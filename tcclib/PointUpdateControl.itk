@@ -3,7 +3,7 @@
 #
 #  Implements the PointUpdateControl widget.
 #
-#  D Terrett 1 May 2001
+#  D Terrett 2 May 2001
 #
 #  Copyright CCLRC
 #-
@@ -184,7 +184,8 @@ itcl::body PointUpdateControl::take1 {} {
    logger log pointlog
    if { [catch {cs pointLog postCallback [code $this take2]}] } {
       set info [sa apply get mess value]
-      tk_messageBox -icon error -message "Pointlog command failed: \"$info\""
+      tk_messageBox -icon error -message "Pointlog command failed: \"$info\"" \
+            -parent $itk_interior
    }
 }
 
@@ -237,7 +238,7 @@ itcl::body PointUpdateControl::commit {} {
 
 # Commit the current fit to the session parameters.
    if { [catch {Ptweak::commit $itk_interior $itk_option(-ia)} info] } {
-      tk_messageBox -icon error -message $info
+      tk_messageBox -icon error -message $info -parent $itk_interior
       return
    }
 }
