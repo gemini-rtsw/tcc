@@ -17,7 +17,7 @@
 #           updateobj name  Stores the contents of the edit controls in the
 #                           SciTarget object "name".
 #
-#  D Terrett 24 November 1999
+#  D Terrett 17 February 2000
 #
 #  Copyright CCLRC
 #+
@@ -34,6 +34,7 @@ itcl::class SciTargetControl {
    public method updateobj name
 
    private method orbtype
+   private method grab
 
    private variable planet
 }
@@ -302,6 +303,13 @@ itcl::body SciTargetControl::constructor args {
 # applied from the main configuration window.
    pack forget  [$itk_component(storeapply) component lock]
    pack forget  [$itk_component(storeapply) component apply]
+   set store  [$itk_component(storeapply) component store]
+
+# Create a grab button and pack it in its place.
+   itk_component add grab {
+      button [winfo parent $store].grab -text Grab -command [code $this grab]
+   }
+   pack $store $itk_component(grab) -side left -pady 4 -expand y
 
 # Select the RA/Dec page.
   $itk_component(notebook) select RA/Dec
@@ -527,4 +535,21 @@ itcl::body SciTargetControl::orbtype {} {
          $itk_component(dailymot) configure -state disabled
       }
    }
+}
+
+body SciTargetControl::grab {} {
+
+# Get the name of the currently selected SciTarget object.
+   set name [$itk_component(selector) get]
+   if { $name == "" } {
+      set name $scratchobj
+   } else {
+      set name ::ScienceTargetNames::$name
+   }
+
+# Grab the current position from the telescope.
+   $name grab $itk_option(-vt)
+
+# Reselect the object to display the new values
+   selectobj $name
 }
