@@ -7,7 +7,7 @@ static char rcsid[]="$Id:";
 *   FUNCTION NAME(S)
 *   Slaext_Init - Initialisation function for TCL loadable image
 *
-*   D L Terrett 5 June 2002
+*   D L Terrett 3 September 2003
 *
 *   Copyright CCLRC
 *
@@ -203,6 +203,10 @@ static int Dtp2sCmd( ClientData clientdata, Tcl_Interp *interp, int objc,
 
 /* Convert tangent plane coordinates to spherical. */
    slaDtp2s( xi, eta, raz, decz, &ra, &dec );
+
+/* Normalize result. */
+   ra = slaDranrm( ra );
+   dec = slaDrange( dec );
 
 /* Build result list. */
    reslist[0] = Tcl_NewDoubleObj( ra );
