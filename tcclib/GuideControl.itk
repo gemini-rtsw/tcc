@@ -6,7 +6,7 @@
 #
 #  Options:
 #
-#  D Terrett 9 April 2002
+#  D Terrett 24 May 2002
 #
 #  Copyright CCLRC
 #+
@@ -114,9 +114,9 @@ itcl::body GuideControl::save {name} {
    foreach wfs {pwfs1 pwfs2 oiwfs} {
       switch [$itk_component(${wfs}nod) index \
             [$itk_component(${wfs}nod) get]] {
-         0 {set nod AB}
-         1 {set nod A}
-         2 {set nod B}
+         0 {set nod A}
+         1 {set nod B}
+         2 {set nod AB}
       }
       switch [$itk_component(${wfs}chop) index \
             [$itk_component(${wfs}chop) get]] {
@@ -149,9 +149,9 @@ itcl::body GuideControl::load {name} {
          default {$itk_component(${wfs}chop) select 4}
       }
       switch [$name cget -${wfs}NodState] {
-         AB {$itk_component(${wfs}nod) select 0}
-         A {$itk_component(${wfs}nod) select 1}
-         B {$itk_component(${wfs}nod) select 2}
+         A {$itk_component(${wfs}nod) select 0}
+         B {$itk_component(${wfs}nod) select 1}
+         AB {$itk_component(${wfs}nod) select 2}
       }
       if { $wfs != "oiwfs" } {
          $itk_component(${wfs}filter) select [$name cget -${wfs}Filter]
