@@ -8,7 +8,7 @@
 #
 #  Methods:
 #
-#  D Terrett 30 October 2002
+#  D Terrett 20 June 2003
 #
 #  Copyright CCLRC
 #-
@@ -73,6 +73,11 @@ itcl::body Wizard::constructor {args} {
 }
 
 itcl::body Wizard::back {} {
+
+# Unpack the custom widget.
+   foreach slave [pack slaves $itk_component(wizchildsite)] {
+      pack forget $slave
+   }
 
 # Call the back procedure.
    if { $backproc != "" } {
