@@ -5,6 +5,9 @@
 #  needed to specify a pointing origin and knows how to load the pointing
 #  origin into the TCS.
 #
+#  PointOrig components with the name "Rotator Axis" are a special case
+#  with x & y fixed at zero.
+#
 #  Options:
 #          -x           The X value of the pointing origin.
 #
@@ -21,7 +24,7 @@
 #          save file     Writes the values of the pointing origin options
 #                        to the channel identifier "file".
 #
-#  D Terrett 15 March 2001
+#  D Terrett 21 April 2001
 #
 #  Copyright CCLRC
 #+
@@ -75,4 +78,20 @@ itcl::body PointOrig::preview item {
 itcl::body PointOrig::save file {
    puts $file "   -x [list $x] \\"
    puts $file "   -y [list $y]"
+}
+
+itcl::configbody PointOrig::x {
+   if { [string equal [namespace tail $this] "Rotator axis"] } {
+      if { $x != 0.0 } {
+         error "Rotator Axis must have x = 0.0"
+      }
+   }
+}
+
+itcl::configbody PointOrig::y {
+   if { [string equal [namespace tail $this] "Rotator axis"] } {
+      if { $y != 0.0 } {
+         error "Rotator Axis must have y = 0.0"
+      }
+   }
 }
