@@ -11,3 +11,9 @@ CP: tclexts
 
 tclexts:
 	cd src; make install
+	cd lib; make
+	cd pointlib; make
+	cd scriptlib; make
+	cd seqlib; make
+	cd tcclib; make
+	cd tsdlib; make
