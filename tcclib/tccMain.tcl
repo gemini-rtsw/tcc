@@ -141,7 +141,7 @@ proc tccMain args {
    epics cs chopConfig
    epics cs pointParam
 
-# Set the timeput period for posting commands to the TCS.
+# Set the timeout period for posting commands to the TCS.
    cs tcsApply setTimeout 3
 
 # Create the object the represents the configuration of the mirrors within
