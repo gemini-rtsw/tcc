@@ -73,7 +73,7 @@ itcl::body StateButton::destructor {} {
 itcl::body StateButton::pressed {} {
 
 # Set the command sender parameter appropriate for the desired state.
-   if { [string length $itk_option(-setcommand)] } {
+   if { [llength $itk_option(-setcommand)] } {
       foreach {cs par val} $itk_option(-setcommand) {}
       cs $cs set $par $val
 
@@ -95,7 +95,7 @@ itcl::body StateButton::pressed {} {
 }
 
 itcl::configbody StateButton::setcommand {
-   if { [string length $itk_option(-setcommand)] } {
+   if { [llength $itk_option(-setcommand)] } {
 
       set cs [lindex $itk_option(-setcommand) 0]
 

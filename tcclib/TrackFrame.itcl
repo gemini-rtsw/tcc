@@ -125,11 +125,11 @@ itcl::body TrackFrame::init {} {
 }
 
 itcl::body TrackFrame::newCosys {vt name} {
-   if { $current_cosys($vt) != "" } {
+   if { ! [string equal $current_cosys($vt) ""] } {
       CosysNames::$current_cosys($vt) refdec
    }
    set current_cosys($vt) ""
-   if { $name != "" } {
+   if { ! [string equal $name ""] } {
       if { [catch {CosysNames::$name refinc}] } {
          error "Coordinate system \"$name\" does not exist"
       } else {

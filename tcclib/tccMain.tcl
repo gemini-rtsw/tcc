@@ -164,7 +164,7 @@ proc tccMain args {
    source $ROOT/default_components.tcl
 
 # Load initialisation files.
-   if { $init != "" } {
+   if { ! [string equal $init ""] } {
       foreach filespec $init {
          if { [file isdirectory $filespec] } {
             if { [catch {glob $filespec/*} filenames] } {
@@ -201,7 +201,7 @@ proc tccMain args {
    waitConnect
 
 # Load the layout definition.
-   if { $layout != "" } {
+   if { ! [string equal $layout ""] } {
       if [catch {source $layout} msg] {
          puts "Error processing layout \"$msg\""
       }

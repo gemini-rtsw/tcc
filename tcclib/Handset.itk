@@ -223,7 +223,7 @@ itcl::configbody Handset::adjust {
          set cs ""
       }
    }
-   if { $cs != "" } {
+   if { ! [string equal $cs ""] } {
       if { [catch {cs $cs info}] } {
          epics cs $cs
       }
@@ -252,7 +252,7 @@ itcl::configbody Handset::adjust {
 itcl::body Handset::push {dir} {
 
 # Called whenever one of the handset buttons is pressed.
-   if { $cs != "" } {
+   if { ! [string equal $cs ""] } {
       set frame [$itk_component(orient) get]
 
 # Set the frame id. The pwfs frames are not supported by the tcs so

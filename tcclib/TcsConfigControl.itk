@@ -211,7 +211,7 @@ itcl::body TcsConfigControl::apply {} {
 
 # If there is a name to store to, invoke the store button command.
    set name [$itk_component(selector) get]
-   if { $name != "" } {
+   if { ! [string equal $name ""] } {
       $itk_component(store) invoke
    }
 
@@ -281,11 +281,11 @@ itcl::body TcsConfigControl::selectobj name {
 #+
 #  Updates the active components on the panel with the new configuration.
 #-
-   if { $name != "" } {
+   if { ! [string equal $name ""] } {
       foreach component $components option $options list $lists {
          if { [$itk_component($component) cget -active] } {
             set comp [$name cget $option]
-            if { $comp != "" } {
+            if { ! [string equal $comp ""] } {
                [$itk_component($component) component selector] select $comp
                $itk_component($component) configure \
                      -source [namespace tail $name]

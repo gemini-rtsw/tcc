@@ -169,7 +169,7 @@ itcl::body SciTargetControl::selectobj name {
    $itk_component(dailymot) clear
    $itk_component(airmass) clear
 
-   if { $name != "" } {
+   if { ! [string equal $name ""] } {
       switch [$name cget -type] {
          planet {
             $itk_component(notebook) select Planets
@@ -299,7 +299,7 @@ itcl::body SciTargetControl::orbtype {} {
 
 itcl::body SciTargetControl::copy createproc {
    set name [$itk_component(selector) get]
-   if { $name == "" } {
+   if { [string is space $name] } {
       tk_messageBox -icon error -parent $itk_interior \
          -message "A name is required to copy a target"
    } else {

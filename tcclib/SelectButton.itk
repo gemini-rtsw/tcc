@@ -60,7 +60,7 @@ itcl::body SelectButton::constructor args {
 itcl::body SelectButton::add {label args} {
 
 # determine which side to pack the buttons.
-   if { $itk_option(-orient) == "horizontal" } {
+   if { [string equal $itk_option(-orient) horizontal] } {
       set side left
    } else {
       set side top
@@ -97,14 +97,14 @@ itcl::body SelectButton::selectioncommand w {
 
    set current [$w cget -text]
 
-   if { $itk_option(-command) != "" } {
+   if { ! [string equal $itk_option(-command) ""] } {
       uplevel #0 $itk_option(-command) \"[$w cget -text]\"
    }
 }
 
 itcl::configbody SelectButton::onbackground {
    foreach button [winfo children $itk_interior] {
-      if { [$button cget -state] == "disabled" } {
+      if { [string equal [$button cget -state] disabled] } {
          $button configure -background $itk_option(-onbackground)
       }
    }
@@ -112,7 +112,7 @@ itcl::configbody SelectButton::onbackground {
 
 itcl::configbody SelectButton::offbackground {
    foreach button [winfo children $itk_interior] {
-      if { [$button cget -state] == "normal" } {
+      if { [string equal [$button cget -state] normal] } {
          $button configure -background $itk_option(-offbackground)
       }
    }

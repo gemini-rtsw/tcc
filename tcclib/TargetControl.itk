@@ -247,7 +247,7 @@ itcl::body TargetControl::selectobj name {
    $itk_component(az) clear
    $itk_component(el) clear
 
-   if { $name != "" } {
+   if { ! [string equal $name ""] } {
       switch [$name cget -type] {
          radec {
             $itk_component(notebook) select RA/Dec
@@ -276,7 +276,7 @@ itcl::body TargetControl::selectobj name {
       }
       set wavel [$name cget -wavelength_name]
       $itk_component(wavelength) select $wavel
-      if { $wavel == "" } {
+      if { [string equal $wavel ""] } {
          set wavel [$name cget -wavelength_value]
          $itk_component(wavelength) value $wavel
       }
@@ -314,7 +314,7 @@ itcl::body TargetControl::updateobj name {
 
    set wavel [$itk_component(wavelength) get name]
    $name configure -wavelength_name $wavel
-   if { $wavel == "" } {
+   if { [string equal $wavel ""] } {
       $name configure -wavelength_value [$itk_component(wavelength) get value]
    }
 }
@@ -343,7 +343,7 @@ body TargetControl::grab {} {
 
 # Get the name of the currently selected Target object.
    set name [$itk_component(selector) get]
-   if { $name == "" } {
+   if { [string equal $name ""] } {
       set fullname $scratchobj
    } else {
       set fullname ::$itk_option(-namespace)::$name

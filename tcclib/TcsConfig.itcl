@@ -83,28 +83,28 @@ itcl::body TcsConfig::subcomponents {} {
 itcl::body TcsConfig::apply args {
 
 # Call the apply method of all the components that have a value.
-   if { $scienceTarget != "" } {
+   if { ! [string equal $scienceTarget ""] } {
       ::ScienceTargetNames::$scienceTarget apply sourceA
    }
-   if { $guide != "" } {
+   if { ! [string equal $guide ""] } {
       ::GuideNames::$guide apply
    }
-   if { $rotator != "" } {
+   if { ! [string equal $rotator ""] } {
       ::RotatorNames::$rotator apply
    }
-   if { $pointOrig != "" } {
+   if { ! [string equal $pointOrig ""] } {
       ::PointOrigNames::$pointOrig apply all
    }
-   if { $chop != "" } {
+   if { ! [string equal $chop ""] } {
       ::ChopNames::$chop apply
    }
-   if { $slewOptions != "" } {
+   if { ! [string equal $slewOptions ""] } {
       ::SlewOptionsNames::$slewOptions apply
    }
-   if { $trackFrame != "" } {
+   if { ! [string equal $trackFrame ""] } {
       ::TrackFrameNames::$trackFrame apply
    }
-   if { $instrument != "" } {
+   if { ! [string equal $instrument ""] } {
       ::InstrumentNames::$instrument apply
    }
 }
@@ -123,25 +123,25 @@ itcl::body TcsConfig::init {} {
 itcl::body TcsConfig::preview {} {
 
 # Call the preview method of all the components that have a value.
-   if { $scienceTarget != "" } {
+   if { ! [string equal $scienceTarget ""] } {
       ::ScienceTargetNames::$scienceTarget preview sourceA
    }
-   if { $guide != "" } {
+   if { ! [string equal $guide ""] } {
       ::GuideNames::$guide preview
    }
-   if { $rotator != "" } {
+   if { ! [string equal $rotator ""] } {
       ::RotatorNames::$rotator preview
    }
-   if { $pointOrig != "" } {
+   if { ! [string equal $pointOrig ""] } {
       ::PointOrigNames::$pointOrig preview poriginA
    }
-   if { $slewOptions != "" } {
+   if { ! [string equal $slewOptions ""] } {
       ::SlewOptionsNames::$slewOptions preview
    }
-   if { $trackFrame != "" } {
+   if { ! [string equal $trackFrame ""] } {
       ::TrackFrameNames::$trackFrame preview
    }
-   if { $instrument != "" } {
+   if { ! [string equal $instrument ""] } {
       ::InstrumentNames::$instrument preview
    }
 }
@@ -158,11 +158,11 @@ itcl::body TcsConfig::save file {
 }
 
 itcl::configbody TcsConfig::scienceTarget {
-   if { $current_scienceTarget != "" } {
+   if { ! [string equal $current_scienceTarget ""] } {
       ScienceTargetNames::$current_scienceTarget refdec
    }
    set current_scienceTarget ""
-   if { $scienceTarget != "" } {
+   if { ! [string equal $scienceTarget ""] } {
       if { [catch {ScienceTargetNames::$scienceTarget refinc}] } {
          error "Science target \"$scienceTarget\" does not exist"
       } else {
@@ -172,11 +172,11 @@ itcl::configbody TcsConfig::scienceTarget {
 }
 
 itcl::configbody TcsConfig::guide {
-   if { $current_guide != "" } {
+   if { ! [string equal $current_guide ""] } {
       GuideNames::$current_guide refdec
    }
    set current_guide ""
-   if { $guide != "" } {
+   if { ! [string equal $guide ""] } {
       if { [catch {GuideNames::$guide refinc}] } {
          error "Guide configuration \"$guide\" does not exist"
       } else {
@@ -186,11 +186,11 @@ itcl::configbody TcsConfig::guide {
 }
 
 itcl::configbody TcsConfig::rotator {
-   if { $current_rotator != "" } {
+   if { ! [string equal $current_rotator ""] } {
       RotatorNames::$current_rotator refdec
    }
    set current_rotator ""
-   if { $rotator != "" } {
+   if { ! [string equal $rotator ""] } {
       if { [catch {RotatorNames::$rotator refinc}] } {
          error "Field orientation \"$rotator\" does not exist"
       } else {
@@ -200,11 +200,11 @@ itcl::configbody TcsConfig::rotator {
 }
 
 itcl::configbody TcsConfig::pointOrig {
-   if { $current_pointOrig != "" } {
+   if { ! [string equal $current_pointOrig ""] } {
       PointOrigNames::$current_pointOrig refdec
    }
    set current_pointOrig ""
-   if { $pointOrig != "" } {
+   if { ! [string equal $pointOrig ""] } {
       if { [catch {PointOrigNames::$pointOrig refinc}] } {
          error "Pointing origin \"$pointOrig\" does not exist"
       } else {
@@ -214,11 +214,11 @@ itcl::configbody TcsConfig::pointOrig {
 }
 
 itcl::configbody TcsConfig::chop {
-   if { $current_chop != "" } {
+   if { ! [string equal $current_chop ""] } {
       ChopNames::$current_chop refdec
    }
    set current_chop ""
-   if { $chop != "" } {
+   if { ! [string equal $chop ""] } {
       if { [catch {ChopNames::$chop refinc}] } {
          error "Chop configuration \"$chop\" does not exist"
       } else {
@@ -228,11 +228,11 @@ itcl::configbody TcsConfig::chop {
 }
 
 itcl::configbody TcsConfig::slewOptions {
-   if { $current_slewOptions != "" } {
+   if { ! [string equal $current_slewOptions ""] } {
       SlewOptionsNames::$current_slewOptions refdec
    }
    set current_slewOptions ""
-   if { $slewOptions != "" } {
+   if { ! [string equal $slewOptions ""] } {
       if { [catch {SlewOptionsNames::$slewOptions refinc}] } {
          error "Slew options \"$slewOptions\" does not exist"
       } else {
@@ -242,11 +242,11 @@ itcl::configbody TcsConfig::slewOptions {
 }
 
 itcl::configbody TcsConfig::trackFrame {
-   if { $current_trackFrame != "" } {
+   if { ! [string equal $current_trackFrame ""] } {
       TrackFrameNames::$current_trackFrame refdec
    }
    set current_trackFrame ""
-   if { $trackFrame != "" } {
+   if { ! [string equal $trackFrame ""] } {
       if { [catch {TrackFrameNames::$trackFrame refinc}] } {
          error "tracking Frames \"$trackFrame\" does not exist"
       } else {
@@ -256,11 +256,11 @@ itcl::configbody TcsConfig::trackFrame {
 }
 
 itcl::configbody TcsConfig::instrument {
-   if { $current_instrument != "" } {
+   if { ! [string equal $current_instrument ""] } {
       InstrumentNames::$current_instrument refdec
    }
    set current_instrument ""
-   if { $instrument != "" } {
+   if { ! [string equal $instrument ""] } {
       if { [catch {InstrumentNames::$instrument refinc}] } {
          error "Instrument \"$instrument\" does not exist"
       } else {

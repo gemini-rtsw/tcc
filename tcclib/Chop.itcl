@@ -62,7 +62,7 @@ itcl::body Chop::subcomponents {} {
 
 itcl::body Chop::apply args {
    cs chopRelative set angle \"$angle\"
-   if { $cosys == "" } {
+   if { [string equal $cosys ""] } {
       cs chopRelative set system FK5
       cs chopRelative set equinox J2000
    } else {
@@ -96,11 +96,11 @@ itcl::body Chop::init {} {
 }
 
 itcl::configbody Chop::cosys {
-   if { $current_cosys != "" } {
+   if { ! [string equal $current_cosys ""] } {
       CosysNames::$current_cosys refdec
    }
    set current_cosys ""
-   if { $cosys != "" } {
+   if { ! [string equal $cosys ""] } {
       if { [catch {CosysNames::$cosys refinc}] } {
          error "Coordinate frame \"$cosys\" does not exist"
       } else {

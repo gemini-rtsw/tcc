@@ -69,7 +69,7 @@ itcl::class Target {
       variable objName {}
 
 # Type "radec"
-      variable radec {} {if {$radec != ""} {set type radec}}
+      variable radec {} {if { ![string equal $radec ""] } {set type radec}}
       variable cosys {}
       variable epoch {}
       variable parallax 0
@@ -77,7 +77,7 @@ itcl::class Target {
       variable rv 0
 
 # Type "azel"
-      variable azel {} {if {$azel != ""} {set type azel}}
+      variable azel {} {if { ! [string equal $azel ""] } {set type azel}}
 
       variable wavelength_name {}
       variable wavelength_value {} {
@@ -117,7 +117,7 @@ itcl::body Target::apply vt {
    switch $type {
       radec {
          cs $vt set objName \"$objName\"
-         if { $cosys == "" } {
+         if { [string equal $cosys ""] } {
             cs $vt set system FK5
             cs $vt set equinox J2000
          } else {
@@ -127,12 +127,12 @@ itcl::body Target::apply vt {
          cs $vt set theta2 \"[lindex $radec 1]\"
          cs $vt set epoch \"$epoch\"
          cs $vt set parallax \"$parallax\"
-         if { $pm != "" } {
-            cs $vt set dtheta1 \"[lindex $pm 0]\"
-            cs $vt set dtheta2 \"[lindex $pm 1]\"
-         } else {
+         if { [string equal $pm ""] } {
             cs $vt set dtheta1 \"\"
             cs $vt set dtheta2 \"\"
+         } else {
+            cs $vt set dtheta1 \"[lindex $pm 0]\"
+            cs $vt set dtheta2 \"[lindex $pm 1]\"
          }
          cs $vt set rv \"$rv\"
       }
@@ -150,17 +150,17 @@ itcl::body Target::apply vt {
       }
    }
    logger command $vt
-   if { $wavelength_name != "" } {
-      if { $wavelength_name != "" } {
-         ::WavelengthNames::$wavelength_name apply $vt
-      }
-   } else {
-      if { $wavelength_value != "" } {
+   if { [string equal $wavelength_name ""] } {
+      if { ! [string equal $wavelength_value ""] } {
          $Wavelength configure -wavel $wavelength_value
          $Wavelength apply $vt
       }
+   } else {
+      if { ! [string equal $wavelength_name ""] } {
+         ::WavelengthNames::$wavelength_name apply $vt
+      }
    }
-   if { $trackrate != "" } {
+   if { ! [string equal $trackrate ""] } {
       ::TrackRateNames::$trackrate apply $vt
    }
 }
@@ -183,7 +183,7 @@ itcl::body Target::init {} {
 
 itcl::body Target::preview vt {
 
-   if { $cosys == "" } {
+   if { [string equal $cosys ""] } {
       set system FK5
       set equinox J2000
    } else {
@@ -200,15 +200,15 @@ itcl::body Target::preview vt {
       }
    }
       
-   if { $wavelength_name != "" } {
-      ::WavelengthNames::$wavelength_name preview $vt
-   } else {
-      if { $wavelength_value != "" } {
+   if { [string equal $wavelength_name ""] } {
+      if { ! [string equal $wavelength_value ""] } {
          $Wavelength configure -wavel $wavelength_value
          $Wavelength preview $vt
       }
+   } else {
+      ::WavelengthNames::$wavelength_name preview $vt
    }
-   if { $trackrate != "" } {
+   if { ! [string equal $trackrate ""] } {
       ::TrackRateNames::$trackrate preview $vt
    }
 }
@@ -269,11 +269,11 @@ body Target::grab vt {
 }
 
 itcl::configbody Target::cosys {
-   if { $current_cosys != "" } {
+   if { ! [string equal $current_cosys ""] } {
       CosysNames::$current_cosys refdec
    }
    set current_cosys ""
-   if { $cosys != "" } {
+   if { ! [string equal $cosys ""] } {
       if { [catch {CosysNames::$cosys refinc}] } {
          error "Coordinate frame \"$cosys\" does not exist"
       } else {
@@ -283,11 +283,11 @@ itcl::configbody Target::cosys {
 }
 
 itcl::configbody Target::wavelength_name {
-   if { $current_wavelength_name != "" } {
+   if { ! [string equal $current_wavelength_name ""] } {
       WavelengthNames::$current_wavelength_name refdec
    }
    set current_wavelength_name ""
-   if { $wavelength_name != "" } {
+   if { ! [string equal $wavelength_name ""] } {
       if { [catch {WavelengthNames::$wavelength_name refinc}] } {
          error "Wavelength \"$wavelength_name\" does not exist"
       } else {
@@ -297,11 +297,11 @@ itcl::configbody Target::wavelength_name {
 }
 
 itcl::configbody Target::trackrate {
-   if { $current_trackrate != "" } {
+   if { ! [string equal $current_trackrate ""] } {
       TrackRateNames::$current_trackrate refdec
    }
    set current_trackrate ""
-   if { $trackrate != "" } {
+   if { ! [string equal $trackrate ""] } {
       if { [catch {TrackRateNames::$trackrate refinc}] } {
          error "Differential track rate \"$trackrate\" does not exist"
       } else {

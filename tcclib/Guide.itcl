@@ -138,13 +138,13 @@ itcl::body Guide::init {} {
 }
 
 itcl::body Guide::preview {} {
-   if { $pwfs1Target != "" } {
+   if { ! [string equal $pwfs1Target ""] } {
       ::WfsTargetNames::$pwfs1Target preview pwfs1
    }
-   if { $pwfs2Target != "" } {
+   if { ! [string equal $pwfs2Target ""] } {
       ::WfsTargetNames::$pwfs2Target preview pwfs2
    }
-   if { $oiwfsTarget != "" } {
+   if { ! [string equal $oiwfsTarget ""] } {
       ::WfsTargetNames::$oiwfsTarget preview oiwfs
    }
 }
@@ -262,11 +262,11 @@ itcl::body Guide::setEnableFlags {wfs active nodstate} {
 }
 
 itcl::body Guide::newTarget {wfs name} {
-   if { $current_target($wfs) != "" } {
+   if { ! [string equal $current_target($wfs) ""] } {
       WfsTargetNames::$current_target($wfs) refdec
    }
    set current_target($wfs) ""
-   if { ![string is space $name] } {
+   if { ! [string is space $name] } {
       if { [catch {WfsTargetNames::$name refinc}] } {
          error "Guide target \"$name\" does not exist"
       } else {

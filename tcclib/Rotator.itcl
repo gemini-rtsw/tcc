@@ -53,27 +53,27 @@ itcl::body Rotator::subcomponents {} {
 
 itcl::body Rotator::apply args {
    cs rotator set ipa \"$ipa\"
-   if { [string length $cosys] } {
-      CosysNames::$cosys apply rotator
-   } else {
+   if { [string equal $cosys ""] } {
       cs rotator set system FK5
       cs rotator set equinox J2000
+   } else {
+      CosysNames::$cosys apply rotator
    }
    logger command rotator
 }
 
 itcl::body Rotator::preview {} {
-   if { [string length $cosys] } {
-      set frame [CosysNames::$cosys cget -frame]
-      set equinox [CosysNames::$cosys cget -equinox]
-   } else {
+   if { [string equal $cosys ""] } {
       set frame FK5
       set equinox J2000
-   }
-   if { [string length $ipa] } {
-      set a $ipa
    } else {
+      set frame [CosysNames::$cosys cget -frame]
+      set equinox [CosysNames::$cosys cget -equinox]
+   }
+   if { [string equal $ipa ""] } {
       set a 0.0
+   } else {
+      set a $ipa
    }
    tccPreview set ipa $a $frame $equinox
 }
@@ -89,11 +89,11 @@ itcl::body Rotator::init {} {
 }
 
 itcl::configbody Rotator::cosys {
-   if { $current_cosys != "" } {
+   if { ! [string equal $current_cosys ""] } {
       CosysNames::$current_cosys refdec
    }
    set current_cosys ""
-   if { $cosys != "" } {
+   if { ! [string equal $cosys ""] } {
       if { [catch {CosysNames::$cosys refinc}] } {
          error "Coordinate frame \"$cosys\" does not exist"
       } else {

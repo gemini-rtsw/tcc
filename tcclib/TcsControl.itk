@@ -516,7 +516,7 @@ itcl::body TcsControl::carousel par {
       }
       slit {
          set sh [$itk_component(slit) get]
-         if { $sh != "" } {
+         if { ! [string equal $sh ""] } {
             set sh [expr $sh * 1000.0]
          }
          return $sh
@@ -541,13 +541,13 @@ itcl::body TcsControl::weather {} {
 # set if the source is "local".
 #-
    set source [$itk_component(source) get]
-   if { [string compare $source "server"] } {
+   if { [string equal $source server] } {
      set s 1
    } else {
      set s 0
    }
    cs weather set source $s
-   if { [string compare $source local] == 0 } {
+   if { [string equal $source local] == 0 } {
       cs weather set temp [$itk_component(temp) get]
       cs weather set press [$itk_component(press) get]
       cs weather set humid [$itk_component(humid) get]
@@ -573,7 +573,7 @@ itcl::body TcsControl::shStep {sign} {
 }
 
 itcl::body TcsControl::shutterMode {} {
-   if { [string compare [$itk_component(shuttermode) get] Tracking] == 0 } {
+   if { [string equal [$itk_component(shuttermode) get] Tracking] } {
       $itk_component(slit) configure -state normal
    } else {
       $itk_component(slit) configure -state disabled

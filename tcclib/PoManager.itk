@@ -142,7 +142,7 @@ itcl::body PoManager::selectcmd {po} {
 # If one of the chop states is selected for this pointing origin then 
 # absorb any offsets and send the X/Y to the TCS.
 
-   if { $achop == $po } {
+   if { [string equal $achop $po] } {
       cs absorbPoOffset set vt "\"SOURCE A\""
       cs absorbPoOffset set index all
       logger command absorbPoOffset
@@ -151,7 +151,7 @@ itcl::body PoManager::selectcmd {po} {
                "Error absorbing pointing origin offsets: TCS reports \"$msg\""
       }
    }
-   if { $bchop == $po } {
+   if { [string equal $bchop $po] } {
       cs absorbPoOffset set vt "\"SOURCE B\""
       cs absorbPoOffset set index all
       logger command absorbPoOffset
@@ -160,13 +160,13 @@ itcl::body PoManager::selectcmd {po} {
                "Error absorbing pointing origin offsets: TCS reports \"$msg\""
       }
    }
-   if {  $achop == $po ||  $bchop == $po } {
+   if {  [string equal $achop $po] ||  [string equal $bchop $po] } {
       if { $achop == $po } {
          cs poriginA set x [$itk_component(x$po) cget -text]
          cs poriginA set y [$itk_component(y$po) cget -text]
          logger command poriginA
       }
-      if { $bchop == $po } {
+      if { [string equal $bchop $po] } {
          cs poriginB set x [$itk_component(x$po) cget -text]
          cs poriginB set y [$itk_component(y$po) cget -text]
          logger command poriginB
@@ -192,6 +192,7 @@ itcl::body PoManager::update {chop} {
 
 # The ra pointing origin is a special case.
    if { [string equal $po ra] } {
+# TBD
    } else {
 
 # Get the current values of the appropriate pointing origin.

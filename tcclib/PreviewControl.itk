@@ -373,7 +373,7 @@ itcl::body PreviewControl::update {} {
       }
    
       set pwfs1 [tccPreview get pwfs1]
-      if { $pwfs1 != "" } {
+      if { ! [string equal $pwfs1 ""] } {
          set x [lindex $pwfs1 0]
          set y [lindex $pwfs1 1]
          set x [format "%.2f" [expr $x * 0.88209918590395]]
@@ -395,7 +395,7 @@ itcl::body PreviewControl::update {} {
          $itk_component(pwfs1y) configure -text "" -state normal
       }
       set pwfs2 [tccPreview get pwfs2]
-      if { $pwfs2 != "" } {
+      if { ! [string equal $pwfs2 ""] } {
          set x [lindex $pwfs2 0]
          set y [lindex $pwfs2 1]
          set x [format "%.2f" [expr $x * 0.90235394114609]]
@@ -417,7 +417,7 @@ itcl::body PreviewControl::update {} {
          $itk_component(pwfs2y) configure -text "" -state normal
       }
       set oiwfs [tccPreview get oiwfs]
-      if { $oiwfs != "" } {
+      if { ! [string equal $oiwfs ""] } {
          set x [lindex $oiwfs 0]
          set y [lindex $oiwfs 1]
          $itk_component(oiwfsx) configure -text $x
@@ -476,7 +476,7 @@ itcl::body PreviewControl::update {} {
             $itk_component(ellim) configure -text ""
          }
       } else {
-         if { $eltime != "" } {
+         if { ! [string equal $eltime ""] } {
             if { $eltime > 0 } {
                $itk_component(ellim) configure \
                   -text "Source rises in $eltime minutes"
@@ -491,12 +491,12 @@ itcl::body PreviewControl::update {} {
 
 # Set times to azimuth and rotator limits only if 1) source is above
 # elevation limit 2) time to limit is less than time to elevation limit.
-      if { $az1time == "" } {set az1time 99999.0}
-      if { $az2time == "" } {set az2time 99999.0}
-      if { $rot1time == "" } {set rot1time 99999.0}
-      if { $rot2time == "" } {set rot2time 99999.0}
+      if { [string equal $az1time ""] } {set az1time 99999.0}
+      if { [string equal $az2time ""] } {set az2time 99999.0}
+      if { [string equal $rot1time ""] } {set rot1time 99999.0}
+      if { [string equal $rot2time ""] } {set rot2time 99999.0}
       if { $vis } {
-         if { $eltime == "" } {set eltime -1.0}
+         if { [string equal $eltime ""] } {set eltime -1.0}
          if { $az1time < $eltime } {
             $itk_component(az1lim) configure -text $az1time
             if { $azwrap == -1 } {

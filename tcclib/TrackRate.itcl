@@ -61,7 +61,7 @@ itcl::body TrackRate::apply vt {
    set vt [string toupper [string range $vt 0 0]][string range $vt 1 end]
 
 # Set all the parameters.
-   if { $cosys == "" } {
+   if { [string equal $cosys ""] } {
       CosysNames::FK5/J2000 apply difTr${vt}
    } else {
       CosysNames::$cosys apply difTr${vt}
@@ -87,11 +87,11 @@ itcl::body TrackRate::save file {
 }
 
 itcl::configbody TrackRate::cosys {
-   if { $current_cosys != "" } {
+   if { ! [string equal $current_cosys ""] } {
       CosysNames::$current_cosys refdec
    }
    set current_cosys ""
-   if { $cosys != "" } {
+   if { ! [string equal $cosys ""] } {
       if { [catch {CosysNames::$cosys refinc}] } {
          error "Coordinate frame \"$cosys\" does not exist"
       } else {

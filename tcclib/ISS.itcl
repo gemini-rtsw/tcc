@@ -104,16 +104,16 @@ itcl::body ISS::position {} {
 }
 
 itcl::body ISS::update {} {
-   if { $hwfold != "" } {
+   if { ! [string equal $hwfold ""] } {
       cs hrwfs set hwfold value $hwfold
       logger command hrwfs
    }
-#   if { $aofold != "" } {
+#   if { ! [string equal $aofold ""] } {
 #      cs aoFold set aofold value $aofold
 #      logger command aoFold
 #   }
-   if { $scfold != "" } {
-      if { $scfold == "OUT" } {
+   if { ! [string equal $scfold ""] } {
+      if { [string equal $scfold "OUT"] } {
          cs scienceFoldPark set dummy value MARK
          logger command scienceFoldPark
       } else {

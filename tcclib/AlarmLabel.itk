@@ -63,33 +63,33 @@ itcl::body AlarmLabel::constructor args {
 }
 
 itcl::configbody AlarmLabel::alarmbackground {
-   if { $itk_option(-state) == "alarm" } {
+   if { [string equal $itk_option(-state) "alarm"] } {
       $itk_component(label) configure -background $itk_option(-alarmbackground)
    }
 }
 
 itcl::configbody AlarmLabel::alarmforeground {
-   if { $itk_option(-state) == "alarm" } {
+   if { [string equal $itk_option(-state) "alarm"] } {
       $itk_component(label) configure -foreground $itk_option(-alarmforeground)
    }
 }
 
 itcl::configbody AlarmLabel::background {
-   if { $itk_option(-state) == "normal" } {
-      if { [string length $itk_option(-background)] } {
-         $itk_component(label) configure -background $itk_option(-background) 
-      } else {
+   if { [string equal $itk_option(-state) "normal"] } {
+      if { [string equal $itk_option(-background) ""] } {
          set itk_option(-background) [$itk_component(label) cget -background]
+      } else {
+         $itk_component(label) configure -background $itk_option(-background) 
       }
    }
 }
 
 itcl::configbody AlarmLabel::foreground {
-   if { $itk_option(-state) == "normal" } {
-      if { [string length $itk_option(-foreground)] } {
-         $itk_component(label) configure -foreground $itk_option(-foreground) 
-      } else {
+   if { [string equal $itk_option(-state) "normal"] } {
+      if { [string equal $itk_option(-foreground) ""] } {
          set itk_option(-foreground) [$itk_component(label) cget -foreground]
+      } else {
+         $itk_component(label) configure -foreground $itk_option(-foreground) 
       }
    }
 }
@@ -97,10 +97,10 @@ itcl::configbody AlarmLabel::foreground {
 itcl::configbody AlarmLabel::state {
    switch -- $itk_option(-state) {
       normal {
-         if { [string length $itk_option(-foreground)] } {
+         if { ! [string equal $itk_option(-foreground) ""] } {
             $itk_component(label) configure -foreground $itk_option(-foreground)
          }
-         if { [string length $itk_option(-background)] } {
+         if { ! [string equal $itk_option(-background) ""] } {
             $itk_component(label) configure -background $itk_option(-background)
          }
       }
