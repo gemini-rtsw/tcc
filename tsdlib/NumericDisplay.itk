@@ -11,7 +11,7 @@
 #
 #  options
 #
-#  D Terrett 11 September 2000
+#  D Terrett 6 December 2000
 #
 #  Copyright CCLRC
 #-
@@ -201,15 +201,26 @@ itcl::body NumericDisplay::constructor args {
             -entryrelief groove
    }
    [$itk_component(lst) component label] configure -width 4
-   global TIMEZONE
-   itk_component add lmt {
-      StatusField $w.lmt -labeltext ${TIMEZONE}: -labelmargin 5 -entryborder 3 \
+   itk_component add hflag {
+      label $w.hflag -image hawaii_flag
+   }
+   itk_component add hst {
+      StatusField $w.hst -labeltext HST: -labelmargin 5 -entryborder 3 \
             -entryrelief groove
    }
-   [$itk_component(lmt) component label] configure -width 4
-   grid $itk_component(utc) -pady 2 -sticky w
-   grid $itk_component(lst) -pady 2 -sticky w
-   grid $itk_component(lmt) -pady 2 -sticky w
+   [$itk_component(hst) component label] configure -width 4
+   itk_component add cflag {
+      label $w.cflag -image chile_flag
+   }
+   itk_component add cst {
+      StatusField $w.cst -labeltext CST: -labelmargin 5 -entryborder 3 \
+            -entryrelief groove
+   }
+   [$itk_component(cst) component label] configure -width 4
+   grid x $itk_component(utc) -pady 2 -sticky w
+   grid x $itk_component(lst) -pady 2 -sticky w
+   grid $itk_component(hflag) $itk_component(hst) -pady 2 -sticky w
+   grid $itk_component(cflag) $itk_component(cst) -pady 2 -sticky w
 
 # Telescope and Dome positions.
    set w $itk_component(top)
@@ -519,10 +530,10 @@ itcl::body NumericDisplay::update {} {
 
 # Offset and base and track rate
    set ra [slaDr2tf 3 [lindex $target 0]]
+   set dec [slaDr2af 2 [lindex $target 1]]
    $itk_component(base1) configure -text \
          [format "%02d:%02d:%02d.%03d" [lindex $ra 1] [lindex $ra 2] \
          [lindex $ra 3] [lindex $ra 4]]
-   set dec [slaDr2af 2 [lindex $target 1]]
    $itk_component(base2) configure -text \
          [format "%s%02d:%02d:%02d.%02d" [lindex $dec 0] [lindex $dec 1] \
          [lindex $dec 2] [lindex $dec 3] [lindex $dec 4]]
@@ -548,7 +559,8 @@ itcl::body NumericDisplay::update {} {
 
 # Time.
    $itk_component(utc) configure -text [tccTime utc]
-   $itk_component(lmt) configure -text [tccTime localtime]
+   $itk_component(hst) configure -text [tccTime localtime 10]
+   $itk_component(cst) configure -text [tccTime localtime 4]
    $itk_component(lst) configure -text [tccTime last]
 }
 
