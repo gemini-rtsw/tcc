@@ -43,6 +43,8 @@
 #                         setting the values of the command parameters
 #                         for virtual telescope "vt".
 #
+#           grab vt       Grabs the current science target from the tcs.
+#
 #           init          Sets the science target to its initial state.
 #
 #           preview item  Sets the preview target for "item".
@@ -53,7 +55,7 @@
 #  Procs:
 #           subcomponents Returns a list of the target classes subcomponents.
 #
-#  D Terrett 6 June 2000
+#  D Terrett 26 June 2000
 #
 #  Copyright CCLRC
 #+
@@ -64,11 +66,12 @@ itcl::class SciTarget {
    public proc subcomponents {} {return [Target::subcomponents]}
 
    public method apply vt
+   public method grab vt
    public method init
    public method preview vt
    public method save file
 
-   public variable airmassLimit
+   public variable airmassLimit {}
 
 # Type "planet"
    public variable planet {} {if {$planet != ""} {set type planet}}
@@ -86,14 +89,17 @@ itcl::class SciTarget {
    public variable meanlong {}
    public variable meananom {}
    public variable dailymot {}
+
 }
 
 itcl::body SciTarget::apply vt {
 
    $this Target::apply $vt
 
-   cs airmassLimit set limit $airmassLimit
-   logger command airmassLimit
+   if { ![string is space $airmassLimit] } {
+      cs airmassLimit set limit $airmassLimit
+      logger command airmassLimit
+   }
 
    switch $type {
       planet {
@@ -208,4 +214,9 @@ itcl::body SciTarget::save file {
       }
    }
    puts $file "   -airmassLimit \"$airmassLimit\""
+}
+
+itcl::body SciTarget::grab vt {
+   Target::grab $vt
+   set airmassLimit [sa tcssad get airMassLimit]
 }
