@@ -72,8 +72,48 @@ itcl::body ActiveOptics::enable {} {
 
 # Set parameters according to the current state...
 
+# The probe guide states can either be A, B, AB or on. If it is the latter
+# then we must first determine which chop states it will be active in
+# according to the probe chop/nod flags and modify the state accordingly.
+   foreach sa "pwfs1Guide pwfs2Guide oiwfsGuide pwfs2Guide" \
+         statevar "m2p1guide m2p2guide m2oiguide m2aoguide" \
+         state [list $p1guide $p2guide $oiguide $aoguide] \
+         probe "PWFS1 PWFS2 OIWFS AOWFS" {
+
+      set $statevar ""
+      if { $state eq "On" } {
+         switch [sa tcssad get nodState] {
+            A {
+               if { [sa $sa get nodachopa] eq "On" } {
+                  append $statevar A
+               } 
+               if { [sa $sa get nodachopb] eq "On" } {
+                  append $statevar B
+               } 
+            }
+            B {
+               if { [sa $sa get nodbchopa] eq "On" } {
+                  append $statevar A
+               } 
+               if { [sa $sa get nodbchopb] eq "On" } {
+                  append $statevar B
+               } 
+            }
+         }
+
+# If no chop states are set then this is an error.
+         if { [set $statevar] eq "" } {
+            tk_messageBox -icon error -message \
+                  "Tip/tilt guiding has been specified for $probe but it is \
+                  not tracking a star in either chop state"
+            return   
+         }
+      }
+   }
+
 # M2 tip/tilt is on and we want it off.
-   if { $p1guide eq "" && $p2guide eq "" && $aoguide eq "" && $oiguide eq "" } {
+   if { $m2p1guide eq "" && $m2p2guide eq "" && $m2aoguide eq "" && \
+            $m2oiguide eq "" } {
       if { [state m2] } {
 
 # Turn guiding off.
@@ -86,7 +126,7 @@ itcl::body ActiveOptics::enable {} {
       set needreset 0
       set addlist [list]
       foreach source {PWFS1 PWFS2 GAOS OIWFS} \
-            guide [list $p1guide $p2guide $aoguide $oiguide] {
+            guide [list $m2p1guide $m2p2guide $m2aoguide $m2oiguide] {
          foreach beam {A B} {
             if { [source m2 $source $beam] } {
                if { $guide ne $beam } {
@@ -134,7 +174,7 @@ itcl::body ActiveOptics::enable {} {
 # N.B. at the moment only once source is actually useable as the M2 code
 # to blend multiple sources isn't debugged.
          foreach source {PWFS1 PWFS2 GAOS OIWFS} \
-                  beam [list $p1guide $p2guide $aoguide $oiguide] {
+                  beam [list $m2p1guide $m2p2guide $m2aoguide $m2oiguide] {
             if {$source eq "GAOS" } {
                if { $beam ne "" } {
                  cs oiwfsSelect set output AO
@@ -259,7 +299,7 @@ itcl::body ActiveOptics::enable {} {
    foreach wfs "pwfs1 pwfs2 oiwfs" \
          active "$pwfs1Active $pwfs2Active $oiwfsActive" \
          wfsobj "Pwfs1 Pwfs2 Oiwfs" \
-         guide "$p1guide $p2guide $oiguide" {
+         guide "$m2p1guide $m2p2guide $m2oiguide" {
 
 # Stop the WFS we don't want.
       if { [state $wfs] && ! $active } {
