@@ -1,21 +1,21 @@
-The tcc applications are now installed in /gemini/tcc. So:
+The tcc applications are now installed in /gemini/tcc/tcc. So:
 
-	/gemini/tcc/tsd &
+	/gemini/tcc/tcc/tsd &
 
 starts the status displays and
 
-	/gemini/tcc/tcc -init /gemini/tcc/data &
+	/gemini/tcc/tcc/tcc -init /gemini/tcc/tcc/data &
 
 starts the consoles and loads the sample targets, instrument definitions etc.
 
 Similarly, the pointing test and start of night callibration applications are
 started by:
 
-	/gemini/tcc/pointtest &
+	/gemini/tcc/tcc/pointtest &
 
 and
 
-	/gemini/tcc/pointupdate &
+	/gemini/tcc/tcc/pointupdate &
 
 respectively.
 
@@ -34,7 +34,7 @@ If you save your own definitions to a file you can loaded them when you
 next start the consoles by adding another -init option to the command line.
 e.g.:
 
-	/gemini/tcc/tcc -init /gemini/tcc/data -init mystuff.dat &
+	/gemini/tcc/tcc/tcc -init /gemini/tcc/tcc/data -init mystuff.dat &
 
 If the -init option is a directory then all the files in the directory are
 read.
@@ -42,10 +42,10 @@ read.
 To start either the consoles or the status screens using a previously saved
 layout (but read the bugs section of this note first) use the -layout option:
 
-	/gemini/tcc/tsd -layout layout.dat &
+	/gemini/tcc/tcc/tsd -layout layout.dat &
 
 There are a number of star catalogues suitable for pointing tests in 
-/gemini/tcc/pointcats.
+/gemini/tcc/tcc/pointcats.
 
 BUGS
 ----
