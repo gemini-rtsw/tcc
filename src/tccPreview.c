@@ -7,7 +7,7 @@ static char rcsid[]="$Id:";
 *   FUNCTION NAME(S)
 *   tccPreviewCmd - Implements the tccPreview tcl command.
 *
-*   D L Terrett 22 February 2001
+*   D L Terrett 13 March 2001
 *
 *   Copyright CCLRC
 */
@@ -36,6 +36,7 @@ static int getLimits( Tcl_Interp*);
 static int getSource( Tcl_Interp*);
 static int getTarget( Tcl_Interp*, int);
 static int getRotator( Tcl_Interp*);
+static int getMoonDist(Tcl_Interp* );
 static int setPo( Tcl_Interp*, int, int, Tcl_Obj *CONST[]); 
 static int setTarget( Tcl_Interp*, int, int, Tcl_Obj *CONST[]);
 static int setWavel( Tcl_Interp*, int, int, Tcl_Obj *CONST[]); 
@@ -77,6 +78,7 @@ int Planet;          /* Planet */
 int Jtype;           /* Orbital element type */
 double T0;           /* reference epoch */
 double Orbel[7];     /* Orbital elements */
+double MoonDist;     /* Distance from object to the moon */
 
 /* Static storage for results */
 int Visible;                     /* Source visible flag */
@@ -218,7 +220,7 @@ int Tccext_PreviewCmd( ClientData clientdata, Tcl_Interp *interp, int objc,
     char *options[] = { "begin", "end", "get", "set", "update", NULL};
     char *getopts[] = { "mount", "source", "source_target", "pwfs1_target",
             "pwfs2_target", "oiwfs_target", "rotator", "pwfs1", "pwfs2",
-            "oiwfs", "limits", NULL};
+            "oiwfs", "limits", "moondist", NULL};
     char *setopts[] = { "sourceA", "pwfs1", "pwfs2", "oiwfs", "poriginA",
             "poriginB", "wavelsourceA", "wavelpwfs1", "wavelpwfs2",
             "waveloiwfs", "limits", "ipa", "iaa", "planet", "orbit", NULL};
@@ -287,6 +289,9 @@ int Tccext_PreviewCmd( ClientData clientdata, Tcl_Interp *interp, int objc,
                     break;
                 case 10:
                     result = getLimits( interp );
+                    break;
+                case 11:
+                    result = getMoonDist( interp );
                     break;
             }
             break;
@@ -385,7 +390,7 @@ static int begin( Tcl_Interp *interp )
 static int end( Tcl_Interp *interp, Tcl_Obj *obj )
 {
     double delta, rawt, tt, utc, tai;
-    double a, b, ra, dec;
+    double a, b, ra, dec, moon_ra, moon_dec;
     double aoprms[15];
     int i;
     double m2xy[3][2];
@@ -510,6 +515,10 @@ static int end( Tcl_Interp *interp, Tcl_Obj *obj )
 /* Compute zenith distance and airmass. */
     ZD = slaZd( HA, dec, aoprms[0]);
     Airmass = slaAirmas( ZD);
+
+/* Compute distance from Moon. */
+    slaRdplan( tt, 3, Elong, Elat, &moon_ra, &moon_dec, &diam);
+    MoonDist = slaDsep( ra, dec, moon_ra, moon_dec);
 
 /* Store mount and rotator data. */
     Az1 = Az2 = slaDranrm(ctx.ab0[0]);
@@ -736,6 +745,14 @@ static int getLimits( Tcl_Interp *interp)
     } else {
         Tcl_AppendElement( interp, "");
     }
+    return TCL_OK;
+}
+
+static int getMoonDist( Tcl_Interp *interp )
+{
+    char result[4];
+    sprintf( result, "%4d", (int) floor(MoonDist / D2R));
+    Tcl_SetResult( interp, result, TCL_VOLATILE);
     return TCL_OK;
 }
 
