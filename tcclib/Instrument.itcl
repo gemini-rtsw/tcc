@@ -9,7 +9,7 @@
 #                             "closed" or "").
 #
 #          -deployableBaffle  The position of the M2 deployable baffle
-#                             ("thermal IR", "near IR", "optical",
+#                             ("thermal IR", "near IR", "visible",
 #                             "maintenance" or "").
 #
 #          -focusOffset       The focus offset to apply.
@@ -35,7 +35,7 @@
 #           subcomponents   Returns a list of the subcomponents of the
 #                           Instrument objects (an empty list).
 #
-#  D Terrett 27 September 2000
+#  D Terrett 31 October 2000
 #
 #  Copyright CCLRC
 #+
@@ -70,14 +70,14 @@ itcl::body Instrument::apply args {
 
 # Configure ISS object.
    switch $centralBaffle {
-      closed {cs m2Baffle set centralBaffle POS1}
-      open {cs m2Baffle set centralBaffle POS2}
+      closed {cs m2Baffle set centralBaffle Closed}
+      open {cs m2Baffle set centralBaffle Open}
    }
    switch $deployableBaffle {
-      "thermal IR" {cs m2Baffle set deployBaffle RETRACTED}
-      "near IR" {cs m2Baffle set deployBaffle POS1}
-      optical {cs m2Baffle set deployBaffle POS2}
-      maintenance {cs m2Baffle set deployBaffle EXTENDED}
+      "thermal IR" {cs m2Baffle set deployBaffle Retracted}
+      "near IR" {cs m2Baffle set deployBaffle "Near IR"}
+      visible {cs m2Baffle set deployBaffle Visible}
+      maintenance {cs m2Baffle set deployBaffle Extended}
    }
    if { !( [string is space $centralBaffle] && \
          [string is space $deployableBaffle] ) } {
