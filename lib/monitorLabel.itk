@@ -1,0 +1,80 @@
+#+
+#  MonitorLabel <- itk::Widget
+#
+#  Implements a label which monitors an EPICS and displays its value.
+#
+#  Methods:
+#         
+#
+# AWEbbers  January, 2005
+#
+
+itcl::class MonitorLabel {
+   inherit itk::Widget
+   constructor {sys var args} {}
+   public {
+	method getValue {}
+   }
+   private {
+      variable varName ""
+   }
+   itk_option define -width width Width 0 {
+	#puts "new width: $itk_option(-width)"
+   }
+   itk_option define -text text Text "" {
+	#puts "label text: $itk_option(-text)"
+   }
+   itk_option define -font font Font "Arial 12" {
+	#puts "new font: $itk_option(-font)"
+   }
+   itk_option define -anchor anchor Anchor "c" {
+	#puts "new anchor: $itk_option(-anchor)"
+   }
+}
+
+itk::usual MonitorLabel {
+   keep -background -cursor
+}
+
+itcl::body MonitorLabel::constructor {sys var args} {
+
+# Create the status acceptor if it doesn't alread exist.
+   if { [catch {sa $sys info}] } {
+      epics sa $sys
+   }
+
+   itk_option add MonitorLabel::width
+   #puts "MonitorLabel const: this: $this var: $var path: $itk_interior"
+   eval itk_initialize $args
+   set varName "$var\(value\)"
+
+   global $var
+
+   set $varName [sa $sys get $var]
+   sa $sys link $var $var
+
+   itk_component add frame {
+	frame $itk_interior.fr
+   }
+   set w $itk_interior.fr
+   pack $w
+
+   itk_component add desc { 
+	label $w.desc -text $itk_option(-text) -font $itk_option(-font)
+   }
+
+   itk_component add label { 
+	label $w.lab -textvariable $varName -width $itk_option(-width) -font $itk_option(-font)
+   }
+
+   pack $itk_component(desc) $itk_component(label) -side left -anchor $itk_option(-anchor)
+}
+
+itcl::body MonitorLabel::getValue {} {
+   global [string trimright $varName "(value)"]
+   #puts "MonitorLabel getValue $varName"
+
+   #puts "MonitorLabel getValue $varName = [set $varName]"
+   return [set $varName]
+}
+
