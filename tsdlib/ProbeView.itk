@@ -10,7 +10,7 @@
 #  Methods:
 #           update       Updates the display.
 #
-# D Terrett 13 September 2000
+# D Terrett 21 July 2003
 #
 #  Copyright CCLRC
 #-
@@ -18,7 +18,7 @@
 itcl::class ProbeView {
    inherit itk::Widget
    constructor args {}
-   itk_option define -probe probe Probe 1 
+   itk_option define -probe probe Probe 1
    public {
       method update {}
    }
@@ -28,6 +28,7 @@ itcl::class ProbeView {
       variable arm
       variable ghost
       variable piv
+      variable probename
       variable mirror
       variable target
    }
@@ -42,6 +43,12 @@ itk::usual ProbeView {
 
 itcl::body ProbeView::constructor args {
 
+   if { [catch {sa pwfs1Guide info}] } {
+      epics sa pwfs1Guide
+   }
+   if { [catch {sa pwfs2Guide info}] } {
+      epics sa pwfs2Guide
+   }
    itk_component add canvas {
       canvas $itk_interior.canvas -width 120 -height 120
    }
@@ -86,9 +93,11 @@ itcl::configbody ProbeView::probe {
    switch $itk_option(-probe) {
       p1 {
          $itk_component(canvas) lower $ghost $arm
+         set probename pwfs1
       }
       p2 {
          $itk_component(canvas) raise $ghost $arm
+         set probename pwfs2
       }
    }
 }
@@ -153,11 +162,29 @@ itcl::body ProbeView::update {} {
          } else {
             $itk_component(canvas) itemconfigure $arm -fill yellow
          }
+         switch [sa tcssad get nodState] {
+            A {
+               if { [string equal [sa ${probename}Guide get nodachopa] On] ||
+                     [string equal [sa ${probename}Guide get nodachopb] On] } {
+                  $itk_component(canvas) itemconfigure $arm -stipple ""
+               } else {
+                  $itk_component(canvas) itemconfigure $arm -stipple gray50
+               }
+            }
+            B {
+               if { [string equal [sa ${probename}Guide get nodbchopa] On] ||
+                     [string equal [sa ${probename}Guide get nodbchopb] On] } {
+                  $itk_component(canvas) itemconfigure $arm -stipple ""
+               } else {
+                  $itk_component(canvas) itemconfigure $arm -stipple gray50
+               }
+            }
+         }
       } else {
-         $itk_component(canvas) itemconfigure $arm -fill red
+         $itk_component(canvas) itemconfigure $arm -fill red -stipple ""
       }
    } else {
-      $itk_component(canvas) itemconfigure $arm -fill red
+      $itk_component(canvas) itemconfigure $arm -fill red -stipple ""
 
    }
    if { $ag != "" && $xg != "" && $yg != "" } {

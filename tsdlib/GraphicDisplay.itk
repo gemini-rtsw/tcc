@@ -10,7 +10,7 @@
 #           update          Updates the view with the current state of the
 #                           telescope.
 #
-#  D Terrett 24 June 2003
+#  D Terrett 25 July 2003
 #
 #  Copyright CCLRC
 #-
@@ -142,20 +142,14 @@ itcl::body GraphicDisplay::constructor args {
    itk_component add oilabel {
       label $w.oilabel -text "OIWFS"
    }
-   itk_component add oix {
-      StatusField $w.oix -labeltext x -entryborder 2 -entryrelief ridge \
-            -width 6 -anchor e
-   }
-   itk_component add oiy {
-      StatusField $w.oiy -labeltext y -entryborder 2 -entryrelief ridge \
-            -width 6 -anchor e
+   itk_component add oixy {
+      ProbePos $w.oixy -probe oi
    }
    itk_component add oiwavel {
       label $w.oiwavel
    }
    pack $itk_component(oiname) $itk_component(oilabel) -padx 5
-   pack $itk_component(oix) $itk_component(oiy) $itk_component(oiwavel) \
-         -padx 5 -pady 3
+   pack $itk_component(oixy) $itk_component(oiwavel) -padx 5 -pady 3
 
 # ALTAIR WFS.
    set w $itk_component(col4)
@@ -166,19 +160,14 @@ itcl::body GraphicDisplay::constructor args {
    itk_component add aolabel {
       label $w.aolabel -text "ALTAIR"
    }
-   itk_component add aox {
-      StatusField $w.aox -labeltext x -entryborder 2 -entryrelief ridge \
-            -width 6 -anchor e
-   }
-   itk_component add aoy {
-      StatusField $w.aoy -labeltext y -entryborder 2 -entryrelief ridge \
-            -width 6 -anchor e
+   itk_component add aoxy {
+      ProbePos $w.aoxy -probe ao
    }
    itk_component add aowavel {
       label $w.aowavel
    }
    pack $itk_component(aolabel) -padx 5
-   pack $itk_component(aowavel) $itk_component(aoy) $itk_component(aox) \
+   pack $itk_component(aowavel) $itk_component(aoxy) \
          -padx 5 -pady 3 -side bottom
 
 # PWFS1.
@@ -250,6 +239,8 @@ itcl::body GraphicDisplay::update {} {
    $itk_component(domeview) update
    $itk_component(elview) update
    $itk_component(wrapview) update
+   $itk_component(oixy) update
+   $itk_component(aoxy) update
    $itk_component(probe1) update
    $itk_component(probe2) update
 
@@ -445,45 +436,8 @@ itcl::body GraphicDisplay::update {} {
    $itk_component(m2oi) configure -text [sa m2ssad get oiGuideConfig]
    $itk_component(m2ao) configure -text [sa m2ssad get aoGuideConfig]
 
-# Set the colour of the OIWFS according to the follow and in position state.
-   if { [isFollowing agssad oiFollowS] } {
-      if { [isInPosition agssad oiInPosition] } {
-         $itk_component(oix) configure -status ok
-         $itk_component(oiy) configure -status ok
-      } else {
-         $itk_component(oix) configure -status warning
-         $itk_component(oiy) configure -status warning
-      }
-   } else {
-      $itk_component(oix) configure -status error
-      $itk_component(oiy) configure -status error
-   }
-
-# Set the colour of the ALTAIR WFS according to the follow and in position 
-# state.
-   if { [isFollowing aossad followS] } {
-      if { [isInPosition aossad inPosition] } {
-         $itk_component(aox) configure -status ok
-         $itk_component(aoy) configure -status ok
-      } else {
-         $itk_component(aox) configure -status warning
-         $itk_component(aoy) configure -status warning
-      }
-   } else {
-      $itk_component(aox) configure -status error
-      $itk_component(aoy) configure -status error
-   }
-
-# Update the OIWFS name and position.
+# Update the OIWFS name.
    $itk_component(oiname) configure -text [sa agssad get oiwfsName]
-   $itk_component(oix) configure -text [format %.2f [sadVal agssad oiX 0.0]]
-   $itk_component(oiy) configure -text [format %.2f [sadVal agssad oiY 0.0]]
-
-# Update the ALTAIR position.
-   $itk_component(aox) configure \
-         -text [format %.2f [sadVal aossad wfsXPosition 0.0]]
-   $itk_component(aoy) configure \
-         -text [format %.2f [sadVal aossad wfsYPosition 0.0]]
 
 # Update the guiding wavelengths.
    set wavel [sadVal tcssad pwfs1Wavelength ""]
