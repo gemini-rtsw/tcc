@@ -15,25 +15,22 @@ proc promptN { prompt min max help varname } {
 
    set done 0
    while { ! $done } {
-      if { $val == "" } {
+      if { [string is space $val] } {
          puts -nonewline "$prompt: "
       } else {
          puts -nonewline "$prompt ($val): "
       }
       flush stdout
       gets stdin reply
-      if { $reply == "" } {
-         if { $val != "" } {
+      if { [string is space $reply] } {
+         if { ! [string is space $val] } {
             incr done
          }
       } else {
          if { [string first ? $reply] != -1 } {
             puts $help
          } else {
-            if { [catch {expr $reply + 0}] } {
-               puts "\"$reply\" isn't a number"
-               puts $help
-            } else {
+            if { [string is double $reply] } {
                if { $min != $max } {
                   if { $reply < $min } {
                      puts "\"$reply\" is too small"
@@ -51,6 +48,9 @@ proc promptN { prompt min max help varname } {
                   set val $reply
                   incr done
                }
+            } else {
+               puts "\"$reply\" isn't a number"
+               puts $help
             }
          }
       }

@@ -11,7 +11,7 @@
 proc tcsCommands args {
 
 # Create the epics service if necessary.
-   if { [info commands epics] == "" } {
+   if { [llength [info commands epics]] == 0 } {
       service epics
    }
 
