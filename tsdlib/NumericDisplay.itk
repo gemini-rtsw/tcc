@@ -11,7 +11,7 @@
 #
 #  options
 #
-#  D Terrett 16 July 2003
+#  D Terrett 23 July 2003
 #
 #  Copyright CCLRC
 #-
@@ -404,6 +404,9 @@ itcl::body NumericDisplay::constructor args {
 # Monitor the chop beam (this changes faster than the 1 sec update of the
 # rest of the display).
    sa tcssad proc chopBeam [itcl::code $this chopbeam]
+
+# Update the chop beam display after the widget is constructed.
+   after idle [itcl::code $this chopbeam "" "" "" [sa tcssad get chopBeam]]
    
 # Trigger checks on the subsystem states
    inPosition mcssad.xxxx ""
