@@ -8,16 +8,13 @@ starts the status displays and
 
 starts the consoles and loads the sample targets, instrument definitions etc.
 
-Similarly, the star selector, pointing test and start of night calibration 
-applications are started by:
+Similarly, the star selector and pointing test applications are started by:
 
 	/gemini/tcc/tcc/starselect &
 
-	/gemini/tcc/tcc/pointtest &
-
 and
 
-	/gemini/tcc/tcc/pointupdate &
+	/gemini/tcc/tcc/pointtest &
 
 respectively.
 
@@ -124,13 +121,6 @@ cutting the text (this isn't always possible).
 7) If an object refers to a component that has been deleted, the component
    is ignored without any message when the object is "applied".
 
-8) The pointtest application needs a way of setting the slew options used
-   when the "slew to next object" button is pressed.
-
-9) The behaviour of the entry field for setting a custom step size on the
-   handsets is confusing and buggy (<Return should "press" the custom 
-   button but doesn't).
-
 Obscure internal bugs:
 
 1) The -font option of the SelectButton widget doesn't work because the
@@ -170,13 +160,4 @@ what some of them mean.
 11) Change the label of the "Set/Slew" button to Set or Slew depending on 
     whether a SlewOptions component has been selected.
 
-12) Do something about management of pointing models.
-
-13) Re-think the way merging of configurations work.
-
-15) Revise the "export" function. What is required here ? Just save everything
-    or something more ?
-
-There is of course more that I don't yet know how to do - acquisition of
-guide stars for example - that will have to wait until we know more about
-how the telescope will work.
+12) Re-think the way merging of configurations work.
