@@ -92,14 +92,22 @@ itcl::body ObserveControl::constructor args {
    }
    $itk_component(beam) add "Beam A"
    $itk_component(beam) add "Beam B"
-   itk_component add nod {
-      SelectButton $w.nod -command [code $this setnod] -orient vertical
-   } {
-      usual
-      rename -offbackground -background background Background
+#   itk_component add nod {
+#      SelectButton $w.nod -command [code $this setnod] -orient vertical
+#   } {
+#      usual
+#      rename -offbackground -background background Background
+#   }
+#   $itk_component(nod) add "Nod A"
+#   $itk_component(nod) add "Nod B"
+   itk_component add noda {
+      StateButton $w.noda -text "Nod A" -setcommand {nod nod A} \
+            -sadrecord {tcssad nodState} -setvalue A
    }
-   $itk_component(nod) add "Nod A"
-   $itk_component(nod) add "Nod B"
+   itk_component add nodb {
+      StateButton $w.nodb -text "Nod B" -setcommand {nod nod B} \
+            -sadrecord {tcssad nodState} -setvalue B
+   }
 
 # PWFS1 controls.
    itk_component add p1lab {
@@ -160,13 +168,13 @@ itcl::body ObserveControl::constructor args {
          $itk_component(p2flip) -sticky ew -padx 5
    grid $itk_component(guidehand) x x $itk_component(p1unwrap) \
          $itk_component(p2unwrap) -sticky ew -padx 5
-   grid x x $itk_component(nod) $itk_component(p1center) \
+   grid x x $itk_component(noda) $itk_component(p1center) \
          $itk_component(p2center) -sticky ew -padx 5
-   grid x x x $itk_component(p1park) $itk_component(p2park) \
+   grid x x $itk_component(nodb) $itk_component(p1park) $itk_component(p2park) \
          -sticky ew -padx 5
    grid configure $itk_component(fold) -rowspan 3
    grid configure $itk_component(beam) -rowspan 2
-   grid configure $itk_component(nod) -rowspan 2
+#   grid configure $itk_component(nod) -rowspan 2
 
 # Create command senders.
    if { [catch {cs chop info}] } {
