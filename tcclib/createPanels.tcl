@@ -3,7 +3,7 @@
 #
 #  Creates all the panel objects that make up the tcc application.
 #
-#  D Terrett 25 November 1998
+#  D Terrett 28 May 1999
 #
 #  Copyright CCLRC
 #-
@@ -36,11 +36,11 @@ proc createPanels {} {
    PanelMgr logPanel -name .logPanel -class LogPanel \
          -title "Command Log"
    PanelMgr guideHandsetPanel -name .guideHandsetPanel \
-         -class GuideHandsetPanel -title "Adjust Pointing"
+         -class GuideHandsetPanel -title "Pointing Handset"
    PanelMgr offsetHandsetPanel -name .offsetHandsetPanel \
-         -class OffsetHandsetPanel -title "Adjust Target Offset"
+         -class OffsetHandsetPanel -title "Target Handset"
    PanelMgr poHandsetPanel -name .poHandsetPanel \
-         -class PoHandsetPanel -title "Adjust Instrument X/Y"
+         -class PoHandsetPanel -title "Instrument Handset"
 
 # Create all the edit panels.
    createEditPanels "" tcsconfig TcsConfig TcsConfigNames \
