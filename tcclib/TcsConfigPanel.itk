@@ -107,7 +107,8 @@ itcl::body TcsConfigPanel::import {} {
    set dialog  $itk_interior.importdialog
    if { ! [winfo exists $dialog] } {
       set dialog [iwidgets::fileselectiondialog $dialog \
-            -modality application -title "Import File Selection Dialog"]
+            -modality application -title "Import File Selection Dialog" \
+            -master [winfo toplevel $itk_interior]]
       $dialog center
    }
 
@@ -148,7 +149,8 @@ itcl::body TcsConfigPanel::export {} {
    set dialog $itk_interior.exportdialog
    if { ! [winfo exists $dialog] } {
       set dialog [ExportDialog $dialog -master $itk_interior \
-            -title "Export Definitions Dialog" -modality application]
+            -title "Export Definitions Dialog" -modality application \
+            -master [winfo toplevel $itk_interior]]
       $dialog center
    }
 
