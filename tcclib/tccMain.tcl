@@ -135,11 +135,18 @@ proc tccMain args {
 # the instrument support structure.
    ISS iss
 
+# Create the object the controls the Acquisition Camera/HRWFS.
+   Acqcam acqcam
+
+# Create the ocs session object for the one and only session.
+   OcsSession ocssession sessionQueue
+
 # Create the object that controls the active optics.
    ActiveOptics AO
 
-# Create the logger object.
-   Logger logger apply applyC errMessage
+# Create the logger objects.
+   Logger logger tcs apply applyC errMessage
+   Logger aclogger hrwfs acqcam::apply acqcam::applyC
 
 # Create the CalParam object.
    CalParam calparam
@@ -152,7 +159,7 @@ proc tccMain args {
 
 # Load default components.
    set file [open $::ROOT/default_components.xml RDONLY]
-   set config [TcsConfigFile #auto $file .]
+   set config [TcsConfigFile #auto [read $file] .]
    itcl::delete object $config
    close $file
 
