@@ -4,7 +4,7 @@
 # An ActiveOptics object controls the state of the active optics (M2 tip/tilt,
 # coma correction, M1 figure). 
 #
-# D Terrett  20 October 2003
+# D Terrett  1 February 2004
 #
 # Copyright CLRC
 #+
@@ -79,10 +79,10 @@ itcl::body ActiveOptics::enable {} {
 # The probe guide states can either be A, B, AB or on. If it is the latter
 # then we must first determine which chop states it will be active in
 # according to the probe chop/nod flags and modify the state accordingly.
-   foreach sa "pwfs1Guide pwfs2Guide oiwfsGuide pwfs2Guide" \
-         statevar "m2p1guide m2p2guide m2oiguide m2aoguide" \
+   foreach sa [list pwfs1Guide pwfs2Guide oiwfsGuide pwfs2Guide] \
+         statevar [list m2p1guide m2p2guide m2oiguide m2aoguide] \
          state [list $p1guide $p2guide $oiguide $aoguide] \
-         probe "PWFS1 PWFS2 OIWFS AOWFS" {
+         probe [list PWFS1 PWFS2 OIWFS AOWFS] {
 
       set $statevar ""
       if { $state eq "On" } {
@@ -121,9 +121,9 @@ itcl::body ActiveOptics::enable {} {
 # See if the current M2 source matches what we want.
       set needreset 0
       set addlist [list]
-      foreach source {PWFS1 PWFS2 GAOS OIWFS} \
+      foreach source [list PWFS1 PWFS2 GAOS OIWFS] \
             guide [list $m2p1guide $m2p2guide $m2aoguide $m2oiguide] {
-         foreach beam {A B} {
+         foreach beam [list A B] {
             if { [source m2 $source $beam] } {
                if { $guide ne $beam } {
                   set needreset 1
@@ -161,7 +161,7 @@ itcl::body ActiveOptics::enable {} {
          }
 
 # Add the desired guide sources.
-         foreach source {PWFS1 PWFS2 GAOS OIWFS} \
+         foreach source [list PWFS1 PWFS2 GAOS OIWFS] \
                   beam [list $m2p1guide $m2p2guide $m2aoguide $m2oiguide] {
             if {$source eq "GAOS" } {
                if { $beam ne "" } {
@@ -286,10 +286,10 @@ itcl::body ActiveOptics::enable {} {
       logger command wfsGuideMode
    }
 
-   foreach wfs "pwfs1 pwfs2 oiwfs" \
-         active "$pwfs1Active $pwfs2Active $oiwfsActive" \
-         wfsobj "Pwfs1 Pwfs2 Oiwfs" \
-         guide "$m2p1guide $m2p2guide $m2oiguide" {
+   foreach wfs [list pwfs1 pwfs2 oiwfs] \
+         active [list $pwfs1Active $pwfs2Active $oiwfsActive] \
+         wfsobj [list Pwfs1 Pwfs2 Oiwfs] \
+         guide [list $m2p1guide $m2p2guide $m2oiguide] {
 
 # Stop the WFS we don't want.
       if { [state $wfs] && ! $active } {
