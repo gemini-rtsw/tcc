@@ -5,19 +5,15 @@
 #     saveLayout  - saves the current panel layout to a file selected with
 #                   a dialog box.
 #
-#  Globals:
-#     SAVE_FILE_DIR - default path for saving layout files.
-#
-#  D Terrett 17 November 1999
+#  D Terrett 31 May 2001
 #
 #  Copyright CCLRC
 #-
 proc saveLayout {} {
 
 # Save the current directory and cd to save file directory.
-   global SAVE_FILE_DIR
    set pwd [pwd]
-   cd $SAVE_FILE_DIR
+   cd $tcclib::SaveFileDirectory
 
 # Create a dialog box for selecting the file and center it.
    set dialog [iwidgets::fileselectiondialog .fsd \
@@ -35,7 +31,7 @@ proc saveLayout {} {
       } else {
 
 # Save the layout parameters for every panel object that exists.
-         foreach panelmgr [itcl::find objects -isa PanelMgr] {
+         foreach panelmgr [itcl::find objects -isa tcclib::PanelMgr] {
 
 # Update the panel manager's geometry 
             $panelmgr updategeometry
@@ -61,7 +57,7 @@ proc saveLayout {} {
          }
 
 # Write a map command for the panels which have createset to 1.
-         foreach panelmgr [itcl::find objects -class PanelMgr] {
+         foreach panelmgr [itcl::find objects -class tcclib::PanelMgr] {
             if { [$panelmgr cget -create] } {
                puts $file "$panelmgr configure -create 1"
                puts $file "$panelmgr map"
@@ -102,9 +98,9 @@ proc saveLayout {} {
 # Save the name of the save file directory.
          set dir [file dirname $filename]
          if { [string compare [file pathtype $dir] relative] == 0 } {
-            set SAVE_FILE_DIR [pwd]/$dir
+            set tcclib::SaveFileDirectory [pwd]/$dir
          } else {
-            set SAVE_FILE_DIR $dir
+            set tcclib::SaveFileDirectory $dir
          }
       }
    }

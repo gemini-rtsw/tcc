@@ -20,7 +20,7 @@
 #
 #            vt         The virtual telescope argument for the component.
 #
-#  D Terrett 28 March 2001
+#  D Terrett 6 June 2001
 #
 #  Copyright CCLRC
 #-
@@ -28,12 +28,12 @@
 proc createEditPanels {parent component class namespace list title vt} {
 
 # Create the edit panel that edits this component.
-   EditPanelMgr ${parent}${component}Panel \
+   tcclib::EditPanelMgr ${parent}${component}Panel \
          -name .${parent}${component}Panel -class ${class}Panel \
-         -title $title -componentlist $list -namespace $namespace -vt $vt
+         -title $title -componentlist $list -namespace $namespace -applyarg $vt
 
 # Create the EditShadow.
-   EditShadow ${parent}${component} ${parent}${component}Panel \
+   tcclib::EditShadow ${parent}${component} ${parent}${component}Panel \
          -parent $parent -component $component -namespace $namespace
 
 # Create all the edit panels for the subcomponents.
