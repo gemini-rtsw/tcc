@@ -1,0 +1,140 @@
+#+
+#  M1TuneWizard <- Wizard
+#
+#  A wizard for stepping through the procedure for tuning M1 with the
+#  HRWFS.
+#
+#  Methods:
+#
+#  D Terrett 1 November 2002
+#
+#  Copyright CCLRC
+#-
+
+itcl::class M1TuneWizard {
+   inherit Wizard
+   constructor {args} {}
+   destructor {}
+   private {
+      method tune {}
+      method stoptune {}
+      method step1 {}
+      method step2 {}
+      method test {}
+      variable pid
+      variable dir
+   }
+}
+
+itk::usual M1TuneWizard {
+   keep -background -cursor -foreground -modality 
+}
+
+option add *M1TuneWizard.borderWidth 2 widgetDefault
+option add *M1TuneWizard.height 300 widgetDefault
+option add *M1TuneWizard.master "." widgetDefault
+option add *M1TuneWizard.width 400 widgetDefault
+option add *M1TuneWizard.title "M1 tuning wizard"
+
+itcl::body M1TuneWizard::constructor {args} {
+
+# Create the widgets for each step.
+   set w [childsite]
+   itk_component add obssetup {
+      frame $w.obssetup
+   }
+   set w $itk_component(obssetup)
+   itk_component add expose {
+      iwidgets::optionmenu $w.expose -labeltext "Exposure time (s)"
+   }
+   $itk_component(expose) insert end 30 60
+   itk_component add ndfilt {
+      iwidgets::optionmenu $w.ndfilt -labeltext "neutral density filter"
+   }
+   $itk_component(ndfilt) insert end neutral filt02 filt04 filt08 open
+   itk_component add test {
+      button $w.test -text "Test exposure" \
+            -command [itcl::code $this test]
+   }
+   pack $itk_component(expose) $itk_component(ndfilt) $itk_component(test)
+
+# Call the first step to initialize the dialog box.
+   step1
+
+   eval itk_initialize $args
+}
+
+itcl::body M1TuneWizard::step1 {} {
+   pack $itk_component(obssetup)
+   set instructions "Select exposure time and neutral density filter\
+      and press \"Test exposure\" to take a test exposure. Press\
+      \"Next\" to start the tuning process"
+   set nextproc [itcl::code $this step2]
+   set actionproc [itcl::code $this tune]
+}
+
+itcl::body M1TuneWizard::tune {} {
+
+# Set output destination.
+   set utc [split [tccTime utc]]
+   set dir [lindex $utc end][string tolower [lindex $utc end-1]][lindex \
+         $utc end-2]
+   set dir /usr/astro/data/${dir}/wfs
+
+   hrwfs output FILE $dir hrwfs.fits
+   hrwfs start -1
+
+# Copy the appropriate sky image.
+   set filt [$itk_component(ndfilt) get]
+   if { [string first filt $filt] != -1 } {
+      set filt [string range 4 end]
+   }
+   set filename hrwfs_sky_red_${filt}_[$itk_component(expose) get].fits
+   file copy -force /home/ssa/SKY/${filename} $dir
+
+# Delete any existing output file.
+   file delete ${dir}/AO.dat
+
+# Exec the analysis program.
+   set home [pwd]
+   cd $dir
+   logger log "idl /home/ssa/idl/shell2hrwfsAO.bat"
+   catch {unset ::env(IDL_STARTUP)}
+   set pid [exec idl /home/ssa/idl/shell2hrwfsAO.bat &]
+   cd $home
+
+# Start the M1 tuning.
+   AO configure -comacorr 1 -m1figure HRWFS -m1filename ${dir}/AO.dat
+   AO enable
+}
+
+itcl::body M1TuneWizard::step2 {} {
+   set packproc [itcl::code $this step1]
+   set nextproc ""
+   set finishproc [itcl::code $this stoptune]
+   set instructions "Press \"Finish\" when M1 is tuned"
+}
+
+itcl::body M1TuneWizard::stoptune {} {
+   AO configure -m1figure none -comacorr 0
+   AO enable
+   exec kill -9 $pid
+}
+
+itcl::body M1TuneWizard::test {} {
+
+# Set exposure time.
+   hrwfs expose [$itk_component(expose) get]
+
+# Set ND filter.
+   hrwfs ndsel [$itk_component(ndfilt) get]
+
+# Insert lens
+   hrwfs lenssel HRWFS
+
+# Data destination.
+   hrwfs output DHS
+
+# Take an exposure.
+   hrwfs start 1
+}

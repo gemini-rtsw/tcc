@@ -73,6 +73,9 @@ itcl::body TcsConfigPanel::constructor args {
    $itk_component(menubar) add command .tools.pointtest \
          -command "exec $::ROOT/pointtest &" \
          -label "Pointing test application"
+   $itk_component(menubar) add command .tools.m1tune \
+         -command {[M1TuneWizard .#auto] activate} \
+         -label "Tune M1 with the HRWFS"
 
    setWidgetColors "$itk_component(menubar) $itk_component(control)" \
          $itk_option(-background) $itk_option(-foreground)
@@ -161,8 +164,8 @@ itcl::body TcsConfigPanel::import {} {
       if { [catch {set file [open $filename RDONLY]} msg] } {
          tk_messageBox -icon error -message $msg
       } else {
-         if { [catch {set config [TcsConfigFile #auto $file $itk_interior]} \
-               msg] } {
+         if { [catch {set config [TcsConfigFile #auto [read $file] \
+               $itk_interior]} msg] } {
             tk_messageBox -icon error -message $msg
          } else {
             itcl::delete object $config

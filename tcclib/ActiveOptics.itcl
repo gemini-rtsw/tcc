@@ -4,7 +4,7 @@
 # An ActiveOptics object controls the state of the active optics (M2 tip/tilt,
 # coma correction, M1 figure). 
 #
-# D Terrett  25 October 2002
+# D Terrett  27 October 2002
 #
 # Copyright CLRC
 #+
@@ -19,6 +19,7 @@ itcl::class ActiveOptics {
       variable scssource none
       variable comacorr 0
       variable m1figure none
+      variable m1filename ""
       variable probeguide none
       variable mountguide none
       variable pwfs1Expose 0.01
@@ -217,6 +218,13 @@ itcl::body ActiveOptics::enable {} {
              cs m1GuideConfig set weighting none
              cs m1GuideConfig set source OIWFS
              cs m1GuideConfig set frames 1
+         }
+         HRWFS {
+             cs m1Guide set mode On
+             cs m1GuideConfig set weighting none
+             cs m1GuideConfig set source HRWFS
+             cs m1GuideConfig set frames 1
+             cs m1GuideConfig set filename $m1filename
          }
       }
       logger command m1GuideConfig

@@ -14,6 +14,8 @@
 #
 #           expose time         Set exposure time.
 #
+#           output type dir file  Set data destination.
+#
 #           start nexpose       Start exposure.
 #
 #           stop                Stop exposure.
@@ -33,6 +35,7 @@ itcl::class Hrwfs {
       method expose {time}
       method lenssel {name}
       method ndsel {name}
+      method output {type {dir .} {file hrwfs.fits}}
       method start {nexpose}
       method stop {}
       method wait {applyC timeout}
@@ -147,6 +150,29 @@ itcl::body Hrwfs::stop {} {
    cs hrwfs::apply post
 }
 
+itcl::body Hrwfs::output {type {dir .} {file hrwfs.fits}} {
+   switch $type {
+      NONE {
+         cs hrwfs::setObserve output 0
+      }
+      DHS {
+         cs hrwfs::setObserve output 1
+      }
+      FILE {
+         cs hrwfs::setObserve output 2
+      }
+      default {
+         error "Unknown DHS output type"
+      }
+   }
+   cs hrwfs::setObserve dir $dir
+   cs hrwfs::setObserve file $file
+   cs hrwfs::setObserve simfile NONE
+   aclogger command hrwfs::setObserve
+   cs hrwfs::apply postWait
+   after 10
+}
+
 itcl::body Hrwfs::start {nframe} {
    cs hrwfs::stop set dummy 1
    aclogger command hrwfs::stop
@@ -156,18 +182,11 @@ itcl::body Hrwfs::start {nframe} {
    aclogger command hrwfs::detExposure
    cs hrwfs::apply postWait
    after 10
-   cs hrwfs::setDhsInfo stream hrwfsScience
-   cs hrwfs::setDhsInfo option 2
-   aclogger command hrwfs::setDhsInfo
-   cs hrwfs::apply postWait
-   after 10
-   cs hrwfs::setObserve output 1
-   cs hrwfs::setObserve dir .
-   cs hrwfs::setObserve file hrwfs.fits
-   cs hrwfs::setObserve simfile NONE
-   aclogger command hrwfs::setObserve
-   cs hrwfs::apply postWait
-   after 10
+#   cs hrwfs::setDhsInfo stream hrwfsScience
+#   cs hrwfs::setDhsInfo option 2
+#   aclogger command hrwfs::setDhsInfo
+#   cs hrwfs::apply postWait
+#   after 10
    cs hrwfs::observe set label NONE
    aclogger command hrwfs::observe
    cs hrwfs::apply post
