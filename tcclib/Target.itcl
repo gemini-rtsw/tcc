@@ -144,10 +144,10 @@ itcl::class Target {
 itcl::body Target::constructor {args} {
 
 # Initialise the trackrate namespace from the target namespace.
-   set targetns [namespace qualifier $this]
-   set i [string last TargetName $targetns]
+   set targetns [namespace qualifier ${this}]
+   set i [string last TargetName ${targetns}]
    if { $i > 0 } {
-      set trackratens [string range $targetns 0 [incr i -1]]
+      set trackratens [string range ${targetns} 0 [incr i -1]]
       append trackratens TrackRateNames
    }
 
@@ -616,11 +616,22 @@ itcl::configbody Target::cosys {
 }
 
 itcl::configbody Target::trackrate {
+
+   set targetns [namespace qualifier ${this}]
+
    if { ! [string equal $current_trackrate ""] } {
       ${trackratens}::$current_trackrate refdec
    }
    set current_trackrate ""
    if { ! [string equal $trackrate ""] } {
+      # AWE if the Target was stored before Field, the wrong trackratens will be referenced ...
+      # detect an invalid trackratens and substitute the correct one.
+      set i [string last FieldName ${trackratens}]
+      if { $i < 0 } {
+	  #puts "AWE trackratens is wrong ... fixing"
+	  set trackratens [string replace ${targetns} [string last TargetNames ${targetns}] end TrackRateNames]
+      }
+
       if { [catch {${trackratens}::$trackrate refinc}] } {
          error "Differential track rate \"$trackrate\" does not exist"
       } else {
