@@ -11,7 +11,7 @@
 #
 #  options
 #
-#  D Terrett 23 July 2003
+#  D Terrett 12 August 2003
 #
 #  Copyright CCLRC
 #-
@@ -189,14 +189,14 @@ itcl::body NumericDisplay::constructor args {
    }
 
    itk_component add ratelab {
-      label $w.ratelab -text "TRACK RATE:"
+      label $w.ratelab -text "TRACK RATE (arcsec/s):"
    }
    itk_component add rate1 {
-      StatusField $w.rate1 -labelmargin 5 -width 8 -entryborder 3 \
+      StatusField $w.rate1 -labelmargin 5 -width 11 -entryborder 3 \
             -entryrelief groove -anchor e
    }
    itk_component add rate2 {
-      StatusField $w.rate2 -labelmargin 5 -width 8 -entryborder 3 \
+      StatusField $w.rate2 -labelmargin 5 -width 11 -entryborder 3 \
             -entryrelief groove -anchor e
    }
    itk_component add choplab {
@@ -566,7 +566,9 @@ itcl::body NumericDisplay::update {} {
    $itk_component(off1) configure -text [format "%10.2f" $off1]
    $itk_component(off2) configure -text \
          [format "%10.2f" [expr {[lindex $target 3] * 206264.80624710}] ]
-   $itk_component(rate1) configure -text [sa tcssad get sourceADiffRA value]
+   set rate1 [expr { [sa tcssad get sourceADiffRA value] * \
+         cos( [lindex $target 1] ) * 15.0}]
+   $itk_component(rate1) configure -text [format %.6f $rate1]
    $itk_component(rate2) configure -text [sa tcssad get sourceADiffDec value]
 
 # Chop throw.
