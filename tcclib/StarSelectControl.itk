@@ -3,7 +3,7 @@
 #
 #  Implements the StarSelectControl widget.
 #
-#  D Terrett 10 April 2002
+#  D Terrett 17 April 2002
 #
 #  Copyright CCLRC
 #-
@@ -75,10 +75,6 @@ itcl::body StarSelectControl::selectstar {cat tag} {
 # Select the field
    set ::Config(tcs.field,value) $name
 
-# Make sure that there is a cosys defined that matches this position.
-   createCosys [lindex $object 3]/[lindex $object 4] \
-         -frame [lindex $object 3] -equinox [lindex $object 4]
-
    $::Config(tcs.field,panel) map sciencetarget
    [$::Config(tcs.field,panel) cget -name] \
          newtarget [lindex $object 0] sciencetarget \
@@ -86,13 +82,13 @@ itcl::body StarSelectControl::selectstar {cat tag} {
          -type hmsdegTarget \
          -c1 [lindex $object 1] \
          -c2 [lindex $object 2] \
-         -cosys [lindex $object 3]/[lindex $object 4] \
-         -epoch [lindex $object 5] \
-         -pm1 [lindex $object 6] \
-         -pm2 [lindex $object 7] \
-         -parallax [lindex $object 8] \
-         -rv [lindex $object 9] \
-         -brightness [lindex $object 10]
+         -system [lindex $object 3] \
+         -epoch [lindex $object 4] \
+         -pm1 [lindex $object 5] \
+         -pm2 [lindex $object 6] \
+         -parallax [lindex $object 7] \
+         -rv [lindex $object 8] \
+         -brightness [lindex $object 9]
 }
 
 itcl::body StarSelectControl::load {} {
