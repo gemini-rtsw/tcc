@@ -3,7 +3,7 @@
 #
 #  Implements the SciTargetControl widget.
 #
-#  D Terrett 15 November 1999
+#  D Terrett 17 November 1999
 #
 #  Copyright CCLRC
 #+
@@ -39,11 +39,21 @@ itcl::body SciTargetControl::constructor args {
    pack $itk_component(frame) -fill x -expand y
    set w $itk_component(frame)
 
+# Frame to highlight the position entry window.
+   itk_component add highlight {
+      frame $w.highlight -background black
+   } {
+      usual
+      ignore -background
+   }
+   pack $itk_component(highlight) -fill x -expand y
+   set w $itk_component(highlight)
+
 # Create tabnotebook for the target position.
    itk_component add notebook {
       iwidgets::tabnotebook $w.notebook -height 250 -width 400 
    }
-   pack $itk_component(notebook)
+   pack $itk_component(notebook) -padx 3 -pady 3
 
 # Page for RA/Dec
    set w [$itk_component(notebook) add -label "RA/Dec"]
