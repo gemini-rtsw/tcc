@@ -597,9 +597,12 @@ itcl::body FieldControl::load {name} {
       set ::Config($comp.${target}target.trackrate,namespace) \
             ${name}TrackRateNames
    }
+
    set ::Config($comp.guide,value) [$name cget -guide]
    set ::Config($comp.rotator,value) [$name cget -rotator]
    set ::Config($comp.wavelength,value) [$name cget -wavelength]
+   $itk_component(progid) clear
+   $itk_component(airmass) clear
    $itk_component(progid) insert end [$name cget -programid]
    $itk_component(airmass) insert end [$name cget -airmassLimit]
 
