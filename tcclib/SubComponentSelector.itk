@@ -17,7 +17,7 @@
 #  Methods:
 #           select item      Selects "item" into the list manager.
 #
-#  D Terrett  17 February 2000
+#  D Terrett  20 April 2000
 #
 #  Copyright CCLRC
 #+
@@ -59,9 +59,13 @@ itcl::body SubComponentSelector::constructor args {
       keep -labeltext
       keep -labelpos
       keep -componentlist
+      keep -state
    }
    itk_component add edit {
       EditButton $w.edit -bitmap "edit" -selector $itk_component(selector)
+   } {
+      usual
+      keep -state
    }
 
    pack $itk_component(selector) -side left
