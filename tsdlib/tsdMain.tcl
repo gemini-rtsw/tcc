@@ -5,7 +5,7 @@
 #  Arguments:
 #             Any command line options and values.
 #
-#  D Terrett 11 February 2000
+#  D Terrett 9 June 2000
 #
 #  Copyright CCLRC
 #-
@@ -63,7 +63,8 @@ proc tsdMain args {
    PanelMgr rcPanel -name .rcPanel -class RcPanel -title "Display configure"
 
 # Link updating the panels to the UTC sad record.
-   sa tcssad proc UTC updateDisplays
+   RecordMonitor tcssad.UTC tcssad UTC
+   tcssad.UTC add updateDisplays
 
 # Pack the toolbar.
    pack [TsdToolbar .toolbar]

@@ -7,11 +7,11 @@
 #  Arguments:
 #            All arguments are ignored.
 #
-#  D Terrett 28 August 1998
+#  D Terrett 9 June 2000
 #
 #  Copyright CCLRC
 #-
-proc updateDisplays args {
+proc updateDisplays {record value} {
 
 # Update the time system with the latest tcs context
    tccTime set [ast update]

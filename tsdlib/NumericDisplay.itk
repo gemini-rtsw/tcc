@@ -24,12 +24,13 @@ itcl::class NumericDisplay {
 
    public method update
 
-   private method newtarget args
-   private method newobject args
-   private method inPosition {rec status info value}
+   private method newtarget {record value}
+   private method newobject {record value}
+   private method inPosition {rec value}
    private method noheartbeat
-   private method heartbeat {rec status info value}
+   private method heartbeat {rec value}
    private variable nohbid
+   private variable hbid
 }
 
 itk::usual NumericDisplay {
@@ -293,14 +294,30 @@ itcl::body NumericDisplay::constructor args {
 
 # Call newtarget whenever any of the tracking frame or wavelengths change.
    foreach vt {sourceA sourceB sourceC pwfs1 pwfs2 oiwfs mount} {
-      sa tcssad proc ${vt}TrackFrame [code $this newtarget]
-      sa tcssad proc ${vt}TrackEq [code $this newtarget]
-      sa tcssad proc ${vt}Wavelength [code $this newtarget]
+      if { [llength [find object tcssad.${vt}TrackFrame]] == 0 } {
+         RecordMonitor tcssad.${vt}TrackFrame tcssad ${vt}TrackFrame
+      }
+      set hbid(${vt}TrackFrame) [tcssad.${vt}TrackFrame add \
+            [code $this newtarget]]
+      if { [llength [find object tcssad.${vt}TrackEq]] == 0 } {
+         RecordMonitor tcssad.${vt}TrackEq tcssad ${vt}TrackEq
+      }
+      set hbid(${vt}TrackEq) [tcssad.${vt}TrackEq add \
+            [code $this newtarget]]
+      if { [llength [find object tcssad.${vt}TrackWavelength]] == 0 } {
+         RecordMonitor tcssad.${vt}TrackWavelength tcssad ${vt}TrackWavelength
+      }
+      set hbid(${vt}TrackWavelength) [tcssad.${vt}TrackWavelength add \
+            [code $this newtarget]]
    }
 
 # Call newobject whenever any of the input objects change.
    foreach vt {sourceA sourceB sourceC pwfs1 pwfs2 oiwfs mount} {
-      sa tcssad proc ${vt}ObjectName [code $this newobject]
+      if { [llength [find object tcssad.${vt}ObjectName]] == 0 } {
+         RecordMonitor tcssad.${vt}ObjectName tcssad ${vt}ObjectName
+      }
+      set hbid(${vt}ObjectName) [tcssad.${vt}ObjectName add \
+            [code $this newobject]]
    }
 
 # Call inPosition whenever any of the inPosition or followS records change.
@@ -308,7 +325,10 @@ itcl::body NumericDisplay::constructor args {
          tcssad mcssad crssad} \
          par {inPosition inPositionAz inPositionEl inPosition \
          domeInPos topShtrInPos botShtrInPos inPosition followS followS} {
-      sa $sa proc $par [code $this inPosition]
+         if { [llength [find object $sa.$par]] == 0 } {
+            RecordMonitor $sa.$par $sa $par
+         }
+         set hbid($par) [$sa.$par add [code $this inPosition]]
    }
 
 # Execute the noheartbeat method in 5 seconds time (the heartbeat monitor
@@ -316,39 +336,42 @@ itcl::body NumericDisplay::constructor args {
    set nohbid [after 5000 [code $this noheartbeat]]
 
 # Monitor the heartbeat sad record.
-   sa tcssad proc heartbeat [code $this heartbeat]
-
+   if { [llength [find object tcssad.heartbeat]] == 0 } {
+      RecordMonitor tcssad.heartbeat tcssad heartbeat
+   }
+   set hbid(heartbeat) [tcssad.heartbeat add [code $this heartbeat]]
+   
 # Trigger checks on the subsystem states
-   inPosition mcssad.xxxx {} {} {}
-   inPosition crssad.xxxx {} {} {}
-   inPosition ecssad.xxxx {} {} {}
+   inPosition mcssad.xxxx ""
+   inPosition crssad.xxxx ""
+   inPosition ecssad.xxxx ""
 
 # Update the display.
-   newobject
-   newtarget
+   newobject "" ""
+   newtarget "" ""
 
    eval itk_initialize $args
 }
 
 itcl::body NumericDisplay::destructor {} {
    foreach vt {sourceA sourceB sourceC pwfs1 pwfs2 oiwfs mount} {
-      sa tcssad unproc ${vt}TrackFrame [code $this newtarget]
-      sa tcssad unproc ${vt}TrackEq [code $this newtarget]
-      sa tcssad unproc ${vt}Wavelength [code $this newtarget]
-      sa tcssad unproc ${vt}ObjectName [code $this newobject]
+      tcssad.${vt}TrackFrame remove $hbid(${vt}TrackFrame)
+      tcssad.${vt}TrackEq remove $hbid(${vt}TrackEq)
+      tcssad.${vt}TrackWavelength remove $hbid(${vt}TrackWavelength)
+      tcssad.${vt}ObjectName remove $hbid(${vt}ObjectName)
    }
    foreach sa {mcssad mcssad mcssad crssad ecssad ecssad ecssad \
          tcssad mcssad crssad} \
          par {inPosition inPositionAz inPositionEl inPosition \
          domeInPos topShtrInPos botShtrInPos inPosition \
          followS followS} {
-      sa $sa unproc $par [code $this inPosition]
+      $sa.$par remove $hbid($par)
    }
-   sa tcssad unproc heartbeat [code $this heartbeat]
+   tcssad.heartbeat remove $hbid(heartbeat)
    after cancel $nohbid
 }
 
-itcl::body NumericDisplay::newtarget args {
+itcl::body NumericDisplay::newtarget {record value} {
 # Updates the display when the tracking frame or wavelength changes.
    
 # Telescope position (in tracking frame of the mount).
@@ -414,7 +437,7 @@ itcl::body NumericDisplay::newtarget args {
    $itk_component(tarwavel) configure -text "$wavel"
 }
 
-itcl::body NumericDisplay::newobject args {
+itcl::body NumericDisplay::newobject {record value} {
 
 # Updates the display when the source changes.
    
@@ -507,7 +530,7 @@ itcl::body NumericDisplay::update {} {
    $itk_component(lst) configure -text [tccTime last]
 }
 
-itcl::body NumericDisplay::inPosition {rec status info value} {
+itcl::body NumericDisplay::inPosition {rec value} {
 #+
 # Colour codes various widgets according to whether a sub-system is 
 # in position and/or following.
@@ -601,7 +624,7 @@ itcl::body NumericDisplay::noheartbeat {} {
    $itk_component(status) configure -text "NO HEARTBEAT" -status error
 }
 
-itcl::body NumericDisplay::heartbeat {rec status info value} {
+itcl::body NumericDisplay::heartbeat {rec value} {
 
 # Cancel the pending noheartbeat call.
    after cancel $nohbid
