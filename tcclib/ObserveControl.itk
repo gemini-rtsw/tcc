@@ -7,7 +7,7 @@
 #  Methods:
 #           none
 #
-#  D Terrett  7 June 2000
+#  D Terrett  8 June 2000
 #
 #  Copyright CCLRC
 #+
@@ -20,7 +20,6 @@ itcl::class ObserveControl {
    private method setchop state
    private method setfold state
    private method setnod state
-   private method trackon par {return On}
    private method center par {return 0}
 }
 
@@ -81,14 +80,18 @@ itcl::body ObserveControl::constructor args {
       label $w.choplab -text Chop/Nod
    }
    itk_component add chop {
-      SelectButton $w.chop -command [code $this setchop] -orient vertical
+      OnOffButton $w.chop -text Chop -oncommand {chop chop On} \
+            -offcommand {chop chop off} -sadrecord {tcssad chopState} \
+            -onvalue YES -offvalue NO
+   }
+   itk_component add beam {
+      SelectButton $w.beam -command [code $this setchop] -orient vertical
    } {
       usual
       rename -offbackground -background background Background
    }
-   $itk_component(chop) add Chop
-   $itk_component(chop) add "Beam A"
-   $itk_component(chop) add "Beam B"
+   $itk_component(beam) add "Beam A"
+   $itk_component(beam) add "Beam B"
    itk_component add nod {
       SelectButton $w.nod -command [code $this setnod] -orient vertical
    } {
@@ -102,9 +105,12 @@ itcl::body ObserveControl::constructor args {
    itk_component add p1lab {
       label $w.p1lab -text "P1 probe"
    }
-   itk_component add p1track {
-      ApplyButton $w.p1track -command p1Follow -text Track \
-            -parcommand [code $this trackon]
+   itk_component add p1follow {
+      OnOffButton $w.p1follow -text Follow \
+            -oncommand {p1Follow followState On} \
+            -offcommand {p1Follow followState Off} \
+            -onvalue {ON On} -offvalue {OFF Off} \
+            -sadrecord {agssad p1FollowS}
    }
    itk_component add p1flip {
       ApplyButton $w.p1flip -command pwfs1Flip -text "Flip arm"
@@ -119,17 +125,17 @@ itcl::body ObserveControl::constructor args {
    itk_component add p1park {
       ApplyButton $w.p1park -command pwfs1Park -text Park
    }
-   itk_component add p1stop {
-      ApplyButton $w.p1stop -command pwfs1Stop -text Stop
-   }
 
 # PWFS2 controls.
    itk_component add p2lab {
       label $w.p2lab -text "P2 probe"
    }
-   itk_component add p2track {
-      ApplyButton $w.p2track -command p2Follow -text Track \
-            -parcommand [code $this trackon]
+   itk_component add p2follow {
+      OnOffButton $w.p2follow -text Follow \
+            -oncommand {p2Follow followState On} \
+            -offcommand {p2Follow followState Off} \
+            -onvalue {ON On} -offvalue {OFF Off} \
+            -sadrecord {agssad p2FollowS}
    }
    itk_component add p2flip {
       ApplyButton $w.p2flip -command pwfs2Flip -text "Flip arm"
@@ -144,16 +150,13 @@ itcl::body ObserveControl::constructor args {
       ApplyButton $w.p2center -command pwfs2SetOrient -text Center \
             -parcommand [code $this center]
    }
-   itk_component add p2stop {
-      ApplyButton $w.p2stop -command pwfs2Stop -text Stop
-   }
 
    grid $itk_component(handlab) $itk_component(foldlab) \
          $itk_component(choplab) $itk_component(p1lab) \
          $itk_component(p2lab) -sticky ew -padx 5
    grid $itk_component(tarhand) $itk_component(fold) $itk_component(chop) \
-         $itk_component(p1track) $itk_component(p2track) -sticky ew -padx 5
-   grid $itk_component(pohand) x x $itk_component(p1flip) \
+         $itk_component(p1follow) $itk_component(p2follow) -sticky ew -padx 5
+   grid $itk_component(pohand) x $itk_component(beam) $itk_component(p1flip) \
          $itk_component(p2flip) -sticky ew -padx 5
    grid $itk_component(guidehand) x x $itk_component(p1unwrap) \
          $itk_component(p2unwrap) -sticky ew -padx 5
@@ -161,9 +164,8 @@ itcl::body ObserveControl::constructor args {
          $itk_component(p2center) -sticky ew -padx 5
    grid x x x $itk_component(p1park) $itk_component(p2park) \
          -sticky ew -padx 5
-   grid x x x $itk_component(p1stop) $itk_component(p2stop) -sticky ew -padx 5
    grid configure $itk_component(fold) -rowspan 3
-   grid configure $itk_component(chop) -rowspan 3
+   grid configure $itk_component(beam) -rowspan 2
    grid configure $itk_component(nod) -rowspan 2
 
 # Create command senders.

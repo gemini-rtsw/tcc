@@ -124,15 +124,27 @@ itcl::body TcsControl::constructor args {
 # Commands to enable/disable following in each subsystem 
    set w $itk_component(row1f2)
    itk_component add mcs {
-      FollowButton $w.mcs -text MCS -command mcFollow \
+      OnOffButton $w.mcs -text MCS \
+            -oncommand {mcFollow followState On} \
+            -offcommand {mcFollow followState Off} \
+            -onvalue {ON On} \
+            -offvalue {OFF Off} \
             -sadrecord {mcssad followS}
    }
    itk_component add scs {
-      FollowButton $w.scs -text SCS -command m2Follow \
+      OnOffButton $w.scs -text SCS \
+            -oncommand {m2Follow followState On} \
+            -offcommand {m2Follow followState Off} \
+            -onvalue {YES On} \
+            -offvalue {NO Off} \
             -sadrecord {m2ssad followS}
    }
    itk_component add crs {
-      FollowButton $w.crs -text CRCS -command crFollow \
+      OnOffButton $w.crs -text CRCS \
+            -oncommand {crFollow followState On} \
+            -offcommand {crFollow followState Off} \
+            -onvalue {ON On} \
+            -offvalue {OFF Off} \
             -sadrecord {crssad followS}
    }
    itk_component add ecs {
@@ -142,15 +154,28 @@ itcl::body TcsControl::constructor args {
       button $w.pcs -text PCS -state disabled -disabledforeground black
    }
    itk_component add p1 {
-      FollowButton $w.p1 -text P1 -command p1Follow \
+      OnOffButton $w.p1 -text P1 \
+            -oncommand {p1Follow followState On} \
+            -offcommand {p1Follow followState Off} \
+            -onvalue {ON On} \
+            -offvalue {OFF Off} \
             -sadrecord {agssad p1FollowS}
    }
    itk_component add p2 {
-      FollowButton $w.p2 -text P2 -command p2Follow \
+      OnOffButton $w.p2 -text P2 \
+            -oncommand {p2Follow followState On} \
+            -offcommand {p2Follow followState Off} \
+            -onvalue {ON On} \
+            -offvalue {OFF Off} \
             -sadrecord {agssad p2FollowS}
    }
    itk_component add oiwfs {
-      FollowButton $w.oiwfs -text OIWFS -command oiFollow
+      OnOffButton $w.oiwfs -text OIWFS \
+            -oncommand {oiFollow followState On } \
+            -offcommand {oiFollow followState Off } \
+            -onvalue {ON On} \
+            -offvalue {OFF Off} \
+            -sadrecord {agssad oiFollowS}
    }
 
 # Commands for datuming, initing or unparking mechanisms.
