@@ -53,6 +53,41 @@ the command line. e.g.:
 There are a number of star catalogues suitable for pointing tests in 
 /gemini/tcc/tcc/pointcats.
 
+If, when you try to start Skycat from the tcc, using either with the Plot 
+button on the preview window or by selecting Skycat on the Windows menu of 
+the Target Selector window, you get an error message box that says:
+
+    Error: X server insecure (must use xauth-style 
+    authorization); command ignored
+
+you must turn off host based authorisation by doing the following on a
+terminal window logged into your workstation:
+
+xhost
+
+this will print either:
+
+    access control disabled, clients can connect from any host
+
+possibly followed by a list of clients (e.g. INET:draco)
+
+or
+    access control enabled, only authorized clients can connect
+
+followed by a list of clients.
+
+Then type xhost followed by each of the clients listed with a minus sign 
+prepended followed by a minus sign on its own. e.g.
+
+xhost -draco -scott -
+
+Type xhost again and you should get:
+
+    access control enabled, only authorized clients can connect
+
+with no clients listed. Exit from skycat and try again - there is no need to
+restart the tcc.
+
 BUGS
 ----
 
