@@ -102,19 +102,19 @@ itcl::body TcsControl::constructor args {
 # Park to Reboot buttons.
 #   set w $itk_component(row1f1)
 #   itk_component add park {
-#      ApplyButton $w.park -command park
+#      tcclib::ApplyButton $w.park -command park
 #   }
 #   itk_component add datum {
-#      ApplyButton $w.datum -command datum
+#      tcclib::ApplyButton $w.datum -command datum
 #   }
 #   itk_component add init {
-#      ApplyButton $w.init -command init
+#      tcclib::ApplyButton $w.init -command init
 #   }
 #   itk_component add test {
-#      ApplyButton $w.test -command test
+#      tcclib::ApplyButton $w.test -command test
 #   }
 #   itk_component add reboot {
-#      ApplyButton $w.reboot -command reboot -confirm \
+#      tcclib::ApplyButton $w.reboot -command reboot -confirm \
 #            "This will reboot the TCS and all it's subsystems"
 #   }
 #   pack $itk_component(park) $itk_component(datum) $itk_component(init) \
@@ -180,57 +180,57 @@ itcl::body TcsControl::constructor args {
 
 # Commands for datuming, initing or unparking mechanisms.
    itk_component add mcsdatum {
-      ApplyButton $w.mcsdatum -command mountDatum -text Datum \
+      tcclib::ApplyButton $w.mcsdatum -command mountDatum -text Datum \
          -parcommand [code $this mountdatum]
    }
    itk_component add scsinit {
-      ApplyButton $w.scsinit -command m2Init -text Init
+      tcclib::ApplyButton $w.scsinit -command m2Init -text Init
    }
    itk_component add crsdatum {
-      ApplyButton $w.crsdatum -command rotDatum -text Datum
+      tcclib::ApplyButton $w.crsdatum -command rotDatum -text Datum
    }
    itk_component add ecsinit {
-      ApplyButton $w.ecsinit -command enclosureInit -text Init
+      tcclib::ApplyButton $w.ecsinit -command enclosureInit -text Init
    }
    itk_component add pcsunpark {
-      ApplyButton $w.pcsunpark -command m1Park -text Unpark \
+      tcclib::ApplyButton $w.pcsunpark -command m1Park -text Unpark \
             -parcommand [code $this m1unpark]
    }
    itk_component add p1datum {
-      ApplyButton $w.p1datum -command pwfs1Datum -text Datum
+      tcclib::ApplyButton $w.p1datum -command pwfs1Datum -text Datum
    }
    itk_component add p2datum {
-      ApplyButton $w.p2datum -command pwfs2Datum -text Datum
+      tcclib::ApplyButton $w.p2datum -command pwfs2Datum -text Datum
    }
    itk_component add oidatum {
-      ApplyButton $w.oidatum -command oiwfsDatum -text Datum
+      tcclib::ApplyButton $w.oidatum -command oiwfsDatum -text Datum
    }
 
 # Commands for parking mechanisms.
    itk_component add mcspark {
-      ApplyButton $w.mcspark -command telpark -text Park
+      tcclib::ApplyButton $w.mcspark -command telpark -text Park
    }
    itk_component add scspark {
-      ApplyButton $w.scspark -command m2Park -text Park
+      tcclib::ApplyButton $w.scspark -command m2Park -text Park
    }
    itk_component add crspark {
-      ApplyButton $w.crspark -command rotPark -text Park
+      tcclib::ApplyButton $w.crspark -command rotPark -text Park
    }
    itk_component add ecspark {
-      ApplyButton $w.ecspark -command enclosurePark -text Park
+      tcclib::ApplyButton $w.ecspark -command enclosurePark -text Park
    }
    itk_component add pcspark {
-      ApplyButton $w.pcspark -command m1Park -text Park \
+      tcclib::ApplyButton $w.pcspark -command m1Park -text Park \
             -parcommand [code $this m1park]
    }
    itk_component add p1park {
-      ApplyButton $w.p1park -command pwfs1Park -text Park
+      tcclib::ApplyButton $w.p1park -command pwfs1Park -text Park
    }
    itk_component add p2park {
-      ApplyButton $w.p2park -command pwfs2Park -text Park
+      tcclib::ApplyButton $w.p2park -command pwfs2Park -text Park
    }
    itk_component add oipark {
-      ApplyButton $w.oipark -command oiwfsPark -text Park
+      tcclib::ApplyButton $w.oipark -command oiwfsPark -text Park
    }
 
    grid $itk_component(mcs) $itk_component(mcsdatum) $itk_component(mcspark) \
@@ -253,7 +253,7 @@ itcl::body TcsControl::constructor args {
 # Carousel driving mode command.
    set w $itk_component(f3top)
    itk_component add carousel {
-      ApplyButton $w.carousel -command carousel -parcommand \
+      tcclib::ApplyButton $w.carousel -command carousel -parcommand \
             [code $this carousel]
    }
    itk_component add domemode {
@@ -292,10 +292,10 @@ itcl::body TcsControl::constructor args {
 # Close shutters command.
    set w $itk_component(f3mid)
    itk_component add closeshut {
-      ApplyButton $w.closeshut -command shutterPark
+      tcclib::ApplyButton $w.closeshut -command shutterPark
    }
    itk_component add closegates {
-      ApplyButton $w.closegates -command ventgatesPark
+      tcclib::ApplyButton $w.closegates -command ventgatesPark
    }
    pack $itk_component(closeshut) $itk_component(closegates) \
          -fill both -expand yes -padx 10 -pady 5 -side left
@@ -303,7 +303,7 @@ itcl::body TcsControl::constructor args {
 # Rotator center wrap command.
    set w $itk_component(f3bot)
    itk_component add cenwrap {
-      ApplyButton $w.cenwrap -command rotCentre
+      tcclib::ApplyButton $w.cenwrap -command rotCentre
    }
    pack $itk_component(cenwrap) -fill both -expand yes -padx 10 -pady 10
 
@@ -323,10 +323,12 @@ itcl::body TcsControl::constructor args {
    $itk_component(agmech) selection set "Science fold"
    $itk_component(agmech) configure -editable 0
    itk_component add mechdatum {
-      LiveButton $w.mechdatum -text Datum -command [code $this agmech Datum]
+      tcclib::LiveButton $w.mechdatum -text Datum \
+            -command [code $this agmech Datum]
    }
    itk_component add mechpark {
-      LiveButton $w.mechpark -text Park -command [code $this agmech Park]
+      tcclib::LiveButton $w.mechpark -text Park \
+            -command [code $this agmech Park]
    }
 
    pack $itk_component(mechlab) $itk_component(agmech) \
@@ -416,7 +418,7 @@ itcl::body TcsControl::constructor args {
    pack $itk_component(vg) -fill x -expand y
    set w $itk_component(vg)
    itk_component add ventgates {
-      ApplyButton $w.ventgates -command ventgates -parcommand \
+      tcclib::ApplyButton $w.ventgates -command ventgates -parcommand \
             [code $this parget]
    }
    itk_component add east {
@@ -444,7 +446,7 @@ itcl::body TcsControl::constructor args {
 # Enclosure thermal control command.
    set w $itk_component(row4f1)
    itk_component add thermal {
-      ApplyButton $w.thermal -command encThermal \
+      tcclib::ApplyButton $w.thermal -command encThermal \
             -parcommand [code $this parget]
    }
    itk_component add mode {
@@ -464,7 +466,7 @@ itcl::body TcsControl::constructor args {
 # Weather command.
    set w $itk_component(row4f2)
    itk_component add weather {
-      LiveButton $w.weather -command [code $this weather] \
+      tcclib::LiveButton $w.weather -command [code $this weather] \
             -text [lindex [cs weather info] 1]
    }
    itk_component add source {

@@ -1,5 +1,5 @@
 #+
-#  TcsConfigPanel <- Panel
+#  TcsConfigPanel <- tcclib::Panel
 #
 #  Implements the TcsConfigPanel widget. A Panel widget with a TcsConfigControl
 #  widget packed into its interior and a "sub-components" menu added to the
@@ -14,7 +14,7 @@
 #+
 
 itcl::class TcsConfigPanel {
-   inherit Panel
+   inherit tcclib::Panel
    constructor args {}
    public {
       method preview {}
@@ -99,9 +99,8 @@ body TcsConfigPanel::createSubMenu {menuPathName comproot class} {
 itcl::body TcsConfigPanel::import {} {
 
 # Save the current directory and cd to save file directory.
-   global SAVE_FILE_DIR
    set pwd [pwd]
-   catch {cd $SAVE_FILE_DIR}
+   catch {cd $tcclib::SaveFileDirectory}
 
 # Create a dialog box for selecting the file and center it.
    set dialog  $itk_interior.importdialog
@@ -126,9 +125,9 @@ itcl::body TcsConfigPanel::import {} {
 # Update save file directory.
          set dir [file dirname $filename]
          if { [string compare [file pathtype $dir] relative] == 0 } {
-            set SAVE_FILE_DIR [pwd]/$dir
+            set tcclib::SaveFileDirectory [pwd]/$dir
          } else {
-            set SAVE_FILE_DIR $dir
+            set tcclib::SaveFileDirectory $dir
          }
       }
    }
@@ -141,9 +140,8 @@ itcl::body TcsConfigPanel::import {} {
 itcl::body TcsConfigPanel::export {} {
 
 # cd to save file directory.
-   global SAVE_FILE_DIR
    set pwd [pwd]
-   catch {cd $SAVE_FILE_DIR}
+   catch {cd $tcclib::SaveFileDirectory}
 
 # Create dialog.
    set dialog $itk_interior.exportdialog
@@ -215,9 +213,9 @@ itcl::body TcsConfigPanel::export {} {
 # Update save file directory.
             set dir [file dirname $filename]
             if { [string compare [file pathtype $dir] relative] == 0 } {
-               set SAVE_FILE_DIR [pwd]/$dir
+               set tcclib::SaveFileDirectory [pwd]/$dir
             } else {
-               set SAVE_FILE_DIR $dir
+               set tcclib::SaveFileDirectory $dir
             }
          }
       }

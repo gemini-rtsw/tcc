@@ -1,5 +1,5 @@
 #+
-#  TrackFrameControl <- ComponentControl
+#  TrackFrameControl <- tcclib::ComponentControl
 #
 #  Implements the TrackFrameControl widget.
 #
@@ -17,7 +17,7 @@
 #+
 
 itcl::class TrackFrameControl {
-   inherit ComponentControl
+   inherit tcclib::ComponentControl
    constructor args {}
    itk_option define -shadow shadow Shadow {}
    public {
@@ -29,7 +29,7 @@ itcl::class TrackFrameControl {
 itk::usual TrackFrameControl {
    keep -borderwidth -cursor -font -highlightthickness -insertborderwidth \
          -insertofftime -insertontime -insertwidth -labelfont -popupcursor \
-         -selectborderwidth -textfont -title -vt -namespace -componentlist
+         -selectborderwidth -textfont -title -applyarg -namespace -componentlist
 }
 
 itcl::body TrackFrameControl::constructor args {
@@ -42,31 +42,31 @@ itcl::body TrackFrameControl::constructor args {
    set w $itk_component(trackframes)
 
    itk_component add mountCosys {
-      SubComponentSelector $w.mount -labeltext "Mount" \
+      tcclib::SubComponentSelector $w.mount -labeltext "Mount" \
             -labelpos w -componentlist CosysList -component mountCosys
    }
    itk_component add sourceACosys {
-      SubComponentSelector $w.sourcea -labeltext "Source A" \
+      tcclib::SubComponentSelector $w.sourcea -labeltext "Source A" \
             -labelpos w -componentlist CosysList -component sourceACosys
    }
    itk_component add sourceBCosys {
-      SubComponentSelector $w.sourceb -labeltext "Source B" \
+      tcclib::SubComponentSelector $w.sourceb -labeltext "Source B" \
             -labelpos w -componentlist CosysList -component sourceBCosys
    }
    itk_component add sourceCCosys {
-      SubComponentSelector $w.sourcec -labeltext "Source C" \
+      tcclib::SubComponentSelector $w.sourcec -labeltext "Source C" \
             -labelpos w -componentlist CosysList -component sourceCCosys
    }
    itk_component add pwfs1Cosys {
-      SubComponentSelector $w.pwfs1 -labeltext "PWFS1" \
+      tcclib::SubComponentSelector $w.pwfs1 -labeltext "PWFS1" \
             -labelpos w -componentlist CosysList -component pwfs1Cosys
    }
    itk_component add pwfs2Cosys {
-      SubComponentSelector $w.pwfs2 -labeltext "PWFS2" \
+      tcclib::SubComponentSelector $w.pwfs2 -labeltext "PWFS2" \
             -labelpos w -componentlist CosysList -component pwfs2Cosys
    }
    itk_component add oiwfsCosys {
-      SubComponentSelector $w.oiwfs -labeltext "OIWFS" \
+      tcclib::SubComponentSelector $w.oiwfs -labeltext "OIWFS" \
             -labelpos w -componentlist CosysList -component oiwfsCosys
    }
    grid $itk_component(mountCosys) -sticky e

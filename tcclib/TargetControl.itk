@@ -1,5 +1,5 @@
 #+
-#  TargetControl <- ComponentControl
+#  TargetControl <- tcclib::ComponentControl
 #
 #  A Target control is a ComponentControl widget with widgets for
 #  the target position etc. It is intended to be inherited by widgets
@@ -24,7 +24,7 @@
 #+
 
 itcl::class TargetControl {
-   inherit ComponentControl
+   inherit tcclib::ComponentControl
    constructor args {}
    itk_option define -shadow shadow Shadow ""
    public {
@@ -113,7 +113,7 @@ itcl::body TargetControl::constructor args {
 
 #  Coordinate frame.
    itk_component add cosys {
-      SubComponentSelector $w.cosys -labeltext "Coordinate system" \
+      tcclib::SubComponentSelector $w.cosys -labeltext "Coordinate system" \
             -labelpos nw -componentlist CosysList -component cosys \
             -selectioncommand [code $this checkcosys]
    }
@@ -204,7 +204,7 @@ itcl::body TargetControl::constructor args {
 # Control for selecting a differential track rate.
    set w $itk_component(trw)
    itk_component add trackrate {
-      SubComponentSelector $w.trackrate -labeltext "Diff track rate" \
+      tcclib::SubComponentSelector $w.trackrate -labeltext "Diff track rate" \
             -labelpos nw -componentlist TrackRateList -component trackrate
    }
    pack $itk_component(trackrate) -side left -anchor n -padx 5 -pady 5
@@ -367,7 +367,7 @@ body TargetControl::grab {} {
    }
 
 # Grab the current position from the telescope.
-   $fullname grab $itk_option(-vt)
+   $fullname grab $itk_option(-applyarg)
 
 # Reselect the object to display the new values
    selectobj $fullname

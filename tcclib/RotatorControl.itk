@@ -1,5 +1,5 @@
 #+
-#  RotatorControl <- ComponentControl
+#  RotatorControl <- tcclib::ComponentControl
 #
 #  A Rotator control is a ComponentControl widget with widgets for the 
 #  instrument position angle and coordinate system.
@@ -20,7 +20,7 @@
 #+
 
 itcl::class RotatorControl {
-   inherit ComponentControl
+   inherit tcclib::ComponentControl
 
    constructor args {}
 
@@ -37,7 +37,7 @@ itcl::class RotatorControl {
 itk::usual RotatorControl {
    keep -borderwidth -cursor -font -highlightthickness -insertborderwidth \
          -insertofftime -insertontime -insertwidth -labelfont -popupcursor \
-         -selectborderwidth -textfont -title -vt -componentlist -namespace
+         -selectborderwidth -textfont -title -applyarg -componentlist -namespace
 }
 
 itcl::body RotatorControl::constructor args {
@@ -82,7 +82,7 @@ itcl::body RotatorControl::constructor args {
 
 # Control for selecting a coordinate frame.
    itk_component add cosys {
-      SubComponentSelector $w.cosys -labeltext "Coordinate system" \
+      tcclib::SubComponentSelector $w.cosys -labeltext "Coordinate system" \
             -labelpos nw -componentlist CosysList -component cosys \
             -selectioncommand [code $this checkcosys]
    }

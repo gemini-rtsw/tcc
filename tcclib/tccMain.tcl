@@ -53,31 +53,31 @@ proc tccMain args {
 
 # Create the configuration component lists and the namespaces for the
 # components.
-   ComponentList TcsConfigList
+   tcclib::ComponentList TcsConfigList
    namespace eval TcsConfigNames {}
-   ComponentList ScienceTargetList
+   tcclib::ComponentList ScienceTargetList
    namespace eval ScienceTargetNames {}
-   ComponentList WfsTargetList
+   tcclib::ComponentList WfsTargetList
    namespace eval WfsTargetNames {}
-   ComponentList PointOrigList
+   tcclib::ComponentList PointOrigList
    namespace eval PointOrigNames {}
-   ComponentList ChopList
+   tcclib::ComponentList ChopList
    namespace eval ChopNames {}
-   ComponentList WavelengthList
+   tcclib::ComponentList WavelengthList
    namespace eval WavelengthNames {}
-   ComponentList TrackRateList
+   tcclib::ComponentList TrackRateList
    namespace eval TrackRateNames {}
-   ComponentList SlewOptionsList
+   tcclib::ComponentList SlewOptionsList
    namespace eval SlewOptionsNames {}
-   ComponentList RotatorList
+   tcclib::ComponentList RotatorList
    namespace eval RotatorNames {}
-   ComponentList TrackFrameList
+   tcclib::ComponentList TrackFrameList
    namespace eval TrackFrameNames {}
-   ComponentList GuideList
+   tcclib::ComponentList GuideList
    namespace eval GuideNames {}
-   ComponentList CosysList
+   tcclib::ComponentList CosysList
    namespace eval CosysNames {}
-   ComponentList InstrumentList
+   tcclib::ComponentList InstrumentList
    namespace eval InstrumentNames {}
 
 # Create all the panel manager objects.
@@ -149,7 +149,7 @@ proc tccMain args {
    ISS iss
 
 # Create the logger object.
-   Logger logger apply applyC errMessage
+   tcclib::Logger logger apply applyC errMessage
 
 # Create the CalParam object.
    CalParam calparam

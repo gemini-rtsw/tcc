@@ -1,5 +1,5 @@
 #+
-#  TcsConfigControl <- ComponentControl
+#  TcsConfigControl <- tcclib::ComponentControl
 #
 #  Implements the TcsConfigControl widget.
 #
@@ -9,7 +9,7 @@
 #+
 
 itcl::class TcsConfigControl {
-   inherit ComponentControl
+   inherit tcclib::ComponentControl
    constructor args {}
    itk_option define -shadow shadow Shadow {}
    public {
@@ -38,7 +38,7 @@ itcl::class TcsConfigControl {
 itk::usual TcsConfigControl {
    keep -borderwidth -cursor -font -highlightthickness -insertborderwidth \
          -insertofftime -insertontime -insertwidth -labelfont -popupcursor \
-         -selectborderwidth -textfont -title -vt -namespace -componentlist
+         -selectborderwidth -textfont -title -applyarg -namespace -componentlist
 }
 
 itcl::body TcsConfigControl::constructor args {
@@ -159,7 +159,7 @@ itcl::body TcsConfigControl::constructor args {
    }
    $itk_component(rotwrap) insert end + "" -
    itk_component add wrapapply {
-      ApplyButton $w.wrapapply -command wrap -text Apply \
+      tcclib::ApplyButton $w.wrapapply -command wrap -text Apply \
             -parcommand [code $this wrap]
    }
 
@@ -171,11 +171,11 @@ itcl::body TcsConfigControl::constructor args {
 
    set w $itk_component(row3)
    itk_component add apply {
-      LiveButton $w.apply -text "Set/Slew" -command [code $this apply] \
+      tcclib::LiveButton $w.apply -text "Set/Slew" -command [code $this apply] \
             -width 8
    }
    itk_component add store {
-      StoreButton $w.store -text Store -width 8 \
+      tcclib::StoreButton $w.store -text Store -width 8 \
             -combobox $itk_component(selector)
    } {
       usual

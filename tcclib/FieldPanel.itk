@@ -1,5 +1,5 @@
 #+
-#  FieldPanel <- Panel
+#  FieldPanel <- tcclib::Panel
 #
 #  Implements the FieldPanel widget. A Panel widget with a 
 #  SciTargetControl widget and a StarSelector widget packed into its interior.
@@ -11,23 +11,23 @@
 #
 #           -titlelist       The title options of the controls
 #
-#           -vt -            The -vt options of the controls
+#           -applyargs -     The -applyarg options of the controls
 #
 #  Methods:
 #           none
 #
-#  D Terrett 30 March 2001
+#  D Terrett 6 June 2001
 #
 #  Copyright CCLRC
 #+
 
 itcl::class FieldPanel {
-   inherit Panel
+   inherit tcclib::Panel
    constructor args {}
    itk_option define -componentlist componentList ComponentList {}
    itk_option define -namespace namespace Namespace {}
    itk_option define -titlelist titleList TitleList {}
-   itk_option define -vt vt Vt {}
+   itk_option define -applyarg applyArg ApplyArg {}
    public {
       method show {component}
    }
@@ -50,7 +50,7 @@ itcl::body FieldPanel::constructor args {
       SciTargetControl $w.scitarget
    } {
       usual
-      ignore -namespace -componentlist -vt -title
+      ignore -namespace -componentlist -applyarg -title
    }
    pack $itk_component(scitarget)
    set w [$itk_component(targets) add -label PWFS1]
@@ -58,7 +58,7 @@ itcl::body FieldPanel::constructor args {
       WfsTargetControl $w.pwfs1target
    } {
       usual
-      ignore -namespace -componentlist -vt -title
+      ignore -namespace -componentlist -applyarg -title
    }
    pack $itk_component(pwfs1target)
    set w [$itk_component(targets) add -label PWFS2]
@@ -66,7 +66,7 @@ itcl::body FieldPanel::constructor args {
       WfsTargetControl $w.pwfs2target
    } {
       usual
-      ignore -namespace -componentlist -vt -title
+      ignore -namespace -componentlist -applyarg -title
    }
    pack $itk_component(pwfs2target)
    set w [$itk_component(targets) add -label OIWFS]
@@ -74,7 +74,7 @@ itcl::body FieldPanel::constructor args {
       WfsTargetControl $w.oiwfstarget
    } {
       usual
-      ignore -namespace -componentlist -vt -title
+      ignore -namespace -componentlist -applyarg -title
    }
    pack $itk_component(oiwfstarget)
    $itk_component(targets) select Science
@@ -122,11 +122,15 @@ itcl::configbody FieldPanel::namespace {
          -namespace [lindex $itk_option(-namespace) 3]
 }
 
-itcl::configbody FieldPanel::vt {
-   $itk_component(scitarget) configure -vt [lindex $itk_option(-vt) 0]
-   $itk_component(pwfs1target) configure -vt [lindex $itk_option(-vt) 1]
-   $itk_component(pwfs2target) configure -vt [lindex $itk_option(-vt) 2]
-   $itk_component(oiwfstarget) configure -vt [lindex $itk_option(-vt) 3]
+itcl::configbody FieldPanel::applyarg {
+   $itk_component(scitarget) configure \
+         -applyarg [lindex $itk_option(-applyarg) 0]
+   $itk_component(pwfs1target) configure \
+         -applyarg [lindex $itk_option(-applyarg) 1]
+   $itk_component(pwfs2target) configure \
+         -applyarg [lindex $itk_option(-applyarg) 2]
+   $itk_component(oiwfstarget) configure \
+         -applyarg [lindex $itk_option(-applyarg) 3]
 }
 
 itcl::configbody FieldPanel::titlelist {

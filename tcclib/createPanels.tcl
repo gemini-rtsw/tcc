@@ -6,7 +6,7 @@
 #  Arguments:
 #             none
 #
-#  D Terrett 24 April 2001
+#  D Terrett 6 June 2001
 #
 #  Copyright CCLRC
 #-
@@ -14,43 +14,43 @@
 proc createPanels {} {
 
 # Create all the simple command panels.
-   PanelMgr observePanel -name .observePanel -class ObservePanel \
+   tcclib::PanelMgr observePanel -name .observePanel -class ObservePanel \
          -title "Acquisition & Guiding"
-   PanelMgr skycatPanel -name .skycatPanel -class SkycatPanel \
+   tcclib::PanelMgr skycatPanel -name .skycatPanel -class SkycatPanel \
          -title "SkyCat"
-   PanelMgr tcsPanel -name .tcsPanel -class TcsPanel \
+   tcclib::PanelMgr tcsPanel -name .tcsPanel -class TcsPanel \
          -title "System Control"
-   PanelMgr mcsPanel -name .mcsPanel -class McsPanel \
+   tcclib::PanelMgr mcsPanel -name .mcsPanel -class McsPanel \
          -title "Mount Control"
-   PanelMgr crsPanel -name .crsPanel -class CrsPanel \
+   tcclib::PanelMgr crsPanel -name .crsPanel -class CrsPanel \
          -title "Cass Rotator Control"
-   PanelMgr ecsPanel -name .ecsPanel -class EcsPanel \
+   tcclib::PanelMgr ecsPanel -name .ecsPanel -class EcsPanel \
          -title "Enclosure Control"
-#   PanelMgr m1sPanel -name .m1sPanel -class M1sPanel \
+#   tcclib::PanelMgr m1sPanel -name .m1sPanel -class M1sPanel \
 #         -title "Primary Mirror Control"
-#   PanelMgr m2sPanel -name .m2sPanel -class M2sPanel \
+#   tcclib::PanelMgr m2sPanel -name .m2sPanel -class M2sPanel \
 #         -title "Secondary Mirror Control"
-#   PanelMgr agsPanel -name .agsPanel -class AgsPanel \
+#   tcclib::PanelMgr agsPanel -name .agsPanel -class AgsPanel \
 #         -title "A & G Control"
-#   PanelMgr aosPanel -name .aosPanel -class AosPanel \
+#   tcclib::PanelMgr aosPanel -name .aosPanel -class AosPanel \
 #         -title "Active Optics Control"
-   PanelMgr previewPanel -name .previewPanel -class PreviewPanel \
+   tcclib::PanelMgr previewPanel -name .previewPanel -class PreviewPanel \
          -title "Configuration Preview"
-   PanelMgr logPanel -name .logPanel -class LogPanel \
+   tcclib::PanelMgr logPanel -name .logPanel -class tcclib::LogPanel \
          -title "Command Log"
-   PanelMgr guideLoopPanel -name .guideLoopPanel \
+   tcclib::PanelMgr guideLoopPanel -name .guideLoopPanel \
          -class GuideLoopPanel -title "Guiding Loop Control"
-#   PanelMgr guideHandsetPanel -name .guideHandsetPanel \
+#   tcclib::PanelMgr guideHandsetPanel -name .guideHandsetPanel \
 #         -class GuideHandsetPanel -title "Pointing Handset"
-#   PanelMgr targetHandsetPanel -name .targetHandsetPanel \
+#   tcclib::PanelMgr targetHandsetPanel -name .targetHandsetPanel \
 #         -class TargetHandsetPanel -title "Target Handset"
-#   PanelMgr poHandsetPanel -name .poHandsetPanel \
+#   tcclib::PanelMgr poHandsetPanel -name .poHandsetPanel \
 #         -class PoHandsetPanel -title "Instrument Handset"
-   PanelMgr handsetPanel -name .handsetPanel \
+   tcclib::PanelMgr handsetPanel -name .handsetPanel \
          -class HandsetPanel -title "Handsets"
-   PanelMgr pointUpdatePanel -name .pointUpdatePanel \
+   tcclib::PanelMgr pointUpdatePanel -name .pointUpdatePanel \
          -class PointUpdatePanel -title "Pointing model update"
-   PanelMgr starSelectPanel -name .starSelectPanel \
+   tcclib::PanelMgr starSelectPanel -name .starSelectPanel \
          -class StarSelectPanel -title "Star Selector"
 
 # Create all the edit panels.
@@ -64,10 +64,10 @@ proc createPanels {} {
    delete object tcsconfigguideoiwfsTargetPanel
 
 # Create a field panel in its place.
-    EditPanelMgr tcsconfigfieldPanel \
+    tcclib::EditPanelMgr tcsconfigfieldPanel \
           -namespace {ScienceTargetNames WfsTargetNames WfsTargetNames \
              WfsTargetNames} \
-          -vt {sourceA pwfs1 pwfs2 oiwfs} \
+          -applyarg {sourceA pwfs1 pwfs2 oiwfs} \
           -componentlist { ScienceTargetList WfsTargetList WfsTargetList \
              WfsTargetList} \
           -titlelist [list "Science target" "PWFS1 target" "PWFS2 target" \

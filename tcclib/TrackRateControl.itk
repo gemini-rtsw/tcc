@@ -1,5 +1,5 @@
 #+
-#  TrackRateControl <- ComponentControl
+#  TrackRateControl <- tcclib::ComponentControl
 #
 #  Implements the TrackRateControl widget.
 #
@@ -19,7 +19,7 @@
 #+
 
 itcl::class TrackRateControl {
-   inherit ComponentControl
+   inherit tcclib::ComponentControl
    constructor args {}
    itk_option define -shadow shadow Shadow {}
    public {
@@ -34,7 +34,7 @@ itcl::class TrackRateControl {
 itk::usual TrackRateControl {
    keep -borderwidth -cursor -font -highlightthickness -insertborderwidth \
          -insertofftime -insertontime -insertwidth -labelfont -popupcursor \
-         -selectborderwidth -textfont -title -vt -namespace -componentlist
+         -selectborderwidth -textfont -title -applyarg -namespace -componentlist
 }
 
 itcl::body TrackRateControl::constructor args {
@@ -63,7 +63,7 @@ itcl::body TrackRateControl::constructor args {
 
 # Control for selecting a coordinate frame.
    itk_component add cosys {
-      SubComponentSelector $w.cosys -labeltext "Coordinate system" \
+      tcclib::SubComponentSelector $w.cosys -labeltext "Coordinate system" \
             -labelpos nw -componentlist CosysList -component cosys \
             -selectioncommand [code $this checkcosys]
    }
