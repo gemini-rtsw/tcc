@@ -11,7 +11,7 @@
 #
 #  options
 #
-#  D Terrett 9 June 2000
+#  D Terrett 10 July 2000
 #
 #  Copyright CCLRC
 #-
@@ -466,14 +466,15 @@ itcl::body NumericDisplay::update {} {
 
 # Target
    set wavel [sadVal tcssad sourceAWavelength ""]
-   set demand [ast target A A [expr { $wavel / 10000.0 }] \
+   if { ![catch {set demand [ast target A A [expr { $wavel / 10000.0 }] \
          [sa tcssad get sourceATrackFrame] \
-         [sa tcssad get sourceATrackEq]]
-   $itk_component(tar1) configure -text [lindex $demand 0]
-   $itk_component(tar2) configure -text [lindex $demand 1]
-   $itk_component(ha) configure -text [lindex $demand 2]
-   $itk_component(zd) configure -text [lindex $demand 3]
-   $itk_component(am) configure -text [lindex $demand 4]
+         [sa tcssad get sourceATrackEq]]}] } {
+      $itk_component(tar1) configure -text [lindex $demand 0]
+      $itk_component(tar2) configure -text [lindex $demand 1]
+      $itk_component(ha) configure -text [lindex $demand 2]
+      $itk_component(zd) configure -text [lindex $demand 3]
+      $itk_component(am) configure -text [lindex $demand 4]
+   }
 
 # Nod state
    set nod [sa tcssad get nodState]
@@ -492,6 +493,10 @@ itcl::body NumericDisplay::update {} {
       C {
          set target [sa tcssad get targetC]
          set targetb [sa tcssad get targetA]
+      }
+      default {
+         set target [sa tcssad get targetA]
+         set targetb [sa tcssad get targetB]
       }
    }
 
