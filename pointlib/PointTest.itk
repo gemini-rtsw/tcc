@@ -3,7 +3,7 @@
 #
 # A PointTest widget is the main interface of the pointtest application.
 #
-# D Terrett 19 July 2000
+# D Terrett 22 July 2000
 #
 # Copyright CCLRC
 #+
@@ -17,13 +17,15 @@ itcl::class PointTest {
    private method loadposition {ra dec}
    private method pointobsopts {option}
    private method nextstyle {widget}
-   private method setdelay {name1 name2 op}
+   private method setguidedelay {name1 name2 op}
+   private method setlogdelay {name1 name2 op}
 
    private variable Options
    private variable PointObs
    private variable StarCat
-   private variable Wfs PWFS1
-   private variable Delay 10
+   private variable Wfs PWFS2
+   private variable LogDelay 20
+   private variable GuideDelay 10
 }
 
 itcl::body PointTest::constructor {args} {
@@ -38,7 +40,7 @@ itcl::body PointTest::constructor {args} {
       AzElPlot $itk_interior.azelplot \
             -selectioncommand [itcl::code $this selectstar] \
             -hitcommand [itcl::code $this loadposition] \
-            -bias 2
+            -bias 1.5
    }
  
 # Create an empty star catalogue.
@@ -84,15 +86,22 @@ itcl::body PointTest::constructor {args} {
          -labeltext "Guide controls" -labelpos nw] \
          -expand yes -fill both
    set f [$c.fguide childsite]
-   pack [iwidgets::spinint $f.delay -labeltext "delay before logging (s)" \
+   pack [iwidgets::spinint $f.guidedelay -labeltext "delay before guiding (s)" \
       -range {0 60} -width 2] \
       -side bottom -pady 3 -anchor w
-   [$f.delay component entry] configure -textvariable [scope Delay]
-   trace variable Delay w [code $this setdelay]
+   pack [iwidgets::spinint $f.logdelay -labeltext "delay before logging (s)" \
+      -range {0 60} -width 2] \
+      -side bottom -pady 3 -anchor w
+   [$f.logdelay component entry] configure -textvariable [scope LogDelay]
+   [$f.guidedelay component entry] configure -textvariable [scope GuideDelay]
+   trace variable LogDelay w [itcl::code $this setlogdelay]
+   trace variable GuideDelay w [itcl::code $this setguidedelay]
 
-   pack [radiobutton $f.p1 -text PWFS1 -variable [scope Wfs] -value PWFS1 \
+   pack [radiobutton $f.p1 -text PWFS1 -variable [scope Options(wfs)] \
+         -value PWFS1 \
          -command [itcl::code $this pointobsopts wfs]] \
-         [radiobutton $f.p2 -text PWFS2 -variable [scope Wfs] -value PWFS2 \
+         [radiobutton $f.p2 -text PWFS2 -variable [scope Options(wfs)] \
+         -value PWFS2 \
          -command [itcl::code $this pointobsopts wfs]] \
          -side left
 
@@ -159,7 +168,11 @@ itcl::body PointTest::constructor {args} {
             -command "[namespace code "$PointObs log"]"
    }
    bind all <l> "$itk_component(log) invoke"
-   pack $itk_component(slew) $itk_component(log) -side left -expand yes
+   itk_component add cancel {
+      button $w.cancel -text "Cancel" -command "tcs cancel {}"
+   }
+   pack $itk_component(slew) $itk_component(log) $itk_component(cancel) \
+         -side left -expand yes
 
 # - Stop keypresses from triggering button bindings
    bind Entry <Key> "[bind Entry <Key>]; break"
@@ -228,6 +241,7 @@ itcl::body PointTest::pointobsopts {option} {
          $PointObs configure -zlpm $Options($option)
       }
       wfs {
+         $PointObs configure -wfs $Options($option)
       }
    }
 }
@@ -236,8 +250,14 @@ itcl::body PointTest::nextstyle {widget} {
    $PointObs configure -nextstyle [$widget get]
 }
 
-itcl::body PointTest::setdelay {name1 name2 op} {
-   if { [string length $Delay] } {
-      $PointObs configure -delay $Delay
+itcl::body PointTest::setlogdelay {name1 name2 op} {
+   if { [string length $LogDelay] } {
+      $PointObs configure -logdelay $LogDelay
+   }
+}
+
+itcl::body PointTest::setguidedelay {name1 name2 op} {
+   if { [string length $GuideDelay] } {
+      $PointObs configure -guidedelay $GuideDelay
    }
 }

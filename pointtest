@@ -5,7 +5,6 @@ exec $HLPG_INSTALL_BASE/bin/solaris/ocswish "$0" "$@"
 #  FILENAME
 #  pointtest
 #
-#  $log$
 #+
 #  Purpose:
 #  Utility to run a pointing test
@@ -15,7 +14,7 @@ exec $HLPG_INSTALL_BASE/bin/solaris/ocswish "$0" "$@"
 #  star positions stored in a file and writes a log that can be processed
 #  into a TPOINT data file.
 #
-#  D Terrett 17 September 1999
+#  D Terrett 8 July 2000
 #
 #  Copyright CCLRC
 #-
@@ -41,15 +40,18 @@ set SAVE_FILE_DIR /gemini/files
 # The pointtest application procedures live in the pointlib subdirectory.
 lappend auto_path $ROOT/pointlib
 
+# The Seq package is in the seqpck subdirectory
+lappend auto_path seqpkg
+
 # Load the tcctime and sla extensions to tcl.
 load $ROOT/lib/solaris/tcctime.so
 load $ROOT/lib/solaris/slaext.so
 
 package require Itcl
-namespace import itcl::*
 package require Itk
 package require Iwidgets
 package require Ocspkg
+package require Seq
 
 # Set the name of the epics service configuration file.
 if { [info exists env(TCC_TCSNAME)] } {

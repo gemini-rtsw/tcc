@@ -12,7 +12,9 @@
 #
 #    Options:
 #
-#       delay          The number of seconds to wait after enabling guiding
+#       guidedelay     The number of seconds to wait before enabling guiding.
+#
+#       logdelay       The number of seconds to wait after enabling guiding
 #                      before loging the pointing.
 #
 #       logafterslew   If true, the pointing is logged at the end of a slew.
@@ -26,9 +28,11 @@
 #
 #       skiponerror    If true, slew to the next star if an error occurs.
 #
+#       wfs            Which WFS to use for guiding.
+#
 #       zlpm           If true, zero the local pointing model when slewing.
 #
-#  D Terrett 19 July 2000
+#  D Terrett 22 July 2000
 #
 #  Copyright CCLRC
 #+
@@ -40,28 +44,40 @@ itcl::class PointObs {
    public method slew {}
    public method log {}
 
-   public variable delay 1
+   public variable logdelay 0
+   public variable guidedelay 10
    public variable logafterslew 0
    public variable nextstyle minslew
    public variable selectafterlog 0
    public variable guideafterslew 0
    public variable skiponerror 0
    public variable zlpm 0
+   public variable wfs PWFS2
 
    private method nextstar {args}
    private method nextaction {args}
    private method reporterror {message}
    private method start {action}
    private method onerror {message}
+   private method isinposition {} 
+   private method novignette
+   private method isguiding
 
    private variable SlewAction
-   private variable GuideAction
+   private variable Guide1Action
+   private variable Guide2Action
+   private variable MountGuideAction
    private variable GuideOffAction
+   private variable DomeWaitAction
    private variable LogAction
    private variable SourceEntry
    private variable AzElPlot
    private variable Catalogue
    private variable Guiding 0
+   private variable InPosition
+   private variable DomeVignette
+   private variable IsGuiding
+   private variable LogCount 0
 }
 
 itcl::body PointObs::constructor {sourceentry azelplot catalogue args} {
@@ -72,19 +88,42 @@ itcl::body PointObs::constructor {sourceentry azelplot catalogue args} {
    set Catalogue $catalogue
 
 # Create the action that slews the telescope.
-   set SlewAction [seq::Action #auto tcs -timeout 600 \
+   set SlewAction [seq::Action #auto tcs -timeout 300 \
          -onok [code $this nextaction slew] \
          -onerror [code $this onerror] \
-         -ontimeout [code $this onerror "Slew timed out"]]
+         -ontimeout [code $this onerror "Slew timed out"] \
+         -oktest [code $this isinposition] \
+         -waitvar [scope InPosition(value)]]
+   sa tcssad link inPosition [scope InPosition]
    $SlewAction set slew pointing Off
 
+# Create action that waits for the dome vignetting to go to zero.
+   set DomeWaitAction [seq::Action #auto tcs -timeout 300 \
+         -onok [code $this nextaction domewait] \
+         -ontimeout [code $this onerror "timed out waiting for dome"] \
+         -oktest [code $this novignette] \
+         -waitvar [scope DomeVignette(value)]]
+   sa tcssad link domeVignette [scope DomeVignette]
+
 # Create actions for enabling and disabling guiding.
-   set GuideAction [seq::Action #auto tcs \
+   set MountGuideAction [seq::Action #auto tcs \
          -onok "after 10000 [code $this nextaction guideon]" \
          -onerror [code $this onerror] \
-         -ontimeout [code $this onerror "Attempt to guide timed out"]]
-   $GuideAction set m2Guide state On
-   $GuideAction set mountGuide mode On 
+         -oktest [itcl::code $this isguiding] \
+         -ontimeout [code $this onerror "Attempt to guide timed out"] \
+         -waitvar [scope IsGuiding(value)]]
+   $MountGuideAction set mountGuide mode On 
+   set Guide1Action [seq::Action #auto tcs \
+         -onok "after 5000 [namespace code "$MountGuideAction start"]" \
+         -onerror [code $this onerror]]
+   $Guide1Action set m2Guide state On
+   $Guide1Action set pwfs1Observe noexp -1
+
+   set Guide2Action [seq::Action #auto tcs \
+         -onok "after 5000 [namespace code "$MountGuideAction start"]" \
+         -onerror [code $this onerror]]
+   $Guide2Action set m2Guide state On
+   $Guide2Action set pwfs2Observe noexp -1
 
    set GuideOffAction [seq::Action #auto tcs \
          -onok [code $this nextaction guideoff] \
@@ -92,12 +131,16 @@ itcl::body PointObs::constructor {sourceentry azelplot catalogue args} {
          -ontimeout [code $this onerror "Attempt to disable guiding timed out"]]
    $GuideOffAction set m2Guide state Off
    $GuideOffAction set mountGuide mode Off 
+   $GuideOffAction set pwfs1StopObserve dummy 1
+   $GuideOffAction set pwfs2StopObserve dummy 1
 
 # Create the action that logs the pointing.
-   set LogAction [seq::Action #auto tcs -timeout 600 \
+   set LogAction [seq::Action #auto tcs -timeout 300 \
          -onok [code $this nextaction log] \
          -onerror [code $this onerror] \
-         -ontimeout [code $this onerror "Logging pointing timed out"]]
+         -ontimeout [code $this onerror "Logging pointing timed out"] \
+         -oktest [code $this isinposition] \
+         -waitvar [scope InPosition(value)]]
 
 # Set the pointLog parameter to mark the CAD.
    $LogAction set pointLog log Off
@@ -122,35 +165,74 @@ itcl::body PointObs::slew {} {
 }
 
 itcl::body PointObs::log {} {
-   start $LogAction
+
+# Look at the guide ca/ce to check that some guiding has taken place and that
+# it isn't an excessive amount.
+   set ca [sa tcssad get caguide]
+   set ce [sa tcssad get ceguide]
+   if { $ca == 0.0 && $ce == 0.0 } {
+      set ans [tk_messageBox -icon question -parent . -type yesno \
+         -message "No guiding has taken place. Log this star ?"]
+   } elseif { $ca * $ca + $ce * $ce > 100.0 } {
+      set ans [tk_messageBox -icon question -parent . -type yesno \
+         -message "guiding correction is accessive. Log this star ?"]
+   } else {
+      set ans yes
+   }
+ 
+   if { [string equal $ans yes] } {
+      start $LogAction
+   } else {
+      nextaction log
+   }
 }
 
 itcl::body PointObs::nextaction {after} {
    switch $after {
       slew {
+         set LogCount 0
+         start $DomeWaitAction
+      }
+      domewait {
+         set LogCount 0
          if { $guideafterslew } {
             set Guiding 1
-            start $GuideAction
+            switch $wfs {
+               PWFS1 {
+                  start $Guide1Action
+               }
+               PWFS2 {
+                  start $Guide2Action
+               }
+            }
          } elseif { $logafterslew } {
-            start $LogAction
+            log
          }
       }
       guideon {
+         set LogCount 0
          if { $logafterslew } {
-            start $LogAction
+            log
          }
       }
       guideoff {
+         set LogCount 0
          if { $selectafterlog } {
             set Guiding 0
             nextstar
          }
       }
       log {
-         if { $Guiding } {
-            start $GuideOffAction
-         } elseif { $selectafterlog } {
-            nextstar
+         if { $LogCount < 4 } {
+            incr LogCount
+            after 100 [namespace code "$LogAction start"]
+         } else {
+            set LogCount 0
+            if { $Guiding } {
+               start $GuideOffAction
+            } elseif { $selectafterlog } {
+               nextstar
+            }
          }
       }
    }
@@ -204,7 +286,34 @@ itcl::body PointObs::onerror {message} {
    }
 }
 
-itcl::configbody PointObs::delay {
-   $GuideAction configure \
-         -onok "after [expr {$delay * 1000}] [code $this nextaction guideon]" 
+itcl::configbody PointObs::logdelay {
+   $MountGuideAction configure -onok "after [expr {$logdelay * 1000}] \
+         [code $this nextaction guideon]" 
+}
+
+itcl::body PointObs::isinposition {} {
+   set val [sa tcssad get inPosition]
+   return [string equal $val TRUE]
+}
+
+itcl::body PointObs::novignette {} {
+   set val [sa tcssad get domeVignette]
+   return [expr { $val <= 0.0 }]
+}
+
+itcl::body PointObs::isguiding {} {
+   switch $wfs {
+      PWFS1 {
+         set val [sa agssad get p1guiding]
+      }
+      PWFS2 {
+         set val [sa agssad get p2guiding]
+      }
+   }
+   return [expr { $val == 0 }]
+}
+
+itcl::configbody PointObs::guidedelay {
+   $SlewAction configure -onok "after [expr {$guidedelay * 1000}] \
+         [code $this nextaction slew]"
 }

@@ -4,7 +4,7 @@
 #  Implements the AzElPlot widget. A canvas with stars and the current
 #  telescope position plotted in Az/El.
 #
-#  D Terrett 19 July 2000
+#  D Terrett 22 July 2000
 #
 #  Copyright CCLRC
 #+
@@ -20,6 +20,9 @@ itcl::class AzElPlot {
    itk_option define -selectioncommand selectionCommand Command {}
    itk_option define -hitcommand hitCommand Command {}
    itk_option define -bias bias Bias 1
+   itk_option define -ellimit elLimit Limit 27.0
+   itk_option define -azlolimit azloLimit Limit -160.0
+   itk_option define -azhilimit azhiLimit Limit 340.0
 
    public method add {tag ra dec}
    public method remove tag
@@ -48,6 +51,8 @@ itcl::class AzElPlot {
    private variable TelEl 90.0
    private variable St 0.0
    private variable NextPlot -1
+   private variable D2R 0.01745329251994
+   private variable 2PI 6.28318530717959
 }
 
 itk::usual AzElPlot {
@@ -69,24 +74,24 @@ itcl::body AzElPlot::constructor args {
    pack $itk_component(canvas)
 
 # Circle at horizon limit
-   set r [el2r 0.2617993878]
-   $itk_component(canvas) create oval [expr $Xc - $r] [expr $Yc - $r] \
-         [expr $Xc + $r] [expr $Yc + $r] -outline black \
+   set r [el2r [expr {15.0 * $D2R}]]
+   $itk_component(canvas) create oval [expr {$Xc - $r}] [expr {$Yc - $r}] \
+         [expr {$Xc + $r}] [expr {$Yc + $r}] -outline black \
           -fill darkblue -tags sky
 
 #  30 degree grid in azimuth.
    foreach d {0 30 60 90 120 150} {
-      set x [expr $r * cos($d * 0.01745329)]
-      set y [expr $r * sin($d * 0.01745329)]
-      $itk_component(canvas) create line [expr $Xc - $x] [expr $Yc - $y] \
-            [expr $Xc + $x] [expr $Yc + $y] -fill black -tags sky
+      set x [expr $r * cos($d * $D2R)]
+      set y [expr $r * sin($d * $D2R)]
+      $itk_component(canvas) create line [expr {$Xc - $x}] [expr {$Yc - $y}] \
+            [expr {$Xc + $x}] [expr {$Yc + $y}] -fill black -tags sky
    }
 
 #  20 degree grid in elevation from the pole.
    foreach d {70 50 30} {
-      set r [el2r [expr $d * 0.01745329]]
-      $itk_component(canvas) create oval [expr $Xc - $r] [expr $Yc - $r] \
-            [expr $Xc + $r] [expr $Yc + $r] -outline black -tags sky
+      set r [el2r [expr {$d * $D2R}]]
+      $itk_component(canvas) create oval [expr {$Xc - $r}] [expr {$Yc - $r}] \
+            [expr {$Xc + $r}] [expr {$Yc + $r}] -outline black -tags sky
    }
 
 # Binding to display RA/Dec when mouse button 1 is pressed.
@@ -98,11 +103,11 @@ itcl::body AzElPlot::constructor args {
    $itk_component(canvas) create text 10 $Yc -text W -anchor c
 
 # Telescope position.
-   $itk_component(canvas) create oval [expr $Xc - 5] [expr $Yc - 5] \
-         [expr $Xc + 5] [expr $Yc + 5] -fill orange -outline "" -tags tel
+   $itk_component(canvas) create oval [expr {$Xc - 5}] [expr {$Yc - 5}] \
+         [expr {$Xc + 5}] [expr {$Yc + 5}] -fill orange -outline "" -tags tel
 
 # Store sin and cos of latitude.
-   set lat [expr [sa tcssad get tlatm value] * 0.0174532925]
+   set lat [expr {[sa tcssad get tlatm value] * $D2R}]
    set Clat [expr cos($lat)]
    set Slat [expr sin($lat)]
 
@@ -128,7 +133,7 @@ itcl::body AzElPlot::add {tag ra dec} {
 
 # Set its state to normal and create it.
    set StarsState($tag) ""
-   if { $StarsEl($tag) >= 0.3491 } {
+   if { $StarsEl($tag) >= 15.0 * $D2R } {
 
 # Star is above horizon.
       set r [el2r $StarsEl($tag)]
@@ -137,6 +142,11 @@ itcl::body AzElPlot::add {tag ra dec} {
       $itk_component(canvas) create rectangle [expr $x+2] [expr $y+2] \
             [expr $x-2] [expr $y-2] -tags "S$tag stars" \
             -fill $itk_option(-normalcolor) -outline ""
+
+# If the star is below the elevation limit, mark it.
+      if { $StarsEl($tag) < $itk_option(-ellimit) * $D2R } {
+         mark $tag
+      }
    } else {
 
 # Star is below horizon.
@@ -224,7 +234,7 @@ itcl::body AzElPlot::mark tag {
 
 itcl::body AzElPlot::unmark tag {
 #+
-# Unmarks the star $tag.
+# Unmarks the star $tag or all stars.
 #-
    if { $tag == "" } {
       foreach t [array names StarsState] {
@@ -299,7 +309,7 @@ itcl::body AzElPlot::replot {} {
       set azel [radectoazel $StarsRa($tag) $StarsDec($tag)]
       set StarsAz($tag) [lindex $azel 0]
       set StarsEl($tag) [lindex $azel 1]
-      if { $StarsEl($tag) >= 0.3491 } {
+      if { $StarsEl($tag) >= 15.0 * $D2R } {
          set r [el2r $StarsEl($tag)]
          set x [expr $r * sin($StarsAz($tag)) + $Xc]
          set y [expr -$r * cos($StarsAz($tag)) + $Yc]
@@ -307,6 +317,9 @@ itcl::body AzElPlot::replot {} {
                [expr $x-2] [expr $y-2]
       } else {
         $itk_component(canvas) coords S$tag -1 -1 -1 -1
+      }
+      if { $StarsEl($tag) < $itk_option(-ellimit) * $D2R } {
+         mark $tag
       }
 
       incr NextPlot
@@ -344,24 +357,32 @@ itcl::body AzElPlot::next mode {
          set besttag ""
          while { [info exists StarsAz($tag)] } {
 
-# Ignore stars below the horizon.
-            if { $StarsState($tag) == "" && $StarsEl($tag) > 0.3491 } {
+# Ignore stars below the elevation limit.
+            if { $StarsState($tag) == "" && $StarsEl($tag) > \
+                   $itk_option(-ellimit) * $D2R } {
 
 # Distance to this star in elevation.
-               set eldist [expr abs( $StarsEl($tag) - $TelEl) / \
-                     $itk_option(-bias)]
-               set azdist [expr abs( $StarsAz($tag) - $TelAz)]
+               set eldist [expr {abs( $StarsEl($tag) - $TelEl) / \
+                     $itk_option(-bias)}]
 
-# If the azimuth is less than zero we need to check whether it is closer
-# in the other wrap state.
-               if { $StarsAz($tag) < 0.0 } {
-                  set azdist2 [expr abs( ($StarsAz($tag) + 6.2831853072) - \
-                        $TelAz)]
-                  set azdist [expr $azdist2 < $azdist ? $azdist2 : $azdist]
+# If the star's azimuth is less than the az low limit add 2 PI.
+               if { $StarsAz($tag) < $itk_option(-azlolimit) * $D2R } {
+                  set staraz [expr {$StarsAz($tag) + $2PI}]
+               } else {
+                  set staraz $StarsAz($tag)
+               }
+
+# Distance to star in azimuth.
+               set azdist [expr {abs( $staraz - $TelAz)}]
+
+# If the star is accessible on the positive wrap then check this distance too.
+               if { $staraz + $2PI < $itk_option(-azhilimit) * $D2R } {
+                  set azdist2 [expr {abs( $staraz + $2PI - $TelAz)}]
+                  set azdist [expr {$azdist2 < $azdist ? $azdist2 : $azdist}]
                }
 
 # Distance we have to slew to each this star.
-               set slewdist [expr $eldist > $azdist ? $eldist : $azdist]
+               set slewdist [expr {$eldist > $azdist ? $eldist : $azdist}]
 
 # First star is always the best choice found so far.
                if { $besttag == "" } {
