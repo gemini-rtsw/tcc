@@ -3,7 +3,7 @@
 #
 #  A widget that plots a map of the currently selected field.
 #
-#  D Terrett  17 June 2003
+#  D Terrett  17 January 2004
 #
 #  Copyright CCLRC
 #-
@@ -21,10 +21,9 @@ itcl::class FieldPlot {
       method zoom {dir}
       method grabwfs {wfs}
       method dropwfs {wfs x y}
-      variable width
-      variable height
       variable telsim
-      variable scale 0.5
+      variable scale 1.0
+      variable size
       variable afterid ""
       variable namelist
       variable xlist
@@ -38,13 +37,17 @@ itk::usual FieldPlot {
 
 itcl::body FieldPlot::constructor {args} {
 
-   set width 420
-   set height 420
+   if { [string is double -strict [lindex $args 0]] } {
+      set size [lindex $args 0]
+      set args [lreplace $args 0 0]
+   } else {
+      set size 420
+   }
 
 # Canvas for the plot.
    itk_component add canvas {
-      canvas $itk_interior.canvas -background darkblue -width $width \
-         -height $height -borderwidth 2 -relief sunken
+      canvas $itk_interior.canvas -background darkblue -width $size \
+         -height $size -borderwidth 2 -relief sunken
    } {
       ignore -background
    }
@@ -69,7 +72,7 @@ itcl::body FieldPlot::constructor {args} {
    itk_component add zlabel {
       label $w.zlabel
    }
-   pack $itk_component(zlabel) -side top
+   pack $itk_component(zlabel) -side left
    pack $itk_component(minus) $itk_component(zoom) $itk_component(plus) \
       -side left
    pack $itk_component(zframe) -side left
@@ -98,8 +101,8 @@ itcl::body FieldPlot::constructor {args} {
    eval itk_initialize $args
 
 # Set plot scale (this will redraw the picture and start the period redraw).
-   $itk_component(zoom) set -0.2
-   setscale -0.2
+   $itk_component(zoom) set -0.4
+   setscale -0.4
 }
 
 itcl::body FieldPlot::destructor {} {
@@ -293,7 +296,7 @@ itcl::body FieldPlot::redraw {} {
    }
 
 # Centre everything.
-   $itk_component(canvas) move all [expr {$width / 2.0}] [expr {$height / 2.0}]
+   $itk_component(canvas) move all [expr {$size / 2.0}] [expr {$size / 2.0}]
 }
 
 itcl::body FieldPlot::drawstars {} {
@@ -403,8 +406,8 @@ itcl::body FieldPlot::setscale {v} {
    set scale [expr { pow( 10.0, $v )}]
 
 # Compute new plot size in arc min and construct label.
-   set w [expr { $width / $scale / 1.611 }]
-   set h [expr { $height / $scale / 1.611 }]
+   set w [expr { $size / $scale / 1.611 }]
+   set h [expr { $size / $scale / 1.611 }]
    if { $w < 60.0 || $h < 60.0 } {
       $itk_component(zlabel) configure -text [format "%d x %d arc sec" \
             [expr { int( round( $w ) )}] [expr { int( round( $h ) )}]]
@@ -433,8 +436,8 @@ itcl::body FieldPlot::dropwfs {wfs xhit yhit} {
    bind $itk_component(canvas) <ButtonRelease-1> ""
 
 # Convert x/y to mm in focal plane.
-   set xhit [expr { ($xhit - ($width / 2.0)) / $scale}]
-   set yhit [expr { ($yhit - ($height / 2.0)) / $scale}]
+   set xhit [expr { ($xhit - ($size / 2.0)) / $scale}]
+   set yhit [expr { ($yhit - ($size / 2.0)) / $scale}]
 
 # Scan the list of star coordinates looking for the closest.
    set nearest ""
