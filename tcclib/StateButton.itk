@@ -1,0 +1,142 @@
+#+
+#  StateButton <- itk::Widget
+#
+#  Implements the StateButton class. A StateButton is a push button that
+#  sets some mechanism into a particular state. The current state of the
+#  mechanism, is indicated by the background colour (red for if is not
+#  in that state, green if it. When the button is pressed it goes yellow 
+#  until the mechanism has changed state.
+#
+#  Options:
+#          -setcommand     The command sender, parameter and value that sets
+#                          the mechanism state.
+#
+#          -setvalue       A list of the sad record values that indicate that
+#                          the mechanism is in the desired state.
+#
+#          -sadrecord      The name of the sa that indicates the mechanism
+#                          state.
+#
+#  Methods:
+#          none
+#
+#  D Terrett 8 June 2000
+#
+#  Copyright CCLRC
+#-
+
+itcl::class StateButton {
+   inherit itk::Widget
+
+   constructor args {}
+   destructor {}
+
+   itk_option define -setcommand setCommand Command {}
+   itk_option define -setvalue setValue Value {} checkstate
+   itk_option define -sadrecord sadrecord SadRecord {} checkstate
+
+   private method pressed
+   private method monitor {record value}
+   private method checkstate
+
+   private variable state 0
+   private variable monid
+}
+
+itk::usual StateButton {
+   keep -activeforeground -cursor -disabledforeground \
+         -foreground -font -highlightcolor -highlightthickness -width
+}
+
+itcl::body StateButton::constructor args {
+
+   itk_component add button {
+      button $itk_interior.button -command [code $this pressed]
+   } {
+      usual
+      keep -state -text -width
+      ignore -activebackground
+      ignore -background
+   }
+   pack $itk_component(button) -fill both -expand y
+
+   eval itk_initialize $args
+}
+
+itcl::body StateButton::destructor {} {
+
+# If the sad record has been set then remove the monitor.
+   if { [llength $itk_option(-sadrecord)] } {
+      [lindex $itk_option(-sadrecord) 0].[lindex $itk_option(-sadrecord) 1] \
+         remove $monid
+   }
+}
+
+itcl::body StateButton::pressed {} {
+
+# Set the command sender parameter appropriate for the desired state.
+   if { [string length $itk_option(-setcommand)] } {
+      foreach {cs par val} $itk_option(-setcommand) {}
+      cs $cs set $par $val
+
+# Log and post the command.
+      if { [string length $cs] } {
+         logger command $cs
+         if { [catch {cs tcsApply post} msg] } {
+            tk_messageBox -icon error -parent $itk_interior -message $msg
+         }
+
+# If the mechanism wasn't already in the desired state then set the button 
+# background to indicate that a state change is in progress.
+         if { !$state } {
+            $itk_component(button) configure -background yellow \
+                  -activebackground yellow
+         }
+      }
+   }
+}
+
+itcl::configbody StateButton::setcommand {
+   if { [string length $itk_option(-setcommand)] } {
+
+      set cs [lindex $itk_option(-setcommand) 0]
+
+# Create the command sender if it doesn't already exist.
+      if { [catch {cs $cs info}] } {
+         epics cs $cs
+      }
+   }
+}
+
+itcl::body StateButton::checkstate {} {
+   if { [llength $itk_option(-sadrecord)] } {
+
+# Extract the staus acceptor and record names.
+      foreach {sa rec} $itk_option(-sadrecord) {}
+
+# Create the record monitor for this item if it doesn't already exist.
+      if { [llength [find objects $sa.$rec]] == 0 } {
+         RecordMonitor $sa.$rec $sa $rec
+      }
+
+# Monitor the record.
+      set monid [$sa.$rec add [code $this monitor]]
+
+# Call the monitor routine to update the state.
+      monitor $sa.$rec [sa $sa get $rec]
+   }
+}
+
+itcl::body StateButton::monitor {record value} {
+
+# Determine the state of the mechanism and set the colour.
+   if { [lsearch -exact $itk_option(-setvalue) $value] >= 0 } {
+      set state 1
+      $itk_component(button) configure -background green \
+            -activebackground green
+   } else {
+      set state 0
+      $itk_component(button) configure -background red \
+            -activebackground red
+   }
+}
