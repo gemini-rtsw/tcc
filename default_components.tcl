@@ -6,11 +6,13 @@
 createPointingOrigin "Rotator axis" -x "0.0" -y "0.0"
 
 createCosys FK5/J2000 -frame FK5 -equinox J2000
+createCosys FK4/B1950 -frame FK4 -equinox B1950
+createCosys FK4/B1900 -frame FK4 -equinox B1900
 
 createRotator north -cosys FK5/J2000 -ipa 180
 createRotator vertical -cosys "" -ipa 180
 
-createGuide "Off"
+createGuide "None"
 
 createSlewOptions "All" \
    -chopThrow "On" \
@@ -23,9 +25,17 @@ createSlewOptions "All" \
    -pointing "On" \
    -guiding "On"
 
+createTrackFrame FK5 \
+   -mountCosys "FK5/J2000" \
+   -sourceACosys "FK5/J2000" \
+   -sourceBCosys "FK5/J2000" \
+   -sourceCCosys "FK5/J2000" \
+   -pwfs1Cosys "FK5/J2000" \
+   -pwfs1Cosys "FK5/J2000" \
+   -oiwfsCosys "FK5/J2000" 
+
 createConfig default \
    -rotator north \
-   -pointOrig "Rotator axis" \
    -slewOptions All \
-   -trackFrame FK5/J2000 \
-   -guide Off
+   -trackFrame FK5 \
+   -guide None
