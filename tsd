@@ -1,6 +1,6 @@
 #!/bin/sh
-# the next line restarts using ocswish \
-exec $HLPG_INSTALL_BASE/bin/ocswish "$0" "$@"
+# the next line restarts using ocssh \
+exec $HLPG_INSTALL_BASE/bin/ocssh "$0" "$@"
 
 #+
 #  tsd
@@ -14,6 +14,14 @@ exec $HLPG_INSTALL_BASE/bin/ocswish "$0" "$@"
 #
 #  Copyright CCLRC
 #-
+
+# Load all the packages required by the tsd.
+package require Tcl 8.4
+package require Tk
+package require Itcl
+package require Itk
+package require Iwidgets
+package require Ocspkg
 
 
 # Define the root directory for locating libraries and extensions.
@@ -37,12 +45,6 @@ load [file join $ROOT lib $::env(HOST_ARCH) slaext.so]
 # Define images.
 image create photo chile_flag -file [file join $ROOT lib chile_flag-small.gif]
 image create photo hawaii_flag -file [file join $ROOT lib hawaii_flag-small.gif]
-
-# Load all the packages required by the tsd.
-package require Itcl
-package require Itk
-package require Iwidgets
-package require Ocspkg
 
 # Set the name of the epics service configuration file.
 if { [info exists ::env(TCC_TCSNAME)] } {

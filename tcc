@@ -1,6 +1,6 @@
 #!/bin/sh
-# the next line restarts using ocswish \
-exec $HLPG_INSTALL_BASE/bin/ocswish "$0" "$@"
+# the next line restarts using ocssh \
+exec $HLPG_INSTALL_BASE/bin/ocssh "$0" "$@"
 
 #+
 #  tcc
@@ -14,6 +14,17 @@ exec $HLPG_INSTALL_BASE/bin/ocswish "$0" "$@"
 #
 #  Copyright CCLRC
 #-
+
+# Load all the packages required by the tcc.
+package require Tcl 8.4
+package require Tk
+package require Itcl
+package require Itk
+package require Iwidgets
+package require Ocspkg
+package require dom
+package require dom::libxml2
+package require Seq
 
 # Define the root directory for locating libraries and applications.
 set ::ROOT [file dirname [info script]]
@@ -32,15 +43,6 @@ lappend auto_path [file join $::ROOT tcclib]
 load [file join $::ROOT lib $::env(HOST_ARCH) tcctime.so]
 load [file join $::ROOT tcclib $::env(HOST_ARCH) tccext.so]
 load [file join $::ROOT lib $::env(HOST_ARCH) slaext.so]
-
-# Load all the packages required by the tcc.
-package require Itcl
-package require Itk
-package require Iwidgets
-package require Ocspkg
-package require dom
-package require dom::libxml2
-package require Seq
 
 # Define the default directory for writing files.
 set SaveFileDirectory /gemini/files

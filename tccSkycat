@@ -1,6 +1,6 @@
 #!/bin/sh
-# the next line restarts using ocswish \
-exec $HLPG_INSTALL_BASE/bin/ocswish "$0" "$@"
+# the next line restarts using ocssh \
+exec $HLPG_INSTALL_BASE/bin/ocssh "$0" "$@"
 
 #+
 #  tccSkycat
@@ -15,6 +15,15 @@ exec $HLPG_INSTALL_BASE/bin/ocswish "$0" "$@"
 #  Copyright CCLRC
 #-
 
+# Load all the packages required by skycat.
+package require Tcl
+package require Tk
+package require Tclx
+package require Itcl
+package require Itk
+package require BLT
+package require Skycat
+
 # The tcc library files live in subdirectores of the directory containing
 # this script.
 lappend auto_path [file dirname [info script]]/lib
@@ -25,13 +34,6 @@ set ::env(SKYCAT_PLUGIN) \
    [file dirname [info script]]/plugins/tccSkyCatPlugin.tcl
 set ::env(SKYSEARCH_PLUGIN) \
    [file dirname [info script]]/plugins/tccSkySearchPlugin.tcl
-
-# Load all the packages required by skycat.
-package require Tclx
-package require Itcl
-package require Itk
-package require BLT
-package require Skycat
 
 # Start skycat.
 skycat::SkyCat::startSkyCat
