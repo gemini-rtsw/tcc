@@ -16,7 +16,7 @@ static char rcsid[]="$Id:";
 *   The only configuration option is -display which merely serves as a way
 *   of forcing the item to be redrawn and new data fetched from the TCS.
 *
-*   D L Terrett 19 October 2002
+*   D L Terrett 21 October 2002
 *
 *   Copyright CCLRC
 */
@@ -505,8 +505,8 @@ static void DisplayDV( Tk_Canvas canvas, Tk_Item *itemPtr, Display *display,
 /* The dome */
    r = R2L(DOMERADIUS);
    domeazr = domeviewPtr->domeaz * D2R;
-   a1 = (short) ( D90X + SLITWIDTH2X - domeviewPtr->domeaz * D2X );
-   a2 = 23040 - (short) ( SLITWIDTH2X * 2.0 );
+   a1 = 0;
+   a2 = 360 * 64;
    x = xc - r;
    y = yc - r;
    width = height = (unsigned) ( r * 2.0 );
