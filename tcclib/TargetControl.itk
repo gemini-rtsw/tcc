@@ -336,11 +336,15 @@ itcl::configbody TargetControl::shadow {
 }
 
 itcl::body TargetControl::checkcosys {} {
-#   set cosys [$itk_component(cosys) get]
-#   set frame [CosysNames::$cosys cget -frame]
-#   if { [string equal $frame AZEL_TOPO] } {
-#      $itk_component(cosys) select ""
-#   }
+   set cosys [$itk_component(cosys) get]
+   if { ! [string equal $cosys ""] } {
+      if { [CosysNames::$cosys cget -isazel] } {
+         $itk_component(notebook) select Az/El
+         $itk_component(cosys) select ""
+      } else {
+         $itk_component(notebook) select RA/Dec
+      }
+   }
 }
 
 body TargetControl::grab {} {
