@@ -18,10 +18,8 @@
 *observePanel*background:		PeachPuff1
 *ecsPanel*background:		PeachPuff1
 *guideLoopPanel*background:	PeachPuff1
-*guideHandsetPanel*background:	PeachPuff1
 *mcsPanel*background:		PeachPuff1
-*targetHandsetPanel*background:	PeachPuff1
-*poHandsetPanel*background:		PeachPuff1
+*handsetPanel*background:	PeachPuff1
 *crsPanel*background:		PeachPuff1
 *tcsPanel*background:		PeachPuff1
 
@@ -32,9 +30,8 @@
 *PointOrigPanel*background:		LightGray
 *ChopPanel*background:		LightGray
 *RotatorPanel*background:		LightGray
-*SciTargetPanel*background:		LightGray
+*FieldPanel*background:		LightGray
 *SlewOptionsPanel*background:	LightGray
-*WfsTargetPanel*background:		LightGray
 *TcsConfigPanel*background:		LightGray
 *TrackFramePanel*background:		LightGray
 *TrackRatePanel*background:		LightGray

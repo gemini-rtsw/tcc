@@ -28,28 +28,38 @@ itcl::body HandsetPanel::constructor args {
 
 # Notebook for the handset controls.
    itk_component add handsets {
-      iwidgets::tabnotebook $itk_interior.targets -height 600 -width 360 \
+      iwidgets::tabnotebook $itk_interior.targets -height 580 -width 360 \
             -tabpos n -equaltabs no
+   } {
+      ignore -background -tabbackground
    }
 
+   setWidgetColors "$itk_component(menubar) $itk_component(handsets)" \
+         $itk_option(-background) $itk_option(-foreground)
+
 # Target handset
-   set w [$itk_component(handsets) add -label Targets]
+   set w [$itk_component(handsets) add -label Targets -background pink \
+         -tabbackground pink]
    itk_component add targets {
-      TargetHandsetControl $w.targets
+      TargetHandsetControl $w.targets -background pink
    }
    pack $itk_component(targets)
 
 # Guiding handset
-   set w [$itk_component(handsets) add -label Guiding]
+   set w [$itk_component(handsets) add -label Guiding -background yellow \
+         -tabbackground yellow ]
    itk_component add guiding {
-      GuideHandsetControl $w.guiding
+      GuideHandsetControl $w.guiding -background yellow
+   } {
+      ignore -background
    }
    pack $itk_component(guiding)
 
 # Pointing origin handset
-   set w [$itk_component(handsets) add -label "Instrument Origins"]
+   set w [$itk_component(handsets) add -label "Instrument Origins" \
+         -background yellowgreen -tabbackground yellowgreen]
    itk_component add po {
-      PoHandsetControl $w.po
+      PoHandsetControl $w.po -background yellowgreen
    }
    pack $itk_component(po)
 
