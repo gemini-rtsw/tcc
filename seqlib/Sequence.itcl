@@ -4,7 +4,7 @@
 #  A Sequence object is a linked chain of Steps. When it is created the 
 #  offsets for the steps are read from a file.
 #
-#  D Terrett 14 September 2000
+#  D Terrett 7 October 2000
 #
 #  Copyright CCLRC
 #+
@@ -52,53 +52,58 @@ itcl::body Sequence::constructor {{steptype Step} chanid {canvas ""} {list ""}} 
    }
 
 # Expand the sequence into steps.
-   foreach pat $Patterns {
-      if { ![info exists PattDefs($pat)] } {
-         error "Pattern $pat not defined"
-      }
-      foreach s $PattDefs($pat) {
-
+   if { [info exists Patterns] } {
+      foreach pat $Patterns {
+         if { ![info exists PattDefs($pat)] } {
+            error "Pattern $pat not defined"
+         }
+         foreach s $PattDefs($pat) {
+   
 # Create a new step.
-         foreach {p q} $s {}
-         set cur [$steptype #auto -To "$p $q" -Canvas $canvas -List $list]
+            foreach {p q} $s {}
+            set cur [$steptype #auto -To "$p $q" -Canvas $canvas -List $list]
 
 # Configure the previous step to link to the current one.
-         if { [string length $prev] } {
-            $prev configure -Next [namespace current]::$cur
-         } else {
-            set First [namespace current]::$cur
-         }
-         set prev $cur
+            if { [string length $prev] } {
+               $prev configure -Next [namespace current]::$cur
+            } else {
+               set First [namespace current]::$cur
+            }
+            set prev $cur
 
 # Update the range variable.
-         if { $p < $pmin } {set pmin $p}
-         if { $p > $pmax } {set pmax $p}
-         if { $q < $qmin } {set qmin $q}
-         if { $q > $qmax } {set qmax $q}
+            if { $p < $pmin } {set pmin $p}
+            if { $p > $pmax } {set pmax $p}
+            if { $q < $qmin } {set qmin $q}
+            if { $q > $qmax } {set qmax $q}
+         }
       }
-   }
 
 # Add the marker size to the limits.
-   if { ![string is space $canvas] } {
-      set pmin [expr { $pmin - 3.0 }]
-      set pmax [expr { $pmax + 3.0 }]
-      set pmax [expr { $pmax > - $pmin ? $pmax : - $pmin }]
-      set qmin [expr { $qmin - 3.0 }]
-      set qmax [expr { $qmax + 3.0 }]
-      set qmax [expr { $qmax > - $qmin ? $qmax : - $qmin }]
+      if { ![string is space $canvas] } {
+         set pmin [expr { $pmin - 3.0 }]
+         set pmax [expr { $pmax + 3.0 }]
+         set pmax [expr { $pmax > - $pmin ? $pmax : - $pmin }]
+         set qmin [expr { $qmin - 3.0 }]
+         set qmax [expr { $qmax + 3.0 }]
+         set qmax [expr { $qmax > - $qmin ? $qmax : - $qmin }]
 
 # Scale and shift the step markers on the canvas.
-      set w [$canvas cget -width]
-      set h [$canvas cget -height]
-      set pf [expr { ( $w - 50) / ( 2.0 * $pmax ) }]
-      set qf [expr { ( $h - 50) / ( 2.0 * $qmax ) }]
-      set f [expr { $pf < $qf ? $pf : $qf }]
-      $canvas scale steps 0.0 0.0 $f $f
-      $canvas move steps [expr { $w / 2.0 }] [expr { $h / 2.0 }]
-   }
+         set w [$canvas cget -width]
+         set h [$canvas cget -height]
+         set pf [expr { ( $w - 50) / ( 2.0 * $pmax ) }]
+         set qf [expr { ( $h - 50) / ( 2.0 * $qmax ) }]
+         set f [expr { $pf < $qf ? $pf : $qf }]
+         $canvas scale steps 0.0 0.0 $f $f
+         $canvas move steps [expr { $w / 2.0 }] [expr { $h / 2.0 }]
+      }
 
 # Save the name of the list box.
-   set List $list
+      set List $list
+
+   } else {
+      error "No sequence defined in file"
+   }
 }
 
 itcl::body Sequence::destructor {} {
