@@ -10,7 +10,7 @@
 #
 #      updates the display
 #
-# D Terrett 15 November 1999
+# D Terrett 16 November 1999
 #
 #  Copyright CCLRC
 #-
@@ -26,9 +26,10 @@ itcl::class ProbeView {
 
    private method pivot angle
    private method xy {x y}
-   private variable armtag
-   private variable p1wfs
-   private variable p2wfs
+   private variable arm
+   private variable piv
+   private variable mirror
+   private variable target
 }
 
 itk::usual ProbeView {
@@ -49,11 +50,16 @@ itcl::body ProbeView::constructor args {
    set c $itk_component(canvas)
 
 # Probe arm.
-   set armtag [$c create line 0 0 0 0 -width 3]
+   set arm [$c create line 0 0 0 0 -width 9]
+
+# Pickoff mirror
+   set mirror [$c create oval 0 0 0 0 -fill white]
+
+# Probe arm pivot
+   set piv [$c create oval 0 0 0 0 -fill black]
 
 # Guide Target.
-   set p1wfs [$c create polygon 0 0 0 0 0 0 0 0 -fill orange]
-   set p2wfs [$c create polygon 0 0 0 0 0 0 0 0 -fill orange]
+   set target [$c create oval 0 0 0 0 -fill orange -outline ""]
 
    eval itk_initialize $args
 }
@@ -65,7 +71,7 @@ itcl::configbody ProbeView::probe {
       eval lappend spiral [pivot $a]
    }
    set id [eval $itk_component(canvas) create line $spiral -width 5 -fill gray]
-   $itk_component(canvas) lower $id $armtag
+   $itk_component(canvas) lower $id $arm
 
 # Label X & Y.
    eval $itk_component(canvas) create text [xy 490 0] -text +X -anchor c
@@ -102,19 +108,47 @@ itcl::body ProbeView::update {} {
    set y [sadVal agssad $itk_option(-probe)Y ""]
 
    if { $a != "" && $x != "" && $y != "" } {
-      eval $itk_component(canvas) coords $armtag [pivot $a] [xy $x $y]
+      foreach {x y} [xy $x $y] {}
+      foreach {px py} [pivot $a] {}
+      $itk_component(canvas) coords $arm $px $py $x $y
+
+# Re-position the pickoff mirror and pivot.
+      $itk_component(canvas) coords $mirror \
+            [expr {$x - 5}] [expr {$y - 5}] \
+            [expr {$x + 5}] [expr {$y + 5}] 
+      $itk_component(canvas) coords $piv \
+            [expr {$px - 3}] [expr {$py - 3}] \
+            [expr {$px + 3}] [expr {$py + 3}] 
 
 # Set the colour according to the follow and in position state.
       if { [isFollowing agssad $itk_option(-probe)FollowS] } {
          if { [isInPosition agssad $itk_option(-probe)InPosition] } {
-            $itk_component(canvas) itemconfigure $armtag -fill green
+            $itk_component(canvas) itemconfigure $arm -fill green
          } else {
-            $itk_component(canvas) itemconfigure $armtag -fill yellow
+            $itk_component(canvas) itemconfigure $arm -fill yellow
          }
       } else {
-         $itk_component(canvas) itemconfigure $armtag -fill red
+         $itk_component(canvas) itemconfigure $arm -fill red
       }
    } else {
-      $itk_component(canvas) itemconfigure $armtag -fill red
+      $itk_component(canvas) itemconfigure $arm -fill red
+   }
+
+# Update target position.
+   switch $itk_option(-probe) {
+      p1 {
+         set x [sadVal tcssad pwfs1XDemand ""]
+         set y [sadVal tcssad pwfs1YDemand ""]
+      }
+      p2 {
+         set x [sadVal tcssad pwfs2XDemand ""]
+         set y [sadVal tcssad pwfs2YDemand ""]
+      }
+   }
+   if { $x != "" && $y != "" } {
+      foreach {x y} [xy $x $y] {}
+      $itk_component(canvas) coords $target \
+            [expr {$x - 3}] [expr {$y - 3}] \
+            [expr {$x + 3}] [expr {$y + 3}] 
    }
 }
