@@ -1,4 +1,4 @@
-static char rcsid[] = "$Id: tccDecode.c,v 1.3 2000-02-18 02:29:18 dlt Exp $";
+static char rcsid[] = "$Id: tccDecode.c,v 1.4 2001-02-05 19:33:27 dlt Exp $";
 /* *INDENT-OFF* */
 /*
 *   FILENAME
@@ -17,6 +17,9 @@ static char rcsid[] = "$Id: tccDecode.c,v 1.3 2000-02-18 02:29:18 dlt Exp $";
 */
 /*
  * $Log: not supported by cvs2svn $
+ * Revision 1.3  2000/02/18 02:29:18  dlt
+ * New routine for decoding planet names
+ *
  * Revision 1.2  1999/11/12 00:19:56  dlt
  * Improve handling of errors getting epics process variables
  *
@@ -148,7 +151,7 @@ int tccDcDt(Tcl_Interp *interp, FRAMETYPE frame, char *string1, char *string2,
         vm2 = MAXDD;
         break;
     default:
-        Tcl_AppendResult( interp, "illegal frame ID", (char*)NULL);
+        Tcl_SetResult( interp, "illegal frame ID", TCL_VOLATILE);
         return TCL_ERROR;
     }
 
@@ -164,11 +167,11 @@ int tccDcDt(Tcl_Interp *interp, FRAMETYPE frame, char *string1, char *string2,
     slaDfltin(string1, &m, &d1, &j);
     if (j < 2) {
         if (fabs(d1) > vm1) {
-            Tcl_AppendResult( interp, px1, (char*)NULL);
+            Tcl_SetResult( interp, px1, TCL_VOLATILE);
             return TCL_ERROR;
         }
     } else {
-        Tcl_AppendResult( interp, pb1, (char*)NULL);
+        Tcl_SetResult( interp, pb1, TCL_VOLATILE);
         return TCL_ERROR;
     }
 
@@ -178,11 +181,11 @@ int tccDcDt(Tcl_Interp *interp, FRAMETYPE frame, char *string1, char *string2,
     slaDfltin(string2, &n, &d2, &j);
     if (j < 2) {
         if (fabs(d2) > vm2) {
-            Tcl_AppendResult( interp, px2, (char*)NULL);
+            Tcl_SetResult( interp, px2, TCL_VOLATILE);
             return TCL_ERROR;
         }
     } else {
-        Tcl_AppendResult( interp, pb2, (char*)NULL);
+        Tcl_SetResult( interp, pb2, TCL_VOLATILE);
         return TCL_ERROR;
     }
 
@@ -193,7 +196,7 @@ int tccDcDt(Tcl_Interp *interp, FRAMETYPE frame, char *string1, char *string2,
         (int) string2[n - 1] == '\0') {
         return TCL_OK;
     } else {
-        Tcl_AppendResult( interp, "leftover text", (char*)NULL);
+        Tcl_SetResult( interp, "leftover text", TCL_VOLATILE);
         return TCL_ERROR;
     }
 }
@@ -270,22 +273,19 @@ int tccDcEpoch(Tcl_Interp *interp, char *string, char *type, double *epoch)
                     *epoch = e;
                     return TCL_OK;
                 } else {
-                    Tcl_AppendResult( interp, "leftover text", 
-                       (char*)NULL);
+                    Tcl_SetResult( interp, "leftover text", TCL_VOLATILE);
                     return TCL_ERROR;
                 }
             } else {
-                Tcl_AppendResult( interp, "prefix not B or J", 
-                   (char*)NULL);
+                Tcl_SetResult( interp, "prefix not B or J", TCL_VOLATILE);
                 return TCL_ERROR;
             }
         } else {
-            Tcl_AppendResult( interp, "epoch out of range", 
-               (char*)NULL);
+            Tcl_SetResult( interp, "epoch out of range", TCL_VOLATILE);
             return TCL_ERROR;
         }
     }
-    Tcl_AppendResult( interp, "illegal epoch", (char*)NULL);
+    Tcl_SetResult( interp, "illegal epoch", TCL_VOLATILE);
     return TCL_ERROR;
 }
 /* *INDENT-OFF* */
@@ -375,7 +375,7 @@ int tccDcFrame(Tcl_Interp *interp, char *string, FRAMETYPE * frame)
         *frame = AZEL_TOPO;
         return TCL_OK;
     } else {
-        Tcl_AppendResult( interp, "unrecognized frame", (char*)NULL);
+        Tcl_SetResult( interp, "unrecognized frame", TCL_VOLATILE);
         return TCL_ERROR;
     }
 }
@@ -541,13 +541,11 @@ int tccDcRadec(Tcl_Interp *interp, FRAMETYPE frame, char *string1, char *string2
 
 /* Look for blank input. */
     if (!tccDcLen(string1)) {
-        Tcl_AppendResult( interp, "blank RA/Azimuth", 
-                   (char*)NULL);
+        Tcl_SetResult( interp, "blank RA/Azimuth", TCL_VOLATILE);
         return TCL_ERROR;
     }
     if (!tccDcLen(string2)) {
-        Tcl_AppendResult( interp, "blank Dec/Elevation", 
-                   (char*)NULL);
+        Tcl_SetResult( interp, "blank Dec/Elevation", TCL_VOLATILE);
         return TCL_ERROR;
     }
 
@@ -583,7 +581,7 @@ int tccDcRadec(Tcl_Interp *interp, FRAMETYPE frame, char *string1, char *string2
 
         /* OK if number supplied */
         if (j > 0) {
-            Tcl_AppendResult( interp, "illegal azimuth", (char*)NULL);
+            Tcl_SetResult( interp, "illegal azimuth", TCL_VOLATILE);
             return TCL_ERROR;
         }
 
@@ -597,7 +595,7 @@ int tccDcRadec(Tcl_Interp *interp, FRAMETYPE frame, char *string1, char *string2
 
         /* OK if number supplied. */
         if (j > 0) {
-            Tcl_AppendResult( interp, "illegal elevation", (char*)NULL);
+            Tcl_SetResult( interp, "illegal elevation", TCL_VOLATILE);
             return TCL_ERROR;
         }
 
@@ -619,12 +617,11 @@ int tccDcRadec(Tcl_Interp *interp, FRAMETYPE frame, char *string1, char *string2
 
         /* Give up if error already. */
         if (j < 0) {
-            Tcl_AppendResult( interp, "illegal RA", (char*)NULL);
+            Tcl_SetResult( interp, "illegal RA", TCL_VOLATILE);
             return TCL_ERROR;
         } else {
             if (ar > PI2 || ar < 0.0 ) {
-                Tcl_AppendResult( interp, "RA out of range", 
-                   (char*)NULL);
+                Tcl_SetResult( interp, "RA out of range", TCL_VOLATILE);
                 return TCL_ERROR;
             }
         }
@@ -639,12 +636,11 @@ int tccDcRadec(Tcl_Interp *interp, FRAMETYPE frame, char *string1, char *string2
 
         /* Give up if error already. */
         if (j < 0) {
-            Tcl_AppendResult( interp, "illegal Dec", (char*)NULL);
+            Tcl_SetResult( interp, "illegal Dec", TCL_VOLATILE);
             return TCL_ERROR;
         } else {
             if (ed > D90 || ed < -D90 ) {
-                Tcl_AppendResult( interp, "Dec out of range", 
-                   (char*)NULL);
+                Tcl_SetResult( interp, "Dec out of range", TCL_VOLATILE);
                 return TCL_ERROR;
             }
         }
@@ -652,7 +648,7 @@ int tccDcRadec(Tcl_Interp *interp, FRAMETYPE frame, char *string1, char *string2
         break;
 
     default:
-        Tcl_AppendResult( interp, "illegal frame ID", (char*)NULL);
+        Tcl_SetResult( interp, "illegal frame ID", TCL_VOLATILE);
         return TCL_ERROR;
     }
 
@@ -670,7 +666,7 @@ int tccDcRadec(Tcl_Interp *interp, FRAMETYPE frame, char *string1, char *string2
         *d = ed;
         return TCL_OK;
     } else {
-        Tcl_AppendResult( interp, "leftover text", (char*)NULL);
+        Tcl_SetResult( interp, "leftover text", TCL_VOLATILE);
         return TCL_ERROR;
     }
 }
@@ -828,15 +824,14 @@ int tccDcT0(Tcl_Interp *interp, char *string, double *t0)
             if ((int) string[i - 1] == '\0') {
                 return TCL_OK;
             } else {
-                Tcl_AppendResult( interp, "leftover text", (char*)NULL);
+                Tcl_SetResult( interp, "leftover text", TCL_VOLATILE);
                 return TCL_ERROR;
             }
         } else {
-            Tcl_AppendResult( interp, "epoch out of range", 
-               (char*)NULL);
+            Tcl_SetResult( interp, "epoch out of range", TCL_VOLATILE);
         }
     } else {
-        Tcl_AppendResult( interp, "illegal epoch", (char*)NULL);
+        Tcl_SetResult( interp, "illegal epoch", TCL_VOLATILE);
     }
     return TCL_ERROR;
 }
@@ -954,7 +949,7 @@ int tccDcPlanet(Tcl_Interp *interp, char *string, int *planet)
         *planet = 9;
         return TCL_OK;
     } else {
-        Tcl_AppendResult(interp, "unrecognized planet", (char*)NULL);
+        Tcl_SetResult(interp, "unrecognized planet", TCL_VOLATILE);
         return TCL_ERROR;
     }
 }
