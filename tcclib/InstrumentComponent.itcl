@@ -4,7 +4,7 @@
 #  Implements the InstrumentComponent class. An InstrumentComponent object 
 #  is an Instrument object that is stored in a configuration.
 #
-#  D Terrett 21 August 1998
+#  D Terrett 19 August 1999
 #
 #  Copyright CCLRC
 #+
@@ -23,8 +23,8 @@ itcl::class InstrumentComponent {
 
 itcl::body InstrumentComponent::save file {
    set objname [namespace tail $this]
-   set namespace [info namespace qualifiers $this]
-   puts $file "catch {delete object \"$namespace::$objname\"}"
-   puts $file "InstrumentComponent \"$namespace::$objname\"  $componentList \\"
+   set namespace [namespace qualifiers $this]
+   puts $file "catch {delete object \"${namespace}::$objname\"}"
+   puts $file "InstrumentComponent \"${namespace}::$objname\"  $componentList \\"
    Instrument::save $file
 }

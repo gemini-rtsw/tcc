@@ -4,7 +4,7 @@
 #  Implements the TccToolbar widget which is packed into . to make the
 #  root window of the Gemini tcc.
 #
-#  D Terrett 25 November 1998
+#  D Terrett 19 August 1999
 #
 #  Copyright CCLRC
 #-
@@ -139,20 +139,17 @@ itcl::body TccToolbar::save {list namespace file} {
    for { set i 0 } { $i < $n } { incr i } {
       set name [$list get $i]
       if { $name != "" } {
-         $namespace::$name save $file
+         ${namespace}::$name save $file
       }
    }
 }
 
 itcl::body TccToolbar::export {} {
-#   set dialog [ExportDialog $itk_interior.exportDialog \
-#         -title "Export Definitions Dialog" -modality application \
-#         -master $itk_interior]
    set dialog [ExportDialog $itk_interior.exportDialog \
-         -title "Export Definitions Dialog" \
+         -title "Export Definitions Dialog" -modality application \
          -master $itk_interior]
 
-#   $dialog center
+   $dialog center
 
    if { [$dialog activate] } {
       set filename [$dialog get]
