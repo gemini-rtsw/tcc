@@ -113,7 +113,10 @@ itcl::body PanelMgr::map {{component ""}} {
 
 # Position the window if a position was specified.
       if { ! [string is space $geometry] } {
-         wm geometry $name $geometry
+         if [catch {wm geometry $name $geometry} errMsg] {
+            tk_messageBox -icon error -message \
+               "Error positioning panel \"$name\": $errMsg"
+         }
       }
 
 # Configure the -title and -parent options of the panel object.
@@ -131,7 +134,10 @@ itcl::configbody PanelMgr::title {
 
 itcl::configbody PanelMgr::geometry {
    if [winfo exists $name] {
-      wm geometry $name $geometry
+      if [catch {wm geometry $name $geometry} errMsg] {
+         tk_messageBox -icon error -message \
+            "Error positioning panel \"$name\": $errMsg"
+      }
    }
 }
 
