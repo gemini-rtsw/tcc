@@ -6,7 +6,7 @@
 #  Arguments:
 #             chanid      The channel id to read from.
 #
-#  D Terrett 26 September 2000
+#  D Terrett 30 January 2001
 #
 #  Copyright CCLRC
 #-
@@ -22,9 +22,13 @@ proc loadDefFile chanid {
          if { [info complete $command] && [string index $command \
                   [expr {[string length $command] - 1}]] != "\\"} {
             if { [catch {eval $command} msg] } {
-               tk_messageBox -title "tcc error" -icon error -type ok \
+               if { [string equal [tk_messageBox -title "tcc error" \
+                     -icon error -type okcancel \
                      -message "Error in component definition file at line \
-                     $lineno: \"$msg\""
+                     $lineno: \"$msg\"" ] cancel] } {
+                   set command ""
+                   break;
+               }
             }
             set command ""
          }
