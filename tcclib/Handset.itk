@@ -21,7 +21,7 @@
 #         tcc application is destroyed while the pointer is in the window
 #         the keyboard will be left with autorepeat disabled.
 #
-#  D Terrett 27 April 2001
+#  D Terrett 13 July 2001
 #
 #  Copyright CCLRC
 #-
@@ -57,10 +57,10 @@ itcl::body Handset::constructor {args} {
    foreach frame {tracking xy azel instr pwfs1 pwfs2} {
       switch $frame {
 	 azel {
-            set labels($frame,u) +Az
-            set labels($frame,d) -Az
-            set labels($frame,l) +El
-            set labels($frame,r) -El
+            set labels($frame,u) +El
+            set labels($frame,d) -El
+            set labels($frame,l) -Az
+            set labels($frame,r) +Az
          }
 	 tracking {
             set labels($frame,u) N
@@ -419,10 +419,10 @@ itcl::body Handset::reset {} {
 # Set all the button labels and angles to their defaults.
    switch $frame {
       azel {
-         set labels($frame,u) +Az
-         set labels($frame,d) -Az
-         set labels($frame,l) +El
-         set labels($frame,r) -El
+         set labels($frame,u) +El
+         set labels($frame,d) -El
+         set labels($frame,l) -Az
+         set labels($frame,r) +Az
       }
       tracking {
          set labels($frame,u) N
