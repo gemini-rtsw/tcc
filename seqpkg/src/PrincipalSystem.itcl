@@ -9,13 +9,6 @@
 #
 #        apply   The name of the principle system's apply record.
 #
-#        sa      The status acceptor with the in position attribute
-#
-#        inpos   The in position attribute
-#
-#        okval   The value of the inposition attribute that indicates that
-#                it OK to proceed.
-#
 #     Methods:
 #
 #        post action
@@ -26,52 +19,33 @@
 #
 #           Cancels an action.
 #
-#  D Terrett 17 July 2000
+#  D Terrett 22 July 2000
 #
 #  Copyright CLRC
 #+
 
 itcl::class seq::PrincipalSystem {
-   constructor {apply sa inpos okval} {}
+   constructor {apply} {}
    destructor {}
    public method post {action}
    public method cancel {action}
 
    private method monitor {name status info}
+
    private variable Apply
-   private variable CurrentAction
-   private variable Sa
-   private variable InPos
-   private variable InPosRec
-   private variable OkVal
+   private variable CurrentAction ""
 }
 
-itcl::body seq::PrincipalSystem::constructor {apply sa inpos okval} {
+itcl::body seq::PrincipalSystem::constructor {apply} {
 
 # Save the name of the apply
    set Apply $apply
-
-# Create the status acceptor for the in position record.
-   if { [catch {sa $sa info}] } {
-      epics sa $sa
-   }
-
-# Link a variable to the in position value.
-   sa $sa link $inpos [scope InPos]
-
-# Save the names of the status acceptor and record and the ok value.
-   set Sa $sa
-   set InPosRec $inpos
-   set OkVal $okval
 }
 
 itcl::body seq::PrincipalSystem::destructor {} {
 
 # Release the command monitor.
    cm $Apply release
-
-# Unlink the in position variable.
-   sa $Sa unlink $inPosRec [scope InPos]
 }
 
 itcl::body seq::PrincipalSystem::monitor {name status info} {
@@ -91,6 +65,8 @@ itcl::body seq::PrincipalSystem::monitor {name status info} {
 # Clear the current action so that we don't get reinvoked by a BUSY/IDLE
 # transition while waiting for the in position record to be set.
             set curact $CurrentAction
+            set waitvar [$curact cget -waitvar]
+            set oktest [$curact cget -oktest]
             set CurrentAction ""
 
 # Give the system time to set its in position record. This is a fudge until
@@ -98,8 +74,12 @@ itcl::body seq::PrincipalSystem::monitor {name status info} {
             after 2000
 
 # Wait for the in position record to have the ok value.
-            while { ![string equal [sa tcssad get inPosition] $OkVal] } {
-               vwait [scope InPos(value)]
+            if { ![string is space $oktest] } {
+               while { ![uplevel #0 $oktest] } {
+                  if { ![string is space $waitvar] } {
+                     vwait $waitvar
+                  }
+               }
             }
 
 # Cancel the actions timeout handler.
@@ -138,7 +118,10 @@ itcl::body seq::PrincipalSystem::post {action} {
 }
 
 itcl::body seq::PrincipalSystem::cancel {action} {
-   if { [string equal $action $CurrentAction] } {
-      set $CurrentAction ""
+   if { [string is space $action] || [string equal $action $CurrentAction] } {
+      if { ![string is space $CurrentAction] } {
+         $CurrentAction cancel
+         set $CurrentAction ""
+      }
    }
 }

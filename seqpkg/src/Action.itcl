@@ -26,6 +26,11 @@
 #
 #     Options:
 #
+#           -oktest
+#
+#              The tcl script to execute to determine if the action is
+#              complete.
+#
 #           -onok
 #
 #              The tcl script to execute when the action completes succesfully.
@@ -44,8 +49,13 @@
 #
 #              The timeout period in seconds.
 #
+#           -waitvar
 #
-#  D Terrett 9 July 2000
+#              The variable to wait on while waiting for the action to
+#              complete.
+#
+#
+#  D Terrett 20 July 2000
 #
 #  Copyright CCLRC
 #+
@@ -55,6 +65,8 @@ itcl::class seq::Action {
    public method set {cs par val}
    public method start {}
    public method canceltimeout {} {after cancel [code $this timedout]}
+   public variable oktest {}
+   public variable waitvar {}
    public variable onok {}
    public variable onerror {}
    public variable ontimeout {}
