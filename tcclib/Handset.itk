@@ -38,6 +38,7 @@ itcl::class Handset {
       method vflip {}
       method reset {}
       method relabel {}
+      method initlabels {}
       variable cs ""
       variable angles
       variable labels
@@ -105,32 +106,8 @@ itk::usual Handset {
 
 itcl::body Handset::constructor {args} {
 
-# Fill in the table of labels
-   foreach frame {tracking xy azel instr pwfs1 pwfs2} {
-      switch $frame {
-	 azel {
-            set labels($frame,u) +El
-            set labels($frame,d) -El
-            set labels($frame,l) -Az
-            set labels($frame,r) +Az
-         }
-	 tracking {
-            set labels($frame,u) N
-            set labels($frame,d) S
-            set labels($frame,l) E
-            set labels($frame,r) W
-	 }
-	 xy -
-	 instr -
-	 pwfs2 -
-	 pwfs1 {
-            set labels($frame,u) ""
-            set labels($frame,d) ""
-            set labels($frame,l) ""
-            set labels($frame,r) ""
-         }
-      }
-   }
+# Fill out the table of button labels.
+   initlabels
 
    set w $itk_interior
 
@@ -292,6 +269,9 @@ itcl::body Handset::constructor {args} {
    bind $top <FocusIn> autoRepeatOff
    bind $top <FocusOut> autoRepeatOn
    bind $top <Destroy> autoRepeatOn
+
+# Initialise the button labels.
+   relabel
 
    eval itk_initialize $args
 }
@@ -469,21 +449,8 @@ itcl::body Handset::reset {} {
       }
    }
 
-# Set all the button labels and angles to their defaults.
-   switch $frame {
-      azel {
-         set labels($frame,u) +El
-         set labels($frame,d) -El
-         set labels($frame,l) -Az
-         set labels($frame,r) +Az
-      }
-      tracking {
-         set labels($frame,u) N
-         set labels($frame,d) S
-         set labels($frame,l) E
-         set labels($frame,r) W
-      }
-   }
+# Set all the button labels to their defaults.
+   initlabels
    relabel
 }
 
@@ -493,4 +460,44 @@ itcl::body Handset::relabel {} {
    $itk_component(d) configure -text $labels($frame,d)
    $itk_component(l) configure -text $labels($frame,l)
    $itk_component(r) configure -text $labels($frame,r)
+}
+
+itcl::body Handset::initlabels {} {
+
+# Fill in the table of labels with their default values.
+   foreach frame {tracking xy azel instr pwfs1 pwfs2} {
+      switch $frame {
+         xy {
+            set labels($frame,u) +y
+            set labels($frame,d) -y
+            set labels($frame,l) -x
+            set labels($frame,r) +x
+         }
+	 azel {
+            set labels($frame,u) +El
+            set labels($frame,d) -El
+            set labels($frame,l) -Az
+            set labels($frame,r) +Az
+         }
+	 tracking {
+            set labels($frame,u) N
+            set labels($frame,d) S
+            set labels($frame,l) E
+            set labels($frame,r) W
+	 }
+	 instr {
+	   set labels($frame,u) +q
+	   set labels($frame,d) -q
+	   set labels($frame,l) +p
+	   set labels($frame,r) -p
+         }
+	 pwfs2 -
+	 pwfs1 {
+            set labels($frame,u) ""
+            set labels($frame,d) ""
+            set labels($frame,l) ""
+            set labels($frame,r) ""
+         }
+      }
+   }
 }
