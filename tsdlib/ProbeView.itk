@@ -5,12 +5,12 @@
 #  probe arm angle of a peripheral wave front sensor.
 #
 #  Options:
-#           -probe       The probe being drawn (1 or 2).
+#           -probe       The probe being drawn (p1 or p2).
 #
 #  Methods:
 #           update       Updates the display.
 #
-# D Terrett 4 February 2000
+# D Terrett 11 February 2000
 #
 #  Copyright CCLRC
 #-
@@ -22,11 +22,12 @@ itcl::class ProbeView {
 
    public method update
 
-   itk_option define -probe probe Probe 1
+   itk_option define -probe probe Probe 1 
 
-   private method pivot angle
+   private method pivot {probe angle}
    private method xy {x y}
    private variable arm
+   private variable ghost
    private variable piv
    private variable mirror
    private variable target
@@ -48,7 +49,7 @@ itcl::body ProbeView::constructor args {
    set c $itk_component(canvas)
 
 # Probe arm.
-   set arm [$c create line 0 0 0 0 -width 9]
+   set arm [$c create line 0 0 0 0 -width 20 -capstyle projecting]
 
 # Pickoff mirror
    set mirror [$c create oval 0 0 0 0 -fill white]
@@ -59,6 +60,10 @@ itcl::body ProbeView::constructor args {
 # Guide Target.
    set target [$c create oval 0 0 0 0 -fill orange -outline ""]
 
+# The shadow of the other Probe arm.
+   set ghost [$c create line 0 0 0 0 -width 20 -capstyle projecting \
+         -stipple gray25]
+
    eval itk_initialize $args
 }
 
@@ -66,7 +71,7 @@ itcl::configbody ProbeView::probe {
 
 # Generate a spiral polyline to represent the cable wrap.
    for { set a -220 } { $a < 220 } { incr a 10 } {
-      eval lappend spiral [pivot $a]
+      eval lappend spiral [pivot $itk_option(-probe) $a]
    }
    set id [eval $itk_component(canvas) create line $spiral -width 5 -fill gray]
    $itk_component(canvas) lower $id $arm
@@ -76,10 +81,20 @@ itcl::configbody ProbeView::probe {
    eval $itk_component(canvas) create text [xy -490 0] -text -X -anchor c
    eval $itk_component(canvas) create text [xy 0 490] -text +Y -anchor c
    eval $itk_component(canvas) create text [xy 0 -490] -text -Y -anchor c
+
+# Set the stacking order of the arm and the ghost of the other arm.
+   switch $itk_option(-probe) {
+      p1 {
+         $itk_component(canvas) lower $ghost $arm
+      }
+      p2 {
+         $itk_component(canvas) raise $ghost $arm
+      }
+   }
 }
 
-itcl::body ProbeView::pivot a {
-   switch $itk_option(-probe) {
+itcl::body ProbeView::pivot {probe a} {
+   switch $probe {
       p1 {
          set a1 $a
       }
@@ -99,21 +114,34 @@ itcl::body ProbeView::xy {x y} {
 
 itcl::body ProbeView::update {} {
 
-# Update the coordinates of the arm according to the x/y of the wfs and 
+# Update the coordinates of the arms according to the x/y of the wfs and 
 # the angle of the pivot.
-   set a [sadVal agssad $itk_option(-probe)TableAngle ""]
-   set x [sadVal agssad $itk_option(-probe)X ""]
-   set y [sadVal agssad $itk_option(-probe)Y ""]
+   switch $itk_option(-probe) {
+      p1 {
+         set p p1
+         set g p2
+        }
+      p2 {
+         set p p2
+         set g p1
+        }
+      }
+      set a [sadVal agssad ${p}TableAngle ""]
+      set x [sadVal agssad ${p}X ""]
+      set y [sadVal agssad ${p}Y ""]
+      set ag [sadVal agssad ${g}TableAngle ""]
+      set xg [sadVal agssad ${g}X ""]
+      set yg [sadVal agssad ${g}Y ""]
 
    if { $a != "" && $x != "" && $y != "" } {
       foreach {x y} [xy $x $y] {}
-      foreach {px py} [pivot $a] {}
+      foreach {px py} [pivot $p $a] {}
       $itk_component(canvas) coords $arm $px $py $x $y
 
 # Re-position the pickoff mirror and pivot.
       $itk_component(canvas) coords $mirror \
-            [expr {$x - 5}] [expr {$y - 5}] \
-            [expr {$x + 5}] [expr {$y + 5}] 
+            [expr {$x - 7}] [expr {$y - 7}] \
+            [expr {$x + 7}] [expr {$y + 7}] 
       $itk_component(canvas) coords $piv \
             [expr {$px - 3}] [expr {$py - 3}] \
             [expr {$px + 3}] [expr {$py + 3}] 
@@ -130,7 +158,13 @@ itcl::body ProbeView::update {} {
       }
    } else {
       $itk_component(canvas) itemconfigure $arm -fill red
+
    }
+   if { $ag != "" && $xg != "" && $yg != "" } {
+      foreach {x y} [xy $xg $yg] {}
+      foreach {px py} [pivot $g $ag] {}
+      $itk_component(canvas) coords $ghost $px $py $x $y
+    }
 
 # Update target position.
    switch $itk_option(-probe) {
