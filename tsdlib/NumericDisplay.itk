@@ -11,7 +11,7 @@
 #
 #  options
 #
-#  D Terrett 11 July 2000
+#  D Terrett 12 July 2000
 #
 #  Copyright CCLRC
 #-
@@ -535,10 +535,11 @@ itcl::body NumericDisplay::update {} {
 # Chop throw.
    $itk_component(chop1) configure -text [format "%10.2f" \
          [expr ([lindex $targetb 0] + [lindex $targetb 2] - \
-         [lindex $target 0]) * 206264.81 * cos( [lindex $target 1] )] ]
+         [lindex $target 0] - [lindex $target 2]) * 206264.81 * \
+         cos( [lindex $target 1] )] ]
    $itk_component(chop2) configure -text [format "%10.2f" \
          [expr ([lindex $targetb 1] + [lindex $targetb 3] - \
-         [lindex $target 1]) * 206264.81] ]
+         [lindex $target 1] - [lindex $target 3]) * 206264.81] ]
 
    set xy [ast instrument A]
    $itk_component(instrx) configure -text [lindex $xy 0]
