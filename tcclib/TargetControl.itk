@@ -10,7 +10,7 @@
 #
 #  Methods:
 #
-#  D Terrett 7 April 2002
+#  D Terrett 9 May 2002
 #
 #  Copyright CCLRC
 #+
@@ -30,6 +30,7 @@ itcl::class TargetControl {
       method checkcosys {}
       method grab {}
       method newlist {n1 n2 op}
+      method newtrlist {n1 n2 op}
       variable comp ""
    }
 }
@@ -199,6 +200,7 @@ itcl::body TargetControl::constructor {args} {
 
 itcl::body TargetControl::destructor {} {
    trace vdelete ::Config($comp,list) w [itcl::code $this newlist]
+   trace vdelete ::Config($comp.trackrate,list) w [itcl::code $this newtrlist]
 }
 
 itcl::body TargetControl::reset {} {
@@ -274,6 +276,7 @@ itcl::configbody TargetControl::component {
 
 # remove any existing trace.
    trace vdelete ::Config($comp,list) w [itcl::code $this newlist]
+   trace vdelete ::Config($comp.trackrate,list) w [itcl::code $this newtrlist]
    set comp ""
 
    if { $itk_option(-component) != "" } {
@@ -287,9 +290,12 @@ itcl::configbody TargetControl::component {
 # The list of targets changes when a new field is selected so we must
 # monitor the list name element of the config array.
       trace variable ::Config($comp,list) w [itcl::code $this newlist]
+      trace variable ::Config($comp.trackrate,list) w \
+           [itcl::code $this newtrlist]
 
 # Initialise with the current list name.
       after idle [itcl::code $this newlist "" "" ""]
+      after idle [itcl::code $this newtrlist "" "" ""]
    }
 }
 
@@ -322,4 +328,11 @@ itcl::body TargetControl::newlist {n1 n2 op} {
 
 # Select the current component.
   $itk_component(selector) select $::Config($comp,value)
+}
+
+itcl::body TargetControl::newtrlist {n1 n2 op} {
+
+# Re-configure the control.
+  $itk_component(trackrate) configure -componentlist \
+       $::Config($comp.trackrate,list)
 }

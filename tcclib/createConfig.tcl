@@ -7,7 +7,7 @@
 #  Arguments:
 #             none
 #
-#  D Terrett 11 April 2002
+#  D Terrett 10 May 2002
 #
 #  Copyright CCLRC
 #-
@@ -59,12 +59,15 @@ proc createConfig {} {
    set ::Config(tcs.field.sciencetarget.trackrate,value) ""
    set ::Config(tcs.field.sciencetarget.trackrate,anon) [TrackRate #auto]
    set ::Config(tcs.field.sciencetarget.trackrate,class) TrackRateComponent
-   set ::Config(tcs.field.sciencetarget.trackrate,namespace) ::TrackRateNames
-   set ::Config(tcs.field.sciencetarget.trackrate,list) TrackRateList
+   set ::Config(tcs.field.sciencetarget.trackrate,namespace) \
+         $::Config(tcs.field,anon)TrackRateNames
+   set ::Config(tcs.field.sciencetarget.trackrate,list) \
+         $::Config(tcs.field,anon)TrackRateList
    set ::Config(tcs.field.sciencetarget.trackrate,panel) \
       tcsFieldScienceTargetTrackRatePanel
    set ::Config(tcs.field.sciencetarget.trackrate,subcomp) cosys
-   set ::Config(tcs.field.sciencetarget.trackrate,label) "Coordinate system"
+   set ::Config(tcs.field.sciencetarget.trackrate,label) \
+         "Differential track rate"
 
    set ::Config(tcs.field.sciencetarget.trackrate.cosys,value) ""
    set ::Config(tcs.field.sciencetartet.trackrate.cosys,anon) ::[Cosys #auto]
@@ -75,7 +78,7 @@ proc createConfig {} {
       tcsFieldScienceTargetTrackRateCosysPanel
    set ::Config(tcs.field.sciencetarget.trackrate.cosys,subcomp) ""
    set ::Config(tcs.field.sciencetarget.trackrate.cosys,label) \
-         "Differential track rate"
+         "Coordinate system"
    
    set ::Config(tcs.field.pwfs1target,value) ""
    set ::Config(tcs.field.pwfs1target,anon) ::[Target #auto]
@@ -101,8 +104,10 @@ proc createConfig {} {
    set ::Config(tcs.field.pwfs1target.trackrate,value) ""
    set ::Config(tcs.field.pwfs1target.trackrate,anon) ::[TrackRate #auto]
    set ::Config(tcs.field.pwfs1target.trackrate,class) TrackRateComponent
-   set ::Config(tcs.field.pwfs1target.trackrate,namespace) ::TrackRateNames
-   set ::Config(tcs.field.pwfs1target.trackrate,list) TrackRateList
+   set ::Config(tcs.field.pwfs1target.trackrate,namespace) \
+         $::Config(tcs.field,anon)TrackRateNames
+   set ::Config(tcs.field.pwfs1target.trackrate,list) \
+         $::Config(tcs.field,anon)TrackRateList
    set ::Config(tcs.field.pwfs1target.trackrate,panel) \
       tcsFieldPwfs1TargetTrackRatePanel
    set ::Config(tcs.field.pwfs1target.trackrate,subcomp) cosys
@@ -118,7 +123,7 @@ proc createConfig {} {
       tcsFieldPwfs1TargetTrackRateCosysPanel
    set ::Config(tcs.field.pwfs1target.trackrate.cosys,subcomp) ""
    set ::Config(tcs.field.pwfs1target.trackrate.cosys,label) \
-         "Coordiante system"
+         "Coordinate system"
    
    set ::Config(tcs.field.pwfs2target,value) ""
    set ::Config(tcs.field.pwfs2target,anon) ::[Target #auto]
@@ -144,8 +149,10 @@ proc createConfig {} {
    set ::Config(tcs.field.pwfs2target.trackrate,value) ""
    set ::Config(tcs.field.pwfs2target.trackrate,anon) ::[TrackRate #auto]
    set ::Config(tcs.field.pwfs2target.trackrate,class) TrackRateComponent
-   set ::Config(tcs.field.pwfs2target.trackrate,namespace) ::TrackRateNames
-   set ::Config(tcs.field.pwfs2target.trackrate,list) TrackRateList
+   set ::Config(tcs.field.pwfs2target.trackrate,namespace) \
+         $::Config(tcs.field,anon)TrackRateNames
+   set ::Config(tcs.field.pwfs2target.trackrate,list) \
+         $::Config(tcs.field,anon)TrackRateList
    set ::Config(tcs.field.pwfs2target.trackrate,panel) \
          tcsFieldPwfs2TargetTrackRatePanel
    set ::Config(tcs.field.pwfs2target.trackrate,subcomp) cosys
@@ -187,8 +194,10 @@ proc createConfig {} {
    set ::Config(tcs.field.oiwfstarget.trackrate,value) ""
    set ::Config(tcs.field.oiwfstarget.trackrate,anon) ::[TrackRate #auto]
    set ::Config(tcs.field.oiwfstarget.trackrate,class) TrackRateComponent
-   set ::Config(tcs.field.oiwfstarget.trackrate,namespace) ::TrackRateNames
-   set ::Config(tcs.field.oiwfstarget.trackrate,list) TrackRateList
+   set ::Config(tcs.field.oiwfstarget.trackrate,namespace) \
+         $::Config(tcs.field,anon)TrackRateNames
+   set ::Config(tcs.field.oiwfstarget.trackrate,list) \
+         $::Config(tcs.field,anon)TrackRateList
    set ::Config(tcs.field.oiwfstarget.trackrate,panel) \
          tcsFieldOiwfsTargetTrackRatePanel
    set ::Config(tcs.field.oiwfstarget.trackrate,subcomp) cosys

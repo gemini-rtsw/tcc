@@ -5,7 +5,7 @@
 #  tcs configuration components and creates and configures the
 #  components.
 #
-#  D Terrett 19 April 2002
+#  D Terrett 8 May 2002
 #
 #  Copyright CCLRC
 #+
@@ -15,6 +15,7 @@ itcl::class TcsConfigFile {
    private {
       method createComponent {type node}
       method createTarget {node}
+      method createTrackrate {node}
       method report {msg}
       variable w
    }
@@ -92,7 +93,7 @@ itcl::body TcsConfigFile::constructor {file parent} {
                    tracking_frame {
                       lappend nodelist(trackframe) $node
                    }
-                   trackrate {
+                   track_rate {
                       lappend nodelist(trackrate) $node
                    }
                    wavelength {
@@ -129,18 +130,26 @@ itcl::body TcsConfigFile::constructor {file parent} {
 
 # Process each of the lists of component types (note that the order is
 # important so that we don't get errors because a subcomponent isn't defined).
-   foreach type {cosys trackrate wavelength oiwfswavelength target rotator \
-         guide field instrument pointorig slewoptions trackframe chop \
-         tcsconfig} {
+   foreach type {cosys wavelength oiwfswavelength target rotator \
+         guide field trackrate instrument pointorig slewoptions trackframe \
+         chop tcsconfig} {
 
-# Targets are a special case.
-      if { $type == "target" } {
-         foreach node $nodelist($type) {
-            if { [createTarget $node] } break
+# Targets and track rates are special cases.
+      switch $type {
+         target {
+            foreach node $nodelist($type) {
+               if { [createTarget $node] } break
+            }
          }
-      } else {
-         foreach node $nodelist($type) {
-            if { [createComponent $type $node] } break
+         trackrate {
+            foreach node $nodelist($type) {
+               if { [createTrackrate $node] } break
+            }
+         }
+         default {
+            foreach node $nodelist($type) {
+               if { [createComponent $type $node] } break
+            }
          }
       }
    }
@@ -153,7 +162,7 @@ itcl::body TcsConfigFile::createComponent {type node} {
 
 # The node must have a name attribute.
    if { [dom::element getAttribute $node name] == "" } {
-      return [report "$type with no name" $node]
+      return [report "$type with no name"]
    }
    set name [dom::element getAttribute $node name]
 
@@ -163,11 +172,6 @@ itcl::body TcsConfigFile::createComponent {type node} {
          set class CosysComponent
          set namespace ::CosysNames
          set list CosysList
-      }
-      trackrate {
-         set class TrackRateComponent
-         set namespace ::TrackRateNames
-         set list TrackRateList
       }
       wavelength {
          set class WavelengthComponent
@@ -312,14 +316,12 @@ itcl::body TcsConfigFile::createTarget {node} {
 
 # Add the target to the field.
    set target $name
-   if { [catch {$field targetinit $target}] } {
-      $field add $target
-   } else {
-      $field targetinit $target
+   if { [catch {$field subinit target $target}] } {
+      $field add target $target
    }
 
 # Configure the target type.
-   if { [catch {$field targetconfigure $target -type $type} msg] } {
+   if { [catch {$field subconfigure target $target -type $type} msg] } {
       if { [report $msg] } {
          return 1
       } else {
@@ -328,7 +330,7 @@ itcl::body TcsConfigFile::createTarget {node} {
    }
 
 # Configure the target object name from the target name.
-   $field targetconfigure $target -objname $target
+   $field subconfigure target $target -objname $target
 
 # Build a list of all the parameter nodes for the target.
    set parlist ""
@@ -353,8 +355,8 @@ itcl::body TcsConfigFile::createTarget {node} {
 # Configure the component from the param nodes.
    foreach child $parlist {
       set name [dom::element getAttribute $child name]
-      if { ! [catch {$field targetcget $target -$name}] } {
-         if { [catch {$field targetconfigure $target \
+      if { ! [catch {$field subcget target $target -$name}] } {
+         if { [catch {$field subconfigure target $target \
                -$name [dom::element getAttribute $child value]} msg] } {
             if { [report $msg] } {
                return 1
@@ -366,6 +368,87 @@ itcl::body TcsConfigFile::createTarget {node} {
 # If the field was created implicitly then set the science target to be
 # this target.
    $field configure -sciencetarget $target
+
+   update
+   return 0
+}
+
+itcl::body TcsConfigFile::createTrackrate {node} {
+
+# The node must have a name and a type attribute.
+   set name [dom::element getAttribute $node name]
+   if { $name== "" } {
+      return [report "target with no name"]
+   }
+   set type [dom::element getAttribute $node type]
+   if { $type== "" } {
+      return [report "target \"$name\" has no type"]
+   }
+
+# Targets only exist in field so we have to search for the enclosing field
+# in the nodes parents.
+   set parent [dom::node cget $node -parentNode]
+   set field ""
+   while { $parent != "" } {
+      if { [string equal [dom::node cget $parent -nodeType] element] } {
+         if { [string equal [dom::node cget $parent -nodeName] paramset] } {
+             if { [dom::element getAttribute $parent type] != "" } {
+                if { [string equal [dom::element getAttribute $parent type] \
+                         field] } {
+                   set field [dom::element getAttribute $parent name]
+                   break
+                }
+             }
+          }
+      }
+      set parent [dom::node cget $parent parentNode]
+   }
+
+# If there is no parent field then this is an error.
+   if { $field == "" } {
+      return \
+            [report "Differential trake rate \"$name\" appears outside a field"]
+   }
+   set field ::FieldNames::$field
+
+# Add the trackrate to the field.
+   set trackrate $name
+   if { [catch {$field subinit trackrate $trackrate}] } {
+      $field add trackrate $trackrate
+   }
+
+# Build a list of all the parameter nodes for the target.
+   set parlist ""
+   foreach child [dom::node children $node] {
+      if { [string equal [dom::node cget $child -nodeType] element] } {
+         if { [string equal [dom::node cget $child -nodeName] param] } {
+            lappend parlist $child
+         } elseif { [string equal [dom::node cget $child -nodeName] paramset] \
+               } {
+            foreach child [dom::node children $child] {
+               if { [string equal [dom::node cget $child -nodeType] element] } {
+                  if { [string equal [dom::node cget $child -nodeName] param] \
+                        } {
+                     lappend parlist $child
+                  }
+               }
+            }
+         }
+      }
+   }
+
+# Configure the component from the param nodes.
+   foreach child $parlist {
+      set name [dom::element getAttribute $child name]
+      if { ! [catch {$field subcget trackrate $trackrate -$name}] } {
+         if { [catch {$field subconfigure trackrate $trackrate \
+               -$name [dom::element getAttribute $child value]} msg] } {
+            if { [report $msg] } {
+               return 1
+            }
+         }
+      }
+   }
 
    update
    return 0

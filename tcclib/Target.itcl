@@ -78,7 +78,7 @@
 #           save node     Saves the values of the target options to the
 #                         xml node.
 #
-#  D Terrett 19 April 2002
+#  D Terrett 9 May 2002
 #
 #  Copyright CCLRC
 #+
@@ -115,7 +115,7 @@ itcl::class Target {
       variable LorM {}
       variable n {}
       variable trackrate {}
-
+      variable trackratens
    }
    private {
       variable current_cosys {}
@@ -211,7 +211,7 @@ itcl::body Target::apply {comp} {
    }
    logger command $vt
    if { ! [string equal $trackrate ""] } {
-      ::TrackRateNames::$trackrate apply $comp.trackrate
+      ${trackratens}::$trackrate apply $comp.trackrate
    }
 }
 
@@ -282,7 +282,7 @@ itcl::body Target::preview vt {
    }
       
    if { ! [string equal $trackrate ""] } {
-      ::TrackRateNames::$trackrate preview $vt
+      ${trackratens}::$trackrate preview $vt
    }
 }
 
@@ -430,11 +430,11 @@ itcl::configbody Target::cosys {
 
 itcl::configbody Target::trackrate {
    if { ! [string equal $current_trackrate ""] } {
-      TrackRateNames::$current_trackrate refdec
+      ${trackratens}::$current_trackrate refdec
    }
    set current_trackrate ""
    if { ! [string equal $trackrate ""] } {
-      if { [catch {TrackRateNames::$trackrate refinc}] } {
+      if { [catch {${trackratens}::$trackrate refinc}] } {
          error "Differential track rate \"$trackrate\" does not exist"
       } else {
          set current_trackrate $trackrate

@@ -6,14 +6,15 @@
 #  Options:
 #           -component     The component that the control edits
 #
-#  D Terrett 8 April 2002
+#  D Terrett 10 May 2002
 #
 #  Copyright CCLRC
 #+
 
 itcl::class TrackRateControl {
    inherit ComponentControl
-   constructor args {}
+   constructor {args} {}
+   destructor {}
    itk_option define -component component Component {}
    public {
       method load {name}
@@ -22,6 +23,8 @@ itcl::class TrackRateControl {
    }
    private {
       method checkcosys {}
+      method newlist {n1 n2 op}
+      variable comp ""
    }
 }
 
@@ -92,6 +95,10 @@ itcl::body TrackRateControl::constructor args {
    eval itk_initialize $args
 }
 
+itcl::body TrackRateControl::destructor {} {
+   trace vdelete ::Config($comp,list) w [itcl::code $this newlist]
+}
+
 itcl::body TrackRateControl::reset {} {
    $itk_component(t0) clear
    $itk_component(ra) clear
@@ -104,6 +111,7 @@ itcl::body TrackRateControl::load {name} {
    $itk_component(t0) insert end [$name cget -t0]
    set cosys [$name cget -cosys]
    if { [string equal $cosys AzEl] } {
+      $itk_component(notebook) select Az/El
       set ::Config($itk_option(-component).cosys,value) Az/El
       $itk_component(az) insert end [$name cget -c1Rate]
       $itk_component(el) insert end [$name cget -c2Rate]
@@ -137,15 +145,45 @@ itcl::body TrackRateControl::save {name} {
 }
 
 itcl::configbody TrackRateControl::component {
+
+# remove any existing trace.
+   trace vdelete ::Config($comp,list) w [itcl::code $this newlist]
+   set comp ""
+
    if { $itk_option(-component) != "" } {
-      $itk_component(cosys) configure -component $itk_option(-component).cosys
+
+# Record current component name.
+      set comp $itk_option(-component)
+
+      $itk_component(cosys) configure -component ${comp}.cosys
+
+# The list of targets changes when a new field is selected so we must
+# monitor the list name element of the config array.
+      trace variable ::Config($comp,list) w [itcl::code $this newlist]
+
+# Initialise with the current list name.
+      after idle [itcl::code $this newlist "" "" ""]
    }
 }
 
 itcl::body TrackRateControl::checkcosys {} {
    set cosys [$itk_component(cosys) get]
-   set frame [CosysNames::$cosys cget -frame]
-   if { [string equal $frame AZEL_TOPO] } {
-      $itk_component(cosys) select ""
+   if { ![string equal $cosys ""] } {
+      set frame [CosysNames::$cosys cget -frame]
+      if { [string equal $frame AzEl] } {
+         $itk_component(notebook) select Az/El
+      } else {
+         $itk_component(notebook) select RA/Dec
+      }
    }
 }
+
+itcl::body TrackRateControl::newlist {n1 n2 op} {
+
+# Re-configure the control.
+  $itk_component(selector) configure -componentlist $::Config($comp,list)
+
+# Select the current component.
+  $itk_component(selector) select $::Config($comp,value)
+}
+

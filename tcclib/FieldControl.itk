@@ -19,7 +19,7 @@
 #           newtarget name type args  Creates a new target in the currently 
 #                                     selected field.
 #
-#  D Terrett 13 April 2002
+#  D Terrett 9 May 2002
 #
 #  Copyright CCLRC
 #+
@@ -204,23 +204,42 @@ itcl::body FieldControl::save {name} {
 # Updates the named field object.
 #-
 
-# If this is a new field then add each target from the old field to the new 
-# provided that the old field still exists.
+# If this is a new field then add each target and track rate from the old 
+# field to the new provided that the old field still exists.
    if { ![string equal $currentname $name] && \
          ( [string equal $currentname $::Config(tcs.field,anon)] ||
          [lsearch -exact [itcl::find objects -class FieldComponent] \
          $currentname] >= 0 ) } {
+
+# Copy each track rate first so that they all exist when we configure the
+# targets.
+      set n [${currentname}TrackRateList length]
+      for { set i 0 } { $i < $n } { incr i } {
+         set trackrate [${currentname}TrackRateList get $i]
+         if { ![string is space $trackrate] } {
+            $name add trackrate $trackrate
+
+# Copy all parameters.
+            foreach par [$currentname subconfigure trackrate $trackrate] {
+               $name subconfigure trackrate $trackrate [lindex $par 0] \
+                     [lindex $par 2]
+            }
+
+# Set refcount to zero since the new target isn't referenced anywhere yet.
+            ${name}TrackRateNames::$trackrate configure -refcount 0
+         }
+      }
 
 # Copy each target.
       set n [${currentname}TargetList length]
       for { set i 0 } { $i < $n } { incr i } {
          set target [${currentname}TargetList get $i]
          if { ![string is space $target] } {
-            $name add $target
+            $name add target $target
 
 # Copy all parameters.
-            foreach par [$currentname targetconfigure $target] {
-               $name targetconfigure $target [lindex $par 0] [lindex $par 2]
+            foreach par [$currentname subconfigure target $target] {
+               $name subconfigure target $target [lindex $par 0] [lindex $par 2]
             }
 
 # Set refcount to zero since the new target isn't referenced anywhere yet.
@@ -228,10 +247,15 @@ itcl::body FieldControl::save {name} {
          }
       }
 
-# If we have just copied the anonymous field then delete all its targets.
+# If we have just copied the anonymous field then delete all its targets and
+# track rates.
       if { [string equal $currentname $::Config(tcs.field,anon)] } {
          while { [${currentname}TargetList length] > 1 } {
             ${currentname}TargetList remove [${currentname}TargetList get 1]
+         }
+         while { [${currentname}TrackRateList length] > 1 } {
+            ${currentname}TrackRateList remove \
+                  [${currentname}TrackRateList get 1]
          }
       }
    }
@@ -271,11 +295,14 @@ itcl::body FieldControl::load {name} {
 # contains.
    set currentname ${name}
 
-# Set the namespace and list to save targets in.
+# Set the namespace and list to save targets and track rates in.
    foreach target {science pwfs1 pwfs2 oiwfs} {
       set ::Config($comp.${target}target,list) ${name}TargetList
       set ::Config($comp.${target}target,namespace) ${name}TargetNames
       set ::Config($comp.${target}target,value) [$name cget -${target}target]
+      set ::Config($comp.${target}target.trackrate,list) ${name}TrackRateList
+      set ::Config($comp.${target}target.trackrate,namespace) \
+            ${name}TrackRateNames
    }
    set ::Config($comp.guide,value) [$name cget -guide]
    set ::Config($comp.rotator,value) [$name cget -rotator]
@@ -378,13 +405,13 @@ itcl::body FieldControl::newtarget {name type args} {
    if { $target == $::Config(tcs.field.oiwfstarget,value) } {
       $field configure -oiwfstarget ""
    }
-   catch {$field remove $target}
+   catch {$field remove target $target}
 
 # Create the new target.
-   $field add $target
+   $field add target $target
 
 # Configure the new target.
-   eval [list $field] targetconfigure [list $target] $args
+   eval [list $field] subconfigure target [list $target] $args
 
 # Make it the specified target and select it.
    if { $type != "" } {

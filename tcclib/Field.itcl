@@ -34,19 +34,19 @@
 #          save node    Saves the values of all the component options to
 #                       the xml node.
 #
-#          add name     Adds a new target.
+#          add type name  Adds a new target or track rate.
 #
-#          remove name  Removes a target
+#          remove type name  Removes a target or track rate
 #
-#          targetconfigure name  Configures a target.
+#          subconfigure type name  Configures a target or track rate.
 #
-#          targetinit name       Inits a target.
+#          subinit type name       Inits a target or track rate.
 #
-#          targetcget name option Gets a target option.
+#          subcget type name option Gets a target or track rate option.
 #
 #          plot azelplot Plots the field position on an azelplot.
 #
-#  D Terrett 22 April 2002
+#  D Terrett 9 May 2002
 #
 #  Copyright CCLRC
 #+
@@ -60,11 +60,11 @@ itcl::class Field {
       method init {}
       method preview {}
       method save {node}
-      method add {name args}
-      method remove {name}
-      method targetconfigure {name args}
-      method targetinit {name}
-      method targetcget {name option}
+      method add {type name args}
+      method remove {type name}
+      method subconfigure {type name args}
+      method subinit {type name}
+      method subcget {type name option}
       method plot {azelplot} {puts "plotting $this on $azelplot"}
       variable sciencetarget ""
       variable pwfs1target ""
@@ -75,8 +75,10 @@ itcl::class Field {
       variable wavelength ""
       variable programid ""
       variable airmassLimit ""
-      variable namespace
+      variable targetns
       variable targetlist
+      variable trackratens
+      variable trackratelist
       variable posAngle
    }
    private {
@@ -92,10 +94,15 @@ itcl::class Field {
 
 itcl::body Field::constructor {args} {
 
-# Create the list and namespace for target names.
+# Create the list and namespace for targets.
    set targetlist [ComponentList ${this}TargetList]
-   set namespace ${this}TargetNames
-   namespace eval $namespace {}
+   set targetns ${this}TargetNames
+   namespace eval $targetns {}
+
+# Create the list and namespace for track rates.
+   set trackratelist [ComponentList ${this}TrackRateList]
+   set trackratens ${this}TrackRateNames
+   namespace eval $trackratens {}
 
    eval configure $args
 }
@@ -106,36 +113,52 @@ itcl::body Field::destructor {} {
    $this init
 
 # Delete all the targets.
-   set n [${this}TargetList length]
+   set n [$targetlist length]
    set targets ""
    for {set i 0} {$i < $n} {incr i} {
-      lappend targets [${this}TargetList get $i]
+      lappend targets [$targetlist get $i]
    }
    foreach name $targets {
       if { ![string equal $name ""] } {
-         delete object ${this}TargetNames::$name
+         delete object ${targetns}::$name
       }
    }
 
 # Delete the list and the namespace.
-   delete object ${this}TargetList
-   namespace delete ${this}TargetNames
+   delete object $targetlist
+   namespace delete ${targetns}
+
+# Repeat for the track rates.
+   set n [$trackratelist length]
+   set trackrates ""
+   for {set i 0} {$i < $n} {incr i} {
+      lappend trackrates [$trackratelist get $i]
+   }
+   foreach name $trackrates {
+      if { ![string equal $name ""] } {
+         delete object ${trackratens}::$name
+      }
+   }
+
+# Delete the list and the namespace.
+   delete object $trackratelist
+   namespace delete $trackratens
 }
 
 itcl::body Field::apply {comp} {
 
 # Call the apply method of all the components that have a value.
    if { ! [string equal $sciencetarget ""] } {
-      ${this}TargetNames::$sciencetarget apply $comp.sciencetarget
+      ${targetns}::$sciencetarget apply $comp.sciencetarget
    }
    if { ! [string equal $pwfs1target ""] } {
-      ${this}TargetNames::$pwfs1target apply $comp.pwfs1target
+      ${targetns}::$pwfs1target apply $comp.pwfs1target
    }
    if { ! [string equal $pwfs2target ""] } {
-      ${this}TargetNames::$pwfs2target apply $comp.pwfs2target
+      ${targetns}::$pwfs2target apply $comp.pwfs2target
    }
    if { ! [string equal $oiwfstarget ""] } {
-      ${this}TargetNames::$oiwfstarget apply $comp.oiwfstarget
+      ${targetns}::$oiwfstarget apply $comp.oiwfstarget
    }
    if { ! [string equal $guide ""] } {
       ::GuideNames::$guide apply $comp.guide
@@ -174,16 +197,16 @@ itcl::body Field::preview {} {
 
 # Call the preview method of all the components that have a value.
    if { ! [string equal $sciencetarget ""] } {
-      ${this}TargetNames::$sciencetarget preview sourceA
+      ${targetns}::$sciencetarget preview sourceA
    }
    if { ! [string equal $pwfs1target ""] } {
-      ${this}TargetNames::$pwfs1target preview pwfs1
+      ${targetns}::$pwfs1target preview pwfs1
    }
    if { ! [string equal $pwfs2target ""] } {
-      ${this}TargetNames::$pwfs2target preview pwfs2
+      ${targetns}::$pwfs2target preview pwfs2
    }
    if { ! [string equal $oiwfstarget ""] } {
-      ${this}TargetNames::$oiwfstarget preview oiwfs
+      ${targetns}::$oiwfstarget preview oiwfs
    }
    if { ! [string equal $guide ""] } {
       ::GuideNames::$guide preview
@@ -208,21 +231,27 @@ itcl::body Field::save {node} {
    param $node programid $programid
    param $node airmassLimit $airmassLimit
 
-   for {set i 0} {$i < [${this}TargetList length]} {incr i} {
-      set target [${this}TargetList get $i]
+   for {set i 0} {$i < [$targetlist length]} {incr i} {
+      set target [$targetlist get $i]
       if { ! [string equal $target ""] } {
-         ${this}TargetNames::$target save $node
+         ${targetns}::$target save $node
+      }
+   }
+   for {set i 0} {$i < [$trackratelist length]} {incr i} {
+      set trackrate [$trackratelist get $i]
+      if { ! [string equal $trackrate ""] } {
+         ${trackratens}::$trackrate save $node
       }
    }
 }
 
 itcl::configbody Field::sciencetarget {
    if { ! [string equal $current_sciencetarget ""] } {
-      ${this}TargetNames::$current_sciencetarget refdec
+      ${targetns}::$current_sciencetarget refdec
    }
    set current_sciencetarget ""
    if { ! [string equal $sciencetarget ""] } {
-      if { [catch {${this}TargetNames::$sciencetarget refinc}] } {
+      if { [catch {${targetns}::$sciencetarget refinc}] } {
          error "Target \"$sciencetarget\" does not exist"
       } else {
          set current_sciencetarget $sciencetarget
@@ -232,11 +261,11 @@ itcl::configbody Field::sciencetarget {
 
 itcl::configbody Field::pwfs1target {
    if { ! [string equal $current_pwfs1target ""] } {
-      ${this}TargetNames::$current_pwfs1target refdec
+      ${targetns}::$current_pwfs1target refdec
    }
    set current_pwfs1target ""
    if { ! [string equal $pwfs1target ""] } {
-      if { [catch {${this}TargetNames::$pwfs1target refinc}] } {
+      if { [catch {${targetns}::$pwfs1target refinc}] } {
          error "Target \"$pwfs1target\" does not exist"
       } else {
          set current_pwfs1target $pwfs1target
@@ -246,11 +275,11 @@ itcl::configbody Field::pwfs1target {
 
 itcl::configbody Field::pwfs2target {
    if { ! [string equal $current_pwfs2target ""] } {
-      ${this}TargetNames::$current_pwfs2target refdec
+      ${targetns}::$current_pwfs2target refdec
    }
    set current_pwfs2target ""
    if { ! [string equal $pwfs2target ""] } {
-      if { [catch {${this}TargetNames::$pwfs2target refinc}] } {
+      if { [catch {${targetns}::$pwfs2target refinc}] } {
          error "Target \"$pwfs2target\" does not exist"
       } else {
          set current_pwfs2target $pwfs2target
@@ -260,11 +289,11 @@ itcl::configbody Field::pwfs2target {
 
 itcl::configbody Field::oiwfstarget {
    if { ! [string equal $current_oiwfstarget ""] } {
-      ${this}TargetNames::$current_oiwfstarget refdec
+      ${targetns}::$current_oiwfstarget refdec
    }
    set current_oiwfstarget ""
    if { ! [string equal $oiwfstarget ""] } {
-      if { [catch {${this}TargetNames::$oiwfstarget refinc}] } {
+      if { [catch {${targetns}::$oiwfstarget refinc}] } {
          error "Target \"$oiwfstarget\" does not exist"
       } else {
          set current_oiwfstarget $oiwfstarget
@@ -314,28 +343,81 @@ itcl::configbody Field::wavelength {
    }
 }
 
-itcl::body Field::add {name args} {
-   return [eval TargetComponent [list ${this}TargetNames::$name] \
-         [list ${this}TargetList] $args]
+itcl::body Field::add {type name args} {
+   switch $type {
+      target {
+         set targetname [TargetComponent ${targetns}::$name $targetlist]
+         $targetname configure -trackratens $trackratens
+         eval [list $targetname] configure $args
+         return $targetname
+      }
+      trackrate {
+         return [eval TrackRateComponent [list ${trackratens}::$name] \
+               [list $trackratelist] $args]
+      }
+      default {
+         error "\"$type"\ is not a valid field component"
+      }
+   }
 }
 
-itcl::body Field::targetconfigure {name args} {
-   eval [list ${this}TargetNames::$name] configure $args
+itcl::body Field::subconfigure {type name args} {
+   switch $type {
+      target {
+         eval [list ${targetns}::$name] configure $args
+      }
+      trackrate {
+         eval [list ${trackratens}::$name] configure $args
+      }
+      default {
+         error "\"$type"\ is not a valid field component"
+      }
+   }
 }
 
-itcl::body Field::targetinit {name} {
-   ${this}TargetNames::$name init
+itcl::body Field::subinit {type name} {
+   switch $type {
+      target {
+         ${targetns}::$name init
+      }
+      trackrate {
+         ${trackratens}::$name init
+      }
+      default {
+         error "\"$type"\ is not a valid field component"
+      }
+   }
 }
 
-itcl::body Field::targetcget {name option} {
-   return [${this}TargetNames::$name cget $option]
+itcl::body Field::subcget {type name option} {
+   switch $type {
+      target {
+         return [${targetns}::$name cget $option]
+      }
+      trackrate {
+         return [${trackratens}::$name cget $option]
+      }
+      default {
+         error "\"$type"\ is not a valid field component"
+      }
+   }
 }
 
-itcl::body Field::remove {name} {
-   delete object ${this}TargetNames::$name
+itcl::body Field::remove {type name} {
+   switch $type {
+      target {
+         delete object ${targetns}::$name
+      }
+      trackrate {
+         delete object ${trackratens}::$name
+      }
+      default {
+         error "\"$type"\ is not a valid field component"
+      }
+   }
 }
 
-# The posAAngle config body sets the rotator option, creating the rotator 
+# The posAngle config body sets the rotator option, creating the rotator 
 # component  if there isn't one that matches the posAngle definition. The
 # frame is assumed to by FK5/J2000.
 
