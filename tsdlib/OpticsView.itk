@@ -8,11 +8,11 @@
 #
 #          -aopresent         AO unit present (boolean).
 #
-#          -centralbaffle     The position of the central baffle ("POSITION 1"
-#                             or "POSITION 2").
+#          -centralbaffle     The position of the central baffle (OPEN or
+#                             CLOSED).
 #
 #          -deployablebaffle  The postion of the deployable baffle (RETRACTED,
-#                             "POSITION 1", "POSITION 2" or EXTENDED).
+#                             "NEAR IR", VISIBLE or EXTENDED).
 #
 #          -holecover         The position of the M1 central hole cover (OPENED,
 #                             "MIDDLE POSITION" or CLOSED).
@@ -45,7 +45,7 @@
 #                             according to the state of the configuration
 #                             options.
 #
-#  D Terrett  9 June 2000
+#  D Terrett  7 November 2000
 #
 #  Copyright CCLRC
 #-
@@ -346,10 +346,10 @@ itcl::body OpticsView::update {} {
 # Configure the central baffle
    $c itemconfigure centralBaffleOp -fill ""
    $c itemconfigure centralBaffleCl -fill ""
-   if { $itk_option(-centralbaffle) == "POSITION 1" } {
+   if { $itk_option(-centralbaffle) == "CLOSED" } {
       $c itemconfigure centralBaffleCl -fill black
    } else {
-      if { $itk_option(-centralbaffle) == "POSITION 2" } {
+      if { $itk_option(-centralbaffle) == "OPEN" } {
          $c itemconfigure centralBaffleOp -fill black
       }
    }
@@ -361,9 +361,9 @@ itcl::body OpticsView::update {} {
    $c itemconfigure deployableBaffle3 -fill ""
    if { $itk_option(-deployablebaffle) == "RETRACTED " } {
       $c itemconfigure deployableBaffle0 -fill black
-   } elseif { $itk_option(-deployablebaffle) == "POSITION 1" } {
+   } elseif { $itk_option(-deployablebaffle) == "NEAR IR" } {
       $c itemconfigure deployableBaffle1 -fill black
-   } elseif { $itk_option(-deployablebaffle) == "POSITION 2" } {
+   } elseif { $itk_option(-deployablebaffle) == "VISIBLE" } {
       $c itemconfigure deployableBaffle2 -fill black
    } elseif { $itk_option(-deployablebaffle) == " EXTENDED " } {
       $c itemconfigure deployableBaffle3 -fill black
