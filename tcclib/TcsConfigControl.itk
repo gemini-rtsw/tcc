@@ -3,7 +3,7 @@
 #
 #  Implements the TcsConfigControl widget.
 #
-#  D Terrett 7 June 2000
+#  D Terrett 29 March 2001
 #
 #  Copyright CCLRC
 #+
@@ -209,36 +209,21 @@ itcl::body TcsConfigControl::apply {} {
 # Called when the apply button is pressed.
 #-
 
-# If there is a name to store to, invoke the store button command.
-   set name [$itk_component(selector) get]
-   if { ! [string equal $name ""] } {
-      $itk_component(store) invoke
-   }
-
-# Store all the current values in the temporary config object.
-   if { [store ""] } {
-
-# Apply the temporary config.
-      $scratchobj apply
-
 # Process the wrap controls
-      switch -- [$itk_component(azwrap) get] {
-         + {cs wrap set azimuth 1}
-         "" {cs wrap set azimuth 0}
-         - {cs wrap set azimuth -1}
-      }
-      switch -- [$itk_component(rotwrap) get] {
-         + {cs wrap set rotator 1}
-         "" {cs wrap set rotator 0}
-         - {cs wrap set rotator -1}
-      }
-
-# Post the command (any command sender will do).
-      if { [catch {cs tcsApply post} msg] } {
-         tk_messageBox -icon error -parent $itk_interior -message \
-               "Error posting configuration: TCS reports \"$msg\""
-      }
+   switch -- [$itk_component(azwrap) get] {
+      + {cs wrap set azimuth 1}
+      "" {cs wrap set azimuth 0}
+      - {cs wrap set azimuth -1}
    }
+   switch -- [$itk_component(rotwrap) get] {
+      + {cs wrap set rotator 1}
+      "" {cs wrap set rotator 0}
+      - {cs wrap set rotator -1}
+   }
+   logger command wrap
+
+# Call the normal apply function.
+   $this ComponentControl::apply
 }
 
 itcl::body TcsConfigControl::updateobj name {
@@ -265,7 +250,7 @@ itcl::body TcsConfigControl::preview {} {
    previewPanel map
 
 # Store the values in the temporary config object.
-   store ""
+   $itk_option(-shadow) storefromcontrol ""
 
 # Initialise the preview system.
    tccPreview begin
