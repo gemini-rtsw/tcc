@@ -1,0 +1,42 @@
+#+
+#  ChopComponent <- Chop, Component
+#
+#  A ChopComponent object is a Chop object that is stored in a 
+#  configuration list.
+#
+#
+#  Options:
+#           none
+#
+#  Methods:
+#           constructor list  Creates the Chop object and puts it onto
+#                           "list".
+#
+#           save file       Writes commands to re-create the object to the
+#                           channel identifier "file" and then calls the
+#                           Chop save method to add the objects data.
+#
+#  D Terrett 22 May 2000
+#
+#  Copyright CCLRC
+#+
+
+itcl::class ChopComponent {
+   inherit Chop Component
+
+   constructor {list args} {
+      Component::constructor $list
+   } {
+      eval configure $args
+   }
+
+   public method save file
+}
+
+itcl::body ChopComponent::save file {
+   set objname [namespace tail $this]
+   set namespace [namespace qualifiers $this]
+   puts $file "catch {delete object \"${namespace}::$objname\"}"
+   puts $file "ChopComponent \"${namespace}::$objname\"  $componentList \\"
+   Chop::save $file
+}

@@ -4,10 +4,10 @@
 #  The main program for the Gemini control console. It creates the top level
 #  "toolbar" window.
 #
-#  D Terrett 21 2000
-#
 #  Arguments:
 #            Any command line options and values.
+#
+#  D Terrett  22 May 2000
 #
 #  Copyright CCLRC
 #-
@@ -61,6 +61,8 @@ proc tccMain args {
    namespace eval WfsTargetNames {}
    ComponentList PointOrigList
    namespace eval PointOrigNames {}
+   ComponentList ChopList
+   namespace eval ChopNames {}
    ComponentList WavelengthList
    namespace eval WavelengthNames {}
    ComponentList TrackRateList
@@ -132,6 +134,8 @@ proc tccMain args {
    epics cs poHandset
    epics cs poHandConfig
    epics cs orbit
+   epics cs chopRelative
+   epics cs chopConfig
 
 # Set the timeput period for posting commands to the TCS.
    cs tcsApply setTimeout 3

@@ -1,0 +1,194 @@
+#+
+#  ChopControl <- ComponentControl
+#
+#  A Chop control is a ComponentControl widget with widgets for the 
+#  instrument position angle, coordinate system throw, frequency, duty
+#  cycle, and chop source.
+#
+#  Options:
+#           -shadow         The name of the control's edit shadow.
+#
+#  Methods:
+#           selectobj name  Copies the contents of the Chop object "name"
+#                           into the edit controls.
+#
+#           updateobj name  Stores the contents of the edit controls in the
+#                           Chop object "name".
+#
+#  D Terrett 22 may 2000
+#
+#  Copyright CCLRC
+#+
+
+itcl::class ChopControl {
+   inherit ComponentControl
+
+   constructor args {}
+
+   itk_option define -shadow shadow Shadow {}
+
+   public method selectobj name
+   public method updateobj name
+
+   private variable refdir
+   private method setdir
+}
+
+itk::usual ChopControl {
+   keep -borderwidth -cursor -font -highlightthickness -insertborderwidth \
+         -insertofftime -insertontime -insertwidth -labelfont -popupcursor \
+         -selectborderwidth -textfont -title -vt
+}
+
+itcl::body ChopControl::constructor args {
+
+# Frame.
+   itk_component add chop {
+      frame $itk_interior.chop -bd 2 -relief ridge
+   }
+   pack $itk_component(chop) -fill x -expand y
+   set w $itk_component(chop)
+
+# Throw
+   itk_component add throw {
+      iwidgets::entryfield $w.throw \
+            -labeltext [lindex [cs chopRelative info throw] 2] -width 8
+   }
+   pack $itk_component(throw) -anchor e -pady 4
+
+# Entry field for angle.
+   itk_component add pa {
+      iwidgets::entryfield $w.pa \
+            -labeltext [lindex [cs chopRelative info angle] 2] -width 8
+   }
+   pack $itk_component(pa) -anchor e -pady 4
+
+# Frame for reference direction.
+   itk_component add refdir {
+      frame $w.refdir -bd 2 -relief ridge
+   }
+   pack $itk_component(refdir) -fill x -expand y
+
+# Title
+   itk_component add title {
+      label $w.label -text "Reference direction"
+   }
+   pack $itk_component(title) -anchor w
+
+# Radiobuttons.
+   itk_component add buttons {
+      frame $w.buttons
+   }
+   set w $itk_component(buttons)
+   pack $itk_component(buttons) -fill x -expand yes
+   itk_component add north {
+      radiobutton $w.north -text "North" -variable [scope refdir] \
+            -value north -command [code $this setdir]
+   }
+   itk_component add vertical {
+      radiobutton $w.vertical -text "Up" -variable [scope refdir] \
+            -value vertical -command [code $this setdir]
+   }
+   pack $itk_component(north) -side left -padx 20
+   pack $itk_component(vertical) -side right -padx 40
+   set w [winfo parent $w]
+
+# Control for selecting a coordinate frame.
+   itk_component add cosys {
+      SubComponentSelector $w.cosys -labeltext "Coordinate system" \
+            -labelpos nw -componentlist CosysList -component cosys
+   }
+   pack $itk_component(cosys) -anchor w
+
+# Control for frequency.
+   itk_component add freq {
+      iwidgets::entryfield $w.freq \
+            -labeltext [lindex [cs chopConfig info frequency] 2] -width 8
+   }
+   pack $itk_component(freq) -anchor e -pady 4
+
+# Control for duty cycle.
+   itk_component add duty {
+      iwidgets::entryfield $w.duty \
+            -labeltext [lindex [cs chopConfig info dutycycle] 2] -width 8
+   }
+   pack $itk_component(duty) -anchor e -pady 4
+
+# Control for sync source.
+   itk_component add source {
+      iwidgets::optionmenu $w.source \
+            -labeltext [lindex [cs chopConfig info source] 2]
+   }
+   $itk_component(source) insert end SCS ICS0 ICS1 ICS2 ICS3 ICS4
+   pack $itk_component(source) -anchor e -pady 4
+
+# Set initial state.
+   set refdir north
+
+# Set the apply log message.
+   $itk_component(storeapply) configure -logmessage "Chop configuration"
+
+# Create rotator object used by apply
+   set scratchobj [namespace which -command [Chop #auto]]
+
+# Set the object class.
+   set objclass ChopComponent
+   set description "chop configuration"
+
+   eval itk_initialize $args
+}
+
+itcl::configbody ChopControl::shadow {
+   $itk_component(cosys) configure -editcontrol \
+            $itk_option(-shadow)cosys
+   $itk_component(cosys) configure -shadow $itk_option(-shadow)
+}
+
+itcl::body ChopControl::selectobj name {
+
+# Copy the contents of the specified chop object into the edit
+# controls.
+   $itk_component(throw) clear
+   $itk_component(pa) clear
+   $itk_component(freq) clear
+   $itk_component(duty) clear
+   $itk_component(source) select SCS
+
+   if { [string length $name] } {
+      $itk_component(throw) insert end [$name cget -throw]
+      $itk_component(pa) insert end [$name cget -angle]
+      $itk_component(freq) insert end [$name cget -frequency]
+      $itk_component(duty) insert end [$name cget -dutycycle]
+      $itk_component(source) select [$name cget -source]
+      set cosys [$name cget -cosys]
+      if { $cosys == "" } {
+         set refdir "vertical"
+         $itk_component(cosys) select ""
+      } else {
+         set refdir "north"
+         $itk_component(cosys) select $cosys
+      }
+      setdir
+   }
+}
+
+itcl::body ChopControl::updateobj name {
+   $name configure -throw [$itk_component(throw) get]
+   $name configure -angle [$itk_component(pa) get]
+   $name configure -frequency [$itk_component(freq) get]
+   $name configure -dutycycle [$itk_component(duty) get]
+   $name configure -source [$itk_component(source) get]
+   if { $refdir == "north"} {
+      $name configure -cosys [$itk_component(cosys) get]
+   } else {
+      $name configure -cosys ""
+   }
+}
+
+itcl::body ChopControl::setdir {} {
+   if { $refdir == "north"} {
+      $itk_component(cosys) configure -state normal
+   } else {
+      $itk_component(cosys) configure -state disabled
+   }
+}

@@ -6,7 +6,7 @@
 #  tcl applications. If an object of the same name and type already exists 
 #  it is deleted.
 #
-#  D Terrett 22 February 2000
+#  D Terrett 22 May 2000
 #
 #  Copyright CCLRC
 #-
@@ -29,6 +29,11 @@ proc createWfsTarget {name args} {
 proc createPointingOrigin {name args} {
    catch {delete object ::PointOrigNames::$name}
    eval PointOrigComponent \"::PointOrigNames::$name\" PointOrigList $args
+}
+
+proc createChop {name args} {
+   catch {delete object ::ChopNames::$name}
+   eval ChopComponent \"::ChopNames::$name\" ChopList $args
 }
 
 proc createSlewOptions {name args} {

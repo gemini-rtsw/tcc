@@ -1,0 +1,109 @@
+#+
+#  Chop
+#
+#  Implements the Chop class. A Chop object stores a chop configuration.
+#
+#  Options:
+#
+#          -angle        The chop position angle.
+#
+#          -cosys        The chop tracking frame.
+#
+#          -dutycycle    The dutly cycle.
+#
+#          -frequency    The chop frequency.
+#
+#          -source       The chop sync source.
+#
+#          -throw        The chop throw.
+#
+#  Methods:
+#          apply args    Applies the chop configuration to the TCS by 
+#                        setting the values of the command parameters. Any
+#                        arguments are ignored.
+#
+#          init          Returns the chop object to its initial state.
+#
+#          save file     Writes the values of the chop configuration
+#                        to the channel identifier "file".
+#
+#  Procs:
+#         subcomponents  Returns a list of the chop classes subcomponents.
+#
+#  D Terrett 22 May 2000
+#
+#  Copyright CCLRC
+#+
+
+itcl::class Chop {
+
+   destructor {$this init}
+
+   public proc subcomponents {}
+
+   public method apply args
+   public method init
+   public method save file
+
+   public variable angle {}
+   public variable cosys {}
+   public variable dutycycle {}
+   public variable frequency {}
+   public variable source {}
+   public variable throw {}
+
+   private variable current_cosys {}
+}
+
+itcl::body Chop::subcomponents {} {
+   return { \
+      {cosys Cosys CosysNames CosysList {Coordinate system} chop} \
+   }
+}
+
+itcl::body Chop::apply args {
+   cs chopRelative set angle \"$angle\"
+   if { $cosys == "" } {
+      cs chopRelative set system AZEL_TOPO
+      cs chopRelative set equinox ""
+   } else {
+      CosysNames::$cosys apply chopRelative
+   }
+   cs chopRelative set throw \"$throw\"
+   cs chopConfig set type 2posn
+   cs chopConfig set source \"$source\"
+   cs chopConfig set frequency \"$frequency\"
+   cs chopConfig set dutycycle \"$dutycycle\"
+}
+
+itcl::body Chop::save file {
+   puts $file "   -angle \"$angle\" \\"
+   puts $file "   -cosys \"$cosys\" \\"
+   puts $file "   -dutycycle \"$dutycycle\" \\"
+   puts $file "   -frequency \"$frequency\" \\"
+   puts $file "   -source \"$source\" \\"
+   puts $file "   -throw \"$throw\""
+}
+
+itcl::body Chop::init {} {
+   set angle ""
+   $this configure -cosys ""
+   set throw ""
+   set frequency ""
+   set dutycycle ""
+   set source ""
+}
+
+itcl::configbody Chop::cosys {
+   if { $current_cosys != "" } {
+      CosysNames::$current_cosys refdec
+   }
+   set current_cosys ""
+   if { $cosys != "" } {
+      if { [catch {CosysNames::$cosys refinc}] } {
+         error "Coordinate frame \"$cosys\" does not exist"
+      } else {
+         set current_cosys $cosys
+      }
+   }
+}
