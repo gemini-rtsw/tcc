@@ -5,7 +5,7 @@
 #  Arguments:
 #             Any command line options and values.
 #
-#  D Terrett 24 April 2001
+#  D Terrett 13 July 2001
 #
 #  Copyright CCLRC
 #-
@@ -37,7 +37,7 @@ proc tsdMain args {
 # Set the title for the windows.
    global env
    if { [info exists env(TCC_TCSNAME)] } {
-      set title "Simulated Gemini TCS ($env(TCC_TCSNAME))"
+      wm title . "Simulated Gemini TCS ($env(TCC_TCSNAME))"
    } else {
       wm title . [sa tcssad get name]
    }
