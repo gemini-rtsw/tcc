@@ -19,7 +19,7 @@
 #
 #           Cancels an action.
 #
-#  D Terrett 30 September 2000
+#  D Terrett 4 October 2000
 #
 #  Copyright CLRC
 #+
@@ -76,7 +76,7 @@ itcl::body seq::PrincipalSystem::monitor {name status info} {
 
 # Give the system time to set its in position record. This is a fudge until
 # the TCS subsystem set their ApplyC records properly.
-            after 2000
+            after 3000
 
 # Wait for the in position record to have the ok value.
             if { ![string is space $oktest] } {
@@ -165,10 +165,10 @@ itcl::body seq::PrincipalSystem::cancel {action} {
 
 itcl::body seq::PrincipalSystem::timeout {} {
    set timeoutcommand [$CurrentAction cget -ontimeout]
+   cleanup
    if { ![string is space $timeoutcommand] } {
       uplevel #0 $timeoutcommand
    }
-   cleanup
 }
 
 itcl::body seq::PrincipalSystem::traceproc {name1 name2 op} {
