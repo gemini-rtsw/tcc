@@ -3,7 +3,7 @@
 #
 #  Implements the pointUpdate widget.
 #
-#  D Terrett 27 May 1999
+#  D Terrett 28 May 1999
 #
 #  Copyright CCLRC
 #-
@@ -12,6 +12,7 @@ itcl::class PointUpdate {
    inherit itk::Widget
 
    constructor args {}
+   method purge
 
    itk_option define -ia ia Ia 0
 
@@ -124,6 +125,24 @@ itcl::body PointUpdate::constructor args {
          -side left -expand yes -pady 5
 
    eval itk_initialize $args
+}
+
+itcl::body PointUpdate::purge {} {
+#+
+# Deletes all disabled Ptweak objects and reloads the selectgrid.
+#-
+
+# Clear the selectgrid.
+   $itk_component(obs) clear
+
+# For each of the Ptweak objects either delete it or add it to the selectgrid.
+   foreach ptweak [itcl::find objects -class Ptweak] {
+      if { [$ptweak cget -enable] } {
+         eval $itk_component(obs) add $ptweak [$ptweak display]
+      } else {
+         delete object $ptweak
+      }
+   }
 }
 
 itcl::body PointUpdate::take1 {} {

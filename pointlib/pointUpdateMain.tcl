@@ -39,6 +39,7 @@ proc pointUpdateMain {w} {
    iwidgets::menubar .mb -menubuttons {
       menubutton file -text File -menu {
          options -tearoff false
+         command purge -label Purge -command {.ptu purge}
          command exit -label Exit -command exit
       }
    }
