@@ -13,7 +13,7 @@
 # rows. The -selectcommand option specifies a command that is executed
 # whenever a row is selected or deselected.
 #
-# D Terrett 21 December 1998
+# D Terrett 27 May 1999
 #
 # Copyright CCLRC
 #-
@@ -30,7 +30,7 @@ itcl::class SelectGrid {
 
    itk_option define -columnhead columnHead Label {}
    itk_option define -selectcommand selectCommand Command {}
-   itk_option define -disablecolor disableColor Color DarkGrey
+   itk_option define -disablecolor disableColor Color LightGrey
 
    private method select row
 
@@ -139,12 +139,12 @@ itcl::body SelectGrid::select row {
       set color $itk_option(-disablecolor)
    } else {
       set states($row) 1
-      set color [$itk_component(frame) cget -background]
+      set color [$itk_component(l00) cget -foreground]
    }
 
 # Set the background of the row appropriately.
    foreach w [grid slaves $itk_component(frame) -row $row] {
-      $w configure -background $color
+      $w configure -foreground $color
    }
 
 # Invoke the -selectcommand option.
