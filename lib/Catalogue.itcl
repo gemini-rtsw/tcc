@@ -15,7 +15,7 @@
 #
 #        view            Displays the catalogue in a listbox
 #
-# D Terrett 24 May 2002
+# D Terrett 10 July 2003
 #
 # Copyright CCLRC
 #+
@@ -180,6 +180,9 @@ itcl::body Catalogue::view {} {
 # Make selecting a star in the listbox select the star on the plot.
       $ListView configure -selectmode single -selectioncommand \
            "$AzElPlot select $Name \[$ListView index anchor\]"
+   } else {
+      $ListView clear
+      wm deiconify [winfo toplevel $ListView]
    }
 
 # Load the catalog into the widget.
