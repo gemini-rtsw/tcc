@@ -139,7 +139,7 @@ itcl::body PointLog::constructor {pointtest} {
 }
 
 itcl::body PointLog::log {name alarm time values} {
-   if {$Logchan != "" } {
+   if { ! [string equal $Logchan ""] } {
       if { ![string equal $values $LastObs] } {
          puts $Logchan OBS
          foreach item $values {
@@ -199,7 +199,7 @@ itcl::body PointLog::destructor {} {
    }
 
 # Convert the log file to tpoint format.
-   if { $tpname != {} } {
+   if { ! [string equal $tpname ""] } {
       if { [catch { \
             exec /gemini/tcs/tcs/bin/solaris/ptconv < $LogFileName > $tpname} \
             msg] } {
