@@ -3,15 +3,22 @@
 #
 #  Implements the SciTargetControl widget.
 #
-#  D Terrett 11 November 1999
+#  D Terrett 15 November 1999
 #
 #  Copyright CCLRC
 #+
 
 itcl::class SciTargetControl {
-   inherit TargetControl
+   inherit ComponentControl
+
+   itk_option define -shadow shadow Shadow {}
+   itk_option define -vt vt Vt {}
 
    constructor args {}
+
+   public method selectobj name
+   public method updateobj name
+   private method orbtype
 }
 
 itk::usual SciTargetControl {
@@ -26,10 +33,475 @@ itk::usual SciTargetControl {
 
 itcl::body SciTargetControl::constructor args {
 
+   itk_component add frame {
+      frame $itk_interior.frame -borderwidth 2 -relief ridge
+   }
+   pack $itk_component(frame) -fill x -expand y
+   set w $itk_component(frame)
+
+# Create tabnotebook for the target position.
+   itk_component add notebook {
+      iwidgets::tabnotebook $w.notebook -height 250 -width 400 
+   }
+   pack $itk_component(notebook)
+
+# Page for RA/Dec
+   set w [$itk_component(notebook) add -label "RA/Dec"]
+   
+# RA and Dec side by side.
+   itk_component add radec {
+      frame $w.radec
+   }
+   pack $itk_component(radec) -fill x -expand y
+   set w $itk_component(radec)
+   itk_component add ra {
+      iwidgets::entryfield $w.ra -width 12 -labeltext RA:
+   } {
+      usual
+      rename -textfont -majorfont majorFont Font
+      rename -labelfont -majorfont majorFont Font
+   }
+   itk_component add dec {
+      iwidgets::entryfield $w.dec -width 12 -labeltext Dec:
+   } {
+      usual
+      rename -textfont -majorfont majorFont Font
+      rename -labelfont -majorfont majorFont Font
+   }
+   pack $itk_component(ra) $itk_component(dec) -side left -expand y -pady 10
+   set w [winfo parent $w]
+
+# Frame for epoch and equinox.
+   itk_component add epeq {
+      frame $w.epeq
+   }
+   pack $itk_component(epeq) -padx 2 -pady 2 -anchor e
+   set w $itk_component(epeq)
+
+# Epoch.
+   itk_component add epoch {
+      iwidgets::entryfield $w.epoch -width 12 \
+            -labeltext [lindex [cs sourceA info epoch] 2] \
+            -labelpos nw
+   }
+
+#  Coordinate frame.
+   itk_component add cosys {
+      SubComponentSelector $w.cosys -labeltext "Coordinate system" \
+            -labelpos nw -componentlist CosysList -component cosys
+   }
+   pack $itk_component(epoch) $itk_component(cosys) -side left -anchor n \
+      -padx 3
+   set w [winfo parent $w]
+
+# Frame for space motions.
+   itk_component add space {
+      frame $w.space -bd 2 -relief sunken
+   }
+   pack $itk_component(space) -padx 2 -pady 2 -fill y
+   set w $itk_component(space)
+
+# Title for space motion frame.
+   itk_component add smtitle {
+      label $w.smtitle -text "Proper motion"
+   }
+   pack $itk_component(smtitle) -pady 3 -padx 3
+
+# Frame for proper motions.
+   itk_component add pm {
+      frame $w.pm
+   }
+   pack $itk_component(pm) -pady 3
+   set w $itk_component(pm)
+
+# Proper motions.
+   itk_component add dtheta1 {
+      iwidgets::entryfield $w.dtheta1 -width 11 \
+            -labeltext "RA (s/yr)"
+   }
+   itk_component add dtheta2 {
+      iwidgets::entryfield $w.dtheta2 -width 11 \
+            -labeltext "Dec (arcsec/yr)"
+   }
+   pack $itk_component(dtheta1) $itk_component(dtheta2) -side left -padx 3
+   set w [winfo parent $w]
+
+# Frame for parallax and radial velocity.
+   itk_component add pv {
+      frame $w.pv
+   }
+   pack $itk_component(pv) -pady 3
+   set w $itk_component(pv)
+
+# Parallax
+   itk_component add parallax {
+      iwidgets::entryfield $w.parallax -width 11 \
+            -labeltext [lindex [cs sourceA info parallax] 2]
+   }
+
+# Radial velocity.
+   itk_component add rv {
+      iwidgets::entryfield $w.rv -width 11 \
+            -labeltext [lindex [cs sourceA info rv] 2]
+   }
+   pack $itk_component(parallax) $itk_component(rv) -side left -padx 3
+
+# Page for Az/El
+   set w [$itk_component(notebook) add -label "Az/El"]
+   
+# Az and El.
+   itk_component add az {
+      iwidgets::entryfield $w.az -width 12 -labeltext Az:
+   } {
+      usual
+      rename -textfont -majorfont majorFont Font
+      rename -labelfont -majorfont majorFont Font
+   }
+   itk_component add el {
+      iwidgets::entryfield $w.el -width 12 -labeltext El:
+   } {
+      usual
+      rename -textfont -majorfont majorFont Font
+      rename -labelfont -majorfont majorFont Font
+   }
+   pack $itk_component(az) $itk_component(el) -side left -expand y -pady 40 \
+      -anchor n
+
+# Page for planets
+   set w [$itk_component(notebook) add -label "Planets"]
+
+# Radiobuttons for selecting a planet.
+   itk_component add moon {
+      radiobutton $w.moon -text Moon -variable $w._planet -value moon
+   }
+   itk_component add mercury {
+      radiobutton $w.mercury -text Mercury -variable $w._planet -value mercury
+   }
+   itk_component add venus {
+      radiobutton $w.venus -text Venus -variable $w._planet -value venus
+   }
+   itk_component add mars {
+      radiobutton $w.mars -text Mars -variable $w._planet -value mars
+   }
+   itk_component add jupiter {
+      radiobutton $w.jupiter -text Jupiter -variable $w._planet -value jupiter
+   }
+   itk_component add saturn {
+      radiobutton $w.saturn -text Saturn -variable $w._planet -value saturn
+   }
+   itk_component add uranus {
+      radiobutton $w.uranus -text Uranus -variable $w._planet -value uranus
+   }
+   itk_component add neptune {
+      radiobutton $w.neptune -text Neptune -variable $w._planet -value neptune
+   }
+   itk_component add pluto {
+      radiobutton $w.pluto -text Pluto -variable $w._planet -value pluto
+   }
+   grid $itk_component(moon) $itk_component(mars) $itk_component(uranus) \
+         -padx 10 -pady 10 -sticky w
+   grid $itk_component(mercury) $itk_component(jupiter) \
+         $itk_component(neptune) \
+         -padx 10 -pady 10 -sticky w
+   grid $itk_component(venus) $itk_component(saturn) $itk_component(pluto) \
+         -padx 10 -pady 10 -sticky w
+
+# Page for orbits
+   set w [$itk_component(notebook) add -label "Orbits"]
+
+# Option menu for the orbit type.
+   itk_component add eltype {
+      iwidgets::optionmenu $w.eltype -command [code $this orbtype]
+   }
+   $itk_component(eltype) insert end "Major planet orbital elements" \
+         "Minor planet orbital elements" "Comet orbital elements"
+
+# Entry widgets for each element.
+   itk_component add epochofel {
+      iwidgets::entryfield $w.epochofel -labeltext \
+            [lindex [cs orbit info epochofel] 2]
+   }
+   itk_component add inclination {
+      iwidgets::entryfield $w.inclination -labeltext \
+            [lindex [cs orbit info inclination] 2]
+   }
+   itk_component add longascnode {
+      iwidgets::entryfield $w.longascnode -labeltext \
+            [lindex [cs orbit info longascnode] 2]
+   }
+   itk_component add xxxofper {
+      iwidgets::entryfield $w.xxxofper -labeltext \
+            [lindex [cs orbit info longofper] 2]
+   }
+   itk_component add xxxdist {
+      iwidgets::entryfield $w.xxxdist -labeltext \
+            [lindex [cs orbit info meandist] 2]
+   }
+   itk_component add eccentricity {
+      iwidgets::entryfield $w.eccentricity -labeltext \
+            [lindex [cs orbit info eccentricity] 2]
+   }
+   itk_component add meanxxxx {
+      iwidgets::entryfield $w.meanxxxx -labeltext \
+            [lindex [cs orbit info meanlong] 2]
+   }
+   itk_component add dailymot {
+      iwidgets::entryfield $w.dailymot -labeltext \
+            [lindex [cs orbit info dailymot] 2]
+   }
+   grid $itk_component(eltype) -pady 1
+   grid $itk_component(epochofel) -sticky e -pady 1
+   grid $itk_component(inclination) -sticky e -pady 1
+   grid $itk_component(longascnode) -sticky e -pady 1
+   grid $itk_component(xxxofper) -sticky e -pady 1
+   grid $itk_component(xxxdist) -sticky e -pady 1
+   grid $itk_component(eccentricity) -sticky e -pady 1
+   grid $itk_component(meanxxxx) -sticky e -pady 1
+   grid $itk_component(dailymot) -sticky e -pady 1
+
+# Control for selecting a differential track rate.
+   set w $itk_component(frame)
+   itk_component add trackrate {
+      SubComponentSelector $w.trackrate -labeltext "Differential track rate" \
+            -labelpos nw -componentlist TrackRateList -component trackrate
+   }
+   pack $itk_component(trackrate) -side left -anchor n -padx 5 -pady 5
+
+# Control for setting the effective wavelength.
+   itk_component add wavelength {
+       WavelengthSelector $w.wavelength
+   }
+   pack $itk_component(wavelength) -side left -padx 5 -pady 5
+
 # Unpack Apply button and checkbutton so that new science targets have to be
 # applied from the main configuration window.
    pack forget  [$itk_component(storeapply) component lock]
    pack forget  [$itk_component(storeapply) component apply]
 
+# Select the RA/Dec page.
+  $itk_component(notebook) select RA/Dec
+
+# Create the scatch target object used by apply.
+   set scratchobj [namespace which -command [SciTarget #auto]]
+
+# Define the object class
+   set objclass SciTargetComponent
+   set description target
+
    eval itk_initialize $args
+}
+
+itcl::body SciTargetControl::selectobj name {
+
+   $itk_component(az) clear
+   $itk_component(el) clear
+   $itk_component(ra) clear
+   $itk_component(dec) clear
+   $itk_component(epoch) clear
+   $itk_component(dtheta1) clear
+   $itk_component(dtheta2) clear
+   $itk_component(parallax) clear
+   $itk_component(rv) clear
+   $itk_component(epochofel) clear
+   $itk_component(inclination) clear
+   $itk_component(longascnode) clear
+   $itk_component(xxxofper) clear
+   $itk_component(xxxdist) clear
+   $itk_component(eccentricity) clear
+   $itk_component(meanxxxx) clear
+   $itk_component(dailymot) clear
+
+   if { $name != "" } {
+      switch [$name cget -type] {
+         radec {
+            $itk_component(notebook) select RA/Dec
+            $itk_component(cosys) select [$name cget -cosys]
+            set radec [$name cget -radec]
+            $itk_component(ra) insert end [lindex $radec 0]
+            $itk_component(dec) insert end [lindex $radec 1]
+            $itk_component(epoch) insert end [$name cget -epoch]
+            set pm [$name cget -pm]
+            $itk_component(dtheta1) insert end [lindex $pm 0]
+            $itk_component(dtheta2) insert end [lindex $pm 1]
+            $itk_component(parallax) insert end [$name cget -parallax]
+            $itk_component(rv) insert end [$name cget -rv]
+         }
+         azel {
+            $itk_component(notebook) select Az/El
+            set azel [$name cget -azel]
+            $itk_component(az) insert end [lindex $azel 0]
+            $itk_component(el) insert end [lindex $azel 1]
+         }
+         planet {
+            $itk_component(notebook) select Planets
+            upvar #0 [$itk_component(moon) cget -variable] body
+            set body [$name cget -planet]
+         }
+         orbit {
+            $itk_component(notebook) select Orbits
+            set eltype [$name cget -eltype]
+            $itk_component(eltype) select [expr {$eltype - 1}]
+            orbtype
+            $itk_component(epochofel) insert end [$name cget -epochofel]
+            $itk_component(inclination) insert end [$name cget -inclination]
+            $itk_component(longascnode) insert end [$name cget -longascnode]
+            if { $eltype == 1 } {
+               $itk_component(xxxofper) insert end [$name cget -longofper]
+            } else {
+               $itk_component(xxxofper) insert end [$name cget -argofper]
+            }
+            if { $eltype == 3 } {
+               $itk_component(xxxdist) insert end [$name cget -perdist]
+            } else {
+               $itk_component(xxxdist) insert end [$name cget -meandist]
+            }
+            $itk_component(eccentricity) insert end [$name cget -eccentricity]
+            if { $eltype == 1 } {
+               $itk_component(meanxxxx) insert end [$name cget -meanlong]
+            } elseif { $eltype == 2 } {
+               $itk_component(meanxxxx) insert end [$name cget -meananom]
+            }
+            if { $eltype == 1 } {
+               $itk_component(dailymot) insert end [$name cget -dailymot]
+            }
+         }
+      }
+      set wavel [$name cget -wavelength_name]
+      $itk_component(wavelength) select $wavel
+      if { $wavel == "" } {
+         set wavel [$name cget -wavelength_value]
+         $itk_component(wavelength) value $wavel
+      }
+      $itk_component(trackrate) select [$name cget -trackrate]
+   }
+}
+
+itcl::body SciTargetControl::updateobj name {
+#+
+# Updates a target object with the values currently entered in the
+# control window.
+#-
+   set page [lindex [$itk_component(notebook) pageconfigure \
+         [$itk_component(notebook) select select] -label] 4]
+   switch $page {
+      RA/Dec {
+         $name configure \
+               -objName [$itk_component(selector) get] \
+               -cosys [$itk_component(cosys) get] \
+               -radec [list [$itk_component(ra) get] \
+               [$itk_component(dec) get]] \
+               -epoch [$itk_component(epoch) get] \
+               -pm "[$itk_component(dtheta1) get] \
+               [$itk_component(dtheta2) get]" \
+               -parallax [$itk_component(parallax) get] \
+               -rv [$itk_component(rv) get] \
+               -trackrate [$itk_component(trackrate) get]
+      }
+      Az/El {
+         $name configure \
+               -objName [$itk_component(selector) get] \
+               -azel [list [$itk_component(az) get] \
+               [$itk_component(el) get]] \
+      }
+      Planets {
+         upvar #0 [$itk_component(moon) cget -variable] body
+         $name configure \
+               -objName [$itk_component(selector) get] \
+               -planet $body
+      }
+      Orbits {
+         set eltype [expr {[$itk_component(eltype) index \
+               [$itk_component(eltype) get]] + 1}]
+         $name configure \
+               -objName [$itk_component(selector) get] \
+               -eltype $eltype \
+               -epochofel [$itk_component(epochofel) get] \
+               -inclination [$itk_component(inclination) get] \
+               -longascnode [$itk_component(longascnode) get] \
+               -eccentricity [$itk_component(eccentricity) get]
+         switch $eltype {
+            1 {
+               $name configure \
+                     -longofper [$itk_component(xxxofper) get] \
+                     -argofper "" \
+                     -meandist [$itk_component(xxxdist) get] \
+                     -perdist "" \
+                     -meanlong [$itk_component(meanxxxx) get] \
+                     -dailymot [$itk_component(dailymot) get]
+            }
+            2 {
+               $name configure \
+                     -longofper "" \
+                     -argofper [$itk_component(xxxofper) get] \
+                     -meandist [$itk_component(xxxdist) get] \
+                     -perdist "" \
+                     -meananom [$itk_component(meanxxxx) get] \
+                     -dailymot ""
+            }
+            3 {
+               $name configure \
+                     -longofper "" \
+                     -argofper [$itk_component(xxxofper) get] \
+                     -meandist "" \
+                     -perdist [$itk_component(xxxdist) get] \
+                     -meananom "" \
+                     -dailymot ""
+            }
+         }
+      }
+   }
+
+   set wavel [$itk_component(wavelength) get name]
+   $name configure -wavelength_name $wavel
+   if { $wavel == "" } {
+      $name configure -wavelength_value [$itk_component(wavelength) get value]
+   }
+}
+
+itcl::configbody SciTargetControl::shadow {
+   $itk_component(cosys) configure -editcontrol \
+            $itk_option(-shadow)cosys
+   $itk_component(wavelength) configure -editcontrol \
+            $itk_option(-shadow)wavelength
+   $itk_component(trackrate) configure -editcontrol \
+            $itk_option(-shadow)trackrate
+   $itk_component(cosys) configure -shadow $itk_option(-shadow)
+   $itk_component(wavelength) configure -shadow $itk_option(-shadow)
+   $itk_component(trackrate) configure -shadow $itk_option(-shadow)
+}
+
+itcl::configbody SciTargetControl::vt {
+   $itk_component(storeapply) configure \
+         -logmessage "$itk_option(-vt) target"
+}
+
+itcl::body SciTargetControl::orbtype {} {
+   switch [$itk_component(eltype) get] {
+      "Major planet orbital elements" {
+         $itk_component(xxxofper) configure -labeltext \
+               [lindex [cs orbit info longofper] 2]
+         $itk_component(xxxdist) configure -labeltext \
+               [lindex [cs orbit info meandist] 2]
+         $itk_component(meanxxxx) configure -state normal -labeltext \
+               [lindex [cs orbit info meanlong] 2]
+         $itk_component(dailymot) configure -state normal
+      }
+      "Minor planet orbital elements" {
+         $itk_component(xxxofper) configure -labeltext \
+               [lindex [cs orbit info argofper] 2]
+         $itk_component(xxxdist) configure -labeltext \
+               [lindex [cs orbit info meandist] 2]
+         $itk_component(meanxxxx) configure -state normal -labeltext \
+               [lindex [cs orbit info meananom] 2]
+         $itk_component(dailymot) configure -state disabled
+      }
+      "Comet orbital elements" {
+         $itk_component(xxxofper) configure -labeltext \
+               [lindex [cs orbit info argofper] 2]
+         $itk_component(xxxdist) configure -labeltext \
+               [lindex [cs orbit info perdist] 2]
+         $itk_component(meanxxxx) configure -state disabled
+         $itk_component(dailymot) configure -state disabled
+      }
+   }
 }

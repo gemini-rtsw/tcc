@@ -1,27 +1,244 @@
 #+
 #  SciTarget.itcl
 #
-#  Implements the SciTarget class. A SciTarget object is just a Target
-#  object with a different name.
+#  Implements the SciTarget class. A SciTarget object stores all
+#  the parameters needed to specify a science target.
 #
-#  D Terrett 11 November 1999
+#  Methods:
+#
+#     apply <virtual telescope>
+#
+#         Applies the target definition to the TCS by setting the values
+#         of the command parameters.
+#
+#     preview <item>
+#
+#         Calls tccPreview to set the data in the named virtual telescope.
+#
+#  D Terrett 15 November 1999
 #
 #  Copyright CCLRC
 #+
 
 itcl::class SciTarget {
-   inherit Target
 
    constructor args {}
 
-   public proc subcomponents
+   public proc subcomponents {}
+
+   public method apply vt {}
+   public method preview vt {}
+   public method save file
+
+   public variable type
+   public variable objName {}
+
+# Type "radec"
+   public variable radec {} {if {$radec != ""} {set type radec}}
+   public variable cosys {}
+   public variable epoch {}
+   public variable parallax 0
+   public variable pm {}
+   public variable rv 0
+
+# Type "azel"
+   public variable azel {} {if {$azel != ""} {set type azel}}
+
+# Type "planet"
+   public variable planet {} {if {$planet != ""} {set type planet}}
+
+# Type "orbit"
+   public variable eltype {} {if {$eltype != ""} {set type orbit}}
+   public variable epochofel {}
+   public variable inclination {}
+   public variable longascnode {}
+   public variable longofper {}
+   public variable argofper {}
+   public variable meandist {}
+   public variable perdist {}
+   public variable eccentricity {}
+   public variable meanlong {}
+   public variable meananom {}
+   public variable dailymot {}
+
+   public variable wavelength_name {}
+   public variable wavelength_value {} {
+      set wavelength_value [valWavelength $wavelength_value]
+   }
+   public variable trackrate {}
+
+   private common Wavelength ""
+}
+
+itcl::body SciTarget::subcomponents {} {
+   return { \
+      {cosys Cosys CosysNames CosysList {Coordinate System} {}} \
+      {wavelength Wavelength WavelengthNames WavelengthList {Wavelength} {}} \
+      {trackrate TrackRate TrackRateNames TrackRateList {Differential Track Rate} {}} \
+   }
 }
 
 itcl::body SciTarget::constructor args {
 
+# Create the scratch wavelength object if it doesn't already exist.
+   if { [info commands $Wavelength] == "" } {
+      set Wavelength [Wavelength #auto]
+   }
    eval configure $args
 }
 
-itcl::body SciTarget::subcomponents {} {
-   return [Target::subcomponents]
+itcl::body SciTarget::apply vt {
+
+   switch $type {
+      radec {
+         cs $vt set objName \"$objName\"
+         if { $cosys == "" } {
+            cs $vt set system FK5
+            cs $vt set equinox J2000
+         } else {
+            CosysNames::$cosys apply $vt
+         }
+         cs $vt set theta1 \"[lindex $radec 0]\"
+         cs $vt set theta2 \"[lindex $radec 1]\"
+         cs $vt set epoch \"$epoch\"
+         cs $vt set parallax \"$parallax\"
+         if { $pm != "" } {
+            cs $vt set dtheta1 \"[lindex $pm 0]\"
+            cs $vt set dtheta2 \"[lindex $pm 1]\"
+         } else {
+            cs $vt set dtheta1 \"\"
+            cs $vt set dtheta2 \"\"
+         }
+         cs $vt set rv \"$rv\"
+      }
+      azel {
+         cs $vt set objName \"$objName\"
+         cs $vt set system \"AZEL_TOPO\"
+         cs $vt set equinox \"\"
+         cs $vt set theta1 \"[lindex $azel 0]\"
+         cs $vt set theta2 \"[lindex $azel 1]\"
+         cs $vt set epoch \"\"
+         cs $vt set parallax \"\"
+         cs $vt set dtheta1 \"\"
+         cs $vt set dtheta2 \"\"
+         cs $vt set rv \"\"
+      }
+      planet {
+         cs $vt set planet $planet
+      }
+      orbit {
+         cs orbit set objName \"$objName\"
+         cs orbit set eltype \"$eltype\"
+         cs orbit set epochofel \"$epochofel\"
+         cs orbit set inclination \"$inclination\"
+         cs orbit set longascnode \"$longascnode\"
+         if { $eltype == 1 } {
+            cs orbit set longofper \"$longofper\"
+         } else {
+            cs orbit set argofper \"$argofper\"
+         }
+         if { $eltype == 3 } {
+            cs orbit set perdist \"$perdist\"
+         } else {
+            cs orbit set meandist \"$meandist\"
+         }
+         cs orbit set eccentricity \"$eccentricity\"
+         if { $eltype == 1 } {
+            cs orbit set meanlong \"$meanlong\"
+         } elseif { $eltype == 2 } {
+            cs orbit set meananom \"$meananom\"
+         } else {
+            cs orbit set meananom \"\"
+         }
+         if { $eltype == 1 } {
+            cs orbit set dailymot \"$dailymot\"
+         } else {
+            cs orbit set dailymot \"\"
+         }
+      }
+   }
+   if { $wavelength_name != "" } {
+      if { [info commands ::WavelengthNames::$wavelength_name] != "" } {
+         ::WavelengthNames::$wavelength_name apply $vt
+      }
+   } else {
+      if { $wavelength_value != "" } {
+         $Wavelength configure -wavel $wavelength_value
+         $Wavelength apply $vt
+      }
+   }
+   if { [info commands ::TrackRateNames::$trackrate] != "" } {
+      ::TrackRateNames::$trackrate apply $vt
+   }
+}
+
+itcl::body SciTarget::preview vt {
+
+   if { $cosys == "" } {
+      set system FK5
+      set equinox J2000
+   } else {
+      set system [CosysNames::$cosys cget -frame]
+      set equinox [CosysNames::$cosys cget -equinox]
+   }
+   tccPreview set $vt $system [lindex $radec 0] [lindex $radec 1] \
+         $equinox $epoch
+      
+   if { $wavelength_name != "" } {
+      if { [info commands ::WavelengthNames::$wavelength_name] != "" } {
+         ::WavelengthNames::$wavelength_name preview $vt
+      }
+   } else {
+      if { $wavelength_value != "" } {
+         $Wavelength configure -wavel $wavelength_value
+         $Wavelength preview $vt
+      }
+   }
+   if { [info commands ::TrackRateNames::$trackrate] != "" } {
+      ::TrackRateNames::$trackrate preview $vt
+   }
+}
+
+itcl::body SciTarget::save file {
+   puts $file "   -objName \"$objName\" \\"
+   switch $type {
+      radec {
+         puts $file "   -cosys \"$cosys\" \\"
+         puts $file "   -radec \"$radec\" \\"
+         puts $file "   -epoch \"$epoch\" \\"
+         puts $file "   -parallax \"$parallax\" \\"
+         puts $file "   -pm \"$pm\" \\"
+         puts $file "   -rv \"$rv\" \\"
+      }
+      azel {
+         puts $file "   -azel \"$azel\" \\"
+      }
+      planet {
+         puts $file "   -planet \"$planet\" \\"
+      }
+      orbit {
+         puts $file "   -eltype \"$eltype\" \\"
+         puts $file "   -epochofel \"$epochofel\" \\"
+         puts $file "   -inclination \"$inclination\" \\"
+         puts $file "   -longascnode \"$longascnode\" \\"
+         if { $eltype == 1 } {
+            puts $file "   -longofper \"$longofper\" \\"
+         } else {
+            puts $file "   -argofper \"$argofper\" \\"
+         }
+         puts $file "   -meandist \"$meandist\" \\"
+         puts $file "   -perdist \"$perdist\" \\"
+         puts $file "   -eccentricity \"$eccentricity\" \\"
+         puts $file "   -meanlong \"$meanlong\" \\"
+         if { $eltype == 1 || $eltype == 2 } {
+            puts $file "   -meananom \"$meananom\" \\"
+         }
+         if { $eltype == 1 } {
+            puts $file "   -dailymot \"$dailymot\" \\"
+         }
+      }
+   }
+   puts $file "   -wavelength_name \"$wavelength_name\" \\"
+   puts $file "   -wavelength_value \"$wavelength_value\" \\"
+   puts $file "   -trackrate \"$trackrate\""
 }

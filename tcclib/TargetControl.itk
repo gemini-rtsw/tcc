@@ -3,7 +3,7 @@
 #
 #  Implements the TargetControl widget.
 #
-#  D Terrett 27 April 1999
+#  D Terrett 13 November 1999
 #
 #  Copyright CCLRC
 #+
@@ -40,7 +40,7 @@ itcl::body TargetControl::constructor args {
 
 # Create tabnotebook for the target position.
    itk_component add notebook {
-      iwidgets::tabnotebook $w.notebook -height 250 -width 400
+      iwidgets::tabnotebook $w.notebook -height 250 -width 400 
    }
    pack $itk_component(notebook)
 
@@ -67,33 +67,72 @@ itcl::body TargetControl::constructor args {
       rename -textfont -majorfont majorFont Font
       rename -labelfont -majorfont majorFont Font
    }
-   pack $itk_component(ra) $itk_component(dec) -side left -expand y
+   pack $itk_component(ra) $itk_component(dec) -side left -expand y -pady 10
    set w [winfo parent $w]
 
-# Control for selecting a coordinate frame.
+# Frame for epoch and equinox.
+   itk_component add epeq {
+      frame $w.epeq
+   }
+   pack $itk_component(epeq) -padx 2 -pady 2 -anchor e
+   set w $itk_component(epeq)
+
+# Epoch.
+   itk_component add epoch {
+      iwidgets::entryfield $w.epoch -width 12 \
+            -labeltext [lindex [cs sourceA info epoch] 2] \
+            -labelpos nw
+   }
+
+#  Coordinate frame.
    itk_component add cosys {
       SubComponentSelector $w.cosys -labeltext "Coordinate system" \
             -labelpos nw -componentlist CosysList -component cosys
    }
-   pack $itk_component(cosys) -anchor e
+   pack $itk_component(epoch) $itk_component(cosys) -side left -anchor n \
+      -padx 3
+   set w [winfo parent $w]
 
-# Epoch.
-   itk_component add epoch {
-      iwidgets::entryfield $w.epoch \
-            -labeltext [lindex [cs sourceA info epoch] 2]
+# Frame for space motions.
+   itk_component add space {
+      frame $w.space -bd 2 -relief sunken
    }
-   pack $itk_component(epoch) -anchor e
+   pack $itk_component(space) -padx 2 -pady 2 -fill y
+   set w $itk_component(space)
+
+# Title for space motion frame.
+   itk_component add smtitle {
+      label $w.smtitle -text "Proper motion"
+   }
+   pack $itk_component(smtitle) -pady 3 -padx 3
+
+# Frame for proper motions.
+   itk_component add pm {
+      frame $w.pm
+   }
+   pack $itk_component(pm) -pady 3
+   set w $itk_component(pm)
 
 # Proper motions.
    itk_component add dtheta1 {
       iwidgets::entryfield $w.dtheta1 -width 11 \
-            -labeltext [lindex [cs sourceA info dtheta1] 2]
+            -labeltext "RA (s/yr)"
    }
    itk_component add dtheta2 {
       iwidgets::entryfield $w.dtheta2 -width 11 \
-            -labeltext [lindex [cs sourceA info dtheta2] 2]
+            -labeltext "Dec (arcsec/yr)"
    }
-   pack $itk_component(dtheta1) $itk_component(dtheta2) -anchor e
+   pack $itk_component(dtheta1) $itk_component(dtheta2) -side left -padx 3
+   set w [winfo parent $w]
+
+# Frame for parallax and radial velocity.
+   itk_component add pv {
+      frame $w.pv
+   }
+   pack $itk_component(pv) -pady 3
+   set w $itk_component(pv)
+
+# Parallax
    itk_component add parallax {
       iwidgets::entryfield $w.parallax -width 11 \
             -labeltext [lindex [cs sourceA info parallax] 2]
@@ -104,41 +143,42 @@ itcl::body TargetControl::constructor args {
       iwidgets::entryfield $w.rv -width 11 \
             -labeltext [lindex [cs sourceA info rv] 2]
    }
-   pack $itk_component(parallax) $itk_component(rv) -anchor e
+   pack $itk_component(parallax) $itk_component(rv) -side left -padx 3
 
 # Page for Az/El
    set w [$itk_component(notebook) add -label "Az/El"]
    
 # Az and El.
    itk_component add az {
-      iwidgets::entryfield $w.az -width 12 -labeltext Azimuth:
+      iwidgets::entryfield $w.az -width 12 -labeltext Az:
    } {
       usual
       rename -textfont -majorfont majorFont Font
       rename -labelfont -majorfont majorFont Font
    }
    itk_component add el {
-      iwidgets::entryfield $w.el -width 12 -labeltext Elevation:
+      iwidgets::entryfield $w.el -width 12 -labeltext El:
    } {
       usual
       rename -textfont -majorfont majorFont Font
       rename -labelfont -majorfont majorFont Font
    }
-   pack $itk_component(az) $itk_component(el) -expand y
-
-# Control for setting the effective wavelength.
-   set w $itk_component(frame)
-   itk_component add wavelength {
-       WavelengthSelector $w.wavelength
-   }
-   pack $itk_component(wavelength) -anchor e
+   pack $itk_component(az) $itk_component(el) -side left -expand y -pady 40 \
+      -anchor n
 
 # Control for selecting a differential track rate.
+   set w $itk_component(frame)
    itk_component add trackrate {
       SubComponentSelector $w.trackrate -labeltext "Differential track rate" \
             -labelpos nw -componentlist TrackRateList -component trackrate
    }
-   pack $itk_component(trackrate) -anchor e
+   pack $itk_component(trackrate) -side left -anchor n -padx 5 -pady 5
+
+# Control for setting the effective wavelength.
+   itk_component add wavelength {
+       WavelengthSelector $w.wavelength
+   }
+   pack $itk_component(wavelength) -side left -padx 5 -pady 5
 
 # Select the RA/Dec page.
   $itk_component(notebook) select RA/Dec

@@ -4,7 +4,7 @@
 #  The main program for the Gemini control console. It creates the top level
 #  "toolbar" window.
 #
-#  D Terrett 12 November 1999
+#  D Terrett 13 November 1999
 #
 #  Copyright CCLRC
 #-
@@ -129,6 +129,7 @@ proc tccMain args {
    epics cs tarHandConfig
    epics cs poHandset
    epics cs poHandConfig
+   epics cs orbit
 
 # Set the timeput period for posting commands to the TCS.
    cs tcsApply setTimeout 3

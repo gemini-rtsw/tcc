@@ -15,7 +15,7 @@
 #
 #         Calls tccPreview to set the data in the named virtual telescope.
 #
-#  D Terrett 2 October 1998
+#  D Terrett 13 November 1999
 #
 #  Copyright CCLRC
 #+
@@ -43,22 +43,6 @@ itcl::class Target {
 
 # Type "azel"
    public variable azel {} {if {$azel != ""} {set type azel}}
-
-# Type "planet"
-   public variable planet {} {set type planet}
-
-# Type "orbit"
-   public variable eltype {} {set type orbit}
-   public variable epochofel {}
-   public variable inclination {}
-   public variable longascnode {}
-   public variable argofper {}
-   public variable meandist {}
-   public variable perdist {}
-   public variable eccentricity {}
-   public variable meanlong {}
-   public variable meananom {}
-   public variable dailymot {}
 
    public variable wavelength_name {}
    public variable wavelength_value {} {
@@ -146,8 +130,6 @@ itcl::body Target::preview vt {
       set system [CosysNames::$cosys cget -frame]
       set equinox [CosysNames::$cosys cget -equinox]
    }
-#   tccPreview set $vt $system $theta1 $theta2 $equinox $epoch \
-#      $pm $parallax $rv
    tccPreview set $vt $system [lindex $radec 0] [lindex $radec 1] \
          $equinox $epoch
       
