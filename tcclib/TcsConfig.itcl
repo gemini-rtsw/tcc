@@ -31,7 +31,7 @@
 #          save node    Saves the values of all the component options to
 #                       the xml node.
 #
-#  D Terrett 13 May 2003
+#  D Terrett 21 January 2004
 #
 #  Copyright CCLRC
 #+
@@ -65,28 +65,49 @@ itcl::class TcsConfig {
 
 itcl::body TcsConfig::apply {comp} {
 
+# First determine whether the configuration contains a SlewOption that 
+# either disables or clears guiding and ao. This must be done before 
+# we start building the configuration to avoid applying it half way
+# through.
+   if { $slewOptions ne "" } {
+      if { [::SlewOptionsNames::$slewOptions cget -resetao] } {
+
+# Map the guide loop control window.
+         observePanel create
+         after 100
+
+# Reset AO.
+         .observePanel reset
+      } elseif { [::SlewOptionsNames::$slewOptions cget -disable] } {
+
+# Diable AO.
+         AO disable
+         after 100
+      }
+   }
+
 # Call the apply method of all the components that have a value. Note that
 # Altair comes after SlewOptions so that Slew options doesn't overwrite
 # the filter 1 setting.
-   if { ! [string equal $field ""] } {
+   if { $field ne "" } {
       ::FieldNames::$field apply $comp.field
    }
-   if { ! [string equal $pointOrig ""] } {
+   if { $pointOrig ne "" } {
       ::PointOrigNames::$pointOrig apply $comp.pointorig
    }
-   if { ! [string equal $chop ""] } {
+   if { $chop ne "" } {
       ::ChopNames::$chop apply $comp.chop
    }
-   if { ! [string equal $slewOptions ""] } {
+   if { $slewOptions ne "" } {
       ::SlewOptionsNames::$slewOptions apply $comp.slewoptions
    }
-   if { ! [string equal $altair ""] } {
+   if { $altair ne "" } {
       ::AltairNames::$altair apply $comp.altair
    }
-   if { ! [string equal $trackFrame ""] } {
+   if { $trackFrame ne "" } {
       ::TrackFrameNames::$trackFrame apply $comp.trackframe
    }
-   if { ! [string equal $instrument ""] } {
+   if { $instrument ne "" } {
       ::InstrumentNames::$instrument apply $comp.instrument
    }
 }

@@ -46,7 +46,7 @@
 #
 #           save node  Saves all the slew option values to the xml node.
 #
-#  D Terrett 16 January 2004
+#  D Terrett 21 January 2004
 #
 #  Copyright CCLRC
 #+
@@ -76,18 +76,6 @@ itcl::class SlewOptions {
 
 itcl::body SlewOptions::apply {comp} {
 
-# Disable AO first (if requested) so that the telescope doesn't move before
-# the guiding has completely turned off.
-   if { $resetao } {
-
-# Map the guide loop control window.
-      observePanel create
-      .observePanel reset
-      after 500
-   } elseif { $disableao } {
-      AO disable
-      after 500
-   }
    cs slew set chopThrow [list $chopThrow]
    cs slew set sourceOffset [list $sourceOffset]
    cs slew set sourceDifTr [list $sourceDifTr]
