@@ -340,33 +340,24 @@ itcl::body NumericDisplay::constructor args {
 
 # Call newtarget whenever any of the tracking frame or wavelengths change.
    foreach vt {sourceA sourceB sourceC pwfs1 pwfs2 oiwfs mount} {
-      if { [llength [find object tcssad.${vt}TrackFrame]] == 0 } {
-         RecordMonitor tcssad.${vt}TrackFrame tcssad ${vt}TrackFrame
-      }
+      catch {RecordMonitor tcssad.${vt}TrackFrame tcssad ${vt}TrackFrame}
       set hbid(${vt}TrackFrame) [tcssad.${vt}TrackFrame add \
             [itcl::code $this newtarget]]
-      if { [llength [find object tcssad.${vt}TrackEq]] == 0 } {
-         RecordMonitor tcssad.${vt}TrackEq tcssad ${vt}TrackEq
-      }
+      catch {RecordMonitor tcssad.${vt}TrackEq tcssad ${vt}TrackEq}
       set hbid(${vt}TrackEq) [tcssad.${vt}TrackEq add \
             [itcl::code $this newtarget]]
-      if { [llength [find object tcssad.${vt}TrackWavelength]] == 0 } {
-         RecordMonitor tcssad.${vt}TrackWavelength tcssad ${vt}TrackWavelength
-      }
+      catch {RecordMonitor tcssad.${vt}TrackWavelength tcssad \
+            ${vt}TrackWavelength}
       set hbid(${vt}TrackWavelength) [tcssad.${vt}TrackWavelength add \
             [itcl::code $this newtarget]]
-      if { [llength [find object tcssad.${vt}Wavelength]] == 0 } {
-         RecordMonitor tcssad.${vt}Wavelength tcssad ${vt}Wavelength
-      }
+      catch {RecordMonitor tcssad.${vt}Wavelength tcssad ${vt}Wavelength}
       set hbid(${vt}Wavelength) [tcssad.${vt}Wavelength add \
             [itcl::code $this newtarget]]
    }
 
 # Call newobject whenever any of the input objects change.
    foreach vt {sourceA sourceB sourceC pwfs1 pwfs2 oiwfs mount} {
-      if { [llength [find object tcssad.${vt}ObjectName]] == 0 } {
-         RecordMonitor tcssad.${vt}ObjectName tcssad ${vt}ObjectName
-      }
+      catch {RecordMonitor tcssad.${vt}ObjectName tcssad ${vt}ObjectName}
       set hbid(${vt}ObjectName) [tcssad.${vt}ObjectName add \
             [itcl::code $this newobject]]
    }
@@ -377,9 +368,7 @@ itcl::body NumericDisplay::constructor args {
          par {inPosition inPositionAz inPositionEl inPosition \
          domeInPos topShtrInPos botShtrInPos inPosition followS followS \
          autoMoveDome autoMoveShtrs} {
-         if { [llength [find object $sa.$par]] == 0 } {
-            RecordMonitor $sa.$par $sa $par
-         }
+         catch {RecordMonitor $sa.$par $sa $par}
          set hbid($par) [$sa.$par add [itcl::code $this inPosition]]
    }
 
@@ -388,9 +377,7 @@ itcl::body NumericDisplay::constructor args {
    set nohbid [after 5000 [itcl::code $this noheartbeat]]
 
 # Monitor the heartbeat sad record.
-   if { [llength [find object tcssad.heartbeat]] == 0 } {
-      RecordMonitor tcssad.heartbeat tcssad heartbeat
-   }
+   catch {RecordMonitor tcssad.heartbeat tcssad heartbeat}
    set hbid(heartbeat) [tcssad.heartbeat add [itcl::code $this heartbeat]]
    
 # Trigger checks on the subsystem states
