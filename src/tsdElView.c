@@ -9,7 +9,7 @@ static char rcsid[]="$Id:";
 *
 *   DESCRIPTION
 *
-*   D L Terrett 11 November 1999
+*   D L Terrett 10 April 2000
 *
 *   Copyright CCLRC
 */
@@ -71,11 +71,7 @@ typedef struct ElViewItem {
    int display;
 } ElViewItem;
 
-static Tk_CustomOption tagsOption = {
-   Tk_CanvasTagsParseProc,
-   Tk_CanvasTagsPrintProc, 
-   (ClientData) NULL
-};
+static Tk_CustomOption tagsOption;
 
 /* Configuration specs structure */
 
@@ -121,6 +117,12 @@ static Tk_ItemType elViewType = {
 
 void tsdElView()
 {
+/* Initialize the tagsOptions structure.  */
+   tagsOption.parseProc = Tk_CanvasTagsParseProc;
+   tagsOption.printProc = Tk_CanvasTagsPrintProc;
+   tagsOption.clientData = (ClientData) NULL;
+
+/* Create the canvas item type. */
    Tk_CreateItemType( &elViewType );
    return;
 }

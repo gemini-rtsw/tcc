@@ -16,7 +16,7 @@ static char rcsid[]="$Id:";
 *   The only configuration option is -display which merely serves as a way
 *   of forcing the item to be redrawn and new data fetched from the TCS.
 *
-*   D L Terrett 11 November 1999
+*   D L Terrett 10 April 2000
 *
 *   Copyright CCLRC
 */
@@ -104,11 +104,7 @@ typedef struct DomeViewItem {
    GC wvgGC;
 } DomeViewItem;
 
-static Tk_CustomOption tagsOption = {
-   Tk_CanvasTagsParseProc,
-   Tk_CanvasTagsPrintProc, 
-   (ClientData) NULL
-};
+static Tk_CustomOption tagsOption;
 
 /* Configuration specs structure */
 
@@ -154,6 +150,12 @@ static Tk_ItemType domeViewType = {
 
 void tsdDomeView()
 {
+/* Initialize the tagsOptions structure.  */
+   tagsOption.parseProc = Tk_CanvasTagsParseProc;
+   tagsOption.printProc = Tk_CanvasTagsPrintProc;
+   tagsOption.clientData = (ClientData) NULL;
+
+/* Create the canvas item type. */
    Tk_CreateItemType( &domeViewType );
    return;
 }
