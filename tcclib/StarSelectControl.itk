@@ -3,7 +3,7 @@
 #
 #  Implements the StarSelectControl widget.
 #
-#  D Terrett 25 January 2001
+#  D Terrett 27 March 2001
 #
 #  Copyright CCLRC
 #-
@@ -60,7 +60,7 @@ itcl::body StarSelectControl::selectstar {index} {
          -parallax [lindex $object 8]
 
    tcsconfigscienceTarget map
-   tcsconfigscienceTarget select [lindex $object 0]
+   tcsconfigscienceTarget selectfromcontrol [lindex $object 0]
 }
 
 itcl::body StarSelectControl::loadposition {ra dec} {
@@ -79,6 +79,6 @@ itcl::body StarSelectControl::loadposition {ra dec} {
    tcsconfigscienceTarget map
    set name [[tcsconfigscienceTarget cget -window] scratchobj]
    $name configure -radec [list $ra $dec] -cosys Apparent
-   tcsconfigscienceTarget select ""
+   tcsconfigscienceTarget selectfromcontrol ""
    [tcsconfigscienceTarget cget -window] selectobj $name
 }
