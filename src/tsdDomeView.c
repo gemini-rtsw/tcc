@@ -9,7 +9,7 @@ static char rcsid[]="$Id:";
 *
 *   DESCRIPTION
 *   The domeview canvas item draws a picture of the Gemini dome with the 
-*   position of the shutters and widn gates, the projection of the mirror
+*   position of the shutters and wind gates, the projection of the mirror
 *   onto the dome surface, the position and track of the current target and
 *   the position of the moon and sun.
 *
