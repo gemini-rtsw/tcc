@@ -45,7 +45,7 @@
 #                             according to the state of the configuration
 #                             options.
 #
-#  D Terrett  6 April 2000
+#  D Terrett  9 June 2000
 #
 #  Copyright CCLRC
 #-
@@ -278,9 +278,13 @@ itcl::body OpticsView::constructor args {
 # Science fold unknown
    $c create bitmap 0 30 -anchor c -foreground black -tags ScFoldUnknown 
 
-# HRWFS fold
-   $c create line -9 -51 9 -69 -width 2 -tags HrwfsFold
-   $c create line -11 -53 7 -70 -tags HrwfsFoldBck
+# HRWFS fold when deployed
+   $c create line -9 -51 9 -69 -width 2 -tags HrwfsFoldIn
+   $c create line -11 -53 7 -70 -tags HrwfsFoldInBck
+
+# HRWFS fold when retracted
+   $c create line  41 -51 59 -69 -width 2 -tags HrwfsFoldOut
+   $c create line  39 -53 57 -70 -tags HrwfsFoldOutBck
 
 # ISS port numbers
    $c create text 0 -100 -anchor c -text 1
@@ -404,11 +408,15 @@ itcl::body OpticsView::update {} {
 
 # Configure the HRWFS fold mirror
    if { $itk_option(-hrwfs) == "IN" } {
-      $c itemconfigure HrwfsFold -fill white
-      $c itemconfigure HrwfsFoldBck -fill black
+      $c itemconfigure HrwfsFoldIn -fill white
+      $c itemconfigure HrwfsFoldInBck -fill black
+      $c itemconfigure HrwfsFoldOut -fill ""
+      $c itemconfigure HrwfsFoldOutBck -fill ""
    } else {
-      $c itemconfigure HrwfsFold -fill ""
-      $c itemconfigure HrwfsFoldBck -fill ""
+      $c itemconfigure HrwfsFoldIn -fill ""
+      $c itemconfigure HrwfsFoldInBck -fill ""
+      $c itemconfigure HrwfsFoldOut -fill white
+      $c itemconfigure HrwfsFoldOutBck -fill black
    }
 
 # Configure the light path
