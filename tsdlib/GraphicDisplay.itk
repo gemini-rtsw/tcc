@@ -9,7 +9,7 @@
 #
 #       Updates the display from the SAD
 #
-#  D Terrett 28 August 1998
+#  D Terrett 31 May 1999
 #
 #  Copyright CCLRC
 #-
@@ -99,10 +99,14 @@ itcl::body GraphicDisplay::update {} {
          set Vignette 0
       }
    }
+   set scfold [lsearch -exact {0 1 2 3 4} [sa agssad get sfName value]]
+   if { $scfold == -1 } {
+      set scfold PARK
+   }
    $itk_component(opticsview) configure \
          -deployablebaffle [sa m2ssad get deployBafflePos value] \
          -centralbaffle [sa m2ssad get centralBafflePos value] \
-         -scfold [sa agssad get sfName value] \
+         -scfold $scfold \
          -aofold [sa agssad get aoName value] \
          -hrwfs [sa agssad get hwName value]
 }
