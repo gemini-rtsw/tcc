@@ -6,6 +6,10 @@
 #
 #  D Terrett 9 May 2001
 #
+#  History
+#		D Terrett  9 May 2001: original version
+#		M Bec     14 May 2001: timeout is estimated from numCoAdds and intTime
+#
 #  Copyright CCLRC
 #+
 
@@ -20,6 +24,9 @@ itcl::class NiriStep {
    private {
       method exposedone
       common Exposing
+	  common numCoAdds
+	  common intTime
+	  common minInt
       variable ExposeAction
    }
 }
@@ -53,8 +60,31 @@ itcl::body NiriStep::nextaction {after} {
          set ProgressMessage "Waiting for NIRI exposure to finish"
          update
          sa niri link observe [scope Exposing]
-         cs niriObserve set datalab value [format "%03d" $ListIndex]
-         $ExposeAction start
+         sa niriTiming link numCoAdds [scope numCoAdds]
+         sa niriTiming link intTime [scope intTime]
+         sa niriTiming link minInt [scope minInt]
+         
+		 cs niriObserve set datalab value [format "%03d" $ListIndex]
+         # configure the timeout to :
+		 # 30+2.5*intTime*numCoAdds
+		 # this seems 'too much' but is based on the timeout
+		 #  used by the gmos controller itself ...
+		 if [ catch {
+		 	# probably could use the common var...
+			set _intTime [sa niriTiming get intTime]
+			set _numCoAdds [sa niriTiming get numCoAdds]
+		 	set _minInt [sa niriTiming get minInt]
+			
+			set to [expr 30 + 2.5 * ( $_intTime + $_minInt) * $_numCoAdds]
+		 	# integer value (ceil ?)
+			set to [lindex [split $to .] 0]
+			$ExposeAction configure -timeout $to
+			# puts stdout "set timeout $to"
+			} msg ] {
+				puts stdout "Failed to estimate timeout value .. using default (60s)"
+				bell;bell;bell;
+				}
+		 $ExposeAction start
       }
       default {
          Step::nextaction $after
