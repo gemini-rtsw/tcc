@@ -7,7 +7,7 @@ static char rcsid[]="$Id:";
 *   FUNCTION NAME(S)
 *   tccPreviewCmd - Implements the tccPreview tcl command.
 *
-*   D L Terrett 13 December 2000
+*   D L Terrett 31 January 2001
 *
 *   Copyright CCLRC
 */
@@ -660,9 +660,30 @@ static int getTarget( Tcl_Interp *interp, int i)
     if ( TargetSet[i] ) {
        slaDr2tf( 3, Theta1[i], &sign1, hmsf);
        slaDr2af( 2, Theta2[i], &sign2, dmsf);
-       sprintf( result, "%02d:%02d:%02d.%03d %c%02d:%02d:%02d.%02d %c%f",
-           hmsf[0], hmsf[1], hmsf[2], hmsf[3], sign2, dmsf[0], dmsf[1], 
-           dmsf[2], dmsf[3], Equinox[i].type, Equinox[i].year);
+       switch ( System[i] ) {
+          case FK4:
+             sprintf( result, 
+                   "%02d:%02d:%02d.%03d %c%02d:%02d:%02d.%02d FK4 %c%.2f",
+                   hmsf[0], hmsf[1], hmsf[2], hmsf[3], sign2, dmsf[0], dmsf[1], 
+                   dmsf[2], dmsf[3], Equinox[i].type, Equinox[i].year);
+             break;
+          case FK5:
+             sprintf( result, 
+                   "%02d:%02d:%02d.%03d %c%02d:%02d:%02d.%02d FK5 %c%.2f",
+                   hmsf[0], hmsf[1], hmsf[2], hmsf[3], sign2, dmsf[0], dmsf[1], 
+                   dmsf[2], dmsf[3], Equinox[i].type, Equinox[i].year);
+             break;
+          case APPT:
+             sprintf( result, 
+                   "%02d:%02d:%02d.%03d %c%02d:%02d:%02d.%02d Apparent",
+                   hmsf[0], hmsf[1], hmsf[2], hmsf[3], sign2, dmsf[0], dmsf[1], 
+                   dmsf[2], dmsf[3]);
+             break;
+          case AZEL_TOPO:
+             sprintf( result, 
+                   "%.3f %.3f Topocentric Az/El", Theta1[i]/D2R, Theta2[i]/D2R);
+             break;
+        }
     }
     Tcl_SetResult( interp, result, TCL_VOLATILE);
     return TCL_OK;
@@ -681,39 +702,39 @@ static int getLimits( Tcl_Interp *interp)
     char val[5];
     if ( Azttl1 >= 0.0 ) {
         sprintf( val, "%4d", (int) floor(Azttl1));
-        Tcl_SetResult( interp, val, TCL_VOLATILE);
+        Tcl_AppendElement( interp, val);
     } else {
-        Tcl_SetResult( interp, "{}", TCL_VOLATILE);
+        Tcl_AppendElement( interp, "");
     }
     if ( Azttl2 >= 0.0 ) {
         sprintf( val, " %4d", (int) floor(Azttl2));
-        Tcl_SetResult( interp, val, TCL_VOLATILE);
+        Tcl_AppendElement( interp, val);
     } else {
-        Tcl_SetResult( interp, " {}", TCL_VOLATILE);
+        Tcl_AppendElement( interp, "");
     }
     if ( Elttl >= 0.0 ) {
         sprintf( val, " %4d", (int) floor(Elttl));
-        Tcl_SetResult( interp, val, TCL_VOLATILE);
+        Tcl_AppendElement( interp, val);
     } else {
-        Tcl_SetResult( interp, " {}", TCL_VOLATILE);
+        Tcl_AppendElement( interp, "");
     }
     if ( Rotttl1 >= 0.0 ) {
         sprintf( val, " %4d", (int) floor(Rotttl1));
-        Tcl_SetResult( interp, val, TCL_VOLATILE);
+        Tcl_AppendElement( interp, val);
     } else {
-        Tcl_SetResult( interp, " {}", TCL_VOLATILE);
+        Tcl_AppendElement( interp, "");
     }
     if ( Rotttl2 >= 0.0 ) {
         sprintf( val, " %4d", (int) floor(Rotttl2));
-        Tcl_SetResult( interp, val, TCL_VOLATILE);
+        Tcl_AppendElement( interp, val);
     } else {
-        Tcl_SetResult( interp, " {}", TCL_VOLATILE);
+        Tcl_AppendElement( interp, "");
     }
     if ( Zttl >= 0.0 ) {
         sprintf( val, " %4d", (int) floor(Zttl));
-        Tcl_SetResult( interp, val, TCL_VOLATILE);
+        Tcl_AppendElement( interp, val);
     } else {
-        Tcl_SetResult( interp, " {}", TCL_VOLATILE);
+        Tcl_AppendElement( interp, "");
     }
     return TCL_OK;
 }
