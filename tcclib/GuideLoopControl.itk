@@ -22,20 +22,15 @@ itcl::class GuideLoopControl {
    inherit itk::Widget
 
    constructor args {}
+   destructor {}
 
    private method m1mode state
    private method mtmode state
-   private method recolour {mech state}
+   private method m2mode state
+   private method wfsstart wfs
+   private method wfsstop wfs
+   private method recolour args
 
-   private variable pwfs1 0
-   private variable pwfs2 0
-   private variable oiwfs 0
-   private variable m1 0
-   private variable m1_sw 0
-   private variable m2 0
-   private variable m2_sw 0
-   private variable mt 0
-   private variable mt_sw 0
    private variable m1Weight
 }
 
@@ -55,10 +50,10 @@ itcl::body GuideLoopControl::constructor args {
 # WFS boxes
    foreach sys {pwfs1 pwfs2 oiwfs} {
       itk_component add ${sys}_off {
-         button $w.${sys}_off -text OFF -command [code $this recolour ${sys} 0]
+         LiveButton $w.${sys}_off -text OFF -command [code $this wfsstop $sys]
       }
       itk_component add ${sys}_on {
-         button $w.${sys}_on -text ON -command [code $this recolour ${sys} 1]
+         LiveButton $w.${sys}_on -text ON -command [code $this wfsstart $sys]
       }
       itk_component add ${sys}_setup {
          button $w.${sys}_setup -text SETUP
@@ -148,10 +143,10 @@ itcl::body GuideLoopControl::constructor args {
    $w create line 242 122 262 122 -width 3 -fill "" -tags {active m2_close}
    $w create line 252 107 262 122 -width 3 -fill white -tags {active m2_open}
    itk_component add m2open {
-      button $w.m2open -text OPEN -command [code $this recolour m2_sw 0]
+      LiveButton $w.m2open -text OPEN -command [code $this m2mode 0]
    }
    itk_component add m2close {
-      button $w.m2close -text CLOSE -command [code $this recolour m2_sw 1]
+      LiveButton $w.m2close -text CLOSE -command [code $this m2mode 1]
    }
    $w create window 242 137 -width 60 -height 20 -window $w.m2open
    $w create window 242 157 -width 60 -height 20 -window $w.m2close
@@ -204,20 +199,98 @@ itcl::body GuideLoopControl::constructor args {
 # Create the command senders required by this screen.
    if [catch {cs m1Guide info}] {
       epics cs m1Guide
-   }
-   if [catch {cs mountGuide info}] {
       epics cs mountGuide
+      epics cs m2Guide
+      epics cs pwfs1Observe
+      epics cs pwfs1StopObserve
+      epics cs pwfs2Observe
+      epics cs pwfs2StopObserve
+      epics cs oiwfsObserve
+      epics cs oiwfsStopObserve
+   }
+
+# Create status acceptor for guide state
+   if [catch {sa guideConfig info}] {
+      epics sa guideConfig
+   }
+
+# Monitor the guide states
+   foreach rec {p1state p2state oistate m2state absorbtilt m1state} {
+      sa guideConfig proc $rec [code $this recolour]
    }
 
    eval itk_initialize $args
 }
 
-body GuideLoopControl::recolour {mech state} {
+itcl::body GuideLoopControl::destructor {} {
+   foreach rec {p1state p2state oistate m2state absorbtilt m1state} {
+      sa guideConfig proc $rec [code $this recolour]
+   }
+}
+
+body GuideLoopControl::recolour args {
 
    set w $itk_component(canv)
 
-# Record the new state of the mechanism.
-   set $mech $state
+# Set state variables according to the values in the guideConfig status
+# acceptor.
+   switch [sa guideConfig get p1state value] {
+      Yes {
+         set pwfs1 1
+      }
+      No -
+      default {
+         set pwfs1 0
+      }
+   }
+   switch [sa guideConfig get p2state value] {
+      Yes {
+         set pwfs2 1
+      }
+      No -
+      default {
+         set pwfs2 0
+      }
+   }
+   switch [sa guideConfig get oistate value] {
+      Yes {
+         set oiwfs 1
+      }
+      No -
+      default {
+         set oiwfs 0
+      }
+   }
+   switch [sa guideConfig get m1state value] {
+      On {
+         set m1_sw 1
+      }
+      Off -
+      default {
+         set m1_sw 0
+      }
+   }
+   switch [sa guideConfig get m2state value] {
+      On {
+         set m2_sw 1
+      }
+      Off -
+      default {
+         set m2_sw 0
+      }
+   }
+   switch [sa guideConfig get absorbtilt value] {
+      3 {
+         set mt_sw 1
+      }
+      4 {
+         set mt_sw -1
+      }
+      0 -
+      default {
+         set mt_sw 0
+      }
+   }
 
    set pwfs 0
    set wfs 0
@@ -313,8 +386,6 @@ body GuideLoopControl::m1mode state {
             "Error posting m1Guide command: TCS reports \
             \"$msg\""
    }
-
-   recolour m1_sw $state
 }
 
 body GuideLoopControl::mtmode state {
@@ -322,7 +393,7 @@ body GuideLoopControl::mtmode state {
    cs mountGuide set mode [expr {$state ? "On" : "Off"}]
    if { $state == -1 } {
       cs mountGuide set source AG 
-   } elseif { $state == 1 } {
+   } else {
       cs mountGuide set source SCS 
    } 
    set p1 [$itk_component(mtWeight) get]
@@ -334,6 +405,43 @@ body GuideLoopControl::mtmode state {
             "Error posting mountGuide command: TCS reports \
             \"$msg\""
    }
+}
 
-   recolour mt_sw $state
+body GuideLoopControl::m2mode state {
+
+   cs m2Guide set state [expr {$state ? "On" : "Off"}]
+
+   if [catch {cs m2Guide post} msg] {
+      tk_messageBox -icon error -parent $itk_interior -message \
+            "Error posting m2GuideCOntrol command: TCS reports \
+            \"$msg\""
+   }
+}
+
+body GuideLoopControl::wfsstart wfs {
+
+   cs ${wfs}Observe set noexp -1
+   cs ${wfs}Observe set int 1
+   cs ${wfs}Observe set outopt DHS
+   cs ${wfs}Observe set label None
+   cs ${wfs}Observe set output QL
+   cs ${wfs}Observe set path .
+   cs ${wfs}Observe set name ${wfs}.fits
+
+   if [catch {cs ${wfs}Observe post} msg] {
+      tk_messageBox -icon error -parent $itk_interior -message \
+            "Error posting ${wfs}Observe command: TCS reports \
+            \"$msg\""
+   }
+}
+
+body GuideLoopControl::wfsstop wfs {
+
+   cs ${wfs}StopObserve set dummy MARK
+
+   if [catch {cs ${wfs}StopObserve post} msg] {
+      tk_messageBox -icon error -parent $itk_interior -message \
+            "Error posting ${wfs}StopObserve command: TCS reports \
+            \"$msg\""
+   }
 }
