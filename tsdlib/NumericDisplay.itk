@@ -11,7 +11,7 @@
 #
 #  options
 #
-#  D Terrett 24 January 1999
+#  D Terrett 6 June 1999
 #
 #  Copyright CCLRC
 #-
@@ -129,6 +129,17 @@ itcl::body NumericDisplay::constructor args {
       StatusField $w.base2 -labelmargin 5 -width 11 -entryborder 3 \
             -entryrelief groove
    }
+   itk_component add instrlab {
+      label $w.instrlab -text "INSTRUMENT:"
+   }
+   itk_component add instrx {
+      StatusField $w.instrx -labelmargin 5 -width 6 -entryborder 3 \
+            -entryrelief groove -anchor e -labeltext X
+   }
+   itk_component add instry {
+      StatusField $w.instry -labelmargin 5 -width 6 -entryborder 3 \
+            -entryrelief groove -anchor e -labeltext Y
+   }
 
 # Time.
    itk_component add time {
@@ -217,6 +228,9 @@ itcl::body NumericDisplay::constructor args {
          -sticky e -padx 3 -pady 3
    grid $itk_component(baselab) $itk_component(base1) $itk_component(base2) \
          -sticky e -padx 3 -pady 3
+   grid $itk_component(instrlab) $itk_component(instrx) $itk_component(instry) \
+         -sticky e -padx 3 -pady 3
+   grid configure $itk_component(instrx) $itk_component(instry) -sticky e
    grid $itk_component(mech) - - - - $itk_component(time) - -
    grid configure $itk_component(mech) -sticky w
    grid configure $itk_component(time) -sticky e
@@ -382,6 +396,10 @@ itcl::body NumericDisplay::update {} {
          [expr [lindex $target 2] * 206264.81 * cos( [lindex $target 1] )] ]
    $itk_component(off2) configure -text \
          [format "%10.2f" [expr [lindex $target 3] * 206264.81] ]
+
+   set xy [ast instrument $chop]
+   $itk_component(instrx) configure -text [lindex $xy 0]
+   $itk_component(instry) configure -text [lindex $xy 1]
 
 # Time.
    $itk_component(utc) configure -text [tccTime utc]
