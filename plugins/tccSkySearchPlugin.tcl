@@ -98,7 +98,7 @@ namespace eval TccSkyQuery {
             set pmdv [lindex $target $pmd]
             if { $pmav != "" && $pmdv != "" } {
                lappend args -pm1 [expr $pmav * 13750.987] \
-                     -pm2 [expr $pmdv * 206264.806] -pmunits sec-arcsec/year
+                     -pm2 [expr $pmdv * 206264.806] -pmunits sec-arcsecs/year
             }
          }
          if { $radvel != -1 } {

@@ -10,7 +10,7 @@
 #
 #  Methods:
 #
-#  D Terrett 10 June 2002
+#  D Terrett 7 October 2002
 #
 #  Copyright CCLRC
 #+
@@ -98,8 +98,9 @@ itcl::body TargetControl::constructor {args} {
 
 #  Coordinate frame.
    itk_component add cosys {
-      SubComponentSelector $w.cosys -labeltext "Coordinate system" \
-            -labelpos nw -selectioncommand [itcl::code $this checkcosys]
+      SubComponentSelector $w.cosys -labeltext "Coord system" \
+            -labelpos nw -selectioncommand [itcl::code $this checkcosys] \
+            -width 10
    }
    pack $itk_component(ra) $itk_component(dec) $itk_component(cosys) \
          -expand y -pady 10
@@ -124,8 +125,8 @@ itcl::body TargetControl::constructor {args} {
       iwidgets::optionmenu $w.pmunits -labeltext Units
    }
    [$itk_component(pmunits) component menuBtn] configure -anchor w
-   $itk_component(pmunits) insert 0 mas/year mas/century arcsec/year \
-         arcsec/century "sec-arcsec/year" "sec-arcsec/century"
+   $itk_component(pmunits) insert 0 mas/year mas/century arcsecs/year \
+         arcsecs/century sec-arcsecs/year sec-arcsecs/century
    itk_component add pm {
       frame $w.pm
    }
@@ -240,7 +241,7 @@ itcl::body TargetControl::load {name} {
          $itk_component(epoch) insert end [$name cget -epoch]
          set units [$name cget -pmunits]
          if { $units == "" } {
-            set units "sec-arcsec/year"
+            set units sec-arcsecs/year
          }
          $itk_component(pmunits) select $units
          $itk_component(pm1) insert end [$name cget -pm1]

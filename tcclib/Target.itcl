@@ -88,7 +88,7 @@
 #           save node     Saves the values of the target options to the
 #                         xml node.
 #
-#  D Terrett 11 July 2002
+#  D Terrett 7 October 2002
 #
 #  Copyright CCLRC
 #+
@@ -171,7 +171,7 @@ itcl::body Target::apply {comp} {
          cs $vt set epoch [list $epoch]
          cs $vt set parallax [list $parallax]
          if { [catch {set pm [pmconvert $c1 $c2 $pm1 $pm2 $pmunits]} ] } {
-            error "Unable to convert proper motions to sec & arcsec/year"
+            error "Unable to convert proper motions to secs & arcsecs/year"
          }
          cs $vt set dtheta1 [list [lindex $pm 0]]
          cs $vt set dtheta2 [list [lindex $pm 1]]
@@ -589,8 +589,9 @@ itcl::configbody Target::pm2 {
 }
 
 itcl::configbody Target::pmunits {
-   if { [lsearch -exact [list mas/year mas/century arcsec/year arcsec/century \
-         "sec-arcsec/year" "sec-arcsec/century" ""] $pmunits] == -1 } {
+   if { [lsearch -exact [list mas/year mas/century arcsecs/year \
+         arcsecs/century sec-arcsecs/year sec-arcsecs/century ""] $pmunits] == \
+         -1 } {
       error "invalid proper motion units"
    }
 }
@@ -670,7 +671,7 @@ itcl::configbody Target::type {
 
 itcl::body Target::pmconvert {c1 c2 pm1 pm2 pmunits} {
 
-# Returns the proper motions in seconds and arcsec per year (the units used 
+# Returns the proper motions in seconds and arcsecs per year (the units used 
 # by the TCS).
 
 # If both strings are blank then don't bother.
@@ -680,9 +681,9 @@ itcl::body Target::pmconvert {c1 c2 pm1 pm2 pmunits} {
 
 # Convert to per year.
       switch $pmunits {
-         arcsec/century -
+         arcsecs/century -
          mas/century -
-         sec-arcsec/century {
+         sec-arcsecs/century {
             if { [string is double -strict $pm1] } {
                set pm1 [expr {$pm1 / 100.0}]
             }
@@ -709,8 +710,8 @@ itcl::body Target::pmconvert {c1 c2 pm1 pm2 pmunits} {
       switch $pmunits {
          mas/year -
          mas/century -
-         arcsec/year -
-         arcsec/century {
+         arcsecs/year -
+         arcsecs/century {
             set AS2R 0.0000048481368111
             set raz [expr {[slaDafin $c1] * 15.0}]
             set decz [slaDafin $c2]
