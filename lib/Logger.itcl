@@ -15,13 +15,13 @@
 #          command cs    Writes the values of the command sender cs's
 #                        parameters to the log window.
 #
-#  D Terrett 31 May 2001
+#  D Terrett 26 October 2002
 #
 #  Copyright CCLRC
 #+
 
 itcl::class Logger {
-   constructor {apply applyC errMessage} {}
+   constructor {name apply applyC {errMessage ""}} {}
    public {
       method log {message}
       method command {cs}
@@ -34,26 +34,40 @@ itcl::class Logger {
       variable Apply
       variable ApplyC
       variable ErrMessage
+      variable Name
    }
 }
 
-itcl::body Logger::constructor {apply applyC errMessage} {
+itcl::body Logger::constructor {name apply applyC {errMessage ""}} {
+
+# Create status acceptors.
+   if { [catch {sa $apply info}] } {
+      epics sa $apply
+   }
+   if { [catch {sa $applyC info}] } {
+      epics sa $applyC
+   }
+   if { $errMessage != "" } {
+      if { [catch {sa $errMessage info}] } {
+         epics sa $errMessage
+      }
+   }
 
 # Set up monitors on the epics records of interest.
    sa $applyC proc clid [itcl::code $this monitor]
    sa $apply proc mess [itcl::code $this monitor]
-   sa $errMessage proc val [itcl::code $this monitor]
+   if { $errMessage != "" } {
+      sa $errMessage proc val [itcl::code $this monitor]
+   }
 
 # Save the record names.
    set Apply $apply
    set ApplyC $applyC
    set ErrMessage $errMessage
+   set Name $name
 }
 
 itcl::body Logger::monitor {record status time value} {
-
-# Get UTC timestamp for the message.
-   set utc [sa tcssad get UTC value]
 
 # Initialise message.
    set text ""
@@ -64,16 +78,16 @@ itcl::body Logger::monitor {record status time value} {
 
 # If the client ID was incremented then a command was accepted.
             if { $value > $clid } {
-                 set text "$utc: command accepted"
+                 set text "command accepted"
                  set clid $value
             }
          } \
          $ErrMessage.val {
-            set text "$utc: $value"
+            set text $value
          } \
          $Apply.mess {
             if { ! [string is space $value] } {
-               set text "$utc: rejected: $value"
+               set text "rejected: $value"
             }
          }
 
@@ -83,23 +97,19 @@ itcl::body Logger::monitor {record status time value} {
    }
 }
 
-itcl::body Logger::log message {
-   set text "[sa tcssad get UTC value]: $message"
+itcl::body Logger::log {message} {
 
 # Send the text to the logger.
-   send $text
+   send $message
 }
 
-itcl::body Logger::command cs {
-
-# Get UTC timestamp for the message.
-   set text [sa tcssad get UTC value]:
+itcl::body Logger::command {cs} {
 
 # Get the command info
    set info [cs $cs info]
 
 # Write the name of the command.
-   set text "$text [lindex $info 1]"
+   set text [lindex $info 1]
 
 # Get the names of the commands parameters.
    set params [lindex $info 3]
@@ -123,10 +133,10 @@ itcl::body Logger::command cs {
    send $text
 }
 
-itcl::body Logger::send text {
+itcl::body Logger::send {text} {
    set panel [logPanel cget -name]
    if { [winfo exists $panel] } {
        set logwindow [$panel component control]
-       $logwindow add $text
+       $logwindow add "[sa tcssad get UTC value]:($Name) $text"
    }
 }
