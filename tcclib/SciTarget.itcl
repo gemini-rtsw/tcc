@@ -59,13 +59,11 @@
 itcl::class SciTarget {
    inherit Target
 
-   constructor args {}
+   public proc subcomponents {} {return [Target::subcomponents]}
 
-   public proc subcomponents {}
-
-   public method apply vt {}
+   public method apply vt
    public method init
-   public method preview vt {}
+   public method preview vt
    public method save file
 
 # Type "planet"
@@ -86,54 +84,11 @@ itcl::class SciTarget {
    public variable dailymot {}
 }
 
-itcl::body SciTarget::subcomponents {} {
-   return { \
-      {cosys Cosys CosysNames CosysList {Coordinate System} {}} \
-      {wavelength Wavelength WavelengthNames WavelengthList {Wavelength} {}} \
-      {trackrate TrackRate TrackRateNames TrackRateList {Differential Track Rate} {}} \
-   }
-}
-
-itcl::body SciTarget::constructor args {
-   eval configure $args
-}
-
 itcl::body SciTarget::apply vt {
 
+   $this Target::apply $vt
+
    switch $type {
-      radec {
-         cs $vt set objName \"$objName\"
-         if { $cosys == "" } {
-            cs $vt set system FK5
-            cs $vt set equinox J2000
-         } else {
-            CosysNames::$cosys apply $vt
-         }
-         cs $vt set theta1 \"[lindex $radec 0]\"
-         cs $vt set theta2 \"[lindex $radec 1]\"
-         cs $vt set epoch \"$epoch\"
-         cs $vt set parallax \"$parallax\"
-         if { $pm != "" } {
-            cs $vt set dtheta1 \"[lindex $pm 0]\"
-            cs $vt set dtheta2 \"[lindex $pm 1]\"
-         } else {
-            cs $vt set dtheta1 \"\"
-            cs $vt set dtheta2 \"\"
-         }
-         cs $vt set rv \"$rv\"
-      }
-      azel {
-         cs $vt set objName \"$objName\"
-         cs $vt set system \"AZEL_TOPO\"
-         cs $vt set equinox \"\"
-         cs $vt set theta1 \"[lindex $azel 0]\"
-         cs $vt set theta2 \"[lindex $azel 1]\"
-         cs $vt set epoch \"\"
-         cs $vt set parallax \"\"
-         cs $vt set dtheta1 \"\"
-         cs $vt set dtheta2 \"\"
-         cs $vt set rv \"\"
-      }
       planet {
          cs $vt set planet $planet
       }
@@ -168,19 +123,6 @@ itcl::body SciTarget::apply vt {
          }
       }
    }
-   if { $wavelength_name != "" } {
-      if { [info commands ::WavelengthNames::$wavelength_name] != "" } {
-         ::WavelengthNames::$wavelength_name apply $vt
-      }
-   } else {
-      if { $wavelength_value != "" } {
-         Target::$Wavelength configure -wavel $wavelength_value
-         Target::$Wavelength apply $vt
-      }
-   }
-   if { [info commands ::TrackRateNames::$trackrate] != "" } {
-      ::TrackRateNames::$trackrate apply $vt
-   }
 }
 
 itcl::body SciTarget::init {} {
@@ -202,21 +144,8 @@ itcl::body SciTarget::init {} {
 
 itcl::body SciTarget::preview vt {
 
-   if { $cosys == "" } {
-      set system FK5
-      set equinox J2000
-   } else {
-      set system [CosysNames::$cosys cget -frame]
-      set equinox [CosysNames::$cosys cget -equinox]
-   }
+   $this Target::preview $vt
    switch $type {
-      radec {
-         tccPreview set $vt $system [lindex $radec 0] [lindex $radec 1] \
-               $equinox $epoch
-      }
-      azel {
-         tccPreview set $vt AZEL_TOPO [lindex $azel 0] [lindex $azel 1]
-      }
       planet {
          tccPreview set planet $planet
       }
@@ -237,35 +166,11 @@ itcl::body SciTarget::preview vt {
          }
       }
    }
-   if { $wavelength_name != "" } {
-      if { [info commands ::WavelengthNames::$wavelength_name] != "" } {
-         ::WavelengthNames::$wavelength_name preview $vt
-      }
-   } else {
-      if { $wavelength_value != "" } {
-         Target::$Wavelength configure -wavel $wavelength_value
-         Target::$Wavelength preview $vt
-      }
-   }
-   if { [info commands ::TrackRateNames::$trackrate] != "" } {
-      ::TrackRateNames::$trackrate preview $vt
-   }
 }
 
 itcl::body SciTarget::save file {
-   puts $file "   -objName \"$objName\" \\"
+   $this Target::save $file
    switch $type {
-      radec {
-         puts $file "   -cosys \"$cosys\" \\"
-         puts $file "   -radec \"$radec\" \\"
-         puts $file "   -epoch \"$epoch\" \\"
-         puts $file "   -parallax \"$parallax\" \\"
-         puts $file "   -pm \"$pm\" \\"
-         puts $file "   -rv \"$rv\" \\"
-      }
-      azel {
-         puts $file "   -azel \"$azel\" \\"
-      }
       planet {
          puts $file "   -planet \"$planet\" \\"
       }
@@ -291,7 +196,4 @@ itcl::body SciTarget::save file {
          }
       }
    }
-   puts $file "   -wavelength_name \"$wavelength_name\" \\"
-   puts $file "   -wavelength_value \"$wavelength_value\" \\"
-   puts $file "   -trackrate \"$trackrate\""
 }

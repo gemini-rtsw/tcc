@@ -115,9 +115,9 @@ itcl::body Target::constructor args {
 
 itcl::body Target::apply vt {
 
-   cs $vt set objName \"$objName\"
    switch $type {
       radec {
+         cs $vt set objName \"$objName\"
          if { $cosys == "" } {
             cs $vt set system FK5
             cs $vt set equinox J2000
@@ -138,6 +138,7 @@ itcl::body Target::apply vt {
          cs $vt set rv \"$rv\"
       }
       azel {
+         cs $vt set objName \"$objName\"
          cs $vt set system \"AZEL_TOPO\"
          cs $vt set equinox \"\"
          cs $vt set theta1 \"[lindex $azel 0]\"
