@@ -191,5 +191,9 @@ puts gpolwait
 # GPOL is parked so we can put the HRWFS fold in.
       cs hrwfs set hwfold value IN
       logger command hrwfs
+      if { [catch {cs hrwfs post} msg] } {
+         tk_messageBox -icon error -message \
+               "Error posting commands: TCS reports \"$msg\""
+      }
    }
 }
