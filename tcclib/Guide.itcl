@@ -94,19 +94,19 @@ itcl::body Guide::apply args {
 
 # Call the apply method of all the targets that have a value and set the
 # enable flags.
-   if { [string length [info commands ::WfsTargetNames::$pwfs1Target]] } {
+   if { $pwfs1Target != "" } {
       ::WfsTargetNames::$pwfs1Target apply pwfs1
       setEnableFlags pwfs1 $pwfs1Chop $pwfs1Nod
    } else {
       setEnableFlags pwfs1 "" ""
    }
-   if { [string length [info commands ::WfsTargetNames::$pwfs2Target]] } {
+   if { $pwfs2Target != "" } {
       ::WfsTargetNames::$pwfs2Target apply pwfs2
       setEnableFlags pwfs2 $pwfs2Chop $pwfs2Nod
    } else {
       setEnableFlags pwfs2 "" ""
    }
-   if { [string length [info commands ::WfsTargetNames::$oiwfsTarget]] } {
+   if { $oiwfsTarget != "" } {
       ::WfsTargetNames::$oiwfsTarget apply oiwfs
       setEnableFlags oiwfs $oiwfsChop $oiwfsNod
    } else {
@@ -127,13 +127,13 @@ itcl::body Guide::init {} {
 }
 
 itcl::body Guide::preview {} {
-   if { [string length [info commands ::WfsTargetNames::$pwfs1Target]] } {
+   if { $pwfs1Target != "" } {
       ::WfsTargetNames::$pwfs1Target preview pwfs1
    }
-   if { [string length [info commands ::WfsTargetNames::$pwfs2Target]] } {
+   if { $pwfs2Target != "" } {
       ::WfsTargetNames::$pwfs2Target preview pwfs2
    }
-   if { [string length [info commands ::WfsTargetNames::$oiwfsTarget]] } {
+   if { $oiwfsTarget != "" } {
       ::WfsTargetNames::$oiwfsTarget preview oiwfs
    }
 }

@@ -151,7 +151,7 @@ itcl::body Target::apply vt {
       }
    }
    if { $wavelength_name != "" } {
-      if { [info commands ::WavelengthNames::$wavelength_name] != "" } {
+      if { $wavelength_name != "" } {
          ::WavelengthNames::$wavelength_name apply $vt
       }
    } else {
@@ -160,7 +160,7 @@ itcl::body Target::apply vt {
          $Wavelength apply $vt
       }
    }
-   if { [info commands ::TrackRateNames::$trackrate] != "" } {
+   if { $trackrate != "" } {
       ::TrackRateNames::$trackrate apply $vt
    }
 }
@@ -201,16 +201,14 @@ itcl::body Target::preview vt {
    }
       
    if { $wavelength_name != "" } {
-      if { [info commands ::WavelengthNames::$wavelength_name] != "" } {
-         ::WavelengthNames::$wavelength_name preview $vt
-      }
+      ::WavelengthNames::$wavelength_name preview $vt
    } else {
       if { $wavelength_value != "" } {
          $Wavelength configure -wavel $wavelength_value
          $Wavelength preview $vt
       }
    }
-   if { [info commands ::TrackRateNames::$trackrate] != "" } {
+   if { $trackrate != "" } {
       ::TrackRateNames::$trackrate preview $vt
    }
 }
