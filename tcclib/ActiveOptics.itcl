@@ -58,24 +58,6 @@ itcl::body ActiveOptics::constructor {args} {
    if { [catch {cs wfsGuideMode info}] } {
       epics cs wfsGuideMode
    }
-   if { [catch {cs pwfs1Observe info}] } {
-      epics cs pwfs1Observe
-   }
-   if { [catch {cs pwfs1StopObserve info}] } {
-      epics cs pwfs1StopObserve
-   }
-   if { [catch {cs pwfs2Observe info}] } {
-      epics cs pwfs2Observe
-   }
-   if { [catch {cs pwfs2StopObserve info}] } {
-      epics cs pwfs2StopObserve
-   }
-   if { [catch {cs oiwfsObserve info}] } {
-      epics cs oiwfsObserve
-   }
-   if { [catch {cs oiwfsStopObserve info}] } {
-      epics cs oiwfsStopObserve
-   }
    if { [catch {cs oiwfsSelect info}] } {
       epics cs oiwfsSelect
    }
@@ -274,21 +256,18 @@ itcl::body ActiveOptics::enable {} {
       logger command wfsGuideMode
    }
 
-   foreach wfs {pwfs1 pwfs2 oiwfs} {
+   foreach wfs {pwfs1 pwfs2 oiwfs} wfsobj {Pwfs1 Pwfs2 Oiwfs} {
 
 # Stop the WFS we don't want.
       if { [state $wfs] && ! [set ${wfs}Active] } {
-         cs ${wfs}StopObserve set dummy 1
-         logger command ${wfs}StopObserve
+         $wfsobj stop
       }
 
 # Start all the active ones.
-      if { [set ${wfs}Active] && ! [state $wfs] } {
-         cs ${wfs}Observe set noexp -1
-         cs ${wfs}Observe set int [set ${wfs}Expose]
-         cs ${wfs}Observe set outopt NONE
-         cs ${wfs}Observe set output ""
-         logger command ${wfs}Observe
+      if { [set ${wfs}Active] } {
+         $wfsobj configure -exposetime [set ${wfs}Expose] \
+               -mode seq -quicklook 0
+         $wfsobj start -1
       }
    }
 
@@ -303,12 +282,9 @@ itcl::body ActiveOptics::enable {} {
 itcl::body ActiveOptics::disable {} {
 
 # Stop the wave-front sensors.
-   cs pwfs1StopObserve set dummy 1
-   logger command pwfs1StopObserve
-   cs pwfs2StopObserve set dummy 1
-   logger command pwfs2StopObserve
-   cs oiwfsStopObserve set dummy 1
-   logger command oiwfsStopObserve
+   Pwfs1 stop
+   Pwfs2 stop
+   Oiwfs stop
 
 # Turn off M2.
    cs m2Guide set state Off

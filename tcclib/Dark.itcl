@@ -15,7 +15,7 @@
 #
 #     4. Zero the offset
 #
-#  D Terrett 14 January 2004
+#  D Terrett 16 January 2004
 #
 #  Copyright CCLRC
 #-
@@ -33,6 +33,7 @@ itcl::class Dark {
       method isinposition {}
       method isexposedone {}
       variable wfsname
+      variable wfsobj
       variable seqdark
       variable disableaction
       variable offsetaction
@@ -60,9 +61,13 @@ itcl::body Dark::constructor {wfs} {
    switch $wfs {
       p1 {
          $offsetaction set targetAdjust vt -16
+         set wfsname pwfs1
+         set wfsobj Pwfs1
       }
       p2 {
          $offsetaction set targetAdjust vt -32
+         set wfsname pwfs2
+         set wfsobj Pwfs2
       }
    }
 
@@ -70,13 +75,8 @@ itcl::body Dark::constructor {wfs} {
    set exposeaction [seq::Action #auto tcs \
       -waitvar [itcl::scope Exposing(value)] \
       -onok [itcl::code $this zero] \
-      -oktest [itcl::code $this isexposedone]]
-   $exposeaction connect ${wfs}SeqDark
-
-# Save the names of the command senders and the WFS for constructing
-# the file name.
-   set seqdark ${wfs}SeqDark
-   set wfsname $wfs
+      -oktest [itcl::code $this isexposedone] \
+      -onstart "$wfsobj start 1"]
 }
 
 itcl::body Dark::destructor {} {
@@ -104,28 +104,20 @@ itcl::body Dark::offset {} {
 itcl::body Dark::expose {} {
 
 # Link to WFS exposing flag.
-   sa guideConfig link ${wfsname}state [itcl::scope Exposing]
-
-# Construct the file name from the WFS name and the exposure time.
    switch $wfsname {
-      p1 {
-         set exp [cs pwfs1Observe get int]
-         set name pwfs1
+      pwfs1 {
+         sa guideConfig link p1state [itcl::scope Exposing]
       }
-      p2 {
-         set exp [cs pwfs2Observe get int]
-         set name pwfs2
+      pwfs2 {
+         sa guideConfig link p2state [itcl::scope Exposing]
       }
    }
-   set filename [expr { int(1.0/$exp)}]Hz.fits
 
-# Set the file name.
-   $exposeaction set $seqdark filename \
-         [file join /gemini/files/wfs/ $name $filename]
+# Configure the WFS object.
+   $wfsobj configure -mode sky
 
 # Take the dark.
    $exposeaction start
-   logger command $seqdark
 }
 
 itcl::body Dark::zero {} {
@@ -142,6 +134,13 @@ itcl::body Dark::isinposition {} {
 }
 
 itcl::body Dark::isexposedone {} {
-   set val [sa guideConfig get ${wfsname}state]
+   switch $wfsname {
+      pwfs1 {
+         set val [sa guideConfig get p1state]
+      }
+      pwfs2 {
+         set val [sa guideConfig get p2state]
+      }
+   }
    return [string equal $val No]
 }

@@ -15,6 +15,7 @@
 itcl::class ObserveControl {
    inherit itk::Widget
    constructor args {}
+   destructor {}
    public {
       method reset {} {$itk_component(guideloop) reset}
    }
@@ -26,9 +27,9 @@ itcl::class ObserveControl {
       method wfsql {}
       method wfsstop {}
       method selwfs {}
-      variable wfs pwfs1   
-      variable pwfs1Dark
-      variable pwfs2Dark
+      variable wfs Pwfs1   
+      variable Pwfs1Dark
+      variable Pwfs2Dark
    }
 }
 
@@ -227,10 +228,15 @@ itcl::body ObserveControl::constructor args {
    }
 
 # Create the objects for taking darks.
-   set pwfs1Dark [Dark #auto p1]
-   set pwfs2Dark [Dark #auto p2]
+   set Pwfs1Dark [Dark #auto p1]
+   set Pwfs2Dark [Dark #auto p2]
 
    eval itk_initialize $args
+}
+
+itcl::body ObserveControl::destructor {} {
+   itcl::delete object $Pwfs1Dark
+   itcl::delete object $Pwfs2Dark
 }
 
 itcl::body ObserveControl::setfold {path} {
@@ -287,40 +293,28 @@ itcl::body ObserveControl::wfssky {} {
 itcl::body ObserveControl::wfsstop {} {
 
 # Stop the selected WFS.
-   cs ${wfs}StopObserve set dummy 1
-   logger command ${wfs}StopObserve
-   cs tcsApply post
+   $wfs stop
 }
 
 itcl::body ObserveControl::wfsql {} {
 
 # Start the selected WFS with the quick-look tool.
-   wfsstop
-   after 10
-   cs ${wfs}Observe set noexp -1
-   cs ${wfs}Observe set int [AO cget -${wfs}Expose]
-   cs ${wfs}Observe set outopt DHS
-   cs ${wfs}Observe set output QL
-   logger command ${wfs}Observe
-   if { [catch {cs tcsApply post} msg] } {
-      tk_messageBox -icon error -message \
-            "Error posting ${wfs}Observe command: TCS reports \
-            \"$msg\""
-   }
+   $wfs configure -quicklook 1
+   $wfs start -1
 }
 
 itcl::body ObserveControl::selwfs {} {
    switch [$itk_component(wfssel) get] {
       P1 {
-         set wfs pwfs1
+         set wfs Pwfs1
          $itk_component(dark) configure -state normal
       }
       P2 {
-         set wfs pwfs2
+         set wfs Pwfs2
          $itk_component(dark) configure -state normal
       }
       OI {
-         set wfs oiwfs
+         set wfs Oiwfs
          $itk_component(dark) configure -state disabled
       }
    }
