@@ -24,7 +24,7 @@
 #          save file     Writes the values of the pointing origin options
 #                        to the channel identifier "file".
 #
-#  D Terrett 21 April 2001
+#  D Terrett 22 April 2001
 #
 #  Copyright CCLRC
 #+
@@ -42,20 +42,22 @@ itcl::class PointOrig {
 }
 
 itcl::body PointOrig::apply vt {
+   set xmm [expr {$x * 0.62056151}]
+   set ymm [expr {$y * 0.62056151}]
    switch $vt {
       sourceA {
-         cs poriginA set x [list $x]
-         cs poriginA set y [list $y]
+         cs poriginA set x [list $xmm]
+         cs poriginA set y [list $ymm]
          logger command poriginA
       }
       sourceB {
-         cs poriginB set x [list $x]
-         cs poriginB set y [list $y]
+         cs poriginB set x [list $xmm]
+         cs poriginB set y [list $ymm]
          logger command poriginB
       }
       sourceC {
-         cs poriginC set x [list $x]
-         cs poriginC set y [list $y]
+         cs poriginC set x [list $xmm]
+         cs poriginC set y [list $ymm]
          logger command poriginC
       }
       all {
@@ -72,7 +74,7 @@ itcl::body PointOrig::init {} {
 }
 
 itcl::body PointOrig::preview item {
-   tccPreview set $item $x $y
+   tccPreview set $item [expr {$x * 0.62056151}] [expr {$y * 0.62056151}]
 }
 
 itcl::body PointOrig::save file {
@@ -81,17 +83,25 @@ itcl::body PointOrig::save file {
 }
 
 itcl::configbody PointOrig::x {
-   if { [string equal [namespace tail $this] "Rotator axis"] } {
-      if { $x != 0.0 } {
-         error "Rotator Axis must have x = 0.0"
+   if { [string is double -strict $x] } {
+      if { [string equal [namespace tail $this] "Rotator axis"] } {
+         if { $x != 0.0 } {
+            error "Rotator Axis must have X = 0.0"
+         }
       }
+   } else {
+      error "Instrument origin X \"$x\" is not a number"
    }
 }
 
 itcl::configbody PointOrig::y {
-   if { [string equal [namespace tail $this] "Rotator axis"] } {
-      if { $y != 0.0 } {
-         error "Rotator Axis must have y = 0.0"
+   if { [string is double -strict $y] } {
+      if { [string equal [namespace tail $this] "Rotator axis"] } {
+         if { $y != 0.0 } {
+            error "Rotator Axis must have Y = 0.0"
+         }
       }
+   } else {
+      error "Instrument origin Y \"$y\" is not a number"
    }
 }
