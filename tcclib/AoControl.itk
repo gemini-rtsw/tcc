@@ -132,7 +132,7 @@ itcl::body AoControl::correct {arg} {
          cs aoFlatten set dummy 1
          logger command aoFlatten
          cs aoCorrect set correct ON
-         cs aoCorrect set matrix ""
+         cs aoCorrect set matrix 0
          cs aoCorrect set gains 0
       }
       OFF {
@@ -155,7 +155,7 @@ itcl::body AoControl::closeloop {} {
 
 # Post ALTAIR correct command.
    cs aoCorrect set correct ON
-   cs aoCorrect set matrix ""
+   cs aoCorrect set matrix 0
    cs aoCorrect set gains 0
    logger command aoCorrect
    if { [catch {cs tcsApply post} msg] } {
