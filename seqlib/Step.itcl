@@ -1,7 +1,7 @@
 #+
 # Step.itcl
 #
-# D Terrett 8 May 2001
+# D Terrett 24 May 2001
 #
 # Copyright CLRC
 #+
@@ -9,19 +9,25 @@
 itcl::class Step {
    constructor {args} {}
    destructor {}
-   public proc platescale {platescale} {set PlateScale $platescale}
+   public proc platescale {value} {set PlateScale $value}
+   public proc maxguidestep {value} {set MaxGuideStep $value}
+   public proc maxguideoffset {value} {set MaxGuideOffset $value}
+   public proc wfs {value} {set WFS [string tolower $value]}
    public proc start {{step ""}}
    public proc stop
    public proc pause {} {set Paused 1}
    public proc step
    public {
-      common PlateScale 1.0
       common Paused 0
       common ProgressMessage "Idle"
       common CurrentStep ""
       common NextStep ""
       common CurrentP
       common CurrentQ
+      common PlateScale 1.0
+      common MaxGuideStep 1.5
+      common MaxGuideOffset 40.0
+      common WFS p2
       variable Next {}
       variable MoveAction
       variable Canvas {}
@@ -32,7 +38,6 @@ itcl::class Step {
       variable GuideOnAction
       variable GuideOffAction
       variable Expose 1
-      variable MaxGuideStep 1.5
    }
    protected {
       method nextaction {after}
@@ -45,7 +50,8 @@ itcl::class Step {
       method finish
       method isinposition
       common InPosition
-      variable ToggleGuide
+      variable EnableGuide
+      variable DisableGuide
    }
 }
 
@@ -66,6 +72,7 @@ itcl::body Step::constructor {args} {
          -ontimeout [itcl::code $this error "timed out"]
    $GuideOnAction set mountGuide mode on
    $GuideOnAction set m2Guide state on
+   $GuideOnAction set ${WFS}Follow followState on
 
    set GuideOffAction [namespace current]::[seq::Action #auto tcs]
    $GuideOffAction configure -onok "$MoveAction start" \
@@ -88,13 +95,33 @@ itcl::body Step::begin {} {
 
    sa tcssad link inPosition [scope InPosition]
 
+# Check the net offset against the maximum distance from the base to guide
+# on.
+   if { ($X * $X + $Y * $Y) > ($MaxGuideOffset * $MaxGuideOffset) } {
+      set DisableGuide 1
+      set EnableGuide 0
+   } else {
+
 # Check the distance of the move against the maximum step without disabling
 # guiding.
-   set dx [expr {[sa tcssad get xoffsetPoA1 value] - $X}]
-   set dy [expr {[sa tcssad get yoffsetPoA1 value] - $Y}]
+      set dx [expr {[sa tcssad get xoffsetPoA1 value] - $X}]
+      set dy [expr {[sa tcssad get yoffsetPoA1 value] - $Y}]
 
-   set ToggleGuide \
-         [expr { ($dx * $dx + $dy * $dy) > ($MaxGuideStep * $MaxGuideStep) }]
+      if { ($dx * $dx + $dy * $dy) > ($MaxGuideStep * $MaxGuideStep) } {
+         set DisableGuide 1
+         set EnableGuide 1
+      } else {
+         set DisableGuide 0
+         set EnableGuide 1
+      }
+   }
+
+# Configure the Guide Off action to disable or enable follow as appropriate.
+   if { $EnableGuide } {
+      $GuideOffAction set ${WFS}Follow followState on
+   } else {
+      $GuideOffAction set ${WFS}Follow followState off
+   }
 
 # Set the current step, next step and position.
    set CurrentStep $this
@@ -118,14 +145,14 @@ itcl::body Step::nextaction {after} {
       start {
          set ProgressMessage "Moving telescope"
          update
-         if { $ToggleGuide } {
+         if { $DisableGuide } {
             $GuideOffAction start
          } else {
             $MoveAction start
          } 
       }
       move {
-         if { $ToggleGuide } {
+         if { $EnableGuide } {
             $GuideOnAction start
          } else {
             nextaction offset
