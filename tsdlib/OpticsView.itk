@@ -11,7 +11,7 @@
 #          -centralbaffle     The position of the central baffle (OPEN or
 #                             CLOSED).
 #
-#          -calunit           Calibration unit on (boolean)
+#          -calunit           Calibration unit shutter position (OPEN or CLOSE)
 #
 #          -deployablebaffle  The postion of the deployable baffle (RETRACTED,
 #                             "NEAR IR", VISIBLE or EXTENDED).
@@ -49,7 +49,7 @@
 #                             according to the state of the configuration
 #                             options.
 #
-#  D Terrett  22 April 2001
+#  D Terrett  24 April 2001
 #
 #  Copyright CCLRC
 #-
@@ -73,7 +73,7 @@ itcl::class OpticsView {
    itk_option define -port4label port4Label Label "" "relabel 4"
    itk_option define -port5label port5Label Label "" "relabel 5"
    itk_option define -pcsstate pcsState PcsState OFF
-   itk_option define -calunit calUnit CalUnit OFF
+   itk_option define -calunit calUnit CalUnit CLOSE
    public {
       method update {}
    }
@@ -467,6 +467,9 @@ itcl::body OpticsView::update {} {
    }
    $c itemconfigure SkyLight -fill $l
 
+# Assume no light emerging from the ISS.
+   set outport ""
+
    if { $itk_option(-m1cover) == "OPENED" } {
       $c itemconfigure M1Light -fill $l
       if { $itk_option(-holecover) == "OPENED" } {
@@ -487,9 +490,7 @@ itcl::body OpticsView::update {} {
          }
 
 # Determine which (if any) ISS port the beam emerges from
-         if { $inport == "" } {
-            set outport ""
-         } else {
+         if { $inport != "" } {
             if { $scfoldpos == "" } {
                if { $inport == "0" } {
                   set outport 1
@@ -508,50 +509,51 @@ itcl::body OpticsView::update {} {
                      set outport [string index $scfoldpos 0]
                   } elseif { $inport == [string index $scfoldpos 0] } {
                      set outport [string index $scfoldpos 1]
-                  } else {
-                     set outport ""
                   }
                }
             }
          }
-
-# Configure the emerging beam
-         $c itemconfigure IssLight${outport} -fill $l
+      }
+   }
 
 # Configure light from the calibration unit.
-         if { [string equal $itk_option(-calunit) ON] } {
-            $c itemconfigure IssLight4 -fill $l
-            switch $scfoldpos {
-               40 -
-               04 {
-                  $c itemconfigure AoLight -fill $l
-               }
-               43 -
-               34 {
-                  $c itemconfigure IssLight3 -fill $l
-               }
-               45 -
-               54 {
-                  $c itemconfigure IssLight5 -fill $l
-               }
-               14 -
-               41 {
-                  $c itemconfigure IssLight1 -fill $l
-               }
-               "" {
-                  $c itemconfigure IssLight2 -fill $l
-               }
-            }
+   if { [string equal $itk_option(-calunit) OPEN] } {
+      $c itemconfigure IssLight4 -fill $l
+      switch $scfoldpos {
+         40 -
+         04 {
+            $c itemconfigure AoLight -fill $l
          }
+         43 -
+         34 {
+            $c itemconfigure IssLight3 -fill $l
+         }
+         45 -
+         54 {
+            $c itemconfigure IssLight5 -fill $l
+         }
+         14 -
+         41 {
+            $c itemconfigure IssLight1 -fill $l
+            set outport 1
+         }
+         "" {
+            $c itemconfigure IssLight2 -fill $l
+         }
+      }
+   }
+
+# Configure the emerging beam
+   if { $outport != "" } {
+      $c itemconfigure IssLight${outport} -fill $l
+   }
 
 # Configure the beam from the HRWFS to the upward looking ISS face or HRWFS
-         if { $outport == "1" } {
-            if { $itk_option(-hrwfs) == "IN" } {
-               $c itemconfigure TvInLight -fill $l
-            } else {
-               $c itemconfigure TvOutLight -fill $l
-            }
-         }
+   if { $outport == "1" } {
+      if { $itk_option(-hrwfs) == "IN" } {
+         $c itemconfigure TvInLight -fill $l
+      } else {
+         $c itemconfigure TvOutLight -fill $l
       }
    }
 
