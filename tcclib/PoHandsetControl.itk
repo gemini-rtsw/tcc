@@ -1,0 +1,153 @@
+#+
+#  PoHandsetControl.itk
+#
+#  Implements the PoHandsetControl widget.
+#
+#  D Terrett 5 January 1999
+#
+#  Copyright CCLRC
+#+
+
+itcl::class PoHandsetControl {
+   inherit itk::Widget
+
+   constructor args {}
+
+   private method offset dir
+   private method newstep size
+   private method offpars par
+   private method setvt
+}
+
+itk::usual PoHandsetControl {
+   keep -background -borderwidth -cursor -foreground 
+   keep -highlightcolor  -highlightthickness -insertbackground 
+   keep -insertborderwidth  -insertofftime -insertontime -insertwidth 
+   keep -labelfont  -selectbackground -selectborderwidth -selectforeground  
+   keep -textbackground -textfont
+   keep -font
+}
+
+itcl::body PoHandsetControl::constructor args {
+
+# StepSize widget for setting the step associated with the paddle buttons.
+   itk_component add top {
+      frame $itk_interior.top -bd 2 -relief groove
+   }
+   pack $itk_component(top)
+
+   set w $itk_component(top)
+   itk_component add stepsize {
+      StepSize $w.stepsize -text "Step size (mm)" \
+            -command [code $this newstep]
+   }
+   pack $itk_component(stepsize)
+
+   itk_component add mid {
+      frame $itk_interior.mid
+   }
+   pack $itk_component(mid)
+   set w $itk_component(mid)
+
+# Radio buttons for selecting which offset to adjust.
+   itk_component add sel {
+      iwidgets::radiobox $w.sel -command [code $this setvt]
+   }
+   $itk_component(sel) add Mount -text Mount
+   $itk_component(sel) add A -text A
+   $itk_component(sel) add B -text B
+   $itk_component(sel) add C -text C
+   $itk_component(sel) add Source -text A+B+C
+   $itk_component(sel) add All -text All
+   $itk_component(sel) select A
+   pack $itk_component(sel) -side right
+
+# Paddle buttons.
+   itk_component add paddle {
+      HandPaddleButtons $w.paddle \
+            -upcommand [code $this offset D] -uplabel +Y\
+            -downcommand [code $this offset U] -downlabel -Y \
+            -leftcommand [code $this offset R] -leftlabel +X \
+            -rightcommand [code $this offset L] -rightlabel -X
+   }
+   pack $itk_component(paddle)
+
+# Slider for adjusting the angle of the buttons.
+   itk_component add slider {
+      scale $itk_interior.slider -orient horizontal -to [expr 3.14159 * 2] \
+            -command "$itk_component(paddle) configure -angle" \
+            -resolution .01 -showvalue no
+   }
+   pack $itk_component(slider) -fill x -expand y
+
+# Buttons for clearing and absorbing the pointing origin offsets.
+   itk_component add bot {
+      frame $itk_interior.bot
+   }
+   pack $itk_component(bot) -expand yes -fill x
+   set w $itk_component(bot)
+   itk_component add absorb {
+      ApplyButton $w.absorb -command absorbPoOffset -text "Absorb" -width 8 \
+            -parcommand [code $this offpars]
+   }
+   itk_component add clear {
+      ApplyButton $w.clear -command clearPoOffset -text "Clear" -width 8 \
+            -parcommand [code $this offpars]
+   }
+   pack $itk_component(absorb) $itk_component(clear) -side left -expand y \
+         -pady 4
+
+# Set the default step size in the TCS
+   newstep 1.0
+
+   eval itk_initialize $args
+}
+
+itcl::body PoHandsetControl::offset dir {
+   cs poHandset set direction $dir
+   if [catch {cs tcsApply post} msg] {
+      tk_messageBox -icon error -parent $itk_interior -message \
+            "Error adjusting pointing origin: TCS reports \"$msg\""
+   }
+}
+
+itcl::body PoHandsetControl::newstep size {
+   cs poHandConfig set step $size
+   if [catch {cs tcsApply post} msg] {
+      tk_messageBox -icon error -parent $itk_interior -message \
+            "Error setting step size: TCS reports \"$msg\""
+   }
+}
+
+itcl::body PoHandsetControl::offpars par {
+   switch $par {
+      vt {
+         set vt [$itk_component(sel) get]
+         switch $vt {
+            Mount {return Mount}
+            A {return "Source A"}
+            B {return "Source B"}
+            C {return "Source C"}
+            Source {return Source}
+            All {return All}
+         }
+      }
+      index {return 0}
+   }
+}
+
+itcl::body PoHandsetControl::setvt {} {
+   set vt [$itk_component(sel) get]
+   switch $vt {
+      Mount { cs poHandConfig set tel Mount }
+      A { cs poHandConfig set tel "\"Source A\"" }
+      B { cs poHandConfig set tel "\"Source B\"" }
+      C { cs poHandConfig set tel "\"Source C\"" }
+      Source { cs poHandConfig set tel Source }
+      All { cs poHandConfig set tel All }
+   }
+   if [catch {cs tcsApply post} msg] {
+      tk_messageBox -icon error -parent $itk_interior -message \
+            "Error setting virtual telescope: TCS reports \"$msg\""
+   }
+}

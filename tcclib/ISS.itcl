@@ -1,0 +1,105 @@
+#+
+#  ISS.itcl
+#
+#  Implements the ISS class. An ISS object (of which only one is expected to
+#  exist) maps the observing mode (Sky, Calibration or TV) and AO
+#  configuration (in or out) into the necessary configuration of the fold
+#  mirrors in the instrument support structure. The "update" method actually
+#  moves the mirrors to the desired positions.
+#
+#  D Terrett 17 November 1998
+#
+#  Copyright CCLRC
+#+
+
+itcl::class ISS {
+
+   public method update {}
+
+   private method position {}
+
+   public variable mode SKY position
+   public variable ao OUT position
+   public variable port 1 position
+
+   private variable scfold ""
+   private variable hwfold ""
+   private variable aofold ""
+}
+
+itcl::body ISS::position {} {
+
+# Assume that we won't need to move the HRWFS or AO fold.
+   set hrfold ""
+   set aofold ""
+
+# The position of the AO fold depends only on the AO configuration
+   set aofold $ao
+
+# If the mode is TV then the HRWFS fold must be IN and the science fold 
+# either retracted (no AO) or set to reflect port 2 (which is where the AO 
+# unit is attached) to port 1 (the upward looking port).
+   if { $mode == "TV" } {
+      set hwfold IN
+      if { $ao == "IN" } {
+         set scfold 8
+      } else {
+         set scfold "OUT"
+      }
+   } elseif { $mode == "SKY" } {
+
+# If the active ISS port is the upward looking one then the HRWFS fold must
+# be OUT.
+      if { $port == 1 } {
+         set hwfold OUT
+         if { $ao == "IN" } {
+            set scfold 8
+         } else {
+            set scfold OUT
+         }
+      } else {
+
+# Otherwise the the HRWFS fold can be left where it is and the science fold
+# position just depends on whether the AO is in or out.
+         if { $ao == "IN" } {
+            switch $port {
+               3 {set scfold 4}
+               5 {set scfold 7}
+            }
+         } else {
+            switch $port {
+               3 {set scfold 0}
+               5 {set scfold 2}
+            }
+         }
+      }
+   } else {
+
+# Remaning mode is CAL.
+      switch $port {
+         1 {set scfold 11}
+         3 {set scfold 5}
+         5 {set scfold 9}
+      }
+   }
+}
+
+itcl::body ISS::update {} {
+   if { $hwfold != "" } {
+      cs hrwfs set hwfold value $hwfold
+      logger log "set HRWFS fold $hwfold"
+   }
+   if { $aofold != "" } {
+      cs aoFold set aofold value $aofold
+      logger log "set AO fold $aofold"
+   }
+   if { $scfold != "" } {
+      if { $scfold == "OUT" } {
+         cs scienceFoldPark set scfoldPark value MARK
+         logger log "Park science fold"
+      } else {
+         cs scienceFold set scfold value $scfold
+         logger log "set science fold $aofold"
+      }
+   }
+}

@@ -1,0 +1,439 @@
+#+
+#  OpticsView.itk
+#
+#  Implements the OpticsView widget.
+#
+#  methods
+#
+#  D Terrett 10 March 1999
+#
+#  Copyright CCLRC
+#-
+
+itcl::class OpticsView {
+   inherit itk::Widget
+
+   constructor args {}
+
+   itk_option define -m1cover m1Cover M1Cover open redraw
+   itk_option define -holecover holeCover HoleCover open redraw
+   itk_option define -centralbaffle centralBaffle CentralBaffle "" redraw
+   itk_option define -deployablebaffle deployableBaffle DeployableBaffle 0 redraw
+   itk_option define -aofold aoFold AoFold out redraw
+   itk_option define -scfold scFold ScFold 0 redraw
+   itk_option define -hrwfs hrwfs Hrwfs in redraw
+   itk_option define -aopresent aoPresent AoPresent 1 {}
+   itk_option define -vignette vignette Vignette 0 redraw
+   itk_option define -port1label port1Label Label "Port 1" "relabel 1"
+   itk_option define -port2label port2Label Label "" {}
+   itk_option define -port3label port3Label Label "Port 3" "relabel 3"
+   itk_option define -port4label port4Label Label "Cal Unit" "relabel 4"
+   itk_option define -port5label port5Label Label "Port 5" "relabel 5"
+
+   private method redraw {}
+   private method relabel port
+}
+
+itk::usual OpticsView {
+   keep -background -cursor
+   keep -insertbackground -insertborderwidth -insertwidth
+   keep -insertontime -insertofftime
+   keep -selectbackground -selectborderwidth -selectforeground
+   keep -highlightcolor -highlightthickness
+   keep -aopresent -port1label -port2label -port3label -port5label
+   keep -m1cover -holecover -aofold -scfold -hrwfs -deployablebaffle
+   keep -centralbaffle
+}
+
+itcl::body OpticsView::constructor args {
+
+# The picture is drawn to a scale of about 25 pixels per metre. The canvas
+# is therefore 10m wide (8m + room for the AO box) and 20 meters high ( 4m 
+# behind the primary + 12m separation between M1 and M2 + a bit of space
+# above M2).
+#
+# Everything is created as if 0,0 was at the bottom left of the picture
+# and then scaled by -1 in y to flip it the right way up and moved down by
+# 570 pixels into their proper positions.
+
+   itk_component add canvas {
+      canvas $itk_interior.canvas -width 240 -height 570
+   }
+   pack $itk_component(canvas)
+   set c $itk_component(canvas)
+
+# M1 cover open
+   $c create line -100 127 -100 150 -width 5 -tags M1coverOp
+   $c create line 100 127 100 150 -width 5 -tags M1coverOp
+
+# M1 cover closed
+   $c create line -100 127  -80 143  -60 127  -40 143  -20 127  0 143  20 127 \
+          40 143  60 127  80 143  100 127 -tags M1coverCl
+
+# Central hole cover open
+   $c create line -12 110  -12 122 -width 2 -tags holeCoverOp
+   $c create line 12 110  12 122 -width 2 -tags holeCoverOp
+
+# Central hole cover closed
+   $c create line -12 110  12 110 -width 2 -tags holeCoverCl
+
+# M2 deployable baffle in several positions
+   $c create line -15 399 -15 378 -width 2 -tags deployableBaffle0
+   $c create line 16 399 16 378 -width 2 -tags deployableBaffle0
+
+   $c create line -15 399 -25 383 -width 2 -tags deployableBaffle1
+   $c create line 16 399 26 383 -width 2 -tags deployableBaffle1
+
+   $c create line -15 399 -31 390 -width 2 -tags deployableBaffle2
+   $c create line 16 399 32 390 -width 2 -tags deployableBaffle2
+
+   $c create line -15 399 -33 399 -width 2 -tags deployableBaffle3
+   $c create line 16 399 34 399 -width 2 -tags deployableBaffle3
+
+# M2 central baffle closed
+   $c create line -9 405 9 410 -width 2 -tags centralBaffleCl
+
+# M2 central baffle open
+   $c create line -9 405 -9 427 -width 2 -tags centralBaffleOp
+
+# M2 fixed stuff
+   $c create line -9 400 -9 405 -fill black -width 2
+   $c create line 9 400 9 410 -fill black -width 2
+   $c create rectangle -14 400 14 381 -outline black
+
+# Iss ports
+   $c create oval 35 70 65 40 -outline black -tags aoport -fill gray \
+         -stipple gray50
+   $c create oval -35 70 -65 40 -outline black
+   $c create oval 35 20 65 -10 -outline black
+   $c create oval -35 20 -65 -10 -outline black -fill gray -stipple gray50
+   $c create oval -15 -85 15 -115 -outline black
+
+# Iss port labels
+   $c create text 0 -120 -anchor n -tags port1label
+   $c create text 40 95 -anchor w -tags port2label
+   $c create text -40 95 -anchor e -tags port3label
+   $c create text -40 -35 -anchor e -tags port4label
+   $c create text 40 -35 -anchor w -tags port5label
+
+# A&G outline
+   $c create arc -100 90 100 -30 -style arc -start -80 -extent 340 \
+         -outline black -tags ag
+
+# Aquisition TV / HRWFS
+   $c create rectangle  80 -50 100 -70 -outline black
+   $c create rectangle  75 -65 80 -55 -outline black
+
+# Incoming light beams
+   $c create line -80 420 -80 143 -width 4 -tags SkyLight
+   $c create line 80 420 80 143 -width 4 -tags SkyLight
+
+# M1 to central hole cover
+   $c create line -80 143 -80 111 -width 4 -tags {Light M1Light}
+   $c create line 80 143 80 111 -width 4 -tags {Light M1Light}
+   $c create line -80 111 -4 378 -width 4 -tags {Light M1Light}
+   $c create line 80 111 4 378 -width 4 -tags {Light M1Light}
+   $c create line 0 378 0 111 -width 6 -tags {Light M1Light}
+
+# M2 to sky
+   $c create line 0 378 0 420 -width 4 -tags {Light M2Light}
+
+# Central hole cover to AO fold
+   $c create line 0 111 0 65 -width 6 -tags {Light CHLight}
+
+# AO to Science fold
+   $c create line 0 65  80 95 -width 6 -tags {Light AoLight}
+   $c lower \
+         [$c create line 80 95  80 70  50 55 -width 6 -tags {Light AoLight}] \
+         aoport
+   $c create line 0 65  80 95  -width 6 -tags {Light AoLightNoAo}
+   $c create line 0 65  0 30 -width 6 -tags {Light NotAoLight}
+
+# Science fold to ISS face/HRWFS fold
+   $c create line 0 30 0 -60 -width 6 -tags {Light IssLight1}
+   $c create line 0 30 50 55 -width 6 -tags {Light IssLight2 AoLight}
+   $c create line 0 30 -50 55 -width 6 -tags {Light IssLight3}
+   $c create line 0 30 -50 5 -width 6 -tags {Light IssLight4}
+   $c create line 0 30 50 5 -width 6 -tags {Light IssLight5}
+
+# HRWFS fold to ISS face
+   $c create line 0 -60 0 -100 -width 6 -tags {Light TvOutLight}
+
+# HRWFS fold to HRWFS
+   $c create line 0 -60 75 -60 -width 6 -tags {Light TvInLight}
+
+# M1 (in 2 pieces, one each side of the central hole)
+   $c create polygon \
+          -100 110  -100 110  -100 127  -100 127 -75 123  -50 121 \
+          -12 120  -12 120  -12 110  -12 110  \
+          -smooth 1 -fill white -tags M1left
+
+# The other half is created by reflecting in x
+   eval $c create polygon [$c coords M1left] -smooth 1 -fill white -tags M1right
+   $c scale M1right 0 0 -1 1
+
+# M2
+   $c create arc -200 378 200 1380 -start 275 -extent -10 -style arc \
+         -outline white -width 3 -tags M2
+
+# AO fold
+   $c create line -9 74 9 54 -width 2 -tags AoFold
+   $c create line -11 72 7 53 -tags AoFoldBck
+
+# Science fold in various positions
+   $c create line -20 29 20 29 -width 2 -tags {ScFold ScFold32}
+   $c create line -20 27 20 27 -tags {ScFold ScFold32bck}
+
+   eval $c create line [$c coords ScFold32] -width 2 -tags {{ScFold ScFold54}}
+   eval $c create line [$c coords ScFold32bck] -tags {{ScFold ScFold54bck}}
+   $c scale ScFold54 0 30 1 -1
+   $c scale ScFold54bck 0 30 1 -1
+
+   $c create line -1 10 -1 50 -width 2 -tags {ScFold ScFold25}
+   $c create line -3 10 -3 50 -tags {ScFold ScFold25bck}
+
+   eval $c create line [$c coords ScFold25] -width 2 -tags {{ScFold ScFold34}}
+   eval $c create line [$c coords ScFold25bck] -tags {{ScFold ScFold34bck}}
+   $c scale ScFold34 0 30 -1 1
+   $c scale ScFold34bck 0 30 -1 1
+
+   $c create line -10 13 10 47 -width 2 -tags {ScFold ScFoldU4}
+   $c create line -9 11 11 45 -tags {ScFold ScFoldU4bck}
+
+   eval $c create line [$c coords ScFoldU4] -width 2 -tags {{ScFold ScFoldU5}}
+   eval $c create line [$c coords ScFoldU4bck] -tags {{ScFold ScFoldU5bck}}
+   $c scale ScFoldU5 0 30 -1 1
+   $c scale ScFoldU5bck 0 30 -1 1
+
+   eval $c create line [$c coords ScFoldU4] -width 2 -tags {{ScFold ScFold31}}
+   eval $c create line [$c coords ScFoldU4bck] -tags {{ScFold ScFold31bck}}
+   $c scale ScFold31 0 30 1 -1
+   $c scale ScFold31bck 0 30 1 -1
+
+   eval $c create line [$c coords ScFold31] -width 2 -tags {{ScFold ScFold21}}
+   eval $c create line [$c coords ScFold31bck] -tags {{ScFold ScFold21bck}}
+   $c scale ScFold21 0 30 -1 1
+   $c scale ScFold21bck 0 30 -1 1
+
+   $c create line -17 20 17 40 -width 2 -tags {ScFold ScFoldU3}
+   $c create line -15 19 19 39 -tags {ScFold ScFoldU3bck}
+
+   eval $c create line [$c coords ScFoldU3] -width 2 -tags {{ScFold ScFoldU2}}
+   eval $c create line [$c coords ScFoldU3bck] -tags {{ScFold ScFoldU2bck}}
+   $c scale ScFoldU2 0 30 -1 1
+   $c scale ScFoldU2bck 0 30 -1 1
+
+   eval $c create line [$c coords ScFoldU3] -width 2 -tags {{ScFold ScFold41}}
+   eval $c create line [$c coords ScFoldU3bck] -tags {{ScFold ScFold41bck}}
+   $c scale ScFold41 0 30 1 -1
+   $c scale ScFold41bck 0 30 1 -1
+
+   eval $c create line [$c coords ScFold41] -width 2 -tags {{ScFold ScFold51}}
+   eval $c create line [$c coords ScFold41bck] -tags {{ScFold ScFold51bck}}
+   $c scale ScFold51 0 30 -1 1
+   $c scale ScFold51bck 0 30 -1 1
+
+# HRWFS fold
+   $c create line -9 -51 9 -69 -width 2 -tags HrwfsFold
+   $c create line -11 -53 7 -70 -tags HrwfsFoldBck
+
+# Flip and move
+   $c scale all 0 0 1 -1
+   $c move all 120 430
+
+   eval itk_initialize $args
+}
+
+itcl::body OpticsView::redraw {} {
+
+# Set the visibiliy of elements of the drawing according to the state of
+# the configuration options.
+
+   set c $itk_component(canvas)
+   set SfNames {U3 U2 U5 U4 32 34 31 25 21 54 51 41}
+
+# Filter out any unset or unknown positions.
+   if { $itk_option(-m1cover) == "" || $itk_option(-m1cover) == "string" } {
+      set itk_option(-m1cover) PARK
+   }
+   if { $itk_option(-holecover) == "" || $itk_option(-holecover) == "string" } {
+      set itk_option(-holecover) PARK
+   }
+   if { $itk_option(-centralbaffle) == "" || \
+      $itk_option(-centralbaffle) == "string" } {
+      set itk_option(-centralbaffle) PARK
+   }
+   if { $itk_option(-deployablebaffle) == "" || \
+      $itk_option(-deployablebaffle) == "string" } {
+      set itk_option(-deployablebaffle) PARK
+   }
+   if { $itk_option(-scfold) == "" || $itk_option(-scfold) == "string" } {
+      set itk_option(-scfold) PARK
+   }
+   if { $itk_option(-aofold) == "" || $itk_option(-aofold) == "string" } {
+      set itk_option(-aofold) PARK
+   }
+   if { $itk_option(-hrwfs) == "" || $itk_option(-hrwfs) == "string" } {
+      set itk_option(-hrwfs) PARK
+   }
+
+# Configure the M1 cover
+   if { $itk_option(-m1cover) == "closed" } {
+      $c itemconfigure M1coverCl -fill black
+      $c itemconfigure M1coverOp -fill ""
+   } else {
+      $c itemconfigure M1coverCl -fill ""
+      $c itemconfigure M1coverOp -fill black
+   }
+
+# Configure central hole cover
+   if { $itk_option(-holecover) == "closed" } {
+      $c itemconfigure holeCoverCl -fill black
+      $c itemconfigure holeCoverOp -fill ""
+   } else {
+      $c itemconfigure holeCoverCl -fill ""
+      $c itemconfigure holeCoverOp -fill black
+   }
+
+# Configure the central baffle
+   $c itemconfigure centralBaffleOp -fill ""
+   $c itemconfigure centralBaffleCl -fill ""
+   if { $itk_option(-centralbaffle) == "POSITION 1" } {
+      $c itemconfigure centralBaffleCl -fill black
+   } else {
+      if { $itk_option(-centralbaffle) == "POSITION 2" } {
+         $c itemconfigure centralBaffleOp -fill black
+      }
+   }
+
+# Configure the deployable baffle
+   $c itemconfigure deployableBaffle0 -fill ""
+   $c itemconfigure deployableBaffle1 -fill ""
+   $c itemconfigure deployableBaffle2 -fill ""
+   $c itemconfigure deployableBaffle3 -fill ""
+   if { $itk_option(-deployablebaffle) == "RETRACTED " } {
+      $c itemconfigure deployableBaffle0 -fill black
+   } elseif { $itk_option(-deployablebaffle) == "POSITION 1" } {
+      $c itemconfigure deployableBaffle1 -fill black
+   } elseif { $itk_option(-deployablebaffle) == "POSITION 2" } {
+      $c itemconfigure deployableBaffle2 -fill black
+   } elseif { $itk_option(-deployablebaffle) == " EXTENDED " } {
+      $c itemconfigure deployableBaffle3 -fill black
+   }
+
+# Configure the AO fold mirror
+   if { $itk_option(-aofold) == "IN" } {
+      $c itemconfigure AoFold -fill white
+      $c itemconfigure AoFoldBck -fill black
+   } else {
+      $c itemconfigure AoFold -fill ""
+      $c itemconfigure AoFoldBck -fill ""
+   }
+
+# Configure the science fold mirror
+   $c itemconfigure ScFold -fill ""
+   set scfoldpos ""
+   if { $itk_option(-scfold) != "PARK" && $itk_option(-scfold) != "INVALID" } {
+      set scfoldpos [lindex $SfNames $itk_option(-scfold)]
+      $c itemconfigure ScFold${scfoldpos} -fill white
+      $c itemconfigure ScFold${scfoldpos}bck -fill black
+   }
+
+# Configure the HRWFS fold mirror
+   if { $itk_option(-hrwfs) == "IN" } {
+      $c itemconfigure HrwfsFold -fill white
+      $c itemconfigure HrwfsFoldBck -fill black
+   } else {
+      $c itemconfigure HrwfsFold -fill ""
+      $c itemconfigure HrwfsFoldBck -fill ""
+   }
+
+# Configure the light path
+   $c itemconfigure Light -fill ""
+   if { $itk_option(-vignette) == 0 } {
+      set l yellow
+   } else {
+      set l grey
+   }
+   $c itemconfigure SkyLight -fill $l
+
+   if { $itk_option(-m1cover) == "open" } {
+      $c itemconfigure M1Light -fill $l
+      if { $itk_option(-holecover) == "open" } {
+         $c itemconfigure CHLight -fill $l
+
+# Deal with the AO fold mirror position
+         if { $itk_option(-aofold) != "IN" } {
+            $c itemconfigure NotAoLight -fill $l
+            set inport U
+         } else {
+            if { $itk_option(-aopresent) == 1 } {
+               $c itemconfigure AoLight -fill $l
+               set inport 2
+            } else {
+               $c itemconfigure AoLightNoAo -fill $l
+               set inport ""
+            }
+         }
+
+# Determine which (if any) ISS port the beam emerges from
+         if { $inport == "" } {
+            set outport ""
+         } else {
+            if { $scfoldpos == "" } {
+               if { $inport == "U" } {
+                  set outport 1
+               } else {
+                  set outport 4
+               }
+            } else {
+               if { $inport == [string index $scfoldpos 0] } {
+                  set outport [string index $scfoldpos 1]
+               } else {
+                  if { $inport == [string index $scfoldpos 1] } {
+                     set outport [string index $scfoldpos 0]
+                  } else {
+                     set outport ""
+                  }
+               }
+            }
+         }
+
+# Configure the emerging beam
+         $c itemconfigure IssLight${outport} -fill $l
+
+# Configure the beam from the HRWFS to the upward looking ISS face or HRWFS
+         if { $outport == "1" } {
+            if { $itk_option(-hrwfs) == "IN" } {
+               $c itemconfigure TvInLight -fill $l
+            } else {
+               $c itemconfigure TvOutLight -fill $l
+            }
+         }
+      }
+   }
+
+# Configure light from M2 to sky
+   if { $itk_option(-centralbaffle) == "POSITION 2" } {
+      $c itemconfigure M2Light -fill $l
+   }
+}
+
+itcl::body OpticsView::relabel port {
+   $itk_component(canvas) itemconfigure port${port}label \
+         -text $itk_option(-port${port}label)
+}
+
+itcl::configbody OpticsView::aopresent {
+   if { $itk_option(-aopresent) == 1 } {
+      $itk_component(canvas) itemconfigure port2label -text AO
+   } else {
+      relabel 2
+   }
+}
+
+itcl::configbody OpticsView::port2label {
+   if { $itk_option(-aopresent) == 0 } {
+      relabel 2
+   }
+}

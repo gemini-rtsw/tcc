@@ -1,0 +1,198 @@
+#+
+#  PanelMgr.itcl
+#
+#  Implements the PanelMgr class. A PanelMgr object encapsulates the 
+#  information needed to create a panel window and map it onto the screen 
+#  specified by the layout manager. The panel window is created by calling 
+#  the panel object's  map method.
+#
+#  Destroying the PanelMgr object does not destroy the panel window - PanelMgr
+#  objects are not intended to be destroyed.
+#
+#  Methods:
+#
+#     map
+#
+#        Creates the panel window or maps it into the screen if it already
+#        exists.
+#
+#     withdraw
+#
+#        Withdraws the window if it exists.
+#
+#     iconify
+#
+#        Iconifies the window if it exists.
+#
+#     updategeometry
+#
+#       Updates the -geometry option from the panel window (if it exists).
+#
+#  Options:
+#
+#     name
+#
+#        The name to be used for the real panel window.
+#
+#     class
+#
+#        The class of the real panel window.
+#
+#     title
+#
+#        The window title.
+#
+#     screen
+#
+#        The screen on which the window should be create. If this option
+#        is changed after the window has been created, it is destroyed
+#        and recreated.
+#
+#     geometry
+#
+#        The window's geometry. This option is not updated if the window
+#        is moved using the window manager.
+#
+#     windows
+#
+#        A list of the control windows that this panel contains.
+#
+#     create
+#
+#        Whether the window should be created as the system is started up.
+#        This option is only used to decide whether to write a "map" call
+#        into the layout initialisation file.
+#
+#  D Terrett 25 November 1998
+#
+#  Copyright CCLRC
+#+
+
+itcl::class PanelMgr {
+
+   constructor args {
+      eval configure $args
+   }
+
+   public method map
+   public method withdraw
+   public method iconify
+   public method updategeometry
+
+   public variable name ""
+   public variable class ""
+   public variable title ""
+   public variable windows ""
+   public variable screen ""
+   public variable geometry ""
+   public variable state normal
+   public variable create 0 
+}
+
+itcl::body PanelMgr::map {} {
+#-
+# Maps a panel onto the screen. If it doesn't exist it is created on the
+# screen specified by the -screen option.
+#
+# Putting an itk toplevel widget on another screen involves a horrible
+# hack. The widget doesn't have a -screen option and it isn't possible to
+# add one because the options are configured after the window has been
+# created and it is then too late. So, we rename the toplevel command
+# and define a new toplevel command that includes the -screen option.
+#
+# The widget creation then has to be protected by "catch" because if it
+# fails, tk can't create a top level window to report the error.
+#-
+
+# If the window already exists then just map it and raise it.
+   if [winfo exists $name] {
+      wm deiconify $name
+      raise $name
+      return 0
+   } else {
+
+# If the screen name isn't blank then save the toplevel command and re-define
+# it to add the -screen option.
+      if { $screen != "" } {
+         rename ::toplevel ::realToplevel
+         proc ::toplevel args "
+            eval realToplevel \$args -screen $screen
+         "
+         if [catch {$class $name} errMsg] {
+            rename ::toplevel ""
+            rename ::realToplevel ::toplevel
+            tk_messageBox -icon error -message \
+               "Error creating panel \"$name\" on screen \"$screen\": $errMsg"
+            $class $name
+         } else {
+
+# Restore the toplevel command.
+            rename ::toplevel ""
+            rename ::realToplevel ::toplevel
+         }
+      } else {
+
+# Otherwise, just create the panel.
+         $class $name
+      }
+
+# Position the window if a position was specified.
+      if { $geometry != "" } {
+         wm geometry $name $geometry
+      }
+
+# Configure the title and parent PanelMgr object name of the window.
+      $name configure -title $title -panelmgr $this
+
+# Store the names of the windows that the panel contains.
+      set windows [$name cget -windows]
+
+      return 1
+   }
+}
+
+itcl::body PanelMgr::withdraw {} {
+   if [winfo exists $name] {
+      wm withdraw $name
+   }
+}
+
+itcl::body PanelMgr::iconify {} {
+   if [winfo exists $name] {
+      wm iconify $name
+   }
+}
+
+itcl::body PanelMgr::updategeometry {} {
+   if [winfo exists $name] {
+      set geometry [wm geometry $name]
+      set state [wm state $name]
+   }
+}
+
+itcl::configbody PanelMgr::title {
+   if [winfo exists $name] {
+      $name configure -title $title
+   }
+}
+
+itcl::configbody PanelMgr::geometry {
+   if [winfo exists $name] {
+      wm geometry $name $geometry
+   }
+}
+
+itcl::configbody PanelMgr::screen {
+   if [winfo exists $name] {
+      set oldscreen [winfo screen [winfo toplevel $name]]
+      if { $screen == "" } {
+         set newscreen [winfo screen .]
+      } else {
+         set newscreen $screen
+      }
+      if { $newscreen != $oldscreen } {
+          destroy $name
+          $this map
+      }
+   }
+}

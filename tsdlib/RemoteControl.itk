@@ -1,0 +1,111 @@
+#+
+#  RemoteControl.itk
+#
+#  Implements the RemoteControl widget; a widget with controls for setting
+#  the configurable aspects of the main status display.
+#
+#  D Terrett 3 December 1998
+#
+#  Copyright CCLRC
+#-
+
+itcl::class RemoteControl {
+   inherit itk::Widget
+
+   constructor args {}
+
+   private method config {}
+}
+
+itk::usual RemoteControl {
+   keep -background -cursor -foreground -font
+   keep -highlightcolor -highlightthickness
+   keep -activebackground -activeborderwidth -activeforeground
+   keep -borderwidth -disabledforeground -foreground -labelfont
+   keep -popupcursor
+   keep -insertbackground -insertborderwidth
+   keep -insertofftime -insertontime -insertwidth 
+   keep -selectbackground -selectborderwidth -selectforeground 
+   keep -textbackground -textfont
+}
+
+itcl::body RemoteControl::constructor args {
+
+# Frame for target configuration controls.
+   itk_component add target {
+      frame $itk_interior.target -bd 2 -relief sunken
+   }
+   pack $itk_component(target) -padx 2 -pady 2 -fill x -expand y
+   set w $itk_component(target)
+
+   itk_component add tlabel {
+      label $w.tlabel -text "Target Display"
+   }
+   itk_component add vt {
+      iwidgets::optionmenu $w.vt -labeltext VT \
+            -command [code $this config]
+   }
+   $itk_component(vt) insert end "Source A" "Source B"
+   pack $itk_component(tlabel) -pady 4
+   pack $itk_component(vt)
+
+# Frame for ISS port label controls.
+   itk_component add issport {
+      frame $itk_interior.issport -bd 2 -relief sunken
+   }
+   pack $itk_component(issport) -padx 2 -pady 2 -fill x -expand y
+   set w $itk_component(issport)
+
+   itk_component add plabel {
+      label $w.plabel -text "ISS Port Label"
+   }
+   itk_component add port {
+      iwidgets::optionmenu $w.port -command [code $this config]
+   }
+   $itk_component(port) insert end  "Port 1" "Port 3" "Port 5"
+   itk_component add label {
+      iwidgets::entryfield $w.label -width 10 -command [code $this config]
+   }
+   pack $itk_component(plabel)
+   pack $itk_component(port) $itk_component(label) -side left
+
+# temporary stuff until it is available from the SAD...
+   pack [iwidgets::optionmenu $itk_interior.m1cover -labeltext "M1 cover" \
+         -labelpos nw -command  ".graphicPanel configure \
+         -m1cover \[$itk_interior.m1cover get\]"]
+   $itk_interior.m1cover insert end open closed
+   pack [iwidgets::optionmenu $itk_interior.holecover \
+         -labeltext "M1 hole cover" \
+         -labelpos nw -command ".graphicPanel configure \
+         -holecover \[$itk_interior.holecover get\]"]
+   $itk_interior.holecover insert end open closed
+#...
+
+   eval itk_initialize $args
+}
+
+
+itcl::body RemoteControl::config {} {
+   if [winfo exist .numericPanel] {
+      switch [$itk_component(vt) get] {
+         "Source A" {set vt sourceA}
+         "Source B" {set vt sourceB}
+         "Source C" {set vt sourceC}
+         PWFS1 {set vt pwfs1}
+         PWFS2 {set vt pwfs2}
+         OIWFS {set vt oiwfs}
+         Mount {set vt mount}
+      }
+      .numericPanel configure -vt $vt
+   }
+   if { [winfo exists .graphicPanel] } {
+      switch [$itk_component(port) get] {
+         "Port 1" {set port -port1label}
+         "Port 2" {set port -port2label}
+         "Port 3" {set port -port3label}
+         "Port 4" {set port -port4label}
+         "Port 5" {set port -port5label}
+      }
+      .graphicPanel configure $port [$itk_component(label) get]
+   }
+}

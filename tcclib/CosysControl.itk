@@ -1,0 +1,90 @@
+#+
+#  CosysControl.itk
+#
+#  Implements the CosysControl widget. A ComponentControl widget with
+#  an optionmenu for the system and an entryfield widget for the equinox.
+#
+#  D Terrett 3 November 1998
+#
+#  Copyright CCLRC
+#+
+
+itcl::class CosysControl {
+   inherit ComponentControl
+
+   constructor args {}
+
+   itk_option define -vt vt Vt {}
+
+   public method selectobj name
+   public method updateobj name
+}
+
+itk::usual CosysControl {
+   keep -activebackground -activeforeground -disabledforeground
+   keep -background -borderwidth -cursor -foreground -highlightcolor
+   keep -highlightthickness -insertbackground -insertborderwidth
+   keep -insertofftime -insertontime -insertwidth -labelfont -popupcursor
+   keep -selectbackground -selectborderwidth -selectforeground
+   keep -textbackground -textfont -font
+   keep -vt -title
+}
+
+itcl::body CosysControl::constructor args {
+
+   itk_component add cframe {
+      frame $itk_interior.cframe -bd 2 -relief ridge
+   }
+   pack $itk_component(cframe)
+   set w $itk_component(cframe)
+
+# Option menu for the frame
+   itk_component add frame {
+      iwidgets::optionmenu $w.frame \
+            -labeltext [lindex [cs sourceA info system] 2]
+   }
+   $itk_component(frame) insert end FK5 FK4 Appt
+
+# Entryfield for the equinox.
+   itk_component add equinox {
+      iwidgets::entryfield $w.equinox \
+            -labeltext [lindex [cs sourceA info equinox] 2] \
+            -width 8
+   }
+   pack $itk_component(frame) $itk_component(equinox) -padx 4 -pady 4
+
+# Create the cosys object used by apply.
+   set scratchobj [namespace which -command [Cosys #auto]]
+
+# Set the object class.
+   set objclass CosysComponent
+   set description "Coordinate system"
+
+   eval itk_initialize $args
+}
+
+itcl::body CosysControl::updateobj name {
+#+
+# Updates the named cosys object.
+#-
+   $name configure -frame [$itk_component(frame) get] \
+         -equinox [$itk_component(equinox) get]
+}
+
+itcl::body CosysControl::selectobj name {
+#+
+# Copies the contents of the Cosys object selected in the combobox
+# into the edit controls.
+#-
+   $itk_component(equinox) clear
+
+   if { $name != "" } {
+      $itk_component(frame) select [$name cget -frame]
+      $itk_component(equinox) insert end [$name cget -equinox]
+   }
+}
+
+itcl::configbody CosysControl::vt {
+   $itk_component(storeapply) configure \
+         -logmessage "$itk_option(-vt) coordinate system"
+}

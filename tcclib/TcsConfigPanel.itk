@@ -1,0 +1,107 @@
+#+
+#  TcsConfigPanel.itk
+#
+#  Implements the TcsConfigPanel widget. A Panel widget with a TcsConfigControl
+#  widget packed into its interior and a "sub-components" menu added to the
+#  menubar.
+#
+#  D Terrett 26 April 1999
+#
+#  Copyright CCLRC
+#+
+
+itcl::class TcsConfigPanel {
+   inherit Panel
+
+   constructor args {}
+
+   itk_option define -componentlist componentList ComponentList {}
+   itk_option define -namespace namespace Namespace {}
+   itk_option define -component component Component {}
+
+   public method preview
+
+   private method createSubMenu {menuPathName comproot class}
+
+   private variable menuno 0
+}
+
+itk::usual TcsConfigPanel {
+   keep -background -cursor
+}
+
+itcl::body TcsConfigPanel::constructor args {
+
+# Create the config control.
+   itk_component add control {
+      TcsConfigControl $itk_interior.control -componentlist TcsConfigList
+   } {
+      usual
+      ignore -activeforeground
+      ignore -insertbackground
+      ignore -selectforeground
+      ignore -highlightcolor
+      ignore -activebackground
+      ignore -textbackground
+      ignore -selectcolor
+   }
+
+# Add the edit menu to the menu bar.
+   set menubutton [$itk_component(menubar) add menubutton edit \
+         -text Edit]
+
+# Generate the sub components menu items.
+   createSubMenu .edit tcsconfig TcsConfig
+
+# Add the windows menu to the menu bar.
+   set menubutton [$itk_component(menubar) add menubutton windows \
+         -text Windows]
+
+# Add a command for each panel object.
+   foreach panel [itcl::find objects -class PanelMgr] {
+      $itk_component(menubar) add command .windows.$panel \
+         -command "$panel map" -label [$panel cget -title]
+   }
+
+   setWidgetColors "$itk_component(menubar) $itk_component(control)" \
+         $itk_option(-background) $itk_option(-foreground)
+
+   pack $itk_component(control) -fill both -expand y
+
+   set itk_option(-windows) $itk_component(control)
+
+   eval itk_initialize $args
+}
+
+itcl::configbody TcsConfigPanel::componentlist {
+   $itk_component(control) configure -componentlist $itk_option(-componentlist)
+}
+
+itcl::configbody TcsConfigPanel::namespace {
+   $itk_component(control) configure -namespace $itk_option(-namespace)
+}
+
+itcl::configbody TcsConfigPanel::component {
+   $itk_component(control) configure -component $itk_option(-component)
+}
+
+body TcsConfigPanel::preview {} {
+   $itk_component(control) preview
+}
+
+body TcsConfigPanel::createSubMenu {menuPathName comproot class} {
+
+   foreach subcomp [${class}::subcomponents] {
+      $itk_component(menubar) add command ${menuPathName}.${menuno}x \
+              -label [lindex $subcomp 4] \
+              -command "$comproot[lindex $subcomp 0] map"
+      incr menuno
+      if { [[lindex $subcomp 1]::subcomponents] != "" } {
+         $itk_component(menubar) add cascade ${menuPathName}.${menuno}x \
+               -label "..." 
+         createSubMenu ${menuPathName}.${menuno}x $comproot[lindex $subcomp 0] \
+               [lindex $subcomp 1]
+         incr menuno
+      }
+   }
+}

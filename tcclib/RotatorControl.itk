@@ -1,0 +1,130 @@
+#+
+#  RotatorControl.itk
+#
+#  Implements the RotatorControl widget. A ComponentControl widget with
+#  a widgets for the instrument position angle, frame and equinox.
+#
+#  D Terrett 30 January 1999
+#
+#  Copyright CCLRC
+#+
+
+itcl::class RotatorControl {
+   inherit ComponentControl
+
+   constructor args {}
+
+   public method selectobj name
+   public method updateobj name
+}
+
+itk::usual RotatorControl {
+   keep -activebackground -activeforeground -disabledforeground
+   keep -background -borderwidth -cursor -foreground -highlightcolor
+   keep -highlightthickness -insertbackground -insertborderwidth
+   keep -insertofftime -insertontime -insertwidth -labelfont -popupcursor
+   keep -selectbackground -selectborderwidth -selectforeground
+   keep -textbackground -textfont -font
+   keep -vt -title
+}
+
+itcl::body RotatorControl::constructor args {
+
+# Frame for angle.
+   itk_component add angle {
+      frame $itk_interior.angle -bd 2 -relief ridge
+   }
+   pack $itk_component(angle) -fill x -expand y
+
+# Entry field for angle.
+   set w $itk_component(angle)
+   itk_component add ipa {
+      iwidgets::entryfield $w.ipa -labeltext [lindex [cs rotator info ipa] 2] \
+            -width 8
+   }
+   pack $itk_component(ipa)
+
+# Frame for reference direction.
+   itk_component add refdir {
+      frame $itk_interior.refdir -bd 2 -relief ridge
+   }
+   pack $itk_component(refdir) -fill x -expand y
+
+# Title
+   itk_component add title {
+      label $w.label -text "Reference direction"
+   }
+   pack $itk_component(title)
+
+# "Up" radiobutton.
+   itk_component add vertical {
+      radiobutton $w.vertical -text "Up" -variable $w._refdir \
+            -value vertical
+   }
+   pack $itk_component(vertical) -anchor w
+
+# "North" radiobutton.
+   itk_component add north {
+      radiobutton $w.north -text "North" -variable $w._refdir \
+            -value north
+   }
+   pack $itk_component(north) -side left
+
+# Control for selecting a coordinate frame.
+   itk_component add cosys {
+      SubComponentSelector $w.cosys -labeltext "Coordinate system" \
+            -labelpos nw -componentlist CosysList -component cosys
+   }
+   pack $itk_component(cosys)
+   set w [winfo parent $w]
+
+# Set initial state.
+   upvar #0 [$itk_component(north) cget -variable] refdir
+   set refdir north
+
+# Set the apply log message.
+   $itk_component(storeapply) configure -logmessage "Field orientation"
+
+# Create rotator object used by apply
+   set scratchobj [namespace which -command [Rotator #auto]]
+
+# Set the object class.
+   set objclass RotatorComponent
+   set description "field orientation"
+
+   eval itk_initialize $args
+}
+
+itcl::body RotatorControl::updateobj name {
+#+
+# Creates or updates the named rotator object. If the name is empty the
+# temporary Rotator object is updated.
+#-
+   $name configure -ipa [$itk_component(ipa) get]
+   upvar #0 [$itk_component(north) cget -variable] refdir
+   if { $refdir == "north"} {
+      $name configure -cosys [$itk_component(cosys) get]
+   } else {
+      $name configure -cosys ""
+   }
+}
+
+itcl::body RotatorControl::selectobj name {
+#+
+# Copies the contents of the specified rotator object into the edit
+# controls.
+#-
+   $itk_component(ipa) clear
+
+   if { $name != "" } {
+      $itk_component(ipa) insert end [$name cget -ipa]
+      upvar #0 [$itk_component(north) cget -variable] refdir
+      set cosys [$name cget -cosys]
+      if { $cosys == "" } {
+         set refdir "vertical"
+      } else {
+         set refdir "north"
+         $itk_component(cosys) select $cosys
+      }
+   }
+}

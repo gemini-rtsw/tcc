@@ -1,0 +1,48 @@
+#+
+#  Wavelength.itcl
+#
+#  Implements the Wavelength class. A Wavelength object stores an effective 
+#  wavelength.
+#
+#  Methods:
+#
+#     apply <virtual telescope>
+#
+#         Applies the wavelength definition to the TCS by setting the values
+#         of the command parameters.
+#
+#     preview <virtual telescope>
+#
+#         Set the preview wavelength for the specified virtual telescope.
+#
+#  D Terrett 7 September 1998
+#
+#  Copyright CCLRC
+#+
+
+itcl::class Wavelength {
+
+
+   public proc subcomponents {} {return {}}
+
+   public method apply vt
+   public method preview vt
+   public method save file
+
+   public variable wavel {} {set wavel [valWavelength $wavel]}
+}
+
+itcl::body Wavelength::apply vt {
+   set vt [string toupper [string range $vt 0 0]][string range $vt 1 end]
+   cs wavel${vt} set wavel $wavel
+}
+
+itcl::body Wavelength::preview vt {
+   if { $wavel != "" } {
+      tccPreview set wavel${vt} $wavel
+   }
+}
+
+itcl::body Wavelength::save file {
+   puts $file "   -wavel \"$wavel\""
+}

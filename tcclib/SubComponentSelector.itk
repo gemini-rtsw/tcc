@@ -1,0 +1,91 @@
+#+
+#  SubComponentSelector.itk
+#
+#  Implements the SubComponentSelector widget.
+#
+#  Options:
+#
+#     Methods
+#
+#        select <item>
+#
+#           sets the item in the ListManager widget.
+#
+#  D Terrett  9 September 1998
+#
+#  Copyright CCLRC
+#+
+
+itcl::class SubComponentSelector {
+   inherit itk::Widget
+
+   constructor args {}
+
+   itk_option define -editcontrol editControl EditControl {}
+   itk_option define -shadow shadow Shadow {}
+   itk_option define -component component Component {}
+
+   public method select item
+   public method get
+
+   private method selectioncommand
+}
+
+itk::usual SubComponentSelector {
+   keep -background -borderwidth -cursor -foreground -highlightcolor
+   keep -highlightthickness -insertbackground -insertborderwidth
+   keep -insertofftime -insertontime -insertwidth -labelfont -popupcursor
+   keep -selectbackground -selectborderwidth -selectforeground
+   keep -textbackground -textfont -font
+   keep -activebackground -activeforeground -disabledforeground
+}
+
+itcl::body SubComponentSelector::constructor args {
+
+   set w $itk_interior
+
+   itk_component add selector {
+      ListManager $w.selector -editable 0 \
+            -selectioncommand [code $this selectioncommand]
+   } {
+      usual
+      keep -labeltext
+      keep -labelpos
+      keep -componentlist
+   }
+   itk_component add edit {
+      EditButton $w.edit -bitmap "edit" -selector $itk_component(selector)
+   }
+
+   pack $itk_component(selector) -side left
+   pack $itk_component(edit) -side bottom
+
+   $itk_component(edit) configure \
+         -activebackground [$itk_component(edit) cget -background] \
+         -activeforeground [$itk_component(edit) cget -foreground]
+
+   eval itk_initialize $args
+}
+
+itcl::configbody SubComponentSelector::editcontrol {
+#+
+# Sets the name of the control panel popped up by the edit button.
+#-
+   $itk_component(edit) configure -panel $itk_option(-editcontrol)
+}
+
+itcl::body SubComponentSelector::select item {
+   $itk_component(selector) select $item
+}
+
+itcl::body SubComponentSelector::get {} {
+   return [$itk_component(selector) get]
+}
+
+itcl::body SubComponentSelector::selectioncommand {} {
+#+
+#  Updates the EditShadow with the new subcompent object name.
+#-
+   set name [$itk_component(selector) get]
+   $itk_option(-shadow) subselect $itk_option(-component) $name
+}

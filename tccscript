@@ -1,0 +1,69 @@
+#!/bin/sh
+# the next line restarts using ocssh \
+exec $GEMINI_BASE/ocs/bin/solaris/ocssh8 "$0" "$@"
+
+#+
+#  tcc
+#
+#  This script runs tcl scripts from the scripts directory. It contains all
+#  the messy stuff involved in finding the tcl packages and libraries that
+#  the tcc uses. It is probably installation dependent and will need to be
+#  hacked to get it to work.
+#
+#  D Terrett 18 March 1999
+#
+#  Copyright CCLRC
+#-
+
+# Define the root directory for locating libraries and applications.
+global ROOT
+set ROOT [file dirname [info script]]
+
+# The script library files live in the scriptlib subdirectory.
+lappend auto_path $ROOT/scriptlib
+
+# Load all the packages required to drive the tcs.
+package require Ocspkg
+
+# Set the name of the config file directory extension.
+if { [info exists env(TCC_TCSNAME)] } {
+   puts "Using $env(TCC_TCSNAME)"
+   set ext .$env(TCC_TCSNAME)
+} else {
+   set ext ""
+}
+appData add configPath $ROOT/ca_config$ext
+
+# Get the name of the script to run from argv or by prompting the user.
+if { $argc == 0 } {
+   set script ""
+} else {
+   set script [lindex $argv 0]
+}
+set scriptok 0
+while { ! $scriptok } {
+   if { $script == "" } {
+      puts -nonewline "Script to run: "
+      flush stdout
+      gets stdin script
+      if { [string first ? $script] != -1 } {
+         set files [glob $ROOT/scripts/*.tcl]
+         foreach file $files {
+            puts [file rootname [file tail $file]]
+         }
+         set script ""
+      }
+   } else {
+      if { [file exists $ROOT/scripts/${script}.tcl] } {
+         set scriptok 1
+      } else {
+         set script ""
+      }
+   }
+}
+
+# Set the name of the epics service configuration file.
+appData add configFile ${script}.ca
+
+# Source the script.
+source $ROOT/scripts/${script}.tcl

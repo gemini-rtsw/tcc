@@ -1,0 +1,42 @@
+#+
+#  GuideHandsetPanel.itk
+#
+#  Implements the GuideHandsetPanel widget. A Panel widget with a 
+#  GuideHandsetControl widget packed into its interior.
+#
+#  D Terrett 26 April 1999
+#
+#  Copyright CCLRC
+#+
+
+itcl::class GuideHandsetPanel {
+   inherit Panel
+
+   constructor args {}
+}
+
+itk::usual GuideHandsetPanel {
+   keep -background -cursor
+}
+
+itcl::body GuideHandsetPanel::constructor args {
+
+   itk_component add control {
+      GuideHandsetControl $itk_interior.control
+   } {
+      usual
+      ignore -insertbackground
+      ignore -selectforeground
+      ignore -selectbackground
+      ignore -highlightcolor
+      ignore -textbackground
+   }
+   setWidgetColors "$itk_component(menubar) $itk_component(control)" \
+         $itk_option(-background) $itk_option(-foreground)
+
+   pack $itk_component(control) -fill both -expand y
+
+   set itk_option(-windows) $itk_component(control)
+
+   eval itk_initialize $args
+}

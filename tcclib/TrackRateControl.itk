@@ -1,0 +1,151 @@
+#+
+#  TrackRateControl.itk
+#
+#  Implements the TrackRateControl widget.
+#
+#  D Terrett 3 November 1998
+#
+#  Copyright CCLRC
+#+
+
+itcl::class TrackRateControl {
+   inherit ComponentControl
+
+   constructor args {}
+
+   itk_option define -vt vt Vt {}
+   itk_option define -shadow shadow Shadow {}
+
+   public method selectobj name
+   public method updateobj name
+}
+
+itk::usual TrackRateControl {
+   keep -activebackground -activeforeground -disabledforeground
+   keep -background -borderwidth -cursor -foreground -highlightcolor
+   keep -highlightthickness -insertbackground -insertborderwidth
+   keep -insertofftime -insertontime -insertwidth -labelfont -popupcursor
+   keep -selectbackground -selectborderwidth -selectforeground
+   keep -textbackground -textfont -font
+   keep -vt -title
+}
+
+itcl::body TrackRateControl::constructor args {
+
+   itk_component add frame {
+      frame $itk_interior.frame -borderwidth 2 -relief ridge
+   }
+   pack $itk_component(frame) -fill x -expand y
+   set w $itk_component(frame)
+
+# Epoch.
+   itk_component add epoch {
+      iwidgets::entryfield $w.epoch \
+            -labeltext [lindex [cs difTrSourceA info epoch] 2]
+   }
+   pack $itk_component(epoch)
+
+# Tabbed notebook for rate.
+   itk_component add notebook {
+      iwidgets::tabnotebook $w.notebook
+   }
+   pack $itk_component(notebook) -expand yes -fill both
+
+# Page for RA/Dec rates
+   set w [$itk_component(notebook) add -label "RA/Dec"]
+
+# Control for selecting a coordinate frame.
+   itk_component add cosys {
+      SubComponentSelector $w.cosys -labeltext "Coordinate system" \
+            -labelpos nw -componentlist CosysList -component cosys
+   }
+   pack $itk_component(cosys) -anchor e
+
+# Track rates.
+   itk_component add ra {
+      iwidgets::entryfield $w.ra -width 12 -labeltext "RA (s/s)"
+   }
+   itk_component add dec {
+      iwidgets::entryfield $w.dec -width 12 -labeltext "Dec (arcsec/s)"
+   }
+   pack $itk_component(ra) $itk_component(dec) -anchor w
+
+# Page for Az/El/Dec rates
+   set w [$itk_component(notebook) add -label "Az/El"]
+
+# Track rates.
+   itk_component add az {
+      iwidgets::entryfield $w.az -width 12 -labeltext "Az (arcsec/s)"
+   }
+   itk_component add el {
+      iwidgets::entryfield $w.el -width 12 -labeltext "El (arcsec/s)"
+   }
+   pack $itk_component(az) $itk_component(el) -anchor w
+
+# Select the RA/Dec page.
+  $itk_component(notebook) select RA/Dec
+
+# Create the trackrate object used by apply.
+   set scratchobj [namespace which -command [TrackRate #auto]]
+
+# Set the object class
+   set objclass TrackRateComponent
+   set description "differential track rate"
+
+   eval itk_initialize $args
+}
+
+itcl::body TrackRateControl::selectobj name {
+
+   $itk_component(epoch) clear
+   $itk_component(ra) clear
+   $itk_component(dec) clear
+   $itk_component(az) clear
+   $itk_component(el) clear
+
+   if { $name != "" } {
+      $itk_component(epoch) insert end [$name cget -epoch]
+      set cosys [$name cget -cosys]
+      if { $cosys == "AZEL_TOPO" } {
+         $itk_component(notebook) select Az/El
+         $itk_component(az) insert end [$name cget -dtheta1]
+         $itk_component(el) insert end [$name cget -dtheta2]
+      } else {
+         $itk_component(notebook) select RA/Dec
+         $itk_component(ra) insert end [$name cget -dtheta1]
+         $itk_component(dec) insert end [$name cget -dtheta2]
+      }
+   }
+}
+
+itcl::body TrackRateControl::updateobj name {
+#+
+# Updates the named trackrate object.
+#-
+   if { [lindex [$itk_component(notebook) pageconfigure \
+         [$itk_component(notebook) select select] -label] 4] == "Az/El" } {
+      $name configure \
+            -cosys AZEL_TOPO \
+            -epoch [$itk_component(epoch) get] \
+            -dtheta1 [$itk_component(az) get] \
+            -dtheta2 [$itk_component(el) get] \
+   } else {
+      $name configure \
+            -cosys [$itk_component(cosys) get] \
+            -epoch [$itk_component(epoch) get] \
+            -dtheta1 [$itk_component(ra) get] \
+            -dtheta2 [$itk_component(dec) get] \
+   }
+}
+
+itcl::configbody TrackRateControl::shadow {
+   $itk_component(cosys) configure -editcontrol \
+            $itk_option(-shadow)cosys
+   $itk_component(cosys) configure -shadow $itk_option(-shadow)
+}
+
+
+itcl::configbody TrackRateControl::vt {
+   $itk_component(storeapply) configure \
+         -logmessage "$itk_option(-vt) differential track rate"
+}

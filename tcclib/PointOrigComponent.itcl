@@ -1,0 +1,30 @@
+#+
+#  PointOrigComponent.itcl
+#
+#  Implements the PointOrigComponent class. A PointOrigComponent object 
+#  is a PointOrig object that is stored in a configuration.
+#
+#  D Terrett 21 August 1998
+#
+#  Copyright CCLRC
+#+
+
+itcl::class PointOrigComponent {
+   inherit PointOrig Component
+
+   constructor {list args} {
+      Component::constructor $list
+   } {
+      eval configure $args
+   }
+
+   public method save file
+}
+
+itcl::body PointOrigComponent::save file {
+   set objname [namespace tail $this]
+   set namespace [info namespace qualifiers $this]
+   puts $file "catch {delete object \"$namespace::$objname\"}"
+   puts $file "PointOrigComponent \"$namespace::$objname\"  $componentList \\"
+   PointOrig::save $file
+}

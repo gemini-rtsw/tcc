@@ -1,0 +1,54 @@
+#+
+#  PointOrigPanel.itk
+#
+#  Implements the PointOrigPanel widget. A Panel widget with a 
+#  PointOrigControl widget packed into its interior.
+#
+#  D Terrett 26 April 1999
+#
+#  Copyright CCLRC
+#+
+
+itcl::class PointOrigPanel {
+   inherit Panel
+
+   constructor args {}
+
+   itk_option define -componentlist componentList ComponentList {}
+   itk_option define -namespace namespace Namespace {}
+   itk_option define -component component Component {}
+}
+
+itk::usual PointOrigPanel {
+   keep -background -cursor
+}
+
+itcl::body PointOrigPanel::constructor args {
+   itk_component add control {
+      PointOrigControl $itk_interior.control
+   } {
+      usual
+      ignore -activeforeground
+      ignore -insertbackground
+      ignore -selectforeground
+      ignore -highlightcolor
+      ignore -activebackground
+      ignore -textbackground
+   }
+   setWidgetColors "$itk_component(menubar) $itk_component(control)" \
+         $itk_option(-background) $itk_option(-foreground)
+
+   pack $itk_component(control) -fill both -expand y
+
+   set itk_option(-windows) $itk_component(control)
+
+   eval itk_initialize $args
+}
+
+itcl::configbody PointOrigPanel::componentlist {
+   $itk_component(control) configure -componentlist $itk_option(-componentlist)
+}
+
+itcl::configbody PointOrigPanel::namespace {
+   $itk_component(control) configure -namespace $itk_option(-namespace)
+}

@@ -1,0 +1,78 @@
+#+
+#  StatusField.itk
+#
+#  Implements the StatusField widget. A label and a label widget for
+#  displaying a status string.
+#
+#  Options:
+#
+#  D Terrett 3 December 1998
+#
+#  Copyright CCLRC
+#+
+
+itcl::class StatusField {
+   inherit iwidgets::Labeledwidget
+
+   constructor args {}
+
+   itk_option define -status status Status none
+   itk_option define -background background Background {}
+}
+
+itk::usual StatusField {
+   keep -font -background -cursor -foreground -labelfont
+   keep -highlightcolor -highlightthickness
+}
+
+itcl::body StatusField::constructor args {
+
+   itk_component add status {
+      label $itk_interior.status
+   } {
+      usual
+      keep -text
+      keep -width
+      keep -anchor
+      rename -relief -entryrelief entryRelief Relief
+      rename -borderwidth -entryborder entryBorder Border
+      ignore -background
+   }
+
+   pack $itk_component(status) -fill both -expand y -ipadx 3
+
+   eval itk_initialize $args
+}
+
+itcl::configbody StatusField::status {
+   switch $itk_option(-status) {
+      1 -
+      TRUE -
+      ok {
+         $itk_component(status) configure -background lightgreen
+      }
+      0 -
+      FALSE -
+      warning {
+         $itk_component(status) configure -background yellow
+      }
+      error {
+         $itk_component(status) configure -background red
+      }
+      none {
+         if { $itk_option(-background) != "" } {
+            $itk_component(status) configure \
+                  -background $itk_option(-background)
+         }
+      }
+      default {
+         error "invalid status"
+      }
+   }
+}
+
+itcl::configbody StatusField::background {
+   if { $itk_option(-status) == "none" } {
+      $itk_component(status) configure -background $itk_option(-background)
+   }
+}

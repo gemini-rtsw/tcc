@@ -1,0 +1,54 @@
+#+
+#  WavelengthPanel.itk
+#
+#  Implements the WavelengthPanel widget. A Panel widget with a 
+#  WavelengthControl widget packed into its interior.
+#
+#  D Terrett 26 April 1999
+#
+#  Copyright CCLRC
+#+
+
+itcl::class WavelengthPanel {
+   inherit Panel
+
+   constructor args {}
+
+   itk_option define -componentlist componentList ComponentList {}
+   itk_option define -namespace namespace Namespace {}
+   itk_option define -component component Component {}
+}
+
+itk::usual WavelengthPanel {
+   keep -background -cursor
+}
+
+itcl::body WavelengthPanel::constructor args {
+   itk_component add control {
+      WavelengthControl $itk_interior.control
+   } {
+      usual
+      ignore -activeforeground
+      ignore -insertbackground
+      ignore -selectforeground
+      ignore -highlightcolor
+      ignore -activebackground
+      ignore -textbackground
+   }
+   setWidgetColors "$itk_component(menubar) $itk_component(control)" \
+         $itk_option(-background) $itk_option(-foreground)
+
+   pack $itk_component(control) -fill both -expand y
+
+   set itk_option(-windows) $itk_component(control)
+
+   eval itk_initialize $args
+}
+
+itcl::configbody WavelengthPanel::componentlist {
+   $itk_component(control) configure -componentlist $itk_option(-componentlist)
+}
+
+itcl::configbody WavelengthPanel::namespace {
+   $itk_component(control) configure -namespace $itk_option(-namespace)
+}

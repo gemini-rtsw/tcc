@@ -1,0 +1,119 @@
+#+
+#  WavelengthSelector.itk
+#
+#  Implements the WavelengthSelector widget. A WavelengthSelector widget
+#  contains a SubComponentSelector widget to select a named wavelength and 
+#  an entry box for displaying and/or editing the wavelength. The wavelength i
+#  can only be edited if no named wavelength is selected in the 
+#  SubComponentSelector widget.
+#
+#  Methods
+#
+#    select <item>
+#
+#       Sets the wavelength to the specified wavelength component.
+#
+#    value <value>
+#
+#       Sets the wavelength to the specified value.
+#
+#    get <name|value>
+#
+#       Returns the wavelength
+#
+#  D Terrett 7 September 1998
+#
+#  Copyright CCLRC
+#+
+
+itcl::class WavelengthSelector {
+   inherit itk::Widget
+
+   constructor args {}
+
+   public method select item
+   public method value value
+   public method get option
+
+   private method selectioncommand {}
+}
+
+itk::usual WavelengthSelector {
+   keep -background -borderwidth -cursor -foreground -highlightcolor
+   keep -highlightthickness -insertbackground -insertborderwidth
+   keep -insertofftime -insertontime -insertwidth -labelfont -popupcursor
+   keep -selectbackground -selectborderwidth -selectforeground
+   keep -textbackground -textfont -font
+   keep -activebackground -activeforeground -disabledforeground
+}
+
+itcl::body WavelengthSelector::constructor args {
+
+   set w $itk_interior
+
+# SubComponentSelector.
+   itk_component add selector {
+      SubComponentSelector $w.selector -labeltext "Effective Wavelength" \
+            -componentlist WavelengthList -editcontrol wavelengthControl \
+            -labelpos nw -component wavelength
+   } {
+      usual
+      keep -editcontrol
+      keep -shadow
+   }
+   pack $itk_component(selector) -padx 4 -pady 4 -anchor w
+
+# Entryfield for the wavelength.
+   itk_component add wavel {
+      iwidgets::entryfield $w.wavel \
+            -labeltext [lindex [cs wavelSourceA info wavel] 2] -width 8
+   }
+
+   pack $itk_component(wavel) 
+
+   eval itk_initialize $args
+}
+
+itcl::body WavelengthSelector::select item {
+   $itk_component(selector) select $item
+}
+
+itcl::body WavelengthSelector::value value {
+   $itk_component(wavel) clear
+   if { [llength $value] > 0 } {
+      $itk_component(wavel) insert end $value
+   }
+}
+
+itcl::body WavelengthSelector::get option {
+   switch $option {
+      value {
+         return [$itk_component(wavel) get]
+      }
+      name {
+         return [$itk_component(selector) get]
+      }
+      default {
+         error "unrecognised option, should be \n   $this get value\n   $this get name"
+      }
+   }
+}
+
+itcl::body WavelengthSelector::selectioncommand {} {
+#+
+# Copies the contents of the Wavelength object selected in the combobox
+# into the edit controls.
+#-
+   set name [$itk_component(selector) get]
+
+   $itk_component(wavel) clear
+
+   if { $name != "" } {
+      $itk_component(wavel) configure -state normal
+      $itk_component(wavel) clear
+      $itk_component(wavel) insert end [::WavelengthNames::$name cget -wavel]
+      $itk_component(wavel) configure -state disabled
+   } else {
+      $itk_component(wavel) configure -state normal
+   }
+}

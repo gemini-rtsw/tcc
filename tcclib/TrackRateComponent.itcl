@@ -1,0 +1,30 @@
+#+
+#  TrackRateComponent.itcl
+#
+#  Implements the TrackRateComponent class. A TrackRateComponent object 
+#  is a TrackRate object that is stored in a configuration.
+#
+#  D Terrett 21 August 1998
+#
+#  Copyright CCLRC
+#+
+
+itcl::class TrackRateComponent {
+   inherit TrackRate Component
+
+   constructor {list args} {
+      Component::constructor $list
+   } {
+      eval configure $args
+   }
+
+   public method save file
+}
+
+itcl::body TrackRateComponent::save file {
+   set objname [namespace tail $this]
+   set namespace [info namespace qualifiers $this]
+   puts $file "catch {delete object \"$namespace::$objname\"}"
+   puts $file "TrackRateComponent \"$namespace::$objname\"  $componentList \\"
+   TrackRate::save $file
+}

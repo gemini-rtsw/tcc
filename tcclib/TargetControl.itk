@@ -1,0 +1,250 @@
+#+
+#  TargetControl.itk
+#
+#  Implements the TargetControl widget.
+#
+#  D Terrett 27 April 1999
+#
+#  Copyright CCLRC
+#+
+
+itcl::class TargetControl {
+   inherit ComponentControl
+
+   itk_option define -shadow shadow Shadow {}
+   itk_option define -vt vt Vt {}
+
+   constructor args {}
+
+   public method selectobj name
+   public method updateobj name
+}
+
+itk::usual TargetControl {
+   keep -activebackground -activeforeground -disabledforeground
+   keep -background -borderwidth -cursor -foreground -highlightcolor
+   keep -highlightthickness -insertbackground -insertborderwidth
+   keep -insertofftime -insertontime -insertwidth -labelfont -popupcursor
+   keep -selectbackground -selectborderwidth -selectforeground
+   keep -textbackground -textfont -font
+   keep -vt -title
+}
+
+itcl::body TargetControl::constructor args {
+
+   itk_component add frame {
+      frame $itk_interior.frame -borderwidth 2 -relief ridge
+   }
+   pack $itk_component(frame) -fill x -expand y
+   set w $itk_component(frame)
+
+# Create tabnotebook for the target position.
+   itk_component add notebook {
+      iwidgets::tabnotebook $w.notebook -height 250 -width 400
+   }
+   pack $itk_component(notebook)
+
+# Page for RA/Dec
+   set w [$itk_component(notebook) add -label "RA/Dec"]
+   
+# RA and Dec side by side.
+   itk_component add radec {
+      frame $w.radec
+   }
+   pack $itk_component(radec) -fill x -expand y
+   set w $itk_component(radec)
+   itk_component add ra {
+      iwidgets::entryfield $w.ra -width 12 -labeltext RA:
+   } {
+      usual
+      rename -textfont -majorfont majorFont Font
+      rename -labelfont -majorfont majorFont Font
+   }
+   itk_component add dec {
+      iwidgets::entryfield $w.dec -width 12 -labeltext Dec:
+   } {
+      usual
+      rename -textfont -majorfont majorFont Font
+      rename -labelfont -majorfont majorFont Font
+   }
+   pack $itk_component(ra) $itk_component(dec) -side left -expand y
+   set w [winfo parent $w]
+
+# Control for selecting a coordinate frame.
+   itk_component add cosys {
+      SubComponentSelector $w.cosys -labeltext "Coordinate system" \
+            -labelpos nw -componentlist CosysList -component cosys
+   }
+   pack $itk_component(cosys) -anchor e
+
+# Epoch.
+   itk_component add epoch {
+      iwidgets::entryfield $w.epoch \
+            -labeltext [lindex [cs sourceA info epoch] 2]
+   }
+   pack $itk_component(epoch) -anchor e
+
+# Proper motions.
+   itk_component add dtheta1 {
+      iwidgets::entryfield $w.dtheta1 -width 11 \
+            -labeltext [lindex [cs sourceA info dtheta1] 2]
+   }
+   itk_component add dtheta2 {
+      iwidgets::entryfield $w.dtheta2 -width 11 \
+            -labeltext [lindex [cs sourceA info dtheta2] 2]
+   }
+   pack $itk_component(dtheta1) $itk_component(dtheta2) -anchor e
+   itk_component add parallax {
+      iwidgets::entryfield $w.parallax -width 11 \
+            -labeltext [lindex [cs sourceA info parallax] 2]
+   }
+
+# Radial velocity.
+   itk_component add rv {
+      iwidgets::entryfield $w.rv -width 11 \
+            -labeltext [lindex [cs sourceA info rv] 2]
+   }
+   pack $itk_component(parallax) $itk_component(rv) -anchor e
+
+# Page for Az/El
+   set w [$itk_component(notebook) add -label "Az/El"]
+   
+# Az and El.
+   itk_component add az {
+      iwidgets::entryfield $w.az -width 12 -labeltext Azimuth:
+   } {
+      usual
+      rename -textfont -majorfont majorFont Font
+      rename -labelfont -majorfont majorFont Font
+   }
+   itk_component add el {
+      iwidgets::entryfield $w.el -width 12 -labeltext Elevation:
+   } {
+      usual
+      rename -textfont -majorfont majorFont Font
+      rename -labelfont -majorfont majorFont Font
+   }
+   pack $itk_component(az) $itk_component(el) -expand y
+
+# Control for setting the effective wavelength.
+   set w $itk_component(frame)
+   itk_component add wavelength {
+       WavelengthSelector $w.wavelength
+   }
+   pack $itk_component(wavelength) -anchor e
+
+# Control for selecting a differential track rate.
+   itk_component add trackrate {
+      SubComponentSelector $w.trackrate -labeltext "Differential track rate" \
+            -labelpos nw -componentlist TrackRateList -component trackrate
+   }
+   pack $itk_component(trackrate) -anchor e
+
+# Select the RA/Dec page.
+  $itk_component(notebook) select RA/Dec
+
+# Create the scatch target object used by apply.
+   set scratchobj [namespace which -command [Target #auto]]
+
+# Define the object class
+   set objclass TargetComponent
+   set description target
+
+   eval itk_initialize $args
+}
+
+itcl::body TargetControl::selectobj name {
+
+   $itk_component(ra) clear
+   $itk_component(dec) clear
+   $itk_component(epoch) clear
+   $itk_component(dtheta1) clear
+   $itk_component(dtheta2) clear
+   $itk_component(parallax) clear
+   $itk_component(rv) clear
+   $itk_component(az) clear
+   $itk_component(el) clear
+
+   if { $name != "" } {
+      switch [$name cget -type] {
+         radec {
+            $itk_component(notebook) select RA/Dec
+            $itk_component(cosys) select [$name cget -cosys]
+            set radec [$name cget -radec]
+            $itk_component(ra) insert end [lindex $radec 0]
+            $itk_component(dec) insert end [lindex $radec 1]
+            $itk_component(epoch) insert end [$name cget -epoch]
+            set pm [$name cget -pm]
+            $itk_component(dtheta1) insert end [lindex $pm 0]
+            $itk_component(dtheta2) insert end [lindex $pm 1]
+            $itk_component(parallax) insert end [$name cget -parallax]
+            $itk_component(rv) insert end [$name cget -rv]
+         }
+         azel {
+            $itk_component(notebook) select Az/El
+            set azel [$name cget -azel]
+            $itk_component(az) insert end [lindex $azel 0]
+            $itk_component(el) insert end [lindex $azel 1]
+         }
+      }
+      set wavel [$name cget -wavelength_name]
+      $itk_component(wavelength) select $wavel
+      if { $wavel == "" } {
+         set wavel [$name cget -wavelength_value]
+         $itk_component(wavelength) value $wavel
+      }
+      $itk_component(trackrate) select [$name cget -trackrate]
+   }
+}
+
+itcl::body TargetControl::updateobj name {
+#+
+# Updates a target object with the values currently entered in the
+# control window.
+#-
+   set page [lindex [$itk_component(notebook) pageconfigure \
+         [$itk_component(notebook) select select] -label] 4]
+   switch $page {
+      RA/Dec {
+         $name configure \
+               -objName [$itk_component(selector) get] \
+               -cosys [$itk_component(cosys) get] \
+               -radec [list [$itk_component(ra) get] \
+               [$itk_component(dec) get]] \
+               -epoch [$itk_component(epoch) get] \
+               -pm "[$itk_component(dtheta1) get] \
+               [$itk_component(dtheta2) get]" \
+               -parallax [$itk_component(parallax) get] \
+               -rv [$itk_component(rv) get] \
+               -trackrate [$itk_component(trackrate) get]
+      }
+      Az/El {
+         $name configure \
+               -azel [list [$itk_component(az) get] \
+               [$itk_component(el) get]] \
+      }
+   }
+
+   set wavel [$itk_component(wavelength) get name]
+   $name configure -wavelength_name $wavel
+   if { $wavel == "" } {
+      $name configure -wavelength_value [$itk_component(wavelength) get value]
+   }
+}
+
+itcl::configbody TargetControl::shadow {
+   $itk_component(cosys) configure -editcontrol \
+            $itk_option(-shadow)cosys
+   $itk_component(wavelength) configure -editcontrol \
+            $itk_option(-shadow)wavelength
+   $itk_component(trackrate) configure -editcontrol \
+            $itk_option(-shadow)trackrate
+   $itk_component(cosys) configure -shadow $itk_option(-shadow)
+   $itk_component(wavelength) configure -shadow $itk_option(-shadow)
+   $itk_component(trackrate) configure -shadow $itk_option(-shadow)
+}
+
+itcl::configbody TargetControl::vt {
+   $itk_component(storeapply) configure \
+         -logmessage "$itk_option(-vt) target"
+}

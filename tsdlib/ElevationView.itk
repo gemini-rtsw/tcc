@@ -1,0 +1,120 @@
+#+
+#  ElevationView.itk
+#
+#  methods
+#
+#    update
+#
+#       Updates the display.
+#
+#  D Terrett 4 September 1998
+#
+#  Copyright CCLRC
+#-
+
+itcl::class ElevationView {
+   inherit itk::Widget
+
+   constructor args {}
+
+   public method update
+}
+
+itk::usual ElevationView {
+   keep -background -cursor -foreground -font
+   keep -insertbackground -insertborderwidth -insertwidth
+   keep -insertontime -insertofftime
+   keep -selectbackground -selectborderwidth -selectforeground
+   keep -highlightcolor -highlightthickness
+}
+
+itcl::body ElevationView::constructor args {
+
+   itk_component add elview {
+      canvas $itk_interior.elview -width 350 -height 140
+   }
+
+   set c $itk_component(elview)
+   $c create rectangle 30 10 330 120 -fill lightgrey
+   $c create line 50 10 50 120
+   $c create text 5 10 -anchor w -text 90
+   $c create text 5 55 -anchor w -text 60
+   $c create text 5 100 -anchor w -text 30
+   $c create line 50 55 60 55
+   $c create line 50 100 60 100
+   $c create text 50 125 -anchor n -text 0h
+   $c create text 120 125 -anchor n -text 3h
+   $c create text 190 125 -anchor n -text 6h
+   $c create text 260 125 -anchor n -text 9h
+   $c create text 330 125 -anchor n -text 12h
+   $c create line 120 120 120 110
+   $c create line 190 120 190 110
+   $c create line 260 120 260 110
+
+   itk_component add ttl {
+      label $itk_interior.ttl
+   }
+   itk_component add amttl {
+      label $itk_interior.amttl
+   }
+
+   $c create elview 30 10 -tags elview
+
+   pack $itk_component(elview) $itk_component(ttl) $itk_component(amttl)
+
+   eval itk_initialize $args
+}
+
+itcl::body ElevationView::update {} {
+#+
+#  Updates the display.
+#-
+   $itk_component(elview) itemconfigure elview -display 1
+
+   set ttl [sa tcssad get currentTimeToSet value]
+   set ttz [sa tcssad get timeToBlindSpot value]
+   $itk_component(ttl) configure -background $itk_option(-background)
+   if { $ttl != "" } {
+      set h [expr int($ttl / 60.0)]
+      set m [expr int($ttl - ( $h * 60.0 ))]
+      if { $h > 0 } {
+         $itk_component(ttl) configure -text "${h}hr ${m}min to elevation limit"
+      } else {
+         $itk_component(ttl) configure -text "${m}min to elevation limit"
+      }
+   } else {
+      $itk_component(ttl) configure -text "elevation"
+   }
+   if { $ttz != "" } {
+      if { $ttz < $ttl && $ttz >= 0.0 } {
+         set h [expr int($ttz / 60.0)]
+         set m [expr int($ttz - ( $h * 60.0 ))]
+         if { $h > 0 } {
+            $itk_component(ttl) configure \
+                  -text "${h}hr ${m}min to zenith blind spot"
+         } else {
+            $itk_component(ttl) configure -text "${m}min to zenith blind spot"
+         }
+         $itk_component(ttl) configure -background red
+      }
+   }
+
+   set aml [sa tcssad get airMassLimit value]
+   set ttl [sa tcssad get timeToAmSet value]
+   if { $ttl == "" } {
+      $itk_component(amttl) configure -text "airmass $aml not reached"
+   } else {
+      if { $ttl > 0.0 } {
+         set h [expr int($ttl / 60.0)]
+         set m [expr int($ttl - ( $h * 60.0 ))]
+         if { $h > 0 } {
+            $itk_component(amttl) configure \
+                  -text "${h}hr ${m}min to airmass $aml"
+         } else {
+            $itk_component(amttl) configure -text "${m}min to airmass $aml"
+         }
+      } else {
+         $itk_component(amttl) configure -text "source is below airmass $aml"
+      }
+   }
+}

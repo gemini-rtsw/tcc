@@ -1,0 +1,81 @@
+#+
+# Logger.itcl
+#
+# Implements the Logger class. A logger object monitors the TCS applyC.CLID
+# and errorMess.VAL and displays a log of TCS activity in as scrollable text 
+# window. The log method allows additional messages to be written to the log.
+#
+# D Terrett 10 September 1998
+#
+# Copyright CCLRC
+#-
+
+itcl::class Logger {
+
+   constructor {} {}
+
+   public method log message
+
+   private method monitor {record status time value}
+   private method send text
+
+   private variable clid {}
+   private variable applyMess {}
+}
+
+itcl::body Logger::constructor {} {
+
+# Set up monitors on the TCS epics records of interest.
+   sa applyC proc clid [code $this monitor]
+   sa errMessage proc val [code $this monitor]
+}
+
+itcl::body Logger::monitor {record status time value} {
+
+# Get UTC timestamp for the message.
+   set utc [sa tcssad get UTC value]
+
+# Initialise message.
+   set text ""
+
+# Switch on the record name.
+   switch $record {
+      applyC.clid {
+
+# Ignore the first event because this is just the event delivered when the
+# monitor is set up.
+         if { $clid == "" } {
+            set clid $value
+         } else {
+
+# If the client ID was incremented then a command was accepted by the TCS.
+            if { $value > $clid } {
+              set text "$utc: command accepted"
+              set clid $value
+            }
+         }
+      }
+      errMessage.val {
+         set text "$utc: $value"
+      }
+   }
+
+# Send the text to the logger.
+   if { $text != "" } {
+      send $text
+   }
+}
+
+itcl::body Logger::log message {
+   set text "[sa tcssad get UTC value]: $message"
+
+# Send the text to the logger.
+   send $text
+}
+
+itcl::body Logger::send text {
+   set logwindow [logPanel cget -windows]
+   if { [winfo exists $logwindow] } {
+       $logwindow add $text
+   }
+}

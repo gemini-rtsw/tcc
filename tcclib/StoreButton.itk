@@ -1,0 +1,58 @@
+#+
+#  StoreButton.itk
+#
+#  Implements the StoreButton class. A StoreButton is a push button that
+#  reads the contents of a combobox and only calls its command procedure
+#  the string is not empty.
+#
+#  D Terrett  9 September 1998
+#
+#  Copyright CCLRC
+#-
+
+itcl::class StoreButton {
+   inherit itk::Widget
+
+   constructor args {}
+
+   public method invoke
+
+   private method command
+
+   itk_option define -shadow shadow Shadow {}
+   itk_option define -combobox combobox Combobox {}
+}
+
+itk::usual StoreButton {
+   keep -background -cursor -foreground -font
+   keep -activebackground -activeforeground -disabledforeground
+   keep -highlightcolor -highlightthickness
+}
+
+itcl::body StoreButton::constructor args {
+
+   itk_component add button {
+      button $itk_interior.button -command [code $this command]
+   } {
+      usual
+      keep -text
+      keep -width
+   }
+   pack $itk_component(button) -fill both -expand y
+
+   eval itk_initialize $args
+}
+
+itcl::body StoreButton::command {} {
+   set name [$itk_option(-combobox) get]
+   if { $name != "" } {
+      $itk_option(-shadow) store $name
+   } else {
+      tk_messageBox -icon error -parent $itk_interior -message \
+            "Cannot store without a name to store to."
+   }
+}
+
+itcl::body StoreButton::invoke {} {
+   $itk_component(button) invoke
+}

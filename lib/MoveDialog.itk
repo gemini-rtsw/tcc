@@ -1,0 +1,101 @@
+#+
+#  MoveDialog.itk
+#
+#  Implements the MoveDialog widget. A dialog box for specifying the desired
+#  screen and position of a window
+#
+#  D Terrett 16 November 1998
+#
+#  Copyright CCLRC
+#+
+
+itcl::class MoveDialog {
+   inherit iwidgets::Dialog
+
+   constructor args {}
+
+   protected method deactivate arg
+
+   itk_option define -panelmgr panelMgr PanelMgr {}
+}
+
+itk::usual MoveDialog {
+   keep -background -cursor -foreground -modality -font
+   keep -activebackground -activeforeground -disabledforeground
+   keep -selectcolor -borderwidth -highlightcolor
+   keep -highlightthickness -insertbackground -insertborderwidth
+   keep -insertofftime -insertontime -insertwidth -labelfont
+   keep -selectbackground -selectborderwidth -selectforeground
+   keep -textbackground -textfont
+}
+
+itcl::body MoveDialog::constructor args {
+
+# Entry field for screen name.
+   itk_component add screen {
+      iwidgets::entryfield $itk_interior.screen -labeltext Screen:
+   }
+   pack $itk_component(screen)
+
+# Entry fields for the x/y position.
+   itk_component add pos {
+      frame $itk_interior.pos
+   }
+   pack $itk_component(pos)
+   set w $itk_component(pos)
+   itk_component add x {
+      iwidgets::entryfield $w.x -labeltext "Position x:" -width 5
+   }
+   itk_component add y {
+      iwidgets::entryfield $w.y -labeltext y: -width 5
+   }
+   pack $itk_component(x) $itk_component(y) -side left
+
+# Check button to indicate that the window should be created on startup.
+   itk_component add create {
+      checkbutton $itk_interior.create -text "Create on startup" \
+            -variable $itk_interior._create
+   }
+   pack $itk_component(create) -anchor w
+
+   eval itk_initialize $args
+}
+
+itcl::body MoveDialog::deactivate arg {
+#+
+# Called when either the Ok or cancel button is pressed.
+#-
+
+# Call the parent class deactivate method.
+   $this Shell::deactivate $arg
+
+# If Ok was pressed, configure the panel manager object with the settings
+# from the dialog box controls.
+   if { $arg } {
+      upvar #0 [$itk_component(create) cget -variable] createvar
+
+      $itk_option(-panelmgr) configure -screen [$itk_component(screen) get] \
+            -geometry +[$itk_component(x) get]+[$itk_component(y) get] \
+            -create $createvar
+   }
+}
+
+itcl::configbody MoveDialog::panelmgr {
+#+
+# Initialise the dialog controls with the screen and position of the 
+# panel.
+#-
+   set toplevel [$itk_option(-panelmgr) cget -name]
+
+   set screenDef [winfo screen $toplevel]
+   set display [winfo screen .]
+   if { $screenDef != $display } {
+      $itk_component(screen) insert end $screenDef
+   }
+   set geom [winfo geometry $toplevel]
+   scan $geom "%dx%d+%d+%d" w h xDef yDef
+   $itk_component(x) insert end $xDef
+   $itk_component(y) insert end $yDef
+   upvar #0 [$itk_component(create) cget -variable] createvar
+   set createvar [$itk_option(-panelmgr) cget -create]
+}

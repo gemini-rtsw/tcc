@@ -1,0 +1,41 @@
+#+
+#  LogControl.itk
+#
+#  Implements the LogControl widget.
+#
+#  Methods:
+#
+#    update
+#
+#       Causes the preview configuration to be calculated and displayed
+#       in the control.
+#
+#  D Terrett 31 August 1998
+#
+#  Copyright CCLRC
+#+
+
+itcl::class LogControl {
+   inherit itk::Widget
+
+   constructor args {}
+
+   public method add text
+}
+
+itk::usual LogControl {
+}
+
+itcl::body LogControl::constructor args {
+
+   itk_component add display {
+      iwidgets::scrolledtext $itk_interior.display
+   }
+   pack $itk_component(display) -fill both -expand y
+   eval itk_initialize $args
+}
+
+itcl::body LogControl::add text {
+   $itk_component(display) insert end \n$text
+   $itk_component(display) see end
+}

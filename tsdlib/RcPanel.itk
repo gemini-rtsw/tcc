@@ -1,0 +1,41 @@
+#+
+#  RcPanel.itk
+#
+#  Implements the RcPanel widget. A Panel widget with a RemoteControl
+#  widget packed into its interior
+#
+#  D Terrett 13 August 1998
+#
+#  Copyright CCLRC
+#+
+
+itcl::class RcPanel {
+   inherit Panel
+
+   constructor args {}
+}
+
+itk::usual RcPanel {
+   keep -background -cursor -foreground -font
+   keep -highlightcolor -highlightthickness
+   keep -activebackground -activeborderwidth -activeforeground
+   keep -borderwidth -disabledforeground -foreground -labelfont
+   keep -popupcursor
+   keep -insertbackground -insertborderwidth
+   keep -insertofftime -insertontime -insertwidth
+   keep -selectbackground -selectborderwidth -selectforeground
+   keep -textbackground -textfont
+}
+
+itcl::body RcPanel::constructor args {
+
+   itk_component add rc {
+      RemoteControl $itk_interior.rc
+   }
+
+   pack $itk_component(rc) -fill both -expand y
+
+   set itk_option(-windows) $itk_component(rc)
+
+   eval itk_initialize $args
+}

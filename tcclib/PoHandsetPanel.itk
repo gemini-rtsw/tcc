@@ -1,0 +1,43 @@
+#+
+#  PoHandsetPanel.itk
+#
+#  Implements the PoHandsetPanel widget. A Panel widget with a 
+#  PoHandsetControl widget packed into its interior.
+#
+#  D Terrett 26 April 1999
+#
+#  Copyright CCLRC
+#+
+
+itcl::class PoHandsetPanel {
+   inherit Panel
+
+   constructor args {}
+}
+
+itk::usual PoHandsetPanel {
+   keep -background -cursor
+}
+
+itcl::body PoHandsetPanel::constructor args {
+
+   itk_component add control {
+      PoHandsetControl $itk_interior.control
+   } {
+      usual
+      ignore -insertbackground
+      ignore -selectforeground
+      ignore -selectbackground
+      ignore -highlightcolor
+      ignore -textbackground
+   }
+   global COLOR_SCHEME
+   setWidgetColors "$itk_component(menubar) $itk_component(control)" \
+         $itk_option(-background) $itk_option(-foreground)
+
+   pack $itk_component(control) -fill both -expand y
+
+   set itk_option(-windows) $itk_component(control)
+
+   eval itk_initialize $args
+}

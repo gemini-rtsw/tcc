@@ -1,0 +1,76 @@
+#+
+#  Instrument.itcl
+#
+#  Implements the Instrument class. An Instrument object stores an 
+#  instrument alignment angle.
+#
+#  Methods:
+#
+#     apply <virtual telescope>
+#
+#         Applies the iaa to the TCS by setting the values
+#         of the command parameters.
+#
+#     preview <virtual telescope>
+#
+#         Set the preview instrument configuration.
+#
+#  D Terrett 10 September 1998
+#
+#  Copyright CCLRC
+#+
+
+itcl::class Instrument {
+
+   public proc subcomponents {} {return {}}
+
+   public method apply args
+   public method preview
+   public method save
+
+   public variable iaa 0
+   public variable issFace "port 1"
+   public variable centralBaffle closed
+   public variable deployableBaffle optical
+   public variable focusOffset 0
+   public variable airmassLimit
+}
+
+itcl::body Instrument::apply args {
+   cs rotator set iaa \"$iaa\"
+   cs dtelFocus set focusOffset \"$focusOffset\"
+   if { $centralBaffle == "closed" } {
+      cs m2Baffle set centralBaffle POS1
+   } elseif { $centralBaffle == "open" } {
+      cs m2Baffle set centralBaffle POS2
+   }
+   if { $deployableBaffle == "thermal IR" } {
+      cs m2Baffle set deployBaffle RETRACTED
+   } elseif { $deployableBaffle == "near IR" } {
+      cs m2Baffle set deployBaffle POS1
+   } elseif { $deployableBaffle == "optical" } {
+      cs m2Baffle set deployBaffle POS2
+   } elseif { $deployableBaffle == "maintenance" } {
+      cs m2Baffle set deployBaffle EXTENDED
+   }
+   switch $issFace {
+      "port 1" {iss configure -port 1}
+      "port 3" {iss configure -port 3}
+      "port 5" {iss configure -port 5}
+   }
+   iss update
+   cs airmassLimit set limit $airmassLimit
+}
+
+itcl::body Instrument::preview {} {
+   tccPreview set iaa $iaa
+}
+
+itcl::body Instrument::save file {
+   puts $file "   -iaa \"$iaa\" \\"
+   puts $file "   -issFace \"$issFace\" \\"
+   puts $file "   -centralBaffle \"$centralBaffle\" \\"
+   puts $file "   -deployableBaffle \"$deployableBaffle\" \\"
+   puts $file "   -focusOffset \"$focusOffset\" \\"
+   puts $file "   -airmassLimit \"$airmassLimit\""
+}

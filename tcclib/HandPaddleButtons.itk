@@ -1,0 +1,348 @@
+#+
+# HandPaddleButtons.itk
+#
+# Implements the HandPaddleButton widget. A set of four buttons marked with
+# arrows that can be rotated and a "compass rose" that shows the orientation.
+#
+# D Terrett 21 January 1999
+#
+# Copyright CCLRC
+#-
+
+itcl::class HandPaddleButtons {
+
+   inherit itk::Widget
+
+   constructor args {}
+
+   private method press button
+   private method release button
+   private method leave button
+   private method enter button
+   private method sink button
+   private method raise button
+   private method invoke button
+   private method rotate {cy cy coords angle}
+   private method flip
+
+   itk_option define -angle angle Angle 0
+   itk_option define -leftcommand leftCommand Command ""
+   itk_option define -rightcommand rightCommand Command ""
+   itk_option define -upcommand upCommand Command ""
+   itk_option define -downcommand downCommand Command ""
+   itk_option define -leftlabel leftLabel Label l {
+      $itk_component(canvas) itemconfigure left -text $itk_option(-leftlabel)
+   }
+   itk_option define -rightlabel rightLabel Label r {
+      $itk_component(canvas) itemconfigure right -text $itk_option(-rightlabel)
+   }
+   itk_option define -uplabel upLabel Label u {
+      $itk_component(canvas) itemconfigure up -text $itk_option(-uplabel)
+   }
+   itk_option define -downlabel downLabel Label d {
+      $itk_component(canvas) itemconfigure down -text $itk_option(-downlabel)
+   }
+   itk_option define -topshadowcolor topShadowColor TopShadowColor white
+   itk_option define -bottomshadowcolor bottomShadowColor BottomShadowColor \
+              black
+   itk_option define -buttonforeground buttonForeground Foreground  gray50
+   itk_option define -buttonbackground buttonBackground Background gray
+
+   variable pressed ""
+   variable focusbutton ""
+   variable buttonCoords
+   variable topShadowCoords
+   variable bottomShadowCoords
+   variable arrowCoords
+   variable compass1Coords
+   variable compass2Coords
+   variable leftCoords
+   variable rightCoords
+   variable upCoords
+   variable downCoords
+}
+
+itk::usual HandPaddleButtons {
+   keep -background
+}
+
+itcl::body HandPaddleButtons::constructor {args} {
+
+   itk_component add canvas {
+      canvas $itk_interior.canvas -width 260 -height 130 -bd 0
+   }
+
+# Generate coordinates for drawing buttons.
+   set topShadow "0 0 0 34 34 0"
+   set bottomShadow "34 34 34 0 0 34"
+   set button "2 2 2 32 32 32 32 2"
+   set arrow "16 5 8 13 12 13 12 27 20 27 20 13 24 13"
+
+   foreach {x y} $topShadow {
+      lappend topShadowCoords(right) [expr $x + 13]
+      lappend topShadowCoords(right) [expr $y + 66 - 14]
+   }
+   foreach {x y} $bottomShadow {
+      lappend bottomShadowCoords(right) [expr $x + 13]
+      lappend bottomShadowCoords(right) [expr $y + 66 - 14]
+   }
+   foreach {x y} $button {
+      lappend buttonCoords(right) [expr $x + 13]
+      lappend buttonCoords(right) [expr $y + 66 - 14]
+   }
+   foreach {x y} $arrow {
+      lappend arrowCoords(right) [expr - $y + 13 + 33]
+      lappend arrowCoords(right) [expr $x + 66 - 14]
+   }
+
+   foreach {x y} $topShadow {
+      lappend topShadowCoords(left) [expr $x + 23 + 66]
+      lappend topShadowCoords(left) [expr $y + 66 - 14]
+   }
+   foreach {x y} $bottomShadow {
+      lappend bottomShadowCoords(left) [expr $x + 23 + 66]
+      lappend bottomShadowCoords(left) [expr $y + 66 - 14]
+   }
+   foreach {x y} $button {
+      lappend buttonCoords(left) [expr $x + 23 + 66]
+      lappend buttonCoords(left) [expr $y + 66 - 14]
+   }
+   foreach {x y} $arrow {
+      lappend arrowCoords(left) [expr $y + 23 + 66]
+      lappend arrowCoords(left) [expr $x + 66 - 14]
+   }
+
+   foreach {x y} $topShadow {
+      lappend topShadowCoords(down) [expr $x + 66 - 14]
+      lappend topShadowCoords(down) [expr $y + 13]
+   }
+   foreach {x y} $bottomShadow {
+      lappend bottomShadowCoords(down) [expr $x + 66 - 14]
+      lappend bottomShadowCoords(down) [expr $y + 13]
+   }
+   foreach {x y} $button {
+      lappend buttonCoords(down) [expr $x + 66 - 14]
+      lappend buttonCoords(down) [expr $y + 13]
+   }
+   foreach {x y} $arrow {
+      lappend arrowCoords(down) [expr  $x + 66 - 14]
+      lappend arrowCoords(down) [expr  - $y + 13 + 33]
+   }
+
+   foreach {x y} $topShadow {
+      lappend topShadowCoords(up) [expr $x + 66 - 14]
+      lappend topShadowCoords(up) [expr $y + 66 + 23]
+   }
+   foreach {x y} $bottomShadow {
+      lappend bottomShadowCoords(up) [expr $x + 66 - 14]
+      lappend bottomShadowCoords(up) [expr $y + 66 + 23]
+   }
+   foreach {x y} $button {
+      lappend buttonCoords(up) [expr $x + 66 - 14]
+      lappend buttonCoords(up) [expr $y + 66 + 23]
+   }
+   foreach {x y} $arrow {
+      lappend arrowCoords(up) [expr $x + 66 - 14]
+      lappend arrowCoords(up) [expr $y + 66 + 23]
+   }
+
+# Draw the buttons.
+   foreach q {up down left right} {
+      eval $itk_component(canvas) create polygon $topShadowCoords($q) \
+                                  -tags \"${q}topshadow topshadow\"
+      eval $itk_component(canvas) create polygon $bottomShadowCoords($q) \
+                                   -tags \"${q}bottomshadow bottomshadow\"
+      eval $itk_component(canvas) create polygon $buttonCoords($q) \
+                                   -tags \"${q}button button ${q}face\"
+      eval $itk_component(canvas) create polygon $arrowCoords($q) \
+                                -tags \"${q}arrow arrow ${q}face\"
+
+# Create bindings for this button.
+      $itk_component(canvas) bind ${q}face <ButtonPress-1> [
+         code $this press $q
+      ]
+      $itk_component(canvas) bind ${q}face <ButtonRelease-1> [
+         code $this release $q
+      ]
+      $itk_component(canvas) bind ${q}button <Enter> [
+         code $this enter $q
+      ]
+      $itk_component(canvas) bind ${q}button <Leave> [
+         code $this leave $q
+      ]
+   }
+
+# Create bindings on the top-level window for the arrow keys (this assumes
+# that there is only one HandPaddleButtons widget in the window).
+   set top [winfo toplevel $itk_interior]
+   foreach key {<Up> <Down> <Left> <Right>} button {down up right left} {
+      bind $top $key [code $this invoke $button]
+   }
+
+# Bind to focus in and focus out events to turning off auto-repeat.
+   bind $top <FocusIn> autoRepeatOff
+   bind $top <FocusOut> autoRepeatOn
+   bind $top <Destroy> autoRepeatOn
+
+# Draw the compass rose.
+   set compass1Coords {200 40 200 90}
+   set compass2Coords {175 66 225 66}
+   eval $itk_component(canvas) create line $compass1Coords -fill black \
+         -tags compass1
+   eval $itk_component(canvas) create line $compass2Coords -fill black \
+         -tags compass2
+
+# Label the compass rose.
+   set rightCoords {240 66}
+   set leftCoords {160 66}
+   set upCoords {200 30}
+   set downCoords {200 100}
+   eval $itk_component(canvas) create text $rightCoords -tags right
+   eval $itk_component(canvas) create text $leftCoords -tags left
+   eval $itk_component(canvas) create text $upCoords -tags up
+   eval $itk_component(canvas) create text $downCoords -tags down
+
+# Draw the "button" for flipping the arrow directions.
+   $itk_component(canvas) create rectangle 240 0 260 20 -tags flip -outline ""
+   $itk_component(canvas) create line 250 0 250 20 -arrow both -tags flip
+   $itk_component(canvas) bind flip <Button-1> [code $this flip]
+
+   pack $itk_component(canvas)
+
+   eval itk_initialize $args
+}
+
+itcl::body HandPaddleButtons::press button {
+   sink $button
+   set pressed $button
+}
+
+itcl::body HandPaddleButtons::release button {
+   if { $pressed == $button } {
+      raise $button
+      invoke $button
+      set pressed ""
+   }
+}
+
+itcl::body HandPaddleButtons::leave button {
+   set focusbutton ""
+   if { $pressed == $button } {
+      raise $button
+   }
+}
+
+itcl::body HandPaddleButtons::enter button {
+   set focusbutton $button
+   if { $pressed == $button } {
+      sink $button
+   }
+}
+
+itcl::body HandPaddleButtons::invoke button {
+   uplevel #0 $itk_option(-${button}command)
+}
+
+itcl::body HandPaddleButtons::sink button {
+   $itk_component(canvas) itemconfigure ${button}topshadow \
+                          -fill $itk_option(-bottomshadowcolor)
+   $itk_component(canvas) itemconfigure ${button}bottomshadow \
+                          -fill $itk_option(-topshadowcolor)
+}
+
+itcl::body HandPaddleButtons::raise button {
+   $itk_component(canvas) itemconfigure ${button}topshadow \
+                          -fill $itk_option(-topshadowcolor)
+   $itk_component(canvas) itemconfigure ${button}bottomshadow \
+                          -fill $itk_option(-bottomshadowcolor)
+}
+
+itcl::body HandPaddleButtons::rotate {cx cy coords angle} {
+   set s [expr sin(-$angle)]
+   set c [expr cos(-$angle)]
+   foreach {x y} $coords {
+      set x [expr $x - $cx]
+      set y [expr $y - $cy]
+      lappend newcoords [expr $x * $c + $y * $s + $cx]
+      lappend newcoords [expr $y * $c - $x * $s + $cy]
+   }
+   return $newcoords
+}
+
+itcl::configbody HandPaddleButtons::angle {
+   eval $itk_component(canvas) coords lefttopshadow \
+        [rotate 66 66 $topShadowCoords(left) $itk_option(-angle)]
+   eval $itk_component(canvas) coords leftbottomshadow \
+        [rotate 66 66 $bottomShadowCoords(left) $itk_option(-angle)]
+   eval $itk_component(canvas) coords leftbutton \
+        [rotate 66 66 $buttonCoords(left) $itk_option(-angle)]
+   eval $itk_component(canvas) coords leftarrow \
+        [rotate 66 66 $arrowCoords(left) $itk_option(-angle)]
+
+   eval $itk_component(canvas) coords righttopshadow \
+        [rotate 66 66 $topShadowCoords(right) $itk_option(-angle)]
+   eval $itk_component(canvas) coords rightbottomshadow \
+        [rotate 66 66 $bottomShadowCoords(right) $itk_option(-angle)]
+   eval $itk_component(canvas) coords rightbutton \
+        [rotate 66 66 $buttonCoords(right) $itk_option(-angle)]
+   eval $itk_component(canvas) coords rightarrow \
+        [rotate 66 66 $arrowCoords(right) $itk_option(-angle)]
+
+   eval $itk_component(canvas) coords uptopshadow \
+        [rotate 66 66 $topShadowCoords(up) $itk_option(-angle)]
+   eval $itk_component(canvas) coords upbottomshadow \
+        [rotate 66 66 $bottomShadowCoords(up) $itk_option(-angle)]
+   eval $itk_component(canvas) coords upbutton \
+        [rotate 66 66 $buttonCoords(up) $itk_option(-angle)]
+   eval $itk_component(canvas) coords uparrow \
+        [rotate 66 66 $arrowCoords(up) $itk_option(-angle)]
+
+   eval $itk_component(canvas) coords downtopshadow \
+        [rotate 66 66 $topShadowCoords(down) $itk_option(-angle)]
+   eval $itk_component(canvas) coords downbottomshadow \
+        [rotate 66 66 $bottomShadowCoords(down) $itk_option(-angle)]
+   eval $itk_component(canvas) coords downbutton \
+        [rotate 66 66 $buttonCoords(down) $itk_option(-angle)]
+   eval $itk_component(canvas) coords downarrow \
+        [rotate 66 66 $arrowCoords(down) $itk_option(-angle)]
+
+   eval $itk_component(canvas) coords compass1 \
+         [rotate 200 66 $compass1Coords $itk_option(-angle)]
+   eval $itk_component(canvas) coords compass2 \
+         [rotate 200 66 $compass2Coords $itk_option(-angle)]
+   eval $itk_component(canvas) coords up \
+         [rotate 200 66 $upCoords $itk_option(-angle)]
+   eval $itk_component(canvas) coords down \
+         [rotate 200 66 $downCoords $itk_option(-angle)]
+   eval $itk_component(canvas) coords left \
+         [rotate 200 66 $leftCoords $itk_option(-angle)]
+   eval $itk_component(canvas) coords right \
+         [rotate 200 66 $rightCoords $itk_option(-angle)]
+}
+
+itcl::configbody HandPaddleButtons::buttonbackground {
+   $itk_component(canvas) itemconfigure button \
+                         -fill $itk_option(-buttonbackground)
+}
+
+itcl::configbody HandPaddleButtons::buttonforeground {
+   $itk_component(canvas) itemconfigure arrow \
+                         -outline $itk_option(-buttonforeground)
+}
+
+itcl::configbody HandPaddleButtons::topshadowcolor {
+   $itk_component(canvas) itemconfigure topshadow \
+                         -fill $itk_option(-topshadowcolor)
+}
+
+itcl::configbody HandPaddleButtons::bottomshadowcolor {
+   $itk_component(canvas) itemconfigure bottomshadow \
+                         -fill $itk_option(-bottomshadowcolor)
+}
+
+itcl::body HandPaddleButtons::flip {} {
+   $this configure -upcommand [$this cget -downcommand] \
+         -downcommand [$this cget -upcommand] \
+         -uplabel [$this cget -downlabel] \
+         -downlabel [$this cget -uplabel]
+}

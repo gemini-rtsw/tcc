@@ -1,0 +1,90 @@
+#+
+# StepSize.itk
+#
+# Implements the StepSize widget. A row of buttons that select a
+# handset step size.
+#
+# D Terrett 20 January 1999
+#
+# Copyright CCLRC
+#-
+
+itcl::class StepSize {
+   inherit itk::Widget
+
+   constructor args {}
+   destructor {}
+
+   itk_option define -command command Command ""
+
+   private method push
+
+   private common Custom
+}
+
+itk::usual StepSize {
+   keep -background -borderwidth -cursor -foreground 
+   keep -highlightcolor  -highlightthickness -insertbackground 
+   keep -insertborderwidth  -insertofftime -insertontime -insertwidth 
+   keep -labelfont  -selectbackground -selectborderwidth -selectforeground  
+   keep -textbackground -textfont
+   keep -font
+}
+
+itcl::body StepSize::constructor args {
+
+# Create row of buttons.
+   set lablist {0.1 0.2 0.5 1.0 2.0 5.0 10.0 1.0}
+   itk_component add buttons {
+      frame $itk_interior.buttons
+   }
+   pack $itk_component(buttons)
+
+   for { set i 0 } { $i < 8 } { incr i } {
+      itk_component add step$i {
+         label $itk_component(buttons).step$i -relief raised -bd 2 -width 4 \
+            -text [lindex $lablist $i]
+      }
+      pack $itk_component(step$i) -side left -ipady 2
+      bind  $itk_component(step$i)  <Button-1> [code $this push %W]
+   }
+
+# Create label.
+   itk_component add label {
+      label $itk_interior.label
+   } {
+      usual
+      keep -text
+   }
+   pack $itk_component(label) -side left -fill x -expand yes
+
+# Entry widget for setting the custom step size.
+   itk_component add custom {
+      iwidgets::entryfield $itk_interior.custom -width 4 \
+            -textvariable [scope Custom($this)] -validate real
+   }
+   $itk_component(step7) configure -textvariable [scope Custom($this)]
+   set Custom($this) 1.0
+   pack $itk_component(custom)
+
+# Bind <Return> in the entry widget to "pushing" the custom button.
+   bind [$itk_component(custom) component entry] <Return> \
+         [code $this push $itk_component(step7)]
+
+   eval itk_initialize $args
+}
+
+itcl::body StepSize::push w {
+
+# Make the buttons sink when pressed and the other buttons pop up.
+   for { set i 0 } { $i < 8 } { incr i } {
+      $itk_component(step$i) configure -relief raised
+   }
+   $w configure -relief sunken
+
+# Execute the -command option
+   set step [$w cget -text]
+   if { $itk_option(-command) != "" } {
+      uplevel #0 $itk_option(-command) \"$step\"
+   }
+}

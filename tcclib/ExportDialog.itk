@@ -1,0 +1,91 @@
+#+
+#  ExportDialog.itk
+#
+#  Implements the ExportDialog widget which is a file selection dialog with 
+#  checkbuttons for selecting which components are saved.
+#
+#  D Terrett 16 November 1998
+#
+#  Copyright CCLRC
+#-
+
+itcl::class ExportDialog {
+   inherit iwidgets::Fileselectiondialog
+
+   constructor args {}
+}
+
+itk::usual ExportDialog {
+}
+
+itcl::body ExportDialog::constructor args {
+
+#   pack propagate $itk_component(hull) yes
+
+# Add check buttons to select which components to export.
+#   itk_component add frame {
+#      frame $itk_component(dschildsite).frame
+#   }
+#   pack $itk_component(frame)
+#   grid $itk_component(frame)
+#   set w $itk_component(frame)
+   set w $itk_interior
+
+   itk_component add config {
+      checkbutton $w.config -text Configurations -variable $w._config
+   }
+
+   itk_component add sciencetarget {
+      checkbutton $w.scitarg -text "Science Targets" -variable $w._scitarg
+   }
+   grid $w.config $w.scitarg -sticky w
+
+   itk_component add rotator {
+      checkbutton $w.rot -text Rotators -variable $w._rot
+   }
+
+   itk_component add pointorig {
+      checkbutton $w.po -text "Pointing Origins" -variable $w._po
+   }
+   grid $w.rot $w.po -sticky w
+
+   itk_component add slewoptions {
+      checkbutton $w.slew -text "Slew Options" -variable $w._slew
+   }
+
+   itk_component add wavelength {
+      checkbutton $w.wavel -text Wavelengths -variable $w._wavel
+   }
+   grid $w.slew $w.wavel -sticky w
+
+   itk_component add trackframe {
+      checkbutton $w.trackframe -text "Tracking Frames" \
+             -variable $w._trackframe
+   }
+   grid $w.trackframe -sticky w
+
+   itk_component add wfstarget {
+      checkbutton $w.wfstarg -text "Wave Front Sensor Targets" \
+            -variable $w._wfstarg
+   }
+      grid $w.wfstarg - -sticky w
+
+   itk_component add instrument {
+      checkbutton $w.instrument -text "Instrument Configurations" \
+            -variable $w._instrument
+   }
+   grid $w.instrument - -sticky w
+
+   itk_component add guide {
+      checkbutton $w.guide -text "Guide Configurations" -variable $w._guide
+   }
+   grid $w.guide - -sticky w
+
+   itk_component add trackrate {
+      checkbutton $w.trackrate -text "Differential Track Rates" \
+            -variable $w._trackrate
+   }
+   grid $w.trackrate - -sticky w
+
+   eval itk_initialize $args
+}

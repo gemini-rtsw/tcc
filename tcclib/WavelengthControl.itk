@@ -1,0 +1,80 @@
+#+
+#  WavelengthControl.itk
+#
+#  Implements the WavelengthControl widget. A ComponentControl widget with
+#  an entryfield widget for the wavelength.
+#
+#  D Terrett 3 November 1998
+#
+#  Copyright CCLRC
+#+
+
+itcl::class WavelengthControl {
+   inherit ComponentControl
+
+   constructor args {}
+
+   itk_option define -vt vt Vt {}
+
+   public method selectobj name
+   public method updateobj name
+}
+
+itk::usual WavelengthControl {
+   keep -activebackground -activeforeground -disabledforeground
+   keep -background -borderwidth -cursor -foreground -highlightcolor
+   keep -highlightthickness -insertbackground -insertborderwidth
+   keep -insertofftime -insertontime -insertwidth -labelfont -popupcursor
+   keep -selectbackground -selectborderwidth -selectforeground
+   keep -textbackground -textfont -font
+   keep -vt -title
+}
+
+itcl::body WavelengthControl::constructor args {
+
+   itk_component add wframe {
+      frame $itk_interior.wframe -bd 2 -relief ridge
+    }
+    pack $itk_component(wframe)
+    set w $itk_component(wframe)
+
+# Entryfield for the wavelength.
+   itk_component add wavel {
+      iwidgets::entryfield $w.wavel \
+           -labeltext [lindex [cs wavelSourceA info wavel] 2]  -width 8
+   }
+   pack $itk_component(wavel) -padx 4 -pady 4
+
+# Create the wavelength object used by apply.
+   set scratchobj [namespace which -command [Wavelength #auto]]
+
+# Set the object class.
+   set objclass WavelengthComponent
+   set description wavelength
+
+   eval itk_initialize $args
+}
+
+itcl::body WavelengthControl::updateobj name {
+#+
+# Updates the named wavelength object.
+#-
+   $name configure -wavel [$itk_component(wavel) get]
+}
+
+itcl::body WavelengthControl::selectobj name {
+#+
+# Copies the contents of the Wavelength object selected in the combobox
+# into the edit controls.
+#-
+   $itk_component(wavel) clear
+
+   if { $name != "" } {
+      $itk_component(wavel) insert end [$name cget -wavel]
+   }
+}
+
+itcl::configbody WavelengthControl::vt {
+   $itk_component(storeapply) configure \
+         -logmessage "$itk_option(-vt) wavelength"
+}

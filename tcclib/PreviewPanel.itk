@@ -1,0 +1,32 @@
+#+
+#  PreviewPanel.itk
+#
+#  Implements the PreviewPanel widget. A Panel widget with a PreviewControl
+#  widget packed into its interior
+#
+#  D Terrett 13 August 1998
+#
+#  Copyright CCLRC
+#+
+
+itcl::class PreviewPanel {
+   inherit Panel
+
+   constructor args {}
+}
+
+itk::usual PreviewPanel {
+   keep -background -cursor
+}
+
+itcl::body PreviewPanel::constructor args {
+   itk_component add control {
+      PreviewControl $itk_interior.control
+   }
+
+   pack $itk_component(control) -fill both -expand y
+
+   set itk_option(-windows) $itk_component(control)
+
+   eval itk_initialize $args
+}

@@ -1,0 +1,38 @@
+#+
+#  EditButton.itk
+#
+#  Implements the EditButton widget: a button that pops up one of the
+#  tcc editing windows.
+#
+#  D Terrett  5 August 1998
+#
+#  Copyright CCLRC
+#-
+
+itcl::class EditButton {
+   inherit PanelButton
+
+   constructor args {}
+
+   protected method map {}
+
+   itk_option define -selector selector Selector ""
+}
+
+itk::usual EditButton {
+   keep -background -cursor -foreground -font
+   keep -activebackground -activeforeground -disabledforeground
+   keep -highlightcolor -highlightthickness
+}
+
+itcl::body EditButton::constructor args {
+   eval itk_initialize $args
+}
+
+itcl::body EditButton::map {} {
+   $this PanelButton::map
+   set selection [$itk_option(-selector) get]
+   if { $selection != "" } {
+      [$itk_option(-panel) cget -window] select $selection
+   }
+}

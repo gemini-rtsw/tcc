@@ -1,0 +1,93 @@
+#+
+#  Panel.itk
+#
+#  Implements the Panel widget. A Toplevel widget with the addition
+#  of a file menu with Move, Hide and Exit entries and an option that list
+#  the window names of the controls that the panel contains and the name of
+#  the PanelMgr that created this Panel.
+#
+#  D Terrett 16 November 1998
+#
+#  Copyright CCLRC
+#+
+
+itcl::class Panel {
+   inherit itk::Toplevel
+
+   constructor args {}
+
+   itk_option define -windows windows Windows {}
+   itk_option define -panelmgr panelMgr PanelMgr {}
+
+   private method move
+   private method hide
+   private method exit
+}
+
+itk::usual Panel {
+   keep -background -cursor
+}
+
+itcl::body Panel::constructor args {
+
+# Menu bar and menus.
+   itk_component add menubar {
+      iwidgets::menubar $itk_interior.menubar -menubuttons {
+         menubutton file -text File -menu {
+            command move -label Move... -command \"[code $this move]\"
+            command hide -label Hide -command \"[code $this hide]\"
+            command exit -label Exit -command \"[code $this exit]\"
+         }
+      }
+   } {
+   }
+# The empty options clause is because the Menubar class has no "usual" code.
+# A bug in itcl2.2 ?
+
+# Frame.
+   itk_component add frame {
+      frame $itk_interior.frame
+   }
+
+   pack $itk_component(menubar) -fill x -expand y
+   pack $itk_component(frame) -fill both -expand y
+
+   wm resizable $itk_interior 0 0
+
+   set itk_interior $itk_component(frame)
+
+   eval itk_initialize $args
+}
+
+itcl::body Panel::move {} {
+#+
+# Called by the move menu entry. Creates a dialog box for a new screen and
+# position to be entered.
+#-
+   set dialog [MoveDialog $itk_interior.moveDialog \
+         -title "Window Position Dialog" -modality application \
+         -master $itk_interior -panelmgr $itk_option(-panelmgr)]
+   $dialog hide Help
+   $dialog hide Apply
+   $dialog center
+   $dialog activate
+
+# If the screen was changed the dialog will have been deleted when the
+# parent panel was deleted.
+   catch {destroy $dialog}
+}
+
+itcl::body Panel::hide {} {
+#+
+# Called by the hide menu entry. Hides the window by withdrawing it from
+# the screen.
+#-
+   wm withdraw [winfo toplevel $itk_interior]
+}
+
+itcl::body Panel::exit {} {
+#+
+# Called by the exit menu entry. Destroys the window.
+#-
+   destroy [winfo toplevel $itk_interior]
+}

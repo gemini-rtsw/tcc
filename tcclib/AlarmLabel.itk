@@ -1,0 +1,105 @@
+#+
+#  AlarmLabel.itk
+#
+#  Implements the AlarmLabel widget. A label widget that can display an
+#  alarm status. This is currently done by setting the widget background
+#  and foreground colours.
+#
+#  The only tricky thing is the code necessary to avoid trying to set
+#  the label widget colours to empty strings during initialisation.
+#
+#  D Terrett   5 August 1998
+#
+#  Copyright CCLRC
+#+
+
+itcl::class AlarmLabel {
+   inherit itk::Widget
+
+   constructor args {}
+
+   itk_option define -alarmforeground alarmForeground AlarmForeground white
+   itk_option define -alarmbackground alarmBackground AlarmBackground red
+   itk_option define -foreground foreground Foreground {}
+   itk_option define -background background Background {}
+   itk_option define -state state State normal
+}
+
+itk::usual AlarmLabel {
+   keep -alarmbackground -alarmforeground
+   keep -background -foreground
+   keep -cursor -foreground -font
+   keep -highlightcolor -highlightthickness
+}
+
+itcl::body AlarmLabel::constructor args {
+
+   itk_component add label {
+      label $itk_interior.label
+   } {
+      usual
+      ignore -foreground -background
+      keep -text
+      keep -anchor
+      keep -font
+      keep -width
+      keep -borderwidth
+      keep -relief
+   }
+
+   pack $itk_component(label) -fill both -expand y
+
+   eval itk_initialize $args
+}
+
+itcl::configbody AlarmLabel::state {
+   if { $itk_option(-state) == "normal" } {
+      if { $itk_option(-foreground) != "" } {
+         $itk_component(label) configure \
+               -foreground $itk_option(-foreground) 
+      }
+      if { $itk_option(-background) != "" } {
+         $itk_component(label) configure \
+               -background $itk_option(-background)
+      }
+   } elseif { $itk_option(-state) == "alarm" } {
+      $itk_component(label) configure \
+            -foreground $itk_option(-alarmforeground) \
+            -background $itk_option(-alarmbackground)
+   }
+}
+
+itcl::configbody AlarmLabel::foreground {
+   if { $itk_option(-state) == "normal" } {
+      if { $itk_option(-foreground) != "" } {
+         $itk_component(label) configure -foreground \
+               $itk_option(-foreground) 
+      } else {
+         set itk_option(-foreground) [$itk_component(label) cget -foreground]
+      }
+   }
+}
+
+itcl::configbody AlarmLabel::alarmforeground {
+   if { $itk_option(-state) == "alarm" } {
+      $itk_component(label) configure -foreground \
+            $itk_option(-alarmforeground)
+   }
+}
+
+itcl::configbody AlarmLabel::background {
+   if { $itk_option(-state) == "normal" } {
+      if { $itk_option(-background) != "" } {
+         $itk_component(label) configure -background \
+               $itk_option(-background) 
+      } {
+         set itk_option(-background) [$itk_component(label) cget -background]
+      }
+   }
+}
+
+itcl::configbody AlarmLabel::alarmbackground {
+   if { $itk_option(-state) == "alarm" } {
+      $itk_component(label) configure -background $itk_option(-alarmbackground)
+   }
+}

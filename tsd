@@ -1,0 +1,58 @@
+#!/bin/sh
+# the next line restarts using ocswish \
+exec $GEMINI_BASE/ocs/bin/solaris/ocswish8 "$0" "$@"
+
+#+
+#  tsd
+#
+#  This script starts the Gemini telescope status display. It contains all
+#  the messy stuff involved in finding the tcl packages and libraries that
+#  the tsd uses. It is probably installation dependent and will need to be
+#  hacked to get it to work.
+#
+#  D Terrett 26 April 1999
+#
+#  Copyright CCLRC
+#-
+
+# Define the root directory for locating libraries and extensions.
+global ROOT
+set ROOT [file dirname [info script]]
+
+# The tsd library files live in the lib subdirectory of the directory 
+# containing this script.
+lappend auto_path $ROOT/lib
+lappend auto_path $ROOT/tsdlib
+
+# Load the tcctime, sla and tsd extensions to tcl.
+load $ROOT/lib/solaris/tcctime.so
+load $ROOT/lib/solaris/slaext.so
+load $ROOT/tsdlib/solaris/tsdext.so
+
+# Load all the packages required by the tsd.
+package require Itcl
+namespace import itcl::*
+package require Itk
+package require Iwidgets
+package require Ocspkg
+
+# Set the name of the epics service configuration file.
+if { [info exists env(TCC_TCSNAME)] } {
+   puts "Using $env(TCC_TCSNAME)"
+   set ext .$env(TCC_TCSNAME)
+} else {
+   set ext ""
+}
+appData add configPath $ROOT/ca_config$ext
+appData add configFile tsd.ca
+
+# Load options database.
+option readfile $ROOT/options userDefault
+
+# Define timezone
+global TIMEZONE TZOFFSET
+set TIMEZONE HST
+set TZOFFSET -10
+
+# Start the tsd (eval is used to expand $argv into a list of arguments).
+eval tsdMain $argv

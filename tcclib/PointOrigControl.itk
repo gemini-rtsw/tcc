@@ -1,0 +1,86 @@
+#+
+#  PointOrigControl.itk
+#
+#  Implements the PointOrigControl widget. A ComponentControl widget with
+#  entryfield widgets for X and Y.
+#
+#  D Terrett 3 November 1998
+#
+#  Copyright CCLRC
+#+
+
+itcl::class PointOrigControl {
+   inherit ComponentControl
+
+   constructor args {}
+
+   itk_option define -vt vt Vt {}
+
+   public method selectobj name
+   public method updateobj name
+}
+
+itk::usual PointOrigControl {
+   keep -activebackground -activeforeground -disabledforeground
+   keep -background -borderwidth -cursor -foreground -highlightcolor
+   keep -highlightthickness -insertbackground -insertborderwidth
+   keep -insertofftime -insertontime -insertwidth -labelfont -popupcursor
+   keep -selectbackground -selectborderwidth -selectforeground
+   keep -textbackground -textfont -font
+   keep -vt -title
+}
+
+itcl::body PointOrigControl::constructor args {
+
+   set w $itk_interior
+
+# Entryfields for the pointing origin X & Y.
+   itk_component add xy {
+      frame $w.xy -bd 2 -relief ridge
+   }
+   pack $itk_component(xy) -fill x -expand y
+   set w $itk_component(xy)
+   itk_component add x {
+      iwidgets::entryfield $w.x -labeltext [lindex [cs poriginA info x] 2] \
+            -width 5
+   }
+   itk_component add y {
+      iwidgets::entryfield $w.y -labeltext [lindex [cs poriginA info y] 2] \
+            -width 5
+   }
+   pack $itk_component(x) $itk_component(y) -side left -padx 4 -pady 4
+
+# Create the instrument object used by apply.
+   set scratchobj [namespace which -command [PointOrig #auto]]
+
+# Set the object class.
+   set objclass PointOrigComponent
+   set description "pointing origin"
+
+   eval itk_initialize $args
+}
+
+itcl::body PointOrigControl::updateobj name {
+#+
+# Updates the named pointing origin object.
+#-
+   $name configure -x [$itk_component(x) get] -y [$itk_component(y) get]
+}
+
+itcl::body PointOrigControl::selectobj name {
+#+
+# Copies the contents of the PointOrig object selected in the combobox
+# into the edit controls.
+#-
+   $itk_component(x) clear
+   $itk_component(y) clear
+   if { $name != "" } {
+      $itk_component(x) insert end [$name cget -x]
+      $itk_component(y) insert end [$name cget -y]
+   }
+}
+
+itcl::configbody PointOrigControl::vt {
+   $itk_component(storeapply) configure \
+         -logmessage "$itk_option(-vt) pointing origin"
+}

@@ -1,0 +1,60 @@
+#+
+#  PointOrig.itcl
+#
+#  Implements the PointOrig class. A PointOrig object stores all the parameters 
+#  needed to specify a pointing origin and knows how to load the pointing
+#  origin into the TCS.
+#
+#  Methods:
+#
+#     apply <virtual telescope>
+#
+#         Applies the target definition to the TCS by setting the values
+#         of the command parameters.
+#
+#     preview <item>
+#
+#         Calls tccPreview set to set the named item.
+#
+#  D Terrett 8 September 1998
+#
+#  Copyright CCLRC
+#+
+
+itcl::class PointOrig {
+
+   public proc subcomponents {} {return {}}
+
+   public method apply vt
+   public method preview item
+   public method save file
+
+   public variable x 0.0
+   public variable y 0.0
+}
+
+itcl::body PointOrig::apply vt {
+   switch $vt {
+      sourceA {
+         cs poriginA set x \"$x\"
+         cs poriginA set y \"$y\"
+      }
+      sourceB {
+         cs poriginB set x \"$x\"
+         cs poriginB set y \"$y\"
+      }
+      sourceC {
+         cs poriginC set x \"$x\"
+         cs poriginC set y \"$y\"
+      }
+   }
+}
+
+itcl::body PointOrig::preview item {
+   tccPreview set $item $x $y
+}
+
+itcl::body PointOrig::save file {
+   puts $file "   -x \"$x\" \\"
+   puts $file "   -y \"$y\""
+}

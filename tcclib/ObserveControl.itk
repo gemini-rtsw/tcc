@@ -1,0 +1,91 @@
+#+
+#  ObserveControl.itk
+#
+#  Implements the ObserveControl widget.
+#
+#  D Terrett 25 November 1998
+#
+#  Copyright CCLRC
+#+
+
+itcl::class ObserveControl {
+   inherit itk::Widget
+
+   constructor args {}
+
+   private method setao state
+   private method setmode state
+}
+
+itk::usual ObserveControl {
+   keep -background -cursor -foreground
+   keep -activebackground -activeforeground
+   keep -highlightcolor -highlightthickness
+   keep -onbackground
+}
+
+itcl::body ObserveControl::constructor args {
+
+   set w $itk_interior
+   itk_component add ao {
+      SelectButton $w.ao -command [code $this setao] -labeltext "Active Optics:"
+   } {
+      usual
+      rename -offbackground -background background Background
+   }
+   $itk_component(ao) add IN -width 5
+   $itk_component(ao) add OUT -width 5
+   pack $itk_component(ao)
+
+   itk_component add mode {
+      SelectButton $w.mode -command [code $this setmode]
+   } {
+      usual
+      rename -offbackground -background background Background
+   }
+   $itk_component(mode) add observe 
+   $itk_component(mode) add calibrate
+   $itk_component(mode) add "acquisition TV"
+   pack $itk_component(mode)
+
+   global ROOT
+   itk_component add tarhand {
+      PanelButton $w.tarhand -text "Adjust target offsets" \
+         -panel offsetHandsetPanel
+   }
+   itk_component add pohand {
+      PanelButton $w.pohand -text "Adjust Instrument X/Y" \
+         -panel poHandsetPanel
+   }
+   itk_component add guidehand {
+      PanelButton $w.guidehand -text "Adjust pointing" \
+         -panel guideHandsetPanel
+   }
+   pack $itk_component(tarhand) $itk_component(pohand) \
+         $itk_component(guidehand) -fill x -expand yes
+
+   eval itk_initialize $args
+}
+
+itcl::body ObserveControl::setao state {
+   iss configure -ao $state
+   iss update
+   if [catch {cs tcsApply post} msg] {
+      tk_messageBox -icon error -parent $itk_interior -message \
+            "Error posting command: TCS reports \"$msg\""
+   }
+}
+
+itcl::body ObserveControl::setmode state {
+   switch $state {
+      observe {iss configure -mode SKY}
+      calibrate {iss configure -mode CAL}
+      "acquisition TV" {iss configure -mode TV}
+   }
+   iss update
+   if [catch {cs tcsApply post} msg] {
+      logger log "rejected..."
+      logger log $msg
+      tk_messageBox -icon error -parent $itk_interior -message $msg
+   }
+}

@@ -1,0 +1,105 @@
+#+
+#  ComponentList.itcl
+#
+#  Implements the ComponentList class. A ComponentList object manages a
+#  list of component objects, keeping any associated combo boxes up-to-date.
+#
+#  Methods:
+#
+#     add <component> <position>
+#
+#        Adds a component to the list at the specified position.
+#
+#     remove <component>
+#
+#        Removes a component from the list.
+#
+#     length
+#
+#        Returns the number of items in the list.
+#
+#     get <position>
+#
+#        Returns the name of the component at the specified position.
+#
+#     index <component>
+#
+#        Returns the index position of the specified component.
+#
+#     addWidget <widget>
+#
+#        Adds a widget to the list of combo boxes updated when the component
+#        list changes.
+#
+#     removeWidget <widget>
+#
+#        Removes a widget from the list of widgets.
+#
+#  A position can be either an integer or the string "end".
+#
+#  D Terrett 2 June 1998
+#
+#  Copyright CCLRC
+#+
+
+itcl::class ComponentList {
+
+   public method add {component position}
+   public method remove component
+   public method length
+   public method get position
+   public method index component
+   public method addWidget
+   public method removeWidget
+
+   private variable list {{}}
+   private variable widgetList {}
+}
+
+itcl::body ComponentList::add {component position} {
+   if { $position == "end" || $position > [llength $list] } {
+      lappend list $component
+   } else {
+      set list [lreplace $list $position -999 $component]
+   }
+   foreach widget $widgetList {
+      $widget insert list $position $component
+   }
+}
+
+itcl::body ComponentList::remove component {
+   set index [lsearch -exact $list $component]
+   set list [lreplace $list $index $index]
+   foreach widget $widgetList {
+      set editstate [$widget cget -editable]
+      $widget configure -editable 1
+      $widget delete list $index
+      $widget configure -editable $editstate
+   }
+}
+
+itcl::body ComponentList::length {} {
+   return [llength $list]
+}
+
+itcl::body ComponentList::get position {
+   return [lindex $list $position]
+}
+
+itcl::body ComponentList::index component {
+   return [lsearch -exact $list $component]
+}
+
+itcl::body ComponentList::addWidget widget {
+   if { [lsearch -exact $widgetList $widget] == -1 } {
+      lappend widgetList $widget
+      foreach el $list {
+         $widget insert list end $el
+      }
+   }
+}
+
+itcl::body ComponentList::removeWidget widget {
+   set index [lsearch -exact $widgetList $widget]
+   set widgetList [lreplace $widgetList $index $index]
+}

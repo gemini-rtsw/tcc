@@ -1,0 +1,35 @@
+#+
+#  LogPanel.itk
+#
+#  Implements the LogPanel widget. A Panel widget with a LogControl
+#  widget packed into its interior
+#
+#  D Terrett 31 August 1998
+#
+#  Copyright CCLRC
+#+
+
+itcl::class LogPanel {
+   inherit Panel
+
+   constructor args {}
+}
+
+itk::usual LogPanel {
+   keep -background -cursor
+}
+
+itcl::body LogPanel::constructor args {
+   itk_component add control {
+      LogControl $itk_interior.control
+   }
+
+   pack $itk_component(control) -fill both -expand y
+
+# Make this panel resizable.
+   wm resizable [winfo toplevel $itk_interior] 1 1
+
+   set itk_option(-windows) $itk_component(control)
+
+   eval itk_initialize $args
+}

@@ -1,0 +1,200 @@
+#+
+#  GuideControl.itk
+#
+#  Implements the GuideControl widget. A ComponentControl widget with
+#  a widgets for the target name and chop and node states for each of the
+#  wave front sensors.
+#
+#  D Terrett 3 November 1998
+#
+#  Copyright CCLRC
+#+
+
+itcl::class GuideControl {
+   inherit ComponentControl
+
+   itk_option define -shadow shadow Shadow {}
+
+   constructor args {}
+
+   public method selectobj name
+   public method updateobj name
+}
+
+itk::usual GuideControl {
+   keep -activebackground -activeforeground -disabledforeground
+   keep -background -borderwidth -cursor -foreground -highlightcolor
+   keep -highlightthickness -insertbackground -insertborderwidth
+   keep -insertofftime -insertontime -insertwidth -labelfont -popupcursor
+   keep -selectbackground -selectborderwidth -selectforeground
+   keep -textbackground -textfont -font
+   keep -vt -title
+}
+
+itcl::body GuideControl::constructor args {
+
+# Create 3 panels, one for each of the wave front sensors.
+   set w $itk_interior
+   itk_component add pwfs1 {
+      frame $w.pwfs1 -bd 2 -relief sunken
+   }
+   itk_component add pwfs2 {
+      frame $w.pwfs2 -bd 2 -relief sunken
+   }
+   itk_component add oiwfs {
+      frame $w.oiwfs -bd 2 -relief sunken
+   }
+   pack $itk_component(pwfs1) $itk_component(pwfs2) $itk_component(oiwfs)
+
+# PWFS1 settings
+   set w $itk_component(pwfs1)
+
+# Target selector.
+   itk_component add pwfs1Target {
+      SubComponentSelector $w.target -labeltext "PWFS1 Target" \
+            -componentlist WfsTargetList -labelpos nw -component pwfs1Target
+   }
+
+# Chop state
+   itk_component add pwfs1chop {
+      iwidgets::optionmenu $w.chop -labeltext "Active in chop"
+   }
+   $itk_component(pwfs1chop) insert end A B
+
+# Nod setting
+   itk_component add pwfs1nod {
+      iwidgets::optionmenu $w.nod \
+   }
+   $itk_component(pwfs1nod) insert end \
+         "Probe follows nod" "Guide in nod A only" "Guide in nod B only"
+   pack $itk_component(pwfs1Target) $itk_component(pwfs1chop) \
+         $itk_component(pwfs1nod) -padx 5 -pady 2
+
+# PWFS2 settings
+   set w $itk_component(pwfs2)
+
+# Target selector.
+   itk_component add pwfs2Target {
+      SubComponentSelector $w.target -labeltext "PWFS2 Target" \
+            -componentlist WfsTargetList -labelpos nw -component pwfs2Target
+   }
+
+# Chop state
+   itk_component add pwfs2chop {
+      iwidgets::optionmenu $w.chop -labeltext "Active in chop"
+   }
+   $itk_component(pwfs2chop) insert end A B
+
+# Nod setting
+   itk_component add pwfs2nod {
+      iwidgets::optionmenu $w.nod
+   }
+   $itk_component(pwfs2nod) insert end \
+         "Probe follows nod" "Guide in nod A only" "Guide in nod B only"
+   pack $itk_component(pwfs2Target) $itk_component(pwfs2chop) \
+         $itk_component(pwfs2nod) -padx 5 -pady 2
+
+# OIWFS settings
+   set w $itk_component(oiwfs)
+
+# Target selector.
+   itk_component add oiwfsTarget {
+      SubComponentSelector $w.target -labeltext "OIWFS Target" \
+            -componentlist WfsTargetList -labelpos nw -component oiwfsTarget
+   }
+
+# Chop state
+   itk_component add oiwfschop {
+      iwidgets::optionmenu $w.chop -labeltext "Active in chop"
+   }
+   $itk_component(oiwfschop) insert end A B
+
+# Nod setting
+   itk_component add oiwfsnod {
+      iwidgets::optionmenu $w.nod
+   }
+   $itk_component(oiwfsnod) insert end \
+         "Probe follows nod" "Guide in nod A only" "Guide in nod B only"
+   pack $itk_component(oiwfsTarget) $itk_component(oiwfschop) \
+         $itk_component(oiwfsnod) -padx 5 -pady 2
+
+# Set the apply log message.
+   $itk_component(storeapply) configure -logmessage "Guiding configuration"
+
+# Create guide object used by apply
+   set scratchobj [namespace which -command [Guide #auto]]
+
+# Define the object class
+   set objclass GuideComponent
+   set description "guide configuration"
+
+   eval itk_initialize $args
+}
+
+itcl::body GuideControl::updateobj name {
+#+
+# Updates the named guide object.
+#-
+   switch [$itk_component(pwfs1nod) index [$itk_component(pwfs1nod) get]] {
+      0 {set nod AB}
+      1 {set nod A}
+      2 {set nod B}
+   }
+   $name configure -pwfs1Target [$itk_component(pwfs1Target) get] \
+          -pwfs1Chop [$itk_component(pwfs1chop) get] -pwfs1Nod $nod
+   $name configure -pwfs2Target [$itk_component(pwfs2Target) get] \
+          -pwfs2Chop [$itk_component(pwfs2chop) get] -pwfs2Nod $nod
+   switch [$itk_component(pwfs2nod) index [$itk_component(pwfs2nod) get]] {
+      0 {set nod AB}
+      1 {set nod A}
+      2 {set nod B}
+   }
+   $name configure -pwfs2Target [$itk_component(pwfs2Target) get] \
+          -pwfs2Chop [$itk_component(pwfs2chop) get] -pwfs2Nod $nod
+   switch [$itk_component(oiwfsnod) index [$itk_component(oiwfsnod) get]] {
+      0 {set nod AB}
+      1 {set nod A}
+      2 {set nod B}
+   }
+   $name configure -oiwfsTarget [$itk_component(oiwfsTarget) get] \
+          -oiwfsChop [$itk_component(oiwfschop) get] -oiwfsNod $nod
+}
+
+itcl::body GuideControl::selectobj name {
+#+
+# Copies the contents of the guide object selected in the combobox
+# into the edit control.
+#-
+   if { $name != "" } {
+      $itk_component(pwfs1Target) select [$name cget -pwfs1Target]
+      $itk_component(pwfs1chop) select [$name cget -pwfs1Chop]
+      switch [$name cget -pwfs1Nod] {
+        AB {$itk_component(pwfs1nod) select 0}
+        A {$itk_component(pwfs1nod) select 1}
+        B {$itk_component(pwfs1nod) select 2}
+      }
+      $itk_component(pwfs2Target) select [$name cget -pwfs2Target]
+      $itk_component(pwfs2chop) select [$name cget -pwfs2Chop]
+      switch [$name cget -pwfs2Nod] {
+        AB {$itk_component(pwfs2nod) select 0}
+        A {$itk_component(pwfs2nod) select 1}
+        B {$itk_component(pwfs2nod) select 2}
+      }
+      $itk_component(oiwfsTarget) select [$name cget -oiwfsTarget]
+      $itk_component(oiwfschop) select [$name cget -oiwfsChop]
+      switch [$name cget -pwfs1Nod] {
+        AB {$itk_component(oiwfsnod) select 0}
+        A {$itk_component(oiwfsnod) select 1}
+        B {$itk_component(oiwfsnod) select 2}
+      }
+   }
+}
+
+itcl::configbody GuideControl::shadow {
+   $itk_component(pwfs1Target) configure -editcontrol \
+            $itk_option(-shadow)pwfs1Target -shadow $itk_option(-shadow)
+   $itk_component(pwfs2Target) configure -editcontrol \
+            $itk_option(-shadow)pwfs2Target -shadow $itk_option(-shadow)
+   $itk_component(oiwfsTarget) configure -editcontrol \
+            $itk_option(-shadow)oiwfsTarget -shadow $itk_option(-shadow)
+}

@@ -1,0 +1,303 @@
+#+
+#  TcsConfigControl.itk
+#
+#  Implements the TcsConfigControl widget.
+#
+#  D Terrett 27 April 1999
+#
+#  Copyright CCLRC
+#+
+
+itcl::class TcsConfigControl {
+   inherit ComponentControl
+
+   constructor args {}
+
+   itk_option define -shadow shadow Shadow {}
+
+   public method preview
+   public method selectobj name
+   public method updateobj name
+
+   private method apply
+
+   private variable components {
+      scienceTarget guide pointOrig slewOptions rotator trackFrame instrument
+   }
+   private variable options {
+      -scienceTarget -guide -pointOrig -slewOptions -rotator -trackFrame \
+      -instrument
+   }
+   private variable lists {
+      ScienceTargetList GuideList PointOrigList SlewOptionsList RotatorList \
+      TrackFrameList InstrumentList
+   }
+}
+
+itk::usual TcsConfigControl {
+   keep -activebackground -activeforeground -disabledforeground
+   keep -background -borderwidth -cursor -foreground -highlightcolor
+   keep -highlightthickness -insertbackground -insertborderwidth
+   keep -insertofftime -insertontime -insertwidth -labelfont -popupcursor
+   keep -selectbackground -selectborderwidth -selectforeground
+   keep -textbackground -textfont -font -selectcolor
+   keep -vt -title
+}
+
+itcl::body TcsConfigControl::constructor args {
+
+# Divide the window into 3 vertically.
+   itk_component add row1 {
+      frame $itk_interior.row1 -relief ridge -bd 2
+   }
+   itk_component add row2 {
+      frame $itk_interior.row2 -relief ridge -bd 2
+   }
+   itk_component add row3 {
+      frame $itk_interior.row3
+   }
+   pack $itk_component(row1) $itk_component(row2) $itk_component(row3) \
+         -expand y -fill x
+
+# Configuration component selectors.
+   set w $itk_component(row1)
+   itk_component add scienceTarget {
+      ComponentSelector $w.scienceTarget -labeltext "Science Target" \
+            -componentlist ScienceTargetList \
+            -editcontrol tcsconfigscienceTarget \
+            -active 1 -component scienceTarget
+   } {
+      usual
+      rename -textfont -majorfont majorFont Font
+      rename -labelfont -majorfont majorFont Font
+   }
+   itk_component add guide {
+      ComponentSelector $w.guide -labeltext "Guide Configuration" \
+            -componentlist GuideList \
+            -editcontrol tcsconfigguide \
+            -active 1 -component guide
+   } {
+      usual
+      rename -textfont -majorfont majorFont Font
+      rename -labelfont -majorfont majorFont Font
+   }
+   itk_component add rotator {
+      ComponentSelector $w.rotator -labeltext "Field Orientation" \
+            -componentlist RotatorList \
+            -editcontrol tcsconfigrotator \
+            -active 1 -component rotator
+   } {
+      usual
+      rename -textfont -majorfont majorFont Font
+      rename -labelfont -majorfont majorFont Font
+   }
+   itk_component add pointOrig {
+      ComponentSelector $w.pointOrig -labeltext "Pointing Origin" \
+            -componentlist PointOrigList \
+            -editcontrol tcsconfigpointOrig \
+            -active 1 -component pointOrig
+   } {
+      usual
+      rename -textfont -majorfont majorFont Font
+      rename -labelfont -majorfont majorFont Font
+   }
+   itk_component add slewOptions {
+      ComponentSelector $w.slewOptions -labeltext "Slew Options" \
+            -componentlist SlewOptionsList \
+            -editcontrol tcsconfigslewOptions \
+            -active 1 -component slewOptions
+   } {
+      usual
+      rename -textfont -majorfont majorFont Font
+      rename -labelfont -majorfont majorFont Font
+   }
+   itk_component add trackFrame {
+      ComponentSelector $w.trackFrame -labeltext "Tracking Frames" \
+            -componentlist TrackFrameList \
+            -editcontrol tcsconfigtrackFrame \
+            -active 1 -component trackFrame
+   } {
+      usual
+      rename -textfont -majorfont majorFont Font
+      rename -labelfont -majorfont majorFont Font
+   }
+   itk_component add instrument {
+      ComponentSelector $w.instrument -labeltext "Instrument" \
+            -componentlist InstrumentList \
+            -editcontrol tcsconfiginstrument \
+            -active 1 -component instrument
+   } {
+      usual
+      rename -textfont -majorfont majorFont Font
+      rename -labelfont -majorfont majorFont Font
+   }
+
+   pack $itk_component(scienceTarget) $itk_component(guide) \
+         $itk_component(rotator) $itk_component(pointOrig) \
+         $itk_component(slewOptions) $itk_component(trackFrame) \
+         $itk_component(instrument) \
+         -fill x -pady 1
+
+# Wrap control check buttons
+   set w $itk_component(row2)
+   itk_component add azwrap {
+      checkbutton $w.azwrap -text "Unwrap Azimuth" -variable $w._azwrap
+   }
+   itk_component add rotwrap {
+      checkbutton $w.rotwrap -text "Unwrap Rotator" -variable $w._rotwrap
+   }
+   pack $itk_component(azwrap) $itk_component(rotwrap) -side left -pady 10 \
+         -expand y
+
+# Replace the apply and store buttons with Slew/Set, Store and Preview buttons.
+   pack forget $itk_component(storeapply)
+
+   set w $itk_component(row3)
+   itk_component add apply {
+      LiveButton $w.apply -text "Set/Slew" -command [code $this apply] \
+            -width 8
+   }
+   itk_component add store {
+      StoreButton $w.store -text Store -width 8 \
+            -combobox $itk_component(selector)
+   } {
+      usual
+      keep -shadow
+   }
+   itk_component add preview {
+      button $w.preview -text Preview -text Preview \
+            -command [code $this preview] -width 8
+   }
+   pack $itk_component(apply) $itk_component(store) $itk_component(preview) \
+         -side left -expand y -pady 4
+
+# Create the config object used by apply.
+   set scratchobj [namespace which -command [TcsConfig #auto]]
+
+# Set the object class
+   set objclass ConfigComponent
+   set description configuration
+
+   eval itk_initialize $args
+}
+
+itcl::body TcsConfigControl::apply {} {
+#+
+# Called when the apply button is pressed.
+#-
+
+# If there is a name to store to, invoke the store button command.
+   set name [$itk_component(selector) get]
+   if { $name != "" } {
+      $itk_component(store) invoke
+
+# Set the log message.
+      $itk_component(apply) configure -logmessage "New configuration \"$name\""
+   } else {
+      $itk_component(apply) configure -logmessage "New configuration"
+   }
+
+# Store all the current values in the temporary config object.
+   if { [store ""] } {
+
+# Apply the temporary config.
+      $scratchobj apply
+
+# Process the unwrap azimuth checkbutton.
+      upvar #0 [$itk_component(azwrap) cget -variable] unwrapaz
+      if { $unwrapaz } {
+         set az [sa tcssad get demandAz value]
+         set az [lindex [split $az " :"] 0]
+         if { $az > 90.0 } {
+            cs azwrap set flag -1
+         } else {
+            cs azwrap set flag 1
+         }
+      }
+
+# Process the unwrap rotator checkbutton.
+      upvar #0 [$itk_component(rotwrap) cget -variable] unwraprot
+      if { $unwraprot } {
+         set rma [sa tcssad get demandRma value]
+         set rma [lindex [split $rma " :"] 0]
+         if { $rma > 0.0 } {
+            cs rotwrap set flag -1
+         } else {
+            cs rotwrap set flag 1
+         }
+      }
+
+# Clear the unwrap checkbuttons.
+      set unwrapaz 0
+      set unwraprot 0
+
+# Post the command (any command sender will do).
+      if [catch {cs tcsApply post} msg] {
+         error "TCS reports \"$msg\""
+      }
+   }
+}
+
+itcl::body TcsConfigControl::updateobj name {
+#+
+#  Updates the named configuration with the active components.
+#-
+   foreach component $components option $options {
+      if [$itk_component($component) cget -active] {
+         $name configure \
+                $option [[$itk_component($component) component selector] get]
+      } else {
+         $name configure $option ""
+      }
+   }
+}
+
+itcl::body TcsConfigControl::preview {} {
+#+
+#  Maps the preview window by calling the preview method for the
+#  config object followed by the update method of the previewControl.
+#-
+
+# Create or map the preview panel.
+   previewPanel map
+
+# Store the values in the temporary config object.
+   store ""
+
+# Initialise the preview system.
+   tccPreview begin
+
+# Load the preview system with the configuration.
+   $scratchobj preview
+
+# Call the preview panel's update method to generate and display the preview.
+   [[previewPanel cget -name] component control] update
+}
+
+itcl::body TcsConfigControl::selectobj name {
+#+
+#  Updates the active components on the panel with the new configuration.
+#-
+   if { $name != "" } {
+      foreach component $components option $options list $lists {
+         if [$itk_component($component) cget -active] {
+            set comp [$name cget $option]
+            if { $comp != "" } {
+               [$itk_component($component) component selector] select $comp
+               $itk_component($component) configure \
+                     -source [namespace tail $name]
+            }
+         }
+      }
+   }
+}
+
+itcl::configbody TcsConfigControl::shadow {
+   $itk_component(scienceTarget) configure -shadow $itk_option(-shadow)
+   $itk_component(guide) configure -shadow $itk_option(-shadow)
+   $itk_component(rotator) configure -shadow $itk_option(-shadow)
+   $itk_component(pointOrig) configure -shadow $itk_option(-shadow)
+   $itk_component(slewOptions) configure -shadow $itk_option(-shadow)
+   $itk_component(trackFrame) configure -shadow $itk_option(-shadow)
+   $itk_component(instrument) configure -shadow $itk_option(-shadow)
+}

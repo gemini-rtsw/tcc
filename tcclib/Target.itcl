@@ -1,0 +1,181 @@
+#+
+#  Target.itcl
+#
+#  Implements the Target class. A Target object stores all
+#  the parameters needed to specify a target.
+#
+#  Methods:
+#
+#     apply <virtual telescope>
+#
+#         Applies the target definition to the TCS by setting the values
+#         of the command parameters.
+#
+#     preview <item>
+#
+#         Calls tccPreview to set the data in the named virtual telescope.
+#
+#  D Terrett 2 October 1998
+#
+#  Copyright CCLRC
+#+
+
+itcl::class Target {
+
+   constructor args {}
+
+   public proc subcomponents {}
+
+   public method apply vt {}
+   public method preview vt {}
+   public method save file
+
+   public variable type
+   public variable objName {}
+
+# Type "radec"
+   public variable radec {} {if {$radec != ""} {set type radec}}
+   public variable cosys {}
+   public variable epoch {}
+   public variable parallax 0
+   public variable pm {}
+   public variable rv 0
+
+# Type "azel"
+   public variable azel {} {if {$azel != ""} {set type azel}}
+
+# Type "planet"
+   public variable planet {} {set type planet}
+
+# Type "orbit"
+   public variable eltype {} {set type orbit}
+   public variable epochofel {}
+   public variable inclination {}
+   public variable longascnode {}
+   public variable argofper {}
+   public variable meandist {}
+   public variable perdist {}
+   public variable eccentricity {}
+   public variable meanlong {}
+   public variable meananom {}
+   public variable dailymot {}
+
+   public variable wavelength_name {}
+   public variable wavelength_value {} {
+      set wavelength_value [valWavelength $wavelength_value]
+   }
+   public variable trackrate {}
+
+   private common Wavelength ""
+}
+
+itcl::body Target::subcomponents {} {
+   return { \
+      {cosys Cosys CosysNames CosysList {Coordinate System} {}} \
+      {wavelength Wavelength WavelengthNames WavelengthList {Wavelength} {}} \
+      {trackrate TrackRate TrackRateNames TrackRateList {Differential Track Rate} {}} \
+   }
+}
+
+itcl::body Target::constructor args {
+
+# Create the scratch wavelength object if it doesn't already exist.
+   if { [info commands $Wavelength] == "" } {
+      set Wavelength [Wavelength #auto]
+   }
+   eval configure $args
+}
+
+itcl::body Target::apply vt {
+
+   cs $vt set objName \"$objName\"
+   switch $type {
+      radec {
+         if { $cosys == "" } {
+            cs $vt set system FK5
+            cs $vt set equinox J2000
+         } else {
+            CosysNames::$cosys apply $vt
+         }
+         cs $vt set theta1 \"[lindex $radec 0]\"
+         cs $vt set theta2 \"[lindex $radec 1]\"
+         cs $vt set epoch \"$epoch\"
+         cs $vt set parallax \"$parallax\"
+         if { $pm != "" } {
+            cs $vt set dtheta1 \"[lindex $pm 0]\"
+            cs $vt set dtheta2 \"[lindex $pm 1]\"
+         } else {
+            cs $vt set dtheta1 \"\"
+            cs $vt set dtheta2 \"\"
+         }
+         cs $vt set rv \"$rv\"
+      }
+      azel {
+         cs $vt set system \"AZEL_TOPO\"
+         cs $vt set equinox \"\"
+         cs $vt set theta1 \"[lindex $azel 0]\"
+         cs $vt set theta2 \"[lindex $azel 1]\"
+         cs $vt set epoch \"\"
+         cs $vt set parallax \"\"
+         cs $vt set dtheta1 \"\"
+         cs $vt set dtheta2 \"\"
+         cs $vt set rv \"\"
+      }
+   }
+   if { $wavelength_name != "" } {
+      if { [info commands ::WavelengthNames::$wavelength_name] != "" } {
+         ::WavelengthNames::$wavelength_name apply $vt
+      }
+   } else {
+      if { $wavelength_value != "" } {
+         $Wavelength configure -wavel $wavelength_value
+         $Wavelength apply $vt
+      }
+   }
+   if { [info commands ::TrackRateNames::$trackrate] != "" } {
+      ::TrackRateNames::$trackrate apply $vt
+   }
+}
+
+itcl::body Target::preview vt {
+
+   if { $cosys == "" } {
+      set system FK5
+      set equinox J2000
+   } else {
+      set system [CosysNames::$cosys cget -frame]
+      set equinox [CosysNames::$cosys cget -equinox]
+   }
+#   tccPreview set $vt $system $theta1 $theta2 $equinox $epoch \
+#      $pm $parallax $rv
+   tccPreview set $vt $system [lindex $radec 0] [lindex $radec 1] \
+         $equinox $epoch
+      
+   if { $wavelength_name != "" } {
+      if { [info commands ::WavelengthNames::$wavelength_name] != "" } {
+         ::WavelengthNames::$wavelength_name preview $vt
+      }
+   } else {
+      if { $wavelength_value != "" } {
+         $Wavelength configure -wavel $wavelength_value
+         $Wavelength preview $vt
+      }
+   }
+   if { [info commands ::TrackRateNames::$trackrate] != "" } {
+      ::TrackRateNames::$trackrate preview $vt
+   }
+}
+
+itcl::body Target::save file {
+   puts $file "   -objName \"$objName\" \\"
+   puts $file "   -cosys \"$cosys\" \\"
+   puts $file "   -radec \"$radec\" \\"
+   puts $file "   -epoch \"$epoch\" \\"
+   puts $file "   -parallax \"$parallax\" \\"
+   puts $file "   -pm \"$pm\" \\"
+   puts $file "   -rv \"$rv\" \\"
+   puts $file "   -azel \"$azel\" \\"
+   puts $file "   -wavelength_name \"$wavelength_name\" \\"
+   puts $file "   -wavelength_value \"$wavelength_value\" \\"
+   puts $file "   -trackrate \"$trackrate\""
+}

@@ -1,0 +1,66 @@
+#+
+#  TrackRate.itcl
+#
+#  Implements the TrackRate class. A TrackRate object 
+#  stores all the parameters needed to specify a differential track rate.
+#
+#  Methods:
+#
+#     apply <virtual telescope>
+#
+#         Applies the track rate definition to the TCS by setting the values
+#         of the command parameters.
+#
+#     preview <virtual telescope>
+#
+#         The preview system does not support differential track rates so
+#         this method does nothing.
+#
+#  D Terrett 7 October 1998
+#
+#  Copyright CCLRC
+#+
+
+itcl::class TrackRate {
+
+   public proc subcomponents {}
+
+   public method apply vt
+   public method preview vt {}
+   public method save file
+
+   public variable cosys {}
+   public variable epoch {}
+   public variable dtheta1 {}
+   public variable dtheta2 {}
+}
+
+itcl::body TrackRate::subcomponents {} {
+   return { \
+      {cosys Cosys CosysNames CosysList {Coordinate system} difTr} \
+   }
+}
+
+itcl::body TrackRate::apply vt {
+
+# Convert leading character of the virtual telescope name to upper case.
+   set vt [string toupper [string range $vt 0 0]][string range $vt 1 end]
+
+# Set all the parameters.
+   if { $cosys == "" || $cosys == "AZEL_TOPO"} {
+      cs difTr${vt} set system AZEL_TOPO
+      cs difTr${vt} set equinox ""
+   } else {
+      CosysNames::$cosys apply difTr${vt}
+   }
+   cs difTr${vt} set epoch \"$epoch\"
+   cs difTr${vt} set dtheta1 \"$dtheta1\"
+   cs difTr${vt} set dtheta2 \"$dtheta2\"
+}
+
+itcl::body TrackRate::save file {
+   puts $file "   -cosys \"$cosys\" \\"
+   puts $file "   -epoch \"$epoch\" \\"
+   puts $file "   -dtheta1 \"$dtheta1\" \\"
+   puts $file "   -dtheta2 \"$dtheta2\""
+}

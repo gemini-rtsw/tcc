@@ -1,0 +1,110 @@
+#+
+#  GuideHandsetControl.itk
+#
+#  Implements the GuideHandsetControl widget.
+#
+#  D Terrett 17 March 1999
+#
+#  Copyright CCLRC
+#+
+
+itcl::class GuideHandsetControl {
+   inherit itk::Widget
+
+   constructor args {}
+
+   private method offset dir
+   private method newstep size
+}
+
+itk::usual GuideHandsetControl {
+   keep -background -borderwidth -cursor -foreground 
+   keep -highlightcolor  -highlightthickness -insertbackground 
+   keep -insertborderwidth  -insertofftime -insertontime -insertwidth 
+   keep -labelfont  -selectbackground -selectborderwidth -selectforeground  
+   keep -textbackground -textfont
+   keep -font
+}
+
+itcl::body GuideHandsetControl::constructor args {
+
+# StepSize widget for setting the step associated with the paddle buttons.
+   itk_component add top {
+      frame $itk_interior.top -bd 2 -relief groove
+   }
+   pack $itk_component(top)
+
+   set w $itk_component(top)
+   itk_component add stepsize {
+      StepSize $w.stepsize -text "Step size (arcsec)" \
+            -command [code $this newstep]
+   }
+   pack $itk_component(stepsize)
+
+# Set the default step size in the TCS.
+   newstep 1.0
+
+# Paddle buttons.
+   itk_component add paddle {
+      HandPaddleButtons $itk_interior.paddle \
+            -upcommand [code $this offset U] -uplabel +El\
+            -downcommand [code $this offset D] -downlabel -El\
+            -leftcommand [code $this offset L] -leftlabel -Az \
+            -rightcommand [code $this offset R] -rightlabel +Az
+   }
+   pack $itk_component(paddle)
+
+# Slider for adjusting the angle of the buttons.
+   itk_component add slider {
+      scale $itk_interior.slider -orient horizontal -to [expr 3.14159 * 2] \
+            -command "$itk_component(paddle) configure -angle" \
+            -resolution .01 -showvalue no
+   }
+   pack $itk_component(slider) -fill x -expand y
+
+# Buttons for zeroing and absorbing the guide adjustments.
+   itk_component add bot {
+      frame $itk_interior.bot
+   }
+   pack $itk_component(bot) -expand yes
+   set w $itk_component(bot)
+   itk_component add absorb {
+      ApplyButton $w.absorb -command absorbGuide \
+            -text "Absorb Guiding Corrections"
+   }
+   itk_component add clear {
+      ApplyButton $w.clear -command zeroGuide \
+            -text "Clear Guiding Corrections"
+   }
+   pack $itk_component(absorb) $itk_component(clear) -fill x -expand y \
+         -side top -pady 4
+
+   eval itk_initialize $args
+}
+
+itcl::body GuideHandsetControl::offset dir {
+   cs guideHandset set direction $dir
+#   if [catch {cs tcsApply post} msg] {
+#      tk_messageBox -icon error -parent $itk_interior -message \
+#            "Error adjusting pointing: TCS reports \"$msg\""
+#   }
+   catch {cs tcsApply postCallback hsmon}
+#   if [catch {cs tcsApply postCallback hsmon} msg] {
+#      tk_messageBox -icon error -parent $itk_interior -message \
+#            "Error adjusting pointing: TCS reports \"$msg\""
+#   }
+}
+
+itcl::body GuideHandsetControl::newstep size {
+   cs guideHandConfig set step $size
+   catch {cs tcsApply post}
+#   if [catch {cs tcsApply post} msg] {
+#      tk_messageBox -icon error -parent $itk_interior -message \
+#            "Error setting step size: TCS reports \"$msg\""
+#   }
+}
+
+#proc hsmon {name status info} {
+#   puts "++++ \"$status\" ++++"
+#}
+

@@ -1,0 +1,212 @@
+#+
+#  ComponentControl.itk
+#
+#  Implements the ComponentControl widget. A widget with controls
+#  for selecting a configuration component. This class is intended to be
+#  inherited by the panels for specific components.
+#
+#  Methods
+#
+#     select <name>
+#
+#        sets the currently selected component to <name>
+#
+#     scratchobj
+#
+#        returns the name of the scratch object used by the control
+#
+#  D Terrett 3 November 1998
+#
+#  Copyright CCLRC
+#+
+
+itcl::class ComponentControl {
+   inherit itk::Widget
+
+   constructor args {}
+   destructor {}
+
+   itk_option define -namespace namespace Namespace {}
+   itk_option define -component component Component {}
+
+   public method select name
+   public method subselect {component name}
+   public method scratchobj
+   public method store name
+
+   protected method delselected
+   protected method apply args
+
+   protected variable scratchobj
+   protected variable objclass
+   protected variable description
+
+   private method selectioncommand
+}
+
+itk::usual ComponentControl {
+   keep -activebackground -activeforeground -disabledforeground
+   keep -background -borderwidth -cursor -foreground -highlightcolor
+   keep -highlightthickness -insertbackground -insertborderwidth
+   keep -insertofftime -insertontime -insertwidth -labelfont -popupcursor
+   keep -selectbackground -selectborderwidth -selectforeground
+   keep -textbackground -textfont -font
+   keep -vt -title
+}
+
+itcl::body ComponentControl::constructor args {
+
+   itk_component add top {
+      frame $itk_interior.top
+   }
+   pack $itk_component(top) -fill x -expand y
+   set w $itk_component(top)
+
+   itk_component add label {
+      label $w.label -width 1
+   } {
+      usual
+      rename -text -title title Title
+   }
+   bind $itk_component(label) <Configure> {%W configure -wraplength %w}
+   pack $itk_component(label) -fill x -expand yes
+
+   itk_component add delete {
+      button $w.delete -bitmap delete
+   }
+   itk_component add selector {
+      ListManager $w.selector
+   } {
+      usual
+      keep -componentlist
+   }
+   pack $itk_component(delete) $itk_component(selector) -side left
+   set w [winfo parent $w]
+   itk_component add interior {
+      frame $w.interior
+   }
+   pack $itk_component(interior) -fill both -expand y
+
+# Store and apply buttons.
+   itk_component add storeapply {
+      StoreApply $w.storeapply -combobox $itk_component(selector) \
+            -control [code $this]
+   } {
+      usual
+      keep -shadow
+   }
+   pack $itk_component(storeapply) -fill x -pady 4
+
+# Configure the selector and delete button.
+   $itk_component(selector) configure \
+         -selectioncommand [code $this selectioncommand]
+   $itk_component(delete) configure -command [code $this delselected]
+
+# Bind the store button action to the return key in the component selector
+# combo box.
+   $itk_component(selector) configure -returncommand \
+         "[$itk_component(storeapply) component store] invoke"
+
+   set itk_interior $itk_component(interior)
+
+   eval itk_initialize $args
+}
+
+itcl::body ComponentControl::destructor {} {
+
+# Delete the scratch object.
+   delete object $scratchobj
+}
+
+itcl::body ComponentControl::select name {
+#+
+#  Sets the selector to <name> and loads its contents into the edit controls.
+#-
+   $itk_component(selector) select $name
+   if { $name == "" } {
+      $this selectobj ""
+   } else {
+      $this selectobj $itk_option(-namespace)::$name
+   }
+}
+
+itcl::body ComponentControl::delselected {} {
+#+
+# Deletes the currently selected component object.
+#-
+   set name [$itk_component(selector) get]
+   if { $name != "" } {
+      delete object $itk_option(-namespace)::$name
+   }
+}
+
+itcl::body ComponentControl::selectioncommand {} {
+#+
+#  Updates the EditShadow with the new object name.
+#-
+   set name [$itk_component(selector) get]
+   $itk_option(-shadow) select $name
+}
+
+itcl::body ComponentControl::store name {
+#+
+# Creates or updates the named object. If the name is empty the
+# scratch object is updated. The (potentially new) name is then
+# selected in the shadow object.
+#-
+   if { $name == "" } {
+      set fullname $scratchobj
+   } else {
+      set fullname ::$itk_option(-namespace)::$name
+   }
+
+   if { [info commands $fullname] == "" } {
+      $objclass $fullname $itk_option(-componentlist)
+      if { [catch {$this updateobj $fullname} msg] } {
+         delete object $fullname
+         $itk_component(selector) insert $name
+         tk_messageBox -icon error -parent $itk_interior -message \
+               "Error creating $description \"$name\": $msg"
+         return 0
+      }
+   } else {
+      if { [catch {$this updateobj $fullname} msg] } {
+         if { $name == "" } {
+            tk_messageBox -icon error -parent $itk_interior -message \
+                  "Error loading $description: $msg"
+            return 0
+         } else {
+            tk_messageBox -icon error -parent $itk_interior -message \
+                  "Error updating $description \"$name\": $msg"
+            return 0
+         }
+      }
+   } 
+   if { $name != "" } {
+      $itk_option(-shadow) select $name
+   }
+   return 1
+}
+
+itcl::body ComponentControl::apply args {
+
+# Save the values in the control in the scratch object.
+   if { [store ""] } {
+
+# Apply the object
+      eval $scratchobj apply $args
+
+# Post the command.
+      if [catch {cs tcsApply post} msg] {
+         error "TCS reports \"$msg\""
+      }
+   }
+}
+
+itcl::body ComponentControl::scratchobj {} {
+   return $scratchobj
+}
+
+itcl::body ComponentControl::subselect {component name} {
+   $itk_component($component) select $name
+}

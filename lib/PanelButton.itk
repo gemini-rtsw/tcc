@@ -1,0 +1,48 @@
+#+
+#  PanelButton.itk
+#
+#  Implements the PanelButton widget: a button that pops up one of the
+#  tcc main windows.
+#
+#  D Terrett  5 August 1998
+#
+#  Copyright CCLRC
+#-
+
+itcl::class PanelButton {
+   inherit itk::Widget
+
+   constructor args {}
+   protected method map
+
+   itk_option define -panel panel Panel ""
+}
+
+itk::usual PanelButton {
+   keep -background -cursor -foreground -font
+   keep -activebackground -activeforeground -disabledforeground
+   keep -highlightcolor -highlightthickness
+}
+
+itcl::body PanelButton::constructor args {
+   itk_component add button {
+      button $itk_interior.button
+   } {
+      usual
+      keep -text
+      keep -bitmap
+      keep -state
+   }
+
+   pack $itk_component(button) -fill x -expand y
+
+   eval itk_initialize $args
+}
+
+itcl::body PanelButton::map {} {
+   $itk_option(-panel) map
+}
+
+itcl::configbody PanelButton::panel {
+   $itk_component(button) configure -command [code $this map]
+}

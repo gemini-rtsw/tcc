@@ -1,0 +1,402 @@
+#+
+#  TcsControl.itk
+#
+#  Implements the TcsControl widget.
+#
+#  D Terrett 2 November 1998
+#
+#  Copyright CCLRC
+#+
+
+itcl::class TcsControl {
+   inherit itk::Widget
+
+   constructor args {}
+
+   private method enable par
+   private method carousel par
+   private method parget par
+   private method weather {}
+   private method shStep
+   private method shutterMode
+   private method closeDome
+}
+
+itk::usual TcsControl {
+   keep -cursor -foreground -font -background
+   keep -activebackground -activeforeground -disabledforeground
+   keep -highlightcolor -highlightthickness
+   keep -activeborderwidth -borderwidth 
+   keep -labelfont -popupcursor
+   keep -insertborderwidth  -insertofftime -insertontime -insertwidth
+   keep -textbackground -textfont 
+   keep -troughcolor -insertbackground -selectcolor
+   keep -selectbackground -selectborderwidth -selectforeground
+}
+
+itcl::body TcsControl::constructor args {
+
+# Divide the window into 3 vertically
+   itk_component add row1 {
+      frame $itk_interior.row1
+   }
+   itk_component add row2 {
+      frame $itk_interior.row2
+   }
+   itk_component add row3 {
+      frame $itk_interior.row3
+   }
+   pack $itk_component(row1) $itk_component(row2) $itk_component(row3) \
+         -fill x -expand y
+
+# The first row contains 3 frames.
+   set w $itk_component(row1)
+   itk_component add row1f1 {
+      frame $w.f1 -bd 2 -relief ridge
+   }
+   itk_component add row1f2 {
+      frame $w.f2 -bd 2 -relief ridge
+   }
+   itk_component add row1f3 {
+      frame $w.f3
+   }
+   pack $itk_component(row1f1) $itk_component(row1f2) $itk_component(row1f3) \
+         -side left -fill both -expand y
+
+# The third frame in the first row is divided into 2 horizontally.
+   set w $itk_component(row1f3)
+   itk_component add f3top {
+      frame $w.top -bd 2 -relief ridge
+   }
+   itk_component add f3bot {
+      frame $w.bot -bd 2 -relief ridge
+   }
+   pack $itk_component(f3top) $itk_component(f3bot) -fill both -expand yes
+
+# The third row contains 2 frames.
+   set w $itk_component(row3)
+   itk_component add row3f1 {
+      frame $w.f1 -bd 2 -relief ridge
+   }
+   itk_component add row3f2 {
+      frame $w.f2 -bd 2 -relief ridge
+   }
+   pack $itk_component(row3f1) $itk_component(row3f2) \
+         -side left -fill both -expand y
+
+# Park to Reboot buttons.
+   set w $itk_component(row1f1)
+   itk_component add park {
+      ApplyButton $w.park -command park
+   }
+   itk_component add datum {
+      ApplyButton $w.datum -command datum
+   }
+   itk_component add init {
+      ApplyButton $w.init -command init
+   }
+   itk_component add test {
+      ApplyButton $w.test -command test
+   }
+   itk_component add reboot {
+      ApplyButton $w.reboot -command reboot -confirm \
+            "This will reboot the TCS and all it's subsystems"
+   }
+   pack $itk_component(park) $itk_component(datum) $itk_component(init) \
+         $itk_component(test) $itk_component(reboot) -padx 4 -pady 8 \
+         -expand y -fill both 
+
+# Enable command.
+   set w $itk_component(row1f2)
+   itk_component add enable {
+      ApplyButton $w.enable -command follow -parcommand [code $this enable]
+   }
+   itk_component add mcs {
+       checkbutton $w.mcs -text [lindex [cs follow info mcs] 2] \
+      -onvalue On -offvalue Off -variable $w._mcs
+   }
+   $itk_component(mcs) invoke
+   itk_component add crs {
+       checkbutton $w.crs -text [lindex [cs follow info crs] 2] \
+             -onvalue On -offvalue Off -variable $w._crs
+   }
+   $itk_component(crs) invoke
+   itk_component add ecs {
+       checkbutton $w.ecs -text [lindex [cs follow info ecs] 2] \
+             -onvalue On -offvalue Off -variable $w._ecs
+   }
+   $itk_component(ecs) invoke
+   itk_component add ag1 {
+       checkbutton $w.ag1 -text [lindex [cs follow info ag1] 2] \
+             -onvalue On -offvalue Off -variable $w._ag1
+   }
+   $itk_component(ag1) invoke
+   itk_component add ag2 {
+       checkbutton $w.ag2 -text [lindex [cs follow info ag2] 2] \
+             -onvalue On -offvalue Off -variable $w._ag2
+   }
+   $itk_component(ag2) invoke
+   itk_component add ago {
+       checkbutton $w.ago -text [lindex [cs follow info ago] 2] \
+             -onvalue On -offvalue Off -variable $w._ago
+   }
+   $itk_component(ago) invoke
+   itk_component add scs {
+       checkbutton $w.scs -text [lindex [cs follow info scs] 2] \
+             -onvalue On -offvalue Off -variable $w._scs
+   }
+   $itk_component(scs) invoke
+   itk_component add aos {
+       checkbutton $w.aos -text [lindex [cs follow info aos] 2] \
+             -onvalue On -offvalue Off -variable $w._aos
+   }
+   $itk_component(aos) invoke
+
+   pack $itk_component(enable) -pady 4
+# ECS removed until follow is implemented.
+#   pack $itk_component(mcs) $itk_component(crs) $itk_component(ecs) \
+#         $itk_component(ag1) $itk_component(ag2) $itk_component(ago) \
+#         $itk_component(scs) $itk_component(aos) -anchor w
+   pack $itk_component(mcs) $itk_component(crs) \
+         $itk_component(ag1) $itk_component(ag2) $itk_component(ago) \
+         $itk_component(scs) $itk_component(aos) -anchor w
+
+# Carousel driving mode command.
+   set w $itk_component(f3top)
+   itk_component add carousel {
+      ApplyButton $w.carousel -command carousel -parcommand \
+            [code $this carousel]
+   }
+   itk_component add domemode {
+      iwidgets::optionmenu $w.domemode -labeltext \
+            [lindex [cs carousel info domemode] 2] \
+   }
+   $itk_component(domemode) insert end Basic MinScatter MinVibration
+   itk_component add shuttermode {
+      iwidgets::optionmenu $w.shuttermode -labeltext \
+            [lindex [cs carousel info shuttermode] 2] \
+            -command [code $this shutterMode]
+   }
+   $itk_component(shuttermode) insert end FullyOpen Tracking
+   itk_component add slit {
+       iwidgets::spinner $w.slit -labeltext "Shutter aperture (m)" -width 8 \
+             -validate real -increment [code $this shStep +] \
+             -decrement [code $this shStep -] -state disabled
+   }
+   $itk_component(slit) insert end 9.320
+   itk_component add dome {
+      checkbutton $w.dome -text [lindex [cs carousel info dome] 2] \
+            -variable $w._dome -onvalue On -offvalue Off
+   }
+   $itk_component(dome) invoke
+   itk_component add shutter {
+      checkbutton $w.shutter -text [lindex [cs carousel info shutter] 2] \
+            -variable $w._shutter -onvalue On -offvalue Off
+   }
+   $itk_component(shutter) invoke
+   pack $itk_component(carousel) -pady 4
+   pack $itk_component(domemode) \
+         $itk_component(shuttermode) $itk_component(slit) \
+         -padx 4 -pady 5 -anchor w
+   pack $itk_component(dome) $itk_component(shutter) \
+         -side left -padx 4 -pady 5 -anchor w
+
+# Close shutters command.
+   set w $itk_component(f3bot)
+   itk_component add close {
+      LiveButton $w.close -text "Close Shutters & Gates" \
+            -command [code $this closeDome] \
+            -logmessage "Park shutters and gates"
+   }
+   pack $itk_component(close) -fill both -expand yes -padx 10 -pady 5
+
+# Vent gates move command.
+   set w $itk_component(row2)
+   itk_component add vg {
+      frame $w.vg -bd 2 -relief ridge
+   }
+   pack $itk_component(vg) -fill x -expand y
+   set w $itk_component(vg)
+   itk_component add ventgates {
+      ApplyButton $w.ventgates -command ventgates -parcommand \
+            [code $this parget]
+   }
+   itk_component add east {
+      scale $w.east -label [lindex [cs ventgates info east] 2] \
+            -showvalue 1 -to 1.0 -orient horizontal -resolution 0.05
+   }
+   itk_component add west {
+      scale $w.west -label [lindex [cs ventgates info west] 2] \
+            -showvalue 1 -to 1.0 -orient horizontal -resolution 0.05
+   }
+   pack $itk_component(ventgates) -padx 4 -pady 2  -side left
+   pack $itk_component(east) $itk_component(west) \
+         -padx 4 -pady 2 -fill x -expand y -side left
+   $itk_component(east) set [expr [sa ecssad get eastVentGatePos value] / 100]
+   $itk_component(west) set [expr [sa ecssad get westVentGatePos value] / 100]
+
+# Enclosure thermal control command.
+   set w $itk_component(row3f1)
+   itk_component add thermal {
+      ApplyButton $w.thermal -command encThermal \
+            -parcommand [code $this parget]
+   }
+   itk_component add mode {
+      iwidgets::optionmenu $w.mode \
+            -labeltext [lindex [cs encThermal info mode] 2] \
+   }
+   $itk_component(mode) insert end Passive Active
+   itk_component add setpoint {
+      iwidgets::entryfield $w.setpoint \
+            -labeltext [lindex [cs encThermal info setpoint] 2] -width 8
+   }
+   itk_component add wind {
+      iwidgets::entryfield $w.wind \
+            -labeltext [lindex [cs encThermal info wind] 2] -width 8
+   }
+   pack $itk_component(thermal) $itk_component(mode) \
+         $itk_component(setpoint) $itk_component(wind) \
+         -pady 4
+
+# Create shutterPark and ventgatesPark command senders here because we
+# are not using an apply button (because it can't send two commands.
+   if [catch {cs shutterPark info}] {
+      epics cs shutterPark
+   }
+   if [catch {cs ventgatesPark info}] {
+      epics cs ventgatesPark
+   }
+
+# Create weather command sender here because we can't use an apply button
+# because the commands have to be issued in the right order.
+   if [catch {cs weather info}] {
+      epics cs weather
+   }
+
+# Weather command.
+   set w $itk_component(row3f2)
+   itk_component add weather {
+      LiveButton $w.weather -command [code $this weather] \
+            -text [lindex [cs weather info] 1] \
+            -logmessage "Enclosure thermal control"
+   }
+   itk_component add source {
+      iwidgets::optionmenu $w.source \
+            -labeltext [lindex [cs weather info source] 2] \
+   }
+   $itk_component(source) insert end server local
+   itk_component add temp {
+      iwidgets::entryfield $w.temp \
+            -labeltext [lindex [cs weather info temp] 2] -width 8
+   }
+   itk_component add press {
+      iwidgets::entryfield $w.press \
+            -labeltext [lindex [cs weather info press] 2] -width 8
+   }
+   itk_component add humid {
+      iwidgets::entryfield $w.humid \
+            -labeltext [lindex [cs weather info humid] 2] -width 8
+   }
+   pack $itk_component(weather) $itk_component(source) -padx 4
+   pack $itk_component(temp) $itk_component(press) $itk_component(humid) \
+         -anchor e
+}
+
+itcl::body TcsControl::enable par {
+#+
+# Sets enable command parameters.
+#-
+   upvar #0 [$itk_component($par) cget -variable] var
+   return $var
+}
+
+itcl::body TcsControl::carousel par {
+#+
+# Sets carousel command parameters.
+#-
+   switch $par {
+      dome -
+      shutter {
+         upvar #0 [$itk_component($par) cget -variable] var
+         return $var
+      }
+      slit {
+         set sh [$itk_component(slit) get]
+         if { $sh != "" } {
+            set sh [expr $sh * 1000.0]
+         }
+         return $sh
+      }
+      default {
+         return [$itk_component($par) get]
+      }
+   }
+}
+
+itcl::body TcsControl::parget par {
+#+
+# Sets command parameters for commands whos parameter widgets all have a
+# "get" method.
+#-
+   return [$itk_component($par) get]
+}
+
+itcl::body TcsControl::weather {} {
+#+
+# Sets parameters and posts the weather command. The command has to be posted
+# twice when the data source is being set to "local" because the source has
+# to be "local" before the TCS will accept the temperature etc. 
+#-
+   set source [$itk_component(source) get]
+   if { [string compare $source "server"] } {
+     set s 1
+   } else {
+     set s 0
+   }
+   cs weather set source $s
+   if [catch {cs weather post} msg] {
+      tk_messageBox -icon error -parent $itk_interior -message \
+            "Error posting weather command: TCS reports \
+            \"$msg\""
+   }
+   if { $source == "local" } {
+      cs weather set temp [$itk_component(temp) get]
+      cs weather set press [$itk_component(press) get]
+      cs weather set humid [$itk_component(humid) get]
+      if [catch {cs weather post} msg] {
+         tk_messageBox -icon error -parent $itk_interior -message \
+               "Error posting weather command: TCS reports \
+               \"$msg\""
+      }
+   }
+}
+
+itcl::body TcsControl::shStep sign {
+   set sh [$itk_component(slit) get]
+   set sh [expr $sh $sign 0.5]
+   if { $sh > 16.999 } {
+      set sh 16.999
+   } elseif { $sh < 9.320 } {
+      set sh 9.320
+   }
+   $itk_component(slit) clear
+   $itk_component(slit) insert end $sh
+}
+
+itcl::body TcsControl::shutterMode {} {
+   if { [$itk_component(shuttermode) get] == "Tracking" } {
+      $itk_component(slit) configure -state normal
+   } else {
+      $itk_component(slit) configure -state disabled
+   }
+}
+
+itcl::body TcsControl::closeDome {} {
+   cs shutterPark set dummy mark
+   cs ventgatesPark set dummy mark
+   if [catch {cs tcsApply post} msg] {
+      tk_messageBox -icon error -parent $itk_interior -message \
+            "Error parking shutters and vent gates: TCS reports \
+            \"$msg\""
+   }
+}

@@ -1,0 +1,143 @@
+#+
+#  WrapView.itk
+#
+#  Implements the WrapView widget.
+#
+#  methods
+#
+#    update
+#
+#       Updates the display.
+#
+#  D Terrett 25 August 1998
+#
+#  Copyright CCLRC
+#-
+
+itcl::class WrapView {
+   inherit itk::Widget
+
+   constructor args {}
+
+   public method update
+}
+
+itk::usual WrapView {
+   keep -background -cursor -foreground -font
+   keep -highlightcolor -highlightthickness
+   keep -insertbackground -insertborderwidth -insertwidth
+   keep -insertontime -insertofftime
+   keep -selectbackground -selectborderwidth -selectforeground
+   keep -highlightcolor -highlightthickness
+}
+
+itcl::body WrapView::constructor args {
+
+   itk_component add azwrap {
+      canvas $itk_interior.azwrap -width 250 -height 200
+   }
+   itk_component add rotwrap {
+      canvas $itk_interior.rotwrap -width 250 -height 200
+   }
+
+   $itk_component(azwrap) create wrapview 135 114 -tags wrapview \
+         -lolimit -180 -hilimit 360 -foreground black \
+         -background LightGrey -rotator 0
+   $itk_component(azwrap) create text 135 0 -text +360 -anchor n
+   $itk_component(azwrap) create text 2 115 -text +270 -anchor w
+   $itk_component(azwrap) create text 135 220 -text +180 -anchor s
+   $itk_component(azwrap) create text 247 115 -text +90 -anchor e
+   $itk_component(azwrap) create text 135 75 -text +0
+   $itk_component(azwrap) create text 110 115 -text -90
+   $itk_component(azwrap) create text 140 147 -text -180
+
+   $itk_component(rotwrap) create wrapview 135 105 -tags wrapview \
+         -lolimit -270 -hilimit 270 -foreground black \
+         -background LightGrey -rotator 1
+   $itk_component(rotwrap) create text 0 105 -text +270 -anchor w
+   $itk_component(rotwrap) create text 135 220 -text +180 -anchor s
+   $itk_component(rotwrap) create text 251 105 -text +90 -anchor e
+   $itk_component(rotwrap) create text 135 25 -text +0 -anchor s
+   $itk_component(rotwrap) create text 106 105 -text -90
+   $itk_component(rotwrap) create text 135 140 -text -180
+   $itk_component(rotwrap) create text 151 105 -text -270
+
+   itk_component add azlab {
+      label $itk_interior.azlab -text "Azimuth wrap"
+   }
+   itk_component add azttl {
+      label $itk_interior.azttl -foreground white
+   } {
+      usual
+      ignore -foreground
+   }
+   itk_component add rotlab {
+      label $itk_interior.rotlab -text "Rotator wrap"
+   }
+   itk_component add rotttl {
+      label $itk_interior.rotttl -foreground white
+   } {
+      usual
+      ignore -foreground
+   }
+
+   pack $itk_component(azwrap) $itk_component(azlab) \
+         $itk_component(azttl) $itk_component(rotwrap) \
+         $itk_component(rotlab) $itk_component(rotttl) 
+
+   eval itk_initialize $args
+}
+
+itcl::body WrapView::update {} {
+#+
+#  Updates the display.
+#-
+   $itk_component(azwrap) itemconfigure wrapview -display 1
+   $itk_component(rotwrap) itemconfigure wrapview -display 1
+   set elttl [sa tcssad get currentTimeToSet value]
+   if { $elttl == "" } {
+      set elttl 99999999
+   }
+   set azttl [sa tcssad get timeToAzlim value]
+   $itk_component(azttl) configure -text "" \
+         -background [$itk_interior cget -background]
+   if { $azttl != "" } {
+      if { $azttl < $elttl } {
+         set h [expr int($azttl / 60.0)]
+         set m [expr int($azttl - ( $h * 60.0 ))]
+         if { $h > 0 } {
+            $itk_component(azttl) configure -text "${h}hr ${m}min to wrap limit"
+         } else {
+            if { $m > 0 } {
+               $itk_component(azttl) configure -text "${m}min to wrap limit"
+            } else {
+               $itk_component(azttl) configure \
+                     -text "Wrap limit in the next minute"
+            }
+         }
+         $itk_component(azttl) configure -background red
+      }
+   }
+
+   set rotttl [sa tcssad get timeToRotlim value]
+   $itk_component(rotttl) configure -text "" \
+         -background [$itk_interior cget -background]
+   if { $rotttl != "" } {
+      if { $rotttl < $elttl } {
+         set h [expr int($rotttl / 60.0)]
+         set m [expr int($rotttl - ( $h * 60.0 ))]
+         if { $h > 0 } {
+            $itk_component(rotttl) configure \
+                  -text "${h}hr ${m}min to wrap limit"
+         } else {
+            if { $m > 0 } {
+               $itk_component(rotttl) configure -text "${m}min to wrap limit"
+            } else {
+               $itk_component(rotttl) configure \
+                     -text "Wrap limit in the next minute"
+            }
+         }
+         $itk_component(rotttl) configure -background red
+      }
+   }
+}

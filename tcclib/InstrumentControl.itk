@@ -1,0 +1,123 @@
+#+
+#  InstrumentControl.itk
+#
+#  Implements the InstrumentControl widget. A ComponentControl widget with
+#  entry widgets for the IAA, baffle positions and ISS ports.
+#
+#  D Terrett 3 November 1998
+#
+#  Copyright CCLRC
+#+
+
+itcl::class InstrumentControl {
+   inherit ComponentControl
+
+   constructor args {}
+
+   public method selectobj name
+   public method updateobj name
+}
+
+itk::usual InstrumentControl {
+   keep -activebackground -activeforeground -disabledforeground
+   keep -background -borderwidth -cursor -foreground -highlightcolor
+   keep -highlightthickness -insertbackground -insertborderwidth
+   keep -insertofftime -insertontime -insertwidth -labelfont -popupcursor
+   keep -selectbackground -selectborderwidth -selectforeground
+   keep -textbackground -textfont -font
+   keep -vt -title
+}
+
+itcl::body InstrumentControl::constructor args {
+
+# Frame for instrument configuration.
+   itk_component add config {
+      frame $itk_interior.config -bd 2 -relief ridge
+   }
+   pack $itk_component(config) -fill x -expand y
+   set w $itk_component(config)
+
+# ISS port
+   itk_component add port {
+      iwidgets::optionmenu $w.port -labeltext ISS
+   }
+   $itk_component(port) insert end "port 1" "port 3" "port 5"
+   pack $itk_component(port) -anchor e
+
+# Entryfield for the angle.
+   itk_component add iaa {
+      iwidgets::entryfield $w.iaa -labeltext [lindex [cs rotator info iaa] 2] \
+            -width 8
+   }
+   pack $itk_component(iaa) -anchor e
+
+# Focus offset.
+   itk_component add focus {
+      iwidgets::entryfield $w.focus \
+            -labeltext [lindex [cs dtelFocus info focusOffset] 2] -width 8
+   }
+   pack $itk_component(focus) -anchor e
+
+# Central baffle
+   itk_component add central {
+      iwidgets::optionmenu $w.central -labeltext "M2 Central hole cover"
+   }
+   $itk_component(central) insert end open closed
+   pack $itk_component(central) -anchor e
+
+# Deployable baffle
+   itk_component add deploy {
+      iwidgets::optionmenu $w.deploy -labeltext "M2 Deployable baffle"
+   }
+   $itk_component(deploy) insert end "thermal IR" "near IR" optical
+   pack $itk_component(deploy) -anchor e
+
+# Airmass limit
+   itk_component add airmass {
+      iwidgets::entryfield $w.airmass -labeltext "Airmass limit"
+   }
+   pack $itk_component(airmass) -anchor e
+
+# Configure the log message.
+   $itk_component(storeapply) configure -logmessage "Instrument configuration"
+
+# Create the instrument object used by apply.
+   set scratchobj [namespace which -command [Instrument #auto]]
+
+# Set the object class.
+   set objclass InstrumentComponent
+   set description "Instrument configuration"
+
+   eval itk_initialize $args
+}
+
+itcl::body InstrumentControl::updateobj name {
+#+
+# Updates the named instrument object.
+#-
+   $name configure -issFace [$itk_component(port) get]
+   $name configure -iaa [$itk_component(iaa) get]
+   $name configure -focusOffset [$itk_component(focus) get]
+   $name configure -centralBaffle [$itk_component(central) get]
+   $name configure -deployableBaffle [$itk_component(deploy) get]
+   $name configure -airmassLimit [$itk_component(airmass) get]
+}
+
+itcl::body InstrumentControl::selectobj name {
+#+
+# Copies the contents of the Instrument object selected in the combobox
+# into the edit control.
+#-
+   $itk_component(iaa) clear
+   $itk_component(focus) clear
+   $itk_component(airmass) clear
+
+   if { $name != "" } {
+      $itk_component(port) select [$name cget -issFace]
+      $itk_component(iaa) insert end [$name cget -iaa]
+      $itk_component(focus) insert end [$name cget -focusOffset]
+      $itk_component(central) select [$name cget -centralBaffle]
+      $itk_component(deploy) select [$name cget -deployableBaffle]
+      $itk_component(airmass) insert end [$name cget -airmassLimit]
+   }
+}

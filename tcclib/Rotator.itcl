@@ -1,0 +1,63 @@
+#+
+#  Rotator.itcl
+#
+#  Implements the Rotator class. A Rotator object stores the configuration 
+#  of the cass rotator
+#
+#  Methods:
+#
+#     apply 
+#
+#         Applies the rotator configuration to the TCS by setting the values
+#         of the command parameters.
+#
+#     preview 
+#
+#         Set the preview ipa configuration.
+#
+#  D Terrett 23 September 1998
+#
+#  Copyright CCLRC
+#+
+
+itcl::class Rotator {
+
+   public proc subcomponents {}
+
+   public method apply args
+   public method preview
+   public method save file
+
+   public variable ipa {}
+   public variable cosys {}
+}
+
+itcl::body Rotator::subcomponents {} {
+   return { \
+      {cosys Cosys CosysNames CosysList {Coordinate system} rotator} \
+   }
+}
+
+itcl::body Rotator::apply args {
+   cs rotator set ipa \"$ipa\"
+   if { $cosys == "" } {
+      cs rotator set system AZEL_TOPO
+      cs rotator set equinox ""
+   } else {
+      CosysNames::$cosys apply rotator
+   }
+}
+
+itcl::body Rotator::preview {} {
+   if { $cosys == "" } {
+      tccPreview set ipa $ipa AZEL_TOPO {}
+   } else {
+      tccPreview set ipa $ipa [CosysNames::$cosys cget -frame] \
+            [CosysNames::$cosys cget -equinox]
+   }
+}
+
+itcl::body Rotator::save file {
+   puts $file "   -ipa \"$ipa\" \\"
+   puts $file "   -cosys \"$cosys\""
+}

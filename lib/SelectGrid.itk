@@ -1,0 +1,177 @@
+#+
+# SelectGrid.itk
+#
+# Implements the SelectGrid widget. A widget with simlar properties to 
+# a listbox but with the rows divided in to columns. Row are selected
+# and deselected by clicking mouse button 1 in any of the entries in
+# the row. Only the "multiple" selection style is implemented.
+#
+# The number of columns is set by the number of column headers specified
+# by the -columnhead option.
+#
+# There are methods to add a new row (at the bottom only) and delete all the
+# rows. The -selectcommand option specifies a command that is executed
+# whenever a row is selected or deselected.
+#
+# D Terrett 21 December 1998
+#
+# Copyright CCLRC
+#-
+
+itcl::class SelectGrid {
+   inherit itk::Widget
+
+   constructor args {}
+
+   public method add {tag args}
+   public method clear
+   public method selected
+   public method replace {tag args}
+
+   itk_option define -columnhead columnHead Label {}
+   itk_option define -selectcommand selectCommand Command {}
+   itk_option define -disablecolor disableColor Color DarkGrey
+
+   private method select row
+
+   private variable rows
+   private variable tags
+   private variable states
+}
+
+itk::usual SelectGrid {
+   keep -background -cursor -foreground -font
+   keep -highlightcolor -highlightthickness
+}
+
+itcl::body SelectGrid::constructor args {
+   
+# Create a frame for the grid.
+   itk_component add frame {
+      frame $itk_interior.frame
+   }
+   pack $itk_component(frame) -fill x -expand yes
+
+# Create the first (column header) row of the grid.
+   itk_component add l00 {
+      label $itk_component(frame).l00 -bd 1
+   }
+   grid $itk_component(l00)
+
+# Create the dummy element zeros of the tags and state arrays.
+   set tags(0) .
+   set states(0) 0
+
+   eval itk_initialize $args
+}
+
+itcl::configbody SelectGrid::columnhead {
+
+# If the list is emply do nothing.
+   if { [llength $itk_option(-columnhead)] != 0 } {
+
+# Destroy the existing headinf labels.
+      foreach slave [grid slaves $itk_component(frame) -row 0] {
+         destroy $slave
+      }
+
+# Create a new label for each element in the list of headings and
+# pack them into the top row of the grid.
+      set n 0
+      foreach head $itk_option(-columnhead) {
+         itk_component add l0$n {
+            label $itk_component(frame).l0$n -text $head -bd 0 -padx 3
+         }
+         grid $itk_component(l0$n) -row 0 -column $n -sticky ew
+         grid columnconfigure $itk_component(frame) $n -weight 1
+         incr n
+      }
+   }
+}
+
+itcl::body SelectGrid::add {tag args} {
+
+# Get the number of rows currently in the grid.
+   set row [lindex [grid size $itk_component(frame)] 1]
+
+# Create a new row at the bottom of the grid.
+   set n 0
+   foreach element $args {
+      itk_component add l${row}${n} {
+         label $itk_component(frame).l${row}${n} -text $element -anchor e \
+                -bd 0 -padx 3
+      }
+      grid $itk_component(l${row}${n}) -row $row -column $n -sticky ew
+
+# Bind Button 1 to the select method.
+      bind $itk_component(l${row}${n}) <Button-1> [code $this select $row]
+      incr n
+   }
+
+# Create the tags and states entry for the new row.
+   set rows($tag) $row
+   set tags($row) $tag
+   set states($row) 1
+}
+
+itcl::body SelectGrid::clear {} {
+
+# Get the number of rows in the grid.
+   set nrows [lindex [grid size $itk_component(frame)] 1]
+
+# Delete every label in each row except the headings (row 0) and
+# delete the elements from the tags and states arrays.
+   for { set i [expr $nrows - 1] } { $i > 0 } { incr i -1 } {
+      foreach slave [grid slaves $itk_component(frame) -row $i] {
+         destroy $slave
+      }
+      unset rows($tags($i))
+      unset tags($i)
+      unset states($i)
+   }
+}
+
+itcl::body SelectGrid::select row {
+
+# Toggle the state of the row.
+   if { $states($row) } {
+      set states($row) 0
+      set color $itk_option(-disablecolor)
+   } else {
+      set states($row) 1
+      set color [$itk_component(frame) cget -background]
+   }
+
+# Set the background of the row appropriately.
+   foreach w [grid slaves $itk_component(frame) -row $row] {
+      $w configure -background $color
+   }
+
+# Invoke the -selectcommand option.
+   if { $itk_option(-selectcommand) != "" } {
+      uplevel #0 $itk_option(-selectcommand) $tags($row) $states($row)
+   }
+}
+
+itcl::body SelectGrid::selected {} {
+   set result ""
+   foreach element [array names states] {
+      if { $states($element) } {
+         lappend result $tags($element)
+      }
+   }
+   return $result
+}
+
+itcl::body SelectGrid::replace {tag args} {
+
+# Get the row number associated with this tag.
+   set row $rows($tag)
+
+# Replace the text of each label in the row.
+   set n 0
+   foreach text $args {
+      $itk_component(l${row}${n}) configure -text $text
+      incr n
+   }
+}

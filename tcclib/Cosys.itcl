@@ -1,0 +1,30 @@
+#+
+#  Cosys.itcl
+#
+#  Implements the Cosys class. A Cosys object stores a frame and equinox.
+#
+#  D Terrett 22 September 1998
+#
+#  Copyright CCLRC
+#+
+
+itcl::class Cosys {
+
+   public proc subcomponents {} {return {}}
+
+   public method apply cs
+   public method save file
+
+   public variable frame {}
+   public variable equinox {}
+}
+
+itcl::body Cosys::apply cs {
+   cs $cs set system \"$frame\"
+   cs $cs set equinox \"$equinox\"
+}
+
+itcl::body Cosys::save file {
+   puts $file "   -frame \"$frame\" \\"
+   puts $file "   -equinox \"$equinox\""
+}

@@ -1,0 +1,45 @@
+#!/bin/sh
+# the next line restarts using ocswish \
+exec $GEMINI_BASE/ocs/bin/solaris/ocswish8 "$0" "$@"
+
+#+
+#  tccSkycat
+#
+#  This script starts the Gemini telescope control console version of skycat.
+#  It contains all the messy stuff involved in finding the tcl packages and 
+#  libraries that the tcc skycat uses. It is probably installation dependent 
+#  and will need to be hacked to get it to work.
+#
+#  D Terrett 21 May 1998
+#
+#  Copyright CCLRC
+#-
+
+# The tcc library files live in subdirectores of the directory containing
+# this script.
+lappend auto_path /gemini/ocs/external/packages/skycat/lib
+lappend auto_path [file dirname [info script]]/lib
+lappend auto_path [file dirname [info script]]/skycat_plugin
+
+# define the location of the plugin.
+global env
+set env(SKYCAT_PLUGIN) \
+   [file dirname [info script]]/plugins/tccSkyCatPlugin.tcl
+set env(SKYSEARCH_PLUGIN) \
+   [file dirname [info script]]/plugins/tccSkySearchPlugin.tcl
+
+# Set location of the Skycat library.
+lappend auto_path $env(SKYCAT_LIBRARY)
+
+# Load all the packages required by skycat.
+package require Tclx
+package require Itcl
+package require Itk
+package require BLT
+package require Skycat
+
+# Hide the main window.
+wm withdraw .
+
+# Start skycat.
+skycat::SkyCat .skycat -with_grid true

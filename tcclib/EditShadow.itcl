@@ -1,0 +1,150 @@
+#+
+#  EditShadow.itcl
+#
+#  Implements the EditShadow class. A EditShadow object encapsulates the 
+#  information needed to create a control window and map it onto the screen. 
+#  The EditShadow object exists even when the edit control doesn't and so
+#  other parts of the system can configure the window (via the EditShadow's
+#  select and subselect methods without having to bother about whether the 
+#  window exists. When the window is created it is set to the correct state.
+#
+#  The control window is created by calling the control object's map method.
+#
+#  Methods:
+#
+#     EditShadow <panel>
+#
+#     map
+#
+#        Calls the map method of the Panel that contains this control.
+#
+#     select <name>
+#
+#        Sets the name of the object selected in the edit control
+#
+#     subselect <component> <name>
+#
+#        Set the name of the object in the specified sub-component selector
+#
+#     store <name>
+#
+#        Sends a store message to the control window (if it exists) and
+#        the shadow objects of all the subcomponents that have values.
+#
+#
+#  D Terrett 24 November 1998
+#
+#  Copyright CCLRC
+#+
+
+itcl::class EditShadow {
+
+   constructor {arg args} {}
+
+   public method map
+   public method select name
+   public method subselect {component name}
+   public method store name
+
+   public variable parent ""
+   public variable component ""
+   public variable selection ""
+   public variable window ""
+   public variable children ""
+
+   public variable panel
+   private variable subselections
+}
+
+itcl::body EditShadow::constructor {arg args} {
+
+# Store the panel name.
+   set panel $arg
+
+   eval configure $args
+}
+
+itcl::body EditShadow::map {} {
+
+# Call the map method of the panel containing the edit control.
+   if { [$panel map] } {
+
+# Store the name of the edit control window.
+      set window [lindex [$panel cget -windows] 0]
+
+# Set the name of the shadow in the window.
+      $window configure -shadow $this
+
+# Configure the window by calling its select and subselect methods with
+# the current state of the shadow.
+      $window select $selection
+      foreach el [array names subselections] {
+         $window subselect $el $subselections($el)
+      }
+   }
+}
+
+itcl::body EditShadow::select name {
+
+# If the edit control exists, call its select method.
+   if { [winfo exists $window] } {
+      $window select $name
+   }
+
+# If this shadow has a parent, then call its subselect method.
+   if { $parent != "" } {
+      $parent subselect $component $name
+   }
+
+# Store the current selection.
+   set selection $name
+}
+
+itcl::body EditShadow::subselect {comp name} {
+
+# If the edit control exists, call its subselect method.
+   if { [winfo exists $window] } {
+      $window subselect $comp $name 
+   }
+
+# If the subselection has changed, call the selection method of the edit 
+# shadow of the component edit control.
+   if { [info exists subselections($comp)] } {
+      if { $subselections($comp) != $name } {
+         set subselections($comp) $name
+         $this$comp select $name
+      }
+   } else {
+      set subselections($comp) $name
+      $this$comp select $name
+   }
+}
+
+itcl::body EditShadow::store name {
+
+# If the edit control exists, call its store method.
+   if { [winfo exists $window] } {
+      $window store $name 
+
+# And select it.
+      $window select $name
+   }
+
+# Call the store method of the edit shadow of the components that have values.
+   foreach el [array names subselections] {
+      if { $subselections($el) != "" } {
+         $this$el store $subselections($el)
+      }
+   }
+}
+
+
+
+itcl::configbody EditShadow::children {
+   if { [array exists subselections] } {
+      unset subselections
+   }
+   foreach child $children {
+      set subselections($child) ""
+   }
+}

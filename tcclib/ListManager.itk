@@ -1,0 +1,207 @@
+#+
+#  ListManager.itk
+#
+#  Implements the ListManager class. A ListManager widget is a combobox with
+#  a drop-down list that is associated with a ComponentList object and has
+#  a method for selecting one of the elements in the list and returning the
+#  name of the currently selected item. 
+#
+#  options
+#
+#     -componentlist
+#
+#         The name of the associated ComponentList object.
+#
+#     -editable 
+#
+#         Whether the entry widget can be edited.
+#
+#     -selectioncommand
+#
+#         A command that is called whenever a new item is selected.
+#
+#     -returncommand
+#
+#         The action to perform when <Return> is detected in the combo box
+#
+#  methods
+#
+#     select <item>
+#
+#        Selects the nominated item - the item name will appear in the
+#        entry widget.
+#
+#     get
+#
+#        Returns the name of the currently selected item.
+#
+#     insert
+#
+#        Inserts a string into the entry widget
+#
+#  D Terrett  9 September 1998
+#
+#  Copyright CCLRC
+#-
+
+itcl::class ListManager {
+   inherit itk::Widget
+
+   constructor args {}
+   destructor {}
+
+   public method select item
+   public method get
+   public method insert string
+
+   itk_option define -componentlist componentList ComponentList {}
+   itk_option define -returncommand returnCommand Command break
+}
+
+itk::usual ListManager {
+   keep -background -borderwidth -cursor -foreground -highlightcolor
+   keep -highlightthickness -insertbackground -insertborderwidth
+   keep -insertofftime -insertontime -insertwidth -labelfont -popupcursor
+   keep -selectbackground -selectborderwidth -selectforeground
+   keep -textbackground -textfont
+}
+
+itcl::body ListManager::constructor args {
+
+   itk_component add selector {
+#      iwidgets::combobox $itk_interior.selector -autoclear 0
+      iwidgets::combobox $itk_interior.selector
+   } {
+      usual
+      keep -labeltext
+      keep -labelpos
+      keep -width
+      keep -editable
+      keep -selectioncommand
+   }
+
+   pack $itk_component(selector) -fill both -expand y
+
+   eval itk_initialize $args
+}
+
+itcl::body ListManager::destructor {} {
+#+
+# Removes the widget from the list of widgets managed by the list object.
+#-
+   set list $itk_option(-componentlist)
+   if { $list != "" } {
+      $list removeWidget $itk_component(selector)
+   }
+}
+
+itcl::configbody ListManager::componentlist {
+#+
+#  Adds the combobox widget to the list of widgets managed by the list.
+#-
+   if { $itk_option(-componentlist) != "" } {
+      $itk_option(-componentlist) addWidget $itk_component(selector)
+   }
+}
+
+itcl::body ListManager::select item {
+#+
+# Selects one of the items in the associated list.
+#-
+
+# Make the combobox editable.
+   set editable [$itk_component(selector) cget -editable]
+   if { $editable == 0 } {
+      $itk_component(selector) configure -editable 1
+   }
+
+# Clear the current selection.
+   $itk_component(selector) selection clear 0 end
+
+# Select the item according to its position in the list.
+   if { $itk_option(-componentlist) != "" } {
+      set i [$itk_option(-componentlist) index $item]
+      if { $i >= 0 } {
+         $itk_component(selector) selection set $i
+      }
+   } else {
+      error "componentlist not defined"
+   }
+
+# Restore the editability.
+   if { $editable == 0 } {
+      $itk_component(selector) configure -editable 0
+   }
+}
+
+itcl::body ListManager::get {} {
+#+
+# Returns the currently selected item.
+#-
+   return [$itk_component(selector) get]
+}
+itcl::body ListManager::select item {
+#+
+# Selects one of the items in the associated list.
+#-
+
+# Make the combobox editable.
+   set editable [$itk_component(selector) cget -editable]
+   if { $editable == 0 } {
+      $itk_component(selector) configure -editable 1
+   }
+
+# Clear the current selection.
+   $itk_component(selector) selection clear 0 end
+
+# Select the item according to its position in the list.
+   if { $itk_option(-componentlist) != "" } {
+      set i [$itk_option(-componentlist) index $item]
+      if { $i >= 0 } {
+         $itk_component(selector) selection set $i
+      }
+   } else {
+      error "componentlist not defined"
+   }
+
+# Restore the editability.
+   if { $editable == 0 } {
+      $itk_component(selector) configure -editable 0
+   }
+}
+
+itcl::body ListManager::get {} {
+#+
+# Returns the currently selected item.
+#-
+   return [$itk_component(selector) get]
+}
+
+itcl::body ListManager::insert string {
+#+
+# Sets the combobox to the specified string as if it had been typed into
+# the box.
+#-
+
+# Make the combobox editable.
+   set editable [$itk_component(selector) cget -editable]
+   if { $editable == 0 } {
+      $itk_component(selector) configure -editable 1
+   }
+
+# Clear the current selection.
+   $itk_component(selector) selection clear 0 end
+
+# Insert the string.
+   $itk_component(selector) insert entry end $string
+
+# Restore the editability.
+   if { $editable == 0 } {
+      $itk_component(selector) configure -editable 0
+   }
+}
+
+itcl::configbody ListManager::returncommand {
+   bind [$itk_component(selector) component entry] <Return> \
+         $itk_option(-returncommand)
+}

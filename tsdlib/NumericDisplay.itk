@@ -1,0 +1,479 @@
+#+
+#  NumericDisplay.itk
+#
+#  Implements the NumericDisplay widget.
+#
+#  methods
+#
+#    update
+#
+#       Updates the display from the SAD
+#
+#  options
+#
+#  D Terrett 24 January 1999
+#
+#  Copyright CCLRC
+#-
+
+itcl::class NumericDisplay {
+   inherit itk::Widget
+
+   constructor args {}
+   destructor {}
+
+   itk_option define -vt vt Vt sourceA
+
+   public method update
+
+   private method newtarget args
+   private method newobject args
+   private method inPosition {rec status info value}
+}
+
+itk::usual NumericDisplay {
+   keep -background -cursor -foreground -font -labelfont
+   keep -highlightcolor -highlightthickness
+   keep -background -cursor
+   keep -highlightcolor -highlightthickness
+   keep -vt
+}
+
+itcl::body NumericDisplay::constructor args {
+
+# Frame for telescope RA/Dec, frame and tracking wavelength on one row
+# followed by the target position, airmass and hour angle on the next
+   itk_component add top {
+      frame $itk_interior.top
+   }
+   grid $itk_component(top)
+
+   set w $itk_component(top)
+
+# Current object.
+   itk_component add objlabel {
+      label $w.objlabel
+   }
+   itk_component add objname {
+      label $w.objname
+   }
+
+   itk_component add telposlabel {
+      label $w.telposlabel -text "TELESCOPE POSITION:"
+   }
+   itk_component add telpos1 {
+      StatusField $w.tepos1 -labelmargin 5 -width 11 -entryborder 3 \
+            -entryrelief groove
+   }
+   itk_component add telpos2 {
+      StatusField $w.tepos2 -labelmargin 5 -width 11 -entryborder 3 \
+            -entryrelief groove
+   }
+   itk_component add telpossys {
+      label $w.telpossys -width 10
+   }
+   itk_component add telposwavel {
+      label $w.telposwavel -width 8
+   }
+
+   itk_component add tarlabel {
+      label $w.tarlabel -text "TARGET:"
+   }
+   itk_component add tar1 {
+      StatusField $w.tar1 -labelmargin 5 -width 11 -entryborder 3 \
+            -entryrelief groove
+
+   }
+   itk_component add tar2 {
+      StatusField $w.tar2 -labelmargin 5 -width 11 -entryborder 3 \
+            -entryrelief groove
+   }
+   itk_component add tarsys {
+      label $w.tarsys -width 10
+   }
+   itk_component add tarwavel {
+      label $w.tarwavel -width 8
+   }
+   itk_component add ha {
+      StatusField $w.ha -labeltext HA -labelmargin 5 -width 6 -entryborder 3 \
+            -entryrelief groove
+   }
+   itk_component add zd {
+      StatusField $w.zd -labeltext ZD -labelmargin 5 -entryborder 3 \
+            -entryrelief groove
+   }
+   itk_component add am {
+      StatusField $w.am -labeltext AM -labelmargin 5 -entryborder 3 \
+            -entryrelief groove
+   }
+   itk_component add offlab {
+      label $w.offlab -text "OFFSET (arcsec):"
+   }
+   itk_component add off1 {
+      StatusField $w.off1 -labelmargin 5 -width 8 -entryborder 3 \
+            -entryrelief groove -anchor e
+   }
+   itk_component add off2 {
+      StatusField $w.off2 -labelmargin 5 -width 8 -entryborder 3 \
+            -entryrelief groove -anchor e
+   }
+
+   itk_component add baselab {
+      label $w.baselab -text "BASE:"
+   }
+   itk_component add base1 {
+      StatusField $w.base1 -labelmargin 5 -width 11 -entryborder 3 \
+            -entryrelief groove
+   }
+   itk_component add base2 {
+      StatusField $w.base2 -labelmargin 5 -width 11 -entryborder 3 \
+            -entryrelief groove
+   }
+
+# Time.
+   itk_component add time {
+      frame $w.time -bd 2 -relief ridge
+   }
+   set w $itk_component(time)
+   itk_component add utc {
+      StatusField $w.utc -labeltext UTC: -labelmargin 5 -entryborder 3 \
+            -entryrelief groove
+   }
+   [$itk_component(utc) component label] configure -width 4
+   itk_component add lst {
+      StatusField $w.lst -labeltext LST: -labelmargin 5 -entryborder 3 \
+            -entryrelief groove
+   }
+   [$itk_component(lst) component label] configure -width 4
+   global TIMEZONE
+   itk_component add lmt {
+      StatusField $w.lmt -labeltext ${TIMEZONE}: -labelmargin 5 -entryborder 3 \
+            -entryrelief groove
+   }
+   [$itk_component(lmt) component label] configure -width 4
+   grid $itk_component(utc) -pady 3 -sticky w
+   grid $itk_component(lst) -pady 3 -sticky w
+   grid $itk_component(lmt) -pady 3 -sticky w
+
+# Telescope and Dome positions.
+   set w $itk_component(top)
+   itk_component add mech {
+      frame $w.mech -bd 2 -relief ridge
+   }
+   set w $itk_component(mech)
+   itk_component add mechlab {
+      label $w.mechlab -text "Mechanical Positions"
+   }
+   itk_component add tellab {
+      label $w.tellab -text Telescope:
+   }
+   itk_component add telaz {
+      StatusField $w.telaz -labeltext Az -labelmargin 5 -width 13 \
+            -entryborder 3 -entryrelief groove 
+   }
+   itk_component add telel {
+      StatusField $w.telel -labeltext El -labelmargin 5 -width 13 \
+            -entryborder 3 -entryrelief groove 
+   }
+   itk_component add rot {
+      StatusField $w.rot -labeltext Rotator -labelmargin 5 -width 10 \
+            -entryborder 3 -entryrelief groove
+   }
+   itk_component add domelab {
+      label $w.domelab -text Dome:
+   }
+   itk_component add domeaz {
+      StatusField $w.domeaz -labeltext Az -labelmargin 5 -width 7 \
+            -entryborder 3 -entryrelief groove
+   }
+   itk_component add topshut {
+      StatusField $w.topshut -labeltext Top -labelmargin 5 -width 5 \
+            -entryborder 3 -entryrelief groove
+   }
+   itk_component add botshut {
+      StatusField $w.botshut -labeltext Bottom -labelmargin 5 -width 5 \
+            -entryborder 3 -entryrelief groove 
+   }
+   grid $itk_component(mechlab) - - - -pady 3
+   grid $itk_component(tellab) $itk_component(telaz) $itk_component(telel) \
+         $itk_component(rot) -sticky e -pady 3
+   grid $itk_component(domelab) $itk_component(domeaz) \
+         $itk_component(topshut) $itk_component(botshut) -sticky w -pady 3
+   grid configure $itk_component(domelab) -sticky e
+
+# Layout elements.
+   grid $itk_component(objlabel) $itk_component(objname) - - - \
+         -sticky e -padx 3 -pady 3
+   grid configure $itk_component(objname) -sticky w
+   grid $itk_component(telposlabel) $itk_component(telpos1) \
+         $itk_component(telpos2) $itk_component(telpossys) \
+         $itk_component(telposwavel) -padx 3 -pady 3
+   grid $itk_component(tarlabel) $itk_component(tar1) \
+         $itk_component(tar2) $itk_component(tarsys) \
+         $itk_component(tarwavel) $itk_component(ha) $itk_component(zd) \
+         $itk_component(am) \
+         -sticky e -padx 3 -pady 3
+   grid $itk_component(offlab) $itk_component(off1) $itk_component(off2) \
+         -sticky e -padx 3 -pady 3
+   grid $itk_component(baselab) $itk_component(base1) $itk_component(base2) \
+         -sticky e -padx 3 -pady 3
+   grid $itk_component(mech) - - - - $itk_component(time) - -
+   grid configure $itk_component(mech) -sticky w
+   grid configure $itk_component(time) -sticky e
+
+# Call newtarget whenever any of the tracking frame or wavelengths change.
+   foreach vt {sourceA sourceB sourceC pwfs1 pwfs2 oiwfs mount} {
+      sa tcssad proc ${vt}TrackFrame [code $this newtarget]
+      sa tcssad proc ${vt}TrackEq [code $this newtarget]
+      sa tcssad proc ${vt}Wavelength [code $this newtarget]
+   }
+
+# Call newobject whenever any of the input objects change.
+   foreach vt {sourceA sourceB sourceC pwfs1 pwfs2 oiwfs mount} {
+      sa tcssad proc ${vt}ObjectName [code $this newobject]
+   }
+
+# Call inPosition whenever any of the inPosition or followS records change.
+   foreach sa {mcssad mcssad mcssad crssad ecssad ecssad ecssad \
+         tcssad mcssad crssad} \
+         par {inPosition inPositionAz inPositionEl inPosition \
+         domeInPos topShtrInPos botShtrInPos inPosition followS followS} {
+      sa $sa proc $par [code $this inPosition]
+   }
+
+# Trigger checks on the subsystem states
+   inPosition mcssad.xxxx {} {} {}
+   inPosition crssad.xxxx {} {} {}
+   inPosition ecssad.xxxx {} {} {}
+
+   eval itk_initialize $args
+}
+
+itcl::body NumericDisplay::destructor {} {
+   foreach vt {sourceA sourceB sourceC pwfs1 pwfs2 oiwfs mount} {
+      sa tcssad unproc ${vt}TrackFrame [code $this newtarget]
+      sa tcssad unproc ${vt}TrackEq [code $this newtarget]
+      sa tcssad unproc ${vt}Wavelength [code $this newtarget]
+      sa tcssad unproc ${vt}ObjectName [code $this newobject]
+   }
+   foreach sa {mcssad mcssad mcssad crssad ecssad ecssad ecssad \
+         tcssad mcssad crssad} \
+         par {inPosition inPositionAz inPositionEl inPosition \
+         domeInPos topShtrInPos botShtrInPos inPosition \
+         followS followS} {
+      sa $sa unproc $par [code $this inPosition]
+   }
+}
+
+itcl::body NumericDisplay::newtarget args {
+
+# Updates the display when the tracking frame or wavelength changes or
+# -vt is changed..
+   
+# Telescope position (in tracking frame of the mount).
+   set system [sa tcssad get mountTrackFrame]
+   scan [sa tcssad get mountTrackEq] "%c%d" type year
+   set type [format "%c" $type]
+   set wavel [expr [sa tcssad get mountWavelength] / 10000.0]
+   if { $system == "AZEL_TOPO" } {
+      $itk_component(telpos1) configure -labeltext Az
+      $itk_component(telpos2) configure -labeltext El
+   } else {
+      $itk_component(telpos1) configure -labeltext RA
+      $itk_component(telpos2) configure -labeltext Dec
+   }
+   switch $system {
+      FK4 -
+      FK5 {
+         $itk_component(telpossys) configure -text "$system/$type$year"
+      }
+      APPT {
+         $itk_component(telpossys) configure -text "Apparent"
+      }
+      default {
+         $itk_component(telpossys) configure -text ""
+      }
+   }
+   $itk_component(telposwavel) configure -text "$wavel mu"
+
+# Target position.
+   set system [sa tcssad get $itk_option(-vt)TrackFrame]
+   scan [sa tcssad get $itk_option(-vt)TrackEq] "%c%d" type year
+   set type [format "%c" $type]
+   set wavel [expr [sa tcssad get $itk_option(-vt)Wavelength] / 10000.0]
+   if { $system == "AZEL_TOPO" } {
+      $itk_component(tar1) configure -labeltext Az
+      $itk_component(tar2) configure -labeltext El
+   } else {
+      $itk_component(tar1) configure -labeltext RA
+      $itk_component(tar2) configure -labeltext Dec
+   }
+   switch $system {
+      FK4 -
+      FK5 {
+         $itk_component(tarsys) configure -text "$system/$type$year"
+      }
+      APPT {
+         $itk_component(tarsys) configure -text "Apparent"
+      }
+      default {
+         $itk_component(tarsys) configure -text ""
+      }
+   }
+   $itk_component(tarwavel) configure -text "$wavel mu"
+}
+
+itcl::body NumericDisplay::newobject args {
+
+# Updates the display when the source changes or -vt is changed..
+   
+# Set object label.
+   $itk_component(objlabel) configure -text "OBJECT ($itk_option(-vt)):"
+
+# Object name
+   $itk_component(objname) configure \
+         -text [sa tcssad get $itk_option(-vt)ObjectName]
+}
+
+itcl::body NumericDisplay::update {} {
+
+# Telescope and dome position.
+   $itk_component(telpos1) configure -text [sa tcssad get currentRA]
+   $itk_component(telpos2) configure -text [sa tcssad get currentDec]
+   $itk_component(telaz) configure -text [sa tcssad get currentAz]
+   $itk_component(telel) configure -text [sa tcssad get currentEl]
+   $itk_component(rot) configure -text [sa crssad get currentRma]
+   $itk_component(domeaz) configure -text [sa ecssad get domePos]
+   $itk_component(topshut) configure -text [sa ecssad get topShtrPos]
+   $itk_component(botshut) configure -text [sa ecssad get botShtrPos]
+
+# Target
+   switch $itk_option(-vt) {
+      sourceA {set chop A}
+      sourceB {set chop C}
+      sourceC {set chop C}
+   }
+   set demand [ast target $chop $chop \
+         [sa tcssad get $itk_option(-vt)Wavelength] \
+         [sa tcssad get $itk_option(-vt)TrackFrame] \
+         [sa tcssad get $itk_option(-vt)TrackEq]]
+   $itk_component(tar1) configure -text [lindex $demand 0]
+   $itk_component(tar2) configure -text [lindex $demand 1]
+   $itk_component(ha) configure -text [lindex $demand 2]
+   $itk_component(zd) configure -text [lindex $demand 3]
+   $itk_component(am) configure -text [lindex $demand 4]
+
+# Offset and base
+   switch $itk_option(-vt) {
+      sourceA {set vt A}
+      sourceB {set vt C}
+      sourceC {set vt C}
+   }
+   set target [sa tcssad get target${vt}]
+   set ra [slaDr2tf 3 [lindex $target 0]]
+   $itk_component(base1) configure -text \
+         [format "%02d:%02d:%02d.%03d" [lindex $ra 1] [lindex $ra 2] \
+         [lindex $ra 3] [lindex $ra 4]]
+   set dec [slaDr2af 2 [lindex $target 1]]
+   $itk_component(base2) configure -text \
+         [format "%s%02d:%02d:%02d.%02d" [lindex $dec 0] [lindex $dec 1] \
+         [lindex $dec 2] [lindex $dec 3] [lindex $dec 4]]
+   $itk_component(off1) configure -text [format "%10.2f" \
+         [expr [lindex $target 2] * 206264.81 * cos( [lindex $target 1] )] ]
+   $itk_component(off2) configure -text \
+         [format "%10.2f" [expr [lindex $target 3] * 206264.81] ]
+
+# Time.
+   $itk_component(utc) configure -text [tccTime utc]
+   $itk_component(lmt) configure -text [tccTime localtime]
+   $itk_component(lst) configure -text [tccTime last]
+}
+
+itcl::body NumericDisplay::inPosition {rec status info value} {
+#+
+# Colour codes various widgets according to whether a sub-system is 
+# in position and/or following.
+#-
+
+# Extract the subsystem and record from the name of the record that changed.
+   foreach {subsys record} [split $rec .] {}
+
+   switch $subsys {
+      tcssad -
+      mcssad {
+
+# Telescope position.
+         if { [sa mcssad get followS] == "ON" } {
+            if { [sa tcssad get inPosition] == "TRUE" } {
+               set status ok
+            } else {
+               set status warning
+            }
+         } else {
+            set status error
+         }
+         $itk_component(telpos1) configure -status $status
+         $itk_component(telpos2) configure -status $status
+
+# Telescope Az/El.
+         if { [sa mcssad get followS] == "ON" } {
+            if { [sa mcssad get inPositionAz] } {
+               set azstat ok
+            } else {
+               set azstat warning
+            }
+            if { [sa mcssad get inPositionEl] } {
+               set elstat ok
+            } else {
+               set elstat warning
+            }
+         } else {
+            set azstat error
+            set elstat error
+         }
+         $itk_component(telaz) configure -status $azstat
+         $itk_component(telel) configure -status $elstat
+      }
+      crssad {
+
+# Cass rotator position.
+         if { [sa crssad get followS] == "On" } {
+            if { [sa crssad get inPosition] } {
+               set status ok
+            } else {
+               set status warning
+            }
+         } else {
+            set status error
+         }
+         $itk_component(rot) configure -status $status
+      }
+      ecssad {
+
+# Dome az and shutter positions.
+         if { [sa ecssad get domeInPos] } {
+            set domestat ok
+         } else {
+            set domestat warning
+         }
+         if { [sa ecssad get topShtrInPos] } {
+            set topstat ok
+         } else {
+            set topstat warning
+         }
+         if { [sa ecssad get botShtrInPos] } {
+            set botstat ok
+         } else {
+            set botstat warning
+         }
+         $itk_component(domeaz) configure -status $domestat
+         $itk_component(topshut) configure -status $topstat
+         $itk_component(botshut) configure -status $botstat
+      }
+   }
+}
+
+itcl::configbody NumericDisplay::vt {
+   newobject
+   newtarget
+}

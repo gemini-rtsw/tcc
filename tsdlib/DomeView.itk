@@ -1,0 +1,49 @@
+#+
+#  DomeView.itk
+#
+#  methods
+#
+#    update
+#
+#       Updates the display.
+#
+#  D Terrett 13 August 1998
+#
+#  Copyright CCLRC
+#-
+
+itcl::class DomeView {
+   inherit itk::Widget
+
+   constructor args {}
+
+   public method update
+}
+
+itk::usual DomeView {
+   keep -background -cursor
+   keep -insertbackground -insertborderwidth -insertwidth
+   keep -insertontime -insertofftime
+   keep -selectbackground -selectborderwidth -selectforeground
+   keep -highlightcolor -highlightthickness
+}
+
+itcl::body DomeView::constructor args {
+
+   itk_component add domeview {
+      canvas $itk_interior.domeview -width 340 -height 340
+   }
+
+   $itk_component(domeview) create domeview 170 170 -tags domeview
+
+   pack $itk_component(domeview)
+
+   eval itk_initialize $args
+}
+
+itcl::body DomeView::update {} {
+#+
+#  Updates the display.
+#-
+   $itk_component(domeview) itemconfigure domeview -display 1
+}

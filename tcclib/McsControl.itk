@@ -1,0 +1,269 @@
+#+
+#  McsControl.itk
+#
+#  Implements the McsControl widget.
+#
+#  D Terrett  17 November 1998
+#
+#  Copyright CCLRC
+#+
+
+itcl::class McsControl {
+   inherit itk::Widget
+
+   constructor args {}
+
+   private method getParVal par
+}
+
+itk::usual McsControl {
+   keep -cursor -foreground -font -background
+   keep -activebackground -activeforeground -disabledforeground
+   keep -highlightcolor -highlightthickness
+   keep -activeborderwidth -borderwidth
+   keep -labelfont -popupcursor
+   keep -insertborderwidth  -insertofftime -insertontime -insertwidth
+   keep -textbackground -textfont -insertbackground
+   keep -selectbackground -selectborderwidth -selectforeground
+}
+
+itcl::body McsControl::constructor args {
+
+# Divide the window into 2 vertically.
+   itk_component add row1 {
+      frame $itk_interior.row1
+   }
+   itk_component add row2 {
+      frame $itk_interior.row2
+   }
+   pack $itk_component(row1) $itk_component(row2) -fill x -expand y
+
+# The top frame is divided into 2 vertically.
+   set w $itk_component(row1)
+   itk_component add row1f1 {
+      frame $w.f1
+   }
+   itk_component add row1f2 {
+      frame $w.f2
+   }
+   pack $itk_component(row1f1) $itk_component(row1f2) -fill both  -expand y
+
+# The bottom frame has 6 frames packed 2 to a row.
+   set w $itk_component(row2)
+   itk_component add row2f1 {
+      frame $w.row2f1 -bd 2 -relief ridge
+   }
+   itk_component add row2f2 {
+      frame $w.row2f2 -bd 2 -relief ridge
+   }
+   itk_component add row2f3 {
+      frame $w.row2f3 -bd 2 -relief ridge
+   }
+   itk_component add row2f4 {
+      frame $w.row2f4 -bd 2 -relief ridge
+   }
+   itk_component add row2f5 {
+      frame $w.row2f5 -bd 2 -relief ridge
+   }
+   itk_component add row2f6 {
+      frame $w.row2f6 -bd 2 -relief ridge
+   }
+   grid $itk_component(row2f1) $itk_component(row2f2) -sticky nsew
+   grid $itk_component(row2f3) $itk_component(row2f4) -sticky nsew
+   grid $itk_component(row2f5) $itk_component(row2f6) -sticky nsew
+
+# Move commands.
+   set w $itk_component(row1f1)
+   itk_component add azel {
+      ApplyButton $w.azel -command azel \
+            -parcommand [code $this getParVal]
+   }
+   itk_component add azimuth {
+      ApplyButton $w.azimuth -command azimuth \
+         -parcommand [code $this getParVal]
+   }
+   itk_component add elevation {
+      ApplyButton $w.elevation -command elevation \
+            -parcommand [code $this getParVal]
+   }
+   pack $itk_component(azel) $itk_component(azimuth) \
+         $itk_component(elevation) -side left -fill x -expand y -padx 4 -pady 4
+
+   set w $itk_component(row1f2)
+   pack $w -side left -fill y -expand y
+   itk_component add az {
+      iwidgets::entryfield $w.az -labeltext [lindex [cs azel info az] 2] \
+           -width 10
+   }
+   itk_component add el {
+      iwidgets::entryfield $w.el -labeltext [lindex [cs azel info el] 2] \
+            -width 10
+   }
+   pack $itk_component(az) $itk_component(el) -side left -fill x -expand y \
+         -padx 4 -pady 4
+
+# Stop and Park buttons.
+   set w $itk_component(row2f1)
+   itk_component add telpark {
+      ApplyButton $w.telpark -command telpark
+   }
+   itk_component add stop {
+      frame $w.stop
+   }
+   set w $itk_component(stop)
+   itk_component add telstop {
+      ApplyButton $w.telstop -command telstop \
+            -parcommand [code $this getParVal]
+   }
+   itk_component add stopAxis {
+      iwidgets::optionmenu $w.stopAxis 
+   }
+   $itk_component(stopAxis) insert end Both Az El
+   pack $itk_component(telstop) $itk_component(stopAxis) -side left \
+         -fill x -expand y
+   set w $itk_component(row2f1)
+   itk_component add azBrakes {
+       checkbutton $w.azBrakes -onvalue Yes -offvalue No \
+            -text [lindex [cs telstop info azBrakes] 2] 
+   }
+   $itk_component(azBrakes) configure -variable _$itk_component(azBrakes)
+   itk_component add elBrakes {
+       checkbutton $w.elBrakes -onvalue Yes -offvalue No \
+            -text [lindex [cs telstop info elBrakes] 2]
+   }
+   $itk_component(elBrakes) configure -variable _$itk_component(elBrakes)
+   pack $itk_component(telpark) $itk_component(stop) -side top -fill x \
+         -expand y -padx 4 -pady 4
+   pack $itk_component(azBrakes) $itk_component(elBrakes) \
+         -side left -padx 4 -pady 2 -fill x -expand yes
+
+# Datum command.
+   set w $itk_component(row2f2)
+   itk_component add datum {
+      frame $w.datum
+   }
+   set w $itk_component(datum)
+   itk_component add mountDatum {
+      ApplyButton $w.mountDatum -command mountDatum \
+            -parcommand [code $this getParVal]
+   }
+   itk_component add datumAxis {
+      iwidgets::optionmenu $w.datumAxis 
+   }
+   $itk_component(datumAxis) insert end Both Az El
+   pack $itk_component(mountDatum) $itk_component(datumAxis) -side left \
+         -fill x -expand y
+   set w $itk_component(row2f2)
+   itk_component add azDevice {
+      iwidgets::optionmenu $w.azDevice \
+            -labeltext [lindex [cs mountDatum info azDevice] 2]
+   }
+   $itk_component(azDevice) insert end Switch Head1 Head2 Head3 Head4
+   itk_component add elDevice {
+      iwidgets::optionmenu $w.elDevice \
+            -labeltext [lindex [cs mountDatum info elDevice] 2]
+   }
+   $itk_component(elDevice) insert end Switch Head1 Head2 Head3 Head4
+   pack $itk_component(datum) $itk_component(azDevice) \
+         $itk_component(elDevice) -expand y -fill both -padx 4 -pady 4
+
+# Azimuth encoder configuration command.
+   set w $itk_component(row2f3)
+   itk_component add azConfig {
+      ApplyButton $w.azConfig -command azConfig \
+            -parcommand [code $this getParVal]
+   }
+   itk_component add azAlgorithm {
+      iwidgets::optionmenu $w.azAlgorithm \
+            -labeltext [lindex [cs azConfig info azAlgorithm] 2]
+   }
+   $itk_component(azAlgorithm) insert end \
+         FDE ALL_HEADS HEAD_1 HEAD_2 HEAD_3 HEAD_4 HEADS_1_3 HEADS_2_4
+   pack $itk_component(azConfig) $itk_component(azAlgorithm) \
+         -side top -padx 4 -pady 4
+
+# Elevation encoder configuration command.
+   set w $itk_component(row2f4)
+   itk_component add elConfig {
+      ApplyButton $w.elConfig -command elConfig \
+            -parcommand [code $this getParVal]
+   }
+   itk_component add elAlgorithm {
+      iwidgets::optionmenu $w.elAlgorithm \
+            -labeltext [lindex [cs elConfig info elAlgorithm] 2]
+   }
+   $itk_component(elAlgorithm) insert end \
+         FDE ALL_HEADS HEAD_1 HEAD_2  HEADS_1_T HEADS_2_T
+   pack $itk_component(elConfig) $itk_component(elAlgorithm) \
+          -side top -padx 4 -pady 4
+
+# Fast logging control.
+   set w $itk_component(row2f5)
+   itk_component add mountLog {
+      ApplyButton $w.mountLog -command mountLog \
+            -parcommand [code $this getParVal]
+   }
+   itk_component add switch {
+      iwidgets::optionmenu $w.switch \
+            -labeltext [lindex [cs mountLog info switch] 2]
+   }
+   $itk_component(switch) insert end On Off
+   itk_component add sampFreq {
+      iwidgets::entryfield $w.sampFreq -labeltext \
+            [lindex [cs mountLog info sampFreq] 2] -labelpos nw
+   }
+   pack $itk_component(mountLog) $itk_component(switch) \
+         $itk_component(sampFreq) -side top -padx 4 -pady 4
+
+# Tolerance control.
+   set w $itk_component(row2f6)
+   itk_component add mountTolerance {
+      ApplyButton $w.mountTolerance -command mountTolerance \
+            -parcommand [code $this getParVal]
+   }
+   itk_component add mtazlab {
+      label $w.azlab -text Az
+   }
+   itk_component add mtellab {
+      label $w.ellab -text El
+   }
+   itk_component add poslab {
+      label $w.poslab -text "Position (deg)" -anchor e
+   }
+   itk_component add vellab {
+      label $w.vellab -text "Velocity (deg/s)" -anchor e
+   }
+   itk_component add azPosError {
+      iwidgets::entryfield $w.azPosError -width 5
+   }
+   itk_component add azVelError {
+      iwidgets::entryfield $w.azVelError -width 5
+   }
+   itk_component add elPosError {
+      iwidgets::entryfield $w.elPosError -width 5
+   }
+   itk_component add elVelError {
+      iwidgets::entryfield $w.elVelError -width 5
+   }
+   grid $itk_component(mountTolerance) - -
+   grid x $itk_component(mtazlab) $itk_component(mtellab)
+   grid $itk_component(poslab) $itk_component(azPosError) \
+         $itk_component(elPosError) -sticky ew
+   grid $itk_component(vellab) $itk_component(azVelError) \
+         $itk_component(elVelError) -sticky ew
+
+   eval itk_initialize $args
+}
+
+itcl::body McsControl::getParVal par {
+   switch $par {
+      azBrakes -
+      elBrakes {
+         upvar #0 [$itk_component($par) cget -variable] value
+         return $value
+      }
+      default {
+         return [$itk_component($par) get]
+      }
+   }
+}

@@ -1,0 +1,78 @@
+#+
+#  TrackFrame.itcl
+#
+#  Implements the TrackFrame class. A TrackFrame object 
+#  stores all the parameters needed to specify the tracking frame for
+#  all the virtual telescopes.
+#
+#  Methods:
+#
+#     apply
+#
+#         Applies the track frame definition to the TCS by setting the 
+#         values of the TrackFrame command parameters.
+#
+#     preview
+#
+#         The tracking frame does not effect the preview system so
+#         this method does nothing.
+#
+#  D Terrett 23 September 1998
+#
+#  Copyright CCLRC
+#+
+
+itcl::class TrackFrame {
+
+   public proc subcomponents {}
+
+   public method apply args
+   public method preview {} {}
+   public method save file
+
+   public variable mountCosys {}
+   public variable sourceACosys {}
+   public variable sourceBCosys {}
+   public variable sourceCCosys {}
+   public variable pwfs1Cosys {}
+   public variable pwfs2Cosys {}
+   public variable oiwfsCosys {}
+}
+
+itcl::body TrackFrame::subcomponents {} {
+   return { \
+      {mountCosys Cosys CosysNames CosysList {Mount Tracking Frame} trackMount} \
+      {sourceACosys Cosys CosysNames CosysList {Source A Tracking Frame} trackSourceA} \
+      {sourceBCosys Cosys CosysNames CosysList {Source B Tracking Frame} trackSourceB} \
+      {sourceCCosys Cosys CosysNames CosysList {Source C Tracking Frame} trackSourceC} \
+      {pwfs1Cosys Cosys CosysNames CosysList {PWFS1 Tracking Frame} trackPwfs1} \
+      {pwfs2Cosys Cosys CosysNames CosysList {PWFS2 Tracking Frame} trackPwfs2} \
+      {oiwfsCosys Cosys CosysNames CosysList {OIWFS Tracking Frame} trackOiwfs} \
+   }
+}
+
+itcl::body TrackFrame::apply args {
+
+# Set all the parameters.
+   foreach cs {trackMount trackSourceA trackSourceB trackSourceC \
+         trackPwfs1 trackPwfs2 trackOiwfs} \
+         comp {mount sourceA sourceB sourceC pwfs1 pwfs2 oiwfs} {
+      set cosys [set ${comp}Cosys]
+      if { $cosys == "" } {
+         cs $cs set system AZEL_TOPO
+         cs $cs set equinox ""
+      } else {
+         CosysNames::$cosys apply $cs
+      }
+   }
+}
+
+itcl::body TrackFrame::save file {
+   puts $file "   -mountCosys \"$mountCosys\" \\"
+   puts $file "   -sourceACosys \"$sourceACosys\" \\"
+   puts $file "   -sourceBCosys \"$sourceBCosys\" \\"
+   puts $file "   -sourceCCosys \"$sourceCCosys\" \\"
+   puts $file "   -pwfs1Cosys \"$pwfs1Cosys\" \\"
+   puts $file "   -pwfs2Cosys \"$pwfs2Cosys\" \\"
+   puts $file "   -oiwfsCosys \"$oiwfsCosys\" \\"
+}

@@ -1,0 +1,172 @@
+#+
+#  Guide.itcl
+#
+#  Implements the Guide class. A guide component contains the names of
+#  the targes for the 3 wave front sensors and which chop and nod states
+#  they should be active in.
+#
+#  Methods:
+#
+#     apply
+#
+#        Applies the guide configuration to the telescope.
+#
+#  D Terrett 24 March 1999
+#
+#  Copyright CCLRC
+#+
+
+itcl::class Guide {
+
+   public proc subcomponents {}
+
+   public variable pwfs1Target ""
+   public variable pwfs1Chop A
+   public variable pwfs1Nod AB
+   public variable pwfs2Target ""
+   public variable pwfs2Chop A
+   public variable pwfs2Nod AB
+   public variable oiwfsTarget ""
+   public variable oiwfsChop A
+   public variable oiwfsNod AB
+
+   public method apply args
+   public method preview
+   public method save file
+
+   private method setEnableFlags {wfs chop nod}
+}
+
+itcl::body Guide::subcomponents {} {
+   return { \
+      {pwfs1Target Target WfsTargetNames WfsTargetList {PWFS1 Target} pwfs1} \
+      {pwfs2Target Target WfsTargetNames WfsTargetList {PWFS2 Target} pwfs2} \
+      {oiwfsTarget Target WfsTargetNames WfsTargetList {OIWFS Target} oiwfs} \
+   }
+}
+
+itcl::body Guide::apply args {
+
+# Call the apply method of all the targets that have a value and set the
+# enable flags.
+   if { [info commands ::WfsTargetNames::$pwfs1Target] != "" } {
+      ::WfsTargetNames::$pwfs1Target apply pwfs1
+      setEnableFlags pwfs1 $pwfs1Chop $pwfs1Nod
+   } else {
+      setEnableFlags pwfs1 "" ""
+   }
+   if { [info commands ::WfsTargetNames::$pwfs2Target] != "" } {
+      ::WfsTargetNames::$pwfs2Target apply pwfs2
+      setEnableFlags pwfs2 $pwfs2Chop $pwfs2Nod
+   } else {
+      setEnableFlags pwfs2 "" ""
+   }
+   if { [info commands ::WfsTargetNames::$oiwfsTarget] != "" } {
+      ::WfsTargetNames::$oiwfsTarget apply oiwfs
+      setEnableFlags oiwfs $oiwfsChop $oiwfsNod
+   } else {
+      setEnableFlags oiwfs "" ""
+   }
+}
+
+itcl::body Guide::setEnableFlags {wfs chop nod} {
+   if { [string first A $chop] != -1 } {
+      set chopa 1
+   } else {
+      set chopa 0
+   }
+   if { [string first B $chop] != -1 } {
+      set chopb 1
+   } else {
+      set chopb 0
+   }
+   if { [string first C $chop] != -1 } {
+      set chopc 1
+   } else {
+      set chopc 0
+   }
+   if { [string first A $nod] != -1 } {
+      set noda 1
+   } else {
+      set noda 0
+   }
+   if { [string first B $nod] != -1 } {
+      set nodb 1
+   } else {
+      set nodb 0
+   }
+   if { [string first C $nod] != -1 } {
+      set nodc 1
+   } else {
+      set nodc 0
+   }
+   if { $chopa && $noda } {
+      cs ${wfs}Guide set nodachopa On
+   } else {
+      cs ${wfs}Guide set nodachopa Off
+   }
+   if { $chopb && $noda } {
+      cs ${wfs}Guide set nodachopb On
+   } else {
+      cs ${wfs}Guide set nodachopb Off
+   }
+   if { $chopc && $noda } {
+      cs ${wfs}Guide set nodachopc On
+   } else {
+      cs ${wfs}Guide set nodachopc Off
+   }
+   if { $chopa && $nodb } {
+      cs ${wfs}Guide set nodbchopa On
+   } else {
+      cs ${wfs}Guide set nodbchopa Off
+   }
+   if { $chopb && $nodb } {
+      cs ${wfs}Guide set nodbchopb On
+   } else {
+      cs ${wfs}Guide set nodbchopb Off
+   }
+   if { $chopc && $nodb } {
+      cs ${wfs}Guide set nodbchopc On
+   } else {
+      cs ${wfs}Guide set nodbchopc Off
+   }
+   if { $chopa && $nodc } {
+      cs ${wfs}Guide set nodcchopb On
+   } else {
+      cs ${wfs}Guide set nodcchopb Off
+   }
+   if { $chopb && $nodc } {
+      cs ${wfs}Guide set nodcchopb On
+   } else {
+      cs ${wfs}Guide set nodcchopb Off
+   }
+   if { $chopc && $nodc } {
+      cs ${wfs}Guide set nodcchopc On
+   } else {
+      cs ${wfs}Guide set nodcchopc Off
+   }
+}
+
+itcl::body Guide::preview {} {
+   if { [info commands ::WfsTargetNames::$pwfs1Target] != "" } {
+      ::WfsTargetNames::$pwfs1Target preview pwfs1
+   }
+   if { [info commands ::WfsTargetNames::$pwfs2Target] != "" } {
+      ::WfsTargetNames::$pwfs2Target preview pwfs2
+   }
+   if { [info commands ::WfsTargetNames::$oiwfsTarget] != "" } {
+      ::WfsTargetNames::$oiwfsTarget preview oiwfs
+   }
+}
+
+itcl::body Guide::save file {
+   puts $file "   -pwfs1Target \"$pwfs1Target\" \\"
+   puts $file "   -pwfs1Chop $pwfs1Chop \\"
+   puts $file "   -pwfs1Nod $pwfs1Nod \\"
+   puts $file "   -pwfs2Target \"$pwfs2Target\" \\"
+   puts $file "   -pwfs2Chop $pwfs2Chop \\"
+   puts $file "   -pwfs2Nod $pwfs2Nod \\"
+   puts $file "   -oiwfsTarget \"$oiwfsTarget\" \\"
+   puts $file "   -oiwfsChop $oiwfsChop \\"
+   puts $file "   -oiwfsNod $oiwfsNod"
+}
