@@ -10,7 +10,7 @@ exec $HLPG_INSTALL_BASE/bin/ocswish "$0" "$@"
 #  the tcc uses. It is probably installation dependent and will need to be
 #  hacked to get it to work.
 #
-#  D Terrett 8 May 2002
+#  D Terrett 23 May 2003
 #
 #  Copyright CCLRC
 #-
@@ -18,20 +18,20 @@ exec $HLPG_INSTALL_BASE/bin/ocswish "$0" "$@"
 # Define the root directory for locating libraries and applications.
 set ::ROOT [file dirname [info script]]
 if { [string compare [file pathtype $::ROOT] relative] == 0 } {
-   set ::ROOT [pwd]/$::ROOT
+   set ::ROOT [file join [pwd] $::ROOT]
 }
 
 # Define the location of the star catalogue files.
-set ::CATALOG_DIR $::ROOT/pointcats
+set ::CATALOG_DIR [file join $::ROOT pointcats]
 
 # The tcc library files live in the lib subdirectory.
-lappend auto_path $::ROOT/lib
-lappend auto_path $::ROOT/tcclib
+lappend auto_path [file join $::ROOT lib]
+lappend auto_path [file join $::ROOT tcclib]
 
 # Load the time and tcc extensions to tcl.
-load $::ROOT/lib/solaris/tcctime.so
-load $::ROOT/tcclib/solaris/tccext.so
-load $::ROOT/lib/solaris/slaext.so
+load [file join $::ROOT lib $::env(HOST_ARCH) tcctime.so]
+load [file join $::ROOT tcclib $::env(HOST_ARCH) tccext.so]
+load [file join $::ROOT lib $::env(HOST_ARCH) slaext.so]
 
 # Load all the packages required by the tcc.
 package require Itcl
@@ -53,13 +53,13 @@ if { [info exists env(TCC_TCSNAME)] } {
    set ext ""
    set env(TCC_TCSNAME) tcs
 }
-appData add configPath $::ROOT/ca_config$ext
+appData add configPath [file join $::ROOT ca_config$ext]
 appData add configFile tcc.ca
 
 #appData add debuglevel information
 
 # Read the options configuration file.
-option readfile $::ROOT/options userDefault
+option readfile [file join $::ROOT options] userDefault
 
 # Start the tcc (eval is used to expand $argv into a list of arguments).
 eval tccMain $argv

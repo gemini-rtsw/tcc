@@ -14,7 +14,7 @@ exec $HLPG_INSTALL_BASE/bin/ocswish "$0" "$@"
 #  star positions stored in a file and writes a log that can be processed
 #  into a TPOINT data file.
 #
-#  D Terrett 5 November 2002
+#  D Terrett 23 May 2003
 #
 #  Copyright CCLRC
 #-
@@ -25,29 +25,26 @@ set tcl_precision 14
 global ROOT
 set ROOT [file dirname [info script]]
 if { [string compare [file pathtype $ROOT] relative] == 0 } {
-   set ROOT [pwd]/$ROOT
+   set ROOT [file join [pwd] $ROOT]
 }
 
-# temporat location of seq package
-set auto_path [concat $ROOT/../templibs/lib $auto_path]
-
-lappend auto_path $ROOT/lib
+lappend auto_path [file join $ROOT lib]
 
 # Define the default location for catalogue file.
 global CATALOG_DIR
-set CATALOG_DIR $ROOT/pointcats
+set CATALOG_DIR [file join $ROOT pointcats]
 
 # Define the default location for storing pointing test results.
 global SAVE_FILE_DIR
-set SAVE_FILE_DIR /gemini/files
+set SAVE_FILE_DIR [file join /gemini files]
 
 # The pointtest application procedures live in the pointlib subdirectory.
-lappend auto_path $ROOT/pointlib
+lappend auto_path [file join $ROOT pointlib]
 
 # Load the tcctime and sla extensions to tcl.
-load $ROOT/lib/solaris/tcctime.so
-load $ROOT/tcclib/solaris/tccext.so
-load $ROOT/lib/solaris/slaext.so
+load [file join $ROOT lib $::env(HOST_ARCH) tcctime.so]
+load [file join $ROOT tcclib $::env(HOST_ARCH) tccext.so]
+load [file join $ROOT lib $::env(HOST_ARCH) slaext.so]
 
 package require Itcl
 package require Itk
@@ -63,7 +60,7 @@ if { [info exists env(TCC_TCSNAME)] && \
 } else {
    set ext ""
 }
-appData add configPath $ROOT/ca_config$ext
+appData add configPath [file join $ROOT ca_config$ext]
 appData add configFile pointtest.ca
 
 appData add appKind Tcs

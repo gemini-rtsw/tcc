@@ -10,7 +10,7 @@ exec $HLPG_INSTALL_BASE/bin/ocswish "$0" "$@"
 #  the tsd uses. It is probably installation dependent and will need to be
 #  hacked to get it to work.
 #
-#  D Terrett 5 December 2000
+#  D Terrett 23 May 2003
 #
 #  Copyright CCLRC
 #-
@@ -20,23 +20,23 @@ exec $HLPG_INSTALL_BASE/bin/ocswish "$0" "$@"
 global ROOT
 set ROOT [file dirname [info script]]
 if { [string compare [file pathtype $ROOT] relative] == 0 } {
-   set ROOT [pwd]/$ROOT
+   set ROOT [file join [pwd] $ROOT]
 }
 
 
 # The tsd library files live in the lib subdirectory of the directory 
 # containing this script.
-lappend auto_path $ROOT/lib
-lappend auto_path $ROOT/tsdlib
+lappend auto_path [file join $ROOT lib]
+lappend auto_path [file join $ROOT tsdlib]
 
 # Load the tcctime, sla and tsd extensions to tcl.
-load $ROOT/lib/solaris/tcctime.so
-load $ROOT/tsdlib/solaris/tsdext.so
-load $ROOT/lib/solaris/slaext.so
+load [file join $ROOT lib $::env(HOST_ARCH) tcctime.so]
+load [file join $ROOT tsdlib $::env(HOST_ARCH) tsdext.so]
+load [file join $ROOT lib $::env(HOST_ARCH) slaext.so]
 
 # Define images.
-image create photo chile_flag -file $ROOT/lib/chile_flag-small.gif
-image create photo hawaii_flag -file $ROOT/lib/hawaii_flag-small.gif
+image create photo chile_flag -file [file join $ROOT lib chile_flag-small.gif]
+image create photo hawaii_flag -file [file join $ROOT lib hawaii_flag-small.gif]
 
 # Load all the packages required by the tsd.
 package require Itcl
@@ -45,17 +45,17 @@ package require Iwidgets
 package require Ocspkg
 
 # Set the name of the epics service configuration file.
-if { [info exists env(TCC_TCSNAME)] } {
-   puts "Using $env(TCC_TCSNAME)"
-   set ext .$env(TCC_TCSNAME)
+if { [info exists ::env(TCC_TCSNAME)] } {
+   puts "Using $::env(TCC_TCSNAME)"
+   set ext .$::env(TCC_TCSNAME)
 } else {
    set ext ""
 }
-appData add configPath $ROOT/ca_config$ext
+appData add configPath [file join $ROOT ca_config$ext]
 appData add configFile tsd.ca
 
 # Load options database.
-option readfile $ROOT/options userDefault
+option readfile [file join $ROOT options] userDefault
 
 # Set the display background.
 . configure -background wheat
