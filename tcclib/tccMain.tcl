@@ -4,7 +4,7 @@
 #  The main program for the Gemini control console. It creates the top level
 #  "toolbar" window.
 #
-#  D Terrett 15 November 1999
+#  D Terrett 29 November 1999
 #
 #  Copyright CCLRC
 #-
@@ -146,6 +146,9 @@ proc tccMain args {
 # Set the title, icon etc.
    wm title . "Gemini North"
    wm iconname . TCC
+
+# Load default components.
+   source $ROOT/default_components.tcl
 
 # Load initialisation files.
    if { $init != "" } {
