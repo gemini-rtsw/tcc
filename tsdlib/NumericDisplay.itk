@@ -207,7 +207,7 @@ itcl::body NumericDisplay::constructor args {
             -entryrelief groove -anchor e
    }
    itk_component add ipa {
-      StatusField $w.ipa -width 5 -entryborder 3 \
+      StatusField $w.ipa -width 6 -entryborder 3 \
             -entryrelief groove -anchor e -labeltext IPA:
    }
    [$itk_component(ipa) component label] configure -width 4 -anchor e
@@ -239,7 +239,8 @@ itcl::body NumericDisplay::constructor args {
    grid configure $itk_component(ipa) -sticky w
    grid configure $itk_component(seeing) -padx {10 0}
 
-# Instrument origin and AA.
+# Instrument origin and IAA. and  P and Q
+
    itk_component add instrlab {
       label $w.instrlab -text "INSTRUMENT (arcsec):"
    }
@@ -252,13 +253,24 @@ itcl::body NumericDisplay::constructor args {
             -entryrelief groove -anchor e -labeltext Y
    }
    itk_component add iaa {
-      StatusField $w.iaa -width 5 -entryborder 3 \
+      StatusField $w.iaa -width 6 -entryborder 3 \
             -entryrelief groove -anchor e -labeltext IAA:
    }
    [$itk_component(iaa) component label] configure -width 4 -anchor e
-   grid $itk_component(instrlab) $itk_component(instrx) $itk_component(instry) \
+
+   itk_component add instrp {
+      StatusField $w.instrp -labelmargin 5 -width 6 -entryborder 3 \
+            -entryrelief groove -anchor e -labeltext P
+   }
+   itk_component add instrq {
+      StatusField $w.instrq -labelmargin 5 -width 6 -entryborder 3 \
+            -entryrelief groove -anchor e -labeltext Q
+   }
+
+   grid $itk_component(instrlab) $itk_component(instrp) $itk_component(instrq) \
          $itk_component(iaa) -sticky e -pady 2
    grid configure $itk_component(iaa) -sticky w
+   grid x $itk_component(instrx) $itk_component(instry) -sticky e -pady 2
 
 # Now that the grid is complete make adjustments to the row and column
 # spans.
@@ -598,6 +610,16 @@ itcl::body NumericDisplay::update {} {
          -text [format %.2f [expr {[lindex $xy 0] / 0.62056151}]]
    $itk_component(instry) configure \
          -text [format %.2f [expr {[lindex $xy 1] / 0.62056151}]]
+
+# Calculate P and Q
+   set instx [expr {[lindex $xy 0] / 0.62056151}]
+   set insty [expr {[lindex $xy 1] / 0.62056151}]
+   set iaa [expr [$itk_component(iaa) cget -text] * 3.1415926 / 180]
+
+   set instp [expr { - $instx * cos($iaa) + $insty * sin($iaa)}]
+   set instq [expr { - $instx * sin($iaa) - $insty * cos($iaa)}]
+   $itk_component(instrp) configure -text [format %.2f $instp]
+   $itk_component(instrq) configure -text [format %.2f $instq]
 
 # M2 tip/tilt/focus/X/Y.
    set tip [sa m2ssad get xtilt]
