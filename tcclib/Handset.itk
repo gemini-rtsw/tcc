@@ -21,7 +21,7 @@
 #         tcc application is destroyed while the pointer is in the window
 #         the keyboard will be left with autorepeat disabled.
 #
-#  D Terrett 12 October 2003
+#  D Terrett 23 July 2004
 #
 #  Copyright CCLRC
 #-
@@ -189,7 +189,6 @@ itcl::body Handset::constructor {args} {
    $itk_component(orient) add instr -text Instr
    $itk_component(orient) add pwfs1 -text PWFS1
    $itk_component(orient) add pwfs2 -text PWFS2
-   $itk_component(orient) select xy
    $itk_component(orient) configure -command [itcl::code $this relabel]
 
 # buttons for rotating and flipping.
@@ -236,31 +235,11 @@ itcl::body Handset::constructor {args} {
    pack $itk_component(title1) $itk_component(title2) $itk_component(title3) \
          -anchor w
 
-# Fill in the table of angles
-   foreach frame {tracking xy azel instr pwfs1 pwfs2} {
-      switch $frame {
-         azel -
-         instr -
-         tracking {
-            set angles($frame,u) 0.0
-            set angles($frame,r) 90.0
-            set angles($frame,d) 180.0
-            set angles($frame,l) 270.0
-         }
-         pwfs1  {
-            set angles($frame,l) 0.0
-            set angles($frame,d) 90.0
-            set angles($frame,r) 180.0
-            set angles($frame,u) 270.0
-         }
-         pwfs2 -
-         xy {
-            set angles($frame,r) 0.0
-            set angles($frame,u) 90.0
-            set angles($frame,l) 180.0
-            set angles($frame,d) 270.0
-         }
-      }
+# Fill in the table of angles (xy is last in the list so that it becomes
+# the default selection).
+   foreach frame {tracking azel instr pwfs1 pwfs2 xy} {
+      $itk_component(orient) select $frame
+      reset
    }
    
 # Create bindings on the top-level window for the arrow keys (this assumes
@@ -436,7 +415,6 @@ itcl::body Handset::reset {} {
    set frame [$itk_component(orient) get]
    switch $frame {
       azel -
-      instr -
       tracking {
          set angles($frame,u) 0.0
          set angles($frame,r) 90.0
@@ -452,9 +430,15 @@ itcl::body Handset::reset {} {
       pwfs2 -
       xy {
          set angles($frame,r) 0.0
-         set angles($frame,u) 90.0
+         set angles($frame,u) 270.0
          set angles($frame,l) 180.0
-         set angles($frame,d) 270.0
+         set angles($frame,d) 90.0
+      }
+      instr {
+         set angles($frame,u) 180.0
+         set angles($frame,r) 90.0
+         set angles($frame,d) 0.0
+         set angles($frame,l) 270.0
       }
    }
 
@@ -495,10 +479,10 @@ itcl::body Handset::initlabels {} {
             set labels($frame,r) W
 	 }
 	 instr {
-	   set labels($frame,u) +q
-	   set labels($frame,d) -q
-	   set labels($frame,l) +p
-	   set labels($frame,r) -p
+	   set labels($frame,u) +Q
+	   set labels($frame,d) -Q
+	   set labels($frame,l) -P
+	   set labels($frame,r) +P
          }
 	 pwfs2 -
 	 pwfs1 {
