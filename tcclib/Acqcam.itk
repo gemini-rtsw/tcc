@@ -9,7 +9,7 @@
 #  Methods:
 #           none
 #
-#  D Terrett  19 July 2001
+#  D Terrett  7 September 2001
 #
 #  Copyright CCLRC
 #+
@@ -86,7 +86,7 @@ itcl::body Acqcam::constructor {args} {
 
    itk_component add expose {
       iwidgets::combobox $w.expose -labeltext "Expose (s)" -labelpos w \
-         -width 10 -command [itcl::code $this expose] -validate real
+         -width 10 -selectioncommand [itcl::code $this expose] -validate real
    }
    $itk_component(expose) insert list end 0.01 0.1 1.0 10.0
    $itk_component(expose) insert entry end 0.01
@@ -177,6 +177,7 @@ itcl::body Acqcam::start {} {
    cs acqcam::stop set dummy 1
    cs acqcam::apply postWait
    cs acqcam::detExposure set nframe -1
+   cs acqcam::detExposure set exposure [$itk_component(expose) get]
    cs acqcam::apply postWait
    cs acqcam::observe set dummy 1
    cs acqcam::apply post
