@@ -7,7 +7,7 @@ static char rcsid[]="$Id:";
 *   FUNCTION NAME(S)
 *   tccPreviewCmd - Implements the tccPreview tcl command.
 *
-*   D L Terrett 16 February 2000
+*   D L Terrett 5 April 2000
 *
 *   Copyright CCLRC
 */
@@ -414,8 +414,9 @@ static int end( Tcl_Interp *interp, char *arg )
 
 /* Get orbit position */
        case ORBIT:
-          slaPlante( tt, Elong, Elat, Jtype, T0, Orbel[0], Orbel[1], Orbel[2],
-             Orbel[3], Orbel[4], Orbel[5], Orbel[6], &a, &b, &r, &jstat );
+          slaPlante( tt, Elong, Elat, Jtype, T0, Orbel[0] * D2R, 
+             Orbel[1] * D2R, Orbel[2] * D2R, Orbel[3], Orbel[4], 
+             Orbel[5] * D2R, Orbel[6] * D2R, &a, &b, &r, &jstat );
           System[0] = APPT;
           Theta1[0] = a;
           Theta2[0] = b;
