@@ -5,8 +5,6 @@
 #  configuring the componentList that the panel edits.
 #
 #  Options:
-#           -component      Configures the -component option of the EditPanel
-#
 #           -componentlist  Configures the -componentlist option of the 
 #                           EditPanel
 #
@@ -19,7 +17,7 @@
 #  Methods:
 #           map             Overrides the map method of PanelMgr
 #
-#  D Terrett 7 June 2000
+#  D Terrett 27 March 2001
 #
 #  Copyright CCLRC
 #+
@@ -29,7 +27,6 @@ itcl::class EditPanelMgr {
    constructor args {eval configure $args}
    public {
       method map {}
-      variable component {}
       variable componentlist {}
       variable controls {}
       variable namespace {}
@@ -53,14 +50,6 @@ itcl::configbody EditPanelMgr::namespace {
    }
 }
 
-itcl::configbody EditPanelMgr::component {
-   if { [winfo exists $name] } {
-      foreach n $component {
-         $name configure -component $n
-      }
-   }
-}
-
 itcl::configbody EditPanelMgr::vt {
    if { [winfo exists $name] } {
       foreach n $vt {
@@ -73,9 +62,8 @@ itcl::body EditPanelMgr::map {} {
    if { [$this PanelMgr::map] } {
 
 # Configure each of the control objects that the panel contains.
-      foreach control $controls l $componentlist n $namespace \
-            c $component v $vt {
-         $name configure -componentlist $l -namespace $n -component $c -vt $v
+      foreach control $controls l $componentlist n $namespace v $vt {
+         $name configure -componentlist $l -namespace $n -vt $v
       }
       return 1
    }
