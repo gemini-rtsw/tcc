@@ -32,6 +32,7 @@
 itcl::class ISS {
    public {
       method update {}
+      proc gpolwait {}
       variable mode SKY position
       variable ao OUT position
       variable port 1 position
@@ -39,6 +40,7 @@ itcl::class ISS {
    }
    private {
       method position {}
+      common waitid ""
       variable scfold ""
       variable hwfold ""
       variable aofold ""
@@ -133,6 +135,9 @@ itcl::body ISS::position {} {
 
 itcl::body ISS::update {} {
 
+# Kill off any pending attempt to deploy the HRWFS pickoff mirror.
+   after cancel $waitid
+
 # Position HRWFS pickoff mirror. Before moving it into the beam we must
 # check that GPOL is parked.
    switch $hwfold {
@@ -140,11 +145,18 @@ itcl::body ISS::update {} {
          if { [sa gpolsad get upperParkSwitch] == "OPEN" ||
                [sa gpolsad get middleParkSwitch] == "OPEN" ||
                [sa gpolsad get lowerParkSwitch] == "OPEN" } {
+
+# Park GPOL. This takes a long time and we can't move the HRWFS mirror
+# until it is ready.
             cs gpolPark set dummy value MARK
             logger command gpolPark
+
+# Start a background task that polls GPOL until it is parked.
+            set waitid [after 1000 ISS::gpolwait]
+         } else {
+            cs hrwfs set hwfold value $hwfold
+            logger command hrwfs
          }
-         cs hrwfs set hwfold value $hwfold
-         logger command hrwfs
       }
       OUT {
          cs hrwfsPark set dummy value MARK
@@ -163,5 +175,21 @@ itcl::body ISS::update {} {
          cs scienceFold set scfold value $scfold
          logger command scienceFold
       }
+   }
+}
+
+itcl::body ISS::gpolwait {} {
+puts gpolwait
+   if { [sa gpolsad get upperParkSwitch] == "OPEN" ||
+        [sa gpolsad get middleParkSwitch] == "OPEN" ||
+        [sa gpolsad get lowerParkSwitch] == "OPEN" } {
+
+# Not ready yet so try again later.
+     set waitid [after 1000 ISS::gpolwait]
+   } else {
+
+# GPOL is parked so we can put the HRWFS fold in.
+      cs hrwfs set hwfold value IN
+      logger command hrwfs
    }
 }
