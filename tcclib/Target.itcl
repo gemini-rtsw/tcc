@@ -78,7 +78,7 @@
 #           save node     Saves the values of the target options to the
 #                         xml node.
 #
-#  D Terrett 17 April 2002
+#  D Terrett 19 April 2002
 #
 #  Copyright CCLRC
 #+
@@ -514,5 +514,10 @@ itcl::configbody Target::type {
    if { [lsearch -exact {major minor comet} $type] != -1 } {
       set eltype $type
       set type conicTarget
+   } else {
+     if { [lsearch -exact {hmsdegTarget degdegTarget conicTarget namedTarget} \
+           $type] == -1 } {
+         error "\"$type\" is not a recognised target type"
+     }
    }
 }
