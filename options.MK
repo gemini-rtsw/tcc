@@ -33,8 +33,14 @@
 *SlewOptionsPanel*background:	LightGray
 *TcsConfigPanel*background:		LightGray
 *TrackFramePanel*background:		LightGray
-*TrackRatePanel*background:		LightGray
 *WavelengthPanel*background:		LightGray
+
+# TrackRate entry pages
+*tcsFieldScienceTargetTrackRatePanel*background:  Pink
+*tcsFieldPwfs1TargetTrackRatePanel*background:	  SkyBlue
+*tcsFieldPwfs2TargetTrackRatePanel*background:    OldLace
+*tcsFieldOiwfsTargetTrackRatePanel*background:    Wheat
+*tcsFieldAltairTargetTrackRatePanel*background:   LemonChiffon
 
 # Target entry pages
 *FieldPanel*data*page1*background: 	Pink
