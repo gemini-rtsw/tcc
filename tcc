@@ -10,7 +10,7 @@ exec $HLPG_INSTALL_BASE/bin/solaris/ocswish "$0" "$@"
 #  the tcc uses. It is probably installation dependent and will need to be
 #  hacked to get it to work.
 #
-#  D Terrett 25 September 1999
+#  D Terrett 1 November 2000
 #
 #  Copyright CCLRC
 #-
@@ -25,6 +25,10 @@ set ROOT [file dirname [info script]]
 if { [string compare [file pathtype $ROOT] relative] == 0 } {
    set ROOT [pwd]/$ROOT
 }
+
+# Define the location of the star catalogue files.
+global CATALOG_DIR
+set CATALOG_DIR $ROOT/pointcats
 
 # The tcc library files live in the lib subdirectory.
 lappend auto_path $ROOT/lib

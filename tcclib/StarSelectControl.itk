@@ -1,0 +1,78 @@
+#+
+#  StarSelectControl.itk
+#
+#  Implements the StarSelectControl widget.
+#
+#  D Terrett 1 November 2000
+#
+#  Copyright CCLRC
+#-
+
+itcl::class StarSelectControl {
+   inherit itk::Widget
+
+   constructor args {}
+   method load {} {$StarCat load}
+   method view {} {$StarCat view}
+
+   private method selectstar {index}
+   private method loadposition {ra dec}
+
+   private variable StarCat
+}
+
+itk::usual StarSelectControl {
+}
+
+itcl::body StarSelectControl::constructor args {
+
+# AzElPlot.
+   itk_component add azelplot {
+      AzElPlot $itk_interior.azelplot \
+            -selectioncommand [itcl::code $this selectstar] \
+            -hitcommand [itcl::code $this loadposition]
+   }
+   pack $itk_component(azelplot)
+
+# Empty star catalog.
+    set StarCat [Catalogue #auto $itk_component(azelplot)]
+
+   eval itk_initialize $args
+}
+
+itcl::body StarSelectControl::selectstar {index} {
+
+   set object [$StarCat extract $index]
+
+   createCosys [lindex $object 3]/[lindex $object 4] \
+         -frame [lindex $object 3] -equinox [lindex $object 4]
+   createScienceTarget [lindex $object 0] -objName [lindex $object 0] \
+         -radec [list [lindex $object 1] [lindex $object 2]] \
+         -cosys [lindex $object 3]/[lindex $object 4] \
+         -epoch [lindex $object 5] \
+         -pm [list [lindex $object 6] [lindex $object 7]] \
+         -parallax [lindex $object 8]
+
+   tcsconfigscienceTarget map
+   tcsconfigscienceTarget select [lindex $object 0]
+}
+
+itcl::body StarSelectControl::loadposition {ra dec} {
+
+# Format the RA/Dec as HH:MM and DD
+   set ram [expr round($ra*229.18)]
+   if { $ram < 0 } {set ram [expr $ram + 1440]}
+   set rah [expr round(floor($ram / 60.0))]
+   set ram [expr round($ram - $rah * 60.0)]
+   set decm [expr round($dec*3437.746)]
+   set dech [expr round(floor($decm / 60.0))]
+   set decm [expr round($decm - $dech * 60.0)]
+   set ra [format %02d:%02d $rah $ram]
+   set dec [format %0+3d:%02d $dech $decm]
+
+   tcsconfigscienceTarget map
+   set name [[tcsconfigscienceTarget cget -window] scratchobj]
+   $name configure -radec [list $ra $dec] -cosys Apparent
+   tcsconfigscienceTarget select ""
+   [tcsconfigscienceTarget cget -window] selectobj $name
+}
