@@ -126,6 +126,7 @@ proc tccMain args {
    epics cs hrwfsPark
    epics cs aoFoldPark
    epics cs aoFold
+   epics cs agInPosOver
    epics cs scienceFold
    epics cs scienceFoldPark
    epics cs gpolPark
