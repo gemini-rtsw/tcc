@@ -9,7 +9,7 @@
 #  Methods:
 #          none
 #
-#  D Terrett 23 June 2001
+#  D Terrett 1 November 2002
 #
 #  Copyright CCLRC
 #+
@@ -270,9 +270,10 @@ itcl::body TcsControl::constructor args {
    itk_component add slit {
        iwidgets::spinner $w.slit -labeltext "Shutter aperture (m)" -width 8 \
              -validate real -increment [itcl::code $this shStep +] \
-             -decrement [itcl::code $this shStep -] -state disabled
+             -decrement [itcl::code $this shStep -]
    }
    $itk_component(slit) insert end 9.320
+   $itk_component(slit) configure -state disabled
    itk_component add dome {
       checkbutton $w.dome -text [lindex [cs carousel info dome] 2] \
             -variable [itcl::scope dome] -onvalue On -offvalue Off
