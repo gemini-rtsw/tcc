@@ -18,7 +18,7 @@
 #
 #       Returns the wavelength
 #
-#  D Terrett 23 November 1999
+#  D Terrett 17 February 2000
 #
 #  Copyright CCLRC
 #+
@@ -52,7 +52,8 @@ itcl::body WavelengthSelector::constructor args {
    itk_component add selector {
       SubComponentSelector $w.selector -labeltext "Wavelength" \
             -componentlist WavelengthList -editcontrol wavelengthControl \
-            -labelpos nw -component wavelength
+            -labelpos nw -component wavelength \
+            -selectioncommand [code $this selectioncommand]
    } {
       usual
       keep -editcontrol
@@ -102,6 +103,7 @@ itcl::body WavelengthSelector::selectioncommand {} {
 #-
    set name [$itk_component(selector) get]
 
+puts "selecting $name"
    $itk_component(wavel) clear
 
    if { $name != "" } {
