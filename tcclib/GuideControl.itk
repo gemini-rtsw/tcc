@@ -82,10 +82,18 @@ itcl::body GuideControl::constructor {args} {
       } else {
 
 # An option menus and an entry field for the PWFSs.
+	 itk_component add ${wfs}f1 {
+	    frame $w.${wfs}f1
+	 }
          itk_component add ${wfs}filter {
-            iwidgets::optionmenu $w.${wfs}filter -labeltext "with filter" \
+            iwidgets::optionmenu $w.${wfs}f1.${wfs}filter -labeltext "with filter" \
                   -command [itcl::code $this filter $wfs]
          }
+	 itk_component add ${wfs}currFlt {
+	    MonitorLabel $w.${wfs}f1.currFlt agssad ${wfs}Filter -width 8 -anchor w
+	 }
+	 pack $itk_component(${wfs}filter) $itk_component(${wfs}currFlt) -side left -ipadx 4
+	 
          $itk_component(${wfs}filter) insert end neutral Blue Green Red Red04 \
                Red1 ""
          if { $wfs == "pwfs2" } {
@@ -95,12 +103,19 @@ itcl::body GuideControl::constructor {args} {
             iwidgets::entryfield $w.${wfs}wavel -labeltext "Wavelength (um)" \
                   -width 8
          }
+	 itk_component add ${wfs}f2 {
+	    frame $w.${wfs}f2
+	 }
          itk_component add ${wfs}fldstop {
-            iwidgets::optionmenu $w.${wfs}fldstop -labeltext "field stop"
+            iwidgets::optionmenu $w.${wfs}f2.${wfs}fldstop -labeltext "field stop"
          }
+	 itk_component add ${wfs}currFld {
+	    MonitorLabel $w.${wfs}f2.currFld agssad ${wfs}Fldstop -width 8 -anchor w
+	 }
+	 pack $itk_component(${wfs}fldstop) $itk_component(${wfs}currFld) -side left -ipadx 4
          $itk_component(${wfs}fldstop) insert end prism 10.0 6.4 3.2 1.6 open1 open2 open3 open4 ""
-         pack $itk_component(${wfs}filter) $itk_component(${wfs}wavel) \
-               $itk_component(${wfs}fldstop) -anchor w -padx 3 -pady 3
+         pack $itk_component(${wfs}f1) $itk_component(${wfs}wavel) \
+               $itk_component(${wfs}f2) -anchor w -padx 3 -pady 3
       }
    }
 
