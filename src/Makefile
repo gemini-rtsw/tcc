@@ -44,8 +44,8 @@ slaext.so : $(SLAOBJ)
 bitmaps.so : $(BITOBJ)
 	ld -G -z text -o $@ $(BITOBJ) $(LDFLAGS) 
 
-tsdext.o : tccTime.h tccAst.h
-tccext.o : tccPreview.h tccTime.h autorepeat.h
+tsdext.o : tccAst.h
+tccext.o : tccPreview.h autorepeat.h
 bitmaps.o : edit.xbm delete.xbm
 tccPreview.o : tccConstants.h tccUtil.h tccDecode.h
 tccUtil.o : tccConstants.h tccUtil.h

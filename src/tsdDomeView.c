@@ -16,6 +16,11 @@ static char rcsid[]="$Id:";
 *   The only configuration option is -display which merely serves as a way
 *   of forcing the item to be redrawn and new data fetched from the TCS.
 *
+*   WARNING: THIS CODE WILL BREAK AT TCL 8.4
+*            The interface to Tk_ItemCreatProc, Tk_ItemConfigureProc and
+*            Tk_ItemCoordProc have been changed to use object instead of
+*            strings for the command arguments.
+*
 *   D L Terrett 3 May 2000
 *
 *   Copyright CCLRC

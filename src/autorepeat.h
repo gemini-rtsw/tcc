@@ -15,10 +15,10 @@
 #ifndef AUTOREPEAT_H
 #define AUTOREPEAT_H
 
-int autoRepeatOnCmd( ClientData clientdata, Tcl_Interp *interp, int argc,
-    char *argv[]);
+int autoRepeatOnCmd( ClientData clientdata, Tcl_Interp *interp, int objc,
+    Tcl_Obj *CONST objv[]);
 
-int autoRepeatOffCmd( ClientData clientdata, Tcl_Interp *interp, int argc,
-    char *argv[]);
+int autoRepeatOffCmd( ClientData clientdata, Tcl_Interp *interp, int objc,
+    Tcl_Obj *CONST objv[]);
 
 #endif

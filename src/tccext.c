@@ -41,16 +41,16 @@ int Tccext_Init( Tcl_Interp *interp)
 {
     if ( Tcl_InitStubs( interp, "8.0", 0 ) == NULL ) return TCL_ERROR;
 
-    Tcl_CreateCommand( interp, "tccPreview", Tccext_PreviewCmd,
+    Tcl_CreateObjCommand( interp, "tccPreview", Tccext_PreviewCmd,
         (ClientData) NULL, (Tcl_CmdDeleteProc *) NULL);
 
-    Tcl_CreateCommand( interp, "ast", Tccext_AstCmd,
+    Tcl_CreateObjCommand( interp, "ast", Tccext_AstCmd,
         (ClientData) NULL, (Tcl_CmdDeleteProc *) NULL);
 
-    Tcl_CreateCommand( interp, "autoRepeatOn", autoRepeatOnCmd,
+    Tcl_CreateObjCommand( interp, "autoRepeatOn", autoRepeatOnCmd,
         (ClientData) NULL, (Tcl_CmdDeleteProc *) NULL);
 
-    Tcl_CreateCommand( interp, "autoRepeatOff", autoRepeatOffCmd,
+    Tcl_CreateObjCommand( interp, "autoRepeatOff", autoRepeatOffCmd,
         (ClientData) NULL, (Tcl_CmdDeleteProc *) NULL);
 
     return TCL_OK;

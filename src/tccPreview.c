@@ -7,7 +7,7 @@ static char rcsid[]="$Id:";
 *   FUNCTION NAME(S)
 *   tccPreviewCmd - Implements the tccPreview tcl command.
 *
-*   D L Terrett 5 April 2000
+*   D L Terrett 13 December 2000
 *
 *   Copyright CCLRC
 */
@@ -23,27 +23,28 @@ static char rcsid[]="$Id:";
 #include <slalib.h>
 #include <timeLib.h>
 #include <astLib.h>
+#include "tccPreview.h"
 #include "tccConstants.h"
 #include "tccUtil.h"
 #include "tccDecode.h"
 
 static int begin( Tcl_Interp* );
-static int end( Tcl_Interp*, char* );
+static int end( Tcl_Interp*, Tcl_Obj* );
 static int getFpxy( Tcl_Interp*, int );
 static int getMount( Tcl_Interp*);
 static int getLimits( Tcl_Interp*);
 static int getSource( Tcl_Interp*);
 static int getTarget( Tcl_Interp*, int);
 static int getRotator( Tcl_Interp*);
-static int setPo( Tcl_Interp*, int, int, char*[]); 
-static int setTarget( Tcl_Interp*, int, int, char*[]);
-static int setWavel( Tcl_Interp*, int, int, char*[]); 
-static int setLimits( Tcl_Interp*, int, char*[]); 
-static int setIpa( Tcl_Interp*, int, char*[]); 
-static int setIaa( Tcl_Interp*, int, char*[]); 
-static int setPlanet( Tcl_Interp*, int, char*[]); 
-static int setOrbit( Tcl_Interp*, int, char*[]); 
-static int update( Tcl_Interp*, char* );
+static int setPo( Tcl_Interp*, int, int, Tcl_Obj *CONST[]); 
+static int setTarget( Tcl_Interp*, int, int, Tcl_Obj *CONST[]);
+static int setWavel( Tcl_Interp*, int, int, Tcl_Obj *CONST[]); 
+static int setLimits( Tcl_Interp*, int, Tcl_Obj *CONST[]); 
+static int setIpa( Tcl_Interp*, int, Tcl_Obj *CONST[]); 
+static int setIaa( Tcl_Interp*, int, Tcl_Obj *CONST[]); 
+static int setPlanet( Tcl_Interp*, int, Tcl_Obj *CONST[]); 
+static int setOrbit( Tcl_Interp*, int, Tcl_Obj *CONST[]); 
+static int update( Tcl_Interp*, char*);
 static int limitTimes( double, double );
 
 /* Target types */
@@ -211,118 +212,146 @@ double Zlim = 0.5 * D2R;
  */
 /* *INDENT-ON* */
 
-int Tccext_PreviewCmd( ClientData clientdata, Tcl_Interp *interp, int argc,
-    char *argv[])
+int Tccext_PreviewCmd( ClientData clientdata, Tcl_Interp *interp, int objc,
+    Tcl_Obj *CONST objv[])
 {
+    char *options[] = { "begin", "end", "get", "set", "update", NULL};
+    char *getopts[] = { "mount", "source", "source_target", "pwfs1_target",
+            "pwfs2_target", "oiwfs_target", "rotator", "pwfs1", "pwfs2",
+            "oiwfs", "limits", NULL};
+    char *setopts[] = { "sourceA", "pwfs1", "pwfs2", "oiwfs", "poriginA",
+            "poriginB", "wavelsourceA", "wavelpwfs1", "wavelpwfs2",
+            "waveloiwfs", "limits", "ipa", "iaa", "planet", "orbit", NULL};
+    int ind;
     int result;
 
-    if ( argc < 2 ) {
-        Tcl_AppendResult( interp,
-            "wrong # args: should be \"tccPreview option ?arg ...?\"",
-             (char *) NULL);
+    if ( objc < 2 ) {
+        Tcl_WrongNumArgs( interp, 1, objv, "option ?arg ...?");
         return TCL_ERROR;
     }
+    if ( Tcl_GetIndexFromObj( interp, objv[1], options, "option", 0, &ind)
+        != TCL_OK ) return TCL_ERROR;
 
-    if ( strcmp( argv[1], "begin" ) == 0 ) {
-        if ( argc != 2 ) {
-            Tcl_AppendResult( interp,
-                "wrong # args: should be \"tccPreview begin\"",
-                (char *) NULL);
-            return TCL_ERROR;
-        }
-        result = begin( interp );
-    } else if ( strcmp( argv[1], "end" ) == 0 ) {
-        if ( argc != 3 ) {
-            Tcl_AppendResult( interp,
-                "wrong # args: should be \"tccPreview end time\"",
-                (char *) NULL);
-            return TCL_ERROR;
-        }
-        result = end( interp, argv[2] );
-    } else if ( strcmp( argv[1], "get" ) == 0 ) {
-        if ( argc != 3 ) {
-            Tcl_AppendResult( interp,
-                "wrong # args: should be \"tccPreview get item\"",
-                (char *) NULL);
-            return TCL_ERROR;
-        }
-        if ( strcmp( argv[2], "mount" ) == 0 ) {
-            result = getMount( interp );
-        } else if ( strcmp( argv[2], "source" ) == 0 ) {
-            result = getSource( interp );
-        } else if ( strcmp( argv[2], "source_target" ) == 0 ) {
-            result = getTarget( interp, 0 );
-        } else if ( strcmp( argv[2], "pwfs1_target" ) == 0 ) {
-            result = getTarget( interp, 1 );
-        } else if ( strcmp( argv[2], "pwfs2_target" ) == 0 ) {
-            result = getTarget( interp, 2 );
-        } else if ( strcmp( argv[2], "oiwfs_target" ) == 0 ) {
-            result = getTarget( interp, 3 );
-        } else if ( strcmp( argv[2], "rotator" ) == 0 ) {
-            result = getRotator( interp );
-        } else if ( strcmp( argv[2], "pwfs1" ) == 0 ) {
-            result = getFpxy( interp, 1 );
-        } else if ( strcmp( argv[2], "pwfs2" ) == 0 ) {
-            result = getFpxy( interp, 2 );
-        } else if ( strcmp( argv[2], "oiwfs" ) == 0 ) {
-            result = getFpxy( interp, 3 );
-        } else if ( strcmp( argv[2], "limits" ) == 0 ) {
-            result = getLimits( interp );
-        } else {
-            Tcl_AppendResult( interp, "unknown option \"", argv[2],
-        "\" must be mount source rotator, pwfs1, pwfs2, oiwfs or limits", 
-                (char *) NULL);
-        }
-    } else if ( strcmp( argv[1], "set" ) == 0 ) {
-        if ( strcmp( argv[2], "sourceA" ) == 0 ) {
-            result = setTarget( interp, 0, argc, argv );
-        } else if ( strcmp( argv[2], "pwfs1" ) == 0 ) {
-            result = setTarget( interp, 1, argc, argv );
-        } else if ( strcmp( argv[2], "pwfs2" ) == 0 ) {
-            result = setTarget( interp, 2, argc, argv );
-        } else if ( strcmp( argv[2], "oiwfs" ) == 0 ) {
-            result = setTarget( interp, 3, argc, argv );
-        } else if ( strcmp( argv[2], "poriginA" ) == 0 ) {
-            result = setPo( interp, 0, argc, argv );
-        } else if ( strcmp( argv[2], "poriginB" ) == 0 ) {
-            result = setPo( interp, 1, argc, argv );
-        } else if ( strcmp( argv[2], "wavelsourceA" ) == 0 ) {
-            result = setWavel( interp, 0, argc, argv);
-        } else if ( strcmp( argv[2], "wavelpwfs1" ) == 0 ) {
-            result = setWavel( interp, 1, argc, argv);
-        } else if ( strcmp( argv[2], "wavelpwfs2" ) == 0 ) {
-            result = setWavel( interp, 2, argc, argv);
-        } else if ( strcmp( argv[2], "waveloiwfs" ) == 0 ) {
-            result = setWavel( interp, 3, argc, argv);
-        } else if ( strcmp( argv[2], "limits" ) == 0 ) {
-            result = setLimits( interp, argc, argv);
-        } else if ( strcmp( argv[2], "ipa" ) == 0 ) {
-            result = setIpa( interp, argc, argv);
-        } else if ( strcmp( argv[2], "iaa" ) == 0 ) {
-            result = setIaa( interp, argc, argv);
-        } else if ( strcmp( argv[2], "planet" ) == 0 ) {
-            result = setPlanet( interp, argc, argv);
-        } else if ( strcmp( argv[2], "orbit" ) == 0 ) {
-            result = setOrbit( interp, argc, argv);
-        } else {
-            Tcl_AppendResult( interp, "unknown option \"", argv[2],
-                "\" must be sourceA, pwfs1, pwfs2, oiwfs, poriginA, poriginB,",
-                " wavelsourceA wavelpwfs1, wavelpwfs2, oiwfswavel, planet", 
-                " ipa or iaa", (char *) NULL);
-        }
-    } else if ( strcmp( argv[1], "update" ) == 0 ) {
-        if ( argc != 3 ) {
-            Tcl_AppendResult( interp,
-                "wrong # args: should be \"tccPreview update arrayname\"",
-                (char *) NULL);
-            return TCL_ERROR;
-        }
-        result = update( interp, argv[2] );
-    } else {
-        Tcl_AppendResult( interp, "unknown option \"", argv[1], 
-            "\" must be begin, end, sourceA, pwfs1, pwfs2, oiwfs or update", 
-            (char *) NULL);
-        return TCL_ERROR;
+    switch (ind) {
+        case 0:
+            if ( objc != 2 ) {
+                Tcl_WrongNumArgs( interp, 2, objv, "");
+                return TCL_ERROR;
+            }
+            result = begin( interp );
+            break;
+        case 1:
+            if ( objc != 3 ) {
+                Tcl_WrongNumArgs( interp, 2, objv, "time");
+                return TCL_ERROR;
+            }
+            result = end( interp, objv[2] );
+            break;
+        case 2:
+            if ( objc != 3 ) {
+                Tcl_WrongNumArgs( interp, 2, objv, "item");
+                return TCL_ERROR;
+            }
+            if ( Tcl_GetIndexFromObj( interp, objv[2], getopts, "item", 0, &ind)
+                != TCL_OK ) return TCL_ERROR;
+            switch (ind) {
+                case 0:
+                    result = getMount( interp );
+                    break;
+                case 1:
+                    result = getSource( interp );
+                    break;
+                case 2:
+                    result = getTarget( interp, 0 );
+                    break;
+                case 3:
+                    result = getTarget( interp, 1 );
+                    break;
+                case 4:
+                    result = getTarget( interp, 2 );
+                    break;
+                case 5:
+                    result = getTarget( interp, 3 );
+                    break;
+                case 6:
+                    result = getRotator( interp );
+                    break;
+                case 7:
+                    result = getFpxy( interp, 1 );
+                    break;
+                case 8:
+                    result = getFpxy( interp, 2 );
+                    break;
+                case 9:
+                    result = getFpxy( interp, 3 );
+                    break;
+                case 10:
+                    result = getLimits( interp );
+                    break;
+            }
+            break;
+        case 3:
+            if ( objc < 3 ) {
+                Tcl_WrongNumArgs( interp, 2, objv, "item");
+                return TCL_ERROR;
+            }
+            if ( Tcl_GetIndexFromObj( interp, objv[2], setopts, "item", 0, &ind)
+                != TCL_OK ) return TCL_ERROR;
+            switch (ind) {
+                case 0:
+                    result = setTarget( interp, 0, objc, objv );
+                    break;
+                case 1:
+                    result = setTarget( interp, 1, objc, objv );
+                    break;
+                case 2:
+                    result = setTarget( interp, 2, objc, objv );
+                    break;
+                case 3:
+                    result = setTarget( interp, 3, objc, objv );
+                    break;
+                case 4:
+                    result = setPo( interp, 0, objc, objv );
+                    break;
+                case 5:
+                    result = setPo( interp, 1, objc, objv );
+                    break;
+                case 6:
+                    result = setWavel( interp, 0, objc, objv);
+                    break;
+                case 7:
+                    result = setWavel( interp, 1, objc, objv);
+                    break;
+                case 8:
+                    result = setWavel( interp, 2, objc, objv);
+                    break;
+                case 9:
+                    result = setWavel( interp, 3, objc, objv);
+                    break;
+                case 10:
+                    result = setLimits( interp, objc, objv);
+                    break;
+                case 11:
+                    result = setIpa( interp, objc, objv);
+                    break;
+                case 12:
+                    result = setIaa( interp, objc, objv);
+                    break;
+                case 13:
+                    result = setPlanet( interp, objc, objv);
+                    break;
+                case 14:
+                    result = setOrbit( interp, objc, objv);
+                    break;
+            }
+            break;
+        case 4:
+            if ( objc != 3 ) {
+                Tcl_WrongNumArgs( interp, 2, objv, "arrayname");
+                return TCL_ERROR;
+            }
+            result = update( interp, Tcl_GetStringFromObj(objv[2], NULL) );
+            break;
     }
 
     return result;
@@ -353,7 +382,7 @@ static int begin( Tcl_Interp *interp )
     return TCL_OK;
 }
 
-static int end( Tcl_Interp *interp, char *arg )
+static int end( Tcl_Interp *interp, Tcl_Obj *obj )
 {
     double delta, rawt, tt, utc, tai;
     double a, b, ra, dec;
@@ -365,20 +394,18 @@ static int end( Tcl_Interp *interp, char *arg )
     int hmsf[4];
     double diam, r;
     int jstat;
+    char result[12];
 
 /* Check that there is at least a source A target. */
     if ( !TargetSet[0] ) {
-        Tcl_AppendResult( interp,
-            "Configuration must contain a science target", (char*) NULL);
+        Tcl_SetResult( interp, "Configuration must contain a science target",
+            TCL_VOLATILE);
         return TCL_ERROR;
     }
 
 /* Compute time for preview. */
-    if ( sscanf( arg, "%lf", &delta) != 1 ) {
-        Tcl_AppendResult( interp, "invalid delta time \"", arg, "\"", 
-           (char *) NULL);
+    if ( Tcl_GetDoubleFromObj( interp, obj, &delta ) != TCL_OK ) 
         return TCL_ERROR;
-    }
     timeNow( &rawt );
     rawt += delta;
     timeThenD( rawt, UTC, &utc );
@@ -399,7 +426,7 @@ static int end( Tcl_Interp *interp, char *arg )
        case COORD:
           if ( astCoco( Theta1[0], Theta2[0], Pm[0], System[0], Equinox[0], 
              Epoch[0], System[0], Equinox[0], tt, aoprms, Telp, &a, &b) != 0 ) {
-             Tcl_AppendResult( interp, "unreachable position", (char *) NULL);
+             Tcl_SetResult( interp, "unreachable position", TCL_VOLATILE);
              return TCL_ERROR;
           }
           break;
@@ -435,7 +462,7 @@ static int end( Tcl_Interp *interp, char *arg )
     if ( astSimctx_r( tai, Elong, aoprms[0], aoprms[4], Xpmr, Ypmr, aoprms[5], 
         aoprms[6], aoprms[7], aoprms[9], aoprms[8], Telp, m2xy, a, b, 
         System[0], Equinox[0], Iaa, Ipa, Rotsys, Roteqx, &ctx) ) {
-        Tcl_AppendResult( interp, "unreachable position", (char *) NULL);
+        Tcl_SetResult( interp, "unreachable position", TCL_VOLATILE);
         return TCL_ERROR;
     }
 
@@ -445,24 +472,22 @@ static int end( Tcl_Interp *interp, char *arg )
             if ( astCoco( Theta1[i + 1], Theta2[i + 1], Pm[i + 1], 
                 System[i + 1], Equinox[i + 1], Epoch[i + 1], System[i + 1],
                 Equinox[i + 1], tt, aoprms, ctx.tel, &a, &b ) ) {
-                Tcl_AppendResult( interp, "uncomputable WFS target",
-                    (char *) NULL);
+                Tcl_SetResult( interp, "uncomputable WFS target", TCL_VOLATILE);
                 return TCL_ERROR;
             }
             if ( astCtx2tr( ctx, System[i + 1], Equinox[i + 1], Wavel[i + 1], 0,
                 &wcs, &rawt ) ) {
-                Tcl_AppendResult( interp, 
-                    "WCS transformation generation failed", (char *) NULL);
+                Tcl_SetResult( interp, 
+                    "WCS transformation generation failed", TCL_VOLATILE);
                 return TCL_ERROR;
             }
             if ( astInvtr( wcs, &iwcs ) ) {
-                Tcl_AppendResult( interp, "inverting WCS transformation failed",
-                    (char *) NULL);
+                Tcl_SetResult( interp, "inverting WCS transformation failed",
+                    TCL_VOLATILE);
                 return TCL_ERROR;
             }
             if ( astS2xyq( a, b, iwcs, &Wfsx[i], &Wfsy[i] ) ) {
-                Tcl_AppendResult( interp, "uncomputable WFS x/y",
-                    (char *) NULL);
+                Tcl_SetResult( interp, "uncomputable WFS x/y", TCL_VOLATILE);
                 return TCL_ERROR;
             }
 
@@ -475,7 +500,7 @@ static int end( Tcl_Interp *interp, char *arg )
 /* Compute Apparent RA/Dec of telescope. */
     if ( astCoco( Theta1[0], Theta2[0], Pm[0], System[0], Equinox[0], Epoch[0],
         APPT, Roteqx, tt, aoprms, ctx.tel, &ra, &dec) != 0 ) {
-        Tcl_AppendResult( interp, "unreachable position", (char *) NULL);
+        Tcl_SetResult( interp, "unreachable position", TCL_VOLATILE);
         return TCL_ERROR;
     }
 
@@ -500,124 +525,82 @@ static int end( Tcl_Interp *interp, char *arg )
 
 /* Return UTC of preview and visible flag. */
     timeThenT( rawt, UTC, 0, hmsf);
-    sprintf( interp->result, "%02d:%02d:%02d %d", hmsf[0], hmsf[1], hmsf[2],
-       Visible);
+    sprintf( result, "%02d:%02d:%02d %d", hmsf[0], hmsf[1], hmsf[2], Visible);
+    Tcl_SetResult( interp, result, TCL_VOLATILE);
     return TCL_OK;
 }
 
-static int setPo( Tcl_Interp *interp, int po, int argc, char *argv[])
+static int setPo( Tcl_Interp *interp, int po, int objc, Tcl_Obj *CONST objv[])
 {
-    if ( argc != 5 ) {
-        Tcl_AppendResult( interp,
-            "wrong # args: should be \"tccPreview set item arg1 arg2\"",
-            (char *) NULL);
+    if ( objc != 5 ) {
+        Tcl_WrongNumArgs( interp, 3, objv, "x y");
         return TCL_ERROR;
     }
-    if ( sscanf( argv[3], "%lf", &Pox[po]) != 1 ) {
-        Tcl_AppendResult( interp, "invalid pointing origin \"", argv[3], 
-            "\"", (char *) NULL);
+    if ( Tcl_GetDoubleFromObj( interp, objv[3],  &Pox[po] ) != TCL_OK )
         return TCL_ERROR;
-    }
-    if ( sscanf( argv[4], "%lf", &Poy[po]) != 1 ) {
-        Tcl_AppendResult( interp, "invalid pointing origin \"", argv[4], 
-            "\"", (char *) NULL);
+    if ( Tcl_GetDoubleFromObj( interp, objv[4],  &Poy[po] ) != TCL_OK ) 
         return TCL_ERROR;
-    }
     return TCL_OK;
 }
 
-static int setIaa( Tcl_Interp *interp, int argc, char *argv[])
+static int setIaa( Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[])
 {
-    if ( argc != 4 ) {
-        Tcl_AppendResult( interp,
-      "wrong # args: should be \"tccPreview set ipa angle\"",
-            (char *) NULL);
-       return TCL_ERROR;
-    }
-    if ( sscanf( argv[3], "%lf", &Iaa) != 1 ) {
-        Tcl_AppendResult( interp, "invalid alignment angle \"", argv[3], 
-            "\"", (char *) NULL);
+    if ( objc != 4 ) {
+        Tcl_WrongNumArgs( interp, 3, objv, "angle");
         return TCL_ERROR;
     }
+    if ( Tcl_GetDoubleFromObj( interp, objv[3],  &Iaa ) != TCL_OK ) 
+        return TCL_ERROR;
     Iaa *= D2R;
     return TCL_OK;
 }
 
-static int setIpa( Tcl_Interp *interp, int argc, char *argv[])
+static int setIpa( Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[])
 {
-    if ( argc != 6 ) {
-        Tcl_AppendResult( interp,
-      "wrong # args: should be \"tccPreview set ipa angle frame equinox\"",
-            (char *) NULL);
-       return TCL_ERROR;
-    }
-    if ( sscanf( argv[3], "%lf", &Ipa) != 1 ) {
-        Tcl_AppendResult( interp, "invalid position angle \"", argv[3], 
-            "\"", (char *) NULL);
+    if ( objc != 6 ) {
+        Tcl_WrongNumArgs( interp, 3, objv, "angle frame equinox");
         return TCL_ERROR;
     }
+    if ( Tcl_GetDoubleFromObj( interp, objv[3],  &Ipa ) != TCL_OK ) 
+        return TCL_ERROR;
     Ipa *= D2R;
-    if ( tccDcFrame( interp, argv[4], &Rotsys) != TCL_OK )
-        return TCL_ERROR;
-    if ( tccDcEpoch( interp, argv[5], &Roteqx.type, 
-            &Roteqx.year ) != TCL_OK ) return TCL_ERROR;
+    if ( tccDcFrame( interp, Tcl_GetStringFromObj( objv[4], NULL), &Rotsys) 
+        != TCL_OK ) return TCL_ERROR;
+    if ( tccDcEpoch( interp, Tcl_GetStringFromObj( objv[5], NULL), 
+        &Roteqx.type, &Roteqx.year ) != TCL_OK ) return TCL_ERROR;
     return TCL_OK;
 }
 
-static int setWavel( Tcl_Interp *interp, int target, int argc, char *argv[])
+static int setWavel( Tcl_Interp *interp, int target, int objc, 
+    Tcl_Obj *CONST objv[])
 {
-    if ( argc != 4 ) {
-        Tcl_AppendResult( interp,
-            "wrong # args: should be \"tccPreview set wavelength value\"",
-            (char *) NULL);
+    if ( objc != 4 ) {
+        Tcl_WrongNumArgs( interp, 3, objv, "value");
         return TCL_ERROR;
     }
-    if ( sscanf( argv[3], "%lf", &Wavel[target]) != 1 ) {
-        Tcl_AppendResult( interp, "invalid wavelength \"", argv[3], 
-            "\"", (char *) NULL);
+    if ( Tcl_GetDoubleFromObj( interp, objv[3],  &Wavel[target] ) != TCL_OK ) 
         return TCL_ERROR;
-    }
     return TCL_OK;
 }
 
-static int setLimits( Tcl_Interp *interp, int argc, char *argv[])
+static int setLimits( Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[])
 {
-    if ( argc != 9 ) {
-        Tcl_AppendResult( interp,
-       "wrong # args: should be \"tccPreview set limits az az el rot rot zd\"",
-            (char *) NULL);
+    if ( objc != 9 ) {
+        Tcl_WrongNumArgs( interp, 3, objv, "az az el rot rot zd");
         return TCL_ERROR;
     }
-    if ( sscanf( argv[3], "%lf", &Azlolim) != 1 ) {
-        Tcl_AppendResult( interp, "invalid azimuth limit \"", argv[3], 
-            "\"", (char *) NULL);
+    if ( Tcl_GetDoubleFromObj( interp, objv[3],  &Azlolim ) != TCL_OK ) 
         return TCL_ERROR;
-    }
-    if ( sscanf( argv[4], "%lf", &Azhilim) != 1 ) {
-        Tcl_AppendResult( interp, "invalid azimuth limit \"", argv[4], 
-            "\"", (char *) NULL);
+    if ( Tcl_GetDoubleFromObj( interp, objv[4],  &Azhilim ) != TCL_OK ) 
         return TCL_ERROR;
-    }
-    if ( sscanf( argv[5], "%lf", &Ellim) != 1 ) {
-        Tcl_AppendResult( interp, "invalid elevation limit \"", argv[5], 
-            "\"", (char *) NULL);
+    if ( Tcl_GetDoubleFromObj( interp, objv[5],  &Ellim ) != TCL_OK ) 
         return TCL_ERROR;
-    }
-    if ( sscanf( argv[6], "%lf", &Rotlolim) != 1 ) {
-        Tcl_AppendResult( interp, "invalid rotator limit \"", argv[6], 
-            "\"", (char *) NULL);
+    if ( Tcl_GetDoubleFromObj( interp, objv[6],  &Rotlolim ) != TCL_OK ) 
         return TCL_ERROR;
-    }
-    if ( sscanf( argv[7], "%lf", &Rothilim) != 1 ) {
-        Tcl_AppendResult( interp, "invalid rotator limit \"", argv[7], 
-            "\"", (char *) NULL);
+    if ( Tcl_GetDoubleFromObj( interp, objv[7],  &Rothilim ) != TCL_OK ) 
         return TCL_ERROR;
-    }
-    if ( sscanf( argv[8], "%lf", &Zlim) != 1 ) {
-        Tcl_AppendResult( interp, "invalid zenith limit \"", argv[8], 
-            "\"", (char *) NULL);
+    if ( Tcl_GetDoubleFromObj( interp, objv[8],  &Zlim ) != TCL_OK ) 
         return TCL_ERROR;
-    }
     Azlolim *= D2R;
     Azhilim *= D2R;
     Ellim *= D2R;
@@ -629,9 +612,11 @@ static int setLimits( Tcl_Interp *interp, int argc, char *argv[])
 
 static int getFpxy( Tcl_Interp *interp, int target)
 {
+    char result[30];
+
     if ( TargetSet[target] ) {
-        sprintf( interp->result, "%.3f %.3f", Wfsx[target - 1], 
-            Wfsy[target - 1]);
+        sprintf( result, "%.3f %.3f", Wfsx[target - 1], Wfsy[target - 1]);
+        Tcl_SetResult( interp, result, TCL_VOLATILE);
     }
     return TCL_OK;
 }
@@ -640,15 +625,16 @@ static int getMount( Tcl_Interp *interp)
 {
     int dmsf1[4], dmsf2[4], dmsf3[4];
     char sign1, sign2, sign3;
+    char result[40];
 
     slaDr2af( 0, Az1, &sign1, dmsf1);
     slaDr2af( 0, Az2, &sign2, dmsf2);
     slaDr2af( 0, El, &sign3, dmsf3);
-    sprintf( interp->result, 
-        "%c%02d:%02d:%02d %c%02d:%02d:%02d %c%02d:%02d:%02d", 
+    sprintf( result, "%c%02d:%02d:%02d %c%02d:%02d:%02d %c%02d:%02d:%02d", 
         sign1, dmsf1[0], dmsf1[1], dmsf1[2], 
         sign2, dmsf2[0], dmsf2[1], dmsf2[2],
         sign3, dmsf3[0], dmsf3[1], dmsf3[2]);
+    Tcl_SetResult( interp, result, TCL_VOLATILE);
     return TCL_OK;
 }
 
@@ -656,10 +642,12 @@ static int getSource( Tcl_Interp *interp)
 {
     int hmsf0[4];
     char sign0;
+    char result[30];
 
     slaDr2tf( 0, HA, &sign0, hmsf0);
-    sprintf( interp->result, "%c%02d:%02d:%02d %.1f %.2f", sign0, hmsf0[0], 
+    sprintf( result, "%c%02d:%02d:%02d %.1f %.2f", sign0, hmsf0[0], 
         hmsf0[1], hmsf0[2], ZD/D2R, Airmass);
+    Tcl_SetResult( interp, result, TCL_VOLATILE);
     return TCL_OK;
 }
 
@@ -667,21 +655,24 @@ static int getTarget( Tcl_Interp *interp, int i)
 {
     int hmsf[4], dmsf[4];
     char sign1, sign2;
+    char result[60];
 
     if ( TargetSet[i] ) {
        slaDr2tf( 3, Theta1[i], &sign1, hmsf);
        slaDr2af( 2, Theta2[i], &sign2, dmsf);
-       sprintf( interp->result, 
-           "%02d:%02d:%02d.%03d %c%02d:%02d:%02d.%02d %c%f",
+       sprintf( result, "%02d:%02d:%02d.%03d %c%02d:%02d:%02d.%02d %c%f",
            hmsf[0], hmsf[1], hmsf[2], hmsf[3], sign2, dmsf[0], dmsf[1], 
            dmsf[2], dmsf[3], Equinox[i].type, Equinox[i].year);
     }
+    Tcl_SetResult( interp, result, TCL_VOLATILE);
     return TCL_OK;
 }
 
 static int getRotator( Tcl_Interp *interp)
 {
-    sprintf( interp->result, "%6.2f %6.2f", Rma1 / D2R, Rma2 / D2R);
+    char result[20];
+    sprintf( result, "%6.2f %6.2f", Rma1 / D2R, Rma2 / D2R);
+    Tcl_SetResult( interp, result, TCL_VOLATILE);
     return TCL_OK;
 }
 
@@ -690,163 +681,160 @@ static int getLimits( Tcl_Interp *interp)
     char val[5];
     if ( Azttl1 >= 0.0 ) {
         sprintf( val, "%4d", (int) floor(Azttl1));
-        Tcl_AppendResult( interp, val, (char*) NULL);
+        Tcl_SetResult( interp, val, TCL_VOLATILE);
     } else {
-        Tcl_AppendResult( interp, "{}", (char*) NULL);
+        Tcl_SetResult( interp, "{}", TCL_VOLATILE);
     }
     if ( Azttl2 >= 0.0 ) {
         sprintf( val, " %4d", (int) floor(Azttl2));
-        Tcl_AppendResult( interp, val, (char*) NULL);
+        Tcl_SetResult( interp, val, TCL_VOLATILE);
     } else {
-        Tcl_AppendResult( interp, " {}", (char*) NULL);
+        Tcl_SetResult( interp, " {}", TCL_VOLATILE);
     }
     if ( Elttl >= 0.0 ) {
         sprintf( val, " %4d", (int) floor(Elttl));
-        Tcl_AppendResult( interp, val, (char*) NULL);
+        Tcl_SetResult( interp, val, TCL_VOLATILE);
     } else {
-        Tcl_AppendResult( interp, " {}", (char*) NULL);
+        Tcl_SetResult( interp, " {}", TCL_VOLATILE);
     }
     if ( Rotttl1 >= 0.0 ) {
         sprintf( val, " %4d", (int) floor(Rotttl1));
-        Tcl_AppendResult( interp, val, (char*) NULL);
+        Tcl_SetResult( interp, val, TCL_VOLATILE);
     } else {
-        Tcl_AppendResult( interp, " {}", (char*) NULL);
+        Tcl_SetResult( interp, " {}", TCL_VOLATILE);
     }
     if ( Rotttl2 >= 0.0 ) {
         sprintf( val, " %4d", (int) floor(Rotttl2));
-        Tcl_AppendResult( interp, val, (char*) NULL);
+        Tcl_SetResult( interp, val, TCL_VOLATILE);
     } else {
-        Tcl_AppendResult( interp, " {}", (char*) NULL);
+        Tcl_SetResult( interp, " {}", TCL_VOLATILE);
     }
     if ( Zttl >= 0.0 ) {
         sprintf( val, " %4d", (int) floor(Zttl));
-        Tcl_AppendResult( interp, val, (char*) NULL);
+        Tcl_SetResult( interp, val, TCL_VOLATILE);
     } else {
-        Tcl_AppendResult( interp, " {}", (char*) NULL);
+        Tcl_SetResult( interp, " {}", TCL_VOLATILE);
     }
     return TCL_OK;
 }
 
-static int setTarget( Tcl_Interp *interp, int target, int argc,
-    char *argv[])
+static int setTarget( Tcl_Interp *interp, int target, int objc,
+    Tcl_Obj *CONST objv[])
 {
-    if ( argc < 6 ) {
-        Tcl_AppendResult( interp,
-  "wrong # args: should be \"tccPreview set item arg1 arg2 arg3 ?arg ...?\"",
-            (char *) NULL);
+    int nel;
+    Tcl_Obj **objptr;
+    if ( objc < 6 || objc > 11) {
+        Tcl_WrongNumArgs( interp, 3, objv, 
+            "frame theta1 theta2 ?equinox epoch pm parallax rv?");
         return TCL_ERROR;
     }
-    if ( tccDcFrame( interp, argv[3], &System[target]) != TCL_OK )
-        return TCL_ERROR;
-    if ( tccDcRadec( interp, System[target], argv[4], argv[5], 
-        &Theta1[target], &Theta2[target]) != TCL_OK ) return TCL_ERROR;
-    if ( argc > 6 ) {
-        if ( tccDcEpoch( interp, argv[6], &Equinox[target].type, 
-            &Equinox[target].year ) != TCL_OK ) return TCL_ERROR;
+    if ( tccDcFrame( interp, Tcl_GetStringFromObj( objv[3], NULL), 
+        &System[target]) != TCL_OK ) return TCL_ERROR;
+    if ( tccDcRadec( interp, System[target], 
+        Tcl_GetStringFromObj( objv[4], NULL), 
+        Tcl_GetStringFromObj( objv[5], NULL), &Theta1[target], &Theta2[target])
+        != TCL_OK ) return TCL_ERROR;
+    if ( objc > 6 ) {
+        if ( tccDcEpoch( interp, Tcl_GetStringFromObj( objv[6], NULL), 
+            &Equinox[target].type, &Equinox[target].year ) != TCL_OK ) 
+            return TCL_ERROR;
     } else {
         Equinox[target].type = 'J';
         Equinox[target].year = 2000.0;
     }
-    if ( argc > 7 ) {
-        if ( tccDcEpoch( interp, argv[7], &Epoch[target].type, 
-            &Epoch[target].year ) != TCL_OK ) return TCL_ERROR;
+    if ( objc > 7 ) {
+        if ( tccDcEpoch( interp, Tcl_GetStringFromObj( objv[7], NULL), 
+            &Epoch[target].type, &Epoch[target].year ) != TCL_OK ) 
+            return TCL_ERROR;
     } else {
         Epoch[target].type = 'J';
         Epoch[target].year = 2000.0;
     }
-    if ( argc > 8 ) {
-        if ( *argv[8] == '\0' ) {
+    if ( objc > 8 ) {
+        if ( Tcl_ListObjGetElements( interp, objv[8], &nel, &objptr) != 
+            TCL_OK) return TCL_ERROR;
+        if ( nel == 0 ) {
             Pm[target].pm = 0;
         } else {
-            if ( sscanf( argv[8], "%lf %fl", &Pm[target].pmRA, \
-                &Pm[target].pmDec ) != 2 ) {
-                Tcl_AppendResult( interp, "invalid proper motion \"", argv[8], 
-                    "\"", (char *) NULL);
+            if ( nel != 2 ) {
+                Tcl_SetResult( interp, 
+                    "proper motion has the wrong number of elements", 
+                    TCL_VOLATILE);
                 return TCL_ERROR;
             }
+            if ( Tcl_GetDoubleFromObj( interp, *objptr++, &Pm[target].pmRA )
+                != TCL_OK ) return TCL_ERROR;
+            if ( Tcl_GetDoubleFromObj( interp, *objptr++, &Pm[target].pmDec )
+                != TCL_OK ) return TCL_ERROR;
             Pm[target].pm = 1;
         }
     }
     Pm[target].px = 0.0;
     Pm[target].rv = 0.0;
-    if ( argc > 9 ) {
-        if ( sscanf( argv[9], "%lf", &Pm[target].px) != 1 ) {
-            Tcl_AppendResult( interp, "invalid parallax \"", argv[9], "\"", 
-                (char *) NULL);
-            return TCL_ERROR;
-        }
+    if ( objc > 9 ) {
+        if ( Tcl_GetDoubleFromObj( interp, objv[9],  &Pm[target].px ) != 
+            TCL_OK ) return TCL_ERROR;
     }
-    if ( argc > 10 ) {
-        if ( sscanf( argv[10], "%lf", &Pm[target].rv) != 1 ) {
-            Tcl_AppendResult( interp, "invalid radial velocity \"", argv[10],
-                "\"", (char *) NULL);
-            return TCL_ERROR;
-        }
+    if ( objc > 10 ) {
+        if ( Tcl_GetDoubleFromObj( interp, objv[10],  &Pm[target].rv ) != 
+            TCL_OK ) return TCL_ERROR;
     }
     TargetSet[target] = COORD;
     return TCL_OK;
 }
 
-static int setPlanet( Tcl_Interp *interp, int argc, char *argv[])
+static int setPlanet( Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[])
 {
-    if ( argc != 4 ) {
-        Tcl_AppendResult( interp,
-      "wrong # args: should be \"tccPreview set planet planet\"",
-            (char *) NULL);
-       return TCL_ERROR;
+    if ( objc != 4 ) {
+        Tcl_WrongNumArgs( interp, 3, objv, "planet");
+        return TCL_ERROR;
     }
-    if ( tccDcPlanet( interp, argv[3], &Planet ) ) return TCL_ERROR;
+    if ( tccDcPlanet( interp, Tcl_GetStringFromObj( objv[3], NULL), &Planet ) ) 
+        return TCL_ERROR;
     TargetSet[0] = PLANET;
     return TCL_OK;
 }
 
-static int setOrbit( Tcl_Interp *interp, int argc, char *argv[])
+static int setOrbit( Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[])
 {
     int i, nel;
 
-    if ( argc < 4 ) {
-        Tcl_AppendResult( interp,
-      "wrong # args: should be \"tccPreview set orbit jtype elements\"",
-            (char *) NULL);
-       return TCL_ERROR;
-    }
-    if ( sscanf( argv[3], "%d", &Jtype) != 1 ) {
-        Tcl_AppendResult( interp, "invalid orbit element set", (char *) NULL);
+    if ( objc < 4 ) {
+        Tcl_WrongNumArgs( interp, 3, objv, "type elements...");
         return TCL_ERROR;
     }
+    if ( Tcl_GetIntFromObj( interp, objv[3], &Jtype) != TCL_OK) 
+       return TCL_ERROR;
     if ( Jtype == 1 ) {
-      if ( argc != 12 ) {
-         Tcl_AppendResult(interp, 
-            "wrong number of orbital elements: 7 expected", (char *) NULL);
+      if ( objc != 12 ) {
+         Tcl_WrongNumArgs( interp, 4, objv, 
+    "epoch inc longa longper meandist perdist e meanlong meananom dailymot");
          return TCL_ERROR;
       }
       nel = 7;
     } else if ( Jtype == 2 ) {
-      if ( argc != 11 ) {
-         Tcl_AppendResult(interp, 
-            "wrong number of orbital elements: 6 expected", (char *) NULL);
+      if ( objc != 11 ) {
+         Tcl_WrongNumArgs( interp, 4, objv, 
+              "epoch inc longa argofper meandist perdist e meanlong meananom");
          return TCL_ERROR;
       }
       nel = 6;
     } else if ( Jtype == 3 ) {
-      if ( argc != 10 ) {
-         Tcl_AppendResult(interp, 
-            "wrong number of oribital elements: 5 expected", (char *) NULL);
+      if ( objc != 10 ) {
+         Tcl_WrongNumArgs( interp, 4, objv, 
+              "epoch inc longa argofper meandist perdist e meanlong");
          return TCL_ERROR;
       }
       nel = 5;
     } else {
-       Tcl_AppendResult( interp, "invalid orbital element set \"", argv[3], 
-            "\"", (char *) NULL);
+       Tcl_SetResult( interp, "invalid orbital element set", TCL_VOLATILE );
        return TCL_ERROR;
     }
-    if ( tccDcT0( interp, argv[4], &T0 ) != TCL_OK) return TCL_ERROR;
+    if ( tccDcT0( interp, Tcl_GetStringFromObj( objv[4], NULL) , &T0 ) != 
+        TCL_OK) return TCL_ERROR;
     for ( i = 0; i < nel; i++ ) {
-        if ( sscanf( argv[i+5], "%lf", &Orbel[i]) != 1 ) {
-            Tcl_AppendResult( interp, "invalid orbital element \"", argv[i],
-                "\"", (char *) NULL);
+        if ( Tcl_GetDoubleFromObj( interp, objv[i+5], &Orbel[i] ) != TCL_OK )
             return TCL_ERROR;
-        }
     }
     TargetSet[0] = ORBIT;
     return TCL_OK;
@@ -854,147 +842,99 @@ static int setOrbit( Tcl_Interp *interp, int argc, char *argv[])
 
 static int update( Tcl_Interp *interp, char *arrayname )
 {
-    char *val;
+    Tcl_Obj *val;
     double tlongm, tlatm, hm, tdc, pmb, rh, tlr, delut;
     double date;
     int y, m, d, status;
     char cmd[80];
 
 /* Copy data from tcl array. */
-    val = Tcl_GetVar2( interp, arrayname, "tlongm", TCL_LEAVE_ERR_MSG);
-    if ( !val ) return TCL_ERROR;
-    if ( sscanf( val, "%lf", &tlongm) != 1 ) {
-        Tcl_AppendResult( interp, "invalid longitude \"", val, "\"",
-            (char *) NULL);
+    if ((val = Tcl_GetVar2Ex( interp, arrayname, "tlongm", TCL_LEAVE_ERR_MSG))
+        == NULL) return TCL_ERROR;
+    if ( Tcl_GetDoubleFromObj( interp, val, &tlongm ) != TCL_OK ) 
         return TCL_ERROR;
-    }
 
-    val = Tcl_GetVar2( interp, arrayname, "tlatm", TCL_LEAVE_ERR_MSG);
-    if ( !val ) return TCL_ERROR;
-    if ( sscanf( val, "%lf", &tlatm) != 1 ) {
-        Tcl_AppendResult( interp, "invalid latitude \"", val, "\"",
-            (char *) NULL);
+    if ((val = Tcl_GetVar2Ex( interp, arrayname, "tlatm", TCL_LEAVE_ERR_MSG))
+        == NULL) return TCL_ERROR;
+    if ( Tcl_GetDoubleFromObj( interp, val, &tlatm ) != TCL_OK ) 
         return TCL_ERROR;
-    }
 
-    val = Tcl_GetVar2( interp, arrayname, "hm", TCL_LEAVE_ERR_MSG);
-    if ( !val ) return TCL_ERROR;
-    if ( sscanf( val, "%lf", &hm) != 1 ) {
-        Tcl_AppendResult( interp, "invalid height \"", val, "\"",
-            (char *) NULL);
+    if ((val = Tcl_GetVar2Ex( interp, arrayname, "hm", TCL_LEAVE_ERR_MSG))
+        == NULL) return TCL_ERROR;
+    if ( Tcl_GetDoubleFromObj( interp, val, &hm ) != TCL_OK ) 
         return TCL_ERROR;
-    }
 
-    val = Tcl_GetVar2( interp, arrayname, "xpm", TCL_LEAVE_ERR_MSG);
-    if ( !val ) return TCL_ERROR;
-    if ( sscanf( val, "%lf", &Xpmr) != 1 ) {
-        Tcl_AppendResult( interp, "invalid X polar motion \"", val, "\"",
-            (char *) NULL);
+    if ((val = Tcl_GetVar2Ex( interp, arrayname, "xpm", TCL_LEAVE_ERR_MSG))
+        == NULL) return TCL_ERROR;
+    if ( Tcl_GetDoubleFromObj( interp, val, &Xpmr ) != TCL_OK ) 
         return TCL_ERROR;
-    }
     Xpmr *= AS2R;
 
-    val = Tcl_GetVar2( interp, arrayname, "ypm", TCL_LEAVE_ERR_MSG);
-    if ( !val ) return TCL_ERROR;
-    if ( sscanf( val, "%lf", &Ypmr) != 1 ) {
-        Tcl_AppendResult( interp, "invalid Y polar motion \"", val, "\"",
-            (char *) NULL);
+    if ((val = Tcl_GetVar2Ex( interp, arrayname, "ypm", TCL_LEAVE_ERR_MSG))
+        == NULL) return TCL_ERROR;
+    if ( Tcl_GetDoubleFromObj( interp, val, &Ypmr ) != TCL_OK ) 
         return TCL_ERROR;
-    }
     Ypmr *= AS2R;
 
-    val = Tcl_GetVar2( interp, arrayname, "tdc", TCL_LEAVE_ERR_MSG);
-    if ( !val ) return TCL_ERROR;
-    if ( sscanf( val, "%lf", &tdc) != 1 ) {
-        Tcl_AppendResult( interp, "invalid temperature \"", val, "\"",
-            (char *) NULL);
+    if ((val = Tcl_GetVar2Ex( interp, arrayname, "tdc", TCL_LEAVE_ERR_MSG))
+        == NULL) return TCL_ERROR;
+    if ( Tcl_GetDoubleFromObj( interp, val, &tdc ) != TCL_OK ) 
         return TCL_ERROR;
-    }
 
-    val = Tcl_GetVar2( interp, arrayname, "pmb", TCL_LEAVE_ERR_MSG);
-    if ( !val ) return TCL_ERROR;
-    if ( sscanf( val, "%lf", &pmb) != 1 ) {
-        Tcl_AppendResult( interp, "invalid pressure \"", val, "\"",
-            (char *) NULL);
+    if ((val = Tcl_GetVar2Ex( interp, arrayname, "pmb", TCL_LEAVE_ERR_MSG))
+        == NULL) return TCL_ERROR;
+    if ( Tcl_GetDoubleFromObj( interp, val, &pmb ) != TCL_OK ) 
         return TCL_ERROR;
-    }
 
-    val = Tcl_GetVar2( interp, arrayname, "rh", TCL_LEAVE_ERR_MSG);
-    if ( !val ) return TCL_ERROR;
-    if ( sscanf( val, "%lf", &rh) != 1 ) {
-        Tcl_AppendResult( interp, "invalid relative humidiy \"", val, "\"",
-            (char *) NULL);
+    if ((val = Tcl_GetVar2Ex( interp, arrayname, "rh", TCL_LEAVE_ERR_MSG))
+        == NULL) return TCL_ERROR;
+    if ( Tcl_GetDoubleFromObj( interp, val, &rh ) != TCL_OK ) 
         return TCL_ERROR;
-    }
 
-    val = Tcl_GetVar2( interp, arrayname, "tlr", TCL_LEAVE_ERR_MSG);
-    if ( !val ) return TCL_ERROR;
-    if ( sscanf( val, "%lf", &tlr) != 1 ) {
-        Tcl_AppendResult( interp, "invalid tropospheric lapse rate \"", val, "\"",
-            (char *) NULL);
+    if ((val = Tcl_GetVar2Ex( interp, arrayname, "tlr", TCL_LEAVE_ERR_MSG))
+        == NULL) return TCL_ERROR;
+    if ( Tcl_GetDoubleFromObj( interp, val, &tlr ) != TCL_OK ) 
         return TCL_ERROR;
-    }
 
-    val = Tcl_GetVar2( interp, arrayname, "fl", TCL_LEAVE_ERR_MSG);
-    if ( !val ) return TCL_ERROR;
-    if ( sscanf( val, "%lf", &Telp.fl) != 1 ) {
-        Tcl_AppendResult( interp, "invalid focal length \"", val, "\"",
-            (char *) NULL);
+    if ((val = Tcl_GetVar2Ex( interp, arrayname, "fl", TCL_LEAVE_ERR_MSG))
+        == NULL) return TCL_ERROR;
+    if ( Tcl_GetDoubleFromObj( interp, val, &Telp.fl ) != TCL_OK ) 
         return TCL_ERROR;
-    }
 
-    val = Tcl_GetVar2( interp, arrayname, "an", TCL_LEAVE_ERR_MSG);
-    if ( !val ) return TCL_ERROR;
-    if ( sscanf( val, "%lf", &Telp.an) != 1 ) {
-        Tcl_AppendResult( interp, "invalid axis tilt north \"", val, "\"",
-            (char *) NULL);
+    if ((val = Tcl_GetVar2Ex( interp, arrayname, "an", TCL_LEAVE_ERR_MSG))
+        == NULL) return TCL_ERROR;
+    if ( Tcl_GetDoubleFromObj( interp, val, &Telp.an ) != TCL_OK ) 
         return TCL_ERROR;
-    }
     Telp.an *= AS2R;
 
-    val = Tcl_GetVar2( interp, arrayname, "aw", TCL_LEAVE_ERR_MSG);
-    if ( !val ) return TCL_ERROR;
-    if ( sscanf( val, "%lf", &Telp.aw) != 1 ) {
-        Tcl_AppendResult( interp, "invalid axis tilt west \"", val, "\"",
-            (char *) NULL);
+    if ((val = Tcl_GetVar2Ex( interp, arrayname, "aw", TCL_LEAVE_ERR_MSG))
+        == NULL) return TCL_ERROR;
+    if ( Tcl_GetDoubleFromObj( interp, val, &Telp.aw ) != TCL_OK ) 
         return TCL_ERROR;
-    }
     Telp.aw *= AS2R;
 
-    val = Tcl_GetVar2( interp, arrayname, "pnpae", TCL_LEAVE_ERR_MSG);
-    if ( !val ) return TCL_ERROR;
-    if ( sscanf( val, "%lf", &Telp.pnpae) != 1 ) {
-        Tcl_AppendResult( interp, "invalid non-perpendicularity \"", val, "\"",
-            (char *) NULL);
+    if ((val = Tcl_GetVar2Ex( interp, arrayname, "pnpae", TCL_LEAVE_ERR_MSG))
+        == NULL) return TCL_ERROR;
+    if ( Tcl_GetDoubleFromObj( interp, val, &Telp.pnpae ) != TCL_OK ) 
         return TCL_ERROR;
-    }
     Telp.pnpae *= AS2R;
 
-    val = Tcl_GetVar2( interp, arrayname, "ca", TCL_LEAVE_ERR_MSG);
-    if ( !val ) return TCL_ERROR;
-    if ( sscanf( val, "%lf", &Telp.ca) != 1 ) {
-        Tcl_AppendResult( interp, "invalid collimation error azimuth \"",
-            val, "\"", (char *) NULL);
+    if ((val = Tcl_GetVar2Ex( interp, arrayname, "ca", TCL_LEAVE_ERR_MSG))
+        == NULL) return TCL_ERROR;
+    if ( Tcl_GetDoubleFromObj( interp, val, &Telp.ca ) != TCL_OK ) 
         return TCL_ERROR;
-    }
     Telp.ca *= AS2R;
 
-    val = Tcl_GetVar2( interp, arrayname, "ce", TCL_LEAVE_ERR_MSG);
-    if ( !val ) return TCL_ERROR;
-    if ( sscanf( val, "%lf", &Telp.ce) != 1 ) {
-        Tcl_AppendResult( interp, "invalid collimation error elevation \"",
-            val, "\"", (char *) NULL);
+    if ((val = Tcl_GetVar2Ex( interp, arrayname, "ce", TCL_LEAVE_ERR_MSG))
+        == NULL) return TCL_ERROR;
+    if ( Tcl_GetDoubleFromObj( interp, val, &Telp.ce ) != TCL_OK ) 
         return TCL_ERROR;
-    }
     Telp.ce *= AS2R;
 
-    val = Tcl_GetVar2( interp, arrayname, "delut", TCL_LEAVE_ERR_MSG);
-    if ( !val ) return TCL_ERROR;
-    if ( sscanf( val, "%lf", &delut) != 1 ) {
-        Tcl_AppendResult( interp, "invalid UT1-UTC\"",
-            val, "\"", (char *) NULL);
+    if ((val = Tcl_GetVar2Ex( interp, arrayname, "delut", TCL_LEAVE_ERR_MSG))
+        == NULL) return TCL_ERROR;
+    if ( Tcl_GetDoubleFromObj( interp, val, &delut ) != TCL_OK ) 
         return TCL_ERROR;
-    }
 
 /* Set Apparent to observed parameters. */
     timeNowD( UTC, &date);

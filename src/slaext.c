@@ -7,7 +7,7 @@ static char rcsid[]="$Id:";
 *   FUNCTION NAME(S)
 *   Slaext_Init - Initialisation function for TCL loadable image
 *
-*   D L Terrett 2 December 1998
+*   D L Terrett 5 December 2000
 *
 *   Copyright CCLRC
 *
@@ -21,12 +21,12 @@ static char rcsid[]="$Id:";
 #include <tk.h>
 #include <slalib.h>
 
-static int DafinCmd( ClientData clientdata, Tcl_Interp *interp, int argc,
-    char *argv[]);
-static int Dr2afCmd( ClientData clientdata, Tcl_Interp *interp, int argc,
-    char *argv[]);
-static int Dr2tfCmd( ClientData clientdata, Tcl_Interp *interp, int argc,
-    char *argv[]);
+static int DafinCmd( ClientData clientdata, Tcl_Interp *interp, int objc,
+    Tcl_Obj *CONST objv[]);
+static int Dr2afCmd( ClientData clientdata, Tcl_Interp *interp, int objc,
+    Tcl_Obj *CONST objv[]);
+static int Dr2tfCmd( ClientData clientdata, Tcl_Interp *interp, int objc,
+    Tcl_Obj *CONST objv[]);
 
 /* *INDENT-OFF* */
 /*+
@@ -46,18 +46,18 @@ int Slaext_Init( Tcl_Interp *interp)
 
     if ( Tcl_InitStubs( interp, "8.0", 0 ) == NULL ) return TCL_ERROR;
 
-    Tcl_CreateCommand( interp, "slaDafin", DafinCmd,
+    Tcl_CreateObjCommand( interp, "slaDafin", DafinCmd,
         (ClientData) NULL, (Tcl_CmdDeleteProc *) NULL);
-    Tcl_CreateCommand( interp, "slaDr2af", Dr2afCmd,
+    Tcl_CreateObjCommand( interp, "slaDr2af", Dr2afCmd,
         (ClientData) NULL, (Tcl_CmdDeleteProc *) NULL);
-    Tcl_CreateCommand( interp, "slaDr2tf", Dr2tfCmd,
+    Tcl_CreateObjCommand( interp, "slaDr2tf", Dr2tfCmd,
         (ClientData) NULL, (Tcl_CmdDeleteProc *) NULL);
 
     return TCL_OK;
 }
 
-static int DafinCmd( ClientData clientdata, Tcl_Interp *interp, int argc,
-    char *argv[])
+static int DafinCmd( ClientData clientdata, Tcl_Interp *interp, int objc,
+    Tcl_Obj *CONST objv[])
 {
 /*
  * TCL front end for slaDafin.
@@ -65,75 +65,101 @@ static int DafinCmd( ClientData clientdata, Tcl_Interp *interp, int argc,
    int status;
    int nstrt = 1;
    double angle;
+   Tcl_Obj *errobj;
 
-   if ( argc < 2 ) {
-      Tcl_AppendResult( interp,
-         "wrong # args: should be \"slaDafin angle\"",
-          (char *) NULL);
+/* Check number of arguments. */
+   if ( objc != 2 ) {
+      Tcl_WrongNumArgs( interp, 1, objv, "angle");
       return TCL_ERROR;
    }
 
-   slaDafin( argv[1], &nstrt, &angle, &status);
+/* Decode angle. */
+   slaDafin( Tcl_GetStringFromObj( objv[1], NULL), &nstrt, &angle, &status);
 
+/* Report failure. */
    if ( status != 0 ) {
-      Tcl_AppendResult( interp, "\"", argv[1], "\" is not a valid angle",
-         (char *) NULL);
+      errobj = Tcl_NewStringObj(  "\"", -1);
+      Tcl_AppendStringsToObj( errobj, Tcl_GetStringFromObj(objv[1], NULL),
+         "\" is not a valid angle", (char *) NULL);
+      Tcl_SetObjResult( interp, errobj );
       return TCL_ERROR;
    }
-   Tcl_PrintDouble( interp, angle, interp->result);
+
+/* Return decoded angle. */
+   Tcl_SetObjResult( interp, Tcl_NewDoubleObj( angle));
    return TCL_OK;
 }
 
-static int Dr2afCmd( ClientData clientdata, Tcl_Interp *interp, int argc,
-    char *argv[])
+static int Dr2afCmd( ClientData clientdata, Tcl_Interp *interp, int objc,
+    Tcl_Obj *CONST objv[])
 {
 /*
  * TCL front end for slaDr2af.
  */
    char sign;
    int dmsf[4];
-   long ndp;
+   int ndp;
    double angle;
+   Tcl_Obj *result, *reslist[5];
 
-   if ( argc < 3 ) {
-      Tcl_AppendResult( interp,
-         "wrong # args: should be \"slaDr2af precision angle\"",
-          (char *) NULL);
+/* Check number of arguments. */
+   if ( objc != 3 ) {
+      Tcl_WrongNumArgs( interp, 1, objv, "precision angle");
       return TCL_ERROR;
    }
 
-   if ( Tcl_ExprLong( interp, argv[1], &ndp) != TCL_OK) return TCL_ERROR;
-   if ( Tcl_ExprDouble( interp, argv[2], &angle) != TCL_OK) return TCL_ERROR;
-   slaDr2af( (int) ndp, angle, &sign, dmsf);
+/* Decode input arguments. */
+   if ( Tcl_GetIntFromObj( interp, objv[1], &ndp) != TCL_OK) return TCL_ERROR;
+   if ( Tcl_GetDoubleFromObj( interp, objv[2], &angle) != TCL_OK) 
+         return TCL_ERROR;
 
-   sprintf( interp->result, "%c %d %d %d %d", sign, dmsf[0], dmsf[1], dmsf[2],
-      dmsf[3]);
+/* Decompose angle into dms. */
+   slaDr2af( ndp, angle, &sign, dmsf);
+
+/* Build result list. */
+   reslist[0] = Tcl_NewStringObj( &sign, 1);
+   reslist[1] = Tcl_NewIntObj( dmsf[0] );
+   reslist[2] = Tcl_NewIntObj( dmsf[1] );
+   reslist[3] = Tcl_NewIntObj( dmsf[2] );
+   reslist[4] = Tcl_NewIntObj( dmsf[3] );
+   result = Tcl_NewListObj( 5, reslist );
+   Tcl_SetObjResult( interp, result);
    return TCL_OK;
 }
 
-static int Dr2tfCmd( ClientData clientdata, Tcl_Interp *interp, int argc,
-    char *argv[])
+static int Dr2tfCmd( ClientData clientdata, Tcl_Interp *interp, int objc,
+    Tcl_Obj *CONST objv[])
 {
 /*
  * TCL front end for slaDr2tf.
  */
    char sign;
    int hmsf[4];
-   long ndp;
+   int ndp;
    double angle;
+   Tcl_Obj *result, *reslist[5];
 
-   if ( argc < 3 ) {
-      Tcl_AppendResult( interp,
-         "wrong # args: should be \"slaDr2tf precision angle\"",
-          (char *) NULL);
+/* Check number of arguments. */
+   if ( objc != 3 ) {
+      Tcl_WrongNumArgs( interp, 1, objv, "precision angle");
       return TCL_ERROR;
    }
 
-   if ( Tcl_ExprLong( interp, argv[1], &ndp) != TCL_OK) return TCL_ERROR;
-   if ( Tcl_ExprDouble( interp, argv[2], &angle) != TCL_OK) return TCL_ERROR;
-   slaDr2tf( (int) ndp, angle, &sign, hmsf);
+/* Decode input arguments. */
+   if ( Tcl_GetIntFromObj( interp, objv[1], &ndp) != TCL_OK) return TCL_ERROR;
+   if ( Tcl_GetDoubleFromObj( interp, objv[2], &angle) != TCL_OK) 
+         return TCL_ERROR;
 
-   sprintf( interp->result, "%c %d %d %d %d", sign, hmsf[0], hmsf[1], hmsf[2],
-      hmsf[3]);
+/* Decompose angle into hms. */
+   slaDr2tf( ndp, angle, &sign, hmsf);
+
+/* Build result list. */
+   reslist[0] = Tcl_NewStringObj( &sign, 1);
+   reslist[1] = Tcl_NewIntObj( hmsf[0] );
+   reslist[2] = Tcl_NewIntObj( hmsf[1] );
+   reslist[3] = Tcl_NewIntObj( hmsf[2] );
+   reslist[4] = Tcl_NewIntObj( hmsf[3] );
+   result = Tcl_NewListObj( 5, reslist );
+   Tcl_SetObjResult( interp, result);
    return TCL_OK;
 }

@@ -1,4 +1,4 @@
-static char rcsid[] = "$Id: autorepeat.c,v 1.1.1.1 1999-05-27 04:53:40 dlt Exp $";
+static char rcsid[] = "$Id: autorepeat.c,v 1.2 2000-12-13 12:38:09 dlt Exp $";
 /* *INDENT-OFF* */
 /*
 *   FILENAME
@@ -8,7 +8,7 @@ static char rcsid[] = "$Id: autorepeat.c,v 1.1.1.1 1999-05-27 04:53:40 dlt Exp $
 *   autoRepeatOnCmd  - Implements the autoRepeatOn TK command.
 *   autoRepeatOffCmd - Implements the autoRepeatOff TK command.
 *
-*   D L Terrett 25 November 1998
+*   D L Terrett 6 December 2000
 *
 *   Copyright CCLRC
 */
@@ -33,14 +33,13 @@ static char rcsid[] = "$Id: autorepeat.c,v 1.1.1.1 1999-05-27 04:53:40 dlt Exp $
  */
 /* *INDENT-ON* */
 
-int autoRepeatOnCmd( ClientData clientdata, Tcl_Interp *interp, int argc,
-    char *argv[])
+int autoRepeatOnCmd( ClientData clientdata, Tcl_Interp *interp, int objc,
+    Tcl_Obj *CONST objv[])
 {
    Tk_Window tkwin;
 
-   if ( argc != 1 ) {
-        Tcl_AppendResult( interp,
-           "wrong # args: should be \"autoRepeatOn\"", (char *) NULL);
+   if ( objc != 1 ) {
+        Tcl_WrongNumArgs( interp, 1, objv, "");
         return TCL_ERROR;
     }
     tkwin = Tk_MainWindow(interp);
@@ -50,14 +49,13 @@ int autoRepeatOnCmd( ClientData clientdata, Tcl_Interp *interp, int argc,
     return TCL_OK;
 }
 
-int autoRepeatOffCmd( ClientData clientdata, Tcl_Interp *interp, int argc,
-    char *argv[])
+int autoRepeatOffCmd( ClientData clientdata, Tcl_Interp *interp, int objc,
+    Tcl_Obj *CONST objv[])
 {
    Tk_Window tkwin;
 
-   if ( argc != 1 ) {
-        Tcl_AppendResult( interp,
-           "wrong # args: should be \"autoRepeatOn\"", (char *) NULL);
+   if ( objc != 1 ) {
+        Tcl_WrongNumArgs( interp, 1, objv, "");
         return TCL_ERROR;
     }
     tkwin = Tk_MainWindow(interp);

@@ -9,6 +9,11 @@ static char rcsid[]="$Id:";
 *
 *   DESCRIPTION
 *
+*   WARNING: THIS CODE WILL BREAK AT TCL 8.4
+*            The interface to Tk_ItemCreatProc, Tk_ItemConfigureProc and
+*            Tk_ItemCoordProc have been changed to use object instead of
+*            strings for the command arguments.
+*
 *   D L Terrett 10 April 2000
 *
 *   Copyright CCLRC

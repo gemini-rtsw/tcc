@@ -7,7 +7,7 @@ static char rcsid[]="$Id:";
 *   FUNCTION NAME(S)
 *   Tsdext_Init - Initialisation function for TCL loadable image
 *
-*   D L Terrett 1 September 1998
+*   D L Terrett 6 December 2000
 *
 *   Copyright CCLRC
 *
@@ -45,7 +45,7 @@ int Tsdext_Init( Tcl_Interp *interp)
     tsdWrapView();
     tsdElView();
 
-    Tcl_CreateCommand( interp, "ast", Tccext_AstCmd,
+    Tcl_CreateObjCommand( interp, "ast", Tccext_AstCmd,
         (ClientData) NULL, (Tcl_CmdDeleteProc *) NULL);
 
     return TCL_OK;

@@ -15,7 +15,7 @@
 #ifndef TCSPREVIEW_H
 #define TCSPREVIEW_H
 
-int Tccext_PreviewCmd( ClientData clientdata, Tcl_Interp *interp, int argc,
-    char *argv[]);
+int Tccext_PreviewCmd( ClientData clientdata, Tcl_Interp *interp, int objc,
+    Tcl_Obj *CONST objv[]);
 
 #endif
