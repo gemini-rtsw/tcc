@@ -24,8 +24,7 @@ proc tccMain args {
    service epics
 
 # Process command line arguments.
-   global ROOT
-   set layout $ROOT/default_layout.tcc
+   set layout $::ROOT/default_layout.tcc
    set init ""
    foreach {opt val} $args {
       switch -- $opt {
@@ -152,7 +151,7 @@ proc tccMain args {
    wm iconname . TCC
 
 # Load default components.
-   set file [open $ROOT/default_components.xml RDONLY]
+   set file [open $::ROOT/default_components.xml RDONLY]
    set config [TcsConfigFile #auto $file .]
    itcl::delete object $config
    close $file
