@@ -3,7 +3,7 @@
 #
 #  Implements the TcsConfigControl widget.
 #
-#  D Terrett 24 November 1999
+#  D Terrett 17 February 2000
 #
 #  Copyright CCLRC
 #+
@@ -184,6 +184,12 @@ itcl::body TcsConfigControl::constructor args {
 # Set the object class
    set objclass ConfigComponent
    set description configuration
+
+# Select the default configuration. This has to be postponed until after
+# the widget creation is complete in order that options crucial to the
+# operation of the widget have been set.
+   after idle [code $this selectobj TcsConfigNames::default]
+   after idle $itk_component(selector) select default
 
    eval itk_initialize $args
 }
