@@ -7,27 +7,27 @@
 #  Options:
 #           -oiwfsTarget    The target for the on-instrument wavefront sensor.
 #
-#           -oiwfsChop      The chop state for the on-instrument wavefront 
-#                           sensor.
+#           -oiwfsActive    The chop states in which the guide star is
+#                           active
 #
-#           -oiwfsNod       The nod state for the on-instrument wavefront 
-#                           sensor.
+#           -oiwfsNodState  The nod states in which the probe follows
+#                           the star.
 #
 #           -pwfs1Target    The target for peripheral wavefront sensor 1.
 #
-#           -pwfs1Chop      The chop state for the peripheral wavefront 
-#                           sensor 1.
+#           -pwfs1Active    The chop states in which the guide star is
+#                           active
 #
-#           -pwfs1Nod       The nod state for the peripheral wavefront 
-#                           sensor 1.
+#           -pwfs1NodState  The nod states in which the probe follows
+#                           the star.
 #
 #           -pwfs2Target    The target for peripheral wavefront sensor 2.
 #
-#           -pwfs2Chop      The chop state for the peripheral wavefront 
-#                           sensor 2.
+#           -pwfs2Active    The chop states in which the guide star is
+#                           active
 #
-#           -pwfs2Nod       The nod state for the peripheral wavefront 
-#                           sensor 2.
+#           -pwfs2NodState  The nod states in which the probe follows
+#                           the star.
 #
 #  Methods:
 #           apply cs        Sets the system and equinox paramters of the
@@ -44,7 +44,7 @@
 #           subcomponents   Returns a list of the Guide components 
 #                           subcomponents.
 #
-#  D Terrett 26 September 2000
+#  D Terrett 18 October 2000
 #
 #  Copyright CCLRC
 #+
@@ -56,21 +56,30 @@ itcl::class Guide {
    public proc subcomponents {}
 
    public variable oiwfsTarget "" {newTarget oiwfs $oiwfsTarget}
-   public variable oiwfsChop A
-   public variable oiwfsNod AB
    public variable pwfs1Target "" {newTarget pwfs1 $pwfs1Target}
-   public variable pwfs1Chop A
-   public variable pwfs1Nod AB
    public variable pwfs2Target "" {newTarget pwfs2 $pwfs2Target}
-   public variable pwfs2Chop A
-   public variable pwfs2Nod AB
+   public variable pwfs1Active A
+   public variable pwfs2Active A
+   public variable oiwfsActive A
+   public variable pwfs1NodState AB
+   public variable pwfs2NodState AB
+   public variable oiwfsNodState AB
+
+# These variables are retained so as not to break existing configuration
+# definition files.
+   public variable oiwfsChop
+   public variable oiwfsNod
+   public variable pwfs1Chop
+   public variable pwfs1Nod
+   public variable pwfs2Chop
+   public variable pwfs2Nod
 
    public method apply args
    public method init
    public method preview
    public method save file
 
-   private method setEnableFlags {wfs chop nod}
+   private method setEnableFlags {wfs active nodstate}
    private method newTarget {wfs name}
    private method park {wfs}
 
@@ -97,21 +106,21 @@ itcl::body Guide::apply args {
 # enable flags.
    if { ![string is space $pwfs1Target] } {
       ::WfsTargetNames::$pwfs1Target apply pwfs1
-      setEnableFlags pwfs1 $pwfs1Chop $pwfs1Nod
+      setEnableFlags pwfs1 $pwfs1Active $pwfs1NodState
    } else {
       setEnableFlags pwfs1 "" ""
       park pwfs1
    }
    if { ![string is space $pwfs2Target] } {
       ::WfsTargetNames::$pwfs2Target apply pwfs2
-      setEnableFlags pwfs2 $pwfs2Chop $pwfs2Nod
+      setEnableFlags pwfs2 $pwfs2Active $pwfs2NodState
    } else {
       setEnableFlags pwfs2 "" ""
       park pwfs2
    }
    if { ![string is space $oiwfsTarget] } {
       ::WfsTargetNames::$oiwfsTarget apply oiwfs
-      setEnableFlags oiwfs $oiwfsChop $oiwfsNod
+      setEnableFlags oiwfs $oiwfsActive $oiwfsNodState
    } else {
       setEnableFlags oiwfs "" ""
    }
@@ -119,14 +128,14 @@ itcl::body Guide::apply args {
 
 itcl::body Guide::init {} {
    $this configure -oiwfsTarget ""
-   set oiwfsChop A
-   set oiwfsNod AB
+   set oiwfsActive A
+   set oiwfsNodState AB
    $this configure -pwfs1Target ""
-   set pwfs1Chop A
-   set pwfs1Nod AB
+   set pwfs1Active A
+   set pwfs1NodState AB
    $this configure -pwfs2Target ""
-   set pwfs2Chop A
-   set pwfs2Nod AB
+   set pwfs2Active A
+   set pwfs2NodState AB
 }
 
 itcl::body Guide::preview {} {
@@ -143,92 +152,113 @@ itcl::body Guide::preview {} {
 
 itcl::body Guide::save file {
    puts $file "   -pwfs1Target \"$pwfs1Target\" \\"
-   puts $file "   -pwfs1Chop $pwfs1Chop \\"
-   puts $file "   -pwfs1Nod $pwfs1Nod \\"
+   puts $file "   -pwfs1Active $pwfs1Active \\"
+   puts $file "   -pwfs1NodState $pwfs1NodState \\"
    puts $file "   -pwfs2Target \"$pwfs2Target\" \\"
-   puts $file "   -pwfs2Chop $pwfs2Chop \\"
-   puts $file "   -pwfs2Nod $pwfs2Nod \\"
+   puts $file "   -pwfs2Active $pwfs2Active \\"
+   puts $file "   -pwfs2NodState $pwfs2NodState \\"
    puts $file "   -oiwfsTarget \"$oiwfsTarget\" \\"
-   puts $file "   -oiwfsChop $oiwfsChop \\"
-   puts $file "   -oiwfsNod $oiwfsNod"
+   puts $file "   -oiwfsActive $oiwfsActive \\"
+   puts $file "   -oiwfsNodState $oiwfsNodState"
 }
 
-itcl::body Guide::setEnableFlags {wfs chop nod} {
-   if { [string first A $chop] != -1 } {
-      set chopa 1
-   } else {
-      set chopa 0
+itcl::body Guide::setEnableFlags {wfs active nodstate} {
+   switch $active {
+      A {
+         switch $nodstate {
+            A {
+               cs ${wfs}Guide set nodachopa On
+               cs ${wfs}Guide set nodachopb Off
+               cs ${wfs}Guide set nodbchopa Off
+               cs ${wfs}Guide set nodbchopb Off
+            }
+            B {
+               cs ${wfs}Guide set nodachopa Off
+               cs ${wfs}Guide set nodachopb Off
+               cs ${wfs}Guide set nodbchopa On
+               cs ${wfs}Guide set nodbchopb Off
+            }
+            AB {
+               cs ${wfs}Guide set nodachopa On
+               cs ${wfs}Guide set nodachopb Off
+               cs ${wfs}Guide set nodbchopa On
+               cs ${wfs}Guide set nodbchopb Off
+            }
+         }
+      }
+      B {
+         switch $nodstate {
+            A {
+               cs ${wfs}Guide set nodachopa Off
+               cs ${wfs}Guide set nodachopb On
+               cs ${wfs}Guide set nodbchopa Off
+               cs ${wfs}Guide set nodbchopb Off
+            }
+            B {
+               cs ${wfs}Guide set nodachopa Off
+               cs ${wfs}Guide set nodachopb Off
+               cs ${wfs}Guide set nodbchopa Off
+               cs ${wfs}Guide set nodbchopb On
+            }
+            AB {
+               cs ${wfs}Guide set nodachopa Off
+               cs ${wfs}Guide set nodachopb On
+               cs ${wfs}Guide set nodbchopa Off
+               cs ${wfs}Guide set nodbchopb On
+            }
+         }
+      }
+      Nod {
+         switch $nodstate {
+            A {
+               cs ${wfs}Guide set nodachopa On
+               cs ${wfs}Guide set nodachopb Off
+               cs ${wfs}Guide set nodbchopa Off
+               cs ${wfs}Guide set nodbchopb Off
+            }
+            B {
+               cs ${wfs}Guide set nodachopa Off
+               cs ${wfs}Guide set nodachopb Off
+               cs ${wfs}Guide set nodbchopa Off
+               cs ${wfs}Guide set nodbchopb On
+            }
+            AB {
+               cs ${wfs}Guide set nodachopa On
+               cs ${wfs}Guide set nodachopb Off
+               cs ${wfs}Guide set nodbchopa Off
+               cs ${wfs}Guide set nodbchopb On
+            }
+         }
+      }
+      antiNod {
+         switch $nodstate {
+            A {
+               cs ${wfs}Guide set nodachopa Off
+               cs ${wfs}Guide set nodachopb On
+               cs ${wfs}Guide set nodbchopa Off
+               cs ${wfs}Guide set nodbchopb Off
+            }
+            B {
+               cs ${wfs}Guide set nodachopa Off
+               cs ${wfs}Guide set nodachopb Off
+               cs ${wfs}Guide set nodbchopa On
+               cs ${wfs}Guide set nodbchopb Off
+            }
+            AB {
+               cs ${wfs}Guide set nodachopa Off
+               cs ${wfs}Guide set nodachopb On
+               cs ${wfs}Guide set nodbchopa On
+               cs ${wfs}Guide set nodbchopb Off
+            }
+         }
+      }
+      default {
+         cs ${wfs}Guide set nodachopa Off
+         cs ${wfs}Guide set nodachopb Off
+         cs ${wfs}Guide set nodbchopa Off
+         cs ${wfs}Guide set nodbchopb Off
+      }
    }
-   if { [string first B $chop] != -1 } {
-      set chopb 1
-   } else {
-      set chopb 0
-   }
-#   if { [string first C $chop] != -1 } {
-#      set chopc 1
-#   } else {
-#      set chopc 0
-#   }
-   if { [string first A $nod] != -1 } {
-      set noda 1
-   } else {
-      set noda 0
-   }
-   if { [string first B $nod] != -1 } {
-      set nodb 1
-   } else {
-      set nodb 0
-   }
-#   if { [string first C $nod] != -1 } {
-#      set nodc 1
-#   } else {
-#      set nodc 0
-#   }
-   if { $chopa && $noda } {
-      cs ${wfs}Guide set nodachopa On
-   } else {
-      cs ${wfs}Guide set nodachopa Off
-   }
-   if { $chopb && $noda } {
-      cs ${wfs}Guide set nodachopb On
-   } else {
-      cs ${wfs}Guide set nodachopb Off
-   }
-#   if { $chopc && $noda } {
-#      cs ${wfs}Guide set nodachopc On
-#   } else {
-#      cs ${wfs}Guide set nodachopc Off
-#   }
-   if { $chopa && $nodb } {
-      cs ${wfs}Guide set nodbchopa On
-   } else {
-      cs ${wfs}Guide set nodbchopa Off
-   }
-   if { $chopb && $nodb } {
-      cs ${wfs}Guide set nodbchopb On
-   } else {
-      cs ${wfs}Guide set nodbchopb Off
-   }
-#   if { $chopc && $nodb } {
-#      cs ${wfs}Guide set nodbchopc On
-#   } else {
-#      cs ${wfs}Guide set nodbchopc Off
-#   }
-#   if { $chopa && $nodc } {
-#      cs ${wfs}Guide set nodcchopa On
-#   } else {
-#      cs ${wfs}Guide set nodcchopa Off
-#   }
-#   if { $chopb && $nodc } {
-#      cs ${wfs}Guide set nodcchopb On
-#   } else {
-#      cs ${wfs}Guide set nodcchopb Off
-#   }
-#   if { $chopc && $nodc } {
-#      cs ${wfs}Guide set nodcchopc On
-#   } else {
-#      cs ${wfs}Guide set nodcchopc Off
-#   }
    logger command ${wfs}Guide
 }
 

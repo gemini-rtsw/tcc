@@ -1,4 +1,4 @@
-#+
+
 #  GuideControl <- ComponentControl
 #
 #  A GuideControl is a ComponentControl widget with widgets for the target 
@@ -14,7 +14,7 @@
 #           updateobj name  Stores the contents of the edit controls in the
 #                           Guide object "name".
 #
-#  D Terrett 5 June 2000
+#  D Terrett 18 October 2000
 #
 #  Copyright CCLRC
 #+
@@ -62,16 +62,19 @@ itcl::body GuideControl::constructor args {
 
 # Chop state
    itk_component add pwfs1chop {
-      iwidgets::optionmenu $w.chop -labeltext "Active in chop"
+      iwidgets::optionmenu $w.chop -labeltext "Guide"
    }
-   $itk_component(pwfs1chop) insert end A B
+   [$itk_component(pwfs1chop) component menuBtn] configure -anchor w
+   $itk_component(pwfs1chop) insert end "in chop A" "in chop B" \
+         "when chop matches nod" "when chop doesn't match nod" "never"
 
 # Nod setting
    itk_component add pwfs1nod {
-      iwidgets::optionmenu $w.nod \
+      iwidgets::optionmenu $w.nod -labeltext "and in"
    }
+   [$itk_component(pwfs1nod) component menuBtn] configure -anchor w
    $itk_component(pwfs1nod) insert end \
-         "Probe follows nod" "Guide in nod A only" "Guide in nod B only"
+         "both nod states" "nod A only" "nod B only"
    pack $itk_component(pwfs1Target) $itk_component(pwfs1chop) \
          $itk_component(pwfs1nod) -padx 5 -pady 2
 
@@ -86,16 +89,19 @@ itcl::body GuideControl::constructor args {
 
 # Chop state
    itk_component add pwfs2chop {
-      iwidgets::optionmenu $w.chop -labeltext "Active in chop"
+      iwidgets::optionmenu $w.chop -labeltext "Guide"
    }
-   $itk_component(pwfs2chop) insert end A B
+   [$itk_component(pwfs2chop) component menuBtn] configure -anchor w
+   $itk_component(pwfs2chop) insert end "in chop A" "in chop B" \
+         "when chop matches nod" "when chop doesn't match nod" "never"
 
 # Nod setting
    itk_component add pwfs2nod {
-      iwidgets::optionmenu $w.nod
+      iwidgets::optionmenu $w.nod -labeltext "and in"
    }
+   [$itk_component(pwfs2nod) component menuBtn] configure -anchor w
    $itk_component(pwfs2nod) insert end \
-         "Probe follows nod" "Guide in nod A only" "Guide in nod B only"
+         "both nod states" "nod A only" "nod B only"
    pack $itk_component(pwfs2Target) $itk_component(pwfs2chop) \
          $itk_component(pwfs2nod) -padx 5 -pady 2
 
@@ -110,16 +116,19 @@ itcl::body GuideControl::constructor args {
 
 # Chop state
    itk_component add oiwfschop {
-      iwidgets::optionmenu $w.chop -labeltext "Active in chop"
+      iwidgets::optionmenu $w.chop -labeltext "Guide"
    }
-   $itk_component(oiwfschop) insert end A B
+   [$itk_component(oiwfschop) component menuBtn] configure -anchor w
+   $itk_component(oiwfschop) insert end "in chop A" "in chop B" \
+         "when chop matches nod" "when chop doesn't match nod" "never"
 
 # Nod setting
    itk_component add oiwfsnod {
-      iwidgets::optionmenu $w.nod
+      iwidgets::optionmenu $w.nod -labeltext "and in"
    }
+   [$itk_component(oiwfsnod) component menuBtn] configure -anchor w
    $itk_component(oiwfsnod) insert end \
-         "Probe follows nod" "Guide in nod A only" "Guide in nod B only"
+         "both nod states" "nod A only" "nod B only"
    pack $itk_component(oiwfsTarget) $itk_component(oiwfschop) \
          $itk_component(oiwfsnod) -padx 5 -pady 2
 
@@ -142,24 +151,45 @@ itcl::body GuideControl::updateobj name {
       1 {set nod A}
       2 {set nod B}
    }
+   switch [$itk_component(pwfs1chop) index [$itk_component(pwfs1chop) get]] {
+      0 {set chop A}
+      1 {set chop B}
+      2 {set chop Nod}
+      3 {set chop antiNod}
+      4 {set chop never}
+   }
    $name configure -pwfs1Target [$itk_component(pwfs1Target) get] \
-          -pwfs1Chop [$itk_component(pwfs1chop) get] -pwfs1Nod $nod
-   $name configure -pwfs2Target [$itk_component(pwfs2Target) get] \
-          -pwfs2Chop [$itk_component(pwfs2chop) get] -pwfs2Nod $nod
+          -pwfs1Active $chop -pwfs1NodState $nod
+
    switch [$itk_component(pwfs2nod) index [$itk_component(pwfs2nod) get]] {
       0 {set nod AB}
       1 {set nod A}
       2 {set nod B}
    }
+   switch [$itk_component(pwfs2chop) index [$itk_component(pwfs2chop) get]] {
+      0 {set chop A}
+      1 {set chop B}
+      2 {set chop Nod}
+      3 {set chop antiNod}
+      4 {set chop never}
+   }
    $name configure -pwfs2Target [$itk_component(pwfs2Target) get] \
-          -pwfs2Chop [$itk_component(pwfs2chop) get] -pwfs2Nod $nod
+          -pwfs2Active $chop -pwfs2NodState $nod
+
    switch [$itk_component(oiwfsnod) index [$itk_component(oiwfsnod) get]] {
       0 {set nod AB}
       1 {set nod A}
       2 {set nod B}
    }
+   switch [$itk_component(oiwfschop) index [$itk_component(oiwfschop) get]] {
+      0 {set chop A}
+      1 {set chop B}
+      2 {set chop Nod}
+      3 {set chop antiNod}
+      4 {set chop never}
+   }
    $name configure -oiwfsTarget [$itk_component(oiwfsTarget) get] \
-          -oiwfsChop [$itk_component(oiwfschop) get] -oiwfsNod $nod
+          -oiwfsActive $chop -oiwfsNodState $nod
 }
 
 itcl::body GuideControl::selectobj name {
@@ -168,25 +198,43 @@ itcl::body GuideControl::selectobj name {
 # into the edit control.
    if { $name != "" } {
       $itk_component(pwfs1Target) select [$name cget -pwfs1Target]
-      $itk_component(pwfs1chop) select [$name cget -pwfs1Chop]
-      switch [$name cget -pwfs1Nod] {
-        AB {$itk_component(pwfs1nod) select 0}
-        A {$itk_component(pwfs1nod) select 1}
-        B {$itk_component(pwfs1nod) select 2}
+      switch [$name cget -pwfs1Active] {
+         A {$itk_component(pwfs1chop) select 0}
+         B {$itk_component(pwfs1chop) select 1}
+         Nod {$itk_component(pwfs1chop) select 2}
+         antiNod {$itk_component(pwfs1chop) select 3}
+         default {$itk_component(pwfs1chop) select 4}
+      }
+      switch [$name cget -pwfs1NodState] {
+         AB {$itk_component(pwfs1nod) select 0}
+         A {$itk_component(pwfs1nod) select 1}
+         B {$itk_component(pwfs1nod) select 2}
       }
       $itk_component(pwfs2Target) select [$name cget -pwfs2Target]
-      $itk_component(pwfs2chop) select [$name cget -pwfs2Chop]
-      switch [$name cget -pwfs2Nod] {
-        AB {$itk_component(pwfs2nod) select 0}
-        A {$itk_component(pwfs2nod) select 1}
-        B {$itk_component(pwfs2nod) select 2}
+      switch [$name cget -pwfs2Active] {
+         A {$itk_component(pwfs2chop) select 0}
+         B {$itk_component(pwfs2chop) select 1}
+         Nod {$itk_component(pwfs2chop) select 2}
+         antiNod {$itk_component(pwfs2chop) select 3}
+         default {$itk_component(pwfs2chop) select 4}
+      }
+      switch [$name cget -pwfs2NodState] {
+         AB {$itk_component(pwfs2nod) select 0}
+         A {$itk_component(pwfs2nod) select 1}
+         B {$itk_component(pwfs2nod) select 2}
       }
       $itk_component(oiwfsTarget) select [$name cget -oiwfsTarget]
-      $itk_component(oiwfschop) select [$name cget -oiwfsChop]
-      switch [$name cget -pwfs1Nod] {
-        AB {$itk_component(oiwfsnod) select 0}
-        A {$itk_component(oiwfsnod) select 1}
-        B {$itk_component(oiwfsnod) select 2}
+      switch [$name cget -oiwfsActive] {
+         A {$itk_component(oiwfschop) select 0}
+         B {$itk_component(oiwfschop) select 1}
+         Nod {$itk_component(oiwfschop) select 2}
+         antiNod {$itk_component(oiwfschop) select 3}
+         default {$itk_component(oiwfschop) select 4}
+      }
+      switch [$name cget -oiwfsNodState] {
+         AB {$itk_component(oiwfsnod) select 0}
+         A {$itk_component(oiwfsnod) select 1}
+         B {$itk_component(oiwfsnod) select 2}
       }
    }
 }

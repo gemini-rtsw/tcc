@@ -13,7 +13,8 @@ createCosys AzEl -frame AZEL_TOPO -equinox ""
 createRotator tracking -cosys FK5/J2000 -ipa 180
 createRotator fixed -cosys AzEl -ipa 180
 
-createGuide "None" -refcount 1
+createGuide "None" -pwfs1Active never -pwfs2Active never -oiwfsActive never \
+   -refcount 1
 
 createSlewOptions All -refcount 1 \
    -chopThrow On \
