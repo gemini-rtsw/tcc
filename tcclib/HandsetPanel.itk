@@ -10,7 +10,7 @@
 #  Methods:
 #          none
 #
-#  D Terrett 11 June 2001
+#  D Terrett 15 July 2003
 #
 #  Copyright CCLRC
 #+
@@ -26,6 +26,7 @@ itcl::class HandsetPanel {
       [$itk_component(handsets) component tabset] config \
             -selectbackground $color
       [$itk_component(handsets) component canvas] config -bg $color
+      
    }
 }
 
@@ -46,6 +47,9 @@ itcl::body HandsetPanel::constructor args {
    setWidgetColors "$itk_component(menubar) $itk_component(handsets)" \
          $itk_option(-background) $itk_option(-foreground)
 
+# Fix up the backround of the tabs.
+   $itk_component(handsets) configure -backdrop $itk_option(-background)
+
 # Target handset
    set w [$itk_component(handsets)  add -label "Targets" \
          -background "#add8e6" -tabbackground  "#add8e6" \
@@ -56,11 +60,11 @@ itcl::body HandsetPanel::constructor args {
    pack $itk_component(targets)
 
 # Guiding handset
-   set w [$itk_component(handsets) add -label "Pointing" -background "#ffdab9" \
+   set w [$itk_component(handsets) add -label "Pointing" -background "#ffdae9" \
          -tabbackground "#ffdab9" \
-         -command [itcl::code $this pageSelectCB #ffdab9]]
+         -command [itcl::code $this pageSelectCB #ffdae9]]
    itk_component add guiding {
-      GuideHandsetControl $w.guiding -background "#ffdab9"
+      GuideHandsetControl $w.guiding -background "#ffdae9"
    }
    pack $itk_component(guiding)
    
