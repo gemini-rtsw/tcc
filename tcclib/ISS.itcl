@@ -24,7 +24,7 @@
 #                  HRWFS mirrors into the correct position to realise the
 #                  settings ofthe -mode, -ao and -port options.
 #
-#  D Terrett 12 September 2001
+#  D Terrett 3 May 2002
 #
 #  Copyright CCLRC
 #+
@@ -48,7 +48,7 @@ itcl::class ISS {
 itcl::body ISS::position {} {
 
 # Assume that we won't need to move the HRWFS or AO fold.
-   set hrfold ""
+   set hwfold ""
    set aofold ""
 
 # The pseudo port AC is a special case where the Acquisition Camera is
@@ -132,9 +132,24 @@ itcl::body ISS::position {} {
 }
 
 itcl::body ISS::update {} {
-   if { ! [string equal $hwfold ""] } {
-      cs hrwfs set hwfold value $hwfold
-      logger command hrwfs
+
+# Position HRWFS pickoff mirror. Before moving it into the beam we must
+# check that GPOL is parked.
+   switch $hwfold {
+      IN {
+         if { [sa gpolsad get upperParkSwitch] == "OPEN" ||
+               [sa gpolsad get middleParkSwitch] == "OPEN" ||
+               [sa gpolsad get lowerParkSwitch] == "OPEN" } {
+            cs gpolPark set dummy value MARK
+            logger command gpolPark
+         }
+         cs hrwfs set hwfold value $hwfold
+         logger command hrwfs
+      }
+      OUT {
+         cs hrwfsPark set dummy value MARK
+         logger command hrwfsPark
+      }
    }
 #   if { ! [string equal $aofold ""] } {
 #      cs aoFold set aofold value $aofold

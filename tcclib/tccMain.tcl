@@ -7,7 +7,7 @@
 #  Arguments:
 #            Any command line options and values.
 #
-#  D Terrett  11 April 2002
+#  D Terrett  3 May 2002
 #
 #  Copyright CCLRC
 #-
@@ -48,6 +48,7 @@ proc tccMain args {
 # Create status acceptors for sad databases.
    epics sa tcssad
    epics sa ecssad
+   epics sa gpolsad
 
 # Create status acceptors for tcs status and messages.
    epics sa apply
@@ -109,9 +110,11 @@ proc tccMain args {
    epics cs dtelFocus
    epics cs m2Baffle
    epics cs hrwfs
+   epics cs hrwfsPark
    epics cs aoFold
    epics cs scienceFold
    epics cs scienceFoldPark
+   epics cs gpolPark
    epics cs airmassLimit
    epics cs guideHandset
    epics cs guideHandConfig
