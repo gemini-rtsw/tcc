@@ -45,12 +45,12 @@ bitmaps.so : $(BITOBJ)
 	ld -G -z text -o $@ $(BITOBJ) $(LDFLAGS) 
 
 tsdext.o : tccAst.h
-tccext.o : tccPreview.h autorepeat.h
-bitmaps.o : edit.xbm delete.xbm
-tccPreview.o : tccConstants.h tccUtil.h tccDecode.h
+tccext.o : tccAst.h tccPreview.h autorepeat.h
+bitmaps.o : edit.xbm delete.xbm rotate.xbm arotate.xbm flip.xbm reset.xbm
+tccPreview.o : tccPreview.h tccConstants.h tccUtil.h tccDecode.h
 tccUtil.o : tccConstants.h tccUtil.h
 tccTime.o : tccConstants.h
-tccAst.o : tccConstants.h tccUtil.h
+tccAst.o : tccConstants.h tccUtil.h tccAst.h
 tsdDomeview.o : tccConstants.h tccDecode.h tccUtil.h
 tsdWrapview.o : tccConstants.h tccDecode.h tccUtil.h
 tsdElview.o : tccConstants.h tccDecode.h tccUtil.h
