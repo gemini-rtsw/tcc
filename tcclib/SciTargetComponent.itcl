@@ -1,0 +1,30 @@
+#+
+#  SciTargetComponent.itcl
+#
+#  Implements the SciTargetComponent class. A SciTargetComponent object 
+#  is a SciTarget object that is stored in a configuration.
+#
+#  D Terrett 11 November 1999
+#
+#  Copyright CCLRC
+#+
+
+itcl::class SciTargetComponent {
+   inherit SciTarget Component
+
+   constructor {list args} {
+      Component::constructor $list
+   } {
+      eval configure $args
+   }
+
+   public method save file
+}
+
+itcl::body SciTargetComponent::save file {
+   set objname [namespace tail $this]
+   set namespace [namespace qualifiers $this]
+   puts $file "catch {delete object \"${namespace}::$objname\"}"
+   puts $file "SciTargetComponent \"${namespace}::$objname\"  $componentList \\"
+   SciTarget::save $file
+}

@@ -1,0 +1,35 @@
+#+
+#  SciTargetControl.itk
+#
+#  Implements the SciTargetControl widget.
+#
+#  D Terrett 11 November 1999
+#
+#  Copyright CCLRC
+#+
+
+itcl::class SciTargetControl {
+   inherit TargetControl
+
+   constructor args {}
+}
+
+itk::usual SciTargetControl {
+   keep -activebackground -activeforeground -disabledforeground
+   keep -background -borderwidth -cursor -foreground -highlightcolor
+   keep -highlightthickness -insertbackground -insertborderwidth
+   keep -insertofftime -insertontime -insertwidth -labelfont -popupcursor
+   keep -selectbackground -selectborderwidth -selectforeground
+   keep -textbackground -textfont -font
+   keep -vt -title
+}
+
+itcl::body SciTargetControl::constructor args {
+
+# Unpack Apply button and checkbutton so that new science targets have to be
+# applied from the main configuration window.
+   pack forget  [$itk_component(storeapply) component lock]
+   pack forget  [$itk_component(storeapply) component apply]
+
+   eval itk_initialize $args
+}
