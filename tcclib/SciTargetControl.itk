@@ -4,7 +4,7 @@
 #  A SciTarget control is a TargetControl widget with widgets for
 #  the target position etc.
 #
-#  D Terrett 14 March 2001
+#  D Terrett 16 March 2001
 #
 #  Copyright CCLRC
 #+
@@ -17,7 +17,7 @@ itcl::class SciTargetControl {
       method updateobj {name}
    }
    private {
-      method copy {createproc}
+      method copy {createproc wfs}
       method orbtype {}
       method selplanet {}
       variable planet
@@ -152,8 +152,12 @@ itcl::body SciTargetControl::constructor args {
 
 
 # Add destinations to the copy menu.
-   $itk_component(copymenu) add command -label "Wave front sensor targets" \
-         -command [code $this copy createWfsTarget]
+   $itk_component(copymenu) add command -label "PWFS1 targets" \
+         -command [code $this copy createWfsTarget pwfs1]
+   $itk_component(copymenu) add command -label "PWFS2 targets" \
+         -command [code $this copy createWfsTarget pwfs2]
+   $itk_component(copymenu) add command -label "OIWFS targets" \
+         -command [code $this copy createWfsTarget oiwfs]
 
 # Unpack Apply button and checkbutton so that new science targets have to be
 # applied from the main configuration window.
@@ -312,7 +316,7 @@ itcl::body SciTargetControl::orbtype {} {
    }
 }
 
-itcl::body SciTargetControl::copy createproc {
+itcl::body SciTargetControl::copy {createproc wfs} {
    set name [$itk_component(selector) get]
    if { [string is space $name] } {
       tk_messageBox -icon error -parent $itk_interior \
@@ -320,6 +324,7 @@ itcl::body SciTargetControl::copy createproc {
    } else {
       store $name
       ScienceTargetNames::$name copy $createproc
+      tcsconfigguide${wfs}Target select $name
    }
 }
 
