@@ -25,6 +25,17 @@ createSlewOptions "All" -refcount 1 \
    -pointing "On" \
    -guiding "On"
 
+createSlewOptions "Normal" -refcount 1 \
+   -chopThrow "On" \
+   -sourceOffset "On" \
+   -sourceDifTr "On" \
+   -mountOffset "On" \
+   -mountDifTr "On" \
+   -filter1 "On" \
+   -filter2 "On" \
+   -pointing "Off" \
+   -guiding "On"
+
 createTrackFrame FK5 -refcount 1 \
    -mountCosys "FK5/J2000" \
    -sourceACosys "FK5/J2000" \
@@ -36,6 +47,6 @@ createTrackFrame FK5 -refcount 1 \
 
 createConfig default -refcount 1 \
    -rotator north \
-   -slewOptions All \
+   -slewOptions Normal \
    -trackFrame FK5 \
    -guide None
