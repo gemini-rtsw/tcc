@@ -8,7 +8,7 @@ SLAOBJ = slaext.o
 
 CC = /opt/SUNWspro/bin/cc 
 CFLAGS = -K pic -Xc -G \
-         -I/gemini/ocs/external/include \
+         -I/gemini/ocs/external/packages/tcl8/include \
          -I/gemini/slalib/include \
          -I/gemini/timelib/include \
          -I/gemini/astlib/include
