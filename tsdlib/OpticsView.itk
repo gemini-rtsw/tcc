@@ -5,7 +5,7 @@
 #
 #  methods
 #
-#  D Terrett 10 March 1999
+#  D Terrett 9 June 1999
 #
 #  Copyright CCLRC
 #-
@@ -22,13 +22,13 @@ itcl::class OpticsView {
    itk_option define -aofold aoFold AoFold out redraw
    itk_option define -scfold scFold ScFold 0 redraw
    itk_option define -hrwfs hrwfs Hrwfs in redraw
-   itk_option define -aopresent aoPresent AoPresent 1 {}
+   itk_option define -aopresent aoPresent AoPresent 0 {}
    itk_option define -vignette vignette Vignette 0 redraw
-   itk_option define -port1label port1Label Label "Port 1" "relabel 1"
-   itk_option define -port2label port2Label Label "" {}
-   itk_option define -port3label port3Label Label "Port 3" "relabel 3"
-   itk_option define -port4label port4Label Label "Cal Unit" "relabel 4"
-   itk_option define -port5label port5Label Label "Port 5" "relabel 5"
+   itk_option define -port1label port1Label Label "" "relabel 1"
+   itk_option define -port2label port2Label Label "cfwfs" "relabel 2"
+   itk_option define -port3label port3Label Label "Hokupaa" "relabel 3"
+   itk_option define -port4label port4Label Label "A&G cabinet" "relabel 4"
+   itk_option define -port5label port5Label Label "CurveWFS" "relabel 5"
 
    private method redraw {}
    private method relabel port
@@ -123,6 +123,7 @@ itcl::body OpticsView::constructor args {
 # Aquisition TV / HRWFS
    $c create rectangle  80 -50 100 -70 -outline black
    $c create rectangle  75 -65 80 -55 -outline black
+   $c create text 85 -80 -text AC/HRWFS -anchor c
 
 # Incoming light beams
    $c create line -80 420 -80 143 -width 4 -tags SkyLight
@@ -237,6 +238,9 @@ itcl::body OpticsView::constructor args {
    $c create line -9 -51 9 -69 -width 2 -tags HrwfsFold
    $c create line -11 -53 7 -70 -tags HrwfsFoldBck
 
+# Raise the a&g outline so that the front edge cuts the light beam.
+   $c raise ag
+
 # Flip and move
    $c scale all 0 0 1 -1
    $c move all 120 430
@@ -251,31 +255,6 @@ itcl::body OpticsView::redraw {} {
 
    set c $itk_component(canvas)
    set SfNames {U3 U2 U5 U4 32 34 31 25 21 54 51 41}
-
-# Filter out any unset or unknown positions.
-   if { $itk_option(-m1cover) == "" || $itk_option(-m1cover) == "string" } {
-      set itk_option(-m1cover) PARK
-   }
-   if { $itk_option(-holecover) == "" || $itk_option(-holecover) == "string" } {
-      set itk_option(-holecover) PARK
-   }
-   if { $itk_option(-centralbaffle) == "" || \
-      $itk_option(-centralbaffle) == "string" } {
-      set itk_option(-centralbaffle) PARK
-   }
-   if { $itk_option(-deployablebaffle) == "" || \
-      $itk_option(-deployablebaffle) == "string" } {
-      set itk_option(-deployablebaffle) PARK
-   }
-   if { $itk_option(-scfold) == "" || $itk_option(-scfold) == "string" } {
-      set itk_option(-scfold) PARK
-   }
-   if { $itk_option(-aofold) == "" || $itk_option(-aofold) == "string" } {
-      set itk_option(-aofold) PARK
-   }
-   if { $itk_option(-hrwfs) == "" || $itk_option(-hrwfs) == "string" } {
-      set itk_option(-hrwfs) PARK
-   }
 
 # Configure the M1 cover
    if { $itk_option(-m1cover) == "closed" } {
@@ -333,7 +312,7 @@ itcl::body OpticsView::redraw {} {
 # Configure the science fold mirror
    $c itemconfigure ScFold -fill ""
    set scfoldpos ""
-   if { $itk_option(-scfold) != "PARK" && $itk_option(-scfold) != "INVALID" } {
+   if { $itk_option(-scfold) != "PARK" } {
       set scfoldpos [lindex $SfNames $itk_option(-scfold)]
       $c itemconfigure ScFold${scfoldpos} -fill white
       $c itemconfigure ScFold${scfoldpos}bck -fill black
@@ -435,5 +414,25 @@ itcl::configbody OpticsView::aopresent {
 itcl::configbody OpticsView::port2label {
    if { $itk_option(-aopresent) == 0 } {
       relabel 2
+   }
+}
+
+itcl::configbody OpticsView::scfold {
+   switch $itk_option(-scfold) {
+      cwfws {
+         set itk_option(-scfold) U2
+      }
+      curvWFS {
+         set itk_option(-scfold) U3
+      }
+      "A&Gcabinet" {
+         set itk_option(-scfold) U4
+      }
+      Hokupaa {
+         set itk_option(-scfold) U5
+      }
+      default {
+         set itk_option(-scfold) PARK
+      }
    }
 }
