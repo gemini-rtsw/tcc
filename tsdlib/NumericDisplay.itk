@@ -408,8 +408,9 @@ itcl::body NumericDisplay::update {} {
       sourceB {set chop C}
       sourceC {set chop C}
    }
+   set wavel [sadVal tcssad $itk_option(-vt)Wavelength ""]
    set demand [ast target $chop $chop \
-         [sa tcssad get $itk_option(-vt)Wavelength] \
+         [expr { $wavel / 10000.0 }] \
          [sa tcssad get $itk_option(-vt)TrackFrame] \
          [sa tcssad get $itk_option(-vt)TrackEq]]
    $itk_component(tar1) configure -text [lindex $demand 0]
