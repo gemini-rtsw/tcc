@@ -1,0 +1,9 @@
+all: tclIndex
+
+clean:
+	@rm -f tclIndex
+
+tclIndex : *.*tcl *.*tk
+	@for f in $?; do echo "modified: $$f"; done
+	@echo "package require Itcl;auto_mkindex . *.*tcl *.*tk;exit" | /gemini/ocs/ocs/bin/solaris/ocswish
+	@echo "build done: tclIndex"
