@@ -11,9 +11,7 @@
 
 itcl::class AzElPlot {
    inherit itk::Widget
-
    constructor args {}
-
    itk_option define -selectcolor selectColor Color green
    itk_option define -markcolor markColor Color red
    itk_option define -normalcolor normalcolor Color white
@@ -23,36 +21,37 @@ itcl::class AzElPlot {
    itk_option define -ellimit elLimit Limit 15.0
    itk_option define -azlolimit azloLimit Limit -160.0
    itk_option define -azhilimit azhiLimit Limit 340.0
-
-   public method add {tag ra dec}
-   public method remove tag
-   public method select tag
-   public method mark tag
-   public method unmark tag
-   public method next mode
-
-   private method el2r el
-   private method r2el r
-   private method radectoazel
-   private method replot
-   private method displayradec {x y}
-
-   private variable Slat
-   private variable Clat
-   private variable Xc
-   private variable Yc
-   private variable CurrSelection {}
-   private variable StarsRa
-   private variable StarsDec
-   private variable StarsAz
-   private variable StarsEl
-   private variable StarsState
-   private variable TelAz 0.0
-   private variable TelEl 90.0
-   private variable St 0.0
-   private variable NextPlot -1
-   private variable D2R 0.01745329251994
-   private variable 2PI 6.28318530717959
+   public {
+      method add {tag ra dec}
+      method remove {tag}
+      method select {tag}
+      method mark {tag}
+      method unmark {tag}
+      method next {mode}
+   }
+   private {
+      method el2r {el}
+      method r2el {r}
+      method radectoazel {ra dec}
+      method replot {}
+      method displayradec {x y}
+      variable Slat
+      variable Clat
+      variable Xc
+      variable Yc
+      variable CurrSelection {}
+      variable StarsRa
+      variable StarsDec
+      variable StarsAz
+      variable StarsEl
+      variable StarsState
+      variable TelAz 0.0
+      variable TelEl 90.0
+      variable St 0.0
+      variable NextPlot -1
+      variable D2R 0.01745329251994
+      variable 2PI 6.28318530717959
+   }
 }
 
 itk::usual AzElPlot {

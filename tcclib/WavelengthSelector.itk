@@ -25,14 +25,15 @@
 
 itcl::class WavelengthSelector {
    inherit itk::Widget
-
    constructor args {}
-
-   public method select item
-   public method value value
-   public method get option
-
-   private method selectioncommand {}
+   public {
+      method select {item}
+      method value {value}
+      method get {option}
+   }
+   private {
+      method selectioncommand {}
+   }
 }
 
 itk::usual WavelengthSelector {
@@ -103,7 +104,6 @@ itcl::body WavelengthSelector::selectioncommand {} {
 #-
    set name [$itk_component(selector) get]
 
-puts "selecting $name"
    $itk_component(wavel) clear
 
    if { $name != "" } {

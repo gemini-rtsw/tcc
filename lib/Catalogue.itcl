@@ -15,30 +15,37 @@
 #
 #        view            Displays the catalogue in a listbox
 #
-# D Terrett 11 July 2000
+# D Terrett 25 January 2001
 #
 # Copyright CCLRC
 #+
 
 itcl::class Catalogue {
-
    constructor {azelplot} {}
-   public method extract {index}
-   public method load
-   public method select {index}
-   public method view
-
-   public variable CatForm tpoint
-
-   private variable AzElPlot
-   private variable ListView {}
-   private variable Catalog {}
-
-   private method decodeStar {index}
+   destructor {}
+   public {
+      method extract {index}
+      method load {}
+      method select {index}
+      method view {}
+      variable CatForm tpoint
+   }
+   private {
+      method decodeStar {index}
+      variable AzElPlot
+      variable ListView {}
+      variable Catalog {}
+   }
 }
 
 itcl::body Catalogue::constructor {azelplot} {
    set AzElPlot $azelplot
+}
+
+itcl::body Catalogue::destructor {} {
+   if { [winfo exists $ListView] } {
+      destroy [winfo toplevel $ListView]
+   }
 }
 
 itcl::body Catalogue::load {} {

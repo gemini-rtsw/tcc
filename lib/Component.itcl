@@ -25,14 +25,16 @@
 #+
 
 itcl::class Component {
-
    constructor list {}
    destructor {}
-   public method refinc {} {incr refcount}
-   public method refdec {} {incr refcount -1}
-
-   protected variable componentList
-   public variable refcount 0
+   public {
+      method refinc {} {incr refcount}
+      method refdec {} {incr refcount -1}
+      variable refcount 0
+   }
+   protected {
+      variable componentList
+   }
 }
 
 itcl::body Component::constructor list {

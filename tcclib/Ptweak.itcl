@@ -11,24 +11,24 @@
 #+
 
 itcl::class Ptweak {
-
    constructor {} {}
-
-   public method display
-   public variable enable 1
-   public variable ca
-   public variable ce
-   public variable el
-
-   private variable pointobs
-   private common fitca 0
-   private common fitce 0
-   private common fitia 0
-   private common nfitted
-
-   proc fit inclia
-   proc commit {w inclia}
-   private proc postparam
+   public {
+      proc fit {inclia}
+      proc commit {w inclia}
+      method display {}
+      variable enable 1
+      variable ca
+      variable ce
+      variable el
+   }
+   private {
+      proc postparam {}
+      common fitca 0
+      common fitce 0
+      common fitia 0
+      common nfitted
+      variable pointobs
+   }
 }
 
 itcl::body Ptweak::constructor {} {

@@ -55,44 +55,44 @@
 #+
 
 itcl::class Target {
-
    constructor args {}
    destructor {$this init}
-
-   public proc subcomponents {}
-
-   public method apply vt
-   public method copy createproc
-   public method grab vt
-   public method init
-   public method preview vt
-   public method save file
-
-   public variable type {}
-   public variable objName {}
+   public {
+      proc subcomponents {}
+      method apply {vt}
+      method copy {createproc}
+      method grab {vt}
+      method init {}
+      method preview {vt}
+      method save {file}
+      variable type {}
+      variable objName {}
 
 # Type "radec"
-   public variable radec {} {if {$radec != ""} {set type radec}}
-   public variable cosys {}
-   public variable epoch {}
-   public variable parallax 0
-   public variable pm {}
-   public variable rv 0
+      variable radec {} {if {$radec != ""} {set type radec}}
+      variable cosys {}
+      variable epoch {}
+      variable parallax 0
+      variable pm {}
+      variable rv 0
 
 # Type "azel"
-   public variable azel {} {if {$azel != ""} {set type azel}}
+      variable azel {} {if {$azel != ""} {set type azel}}
 
-   public variable wavelength_name {}
-   public variable wavelength_value {} {
-      set wavelength_value [valWavelength $wavelength_value]
+      variable wavelength_name {}
+      variable wavelength_value {} {
+         set wavelength_value [valWavelength $wavelength_value]
+      }
+      variable trackrate {}
    }
-   public variable trackrate {}
-
-   protected common Wavelength ""
-
-   private variable current_cosys {}
-   private variable current_wavelength_name {}
-   private variable current_trackrate {}
+   protected {
+      common Wavelength ""
+   }
+   private {
+      variable current_cosys {}
+      variable current_wavelength_name {}
+      variable current_trackrate {}
+   }
 }
 
 itcl::body Target::subcomponents {} {

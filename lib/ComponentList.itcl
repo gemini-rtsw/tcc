@@ -35,17 +35,19 @@
 #+
 
 itcl::class ComponentList {
-
-   public method add {component position}
-   public method addwidget widget
-   public method get position {return [lindex $list $position]}
-   public method index component {return [lsearch -exact $list $component]}
-   public method length {} {return [llength $list]}
-   public method remove component
-   public method removewidget
-
-   private variable list {{}}
-   private variable widgetList {}
+   public {
+      method add {component position}
+      method addwidget {widget}
+      method get position {return [lindex $list $position]}
+      method index component {return [lsearch -exact $list $component]}
+      method length {} {return [llength $list]}
+      method remove {component}
+      method removewidget {widget}
+   }
+   private {
+      variable list {{}}
+      variable widgetList {}
+   }
 }
 
 itcl::body ComponentList::add {component position} {

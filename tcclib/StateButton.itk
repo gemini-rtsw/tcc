@@ -27,20 +27,18 @@
 
 itcl::class StateButton {
    inherit itk::Widget
-
    constructor args {}
    destructor {}
-
    itk_option define -setcommand setCommand Command {}
    itk_option define -setvalue setValue Value {} checkstate
    itk_option define -sadrecord sadrecord SadRecord {} checkstate
-
-   private method pressed
-   private method monitor {record value}
-   private method checkstate
-
-   private variable state 0
-   private variable monid
+   private {
+      method pressed {}
+      method monitor {record value}
+      method checkstate {}
+      variable state 0
+      variable monid
+   }
 }
 
 itk::usual StateButton {

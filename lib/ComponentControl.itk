@@ -37,28 +37,28 @@
 
 itcl::class ComponentControl {
    inherit itk::Widget
-
    constructor args {}
    destructor {}
-
    itk_option define -apply apply Apply tcsApply
    itk_option define -component component Component {}
    itk_option define -namespace namespace Namespace {}
    itk_option define -system system System TCS
-
-   public method select name
-   public method store name
-   public method scratchobj {} {return $scratchobj}
-   public method subselect {component name}
-
-   protected method apply args
-   protected method delselected
-
-   protected variable description
-   protected variable objclass
-   protected variable scratchobj
-
-   private method selectioncommand
+   public {
+      method select {name}
+      method store {name}
+      method scratchobj {} {return $scratchobj}
+      method subselect {component name}
+   }
+   protected {
+      method apply {args}
+      method delselected {}
+      variable description
+      variable objclass
+      variable scratchobj
+   }
+   private {
+      method selectioncommand {}
+   }
 }
 
 itk::usual ComponentControl {

@@ -3,22 +3,24 @@
 #
 #  Implements the StarSelectControl widget.
 #
-#  D Terrett 1 November 2000
+#  D Terrett 25 January 2001
 #
 #  Copyright CCLRC
 #-
 
 itcl::class StarSelectControl {
    inherit itk::Widget
-
    constructor args {}
-   method load {} {$StarCat load}
-   method view {} {$StarCat view}
-
-   private method selectstar {index}
-   private method loadposition {ra dec}
-
-   private variable StarCat
+   destructor {}
+   public {
+      method load {} {$StarCat load}
+      method view {} {$StarCat view}
+   }
+   private {
+      method selectstar {index}
+      method loadposition {ra dec}
+      variable StarCat
+   }
 }
 
 itk::usual StarSelectControl {
@@ -35,9 +37,13 @@ itcl::body StarSelectControl::constructor args {
    pack $itk_component(azelplot)
 
 # Empty star catalog.
-    set StarCat [Catalogue #auto $itk_component(azelplot)]
+   set StarCat [Catalogue #auto $itk_component(azelplot)]
 
    eval itk_initialize $args
+}
+
+itcl::body StarSelectControl::destructor {} {
+   delete object $StarCat
 }
 
 itcl::body StarSelectControl::selectstar {index} {

@@ -26,12 +26,7 @@
 
 itcl::class SelectButton {
    inherit itk::Widget
-
    constructor args {}
-
-   public method add {label args}
-   public method get {} {return $current}
-
    itk_option define -command command Command {}
    itk_option define -orient orient Orient horizontal
    itk_option define -labels labels Labels {}
@@ -41,11 +36,15 @@ itcl::class SelectButton {
    itk_option define -activeforeground activeForeground Background Black
    itk_option define -highlightcolor highlightColor HighlightColor Black
    itk_option define -highlightthickness highlightThickness HighlightThickness 2
-
-   private method selectioncommand label
-
-   private variable n 0
-   private variable current ""
+   public {
+      method add {label args}
+      method get {} {return $current}
+   }
+   private {
+      method selectioncommand {label}
+      variable n 0
+      variable current ""
+   }
 }
 
 itk::usual SelectButton {

@@ -16,22 +16,22 @@
 
 itcl::class TcsControl {
    inherit itk::Widget
-
    constructor args {}
-
-   private method disable par
-   private method enable par
-   private method carousel par
-   private method parget par
-   private method weather {}
-   private method shStep
-   private method shutterMode
-   private method m1park {par} {return PARK}
-   private method m1unpark {par} {return UNPARK}
-   private method agmech cmd
-   private method mountdatum
-   private variable dome
-   private variable shutter
+   private {
+      method disable {par}
+      method enable {par}
+      method carousel {par}
+      method parget {par}
+      method weather {}
+      method shStep {sign}
+      method shutterMode {}
+      method m1park {par} {return PARK}
+      method m1unpark {par} {return UNPARK}
+      method agmech {cmd}
+      method mountdatum {par}
+      variable dome
+      variable shutter
+   }
 }
 
 itk::usual TcsControl {
@@ -552,7 +552,7 @@ itcl::body TcsControl::weather {} {
    }
 }
 
-itcl::body TcsControl::shStep sign {
+itcl::body TcsControl::shStep {sign} {
    set sh [$itk_component(slit) get]
    set sh [expr $sh $sign 0.5]
    if { $sh > 16.999 } {
@@ -600,7 +600,7 @@ itcl::body TcsControl::agmech cmd {
    }
 }
 
-itcl::body TcsControl::mountdatum par {
+itcl::body TcsControl::mountdatum {par} {
    switch $par {
       datumAxis {return BOTH}
       azDevice {return HEAD1}

@@ -45,24 +45,24 @@
 itcl::class TrackFrame {
    constructor {} {}
    destructor {$this init}
-
-   public proc subcomponents {}
-
-   public method apply args
-   public method init
-   public method preview {} {}
-   public method save file
-
-   public variable mountCosys {} {newCosys mount $mountCosys}
-   public variable sourceACosys {} {newCosys sourceA $sourceACosys}
-   public variable sourceBCosys {} {newCosys sourceB $sourceBCosys}
-   public variable sourceCCosys {} {newCosys sourceC $sourceCCosys}
-   public variable pwfs1Cosys {} {newCosys pwfs1 $pwfs1Cosys}
-   public variable pwfs2Cosys {} {newCosys pwfs2 $pwfs2Cosys}
-   public variable oiwfsCosys {} {newCosys oiwfs $oiwfsCosys}
-
-   private method newCosys {vt name}
-   private variable current_cosys
+   public {
+      proc subcomponents {}
+      method apply {args}
+      method init {}
+      method preview {} {}
+      method save {file}
+      variable mountCosys {} {newCosys mount $mountCosys}
+      variable sourceACosys {} {newCosys sourceA $sourceACosys}
+      variable sourceBCosys {} {newCosys sourceB $sourceBCosys}
+      variable sourceCCosys {} {newCosys sourceC $sourceCCosys}
+      variable pwfs1Cosys {} {newCosys pwfs1 $pwfs1Cosys}
+      variable pwfs2Cosys {} {newCosys pwfs2 $pwfs2Cosys}
+      variable oiwfsCosys {} {newCosys oiwfs $oiwfsCosys}
+   }
+   private {
+      method newCosys {vt name}
+      variable current_cosys
+   }
 }
 
 itcl::body TrackFrame::constructor {} {

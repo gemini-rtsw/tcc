@@ -42,23 +42,22 @@
 
 itcl::class SelectGrid {
    inherit itk::Widget
-
    constructor args {}
-
    itk_option define -columnhead columnHead Label ""
    itk_option define -disablecolor disableColor Color LightGrey
    itk_option define -selectcommand selectCommand Command ""
-
-   public method add {tag args}
-   public method clear
-   public method selected
-   public method replace {tag args}
-
-   private method select row
-
-   private variable rows
-   private variable states
-   private variable tags
+   public {
+      method add {tag args}
+      method clear {}
+      method selected {}
+      method replace {tag args}
+   }
+   private {
+      method select {row}
+      variable rows
+      variable states
+      variable tags
+   }
 }
 
 itk::usual SelectGrid {

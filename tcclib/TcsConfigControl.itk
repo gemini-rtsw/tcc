@@ -10,29 +10,28 @@
 
 itcl::class TcsConfigControl {
    inherit ComponentControl
-
    constructor args {}
-
    itk_option define -shadow shadow Shadow {}
-
-   public method preview
-   public method selectobj name
-   public method updateobj name
-
-   private method apply
-   private method wrap par
-
-   private variable components {
-      scienceTarget guide pointOrig slewOptions rotator chop trackFrame \
-            instrument
+   public {
+      method preview {}
+      method selectobj {name}
+      method updateobj {name}
    }
-   private variable options {
-      -scienceTarget -guide -pointOrig -slewOptions -rotator -chop -trackFrame \
-            -instrument
-   }
-   private variable lists {
-      ScienceTargetList GuideList PointOrigList ChopList SlewOptionsList \
-            RotatorList TrackFrameList InstrumentList
+   private {
+      method apply {}
+      method wrap {par}
+      variable components {
+         scienceTarget guide pointOrig slewOptions rotator chop trackFrame \
+               instrument
+      }
+      variable options {
+         -scienceTarget -guide -pointOrig -slewOptions -rotator -chop \
+               -trackFrame -instrument
+      }
+      variable lists {
+         ScienceTargetList GuideList PointOrigList ChopList SlewOptionsList \
+               RotatorList TrackFrameList InstrumentList
+      }
    }
 }
 

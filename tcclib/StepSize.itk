@@ -17,17 +17,17 @@
 
 itcl::class StepSize {
    inherit itk::Widget
-
    constructor args {}
    destructor {}
-
-   public method get {} {return [$selected cget -text]}
-
-   private method push
-
-   private variable custom1 10
-   private variable custom2 20
-   private variable selected
+   public {
+      method get {} {return [$selected cget -text]}
+   }
+   private {
+      method push {w}
+      variable custom1 10
+      variable custom2 20
+      variable selected
+   }
 }
 
 itk::usual StepSize {
@@ -84,7 +84,7 @@ itcl::body StepSize::constructor args {
    eval itk_initialize $args
 }
 
-itcl::body StepSize::push w {
+itcl::body StepSize::push {w} {
 
 # Make the buttons sink when pressed and the other buttons pop up.
    for { set i 0 } { $i < 8 } { incr i } {

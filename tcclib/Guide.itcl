@@ -52,38 +52,37 @@
 itcl::class Guide {
    constructor {} {}
    destructor {$this init}
-
-   public proc subcomponents {}
-
-   public variable oiwfsTarget "" {newTarget oiwfs $oiwfsTarget}
-   public variable pwfs1Target "" {newTarget pwfs1 $pwfs1Target}
-   public variable pwfs2Target "" {newTarget pwfs2 $pwfs2Target}
-   public variable pwfs1Active A
-   public variable pwfs2Active A
-   public variable oiwfsActive A
-   public variable pwfs1NodState AB
-   public variable pwfs2NodState AB
-   public variable oiwfsNodState AB
+   public {
+      proc subcomponents {}
+      method apply {args}
+      method init {}
+      method preview {}
+      method save {file}
+      variable oiwfsTarget "" {newTarget oiwfs $oiwfsTarget}
+      variable pwfs1Target "" {newTarget pwfs1 $pwfs1Target}
+      variable pwfs2Target "" {newTarget pwfs2 $pwfs2Target}
+      variable pwfs1Active A
+      variable pwfs2Active A
+      variable oiwfsActive A
+      variable pwfs1NodState AB
+      variable pwfs2NodState AB
+      variable oiwfsNodState AB
 
 # These variables are retained so as not to break existing configuration
 # definition files.
-   public variable oiwfsChop
-   public variable oiwfsNod
-   public variable pwfs1Chop
-   public variable pwfs1Nod
-   public variable pwfs2Chop
-   public variable pwfs2Nod
-
-   public method apply args
-   public method init
-   public method preview
-   public method save file
-
-   private method setEnableFlags {wfs active nodstate}
-   private method newTarget {wfs name}
-   private method park {wfs}
-
-   private variable current_target
+      variable oiwfsChop
+      variable oiwfsNod
+      variable pwfs1Chop
+      variable pwfs1Nod
+      variable pwfs2Chop
+      variable pwfs2Nod
+   }
+   private {
+      method setEnableFlags {wfs active nodstate}
+      method newTarget {wfs name}
+      method park {wfs}
+      variable current_target
+   }
 }
 
 itcl::body Guide::constructor {} {

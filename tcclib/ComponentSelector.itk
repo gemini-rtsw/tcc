@@ -32,18 +32,17 @@
 
 itcl::class ComponentSelector {
    inherit itk::Widget
-
    constructor args {}
    destructor {}
-
-   public method select name
-
    itk_option define -active active Active 0 {set enable $itk_option(-active)}
    itk_option define -source source Source ""
-
-   private method enableTrace {n1 n2 op}
-
-   private variable enable
+   public {
+      method select {name}
+   }
+   private {
+      method enableTrace {n1 n2 op}
+      variable enable
+   }
 }
 
 itk::usual ComponentSelector {
