@@ -1,0 +1,135 @@
+#+
+#  CrsControl <- itk::Widget
+#
+#  An CrsControl widget contains various widget for controlling the 
+#  mount control system.
+#
+#  Options:
+#           none
+#
+#  Methods:
+#           none
+#
+#  D Terrett  14 February 2000
+#
+#  Copyright CCLRC
+#+
+
+itcl::class CrsControl {
+   inherit itk::Widget
+
+   constructor args {}
+
+   private method getParVal par
+}
+
+itk::usual CrsControl {
+   keep -cursor -font -highlightthickness -activeborderwidth -borderwidth \
+         -labelfont -popupcursor -insertborderwidth -insertofftime \
+         -insertontime -insertwidth -textfont -selectborderwidth
+}
+
+itcl::body CrsControl::constructor args {
+
+# Divide the window into two frames, top and bottom.
+   itk_component add f1 {
+      frame $itk_interior.f1
+   }
+   itk_component add f2 {
+      frame $itk_interior.f2 -bd 2 -relief ridge
+   }
+   pack $itk_component(f1) $itk_component(f2) -expand y -fill both
+
+# Move command.
+   set w $itk_component(f1)
+   itk_component add movef {
+      frame $w.movef -bd 2 -relief ridge
+   }
+   set w $itk_component(movef)
+   itk_component add move {
+      ApplyButton $w.move -command rotmove \
+            -parcommand [code $this getParVal]
+   }
+   pack $itk_component(move) -padx 4 -pady 8
+
+   itk_component add rma {
+      iwidgets::entryfield $w.rma -labeltext [lindex [cs rotmove info rma] 2] \
+           -width 10 -labelpos nw
+   }
+   pack $itk_component(rma) -fill x -expand y -padx 4 -pady 4 -anchor n
+   pack $itk_component(movef) -side left -fill y -expand y
+
+
+# Config Command.
+   set w $itk_component(f1)
+   itk_component add conff {
+      frame $w.conff -bd 2 -relief ridge
+   }
+   set w $itk_component(conff)
+   itk_component add rotconfig {
+      ApplyButton $w.rotconfig -command rotconfig
+   }
+   pack $itk_component(rotconfig) 
+   itk_component add algorithm {
+      iwidgets::optionmenu $w.algorithm \
+            -labeltext [lindex [cs rotconfig info algorithm] 2]
+   }
+   $itk_component(algorithm) insert end FDE FULL N N&M
+   itk_component add headid {
+      iwidgets::optionmenu $w.headid \
+            -labeltext [lindex [cs rotconfig info headid] 2]
+   }
+   $itk_component(headid) insert end 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15
+   pack $itk_component(rotconfig) $itk_component(algorithm) \
+         $itk_component(headid) -padx 4 -pady 4
+   pack $itk_component(conff) -side left -fill y -expand y
+
+# Tolerance control.
+   set w $itk_component(f1)
+   itk_component add tolf {
+      frame $w.tolf -bd 2 -relief ridge
+   }
+
+   set w $itk_component(tolf)
+   itk_component add rotTolerance {
+      ApplyButton $w.rotTolerance -command rotTolerance \
+            -parcommand [code $this getParVal]
+   }
+   itk_component add poslab {
+      label $w.poslab -text "Position (deg)" -anchor e
+   }
+   itk_component add vellab {
+      label $w.vellab -text "Velocity (deg/s)" -anchor e
+   }
+   itk_component add posError {
+      iwidgets::entryfield $w.posError -width 5
+   }
+   itk_component add velError {
+      iwidgets::entryfield $w.velError -width 5
+   }
+   grid $itk_component(rotTolerance) - - -pady 8
+   grid $itk_component(poslab) $itk_component(posError) \
+         -sticky ew
+   grid $itk_component(vellab) $itk_component(velError) \
+         $itk_component(velError) -sticky ew
+   pack $itk_component(tolf) -side left -fill y -expand y
+
+# Park, Stop and Datum buttons.
+   set w $itk_component(f2)
+   itk_component add rotpark {
+      ApplyButton $w.rotpark -command rotpark
+   }
+   itk_component add rotdatum {
+      ApplyButton $w.rotdatum -command rotdatum
+   }
+   itk_component add rotstop {
+      ApplyButton $w.rotstop -command rotstop
+   }
+   pack $itk_component(rotdatum) $itk_component(rotpark) \
+         $itk_component(rotstop) -side left -padx 4 -pady 4 -fill x -expand y
+   eval itk_initialize $args
+}
+
+itcl::body CrsControl::getParVal par {
+         return [$itk_component($par) get]
+}
