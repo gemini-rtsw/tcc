@@ -1,5 +1,5 @@
 #+
-#  SelectButton <- iwidgets::Labeledwidget
+#  SelectButton <- itk::Widget
 #
 #  Implements the SelectButton widget. A SelectButton is a row of LiveButtons
 #  that behave rather like radio buttons; when a button is pressed it is
@@ -19,17 +19,18 @@
 #           -orient        The orientation of the buttons (horizontal or
 #                          vertical).
 #
-#  D Terrett 7 April 2000
+#  D Terrett 25 October 2000
 #
 #  Copyright CCLRC
 #+
 
 itcl::class SelectButton {
-   inherit iwidgets::Labeledwidget
+   inherit itk::Widget
 
    constructor args {}
 
    public method add {label args}
+   public method get {} {return $current}
 
    itk_option define -command command Command {}
    itk_option define -orient orient Orient horizontal
@@ -44,10 +45,11 @@ itcl::class SelectButton {
    private method selectioncommand label
 
    private variable n 0
+   private variable current ""
 }
 
 itk::usual SelectButton {
-   keep -activebackground -activeforeground -background -cursor -foreground \
+   keep -activebackground -activeforeground -background -cursor \
          -highlightcolor -highlightthickness -onbackground -offbackground
 }
 
@@ -57,13 +59,17 @@ itcl::body SelectButton::constructor args {
 }
 
 itcl::body SelectButton::add {label args} {
+
+# determine which side to pack the buttons.
    if { $itk_option(-orient) == "horizontal" } {
       set side left
    } else {
       set side top
    }
+
+# Create the new button.
    itk_component add $n {
-      LiveButton $itk_component(lwchildsite).$n \
+      LiveButton $itk_interior.$n \
             -text $label -command [code $this selectioncommand $label]
    } {
       usual
@@ -72,15 +78,25 @@ itcl::body SelectButton::add {label args} {
    $itk_component($n) configure \
       -command [code $this selectioncommand $itk_component($n)]
    eval $itk_component($n) configure $args
-   pack $itk_component($n) -side $side -expand yes -fill both
+
+# Unpack the existing buttons.
+   set slaves [pack slaves $itk_interior]
+   if { [llength $slaves] } {
+      eval pack forget $slaves
+   }
+
+# Repack with the new one added.
+   eval pack $slaves $itk_component($n) -side $side -expand yes -fill both
    incr n
 }
 
 itcl::body SelectButton::selectioncommand w {
-   foreach button [winfo children $itk_component(lwchildsite)] {
+   foreach button [winfo children $itk_interior] {
       $button configure -state normal -background $itk_option(-offbackground)
    }
    $w configure -state disabled -background $itk_option(-onbackground)
+
+   set current [$w cget -text]
 
    if { $itk_option(-command) != "" } {
       uplevel #0 $itk_option(-command) \"[$w cget -text]\"
@@ -88,7 +104,7 @@ itcl::body SelectButton::selectioncommand w {
 }
 
 itcl::configbody SelectButton::onbackground {
-   foreach button [winfo children $itk_component(lwchildsite)] {
+   foreach button [winfo children $itk_interior] {
       if { [$button cget -state] == "disabled" } {
          $button configure -background $itk_option(-onbackground)
       }
@@ -96,7 +112,7 @@ itcl::configbody SelectButton::onbackground {
 }
 
 itcl::configbody SelectButton::offbackground {
-   foreach button [winfo children $itk_component(lwchildsite)] {
+   foreach button [winfo children $itk_interior] {
       if { [$button cget -state] == "normal" } {
          $button configure -background $itk_option(-offbackground)
       }
