@@ -4,7 +4,7 @@
 # An ActiveOptics object controls the state of the active optics (M2 tip/tilt,
 # coma correction, M1 figure). 
 #
-# D Terrett  1 February 2004
+# D Terrett  14 April 2004
 #
 # Copyright CLRC
 #+
@@ -81,8 +81,7 @@ itcl::body ActiveOptics::enable {} {
 # according to the probe chop/nod flags and modify the state accordingly.
    foreach sa [list pwfs1Guide pwfs2Guide oiwfsGuide pwfs2Guide] \
          statevar [list m2p1guide m2p2guide m2oiguide m2aoguide] \
-         state [list $p1guide $p2guide $oiguide $aoguide] \
-         probe [list PWFS1 PWFS2 OIWFS AOWFS] {
+         state [list $p1guide $p2guide $oiguide $aoguide] {
 
       set $statevar ""
       if { $state eq "On" } {
