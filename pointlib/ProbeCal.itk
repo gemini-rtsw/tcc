@@ -3,7 +3,7 @@
 #
 # The interface of the probe calibration procedure.
 #
-# D Terrett 28 June 2001
+# D Terrett 22 October 2001
 #
 # Copyright CCLRC
 #+
@@ -13,8 +13,8 @@ itcl::class ProbeCal {
    constructor {args} {}
    destructor {}
    public {
-      variable guidetelwait 30000
-      variable guidewfswait 60000
+      variable guidetelwait 30
+      variable guidewfswait 60
    }
    private {
       method start {}
@@ -25,6 +25,7 @@ itcl::class ProbeCal {
       method probesetup {p}
       method finish {}
       method manual {p}
+      method dwell {waitvar action probe}
       variable probe
       variable logfd
       variable poindex
@@ -67,14 +68,30 @@ itcl::body ProbeCal::constructor {args} {
    $itk_component(mode) select 0
 
    itk_component add pattern {
-      iwidgets::radiobox $w.pattern -labeltext "Pattern size"
+      iwidgets::radiobox $w.pattern -labeltext Pattern
    }
    $itk_component(pattern) add normal -text Normal -width 10
    $itk_component(pattern) add full -text Full
    $itk_component(pattern) select 1
 
+   itk_component add dwell {
+       iwidgets::labeledframe $w.dwell -labeltext "Guiding dwells"
+   }
+   set w [$itk_component(dwell) childsite]
+   itk_component add tel {
+      iwidgets::entryfield $w.tel -validate integer -width 4 \
+            -labeltext Telescope -labelpos w -justify right \
+            -textvariable [itcl::scope guidetelwait]
+   }
+   itk_component add p {
+      iwidgets::entryfield $w.p -validate integer -width 4 \
+            -labeltext Probe -labelpos w -justify right \
+            -textvariable [itcl::scope guidewfswait]
+   }
+   pack $itk_component(tel) $itk_component(p) -anchor e
+
    pack $itk_component(probe) $itk_component(mode) $itk_component(pattern) \
-      -side left -anchor n -padx 5
+         $itk_component(dwell) -side left -anchor n -padx 5
    
    set w $itk_interior
    itk_component add message {
@@ -231,10 +248,10 @@ itcl::body ProbeCal::constructor {args} {
       $action($p,guidesetup) configure \
             -onok [namespace code "$action($p,guidetel) start"]
       $action($p,guidetel) configure \
-            -onok "after $guidetelwait [itcl::code $this probesetup $p]"
+            -onok [itcl::code $this dwell guidetelwait probesetup $p]
       $action($p,probesetup) configure -onok [itcl::code $this manual $p]
       $action($p,guideprobe) configure \
-            -onok "after $guidewfswait [itcl::code $this log $p]"
+            -onok [itcl::code $this dwell guidewfswait log $p]
 
 # Monitor the probe arm inPosition status and A & G active C.
       sa agssad link p${p}InPosition [scope inposition${p}]
@@ -273,61 +290,64 @@ itcl::body ProbeCal::start {} {
          -title "Probe Calibration Log File"]
 
    if { ![string is space $filename] } {
-      set logfd [open $filename {WRONLY CREAT TRUNC}]
+      if {[catch {set logfd [open $filename {WRONLY CREAT TRUNC}]} msg] } {
+         tk_messageBox -icon error -message $msg -type ok
+      } else {
 
 # Disable the start button.
-      $itk_component(start) configure -state disabled
-      $itk_component(stop) configure -state normal
+         $itk_component(start) configure -state disabled
+         $itk_component(stop) configure -state normal
 
 # Write the file header.
-      set probe [$itk_component(probe) get]
-      puts $logfd $probe
-      set dt [clock format [clock seconds] -format "%Y %B %d %H:%M" -gmt 1]
-      puts $logfd "# Probe geometry calibration started at $dt UTC"
-      puts $logfd "#"
-      puts $logfd "# Current settings of probe geometry model are:"
-      puts $logfd "#"
-      puts $logfd "#  Rotary table radius: [sa agssad get p${probe}RadiusRT]"
-      puts $logfd "#  Probe arm radius:    [sa agssad get p${probe}RadiusPA]"
-      puts $logfd "#  X translation:       [sa agssad get p${probe}XTranslation]"
-      puts $logfd "#  Y translation:       [sa agssad get p${probe}YTranslation]"
-      puts $logfd "#  Rotary table offset: [sa agssad get p${probe}TableOffset]"
-      puts $logfd "#  Probe arm offset:    [sa agssad get p${probe}ArmOffset]"
-      puts $logfd "#"
-      puts $logfd "#  CA & CE are the net guiding corrections resulting from"
-      puts $logfd "#  guiding the telescope prior to the calibration observation"
-      puts $logfd "#"
-      puts $logfd "#      X          Y         RT        PA         CA        CE"
-      flush $logfd
-
+         set probe [$itk_component(probe) get]
+         puts $logfd $probe
+         set dt [clock format [clock seconds] -format "%Y %B %d %H:%M" -gmt 1]
+         puts $logfd "# Probe geometry calibration started at $dt UTC"
+         puts $logfd "#"
+         puts $logfd "# Current settings of probe geometry model are:"
+         puts $logfd "#"
+         puts $logfd "#  Rotary table radius: [sa agssad get p${probe}RadiusRT]"
+         puts $logfd "#  Probe arm radius:    [sa agssad get p${probe}RadiusPA]"
+         puts $logfd "#  X translation:       [sa agssad get p${probe}XTranslation]"
+         puts $logfd "#  Y translation:       [sa agssad get p${probe}YTranslation]"
+         puts $logfd "#  Rotary table offset: [sa agssad get p${probe}TableOffset]"
+         puts $logfd "#  Probe arm offset:    [sa agssad get p${probe}ArmOffset]"
+         puts $logfd "#"
+         puts $logfd "#  CA & CE are the net guiding corrections resulting from"
+         puts $logfd "#  guiding the telescope prior to the calibration observation"
+         puts $logfd "#"
+         puts $logfd "#      X          Y         RT        PA         CA        CE"
+         flush $logfd
+   
 # Start at the begining of the pointing origin list.
-      set poindex -1
-
+         set poindex -1
+   
 # Initialise the pointing origin list.
-      set xlist {  0   0 100 100 200}
-      set ylist {100 200 100 200 100}
-      if { [string equal [$itk_component(pattern) get] full] } {
-         lappend xlist   0    0   0 \
-               50  50  50  50 \
-              100 100 \
-              150 150 150 150 \
-              200 200
-         lappend ylist  50 150 250 \
-               50 100 150 200 \
-               50 150 \
-               50 100 150 200 \
-               50 150
-      }
-      set polist {}
-      foreach x $xlist y $ylist {
-         lappend polist "$x $y"
-         lappend polist "$y -$x"
-         lappend polist "-$x -$y"
-         lappend polist "-$y $x"
-      }
+         set xlist {  0   0 100 100 200}
+         set ylist {100 200 100 200 100}
+         if { [string equal [$itk_component(pattern) get] full] } {
+            lappend xlist   0    0   0 \
+                  50  50  50  50 \
+                 100 100 \
+                 150 150 150 150 \
+                 200 200
+            lappend ylist  50 150 250 \
+                  50 100 150 200 \
+                  50 150 \
+                  50 100 150 200 \
+                  50 150
+         }
+         set polist {}
+         foreach x $xlist y $ylist {
+            lappend polist "$x $y"
+            lappend polist "$y -$x"
+            lappend polist "-$x -$y"
+            lappend polist "-$y $x"
+         }
 
 # Start the calibration process.
-      $action($probe,setup) start
+         $action($probe,setup) start
+      }
    }
 }
 
@@ -426,4 +446,15 @@ itcl::body ProbeCal::manual {p} {
             -message "Press Ok when the star is visible on the WFS"
    }
    $action($p,guideprobe) start
+}
+
+itcl::body ProbeCal::dwell {waitvar action probe} {
+   switch $waitvar {
+      guidetelwait {
+         after [expr {$guidetelwait * 1000}] [itcl::code $this $action $probe]
+      }
+      guidewfswait {
+         after [expr {$guidewfswait * 1000}] [itcl::code $this $action $probe]
+      }
+   }
 }
