@@ -10,7 +10,7 @@
 #
 #      updates the display
 #
-# D Terrett 10 November 1999
+# D Terrett 15 November 1999
 #
 #  Copyright CCLRC
 #-
@@ -49,7 +49,7 @@ itcl::body ProbeView::constructor args {
    set c $itk_component(canvas)
 
 # Probe arm.
-   set armtag [$c create line 0 0 0 0 -width 5]
+   set armtag [$c create line 0 0 0 0 -width 3]
 
 # Guide Target.
    set p1wfs [$c create polygon 0 0 0 0 0 0 0 0 -fill orange]
@@ -77,20 +77,20 @@ itcl::configbody ProbeView::probe {
 itcl::body ProbeView::pivot a {
    switch $itk_option(-probe) {
       p1 {
-         set a1 [expr - $a + 0.0]
+         set a1 [expr $a + 180.0]
       }
       p2 {
-         set a1 [expr $a + 250.0]
+         set a1 $a
       }
    }
    set r [expr 40.0  + $a / 50.0 ]
-   set x [expr 60.0 - sin( $a1 / 57.296 ) * $r ]
-   set y [expr 60.0 + cos( $a1 / 57.296 ) * $r ]
+   set x [expr 60.0 + cos( $a1 / 57.296 ) * $r ]
+   set y [expr 60.0 - sin( $a1 / 57.296 ) * $r ]
    return [list $x $y]
 }
 
 itcl::body ProbeView::xy {x y} {
-   return [list [expr 60.0 - $y / 10.0] [expr 60.0 - $x / 10.0]]
+   return [list [expr 60.0 + $x / 10.0] [expr 60.0 - $y / 10.0]]
 }
 
 itcl::body ProbeView::update {} {
@@ -114,6 +114,7 @@ itcl::body ProbeView::update {} {
       } else {
          $itk_component(canvas) itemconfigure $armtag -fill red
       }
+   } else {
+      $itk_component(canvas) itemconfigure $armtag -fill red
    }
-   $itk_component(canvas) itemconfigure $armtag -fill red
 }
