@@ -3,7 +3,7 @@
 #
 # The interface of the probe calibration procedure.
 #
-# D Terrett 26 June 2001
+# D Terrett 27 June 2001
 #
 # Copyright CCLRC
 #+
@@ -101,8 +101,20 @@ itcl::body ProbeCal::constructor {args} {
          set pg 1
       }
 
-# Setting up M2 and guiding.
+# Setting up M2 and guiding, parking the arms and stopping the wave-front
+# sensors.
       set action($p,setup) [seq::Action #auto tcs]
+      $action($p,setup) set poriginA x $xguide
+      $action($p,setup) set poriginA y $yguide
+      $action($p,setup) set poriginB x $xguide
+      $action($p,setup) set poriginB y $yguide
+      $action($p,setup) set poriginC x $xguide
+      $action($p,setup) set poriginC y $yguide
+      $action($p,setup) set m2GuideConfig reset On
+      $action($p,setup) set m2GuideConfig samplefreq 200
+      $action($p,setup) set m2GuideConfig freq1 ""
+      $action($p,setup) set m2GuideConfig freq2 ""
+      $action($p,setup) set m2GuideConfig beam A
       $action($p,setup) set m2GuideConfig source PWFS${pg}
       $action($p,setup) set pwfs1Guide nodachopa on
       $action($p,setup) set pwfs1Guide nodbchopa off
@@ -112,6 +124,22 @@ itcl::body ProbeCal::constructor {args} {
       $action($p,setup) set pwfs2Guide nodbchopa off
       $action($p,setup) set pwfs2Guide nodachopb off
       $action($p,setup) set pwfs2Guide nodbchopb off
+      $action($p,setup) set mountGuide mode off
+      $action($p,setup) set m2Guide state off
+      $action($p,setup) set pwfs1StopObserve
+      $action($p,setup) set pwfs2StopObserve
+      $action($p,setup) set pwfs1Park
+      $action($p,setup) set pwfs2Park
+      $action($p,setup) configure \
+           -oktest [itcl::code $this isagidle] \
+           -waitvar [scope agidle(value)]
+
+      set action($p,setup2) [seq::Action #auto tcs]
+      $action($p,setup2) set m2GuideConfig reset Off
+      $action($p,setup2) set p2Follow followState on
+      $action($p,setup2) configure \
+            -waitvar [scope inposition${pg}(value)] \
+            -oktest [itcl::code $this isinposition $pg]
 
 # Setting up for guiding the telescope.
       set action($p,guidesetup) [seq::Action #auto tcs]
@@ -144,7 +172,7 @@ itcl::body ProbeCal::constructor {args} {
       set action($p,guidetel) [seq::Action #auto tcs \
             -waitvar [scope inposition${pg}(value)] \
             -oktest [itcl::code $this isinposition $pg]]
-      $action($p,guidetel) set pwfs${p}Observe noexp -1
+      $action($p,guidetel) set pwfs${pg}Observe noexp -1
       $action($p,guidetel) set m2Guide state on
       $action($p,guidetel) set mountGuide mode on
       $action($p,guidetel) set mountGuide source SCS
@@ -186,6 +214,8 @@ itcl::body ProbeCal::constructor {args} {
 
 # Chain the actions together.
       $action($p,setup) configure \
+            -onok [namespace code "$action($p,setup2) start"]
+      $action($p,setup2) configure \
             -onok [namespace code "$action($p,guidesetup) start"]
       $action($p,guidesetup) configure \
             -onok [namespace code "$action($p,guidetel) start"]
