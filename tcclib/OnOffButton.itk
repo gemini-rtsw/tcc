@@ -51,7 +51,7 @@ itcl::class OnOffButton {
       method monitor {record value}
       method checkstate {}
       variable state 0
-      variable monid
+      variable monid ""
    }
 }
 
@@ -157,7 +157,9 @@ itcl::body OnOffButton::checkstate {} {
       }
 
 # Monitor the record.
-      set monid [$sa.$rec add [itcl::code $this monitor]]
+      if { $monid == "" } {
+         set monid [$sa.$rec add [itcl::code $this monitor]]
+      }
 
 # Call the monitor routine to update the state.
       monitor $sa.$rec [sa $sa get $rec]
