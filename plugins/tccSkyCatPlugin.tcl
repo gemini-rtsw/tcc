@@ -276,16 +276,16 @@ namespace eval TccSkyCat {
       set m2FplaneSep 16539.326      ;# Distance from M2 to focal plane
       set m2Radius    511.0          ;# Radius of M2 (mm)
       set armLength      400.0       ;# Pivot to mirror centre (mm)
-      set pwfs1FplaneSep 1900.0      ;# Distance of pwfs1 from focal plane
-      set pwfs2FplaneSep 1615.0      ;# Distance of pwfs2 from focal plane
-      set pwfs1Mwidth    146.0       ;# Width of pickoff mirror (mm)
-      set pwfs1Mlength   146.0       ;# Length of pickoff mirror (mm)
-      set pwfs2Mwidth    122.0       ;# Width of pickoff mirror (mm)
-      set pwfs2Mlength   122.0       ;# Length of pickoff mirror (mm)
-      set pwfs1Awidth    196.0       ;# Width of probe arm (mm)
-      set pwfs2Awidth    196.0       ;# Width of probe arm (mm)
-      set pwfs1Adepth    196.0       ;# Depth of pwfs1 support (mm)
-      set pwfs2Adepth    196.0       ;# Depth of pwfs2 support (mm)
+      set pwfs1FplaneSep 1995.0      ;# Distance of pwfs1 from focal plane
+      set pwfs2FplaneSep 1610.0      ;# Distance of pwfs2 from focal plane
+      set pwfs1Mwidth    157.0       ;# Width of pickoff mirror (mm)
+      set pwfs1Mlength   157.0       ;# Length of pickoff mirror (mm)
+      set pwfs2Mwidth    127.0       ;# Width of pickoff mirror (mm)
+      set pwfs2Mlength   127.0       ;# Length of pickoff mirror (mm)
+      set pwfs1Awidth    202.0       ;# Width of probe arm (mm)
+      set pwfs2Awidth    202.0       ;# Width of probe arm (mm)
+      set pwfs1Adepth    202.0       ;# Depth of pwfs1 support (mm)
+      set pwfs2Adepth    202.0       ;# Depth of pwfs2 support (mm)
       set pwfs1Color     white       ;# colour for pwfs1
       set pwfs2Color     yellow      ;# colour for pwfs2
 
@@ -358,37 +358,115 @@ namespace eval TccSkyCat {
 
 # Partially vignetted region
 
+      set xylist {}
+
       set x1 [expr ($pwfsMlength/2.0 + $dr) * $mm2Pix + $r]
-      set y1 [expr (-$pwfsMwidth/2.0 - $dr) * $mm2Pix ]
+      set y1 0.0
+      lappend xylist $x1 $y1
 
       set x2 $x1
-      set y2 [expr -$y1]
+      set y2 [expr ($pwfsMwidth/2.0 ) * $mm2Pix ]
+      lappend xylist $x2 $y2 $x2 $y2
 
-      set x3 [expr (-$pwfsMlength/2.0 + $dr) * $mm2Pix + $r]
-      set y3 $y2
+# define a point at 45 degs
+      set x3 [expr ($pwfsMlength/2.0 + $dr/sqrt(2.0)) *$mm2Pix + $r]
+      set y3 [expr $y2 + $dr/sqrt(2.0)*$mm2Pix]
+      lappend xylist $x3 $y3
 
-      set x4 $x3
-      set y4 $y1
+# Now one at 90 degs
+      set x4 [expr ($pwfsMlength/2.0) * $mm2Pix + $r]
+      set y4 [expr $y2 + $dr*$mm2Pix]
+      lappend xylist $x4 $y4
+
+# Continue with straight line segments. First compute how close to the main
+# arm you can get in the x direction
+      set step [expr ($pwfsAwidth - $pwfsMwidth)/2.0]
+      set dxl [expr sqrt($dr * $dr - ($dr - $step) * ($dr - $step))]
+      
+      set x5 [expr (-$pwfsMlength/2.0 + $dxl) * $mm2Pix + $r]
+      set y5 $y4
+      lappend xylist $x5 $y5 $x5 $y5
+
+# Now reflect through the y axis
+      lappend xylist $x5 -$y5 $x5 -$y5
+      lappend xylist $x4 -$y4 $x4 -$y4
+      lappend xylist $x3 -$y3 
+      lappend xylist $x2 -$y2
+      lappend xylist $x1 -$y1 $x1 -$y1
 
       set vigType partial 
       plotShape $canvas $pwfsColor $pwfsScale $xc $yc $xpSave $ypSave $dx $dy \
-                $x1 $y1 $x2 $y2 $x3 $y3 $x4 $y4 $vigType
+                $xylist $vigType
 
-      set x1 $x4
-      set y1 [expr (-$pwfsAwidth/2.0 - $dr) * $mm2Pix ]
+# Now do the arm. It did not prove possible to draw a symmetric arm in one go.
+# Hence, the arm is drawn in two halves with the points in the list ordered
+# in the same way. This seems to be a consequnce of the way the create polygon
+# command with the "smooth" option works. Note also that P1 and P2 have
+# to be treated differently in the region where the mirror is attached to
+# the arm due to the different mechanical arrangements.
 
-      set x2 $x1
-      set y2 [expr -$y1]
+      set xylist {}
 
-      set x3 0.0
-      set y3 $y2
+      set x1 $x5
+      set y1 0.0
+      lappend xylist $x1 $y1
 
-      set x4 $x3
-      set y4 $y1
+      set x2 $x5
+      set y2 $y5 
+      lappend xylist $x2 $y2 $x2 $y2
+
+      set x3 [expr (-$pwfsMlength/2.0) * $mm2Pix + $r]
+      set y3 [expr ($pwfsAwidth/2.0 + $dr ) * $mm2Pix] 
+
+# Add an extra point in for P2 
+
+      if {$wfs == "pwfs1_target"} {
+        lappend xylist $x3 $y3 
+      } else {
+        set x23 [expr ($x2 + $x3)/2.0]
+        set y23 [expr ($y2 + $y3)/2.0]
+        lappend xylist $x23 $y23 $x3 $y3
+      }
+
+# Add another point part way down the arm to get a smoother curve
+
+        set x4 [expr $x3 - $dr * $mm2Pix]
+        set y4 $y3
+        lappend xylist $x4 $y4
+
+      set x5 0.0 
+      set y5 $y3
+      lappend xylist $x5 $y5 $x5 $y5
+
+      set x6 0.0
+      set y6 0.0 
+      lappend xylist $x6 $y6 $x6 $y6
+
+      set x7 $x1
+      set y7 $y1
+      lappend xylist $x7 $y7 $x7 $y7
 
       set vigType partial 
       plotShape $canvas $pwfsColor $pwfsScale $xc $yc $xpSave $ypSave $dx $dy \
-                $x1 $y1 $x2 $y2 $x3 $y3 $x4 $y4 $vigType
+                $xylist $vigType
+
+
+# Now reflect in the y axis to draw the other half of the arm
+      set xylist {}
+      lappend xylist $x1 -$y1
+      lappend xylist $x2 -$y2 $x2 -$y2
+      if {$wfs == "pwfs2_target"} {
+        lappend xylist $x23 -$y23
+      }
+      lappend xylist $x3 -$y3 
+      lappend xylist $x4 -$y4 
+      lappend xylist $x5 -$y5 $x5 -$y5
+      lappend xylist $x6 -$y6 $x6 -$y6
+      lappend xylist $x7 -$y7 $x7 -$y7
+
+      set vigType partial 
+      plotShape $canvas $pwfsColor $pwfsScale $xc $yc $xpSave $ypSave $dx $dy \
+                $xylist $vigType
 
 # Mirror
 
@@ -405,35 +483,78 @@ namespace eval TccSkyCat {
       set x4 $x3
       set y4 $y1
 
+      set xylist {}
+      lappend xylist $x1 $y1 $x2 $y2 $x3 $y3 $x4 $y4
       set vigType clear 
       plotShape $canvas $pwfsColor $pwfsScale $xc $yc $xpSave $ypSave $dx $dy \
-                $x1 $y1 $x2 $y2 $x3 $y3 $x4 $y4 $vigType
+                $xylist $vigType
 
-# Arm
+# Fully vignetted arm 
+
+      set xylist {}
 
       set x1 $x4
-      set y1 [expr (-$pwfsAwidth/2.0 + $dr) * $mm2Pix ]
+      set y1 0.0
+      lappend xylist $x1 $y1
 
-      set x2 $x1
-      set y2 [expr -$y1]
+      set x2 $x3
+      set y2 $y3
+      lappend xylist $x2 $y2 $x2 $y2
 
-      set x3 0.0
+      set x3 [expr (-$pwfsMlength/2.0) * $mm2Pix + $r]
       set y3 $y2
+      lappend xylist $x3 $y3 $x3 $y3
 
-      set x4 $x3
-      set y4 $y1
+# Place a couple of points along the arc or line to ensure a smooth curve
+# Calculate the end points first
+      set x6 [expr $x3 - $dxl * $mm2Pix]
+      set y6 [expr ($pwfsAwidth/2.0 - $dr) * $mm2Pix]
+
+      if {$wfs == "pwfs1_target"} {
+        set theta [expr asin($dxl/$dr)/3.0] 
+        set x4 [expr $x3 - $dr * sin($theta) * $mm2Pix]
+        set y4 [expr $y3 + ($dr * (1.0 - cos($theta)) * $mm2Pix)]
+        lappend xylist $x4 $y4
+
+        set x5 [expr $x3 - $dr * sin(2.0*$theta) * $mm2Pix]
+        set y5 [expr $y3 + ($dr * (1.0 -cos(2.0*$theta)) * $mm2Pix)]
+        lappend xylist $x5 $y5
+      } else {
+        set x4 [expr $x3 + ($x6 - $x3)/3.0]
+        set y4 [expr $y3 + ($y6 - $y3)/3.0]
+        set x5 [expr $x3 + 2.0 * ($x6 - $x3)/3.0]
+        set y5 [expr $y3 + 2.0 * ($y6 - $y3)/3.0]
+        lappend xylist $x4 $y4 $x5 $y5
+      }
+
+      lappend xylist $x6 $y6
+
+      set x7 0.0
+      set y7 $y6
+      lappend xylist $x7 $y7 $x7 $y7
+
+# Now reflect the points through the y axis
+      lappend xylist $x7 -$y7 $x7 -$y7
+      lappend xylist $x6 -$y6 $x6 -$y6
+      lappend xylist $x5 -$y5
+      lappend xylist $x4 -$y4
+      lappend xylist $x3 -$y3
+      lappend xylist $x2 -$y2 $x2 -$y2
+      lappend xylist $x1 -$y1 $x1 -$y1
+
+
 
       set vigType blocked 
       plotShape $canvas $pwfsColor $pwfsScale $xc $yc $xpSave $ypSave $dx $dy \
-                $x1 $y1 $x2 $y2 $x3 $y3 $x4 $y4 $vigType
+                $xylist $vigType
 
   }
 
-# Routine to draw a polygon as with four corners in the correct orientation
+# Routine to draw a polygon in the correct orientation
 # and projection in the focal plane
 
   proc plotShape {canvas pwfsColor pwfsScale xc yc xp yp dx dy
-                  x1 y1 x2 y2 x3 y3 x4 y4 vigType} {
+                  xylist vigType} {
 
 # Rotate each x,y pair to a frame aligned along the axis of the probe
 
@@ -444,45 +565,38 @@ namespace eval TccSkyCat {
       set cosrot [expr cos($rot)]
       set sinrot [expr sin($rot)]
 
-      set x1p [expr ($x1 * $cosrot + $y1 * $sinrot) + $xp]
-      set y1p [expr (-$x1 * $sinrot + $y1 * $cosrot) + $yp]
+      set numPoints [expr [llength $xylist] / 2 ]
 
-      set x2p [expr ($x2 * $cosrot + $y2 * $sinrot) + $xp]
-      set y2p [expr (-$x2 * $sinrot + $y2 * $cosrot) + $yp]
+      for {set i 0} {$i < $numPoints} {incr i} {
+       
+        set xindex [expr 2 * $i]
+        set yindex [expr $xindex + 1]
+   
+# Rotate these points to the correct orientation
+        set xnp [expr ([lindex $xylist $xindex] * $cosrot + \
+                       [lindex $xylist $yindex] * $sinrot) + $xp]
+        set ynp [expr ([lindex $xylist $xindex] * -$sinrot + \
+                       [lindex $xylist $yindex] * $cosrot) + $yp]
 
-      set x3p [expr ($x3 * $cosrot + $y3 * $sinrot) + $xp]
-      set y3p [expr (-$x3 * $sinrot + $y3 * $cosrot) + $yp]
+# project points into focal plane
+        lappend xyplist [expr ($xnp - $xc)/$pwfsScale + $xc]
+        lappend xyplist [expr ($ynp - $yc)/$pwfsScale + $yc]
 
-      set x4p [expr ($x4 * $cosrot + $y4 * $sinrot) + $xp]
-      set y4p [expr (-$x4 * $sinrot + $y4 * $cosrot) + $yp]
-
-# Project these points into the focal plane
-
-      set x1p [expr ($x1p - $xc)/$pwfsScale + $xc ]
-      set y1p [expr ($y1p - $yc)/$pwfsScale + $yc ]
-
-      set x2p [expr ($x2p - $xc)/$pwfsScale + $xc ]
-      set y2p [expr ($y2p - $yc)/$pwfsScale + $yc ]
-
-      set x3p [expr ($x3p - $xc)/$pwfsScale + $xc ]
-      set y3p [expr ($y3p - $yc)/$pwfsScale + $yc ]
-
-      set x4p [expr ($x4p - $xc)/$pwfsScale + $xc ]
-      set y4p [expr ($y4p - $yc)/$pwfsScale + $yc ]
+      }
 
 # Draw a polygon connecting these points
 
       if {$vigType == "partial" } {
-        $canvas create polygon $x1p $y1p $x2p $y2p $x3p $y3p $x4p $y4p \
+        eval $canvas create polygon $xyplist \
           -fill $pwfsColor -stipple gray12  \
-          -tags objects
+          -tags objects -smooth true
       } elseif {$vigType == "blocked"} {
-        $canvas create polygon $x1p $y1p $x2p $y2p $x3p $y3p $x4p $y4p \
+        eval $canvas create polygon $xyplist \
           -fill $pwfsColor -stipple gray50 \
           -tags objects
       } else {
-        $canvas create polygon $x1p $y1p $x2p $y2p $x3p $y3p $x4p $y4p \
-          -outline $pwfsColor -fill "" -tags objects
+        eval $canvas create polygon $xyplist \
+          -outline $pwfsColor -tags objects -fill {""} 
       }
   }
 
