@@ -196,15 +196,18 @@ itcl::body GuideAlarm::scanLoop {} {
     set num_enabled 0
     set gottaRingBell 0
 
-    foreach wfs {pwfs1 pwfs2 oiwfs gaos} {
-       if {[AO state $wfs]} {
-    	  set alarmEnabled($wfs) 1
-	  incr num_enabled
-       } else {
-    	  set alarmEnabled($wfs) 0
-	  setWfsColor $wfs PeachPuff1
+    if [AO cget -enabled] {
+       foreach wfs {pwfs1 pwfs2 oiwfs gaos} {
+          if {[AO state $wfs]} {
+    	     set alarmEnabled($wfs) 1
+	     incr num_enabled
+          } else {
+    	     set alarmEnabled($wfs) 0
+	     setWfsColor $wfs PeachPuff1
+          }
        }
-    }
+    
+}
     if {$num_enabled > 0} {
        foreach wfs {pwfs1 pwfs2 oiwfs gaos} {
           if {$alarmOn($wfs) == 1} { 
