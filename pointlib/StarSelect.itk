@@ -3,7 +3,7 @@
 #
 # A StarSelect widget is the main interface of the starselect application.
 #
-# D Terrett 21 July 2000
+# D Terrett 26 September 2000
 #
 # Copyright CCLRC
 #+
@@ -16,6 +16,7 @@ itcl::class StarSelect {
    private method selectstar {index}
    private method loadposition {ra dec}
    private method slew
+   private method onerror {msg}
 
    private variable SlewAction
    private variable StarCat
@@ -39,7 +40,7 @@ itcl::body StarSelect::constructor {args} {
    set StarCat [Catalogue #auto $itk_component(azelplot)]
 
 # Create the Action object that slews the telescope.
-   set SlewAction [seq::Action #auto tcs]
+   set SlewAction [seq::Action #auto tcs -onerror [itcl::code $this onerror]]
 
 # Create menus.
    itk_component add menus {
@@ -146,6 +147,12 @@ itcl::body StarSelect::slew {} {
          [[$itk_component(sourceentry) component pmdec] get]
    $SlewAction set sourceA rv \
          [[$itk_component(sourceentry) component rv] get]
+   $SlewAction set slew pointing off
 
    $SlewAction start
+}
+
+itcl::body StarSelect::onerror {msg} {
+   tk_messageBox -parent $itk_interior -icon error -type ok \
+      -message "Slew failed. TCS reports \"$msg\""
 }
