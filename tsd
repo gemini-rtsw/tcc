@@ -56,12 +56,12 @@ if {$plat == "SunOS"} {
     set dirname "bin.linux"
 }
 
-if { [catch {set almanac [exec \
-         /usr/astro/$dirname/skycalc < [file join $ROOT lib skycalc_input_file]]}]} {
+if { [catch {set fid [open "|/usr/astro/$dirname/skycalc < lib/skycalc_input_file" r]}]} {
    puts "Unable to determine whether Chile is using daylight saving time \
-         - assuming not. Please install skycalc in /star/bin."
+         - assuming not. Please install skycalc in /usr/astro/bin."
    set ::CHILE_DAYLIGHT_SAVING 0
 } else {
+   set almanac [read $fid]
    if { [string first CDT $almanac] == -1 } {
       set ::CHILE_DAYLIGHT_SAVING 0
    } else {
