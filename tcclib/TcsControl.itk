@@ -461,7 +461,12 @@ itcl::body TcsControl::constructor args {
             -labeltext [lindex [cs encThermal info mode] 2] \
    }
    $itk_component(mode) insert end Passive Active Shutdown
-   pack $itk_component(thermal) $itk_component(mode) -pady 4
+
+# AWE temporary placement of Shutter Alarm
+   itk_component add alarm {
+      ShutterAlarm $w.alarm
+   }
+   pack $itk_component(thermal) $itk_component(mode)  $itk_component(alarm) -pady 4
 
 # Create weather command sender here because we can't use an apply button
 # because the weather data CAD must not be marked if the data source is

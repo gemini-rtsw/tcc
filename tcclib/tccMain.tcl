@@ -59,6 +59,9 @@ proc tccMain args {
    epics sa applyC
    epics sa errMessage
 
+# AWE monitor Sutter Drive Currents
+   epics sa shutterDriveCurrents
+
 # Create status senders for setting SIR records
    global env
    epics ss $env(TCC_TCSNAME):sad:programID
