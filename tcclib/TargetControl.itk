@@ -18,7 +18,7 @@
 #           updateobj name  Stores the contents of the edit controls in the
 #                           Target object "name".
 #
-#  D Terrett 5 April 2000
+#  D Terrett 26 May 2000
 #
 #  Copyright CCLRC
 #+
@@ -187,8 +187,15 @@ itcl::body TargetControl::constructor args {
    pack $itk_component(az) $itk_component(el) -side left -expand y -pady 40 \
       -anchor n
 
-# Control for selecting a differential track rate.
+# Frame for track rate and wavelength.
    set w $itk_component(frame)
+   itk_component add trw {
+      frame $w.trw
+   }
+   pack $itk_component(trw)
+
+# Control for selecting a differential track rate.
+   set w $itk_component(trw)
    itk_component add trackrate {
       SubComponentSelector $w.trackrate -labeltext "Diff track rate" \
             -labelpos nw -componentlist TrackRateList -component trackrate

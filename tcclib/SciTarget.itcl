@@ -5,6 +5,8 @@
 #  the parameters needed to specify a science target.
 #
 #  Options:
+#              -airmassLimit  The airmass limit to apply when using the
+#                             instrument.
 #
 #           The following options apply when -type is planet.
 #
@@ -51,7 +53,7 @@
 #  Procs:
 #           subcomponents Returns a list of the target classes subcomponents.
 #
-#  D Terrett 5 April 2000
+#  D Terrett 26 May 2000
 #
 #  Copyright CCLRC
 #+
@@ -65,6 +67,8 @@ itcl::class SciTarget {
    public method init
    public method preview vt
    public method save file
+
+   public variable airmassLimit
 
 # Type "planet"
    public variable planet {} {if {$planet != ""} {set type planet}}
@@ -87,6 +91,8 @@ itcl::class SciTarget {
 itcl::body SciTarget::apply vt {
 
    $this Target::apply $vt
+
+   cs airmassLimit set limit $airmassLimit
 
    switch $type {
       planet {
@@ -127,6 +133,7 @@ itcl::body SciTarget::apply vt {
 
 itcl::body SciTarget::init {} {
    $this Target::init
+   set airmassLimit ""
    set planet {}
    set eltype {}
    set epochofel {}
@@ -170,7 +177,7 @@ itcl::body SciTarget::preview vt {
 
 itcl::body SciTarget::save file {
    $this Target::save $file
-   puts $file "$this configure \\"
+   puts $file "\"$this\" configure \\"
    switch $type {
       planet {
          puts $file "   -planet \"$planet\""
@@ -188,13 +195,14 @@ itcl::body SciTarget::save file {
          puts $file "   -meandist \"$meandist\" \\"
          puts $file "   -perdist \"$perdist\" \\"
          puts $file "   -eccentricity \"$eccentricity\" \\"
+         puts $file "   -meanlong \"$meanlong\" \\"
          if { $eltype == 1 || $eltype == 2 } {
             puts $file "   -meananom \"$meananom\" \\"
          }
          if { $eltype == 1 } {
             puts $file "   -dailymot \"$dailymot\" \\"
          }
-         puts $file "   -meanlong \"$meanlong\""
       }
    }
+   puts $file "   -airmassLimit \"$airmassLimit\""
 }

@@ -14,7 +14,7 @@
 #           updateobj name  Stores the contents of the edit controls in the
 #                           Instrument object "name".
 #
-#  D Terrett 24 November 1999
+#  D Terrett 26 May 2000
 #
 #  Copyright CCLRC
 #+
@@ -78,12 +78,6 @@ itcl::body InstrumentControl::constructor args {
    $itk_component(deploy) insert end "thermal IR" "near IR" optical
    pack $itk_component(deploy) -anchor e
 
-# Airmass limit
-   itk_component add airmass {
-      iwidgets::entryfield $w.airmass -labeltext "Airmass limit"
-   }
-   pack $itk_component(airmass) -anchor e
-
 # Configure the log message.
    $itk_component(storeapply) configure -logmessage "Instrument configuration"
 
@@ -106,7 +100,6 @@ itcl::body InstrumentControl::updateobj name {
    $name configure -focusOffset [$itk_component(focus) get]
    $name configure -centralBaffle [$itk_component(central) get]
    $name configure -deployableBaffle [$itk_component(deploy) get]
-   $name configure -airmassLimit [$itk_component(airmass) get]
 }
 
 itcl::body InstrumentControl::selectobj name {
@@ -116,7 +109,6 @@ itcl::body InstrumentControl::selectobj name {
 #-
    $itk_component(iaa) clear
    $itk_component(focus) clear
-   $itk_component(airmass) clear
 
    if { $name != "" } {
       $itk_component(port) select [$name cget -issFace]
@@ -124,6 +116,5 @@ itcl::body InstrumentControl::selectobj name {
       $itk_component(focus) insert end [$name cget -focusOffset]
       $itk_component(central) select [$name cget -centralBaffle]
       $itk_component(deploy) select [$name cget -deployableBaffle]
-      $itk_component(airmass) insert end [$name cget -airmassLimit]
    }
 }

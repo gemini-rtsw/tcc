@@ -5,9 +5,6 @@
 #  instrument alignment angle.
 #
 #  Options:
-#          -airmassLimit      The airmass limit to apply when using the
-#                             instrument.
-#
 #          -centralBaffle     The position of the M2 central baffle ("open"
 #                             or "closed").
 #
@@ -38,7 +35,7 @@
 #           subcomponents   Returns a list of the subcomponents of the
 #                           Instrument objects (an empty list).
 #
-#  D Terrett 21 February 2000
+#  D Terrett 26 May 2000
 #
 #  Copyright CCLRC
 #+
@@ -57,13 +54,11 @@ itcl::class Instrument {
    public variable centralBaffle closed
    public variable deployableBaffle optical
    public variable focusOffset 0
-   public variable airmassLimit
 }
 
 itcl::body Instrument::apply args {
 
-# Set airmasslimit, iaa and focus.
-   cs airmassLimit set limit $airmassLimit
+# Set iaa and focus.
    cs rotator set iaa \"$iaa\"
    cs dtelFocus set focusOffset \"$focusOffset\"
 
@@ -94,7 +89,6 @@ itcl::body Instrument::init {} {
    set centralBaffle closed
    set deployableBaffle optical
    set focusOffset 0
-   set airmassLimit ""
 }
 
 itcl::body Instrument::preview {} {
@@ -106,6 +100,5 @@ itcl::body Instrument::save file {
    puts $file "   -issFace \"$issFace\" \\"
    puts $file "   -centralBaffle \"$centralBaffle\" \\"
    puts $file "   -deployableBaffle \"$deployableBaffle\" \\"
-   puts $file "   -focusOffset \"$focusOffset\" \\"
-   puts $file "   -airmassLimit \"$airmassLimit\""
+   puts $file "   -focusOffset \"$focusOffset\""
 }
