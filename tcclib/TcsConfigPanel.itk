@@ -8,7 +8,7 @@
 #  Methods:
 #          none
 #
-#  D Terrett 14 May 2003
+#  D Terrett 20 June 2003
 #
 #  Copyright CCLRC
 #+
@@ -28,6 +28,7 @@ itcl::class TcsConfigPanel {
       variable menuno 0
       method purge {list namespace}
       method save {list namespace node}
+      method m1tune {}
    }
 }
 
@@ -80,8 +81,7 @@ itcl::body TcsConfigPanel::constructor args {
          -command "exec $::ROOT/pointtest &" \
          -label "Pointing test application"
    $itk_component(menubar) add command .tools.m1tune \
-         -command {[M1TuneWizard .#auto] activate} \
-         -label "Tune M1 with the HRWFS"
+         -command [itcl::code $this m1tune] -label "Tune M1 with the HRWFS"
 
    setWidgetColors "$itk_component(menubar) $itk_component(control)" \
          $itk_option(-background) $itk_option(-foreground)
@@ -335,4 +335,8 @@ itcl::body TcsConfigPanel::getocsobs {} {
 
 # Activate the dialog
    $dialog activate
+}
+
+itcl::body TcsConfigPanel::m1tune {} {
+   [M1TuneWizard .#auto -master $itk_interior] activate
 }
