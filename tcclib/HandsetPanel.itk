@@ -11,6 +11,11 @@
 #          none
 #
 #  D Terrett 1 May 2001
+#  M Bec     8 Jun 2001
+#		- page select callback for tab color
+#		- reddened radiobox button
+#		- hexadecimal colors kindly edited by D. Walters
+#  						
 #
 #  Copyright CCLRC
 #+
@@ -18,6 +23,14 @@
 itcl::class HandsetPanel {
    inherit Panel
    constructor args {}
+   
+   # $itk_component(handsets) config -background achieve this
+   # but reconfigures the whole widget, which look bad on the screen
+   # this avoid annoying flashing and does the job
+   private method pageSelectCB { color } {
+		[$itk_component(handsets) component tabset] config -selectbackground $color
+		[$itk_component(handsets) component canvas] config -bg $color
+		}
 }
 
 itk::usual HandsetPanel {
@@ -38,28 +51,36 @@ itcl::body HandsetPanel::constructor args {
          $itk_option(-background) $itk_option(-foreground)
 
 # Target handset
-   set w [$itk_component(handsets) add -label Targets -background pink \
-         -tabbackground pink]
+   set w [$itk_component(handsets)  add -label "Targets" -background "#add8e6"  \
+         -tabbackground  "#add8e6" -command [code $this pageSelectCB #add8e6]]
    itk_component add targets {
-      TargetHandsetControl $w.targets -background pink
+      TargetHandsetControl $w.targets -background "#add8e6"
    }
    pack $itk_component(targets)
 
 # Guiding handset
-   set w [$itk_component(handsets) add -label Guiding -background yellow \
-         -tabbackground yellow ]
+   set w [$itk_component(handsets) add -label "Pointing" -background "#ffdab9" \
+         -tabbackground "#ffdab9"  -command [code $this pageSelectCB #ffdab9]]
    itk_component add guiding {
-      GuideHandsetControl $w.guiding -background yellow
+      GuideHandsetControl $w.guiding -background "#ffdab9"
    } {
       ignore -background
    }
    pack $itk_component(guiding)
 
+   
+   # fix the 'radiobox buttons are not red' problem
+   # not sure why this happens in the first place
+   # 'red' doesn't seem to be the right red shade
+   [[$itk_component(guiding) component handset ] component orient] configure -selectcolor red
+
+
+
 # Pointing origin handset
    set w [$itk_component(handsets) add -label "Instrument Origins" \
-         -background yellowgreen -tabbackground yellowgreen]
+         -background "#fffacd" -tabbackground "#fffacd" -command [code $this pageSelectCB #fffacd]]
    itk_component add po {
-      PoHandsetControl $w.po -background yellowgreen
+      PoHandsetControl $w.po -background "#fffacd"
    }
    pack $itk_component(po)
 
