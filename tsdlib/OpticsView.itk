@@ -38,6 +38,8 @@
 #
 #          -port5label        The label for ISS port 5.
 #
+#          -pcsstate          The state of the PCS (OFF MOVING or OK)..
+#
 #          -scfold            The name of the current science fold position
 #
 #          -vignette          The fraction of vignetting by the enclosure.
@@ -70,6 +72,7 @@ itcl::class OpticsView {
    itk_option define -port3label port3Label Label "" "relabel 3"
    itk_option define -port4label port4Label Label "" "relabel 4"
    itk_option define -port5label port5Label Label "" "relabel 5"
+   itk_option define -pcsstate pcsState PcsState OFF
    itk_option define -scfoldpos0 scfoldPos0 ScfoldPos ""
    itk_option define -scfoldpos1 scfoldPos1 ScfoldPos ""
    itk_option define -scfoldpos2 scfoldPos2 ScfoldPos ""
@@ -94,7 +97,7 @@ itk::usual OpticsView {
       -port3label -port4label -port5label -scfold -selectbackground \
       -selectborderwidth -selectforeground -scfoldpos0 -scfoldpos1 \
       -scfoldpos2 -scfoldpos4 -scfoldpos5 -scfoldpos9 -scfoldpos11 \
-      -calunit
+      -calunit -pcsstate
 }
 
 itcl::body OpticsView::constructor args {
@@ -219,13 +222,17 @@ itcl::body OpticsView::constructor args {
 
 # M1 (in 2 pieces, one each side of the central hole)
    $c create polygon \
-          -100 110  -100 110  -100 127  -100 127 -75 123  -50 121 \
-          -12 120  -12 120  -12 110  -12 110  \
+          -100 115  -100 115  -100 127  -100 127 -75 123  -50 121 \
+          -12 120  -12 120  -12 115  -12 115  \
           -smooth 1 -fill white -tags M1left
+   $c create rectangle -12 110 -100 115 -outline black -tags {pcs pcsleft}
 
 # The other half is created by reflecting in x
    eval $c create polygon [$c coords M1left] -smooth 1 -fill white -tags M1right
    $c scale M1right 0 0 -1 1
+   eval $c create rectangle [$c coords pcsleft] -outline black \
+         -tags [list {pcs pcsright}]
+   $c scale pcsright 0 0 -1 1
 
 # M2
    $c create arc -200 378 200 1380 -start 275 -extent -10 -style arc \
@@ -392,6 +399,19 @@ itcl::body OpticsView::update {} {
       }
       INPOSITION {
          $c itemconfigure m2s -fill green
+      }
+   }
+
+# Set the PCS colour.
+   switch $itk_option(-pcsstate) {
+      OFF {
+         $c itemconfigure pcs -fill red
+      }
+      MOVING {
+         $c itemconfigure pcs -fill yellow
+      }
+      OK {
+         $c itemconfigure pcs -fill green
       }
    }
 

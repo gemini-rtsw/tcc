@@ -10,7 +10,7 @@
 #           update          Updates the view with the current state of the
 #                           telescope.
 #
-#  D Terrett 6 April 2000
+#  D Terrett 23 April 2000
 #
 #  Copyright CCLRC
 #-
@@ -110,6 +110,7 @@ itcl::body GraphicDisplay::update {} {
    $itk_component(probe1) update
    $itk_component(probe2) update
 
+# Determine whether there is any vignetting from the enclosure.
    set v [sadVal tcssad domeVignette -1]
    if { $v > 0.0 && $Vignette == 0 } {
       $itk_component(opticsview) configure -vignette 1
@@ -118,6 +119,8 @@ itcl::body GraphicDisplay::update {} {
       $itk_component(opticsview) configure -vignette 0
       set Vignette 0
    }
+
+# Determine the status of M2.
    set m2sfollow [isFollowing m2ssad followS]
    set m2sinpos [isInPosition m2ssad inPosition]
 
@@ -130,6 +133,22 @@ itcl::body GraphicDisplay::update {} {
    } else {
       $itk_component(opticsview) configure -m2sstate OFF
    }
+
+# Determine the state of M1.
+   if { [string equal [sa pcssad get apssMsg] "APSS inflated"] && \
+         [string equal [sa pcssad get aosMsg] "aO sub-system is ON"] && \
+         [string equal [sa pcssad get pssInPos] TRUE] && \
+         [string equal [sa pcssad get pssOn] ON] } {
+      if { [sa pcssad get aoMoving] < 10.0 } {
+         $itk_component(opticsview) configure -pcsstate OK
+      } else {
+         $itk_component(opticsview) configure -pcsstate MOVING
+      }
+   } else {
+      $itk_component(opticsview) configure -pcsstate OFF
+   }
+
+# Configure the light path.
    $itk_component(opticsview) configure \
          -deployablebaffle [sa m2ssad get deployBafflePos value] \
          -centralbaffle [sa m2ssad get centralBafflePos value] \
