@@ -47,33 +47,31 @@
 #
 #           The following options apply when -type is conicTarget.
 #
-#              -eltype        Type of elements (major, minor or comet)
+#              -format        The element format
 #
-#              -format        The element format (AsA, MPC or JPL).
+#              -epochofel     Epoch of elements.
 #
-#              -epoch         Epoch of elements.
+#              -orbinc        Orbital inclination.
 #
-#              -inclination   Inclination.
+#              -longascnode   Longitude of ascending node.
 #
-#              -anode         Longitude of ascending node.
+#              -longofperi    Longitude of perihelion.
 #
-#              -perihelion    Longitude or argument of perihelion.
+#              -argofperi     Argument of perihelion.
 #
-#              -a             Mean distance.
+#              -meandist      Mean distance.
 #
-#              -q             Perihelion distance.
+#              -peridist      Perihelion distance.
 #
-#              -e             Eccentricity.
+#              -eccentricity  Orbital eccentricity.
 #
-#              -L             Mean longitude.
+#              -meanlong      Mean longitude.
 #
-#              -M             Mean anomoly.
+#              -meananom      Mean anomaly.
 #
-#              -TP            Time of perihelion.
+#              -epochofperi   Epoch of perihelion.
 #
-#              -n             Daily motion.
-#
-#              -MA            Mean anomoly.
+#              -dailymot      Daily motion.
 #
 #  Methods:
 #           apply comp    Applies the target definition to the TCS by 
@@ -90,7 +88,7 @@
 #           save node     Saves the values of the target options to the
 #                         xml node.
 #
-#  D Terrett 17 June 2002
+#  D Terrett 11 July 2002
 #
 #  Copyright CCLRC
 #+
@@ -119,19 +117,19 @@ itcl::class Target {
       variable c1 {}
       variable c2 {}
       variable planet {}
-      variable eltype {}
       variable format {}
-      variable inclination {}
-      variable anode {}
-      variable perihelion {}
-      variable a {}
-      variable q {}
-      variable e {}
-      variable L {}
-      variable M {}
-      variable TP {}
-      variable n {}
-      variable MA {}
+      variable epochofel {}
+      variable orbinc {}
+      variable longascnode {}
+      variable longofperi {}
+      variable argofperi {}
+      variable meandist {}
+      variable peridist {}
+      variable eccentricity {}
+      variable meanlong {}
+      variable meananom {}
+      variable epochofperi {}
+      variable dailymot {}
       variable trackrate {}
       variable trackratens
    }
@@ -202,26 +200,48 @@ itcl::body Target::apply {comp} {
       conicTarget {
          if { [string equal $vt sourceA] } {
             cs orbit set objName [list $objname]
-            switch $eltype {
-               major {
-                  if { [string equal $format JPL] } {
-                     set L [expr { $anode + $perihelion + $MA }]
-                     set perihelion [expr { $anode + $perihelion }]
+            switch $format {
+               "AsA major planet" {
+                  cs orbit set eltype 1
+                  cs orbit set epoch [list $epochofel]
+                  cs orbit set inclination [list $orbinc]
+                  cs orbit set anode [list $longascnode]
+                  cs orbit set perihelion [list $longofperi]
+                  cs orbit set aorq [list $meandist]
+                  cs orbit set LorM [list $meanlong]
+                  cs orbit set e [list $eccentricity]
+                  cs orbit set n [list $dailymot]
+               }
+               "JPL major planet" {
+                  if { ! [string is double -strict $longascnode] } {
+                     error "expecting floating point number but got
+                           \"$longascnode\""
+                  }
+                  if { ! [string is double -strict $argofperi] } {
+                     error "expecting floating point number but got
+                           \"$argofperi\""
+                  }
+                  if { ! [string is double -strict $meananom] ) } {
+                     error "expecting floating point number but got
+                           \"$longascnode\""
                   }
                   cs orbit set eltype 1
-                  cs orbit set epoch [list $epoch]
-                  cs orbit set inclination [list $inclination]
-                  cs orbit set anode [list $anode]
-                  cs orbit set perihelion [list $perihelion]
-                  cs orbit set aorq [list $a]
-                  cs orbit set LorM [list $L]
-                  cs orbit set e [list $e]
-                  cs orbit set n [list $n]
+                  cs orbit set epoch [list $epochofel]
+                  cs orbit set inclination [list $orbinc]
+                  cs orbit set anode [list $longascnode]
+                  cs orbit set perihelion [expr { $longascnode + $argofperi }]
+                  cs orbit set aorq [list $meandist]
+                  cs orbit set LorM \
+                        [expr { $longascnode + $argofperi + $meananom }]
+                  cs orbit set e [list $eccentricity]
+                  cs orbit set n [list $dailymot]
                }
-               minor {
+               "AsA minor planet" -
+               "MPC minor planet" {
                   foreach {epoch1 inclination1 anode1 perihelion1 a1 e1 M1} \
-                        [slaPertel 2 $epoch $epoch $inclination $anode \
-                              $perihelion $a $e $M] {}
+                        [slaPertel 2 $epochofel $epochofel $orbinc \
+                              $longascnode $argofperi $meandist $eccentricity \
+                              $meananom] {}
                   cs orbit set eltype 2
                   cs orbit set epoch $epoch1
                   cs orbit set inclination $inclination1
@@ -232,13 +252,13 @@ itcl::body Target::apply {comp} {
                   cs orbit set e $e1
                   cs orbit set n ""
                }
-               comet {
-                  if { [string equal AsA $format] } {
-                     set TP $epoch
-                  }
+               "AsA comet" -
+               "JPL minor body" -
+               "MPC comet" {
                   foreach {epoch1 inclination1 anode1 perihelion1 q1 e1} \
-                        [slaPertel 3 $epoch $TP $inclination $anode \
-                              $perihelion $q $e] {}
+                        [slaPertel 3 $epochofel $epochofperi $orbinc \
+                              $longascnode $argofperi $peridist \
+                              $eccentricity] {}
                   cs orbit set eltype 3
                   cs orbit set epoch $epoch1
                   cs orbit set inclination $inclination1
@@ -273,19 +293,18 @@ itcl::body Target::init {} {
    set c2 {}
    $this configure -trackrate {}
    set planet {}
-   set eltype {}
    set format {}
-   set inclination {}
-   set anode {}
+   set epochofel {}
+   set orbinc {}
+   set longascnode {}
    set perihlion {}
-   set a {}
-   set q {}
-   set e {}
-   set L {}
-   set M {}
-   set TP {}
-   set n {}
-   set MA {}
+   set meandist {}
+   set peridist {}
+   set eccentricity {}
+   set meanlong {}
+   set meananom {}
+   set epochofperi {}
+   set dailymot {}
    set brightness {}
 }
 
@@ -311,29 +330,46 @@ itcl::body Target::preview vt {
       }
       conicTarget {
          if { [string equal $vt sourceA] } {
-            switch $eltype {
-               major {
-                  if { [string equal $format JPL] } {
-                     set L [expr { $anode + $perihelion + $MA }]
-                     set perihelion [expr { $anode + $perihelion }]
-                  }
-                  tccPreview set orbit 1 $epoch $inclination $anode \
-                        $perihelion $a $e $L $n
+            switch $format {
+               "AsA major planet" {
+                  tccPreview set orbit 1 $epochofel $orbinc $longascnode \
+                        $longofperi $meandist $eccentricity $meanlong $dailymot
                }
-               minor {
+               "JPL major planet" {
+                  if { ! [string is double -strict $longascnode] } {
+                     error "expecting floating point number but got
+                           \"$longascnode\""
+                  }
+                  if { ! [string is double -strict $argofperi] } {
+                     error "expecting floating point number but got
+                           \"$argofperi\""
+                  }
+                  if { ! [string is double -strict $meananom] ) } {
+                     error "expecting floating point number but got
+                           \"$longascnode\""
+                  }
+                  tccPreview set orbit 1 $epochofel $orbinc $longascnode \
+                        [expr { $longascnode + $argofperi }] $meandist \
+                        $eccentricity  \
+                        [expr { $longascnode + $argofperi + $meananom }] \
+                        $dailymot
+               }
+               "AsA minor planet" -
+               "MPC minor planet" {
                   foreach {epoch1 inclination1 anode1 perihelion1 a1 e1 M1} \
-                        [slaPertel 2 $epoch $epoch $inclination $anode \
-                              $perihelion $a $e $M] {}
+                        [slaPertel 2 $epochofel $epochofel $orbinc \
+                              $longascnode $argofperi $meandist $eccentricity \
+                              $meananom] {}
                   tccPreview set orbit 2 $epoch1 $inclination1 $anode1 \
                         $perihelion1 $a1 $e1 $M1
                }
-               comet {
-                  if { [string equal AsA $format] } {
-                     set TP $epoch
-                  }
+               "AsA comet" -
+               "JPL minor body" -
+               "MPC comet" {
                   foreach {epoch1 inclination1 anode1 perihelion1 q1 e1} \
-                        [slaPertel 3 $epoch $TP $inclination $anode \
-                              $perihelion $q $e] {}
+                        [slaPertel 3 $epochofel $epochofperi $orbinc \
+                              $longascnode $argofperi $peridist \
+                              $eccentricity] {}
                   tccPreview set orbit 3 $epoch1 $inclination1 $anode1 \
                         $perihelion1 $q1 $e1
                }
@@ -376,58 +412,52 @@ itcl::body Target::save {node} {
       }
       conicTarget {
          set node [paramset $node conicTarget]
-         switch $eltype {
-            major {
-               switch $format {
-                  JPL {
-                     param $node type $eltype
-                     param $node format $format
-                     param $node epoch $epoch
-                     param $node inclination $inclination
-                     param $node anode $anode
-                     param $node perihelion $perihelion
-                     param $node a $a
-                     param $node e $e
-                     param $node MA $MA
-                     param $node n $n
-                  }
-                  default {
-                     param $node type $eltype
-                     param $node format $format
-                     param $node epoch $epoch
-                     param $node inclination $inclination
-                     param $node anode $anode
-                     param $node perihelion $perihelion
-                     param $node a $a
-                     param $node e $e
-                     param $node L $L
-                     param $node n $n
-                  }
-               }
-            }
-            minor {
-               param $node type $eltype
+         switch $format {
+            "AsA major planet" -
+            "MPC major planet" {
                param $node format $format
-               param $node epoch $epoch
-               param $node inclination $inclination
-               param $node anode $anode
-               param $node perihelion $perihelion
-               param $node a $a
-               param $node e $e
-               param $node M $M
+               param $node epochofel $epochofel
+               param $node orbinc $orbinc
+               param $node longascnode $longascnode
+               param $node longofperi $longofperi
+               param $node meandist $meandist
+               param $node eccentricity $eccentricity
+               param $node meanlong $meanlong
+               param $node dailymot $dailymot
             }
-            comet {
-               param $node type $eltype
+            "JPL major planet" {
                param $node format $format
-               param $node epoch $epoch
-               param $node inclination $inclination
-               param $node anode $anode
-               param $node perihelion $perihelion
-               param $node q $q
-               param $node e $e
-               if { ![string equal $format AsA] } {
-                  param $node TP $TP
-               }
+               param $node epochofel $epochofel
+               param $node orbinc $orbinc
+               param $node longascnode $longascnode
+               param $node argofperi $argofperi
+               param $node meandist $meandist
+               param $node eccentricity $eccentricity
+               param $node meananom $meananom
+               param $node dailymot $dailymot
+            }
+            "AsA minor planet" -
+            "MPC minor planet" {
+               param $node format $format
+               param $node epochofel $epochofel
+               param $node orbinc $orbinc
+               param $node longascnode $longascnode
+               param $node argofperi $argofperi
+               param $node meandist $meandist
+               param $node eccentricity $eccentricity
+               param $node meananom $meananom
+            }
+            "AsA comet" -
+            "JPL minor body" -
+            "MPC comet" {
+               param $node format $format
+               param $node epochofel $epochofel
+               param $node orbinc $orbinc
+               param $node longascnode $longascnode
+               param $node peridist $peridist
+               param $node argofperi $argofperi
+               param $node eccentricity $eccentricity
+               param $node epochofperi $epochofperi
             }
          }
       }
@@ -630,17 +660,10 @@ itcl::configbody Target::system {
    }
 }
 
-# This config body traps attempts to set -type to an orbit type.
-
 itcl::configbody Target::type {
-   if { [lsearch -exact {major minor comet} $type] != -1 } {
-      set eltype $type
-      set type conicTarget
-   } else {
-     if { [lsearch -exact {hmsdegTarget degdegTarget conicTarget namedTarget} \
-           $type] == -1 } {
-         error "\"$type\" is not a recognised target type"
-     }
+   if { [lsearch -exact {hmsdegTarget degdegTarget conicTarget namedTarget} \
+        $type] == -1 } {
+      error "\"$type\" is not a recognised target type"
    }
 }
 
