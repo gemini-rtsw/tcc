@@ -10,7 +10,7 @@
 #  Methods:
 #           none
 #
-#  D Terrett  9 July 2003
+#  D Terrett  14 July 2003
 #
 #  Copyright CCLRC
 #+
@@ -55,28 +55,29 @@ itcl::body M1sControl::constructor args {
       label $w.model -text "Open Loop Model"
    }
    itk_component add updateon {
-      ApplyButton $w.updateon -command m1FigUpdates -text "Enable Updates" \
+      ApplyButton $w.updateon -command m1FigUpdates -text On \
             -parcommand [itcl::code $this updateon]
    }
    itk_component add updateoff {
-      ApplyButton $w.updateoff -command m1FigUpdates -text "Disable Updates" \
+      ApplyButton $w.updateoff -command m1FigUpdates -text Off \
             -parcommand [itcl::code $this updateoff]
    }
    itk_component add zero {
-      ApplyButton $w.zero -command m1ZeroSet -text "Zero Model" \
+      ApplyButton $w.zero -command m1ZeroSet -text Zero \
             -parcommand [itcl::code $this zeroset]
    }
    itk_component add reload {
-      ApplyButton $w.reload -command m1ModelRestore -text "Restore Model"
+      ApplyButton $w.reload -command m1ModelRestore -text Restore
    }
    grid $itk_component(park) $itk_component(unpark) -sticky ew \
          -padx 5 -pady 3
-   grid columnconfigure $itk_component(top) {0 1} -weight 1
+   grid columnconfigure $itk_component(top) {0 1} -weight 1 -uniform 1
    grid $itk_component(model) -
    grid $itk_component(updateon) $itk_component(updateoff) -sticky ew \
          -padx 5 -pady 3
    grid $itk_component(zero) $itk_component(reload) -sticky ew \
          -padx 5 -pady 3
+   grid columnconfigure $itk_component(bot) {0 1} -weight 1 -uniform 1
    grid $itk_component(top) -sticky ew
    grid $itk_component(bot) -sticky ew
 
