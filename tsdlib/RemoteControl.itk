@@ -10,7 +10,7 @@
 #  Methods:
 #           none
 #
-#  D Terrett 10 February 2000
+#  D Terrett 6 April 2000
 #
 #  Copyright CCLRC
 #-
@@ -27,10 +27,7 @@ itk::usual RemoteControl {
    keep -activebackground -activeborderwidth -activeforeground \
          -background -borderwidth -disabledforeground -cursor \
          -foreground -font -highlightcolor -highlightthickness \
-         -popupcursor -insertbackground -insertborderwidth \
-         -insertofftime -insertontime -insertwidth -labelfont \
-         -selectbackground -selectborderwidth -selectforeground \
-         -textbackground -textfont
+         -popupcursor -labelfont
 }
 
 itcl::body RemoteControl::constructor args {
@@ -53,26 +50,6 @@ itcl::body RemoteControl::constructor args {
    pack $itk_component(tlabel) -pady 4
    pack $itk_component(vt)
 
-# Frame for ISS port label controls.
-   itk_component add issport {
-      frame $itk_interior.issport -bd 2 -relief sunken
-   }
-   pack $itk_component(issport) -padx 2 -pady 2 -fill x -expand y
-   set w $itk_component(issport)
-
-   itk_component add plabel {
-      label $w.plabel -text "ISS Port Label"
-   }
-   itk_component add port {
-      iwidgets::optionmenu $w.port -command [code $this config]
-   }
-   $itk_component(port) insert end  "Port 1" "Port 3" "Port 5"
-   itk_component add label {
-      iwidgets::entryfield $w.label -width 10 -command [code $this config]
-   }
-   pack $itk_component(plabel)
-   pack $itk_component(port) $itk_component(label) -side left
-
    eval itk_initialize $args
 }
 
@@ -89,15 +66,5 @@ itcl::body RemoteControl::config {} {
          Mount {set vt mount}
       }
       .numericPanel configure -vt $vt
-   }
-   if { [winfo exists .graphicPanel] } {
-      switch [$itk_component(port) get] {
-         "Port 1" {set port -port1label}
-         "Port 2" {set port -port2label}
-         "Port 3" {set port -port3label}
-         "Port 4" {set port -port4label}
-         "Port 5" {set port -port5label}
-      }
-      .graphicPanel configure $port [$itk_component(label) get]
    }
 }
