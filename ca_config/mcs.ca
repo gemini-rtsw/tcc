@@ -3,44 +3,44 @@
 #
 # Channel access configuration file for mcs subsystem commands.
 #
-# D Terrett 28 August 1998
+# D Terrett 6 June 2000
 #
 # Copyright CCLRC
 #-
 
-command telstop tcsApply Stop
+command telstop tcsApply Stop mount
 {
-   stopAxis tcs:telstop.A Axis to stop
+   stopAxis tcs:telstop.A Axis
    azBrakes tcs:telstop.B Az brake
    elBrakes tcs:telstop.C El brake
 }
 
 command telpark	tcsApply Park mount
 {
-   dummy tcs:telpark.A Dummy field to mark CAD
+   dummy tcs:telpark.A
 }
 
-command mountDatum tcsApply Datum
+command mountDatum tcsApply Datum mount
 {
-   datumAxis  tcs:mountDatum.A Axis to datum
+   datumAxis  tcs:mountDatum.A Axis
    azDevice   tcs:mountDatum.B Az device
    elDevice   tcs:mountDatum.C El device
 }
 
-command elevation tcsApply Move elevation
+command elevation tcsApply Set mount elevation
 {
-   el tcs:elevation.A Elevation (deg)
+   el tcs:elevation.A Position
 }
 
-command azimuth tcsApply Move azimuth
+command azimuth tcsApply Set mount azimuth
 {
-   az tcs:azimuth.A Azimuth (deg)
+   az tcs:azimuth.A Position
 }
 
-command azel tcsApply Move both
+command azel tcsApply Move mount
 {
-   az tcs:azel.A Azimuth (deg)
-   el tcs:azel.B Elevation (deg)
+   az tcs:azel.A Azimuth
+   el tcs:azel.B Elevation
 }
 
 command azConfig tcsApply Configure azimuth encoders
@@ -53,16 +53,16 @@ command elConfig tcsApply Configure elevation encoders
    elAlgorithm tcs:elConfig.A Algorithm
 }
 
-command mountLog tcsApply Control fast data logging
+command mountLog tcsApply Set MCS fast data logging
 {
    sampFreq tcs:mountLog.B Sampling Frequency (Hz)
-   switch tcs:mountLog.C Logging state
+   switch tcs:mountLog.C state
 }
 
-command mountTolerance tcsApply Set tolerances
+command mountTolerance tcsApply Set mount tolerances
 {
-   azPosError tcs:mountTolerance.A Azimuth position error (deg)
-   azVelError tcs:mountTolerance.B Azimuth velocity error (deg/s)
-   elPosError tcs:mountTolerance.C Elevation position error (deg)
-   elVelError tcs:mountTolerance.D Elevation velocity error (deg/s)
+   azPosError tcs:mountTolerance.A Azimuth position error
+   azVelError tcs:mountTolerance.B Azimuth velocity error
+   elPosError tcs:mountTolerance.C Elevation position error
+   elVelError tcs:mountTolerance.D Elevation velocity error
 }

@@ -4,79 +4,83 @@
 # Channel access configuration file for tcs guiding and chopping related 
 # commands.
 #
-# D Terrett 3 May 2000
+# D Terrett 6 June 2000
 #
 # Copyright CCLRC
 #-
 
-command m1Guide tcsApply Define primary guiding mode
+command m1Guide tcsApply M1 guiding
 {
-   mode       tcs:m1GuideMode.A Guiding mode
+   mode       tcs:m1GuideMode.A Mode
+}
+
+command m1GuideConfig tcsApply Define M1 guiding
+{
    weighting  tcs:m1GuideConfig.A Weighting
-   pwfs1      tcs:m1GuideConfig.B PWFS1 weighting
-   pwfs2      tcs:m1GuideConfig.C PWFS2 weighting
-   frames     tcs:m1GuideConfig.D Number of frames to average
+   pwfs1      tcs:m1GuideConfig.B P1 weight
+   pwfs2      tcs:m1GuideConfig.C P2 weight
+   frames     tcs:m1GuideConfig.D Frames to average
 }
 
-command mountGuide tcsApply Define mount guiding mode
+command mountGuide tcsApply Define mount guiding
 {
-   mode       tcs:mountGuideMode.A Guiding mode
+   mode       tcs:mountGuideMode.A Mode
    source     tcs:mountGuideMode.B Guide Source
-   p1weight   tcs:mountGuideMode.C PWFS1 weighting
-   p2weight   tcs:mountGuideMode.D PWFS2 weighting
+   p1weight   tcs:mountGuideMode.C P1 weight
+   p2weight   tcs:mountGuideMode.D P2 weight
 }
 
-command m2Guide tcsApply M2 Guide Control
+command m2Guide tcsApply M2 Guiding
 {
-   state      tcs:m2GuideControl.A Guiding state
+   state      tcs:m2GuideControl.A State
 }
 
-command pwfs1Observe tcsApply Start PWFS1
+command pwfs1Observe tcsApply Start P1
 {
-   noexp      tcs:pwfs1Observe.A      Number of exposures
-   int        tcs:pwfs1Observe.B      Exposure interval
+   noexp      tcs:pwfs1Observe.A      Exposures
+   int        tcs:pwfs1Observe.B      interval
    outopt     tcs:pwfs1Observe.C      Output options
    label      tcs:pwfs1Observe.D      DHS label
    output     tcs:pwfs1Observe.E      DHS output
    path       tcs:pwfs1Observe.F      Path
-   name       tcs:pwfs1Observe.G      File name
+   name       tcs:pwfs1Observe.G      Filename
 }
 
-command pwfs1StopObserve tcsApply Stop PWFS1
+command pwfs1StopObserve tcsApply Stop P1
 {
-   dummy      tcs:pwfs1StopObserve.A  Stop observation
+   dummy      tcs:pwfs1StopObserve.A
 }
 
-command pwfs2Observe tcsApply Start PWFS2
+command pwfs2Observe tcsApply Start P2
 {
-   noexp      tcs:pwfs2Observe.A      Number of exposures
-   int        tcs:pwfs2Observe.B      Exposure interval
+   noexp      tcs:pwfs2Observe.A      Exposures
+   int        tcs:pwfs2Observe.B      Interval
    outopt     tcs:pwfs2Observe.C      Output options
    label      tcs:pwfs2Observe.D      DHS label
    output     tcs:pwfs2Observe.E      DHS output
    path       tcs:pwfs2Observe.F      Path
-   name       tcs:pwfs2Observe.G      File name
+   name       tcs:pwfs2Observe.G      Filename
 }
 
-command pwfs2StopObserve tcsApply Stop PWFS2
+command pwfs2StopObserve tcsApply Stop P2
 {
-   dummy      tcs:pwfs2StopObserve.A  Stop observation
+   dummy      tcs:pwfs2StopObserve.A
 }
 
-command oiwfsObserve tcsApply Start OIWFs
+command oiwfsObserve tcsApply Start OIWFS
 {
-   noexp      tcs:oiwfsObserve.A      Number of exposures
-   int        tcs:oiwfsObserve.B      Exposure interval
+   noexp      tcs:oiwfsObserve.A      Exposures
+   int        tcs:oiwfsObserve.B      Interval
    outopt     tcs:oiwfsObserve.C      Output options
    label      tcs:oiwfsObserve.D      DHS label
    output     tcs:oiwfsObserve.E      DHS output
    path       tcs:oiwfsObserve.F      Path
-   name       tcs:oiwfsObserve.G      File name
+   name       tcs:oiwfsObserve.G      Filename
 }
 
 command oiwfsStopObserve tcsApply Stop OIWFS
 {
-   dummy      tcs:oiwfsStopObserve.A  Stop observation
+   dummy      tcs:oiwfsStopObserve.A
 }
 
 status guideConfig
@@ -96,10 +100,10 @@ command m2beam tcsApply M2 beam
 
 command chop tcsApply Chop
 {
-   chop       tcs:chop.A             Chop On/Off
+   chop       tcs:chop.A             State
 }
 
 command nod tcsApply Nod
 {
-   nod        tcs:nod.A              Nod state
+   nod        tcs:nod.A              State
 }

@@ -3,17 +3,17 @@
 #
 # TCS Configuration commands channel access configuration file.
 #
-# D Terrett 5 June 2000
+# D Terrett 6 June 2000
 #
 # Copyright CCLRC
 #-
 
-command mount tcsApply Set mount target
+command mount tcsApply Mount target
 {
-   objName tcs:mount.A Object name
+   objName tcs:mount.A Name
    system tcs:mount.B System
-   theta1 tcs:mount.C RA or Azimuth
-   theta2 tcs:mount.D Dec or Elevation
+   theta1 tcs:mount.C RA/Az
+   theta2 tcs:mount.D Dec/El
    epoch tcs:mount.F Epoch
    equinox tcs:mount.E Equinox
    parallax tcs:mount.G Parallax
@@ -22,27 +22,26 @@ command mount tcsApply Set mount target
    rv tcs:mount.J Radial velocity
 }
 
-command sourceA tcsApply Set source A target
+command sourceA tcsApply Source A target
 {
-   objName tcs:sourceA.A Object name
+   objName tcs:sourceA.A Name
    system tcs:sourceA.B System
-   theta1 tcs:sourceA.C RA or Azimuth
-   theta2 tcs:sourceA.D Dec or Elevation
+   theta1 tcs:sourceA.C RA/Az
+   theta2 tcs:sourceA.D Dec/El
    epoch tcs:sourceA.F Epoch
    equinox tcs:sourceA.E Equinox
-   parallax tcs:sourceA.G Parallax (arcsec)
-   dtheta1 tcs:sourceA.H Proper motion in RA (sec/y)
-   dtheta2 tcs:sourceA.I Proper motion in Dec (arcsec/y)
-   rv tcs:sourceA.J Radial velocity (km/s)
-   planet tcs:planet.A Solar system object
+   parallax tcs:sourceA.G Parallax
+   dtheta1 tcs:sourceA.H Proper motion in RA
+   dtheta2 tcs:sourceA.I Proper motion in Dec
+   rv tcs:sourceA.J Radial velocity
 }
 
-command sourceB tcsApply Set source B target
+command sourceB tcsApply Source B target
 {
-   objName tcs:sourceB.A Object name
+   objName tcs:sourceB.A Name
    system tcs:sourceB.B System
-   theta1 tcs:sourceB.C RA or Azimuth
-   theta2 tcs:sourceB.D Dec or Elevation
+   theta1 tcs:sourceB.C RA/Az
+   theta2 tcs:sourceB.D Dec/El
    epoch tcs:sourceB.F Epoch
    equinox tcs:sourceB.E Equinox
    parallax tcs:sourceB.G Parallax
@@ -51,12 +50,26 @@ command sourceB tcsApply Set source B target
    rv tcs:sourceB.J Radial velocity
 }
 
-command pwfs1 tcsApply Set pwfs1 target
+command sourceC tcsApply Source C target
 {
-   objName tcs:pwfs1.A Object name
+   objName tcs:sourceC.A Name
+   system tcs:sourceC.B System
+   theta1 tcs:sourceC.C RA/Az
+   theta2 tcs:sourceC.D Dec/El
+   epoch tcs:sourceC.F Epoch
+   equinox tcs:sourceC.E Equinox
+   parallax tcs:sourceC.G Parallax
+   dtheta1 tcs:sourceC.H Proper motion in RA
+   dtheta2 tcs:sourceC.I Proper motion in Dec
+   rv tcs:sourceC.J Radial velocity
+}
+
+command pwfs1 tcsApply P1 target
+{
+   objName tcs:pwfs1.A Name
    system tcs:pwfs1.B System
-   theta1 tcs:pwfs1.C RA or Azimuth
-   theta2 tcs:pwfs1.D Dec or Elevation
+   theta1 tcs:pwfs1.C RA/Az
+   theta2 tcs:pwfs1.D Dec/El
    epoch tcs:pwfs1.F Epoch
    equinox tcs:pwfs1.E Equinox
    parallax tcs:pwfs1.G Parallax
@@ -65,12 +78,12 @@ command pwfs1 tcsApply Set pwfs1 target
    rv tcs:pwfs1.J Radial velocity
 }
 
-command pwfs2 tcsApply Set pwfs2 target
+command pwfs2 tcsApply P2 target
 {
-   objName tcs:pwfs2.A Object name
+   objName tcs:pwfs2.A Name
    system tcs:pwfs2.B System
-   theta1 tcs:pwfs2.C RA or Azimuth
-   theta2 tcs:pwfs2.D Dec or Elevation
+   theta1 tcs:pwfs2.C RA/Az
+   theta2 tcs:pwfs2.D Dec/El
    epoch tcs:pwfs2.F Epoch
    equinox tcs:pwfs2.E Equinox
    parallax tcs:pwfs2.G Parallax
@@ -79,12 +92,12 @@ command pwfs2 tcsApply Set pwfs2 target
    rv tcs:pwfs2.J Radial velocity
 }
 
-command oiwfs tcsApply Set oiwfs target
+command oiwfs tcsApply OIWFS target
 {
-   objName tcs:oiwfs.A Object name
+   objName tcs:oiwfs.A Name
    system tcs:oiwfs.B System
-   theta1 tcs:oiwfs.C RA or Azimuth
-   theta2 tcs:oiwfs.D Dec or Elevation
+   theta1 tcs:oiwfs.C RA/Az
+   theta2 tcs:oiwfs.D Dec/El
    epoch tcs:oiwfs.F Epoch
    equinox tcs:oiwfs.E Equinox
    parallax tcs:oiwfs.G Parallax
@@ -93,204 +106,218 @@ command oiwfs tcsApply Set oiwfs target
    rv tcs:oiwfs.J Radial velocity
 }
 
-command wavelSourceA tcsApply Set source A effective wavelength
-{
-   wavel tcs:wavelSourceA.A Wavelength (mu)
-}
-
-command wavelSourceB tcsApply Set source B effective wavelength
-{
-   wavel tcs:wavelSourceB.A Wavelength (mu)
-}
-
-command wavelMount tcsApply Set Mount effective wavelength
+command wavelMount tcsApply Mount wavelength
 {
    wavel tcs:wavelMount.A Wavelength (mu)
 }
 
-command wavelPwfs1 tcsApply Set pwfs1 effective wavelength
+command wavelSourceA tcsApply Source A wavelength
+{
+   wavel tcs:wavelSourceA.A Wavelength (mu)
+}
+
+command wavelSourceB tcsApply Source B wavelength
+{
+   wavel tcs:wavelSourceB.A Wavelength (mu)
+}
+
+command wavelSourceC tcsApply Source C wavelength
+{
+   wavel tcs:wavelSourceC.A Wavelength (mu)
+}
+
+command wavelPwfs1 tcsApply P1 wavelength
 {
    wavel tcs:wavelPwfs1.A Wavelength (mu)
 }
 
-command wavelPwfs2 tcsApply Set pwfs2 effective wavelength
+command wavelPwfs2 tcsApply P2 wavelength
 {
    wavel tcs:wavelPwfs2.A Wavelength (mu)
 }
 
-command wavelOiwfs tcsApply Set oiwfs effective wavelength
+command wavelOiwfs tcsApply OIWFS wavelength
 {
    wavel tcs:wavelOiwfs.A Wavelength (mu)
 }
 
-command difTrSourceA tcsApply Set source A differential track rates
-{
-   system tcs:difTrSourceA.A System
-   equinox tcs:difTrSourceA.B Equinox
-   epoch tcs:difTrSourceA.C Epoch (MJD TT)
-   dtheta1 tcs:difTrSourceA.D Rate in RA or Azimuth
-   dtheta2 tcs:difTrSourceA.E Rate in Dec or Elevation
-}
-
-command difTrSourceB tcsApply Set source B differential track rates
-{
-   system tcs:difTrSourceB.A System
-   equinox tcs:difTrSourceB.B Equinox
-   epoch tcs:difTrSourceB.C Epoch (MJD TT)
-   dtheta1 tcs:difTrSourceB.D Rate in RA or Azimuth
-   dtheta2 tcs:difTrSourceB.E Rate in Dec or Elevation
-}
-
-command difTrMount tcsApply Set Mount differential track rates
+command difTrMount tcsApply Mount differential track rate
 {
    system tcs:difTrMount.A System
    equinox tcs:difTrMount.B Equinox
    epoch tcs:difTrMount.C Epoch (MJD TT)
-   dtheta1 tcs:difTrMount.D Rate in RA or Azimuth
-   dtheta2 tcs:difTrMount.E Rate in Dec or Elevation
+   dtheta1 tcs:difTrMount.D RA/Az
+   dtheta2 tcs:difTrMount.E Dec/El
 }
 
-command difTrPwfs1 tcsApply Set pwfs1 differential track rates
+command difTrSourceA tcsApply Source A differential track rate
+{
+   system tcs:difTrSourceA.A System
+   equinox tcs:difTrSourceA.B Equinox
+   epoch tcs:difTrSourceA.C Epoch (MJD TT)
+   dtheta1 tcs:difTrSourceA.D RA/Az
+   dtheta2 tcs:difTrSourceA.E Dec/El
+}
+
+command difTrSourceB tcsApply Source B differential track rate
+{
+   system tcs:difTrSourceB.A System
+   equinox tcs:difTrSourceB.B Equinox
+   epoch tcs:difTrSourceB.C Epoch (MJD TT)
+   dtheta1 tcs:difTrSourceB.D RA/Az
+   dtheta2 tcs:difTrSourceB.E Dec/El
+}
+
+command difTrSourceC tcsApply Source C differential track rate
+{
+   system tcs:difTrSourceC.A System
+   equinox tcs:difTrSourceC.B Equinox
+   epoch tcs:difTrSourceC.C Epoch (MJD TT)
+   dtheta1 tcs:difTrSourceC.D RA/Az
+   dtheta2 tcs:difTrSourceC.E Dec/El
+}
+
+command difTrPwfs1 tcsApply P1 differential track rate
 {
    system tcs:difTrPwfs1.A System
    equinox tcs:difTrPwfs1.B Equinox
    epoch tcs:difTrPwfs1.C Epoch (MJD TT)
-   dtheta1 tcs:difTrPwfs1.D Rate in RA or Azimuth
-   dtheta2 tcs:difTrPwfs1.E Rate in Dec or Elevation
+   dtheta1 tcs:difTrPwfs1.D RA/Az
+   dtheta2 tcs:difTrPwfs1.E Dec/El
 }
 
-command difTrPwfs2 tcsApply Set pwfs2 differential track rates
+command difTrPwfs2 tcsApply P2 differential track rate
 {
    system tcs:difTrPwfs2.A System
    equinox tcs:difTrPwfs2.B Equinox
    epoch tcs:difTrPwfs2.C Epoch (MJD TT)
-   dtheta1 tcs:difTrPwfs2.D Rate in RA or Azimuth
-   dtheta2 tcs:difTrPwfs2.E Rate in Dec or Elevation
+   dtheta1 tcs:difTrPwfs2.D RA/Az
+   dtheta2 tcs:difTrPwfs2.E Dec/El
 }
 
-command difTrOiwfs tcsApply Set oiwfs differential track rates
+command difTrOiwfs tcsApply OIWFS differential track rate
 {
    system tcs:difTrOiwfs.A System
    equinox tcs:difTrOiwfs.B Equinox
    epoch tcs:difTrOiwfs.C Epoch (MJD TT)
-   dtheta1 tcs:difTrOiwfs.D Rate in RA or Azimuth
-   dtheta2 tcs:difTrOiwfs.E Rate in Dec or Elevation
+   dtheta1 tcs:difTrOiwfs.D RA/Az
+   dtheta2 tcs:difTrOiwfs.E Dec/El
 }
 
-command trackMount tcsApply Set mount tracking frame
+command trackMount tcsApply Mount tracking frame
 {
    system tcs:trackMount.A System
    equinox tcs:trackMount.B Equinox
 }
 
-command trackSourceA tcsApply Set source A tracking frame
+command trackSourceA tcsApply Source A tracking frame
 {
    system tcs:trackSourceA.A System
    equinox tcs:trackSourceA.B Equinox
 }
 
-command trackSourceB tcsApply Set source B tracking frame
+command trackSourceB tcsApply Source B tracking frame
 {
    system tcs:trackSourceB.A System
    equinox tcs:trackSourceB.B Equinox
 }
 
-command trackSourceC tcsApply Set source C tracking frame
+command trackSourceC tcsApply Source C tracking frame
 {
    system tcs:trackSourceC.A System
    equinox tcs:trackSourceC.B Equinox
 }
 
-command trackPwfs1 tcsApply Set pwfs1 tracking frame
+command trackPwfs1 tcsApply P1 tracking frame
 {
    system tcs:trackPwfs1.A System
    equinox tcs:trackPwfs1.B Equinox
 }
 
-command trackPwfs2 tcsApply Set pwfs2 tracking frame
+command trackPwfs2 tcsApply P2 tracking frame
 {
    system tcs:trackPwfs2.A System
    equinox tcs:trackPwfs2.B Equinox
 }
 
-command trackOiwfs tcsApply Set oiwfs tracking frame
+command trackOiwfs tcsApply OIWFS tracking frame
 {
    system tcs:trackOiwfs.A System
    equinox tcs:trackOiwfs.B Equinox
 }
 
-command pwfs1Guide tcsApply Set pwfs1 guide configuration
+command pwfs1Guide tcsApply P1 guide configuration
 {
-   nodachopa tcs:configPwfs1.A Nod A Chop A enable
-   nodachopb tcs:configPwfs1.B Nod A Chop B enable
-   nodachopc tcs:configPwfs1.C Nod A Chop C enable
-   nodbchopa tcs:configPwfs1.D Nod B Chop A enable
-   nodbchopb tcs:configPwfs1.E Nod B Chop B enable
-   nodbchopc tcs:configPwfs1.F Nod B Chop C enable
-   nodcchopa tcs:configPwfs1.G Nod C Chop A enable
-   nodcchopb tcs:configPwfs1.H Nod C Chop B enable
-   nodcchopc tcs:configPwfs1.I Nod C Chop C enable
+   nodachopa tcs:configPwfs1.A Nod A Chop A
+   nodachopb tcs:configPwfs1.B Nod A Chop B
+   nodachopc tcs:configPwfs1.C Nod A Chop C
+   nodbchopa tcs:configPwfs1.D Nod B Chop A
+   nodbchopb tcs:configPwfs1.E Nod B Chop B
+   nodbchopc tcs:configPwfs1.F Nod B Chop C
+   nodcchopa tcs:configPwfs1.G Nod C Chop A
+   nodcchopb tcs:configPwfs1.H Nod C Chop B
+   nodcchopc tcs:configPwfs1.I Nod C Chop C
 }
 
-command pwfs2Guide tcsApply Set pwfs2 guide configuration
+command pwfs2Guide tcsApply P2 guide configuration
 {
-   nodachopa tcs:configPwfs2.A Nod A Chop A enable
-   nodachopb tcs:configPwfs2.B Nod A Chop B enable
-   nodachopc tcs:configPwfs2.C Nod A Chop C enable
-   nodbchopa tcs:configPwfs2.D Nod B Chop A enable
-   nodbchopb tcs:configPwfs2.E Nod B Chop B enable
-   nodbchopc tcs:configPwfs2.F Nod B Chop C enable
-   nodcchopa tcs:configPwfs2.G Nod C Chop A enable
-   nodcchopb tcs:configPwfs2.H Nod C Chop B enable
-   nodcchopc tcs:configPwfs2.I Nod C Chop C enable
+   nodachopa tcs:configPwfs2.A Nod A Chop A
+   nodachopb tcs:configPwfs2.B Nod A Chop B
+   nodachopc tcs:configPwfs2.C Nod A Chop C
+   nodbchopa tcs:configPwfs2.D Nod B Chop A
+   nodbchopb tcs:configPwfs2.E Nod B Chop B
+   nodbchopc tcs:configPwfs2.F Nod B Chop C
+   nodcchopa tcs:configPwfs2.G Nod C Chop A
+   nodcchopb tcs:configPwfs2.H Nod C Chop B
+   nodcchopc tcs:configPwfs2.I Nod C Chop C
 }
 
-command oiwfsGuide tcsApply Set oiwfs guide configuration
+command oiwfsGuide tcsApply OIWFS guide configuration
 {
-   nodachopa tcs:configOiwfs.A Nod A Chop A enable
-   nodachopb tcs:configOiwfs.B Nod A Chop B enable
-   nodachopc tcs:configOiwfs.C Nod A Chop C enable
-   nodbchopa tcs:configOiwfs.D Nod B Chop A enable
-   nodbchopb tcs:configOiwfs.E Nod B Chop B enable
-   nodbchopc tcs:configOiwfs.F Nod B Chop C enable
-   nodcchopa tcs:configOiwfs.G Nod C Chop A enable
-   nodcchopb tcs:configOiwfs.H Nod C Chop B enable
-   nodcchopc tcs:configOiwfs.I Nod C Chop C enable
+   nodachopa tcs:configOiwfs.A Nod A Chop A
+   nodachopb tcs:configOiwfs.B Nod A Chop B
+   nodachopc tcs:configOiwfs.C Nod A Chop C
+   nodbchopa tcs:configOiwfs.D Nod B Chop A
+   nodbchopb tcs:configOiwfs.E Nod B Chop B
+   nodbchopc tcs:configOiwfs.F Nod B Chop C
+   nodcchopa tcs:configOiwfs.G Nod C Chop A
+   nodcchopb tcs:configOiwfs.H Nod C Chop B
+   nodcchopc tcs:configOiwfs.I Nod C Chop C
 }
 
-command poriginA tcsApply Set pointing origin A
+command poriginA tcsApply Instrument origin A
 {
    x tcs:poriginA.A X (mm)
    y tcs:poriginA.B Y (mm)
 }
 
-command poriginB tcsApply Set pointing origin B
+command poriginB tcsApply Instrument origin B
 {
    x tcs:poriginB.A X (mm)
    y tcs:poriginB.B Y (mm)
 }
 
-command poriginC tcsApply Set pointing origin B
+command poriginC tcsApply Instrument origin C
 {
    x tcs:poriginC.A X (mm)
    y tcs:poriginC.B Y (mm)
 }
 
-command poriginM tcsApply Set mount pointing origin
+command poriginM tcsApply Mount instrument origin
 {
    x tcs:poriginM.A X (mm)
    y tcs:poriginM.B Y (mm)
 }
 
-command rotator tcsApply Set rotator configuration
+command rotator tcsApply Rotator configuration
 {
-   ipa tcs:rotator.A Position angle (deg)
+   ipa tcs:rotator.A Position angle
    system tcs:rotator.B Reference frame
-   equinox tcs:rotator.C Equinox of reference frame
-   iaa tcs:rotator.D Alignment angle (deg)
+   equinox tcs:rotator.C Equinox
+   iaa tcs:rotator.D Alignment angle
 }
 
-command slew tcsApply Set slew options
+command slew tcsApply Slew
 {
    chopThrow tcs:slew.A Zero chop throw
    sourceOffset tcs:slew.B Zero source offsets
@@ -301,10 +328,10 @@ command slew tcsApply Set slew options
    filter2 tcs:slew.G Short circuit mount filters
    pointing tcs:slew.H Reset local pointing model adjustments
    guiding tcs:slew.I Stop guiding
-   mark tcs:slew.J Mark CAD
+   dummy tcs:slew.J Mark CAD
 }
 
-command orbit tcsApply Set orbital elements
+command orbit tcsApply Orbital elements
 {
    eltype tcs:orbit.A Orbital element type
    epochofel tcs:orbit.B Epoch of elements (TT)
@@ -321,9 +348,14 @@ command orbit tcsApply Set orbital elements
    objName tcs:orbit.J Object name
 }
 
-command chopRelative tcsApply Set relative chopping
+command planet tcsApply Solar system
 {
-   throw tcs:chopRelative.A Chop throw
+   object tcs:planet.A object
+}
+
+command chopRelative tcsApply Relative chop
+{
+   throw tcs:chopRelative.A Throw
    angle tcs:chopRelative.B Position angle
    system tcs:chopRelative.C System
    equinox tcs:chopRelative.D Equinox
