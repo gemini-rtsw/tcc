@@ -11,7 +11,7 @@
 #
 #  options
 #
-#  D Terrett 2 June 2000
+#  D Terrett 9 June 2000
 #
 #  Copyright CCLRC
 #-
@@ -353,6 +353,8 @@ itcl::body NumericDisplay::newtarget args {
    
 # Telescope position (in tracking frame of the mount).
    set system [sa tcssad get mountTrackFrame]
+   set type ""
+   set year ""
    scan [sa tcssad get mountTrackEq] "%c%d" type year
    set type [format "%c" $type]
    set wavel [sadVal tcssad mountWavelength ""]
@@ -382,6 +384,8 @@ itcl::body NumericDisplay::newtarget args {
 
 # Target position.
    set system [sa tcssad get sourceATrackFrame]
+   set type ""
+   set year ""
    scan [sa tcssad get sourceATrackEq] "%c%d" type year
    set type [format "%c" $type]
    set wavel [sadVal tcssad sourceAWavelength ""]

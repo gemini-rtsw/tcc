@@ -10,7 +10,7 @@
 #  Methods:
 #           update      Calls the update method of the Numeric Display.
 #
-#  D Terrett 27 April 1999
+#  D Terrett 9 June 2000
 #
 #  Copyright CCLRC
 #+
@@ -56,6 +56,7 @@ itcl::body NumericPanel::constructor args {
 
 itcl::body NumericPanel::update {} {
 
-# Update the control component.
-   $itk_component(control) update
+# Update the control component. This is protected by catch as the SAD may
+# contain invalid information when the TCS is initialising.
+   catch {$itk_component(control) update}
 }
