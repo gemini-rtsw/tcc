@@ -5,6 +5,9 @@
 #
 #  D Terrett 12 November 1999
 #
+#  23/01/00 (CJM) Replace single follow command and check buttons with a 
+#                 command for each subsystem and apply buttons
+#
 #  Copyright CCLRC
 #+
 
@@ -13,6 +16,7 @@ itcl::class TcsControl {
 
    constructor args {}
 
+   private method disable par
    private method enable par
    private method carousel par
    private method parget par
@@ -63,6 +67,36 @@ itcl::body TcsControl::constructor args {
    pack $itk_component(row1f1) $itk_component(row1f2) $itk_component(row1f3) \
          -side left -fill both -expand y
 
+# The second frame in the first row is divided into 8 horizontally
+   set w $itk_component(row1f2)
+   itk_component add f2r1 {
+      frame $w.f2r1 -bd 2
+   }
+   itk_component add f2r2 {
+      frame $w.f2r2 -bd 2
+   }
+   itk_component add f2r3 {
+      frame $w.f2r3 -bd 2
+   }
+   itk_component add f2r4 {
+      frame $w.f2r4 -bd 2
+   }
+   itk_component add f2r5 {
+      frame $w.f2r5 -bd 2
+   }
+   itk_component add f2r6 {
+      frame $w.f2r6 -bd 2
+   }
+   itk_component add f2r7 {
+      frame $w.f2r7 -bd 2
+   }
+   itk_component add f2r8 {
+      frame $w.f2r8 -bd 2
+   }
+   pack $itk_component(f2r1) $itk_component(f2r2) $itk_component(f2r3) \
+        $itk_component(f2r4) $itk_component(f2r5) $itk_component(f2r6) \
+        $itk_component(f2r7) $itk_component(f2r8) -fill both -expand yes 
+
 # The third frame in the first row is divided into 2 horizontally.
    set w $itk_component(row1f3)
    itk_component add f3top {
@@ -106,60 +140,110 @@ itcl::body TcsControl::constructor args {
          $itk_component(test) $itk_component(reboot) -padx 4 -pady 8 \
          -expand y -fill both 
 
-# Enable command.
-   set w $itk_component(row1f2)
-   itk_component add enable {
-      ApplyButton $w.enable -command follow -parcommand [code $this enable]
+# Commands to enable/disable following in each subsystem 
+   set w $itk_component(f2r1)
+   itk_component add header {
+      label $w.followLabel -text "Set following state"
    }
-   itk_component add mcs {
-       checkbutton $w.mcs -text [lindex [cs follow info mcs] 2] \
-      -onvalue On -offvalue Off -variable $w._mcs
+   set w $itk_component(f2r2)
+   itk_component add mcsLabel {
+      label $w.mcsLabel -text "Mount    " 
    }
-   $itk_component(mcs) invoke
-   itk_component add crs {
-       checkbutton $w.crs -text [lindex [cs follow info crs] 2] \
-             -onvalue On -offvalue Off -variable $w._crs
+   itk_component add mcsOn {
+      ApplyButton $w.mcsOn -command mcFollow -text On -parcommand \
+          [code $this enable] 
    }
-   $itk_component(crs) invoke
-   itk_component add ecs {
-       checkbutton $w.ecs -text [lindex [cs follow info ecs] 2] \
-             -onvalue On -offvalue Off -variable $w._ecs
+   itk_component add mcsOff {
+      ApplyButton $w.mcsOff -command mcFollow -text Off -parcommand \
+          [code $this disable] 
    }
-   $itk_component(ecs) invoke
-   itk_component add ag1 {
-       checkbutton $w.ag1 -text [lindex [cs follow info ag1] 2] \
-             -onvalue On -offvalue Off -variable $w._ag1
+   set w $itk_component(f2r3)
+   itk_component add crcsLabel {
+      label $w.crcsLabel -text "Rotator  " 
    }
-   $itk_component(ag1) invoke
-   itk_component add ag2 {
-       checkbutton $w.ag2 -text [lindex [cs follow info ag2] 2] \
-             -onvalue On -offvalue Off -variable $w._ag2
+   itk_component add crcsOn {
+      ApplyButton $w.crcsOn -command crFollow -text On -parcommand \
+          [code $this enable] 
    }
-   $itk_component(ag2) invoke
-   itk_component add ago {
-       checkbutton $w.ago -text [lindex [cs follow info ago] 2] \
-             -onvalue On -offvalue Off -variable $w._ago
+   itk_component add crcsOff {
+      ApplyButton $w.crcsOff -command crFollow -text Off -parcommand \
+          [code $this disable] 
    }
-   $itk_component(ago) invoke
-   itk_component add scs {
-       checkbutton $w.scs -text [lindex [cs follow info scs] 2] \
-             -onvalue On -offvalue Off -variable $w._scs
+   set w $itk_component(f2r4)
+   itk_component add p1Label {
+      label $w.p1Label -text "PWFS1    " 
    }
-   $itk_component(scs) invoke
-   itk_component add aos {
-       checkbutton $w.aos -text [lindex [cs follow info aos] 2] \
-             -onvalue On -offvalue Off -variable $w._aos
+   itk_component add pwfs1On {
+      ApplyButton $w.pwfs1On -command p1Follow -text On -parcommand \
+          [code $this enable] 
    }
-   $itk_component(aos) invoke
-
-   pack $itk_component(enable) -pady 4
-# ECS removed until follow is implemented.
-#   pack $itk_component(mcs) $itk_component(crs) $itk_component(ecs) \
-#         $itk_component(ag1) $itk_component(ag2) $itk_component(ago) \
-#         $itk_component(scs) $itk_component(aos) -anchor w
-   pack $itk_component(mcs) $itk_component(crs) \
-         $itk_component(ag1) $itk_component(ag2) $itk_component(ago) \
-         $itk_component(scs) $itk_component(aos) -anchor w
+   itk_component add pwfs1Off {
+      ApplyButton $w.pwfs1Off -command p1Follow -text Off -parcommand \
+          [code $this disable] 
+   }
+   set w $itk_component(f2r5)
+   itk_component add p2Label {
+      label $w.p2Label -text "PWFS2    " 
+   }
+   itk_component add pwfs2On {
+      ApplyButton $w.pwfs2On -command p2Follow -text On -parcommand \
+          [code $this enable] 
+   }
+   itk_component add pwfs2Off {
+      ApplyButton $w.pwfs2Off -command p2Follow -text Off -parcommand \
+          [code $this disable] 
+   }
+   set w $itk_component(f2r6)
+   itk_component add oiLabel {
+      label $w.oiLabel -text "OIWFS    " 
+   }
+   itk_component add oiwfsOn {
+      ApplyButton $w.oiwfsOn -command oiFollow -text On -parcommand \
+          [code $this enable] 
+   }
+   itk_component add oiwfsOff {
+      ApplyButton $w.oiwfsOff -command oiFollow -text Off -parcommand \
+          [code $this disable] 
+   }
+   set w $itk_component(f2r7)
+   itk_component add m2Label {
+      label $w.oiLabel -text "Secondary" 
+   }
+   itk_component add scsOn {
+      ApplyButton $w.scsOn -command m2Follow -text On -parcommand \
+          [code $this enable] 
+   }
+   itk_component add scsOff {
+      ApplyButton $w.scsOff -command m2Follow -text Off -parcommand \
+          [code $this disable] 
+   }
+   set w $itk_component(f2r8)
+   itk_component add aoLabel {
+      label $w.oiLabel -text "AOS      " 
+   }
+   itk_component add aoOn {
+      ApplyButton $w.aoOn -command aoFollow -text On -parcommand \
+          [code $this enable] 
+   }
+   itk_component add aoOff {
+      ApplyButton $w.aoOff -command aoFollow -text Off -parcommand \
+          [code $this disable] 
+   }
+   pack $itk_component(header) 
+   pack $itk_component(mcsLabel) $itk_component(mcsOn) $itk_component(mcsOff) \
+        -side left 
+   pack $itk_component(crcsLabel) $itk_component(crcsOn) \
+        $itk_component(crcsOff) -side left 
+   pack $itk_component(p1Label) $itk_component(pwfs1On)\
+        $itk_component(pwfs1Off) -side left
+   pack $itk_component(p2Label) $itk_component(pwfs2On) \
+        $itk_component(pwfs2Off) -side left
+   pack $itk_component(oiLabel) $itk_component(oiwfsOn) \
+        $itk_component(oiwfsOff) -side left
+   pack $itk_component(m2Label) $itk_component(scsOn) \
+        $itk_component(scsOff) -side left
+   pack $itk_component(aoLabel) $itk_component(aoOn) \
+        $itk_component(aoOff) -side left
 
 # Carousel driving mode command.
    set w $itk_component(f3top)
@@ -284,10 +368,16 @@ itcl::body TcsControl::constructor args {
 
 itcl::body TcsControl::enable par {
 #+
-# Sets enable command parameters.
+# Enables following in a TCS subsystem
 #-
-   upvar #0 [$itk_component($par) cget -variable] var
-   return $var
+   return On
+}
+
+itcl::body TcsControl::disable par {
+#+
+# Disables following in a TCS subsystem
+#-
+   return Off
 }
 
 itcl::body TcsControl::carousel par {
