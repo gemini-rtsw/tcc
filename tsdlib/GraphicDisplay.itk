@@ -10,7 +10,7 @@
 #           update          Updates the view with the current state of the
 #                           telescope.
 #
-#  D Terrett 25 June 2002
+#  D Terrett 18 November 2002
 #
 #  Copyright CCLRC
 #-
@@ -131,7 +131,7 @@ itcl::body GraphicDisplay::constructor args {
    pack $itk_component(pwfs2) $itk_component(pwfs1) $itk_component(oiwfs) \
          -side bottom -pady 10
 
-# Configure the ISS port numbers.
+# Configure the ISS port numbers and AO.
    $itk_component(opticsview) configure -portAnumber 1 
    switch [sa tcssad get name] {
       Gemini-North {
@@ -139,6 +139,7 @@ itcl::body GraphicDisplay::constructor args {
          $itk_component(opticsview) configure -portCnumber 3
          $itk_component(opticsview) configure -portDnumber 2
          $itk_component(opticsview) configure -portEnumber 5
+         $itk_component(opticsview) configure -aopresent 1
       }
       Gemini-South {
          $itk_component(opticsview) configure -portBnumber 4
@@ -342,6 +343,8 @@ itcl::body GraphicDisplay::update {} {
          -deployablebaffle [sa m2ssad get deployBafflePos value] \
          -centralbaffle [sa m2ssad get centralBafflePos value] \
          -aofold [sa agssad get aoName value] \
+         -aoentrance [sa aossad get entShutterOpen value] \
+         -aoexit [sa aossad get exitShutterOpen value] \
          -hrwfs [sa agssad get hwName value] \
          -m1cover [sa gissad get m1cover value] \
          -holecover [sa gissad get m1inst value] \

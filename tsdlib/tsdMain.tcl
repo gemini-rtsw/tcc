@@ -5,7 +5,7 @@
 #  Arguments:
 #             Any command line options and values.
 #
-#  D Terrett 5 April 2002
+#  D Terrett 18 November 2002
 #
 #  Copyright CCLRC
 #-
@@ -29,6 +29,7 @@ proc tsdMain args {
    epics sa ecssad
    epics sa gissad
    epics sa pcssad
+   epics sa aossad
    epics sa gcalsad
    epics sa gpolsad
 

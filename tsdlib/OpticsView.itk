@@ -4,6 +4,10 @@
 #  Implements the OpticsView widget.
 #
 #  Options:
+#          -aoentrance        True if the AO entrance shutter is open.
+#
+#          -aoexit            True if the AO exit shutter is open.
+#
 #          -aofold            The position of the ao fold mirror (IN or OUT).
 #
 #          -aopresent         AO unit present (boolean).
@@ -65,7 +69,7 @@
 #                             according to the state of the configuration
 #                             options.
 #
-#  D Terrett  26 April 2002
+#  D Terrett  18 November 2002
 #
 #  Copyright CCLRC
 #-
@@ -78,6 +82,8 @@ itcl::class OpticsView {
    itk_option define -centralbaffle centralBaffle CentralBaffle "" 
    itk_option define -deployablebaffle deployableBaffle DeployableBaffle 0 
    itk_option define -aofold aoFold AoFold out 
+   itk_option define -aoentrance aoEntrance AoEntrance 0 
+   itk_option define -aoexit aoExit AoExit 0 
    itk_option define -scfold scFold ScFold 0 
    itk_option define -hrwfs hrwfs Hrwfs in 
    itk_option define -m2sstate m2sState M2sState OFF
@@ -225,15 +231,14 @@ itcl::body OpticsView::constructor args {
 
 # AO to Science fold
    $c create line 0 65  80 95 -width 6 -tags {Light AoLight}
-   $c lower \
-         [$c create line 80 95  80 70  50 55 -width 6 -tags {Light AoLight}] \
-         aoport
+   $c lower [$c create line 80 95 80 70  50 55 -width 6 \
+         -tags {Light AoLightEnt}] aoport
    $c create line 0 65  80 95  -width 6 -tags {Light AoLightNoAo}
    $c create line 0 65  0 30 -width 6 -tags {Light NotAoLight}
 
 # Science fold to ISS face/HRWFS fold
    $c create line 0 30 0 -60 -width 6 -tags {Light IssLightA}
-   $c create line 0 30 50 55 -width 6 -tags {Light IssLightB AoLight}
+   $c create line 0 30 50 55 -width 6 -tags {Light IssLightB AoLightExit}
    $c create line 0 30 -50 55 -width 6 -tags {Light IssLightC}
    $c create line 0 30 -50 5 -width 6 -tags {Light IssLightD}
    $c create line 0 30 50 5 -width 6 -tags {Light IssLightE}
@@ -521,6 +526,7 @@ itcl::body OpticsView::update {} {
 
 # Assume no light emerging from the ISS.
    set outport ""
+   set inport ""
 
    if { $itk_option(-m1cover) == "OPENED" } {
       $c itemconfigure M1Light -fill $l
@@ -534,10 +540,15 @@ itcl::body OpticsView::update {} {
          } else {
             if { $itk_option(-aopresent) == 1 } {
                $c itemconfigure AoLight -fill $l
-               set inport B
+               if { $itk_option(-aoentrance) } {
+                  $c itemconfigure AoLightEnt -fill $l
+                  if { $itk_option(-aoexit) } {
+                     $c itemconfigure AoLightExit -fill $l
+                     set inport B
+                  }
+               }
             } else {
                $c itemconfigure AoLightNoAo -fill $l
-               set inport ""
             }
          }
 
