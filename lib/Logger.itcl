@@ -123,8 +123,9 @@ itcl::body Logger::command cs {
 }
 
 itcl::body Logger::send text {
-   set logwindow [[logPanel cget -name] component control]
-   if { [winfo exists $logwindow] } {
+   set panel [logPanel cget -name]
+   if { [winfo exists $panel] } {
+       set logwindow [$panel component control]
        $logwindow add $text
    }
 }
