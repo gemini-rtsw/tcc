@@ -24,6 +24,9 @@
 #                           EditShadow.
 #
 #  Methods:
+#           childstored comp       Informs the edit window that a child
+#                                  component stored a new value.
+#
 #           map                    Calls the map method of the Panel that 
 #                                  contains this control.
 #
@@ -50,7 +53,10 @@
 #                                  objects of all the subcomponents that have 
 #                                  values.
 #
-#  D Terrett 21 March 2000
+#           storefromcontrol name  Calls store and then calls the childstored
+#                                  method of the parent
+#
+#  D Terrett 22 March 2000
 #
 #  Copyright CCLRC
 #+
@@ -59,9 +65,11 @@ itcl::class EditShadow {
    constructor {arg args} {}
    public {
       method map {}
+      method childstored {comp}
       method selectfromcontrol {name}
       method selectfromparent {name}
       method store {name}
+      method storefromcontrol {name}
       method subselectfromcontrol {comp name}
       method subselectfromchild {comp name}
       method unmap {} {set scratchobj ""}
@@ -210,7 +218,7 @@ itcl::body EditShadow::selectfromcontrol {name} {
    }
 
 # If this shadow has a parent, then call its subselectfromchild method.
-   if { [string length $parent] } {
+   if { ! [string equal $parent ""] } {
       $parent subselectfromchild $component $name
    }
 
@@ -241,4 +249,23 @@ itcl::body EditShadow::subselectfromcontrol {comp name} {
 
 # Call the selectfromparent of the subcomponent's edit shadow.
    $this$comp selectfromparent $name
+}
+
+itcl::body EditShadow::childstored {comp} {
+   if { [winfo exists $window] } {
+      $window childstored $comp
+   }
+   if { ! [string equal $parent ""] } {
+      $parent childstored $comp
+   }
+}
+
+itcl::body EditShadow::storefromcontrol {name} {
+   if { [store $name] } {
+      if { ! [string equal $parent ""] } {
+         $parent childstored $component
+      }
+      return 1
+   }
+   return 0
 }
