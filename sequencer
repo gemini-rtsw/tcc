@@ -13,6 +13,7 @@ package require Itcl
 package require Itk
 package require Iwidgets
 package require Ocspkg
+package require Seq
 
 # Set the name of the epics service configuration file.
 if { [info exists env(TCC_TCSNAME)] } {
@@ -26,9 +27,7 @@ appData add configFile sequencer.ca
 
 service epics
 
-# Add the sequencer specific packages and libraries
-lappend auto_path $ROOT/seqpkg
-package require Seq
+# Add the sequencer specific library
 lappend auto_path $ROOT/seqlib
 
 # Create a principle system object for the tcs.
