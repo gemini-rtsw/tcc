@@ -13,7 +13,7 @@
 #  Notes:
 #        o This widget is incomplete
 #
-#  D Terrett  24 November 1999
+#  D Terrett  14 February 2000
 #
 #  Copyright CCLRC
 #+
@@ -92,15 +92,16 @@ itcl::body GuideLoopControl::constructor args {
 
 # Controls for M1.
    itk_component add m1Weight {
-      checkbutton $w.m1Weight -text Weighting -variable m1Weight \
+      checkbutton $w.m1Weight -text Weighting -variable [scope m1Weight] \
             -onvalue Errors -offvalue None
    }
    $w create window 1 64 -window $itk_component(m1Weight) -anchor nw -tags m1
-   itk_component add m1Update {
-      iwidgets::entryfield $w.m1Update -labeltext "Interval (s)" -width 5
+   itk_component add m1Frames {
+      iwidgets::entryfield $w.m1Frames -labeltext "No. frames to av" \
+            -width 5
    }
-   $itk_component(m1Update) insert end 60
-   $w create window 1 83 -window $itk_component(m1Update) -anchor nw -tags m1
+   $itk_component(m1Frames) insert end 60
+   $w create window 1 83 -window $itk_component(m1Frames) -anchor nw -tags m1
 
 # Controls for Mount.
    itk_component add mtWeight {
@@ -304,7 +305,7 @@ body GuideLoopControl::recolour {mech state} {
 body GuideLoopControl::m1mode state {
 
    cs m1Guide set mode [expr {$state ? "On" : "Off"}]
-   cs m1Guide set update [$itk_component(m1Update) get]
+   cs m1Guide set frames [$itk_component(m1Frames) get]
    cs m1Guide set weighting $m1Weight
 
    if [catch {cs m1Guide post} msg] {
