@@ -11,7 +11,7 @@
 #
 #  options
 #
-#  D Terrett 12 June 2003
+#  D Terrett 27 June 2003
 #
 #  Copyright CCLRC
 #-
@@ -29,6 +29,7 @@ itcl::class NumericDisplay {
       method inPosition {rec value}
       method noheartbeat {}
       method heartbeat {rec value}
+      method chopbeam {name alarm time value}
       variable nohbid
       variable hbid
    }
@@ -67,9 +68,26 @@ itcl::body NumericDisplay::constructor args {
    }
 
 # Nod and chop state.
+   itk_component add nodbeam {
+      frame $w.nodbeam 
+   }
+   set w $itk_component(nodbeam)
    itk_component add nod {
       label $w.nod -width 8 -anchor w
    }
+   itk_component add beam {
+      label $w.beam -text Beam
+   }
+   itk_component add beama {
+      label $w.beama -text A
+   }
+   itk_component add beamb {
+      label $w.beamb -text B
+   }
+   pack $itk_component(nod) $itk_component(beam) $itk_component(beama) \
+         $itk_component(beamb) -side left
+
+   set w $itk_component(top)
    itk_component add chopping {
       label $w.chopping -width 14 -anchor w
    }
@@ -318,8 +336,8 @@ itcl::body NumericDisplay::constructor args {
    grid configure $itk_component(status) -rowspan 2
    grid $itk_component(tarlabel) $itk_component(tar1) \
          $itk_component(tar2) $itk_component(tarsys) $itk_component(tarwavel) \
-         $itk_component(nod) -sticky e -padx 3 -pady 2
-   grid configure $itk_component(nod) -sticky w
+         $itk_component(nodbeam) -sticky e -padx 3 -pady 2
+   grid configure $itk_component(nodbeam) -sticky w
    grid $itk_component(offlab) $itk_component(off1) $itk_component(off2) \
          x x $itk_component(chopping) -sticky e -padx 3 -pady 2
    grid configure $itk_component(chopping) -sticky w
@@ -382,6 +400,10 @@ itcl::body NumericDisplay::constructor args {
 # Monitor the heartbeat sad record.
    catch {RecordMonitor tcssad.heartbeat tcssad heartbeat}
    set hbid(heartbeat) [tcssad.heartbeat add [itcl::code $this heartbeat]]
+
+# Monitor the chop beam (this changes faster than the 1 sec update of the
+# rest of the display).
+   sa tcssad proc chopBeam [itcl::code $this chopbeam]
    
 # Trigger checks on the subsystem states
    inPosition mcssad.xxxx ""
@@ -721,4 +743,24 @@ itcl::body NumericDisplay::heartbeat {rec value} {
 
 # Schedule the noheartbeat method again.
    set nohbid [after 5000 [itcl::code $this noheartbeat]]
+}
+
+itcl::body NumericDisplay::chopbeam {name alarm time value} {
+
+   set bg [$itk_interior cget -background]
+   set fg [$itk_interior cget -foreground]
+   switch $value {
+      A {
+         $itk_component(beama) configure -foreground $fg
+         $itk_component(beama) configure -background green
+         $itk_component(beamb) configure -foreground $bg
+         $itk_component(beamb) configure -background $bg
+      }
+      B {
+         $itk_component(beamb) configure -foreground $fg
+         $itk_component(beamb) configure -background green
+         $itk_component(beama) configure -foreground $bg
+         $itk_component(beama) configure -background $bg
+      }
+   }
 }
