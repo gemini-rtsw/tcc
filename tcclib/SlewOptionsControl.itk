@@ -14,7 +14,7 @@
 #           updateobj name  Stores the contents of the edit controls in the
 #                           SlewOptions object "name".
 #
-#  D Terrett 5 June 2000
+#  D Terrett 1 December 2000
 #
 #  Copyright CCLRC
 #+
@@ -36,6 +36,7 @@ itcl::class SlewOptionsControl {
    private variable filter2
    private variable pointing
    private variable guiding
+   private variable guideOffset
 }
 
 itk::usual SlewOptionsControl {
@@ -99,11 +100,16 @@ itcl::body SlewOptionsControl::constructor args {
             -onvalue On -offvalue Off \
             -text [lindex [cs slew info guiding] 2]
    }
+   itk_component add guideOffset {
+      checkbutton $w.guideOffset -variable [scope guideOffset] \
+            -onvalue On -offvalue Off \
+            -text [lindex [cs slew info guideOffset] 2]
+   }
    pack $itk_component(chopThrow) $itk_component(sourceOffset) \
           $itk_component(sourceDifTr) $itk_component(mountOffset) \
           $itk_component(mountDifTr) $itk_component(filter1) \
           $itk_component(filter2) $itk_component(pointing) \
-          $itk_component(guiding) -pady 2 -anchor w
+          $itk_component(guiding) $itk_component(guideOffset) -pady 2 -anchor w
 
 # Create the slewOptions object used by apply.
    set scratchobj [namespace which -command [SlewOptions #auto]]
@@ -129,6 +135,7 @@ itcl::body SlewOptionsControl::selectobj name {
       set filter2 [$name cget -filter2]
       set pointing [$name cget -pointing]
       set guiding [$name cget -guiding]
+      set guideOffset [$name cget -guideOffset]
    }
 }
 
@@ -140,5 +147,5 @@ itcl::body SlewOptionsControl::updateobj name {
          -sourceDifTr $sourceDifTr -mountOffset $mountOffset \
          -mountDifTr $mountDifTr -filter1 $filter1 \
          -filter2 $filter2 -pointing $pointing \
-         -guiding $guiding
+         -guiding $guiding -guideOffset $guideOffset
 }

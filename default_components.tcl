@@ -26,7 +26,8 @@ createSlewOptions All -refcount 1 \
    -filter1 On \
    -filter2 On \
    -pointing On \
-   -guiding On
+   -guiding On \
+   -guideOffset On
 
 createSlewOptions "Normal" -refcount 1 \
    -chopThrow On \
@@ -37,7 +38,8 @@ createSlewOptions "Normal" -refcount 1 \
    -filter1 On \
    -filter2 On \
    -pointing Off \
-   -guiding On
+   -guiding On \
+   -guideOffset On
 
 createTrackFrame FK5/J2000 -refcount 1 \
    -mountCosys FK5/J2000 \
