@@ -67,10 +67,25 @@ itcl::body LogControl::destructor {} {
 }
 
 itcl::body LogControl::add text {
+
+# Enable the text widget.
    $itk_component(display) configure -state normal
+
+# Insert the new test.
    $itk_component(display) insert end \n$text
+
+# Make the last line visible.
    $itk_component(display) see end
+
+# Remove the first line if there are now more than 500 lines.
+   if { [$itk_component(display) index end] > 500 } {
+      $itk_component(display) delete 1.0 2.0
+   }
+
+# Disable the text widget to prevent it being edited.
    $itk_component(display) configure -state disabled
+
+# Write the text to the log file.
    if { $chanid != "" } {
       puts $chanid $text
       flush $chanid
