@@ -9,7 +9,7 @@
 #  Methods:
 #          none
 #
-#  D Terrett 15 January 2004
+#  D Terrett 18 January 2004
 #
 #  Copyright CCLRC
 #+
@@ -83,7 +83,7 @@ itcl::body TcsControl::constructor args {
       frame $w.bot -bd 2 -relief ridge
    }
    pack $itk_component(f3top) $itk_component(f3mid) $itk_component(f3bot) \
-         -fill both 
+         -fill both -expand yes
 
 # The fourth row contains 2 frames.
    set w $itk_component(row4)
@@ -292,8 +292,19 @@ itcl::body TcsControl::constructor args {
    pack $itk_component(closeshut) $itk_component(closegates) \
          -fill both -expand yes -padx 10 -pady 5 -side left
 
-# A & G mechanism parking and datuming
+# M2 coma and guide resets.
    set w $itk_component(f3bot)
+   itk_component add zerocoma {
+      ApplyButton $w.zerocoma -command zeroComaCorr
+   }
+   itk_component add clearfocus {
+      ApplyButton $w.clearfocus -command clearGuideFocus
+   }
+   pack $itk_component(zerocoma) $itk_component(clearfocus) \
+         -fill both -expand yes -padx 10 -pady 3
+
+# A & G mechanism parking and datuming
+   set w $itk_component(row2)
    itk_component add mechlab {
       label $w.mechlab -text "A&G mechanisms:"
    }
@@ -315,9 +326,9 @@ itcl::body TcsControl::constructor args {
             -command [itcl::code $this agmech Park]
    }
 
-   pack $itk_component(mechlab) $itk_component(agmech) 
-   pack $itk_component(mechdatum)  $itk_component(mechpark) -side left \
-         -fill x -expand y -padx 15 -pady 5
+   pack $itk_component(mechlab) $itk_component(agmech) \
+         $itk_component(mechdatum)  $itk_component(mechpark) -side left \
+         -padx 5 -pady 5
 
 # Create the command senders for all A&G park and datum commands.
    if { [catch {cs scienceFoldDatum info}] } {
