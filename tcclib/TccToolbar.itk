@@ -10,7 +10,7 @@
 #  Methods:
 #           none
 #
-#  D Terrett 15 February 2000
+#  D Terrett 19 February 2000
 #
 #  Copyright CCLRC
 #-
@@ -34,7 +34,7 @@ itcl::body TccToolbar::constructor args {
       iwidgets::menubar $itk_interior.menubar -menubuttons {
          menubutton file -text File -menu {
             command export -label Export... -command \"[code $this export]\"
-#            command import -label Import... -command \"[code $this import]\"
+            command import -label Import... -command \"[code $this import]\"
             command layout -label "Save layout..." -command saveLayout
             command exit -label Exit -command exit
          }
@@ -153,6 +153,41 @@ itcl::body TccToolbar::constructor args {
 }
 
 itcl::body TccToolbar::import {} {
+
+# Save the current directory and cd to save file directory.
+   global SAVE_FILE_DIR
+   set pwd [pwd]
+   cd $SAVE_FILE_DIR
+
+# Create a dialog box for selecting the file and center it.
+   set dialog [iwidgets::fileselectiondialog .fsd \
+         -modality application -title "Import File Selection Dialog"]
+   $dialog center
+
+# Activate the dialog
+   if { [$dialog activate] } {
+
+# Open the file.
+      set filename [$dialog get]
+      if { [catch {set file [open $filename RDONLY]} msg] } {
+         tk_messageBox -icon error -message $msg
+      } else {
+         loadDefFile $file
+         close $file
+
+# Update save file directory.
+         set dir [file dirname $filename]
+         if { [string compare [file pathtype $dir] relative] == 0 } {
+            set SAVE_FILE_DIR [pwd]/$dir
+         } else {
+            set SAVE_FILE_DIR $dir
+         }
+      }
+   }
+   destroy $dialog
+
+# Restore default directory
+   cd $pwd
 }
 
 itcl::body TccToolbar::save {list namespace file} {

@@ -4,7 +4,7 @@
 #  The main program for the Gemini control console. It creates the top level
 #  "toolbar" window.
 #
-#  D Terrett 29 November 1999
+#  D Terrett 19 February 2000
 #
 #  Arguments:
 #            Any command line options and values.
@@ -161,19 +161,27 @@ proc tccMain args {
                tk_messageBox -icon error -parent . -message \
                   "initialization directory \"$filespec\" is empty"
             } else {
-               foreach file $filenames {
+               foreach filename $filenames {
                   if { ! [file isdirectory $file] } {
-                     if { [catch {source $file} msg] } {
+                     puts "processing $filename"
+                     if { [catch {set file [open $filename RDONLY]} msg] } {
                         tk_messageBox -icon error -parent . -message \
-                 "error while processing initialization file \"$file\": $msg"
+                        "error opening initialization file \"$filename\": $msg"
+                     } else {
+                        loadDefFile $file
+                        close $file
                      }
                   }
                }
             }
          } else {
-            if { [catch {source $filespec} msg] } {
+            if { [catch {set file [open $filespec RDONLY]} msg] } {
                tk_messageBox -icon error -parent . -message \
-                "error while processing initialization file \"$filespec\": $msg"
+                  "error opening initialization file \"$filespec\": $msg"
+            } else {
+               puts "processing $filename"
+               loadDefFile $file
+               close $file
             }
          }
       }
