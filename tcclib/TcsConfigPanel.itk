@@ -6,16 +6,16 @@
 #  menubar.
 #
 #  Options:
-#           -componentlist - The -componentlist option of the Cosys control
+#           -componentlist - The -componentlist option of the tcs config
+#                            control
 #
-#           -namespace -     The -namespace option of the Cosys control
-#
-#           -component -
+#           -namespace -     The -namespace option of the tcs config
+#                            control
 #
 #  Methods:
 #          none
 #
-#  D Terrett 2 February 2001
+#  D Terrett 27 March 2001
 #
 #  Copyright CCLRC
 #+
@@ -25,7 +25,6 @@ itcl::class TcsConfigPanel {
    constructor args {}
    itk_option define -componentlist componentList ComponentList {}
    itk_option define -namespace namespace Namespace {}
-   itk_option define -component component Component {}
    public {
       method preview {}
    }
@@ -86,10 +85,6 @@ itcl::configbody TcsConfigPanel::componentlist {
 
 itcl::configbody TcsConfigPanel::namespace {
    $itk_component(control) configure -namespace $itk_option(-namespace)
-}
-
-itcl::configbody TcsConfigPanel::component {
-   $itk_component(control) configure -component $itk_option(-component)
 }
 
 body TcsConfigPanel::preview {} {
