@@ -10,7 +10,7 @@
 #  Methods:
 #           none
 #
-#  D Terrett  25 November 2002
+#  D Terrett  16 December 2002
 #
 #  Copyright CCLRC
 #+
@@ -21,13 +21,16 @@ itcl::class AoControl {
    destructor {}
    private {
       method centre {}
+      method centrestart {}
       method correct {arg}
-      method closeloop1 {}
-      method closeloop2 {}
-      method centreWfsIsIdle {}
+      method loop {state}
       method onerror {msg}
+      method aoenable {}
+      method preparecm {}
+      method cmPrepareIsDone {}
+      variable dmh 0
+      variable cmPrepareBusy
       variable centreaction
-      variable centreWfsBusy
    }
 }
 
@@ -51,35 +54,65 @@ itcl::body AoControl::constructor args {
       label $w.label -text ALTAIR
    }
 
-# WFS stage follow.
-   itk_component add follow {
-      OnOffButton $w.follow -text Follow \
-            -oncommand {aoFollow followState On} \
-            -offcommand {aoFollow followState Off} \
-            -onvalue {ON On} \
-            -offvalue {OFF Off} \
-            -sadrecord {aossad followS}
+# Flatten.
+   itk_component add flatten {
+      ApplyButton $w.flatten -text Flatten -command aoFlatten
    }
+
+# Take Picture.
+   itk_component add takepic {
+      button $w.takepic -text "Take Picture" -state disabled
+   }
+
+# Create action that prepares a new command matrix, waits for it to be
+# ready.
+   set centreaction [seq::Action #auto tcs \
+         -onstart [itcl::code $this preparecm] \
+         -onok [itcl::code $this centre] \
+         -oktest [itcl::code $this cmPrepareIsDone] \
+         -waitvar [itcl::scope cmPrepareBusy(value)] \
+         -onerror [itcl::code $this onerror]]
 
 # Centre WFS.
    itk_component add centre {
-      LiveButton $w.centre -text "Center WFS" -command [itcl::code $this centre]
+      LiveButton $w.centre -text "Center WFS" \
+            -command [itcl::code $this centrestart]
+   }
+
+# Close loop.
+   itk_component add loop {
+      frame $w.loop
+   }
+   set w $itk_component(loop)
+   itk_component add dmh {
+      checkbutton $w.dmh -variable [itcl::scope dmh] \
+            -command [itcl::code $this aoenable]
+   }
+   itk_component add aom2 {
+      OnOffButton $w.aom2 -text "AO + M2"  -state disabled \
+            -onproc [itcl::code $this loop ON] \
+            -offproc [itcl::code $this loop OFF] \
+            -onvalue 1 \
+            -offvalue 0 \
+            -sadrecord {guideConfig aostate}
+   }
+   pack $itk_component(dmh) $itk_component(aom2) -side right
+   set w $itk_component(frame)
+
+# Prepare control matrix
+   itk_component add prepare {
+      LiveButton $w.prepare -text "Prepare Mtx" \
+            -command [itcl::code $this preparecm]
    }
 
 # Correct.
    itk_component add correct {
-      OnOffButton $w.correct -text Correct \
+      OnOffButton $w.correct -text "Correct Only" \
             -onproc [itcl::code $this correct ON] \
             -offproc [itcl::code $this correct OFF] \
             -onvalue 1 \
             -offvalue 0 \
             -sadrecord {guideConfig aostate}
-   }
-
-# Close loop.
-   itk_component add closeloop {
-      LiveButton $w.closeloop -text "Close Loop" \
-            -command [itcl::code $this closeloop2]
    }
 
 # Create command senders.
@@ -92,40 +125,17 @@ itcl::body AoControl::constructor args {
    if { [catch {cs aoCorrect info}] } {
       epics cs aoCorrect
    }
-
-   itk_component add entshut {
-      OnOffButton $w.entshut -text "Entr shutter" \
-            -oncommand {aoEntShutter state Open} \
-            -offcommand {aoEntShutter state Close} \
-            -onvalue 1 \
-            -offvalue 0 \
-            -sadrecord {aossad entShutterOpen}
-   }
-
-   itk_component add exshut {
-      OnOffButton $w.exshut -text "Exit shutter" \
-            -oncommand {aoExitShutter state Open} \
-            -offcommand {aoExitShutter state Close} \
-            -onvalue 1 \
-            -offvalue 0 \
-            -sadrecord {aossad exitShutterOpen}
+   if { [catch {cs aoOiwfsSource info}] } {
+      epics cs aoOiwfsSource
    }
 
    grid $itk_component(label) -padx 5 -sticky ew
-   grid $itk_component(follow) -padx 5 -sticky ew
+   grid $itk_component(flatten) -padx 5 -sticky ew
+   grid $itk_component(takepic) -padx 5 -sticky ew
    grid $itk_component(centre) -padx 5 -sticky ew
+   grid $itk_component(loop) -padx 5 -sticky ew
+   grid $itk_component(prepare) -padx 5 -sticky ew
    grid $itk_component(correct) -padx 5 -sticky ew
-   grid $itk_component(entshut) -padx 5 -sticky ew
-   grid $itk_component(exshut) -padx 5 -sticky ew
-   grid $itk_component(closeloop) -padx 5 -sticky ew
-
-# Create action that sends the flatten and centre commands and then
-# executed the rest of the close loop procedure.
-   set centreaction [seq::Action #auto tcs \
-         -onok [itcl::code $this closeloop2] \
-         -oktest [itcl::code $this centreWfsIsIdle] \
-         -waitvar [itcl::scope centreWfsBusy(value)] \
-         -onerror [itcl::code $this onerror]]
 
    eval itk_initialize $args
 }
@@ -147,11 +157,11 @@ itcl::body AoControl::centre {} {
 itcl::body AoControl::correct {arg} {
    switch $arg {
       ON {
-         cs aoFlatten set dummy 1
-         logger command aoFlatten
          cs aoCorrect set correct ON
          cs aoCorrect set matrix 0
          cs aoCorrect set gains 0
+         cs aoOiwfsSource set state OFF
+         logger command aoOiwfsSource
       }
       OFF {
          cs aoCorrect set correct OFF
@@ -163,43 +173,87 @@ itcl::body AoControl::correct {arg} {
    }
 }
 
-itcl::body AoControl::closeloop1 {} {
+itcl::body AoControl::loop {state} {
 
-# Link to the TCS in postion flag.
-   sa aossad link centreWfsBusy [itcl::scope centreWfsBusy]
+   switch $state {
+      ON {
 
-# Post flatten and centre commands.
-   $centreaction set aoFlatten dummy 1
-   $centreaction set aoCentreWfs retain 0
-   logger command aoFlatten
-   logger command aoCentreWfs
-   $centreaction start
-}
-
-itcl::body AoControl::closeloop2 {} {
+# Flatten.
+         cs aoFlatten set dummy 1
+         logger command aoFlatten
 
 # Disable guiding.
-   AO disable
+         AO disable
 
 # Post ALTAIR correct command.
-   cs aoCorrect set correct ON
-   cs aoCorrect set matrix 0
-   cs aoCorrect set gains 0
-   logger command aoCorrect
-   if { [catch {cs tcsApply post} msg] } {
-      tk_messageBox -icon error -parent $itk_interior -message $msg
-   }
-   after 10
+         cs aoCorrect set correct ON
+         cs aoCorrect set matrix 0
+         cs aoCorrect set gains 0
+         logger command aoCorrect
+         if { [catch {cs tcsApply post} msg] } {
+            tk_messageBox -icon error -parent $itk_interior -message $msg
+         }
+         after 10
+
+# OIWFS source.
+         cs aoOiwfsSource set state ON
+         cs aoOiwfsSource set bandwidth 0
+         logger command aoOiwfsSource
 
 # Change M2 settup to AOS.
-   AO configure -scssource GAOS
+         AO configure -scssource GAOS
+      }
+      OFF {
+
+# Disable guiding.
+         AO disable
+
+# Post ALTAIR correct command.
+         cs aoCorrect set correct OFF
+         logger command aoCorrect
+         if { [catch {cs tcsApply post} msg] } {
+            tk_messageBox -icon error -parent $itk_interior -message $msg
+         }
+         after 10
+
+# Flatten.
+         cs aoFlatten set dummy 1
+         logger command aoFlatten
+
+# Change M2 settup to OIWFS.
+         AO configure -scssource OIWFS
+      }
+   }
 
 # Re-enable guiding.
    AO enable
 }
 
-itcl::body AoControl::centreWfsIsIdle {} {
-   set val [sa aossad get centreWfsBusy]
+itcl::body AoControl::aoenable {} {
+   if { $dmh } {
+      $itk_component(aom2) configure -state normal
+   } else {
+      $itk_component(aom2) configure -state disabled
+   }
+}
+
+itcl::body AoControl::preparecm {} {
+   cs aoPrepareCm set x [sa tcssad get aoDemandx]
+   cs aoPrepareCm set y [sa tcssad get aoDemandy]
+   logger command aoPrepareCm
+}
+
+itcl::body AoControl::centrestart {} {
+
+# Link to the ALTAIR control matrix ready flag.
+   sa aossad link prepareCmBusy [itcl::scope cmPrepareBusy]
+
+# Start the action.
+   $centreaction start
+}
+
+itcl::body AoControl::cmPrepareIsDone {} {
+   set val [sa aossad get prepareCmBusy]
    return [string equal $val IDLE]
 }
 
