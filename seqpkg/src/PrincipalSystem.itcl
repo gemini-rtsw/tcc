@@ -19,7 +19,7 @@
 #
 #           Cancels an action.
 #
-#  D Terrett 22 July 2000
+#  D Terrett 11 September 2000
 #
 #  Copyright CLRC
 #+
@@ -31,6 +31,9 @@ itcl::class seq::PrincipalSystem {
    public method cancel {action}
 
    private method monitor {name status info}
+   private method timeout 
+   private method traceproc {name1 name2 op}
+   private method cleanup
 
    private variable Apply
    private variable CurrentAction ""
@@ -44,8 +47,14 @@ itcl::body seq::PrincipalSystem::constructor {apply} {
 
 itcl::body seq::PrincipalSystem::destructor {} {
 
+# Cancel any actions in progress.
+   cleanup
+
 # Release the command monitor.
    cm $Apply release
+
+# Cancel the timeout handler
+   after cancel [itcl::code $this timeout]
 }
 
 itcl::body seq::PrincipalSystem::monitor {name status info} {
@@ -58,16 +67,9 @@ itcl::body seq::PrincipalSystem::monitor {name status info} {
       if { [string length $CurrentAction] } {
 
          if { [string equal $status idle] } {
-
-# Get the command associated with sucessful completion of the current command.
             set command [$CurrentAction cget -onok]
-
-# Clear the current action so that we don't get reinvoked by a BUSY/IDLE
-# transition while waiting for the in position record to be set.
-            set curact $CurrentAction
-            set waitvar [$curact cget -waitvar]
-            set oktest [$curact cget -oktest]
-            set CurrentAction ""
+            set waitvar [$CurrentAction cget -waitvar]
+            set oktest [$CurrentAction cget -oktest]
 
 # Give the system time to set its in position record. This is a fudge until
 # the TCS subsystem set their ApplyC records properly.
@@ -75,31 +77,50 @@ itcl::body seq::PrincipalSystem::monitor {name status info} {
 
 # Wait for the in position record to have the ok value.
             if { ![string is space $oktest] } {
-               while { ![uplevel #0 $oktest] } {
-                  if { ![string is space $waitvar] } {
-                     vwait $waitvar
-                  }
+               if { [uplevel #0 $oktest] } {
+                 set ok 1
+               } else {
+                 if { ![string is space $waitvar] } {
+
+# Check for the variable trace already having been set.
+                    set tracing 0
+                    foreach t [trace vinfo $waitvar] {
+                       if { [string equal $t \
+                             [list w [itcl::code $this traceproc]] ] } {
+                          set tracing 1
+                          break
+                       }
+                    }
+                    if { !$tracing } {
+
+# Set a trace on the wait variable.
+                       trace variable $waitvar w [itcl::code $this traceproc]
+                    }
+                 }
+                 set ok 0
                }
+            } else {
+               set ok 1
             }
 
-# Cancel the actions timeout handler.
-            $curact  canceltimeout
+            if { $ok } {
+               cleanup
 
 # Evaluate the OK command.
-            if { [string length $command] } {
-               uplevel #0 $command
+               if { [string length $command] } {
+                  uplevel #0 $command
+               }
             }
          } else {
 
 # Handle error completion.
-            $CurrentAction canceltimeout
             set command [$CurrentAction cget -onerror]
             if { [string equal $status error] } {
                set message [sa $Apply get mess value]
             } else {
                set message "Command timed out"
             }
-            set CurrentAction ""
+            cleanup
             uplevel #0 $command $info \"$message\"
          }
       }
@@ -114,14 +135,47 @@ itcl::body seq::PrincipalSystem::post {action} {
 # Save the name of the current action.
    set CurrentAction $action
 
+# Start the timeout handler
+   set timeoutcommand [$CurrentAction cget -ontimeout]
+   if { ![string is space $timeoutcommand] } {
+      after [expr {[$action cget -timeout] * 1000}] [itcl::code $this timeout]
+   }
+
    return
 }
 
 itcl::body seq::PrincipalSystem::cancel {action} {
    if { [string is space $action] || [string equal $action $CurrentAction] } {
-      if { ![string is space $CurrentAction] } {
-         $CurrentAction cancel
-         set $CurrentAction ""
+      cleanup
+   }
+}
+
+itcl::body seq::PrincipalSystem::timeout {} {
+   set timeoutcommand [$CurrentAction cget -ontimeout]
+   if { ![string is space $timeoutcommand] } {
+      uplevel #0 $timeoutcommand
+   }
+   cleanup
+}
+
+itcl::body seq::PrincipalSystem::traceproc {name1 name2 op} {
+   monitor "" idle ""
+}
+
+itcl::body seq::PrincipalSystem::cleanup {} {
+
+   if { ![string is space $CurrentAction] } {
+
+# Delete timeout handler.
+      after cancel [itcl::code $this timeout]
+
+# Remove ok trace procedure.
+      set waitvar [$CurrentAction cget -waitvar]
+      if { ![string is space $waitvar] } {
+         trace vdelete $waitvar w [itcl::code $this traceproc]
       }
+
+# Clear the current action.
+      set CurrentAction ""
    }
 }

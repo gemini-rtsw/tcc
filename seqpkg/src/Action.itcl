@@ -20,10 +20,6 @@
 #
 #           Starts the execution of the action.
 #
-#        canceltimeout
-#
-#           Cancels the timeout handling of an in progress action.
-#
 #     Options:
 #
 #           -oktest
@@ -55,7 +51,7 @@
 #              complete.
 #
 #
-#  D Terrett 20 July 2000
+#  D Terrett 8 September 2000
 #
 #  Copyright CCLRC
 #+
@@ -64,7 +60,6 @@ itcl::class seq::Action {
    constructor {psys args} {}
    public method set {cs par val}
    public method start {}
-   public method canceltimeout {} {after cancel [code $this timedout]}
    public variable oktest {}
    public variable waitvar {}
    public variable onok {}
@@ -72,7 +67,6 @@ itcl::class seq::Action {
    public variable ontimeout {}
    public variable timeout 60
 
-   private method timedout {}
    private variable Psys
    private variable ParList {}
 }
@@ -112,15 +106,5 @@ itcl::body seq::Action::start {} {
 # Post the command to the principal system.
    $Psys post $this
 
-# Start the timeout timer.
-   if { ![string is space $ontimeout] } {
-      after [expr $timeout * 1000] [code $this timedout]
-   }
-
    return
-}
-
-itcl::body seq::Action::timedout {} {
-   $Psys cancel $this
-   uplevel #0 $ontimeout
 }
