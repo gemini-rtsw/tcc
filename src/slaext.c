@@ -44,6 +44,8 @@ static int Dr2tfCmd( ClientData clientdata, Tcl_Interp *interp, int argc,
 int Slaext_Init( Tcl_Interp *interp)
 {
 
+    if ( Tcl_InitStubs( interp, "8.0", 0 ) == NULL ) return TCL_ERROR;
+
     Tcl_CreateCommand( interp, "slaDafin", DafinCmd,
         (ClientData) NULL, (Tcl_CmdDeleteProc *) NULL);
     Tcl_CreateCommand( interp, "slaDr2af", Dr2afCmd,

@@ -1,6 +1,6 @@
 #!/bin/sh
 # the next line restarts using ocswish \
-exec $GEMINI_BASE/ocs/bin/solaris/ocswish8 "$0" "$@"
+exec $HLPG_INSTALL_BASE/bin/solaris/ocswish "$0" "$@"
 
 #+
 #  tcc

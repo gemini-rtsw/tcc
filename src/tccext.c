@@ -48,6 +48,8 @@ int Tccext_Init( Tcl_Interp *interp)
 #include "left.xbm"
 #include "right.xbm"
 
+    if ( Tcl_InitStubs( interp, "8.0", 0 ) == NULL ) return TCL_ERROR;
+
     Tcl_CreateCommand( interp, "tccPreview", Tccext_PreviewCmd,
         (ClientData) NULL, (Tcl_CmdDeleteProc *) NULL);
 

@@ -1,5 +1,7 @@
 All: tccext.so tsdext.so tcctime.so slaext.so
 
+TCL_VERS = 8.2
+
 CMNOBJ = tccDecode.o tccUtil.o tccAst.o
 TCCOBJ = tccext.o tccPreview.o autorepeat.o
 TSDOBJ = tsdext.o tsdDomeView.o tsdWrapView.o tsdElView.o
@@ -7,15 +9,15 @@ TIMEOBJ = tccTime.o
 SLAOBJ = slaext.o
 
 CC = /opt/SUNWspro/bin/cc 
-CFLAGS = -K pic -Xc -G \
-         -I/gemini/ocs/external/packages/tcl8/include \
+CFLAGS = -K pic -Xc -G -DUSE_TCL_STUBS -DUSE_TK_STUBS \
+         -I/gemini/packages/tcl$(TCL_VERS)/include \
          -I/gemini/slalib/include \
          -I/gemini/timelib/include \
          -I/gemini/astlib/include
 
 #CC = gcc
-#CFLAGS =  -fPIC -G \
-#         -I/gemini/ocs/external/include \
+#CFLAGS =  -fPIC -G -DUSE_TCL_STUBS -DUSE_TK_STUBS \
+#         -I/gemini/packages/tcl$(TCL_VERS)/include \
 #         -I$(HOME)/gemini/slalib/rel/include \
 #         -I$(HOME)/gemini/timelib/rel/include \
 #         -I$(HOME)/gemini/astlib/rel/include
@@ -23,7 +25,8 @@ CFLAGS = -K pic -Xc -G \
 LDFLAGS = -L/gemini/slalib/lib/solaris \
           -L/gemini/timelib/lib/solaris \
           -L/gemini/astlib/lib/solaris \
-          -last -ltime -lsla -lposix4
+          -L/gemini/packages/tcl$(TCL_VERS)/lib \
+          -ltclstub$(TCL_VERS) -ltkstub$(TCL_VERS) -last -ltime -lsla -lposix4
 
 tccext.so : $(TCCOBJ) $(CMNOBJ)
 	ld -G -z text -o $@ $(TCCOBJ) $(CMNOBJ) $(LDFLAGS) 
