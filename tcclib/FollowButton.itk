@@ -11,8 +11,6 @@
 #
 #          -sadrecord      The name of the sa that contains the follow state.
 #
-#          -subsystemname  The name of the subsystem (for log messages)
-#
 #  Methods:
 #          none
 #
@@ -29,7 +27,6 @@ itcl::class FollowButton {
 
    itk_option define -command command Command {}
    itk_option define -sadrecord sadrecord SadRecord {}
-   itk_option define -subsysname subsysname SubsysName {}
 
    private method command
    private method monitor {record status time value}
@@ -91,6 +88,7 @@ itcl::configbody FollowButton::sadrecord {
       }
       sa [lindex $itk_option(-sadrecord) 0] proc \
             [lindex $itk_option(-sadrecord) 1] [code $this monitor]
+      monitor "" "" "" ""
    }
 }
 
