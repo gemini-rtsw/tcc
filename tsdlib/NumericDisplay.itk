@@ -344,22 +344,22 @@ itcl::body NumericDisplay::constructor args {
          RecordMonitor tcssad.${vt}TrackFrame tcssad ${vt}TrackFrame
       }
       set hbid(${vt}TrackFrame) [tcssad.${vt}TrackFrame add \
-            [code $this newtarget]]
+            [itcl::code $this newtarget]]
       if { [llength [find object tcssad.${vt}TrackEq]] == 0 } {
          RecordMonitor tcssad.${vt}TrackEq tcssad ${vt}TrackEq
       }
       set hbid(${vt}TrackEq) [tcssad.${vt}TrackEq add \
-            [code $this newtarget]]
+            [itcl::code $this newtarget]]
       if { [llength [find object tcssad.${vt}TrackWavelength]] == 0 } {
          RecordMonitor tcssad.${vt}TrackWavelength tcssad ${vt}TrackWavelength
       }
       set hbid(${vt}TrackWavelength) [tcssad.${vt}TrackWavelength add \
-            [code $this newtarget]]
+            [itcl::code $this newtarget]]
       if { [llength [find object tcssad.${vt}Wavelength]] == 0 } {
          RecordMonitor tcssad.${vt}Wavelength tcssad ${vt}Wavelength
       }
       set hbid(${vt}Wavelength) [tcssad.${vt}Wavelength add \
-            [code $this newtarget]]
+            [itcl::code $this newtarget]]
    }
 
 # Call newobject whenever any of the input objects change.
@@ -368,7 +368,7 @@ itcl::body NumericDisplay::constructor args {
          RecordMonitor tcssad.${vt}ObjectName tcssad ${vt}ObjectName
       }
       set hbid(${vt}ObjectName) [tcssad.${vt}ObjectName add \
-            [code $this newobject]]
+            [itcl::code $this newobject]]
    }
 
 # Call inPosition whenever any of the inPosition or followS records change.
@@ -380,18 +380,18 @@ itcl::body NumericDisplay::constructor args {
          if { [llength [find object $sa.$par]] == 0 } {
             RecordMonitor $sa.$par $sa $par
          }
-         set hbid($par) [$sa.$par add [code $this inPosition]]
+         set hbid($par) [$sa.$par add [itcl::code $this inPosition]]
    }
 
 # Execute the noheartbeat method in 5 seconds time (the heartbeat monitor
 # routine will cancel it if the heartbeat is running.
-   set nohbid [after 5000 [code $this noheartbeat]]
+   set nohbid [after 5000 [itcl::code $this noheartbeat]]
 
 # Monitor the heartbeat sad record.
    if { [llength [find object tcssad.heartbeat]] == 0 } {
       RecordMonitor tcssad.heartbeat tcssad heartbeat
    }
-   set hbid(heartbeat) [tcssad.heartbeat add [code $this heartbeat]]
+   set hbid(heartbeat) [tcssad.heartbeat add [itcl::code $this heartbeat]]
    
 # Trigger checks on the subsystem states
    inPosition mcssad.xxxx ""
@@ -452,7 +452,7 @@ itcl::body NumericDisplay::newtarget {record value} {
 #         $itk_component(telpossys) configure -text "Apparent"
       }
       default {
-#         $itk_component(telpossys) configure -text ""
+         $itk_component(telpossys) configure -text ""
       }
    }
 #   $itk_component(telposwavel) configure -text $wavel
@@ -744,5 +744,5 @@ itcl::body NumericDisplay::heartbeat {rec value} {
    }
 
 # Schedule the noheartbeat method again.
-   set nohbid [after 5000 [code $this noheartbeat]]
+   set nohbid [after 5000 [itcl::code $this noheartbeat]]
 }

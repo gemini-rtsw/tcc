@@ -1,16 +1,16 @@
 #+
-#  SlewOptionsControl <- tcclib::ComponentControl
+#  SlewOptionsControl <- ComponentControl
 #
 #  A SlewOptionsControl is a ComponentControl widget with checkbutton widgets 
 #  for each of the Slew CAD parameters.
 #
-#  D Terrett 22 October 2001
+#  D Terrett 28 February 2002
 #
 #  Copyright CCLRC
 #+
 
 itcl::class SlewOptionsControl {
-   inherit tcclib::ComponentControl
+   inherit ComponentControl
    constructor args {}
    public {
       method load {name}
@@ -34,7 +34,7 @@ itcl::class SlewOptionsControl {
 itk::usual SlewOptionsControl {
    keep -borderwidth -cursor -font -highlightthickness -insertborderwidth \
          -insertofftime -insertontime -insertwidth -labelfont -popupcursor \
-         -selectborderwidth -textfont -title -applyarg -namespace -componentlist
+         -selectborderwidth -textfont -title
 }
 
 itcl::body SlewOptionsControl::constructor args {
@@ -48,52 +48,52 @@ itcl::body SlewOptionsControl::constructor args {
 # Checkbuttons for the options.
    set w $itk_component(options)
    itk_component add chopThrow {
-      checkbutton $w.chopThrow -variable [scope chopThrow] \
+      checkbutton $w.chopThrow -variable [itcl::scope chopThrow] \
             -onvalue On -offvalue Off \
             -text [lindex [cs slew info chopThrow] 2]
    }
    itk_component add sourceOffset {
-      checkbutton $w.sourceOffset -variable [scope sourceOffset] \
+      checkbutton $w.sourceOffset -variable [itcl::scope sourceOffset] \
             -onvalue On -offvalue Off \
             -text [lindex [cs slew info sourceOffset] 2]
    }
    itk_component add sourceDifTr {
-      checkbutton $w.sourceDifTr -variable [scope sourceDifTr] \
+      checkbutton $w.sourceDifTr -variable [itcl::scope sourceDifTr] \
             -onvalue On -offvalue Off \
             -text [lindex [cs slew info sourceDifTr] 2]
    }
    itk_component add mountOffset {
-      checkbutton $w.mountOffset -variable [scope mountOffset] \
+      checkbutton $w.mountOffset -variable [itcl::scope mountOffset] \
             -onvalue On -offvalue Off \
             -text [lindex [cs slew info mountOffset] 2]
    }
    itk_component add mountDifTr {
-      checkbutton $w.mountDifTr -variable [scope mountDifTr] \
+      checkbutton $w.mountDifTr -variable [itcl::scope mountDifTr] \
             -onvalue On -offvalue Off \
             -text [lindex [cs slew info mountDifTr] 2]
    }
    itk_component add filter1 {
-      checkbutton $w.filter1 -variable [scope filter1] \
+      checkbutton $w.filter1 -variable [itcl::scope filter1] \
             -onvalue On -offvalue Off \
             -text [lindex [cs slew info filter1] 2]
    }
    itk_component add filter2 {
-      checkbutton $w.filter2 -variable [scope filter2] \
+      checkbutton $w.filter2 -variable [itcl::scope filter2] \
             -onvalue On -offvalue Off \
             -text [lindex [cs slew info filter2] 2]
    }
    itk_component add pointing {
-      checkbutton $w.pointing -variable [scope pointing] \
+      checkbutton $w.pointing -variable [itcl::scope pointing] \
             -onvalue On -offvalue Off \
             -text [lindex [cs slew info pointing] 2]
    }
    itk_component add guiding {
-      checkbutton $w.guiding -variable [scope guiding] \
+      checkbutton $w.guiding -variable [itcl::scope guiding] \
             -onvalue On -offvalue Off \
             -text [lindex [cs slew info guiding] 2]
    }
    itk_component add guideOffset {
-      checkbutton $w.guideOffset -variable [scope guideOffset] \
+      checkbutton $w.guideOffset -variable [itcl::scope guideOffset] \
             -onvalue On -offvalue Off \
             -text [lindex [cs slew info guideOffset] 2]
    }
@@ -103,12 +103,8 @@ itcl::body SlewOptionsControl::constructor args {
           $itk_component(filter2) $itk_component(pointing) \
           $itk_component(guiding) $itk_component(guideOffset) -pady 2 -anchor w
 
-# Set the object class
-   set objclass SlewOptionsComponent
+# Set the object description.
    set description "slew options"
-
-# Create the slewOptions object used by apply.
-   set scratchobj [namespace which -command [SlewOptions #auto]]
 
    eval itk_initialize $args
 }

@@ -1,20 +1,20 @@
 #+
-#  TrackRateControl <- tcclib::ComponentControl
+#  TrackRateControl <- ComponentControl
 #
 #  Implements the TrackRateControl widget.
 #
 #  Options:
-#           -shadow
+#           -component     The component that the control edits
 #
-#  D Terrett 11 October 2001
+#  D Terrett 8 April 2002
 #
 #  Copyright CCLRC
 #+
 
 itcl::class TrackRateControl {
-   inherit tcclib::ComponentControl
+   inherit ComponentControl
    constructor args {}
-   itk_option define -shadow shadow Shadow {}
+   itk_option define -component component Component {}
    public {
       method load {name}
       method save {name}
@@ -28,7 +28,7 @@ itcl::class TrackRateControl {
 itk::usual TrackRateControl {
    keep -borderwidth -cursor -font -highlightthickness -insertborderwidth \
          -insertofftime -insertontime -insertwidth -labelfont -popupcursor \
-         -selectborderwidth -textfont -title -applyarg -namespace -componentlist
+         -selectborderwidth -textfont -title
 }
 
 itcl::body TrackRateControl::constructor args {
@@ -40,11 +40,11 @@ itcl::body TrackRateControl::constructor args {
    set w $itk_component(frame)
 
 # Epoch.
-   itk_component add epoch {
-      iwidgets::entryfield $w.epoch \
-            -labeltext [lindex [cs difTrSourceA info epoch] 2]
+   itk_component add t0 {
+      iwidgets::entryfield $w.t0 \
+            -labeltext [lindex [cs difTrSourceA info t0] 2]
    }
-   pack $itk_component(epoch)
+   pack $itk_component(t0)
 
 # Tabbed notebook for rate.
    itk_component add notebook {
@@ -57,9 +57,8 @@ itcl::body TrackRateControl::constructor args {
 
 # Control for selecting a coordinate frame.
    itk_component add cosys {
-      tcclib::SubComponentSelector $w.cosys -labeltext "Coordinate system" \
-            -labelpos nw -componentlist CosysList -component cosys \
-            -selectioncommand [code $this checkcosys]
+      SubComponentSelector $w.cosys -labeltext "Coordinate system" \
+            -labelpos nw -selectioncommand [itcl::code $this checkcosys]
    }
    pack $itk_component(cosys) -anchor e
 
@@ -87,18 +86,14 @@ itcl::body TrackRateControl::constructor args {
 # Select the RA/Dec page.
   $itk_component(notebook) select RA/Dec
 
-# Set the object class
-   set objclass TrackRateComponent
+# Set the object description.
    set description "differential track rate"
-
-# Create the trackrate object used by apply.
-   set scratchobj [namespace which -command [TrackRate #auto]]
 
    eval itk_initialize $args
 }
 
 itcl::body TrackRateControl::reset {} {
-   $itk_component(epoch) clear
+   $itk_component(t0) clear
    $itk_component(ra) clear
    $itk_component(dec) clear
    $itk_component(az) clear
@@ -106,21 +101,21 @@ itcl::body TrackRateControl::reset {} {
 }
 
 itcl::body TrackRateControl::load {name} {
-   $itk_component(epoch) insert end [$name cget -epoch]
+   $itk_component(t0) insert end [$name cget -t0]
    set cosys [$name cget -cosys]
    if { [string equal $cosys AzEl] } {
-      $itk_component(notebook) select Az/El
-      $itk_component(az) insert end [$name cget -dtheta1]
-      $itk_component(el) insert end [$name cget -dtheta2]
+      set ::Config($itk_option(-component).cosys,value) Az/El
+      $itk_component(az) insert end [$name cget -c1Rate]
+      $itk_component(el) insert end [$name cget -c2Rate]
    } else {
       $itk_component(notebook) select RA/Dec
       if { [string is space $cosys] } {
-         $itk_component(cosys) select FK5/J2000
+         set ::Config($itk_option(-component).cosys,value) FK5/J2000
       } else {
-         $itk_component(cosys) select $cosys
+         set ::Config($itk_option(-component).cosys,value) $cosys
       }
-      $itk_component(ra) insert end [$name cget -dtheta1]
-      $itk_component(dec) insert end [$name cget -dtheta2]
+      $itk_component(ra) insert end [$name cget -c1Rate]
+      $itk_component(dec) insert end [$name cget -c2Rate]
    }
 }
 
@@ -129,22 +124,22 @@ itcl::body TrackRateControl::save {name} {
          [$itk_component(notebook) select select] -label] 4] Az/El] } {
       $name configure \
             -cosys AzEl \
-            -epoch [$itk_component(epoch) get] \
-            -dtheta1 [$itk_component(az) get] \
-            -dtheta2 [$itk_component(el) get] \
+            -t0 [$itk_component(t0) get] \
+            -c1Rate [$itk_component(az) get] \
+            -c2Rate [$itk_component(el) get] \
    } else {
       $name configure \
             -cosys [$itk_component(cosys) get] \
-            -epoch [$itk_component(epoch) get] \
-            -dtheta1 [$itk_component(ra) get] \
-            -dtheta2 [$itk_component(dec) get] \
+            -t0 [$itk_component(t0) get] \
+            -c1Rate [$itk_component(ra) get] \
+            -c2Rate [$itk_component(dec) get] \
    }
 }
 
-itcl::configbody TrackRateControl::shadow {
-   $itk_component(cosys) configure -editcontrol \
-            $itk_option(-shadow)cosys
-   $itk_component(cosys) configure -shadow $itk_option(-shadow)
+itcl::configbody TrackRateControl::component {
+   if { $itk_option(-component) != "" } {
+      $itk_component(cosys) configure -component $itk_option(-component).cosys
+   }
 }
 
 itcl::body TrackRateControl::checkcosys {} {

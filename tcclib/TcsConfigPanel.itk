@@ -1,5 +1,5 @@
 #+
-#  TcsConfigPanel <- tcclib::Panel
+#  TcsConfigPanel <- Panel
 #
 #  Implements the TcsConfigPanel widget. A Panel widget with a TcsConfigControl
 #  widget packed into its interior and a "sub-components" menu added to the
@@ -8,24 +8,25 @@
 #  Methods:
 #          none
 #
-#  D Terrett 19 September 2001
+#  D Terrett 9 April 2002
 #
 #  Copyright CCLRC
 #+
 
 itcl::class TcsConfigPanel {
-   inherit tcclib::Panel
+   inherit Panel
    constructor args {}
    public {
       method preview {}
+      method sync {component name} {$itk_component(control) sync $name}
    }
    private {
-      method createSubMenu {menuPathName comproot class}
+      method createSubMenu {menuPathName comproot}
       method export {}
       method import {}
       variable menuno 0
       method purge {list namespace}
-      method save {list namespace file}
+      method save {list namespace node}
    }
 }
 
@@ -37,21 +38,23 @@ itcl::body TcsConfigPanel::constructor args {
 
 # Create the config control.
    itk_component add control {
-      TcsConfigControl $itk_interior.control -componentlist TcsConfigList
+      TcsConfigControl $itk_interior.control
+   } {
+      usual
+      rename -component -components components Components
    }
-
 
 # Add the import and export commands to the File menu.
    $itk_component(menubar) insert .file.exit command import \
-            -label Import... -command \"[code $this import]\"
+            -label Import... -command [list [itcl::code $this import]]
    $itk_component(menubar) insert .file.exit command export \
-            -label Export... -command \"[code $this export]\"
+            -label Export... -command [list [itcl::code $this export]]
 
 # Add the edit menu to the menu bar.
    $itk_component(menubar) add menubutton edit -text Edit
 
 # Generate the sub components menu items.
-   createSubMenu .edit tcsconfig TcsConfig
+   createSubMenu .edit tcs
 
 # Add the windows menu to the menu bar.
    $itk_component(menubar) add menubutton windows -text Windows
@@ -80,18 +83,17 @@ body TcsConfigPanel::preview {} {
    $itk_component(control) preview
 }
 
-body TcsConfigPanel::createSubMenu {menuPathName comproot class} {
+body TcsConfigPanel::createSubMenu {menuPathName comproot} {
 
-   foreach subcomp [${class}::subcomponents] {
-      $itk_component(menubar) add command ${menuPathName}.${menuno}x \
-              -label [lindex $subcomp 4] \
-              -command "$comproot[lindex $subcomp 0] map"
+   foreach subcomp $::Config($comproot,subcomp) {
+      $itk_component(menubar) add command $menuPathName.${menuno}x \
+              -label $::Config($comproot.$subcomp,label) \
+              -command "$::Config($comproot.$subcomp,panel) map $subcomp"
       incr menuno
-      if { [[lindex $subcomp 1]::subcomponents] != "" } {
-         $itk_component(menubar) add cascade ${menuPathName}.${menuno}x \
+      if { [llength $::Config($comproot.$subcomp,subcomp)] } {
+         $itk_component(menubar) add cascade $menuPathName.${menuno}x \
                -label "..." 
-         createSubMenu ${menuPathName}.${menuno}x $comproot[lindex $subcomp 0] \
-               [lindex $subcomp 1]
+         createSubMenu $menuPathName.${menuno}x $comproot.$subcomp 
          incr menuno
       }
    }
@@ -108,7 +110,7 @@ itcl::body TcsConfigPanel::import {} {
    if { ! [winfo exists $dialog] } {
       set dialog [ImportDialog $dialog \
             -modality application -title "Import File Selection Dialog" \
-            -master $itk_interior]
+            -master $itk_interior -mask *.xml]
       $dialog center
    }
 
@@ -132,11 +134,8 @@ itcl::body TcsConfigPanel::import {} {
       if { [lsearch -exact $complist "Differential track rates"] >= 0 } {
          purge TrackRateList TrackRateNames
       }
-      if { [lsearch -exact $complist "Science targets"] >= 0 } {
-         purge ScienceTargetList ScienceTargetNames
-      }
-      if { [lsearch -exact $complist "Wave front sensor targets"] >= 0 } {
-         purge WfsTargetList WfsTargetNames
+      if { [lsearch -exact $complist "Field definitions"] >= 0 } {
+         purge FieldList FieldNames
       }
       if { [lsearch -exact $complist "Field orientations"] >= 0 } {
          purge RotatorList RotatorNames
@@ -162,7 +161,12 @@ itcl::body TcsConfigPanel::import {} {
       if { [catch {set file [open $filename RDONLY]} msg] } {
          tk_messageBox -icon error -message $msg
       } else {
-         loadDefFile $file
+         if { [catch {set config [TcsConfigFile #auto $file $itk_interior]} \
+               msg] } {
+            tk_messageBox -icon error -message $msg
+         } else {
+            delete object $config
+         }
          close $file
 
 # Update save file directory.
@@ -190,78 +194,91 @@ itcl::body TcsConfigPanel::export {} {
    set dialog $itk_interior.exportdialog
    if { ! [winfo exists $dialog] } {
       set dialog [ExportDialog $dialog -master $itk_interior \
-            -title "Export Definitions Dialog" -modality application]
+            -title "Export Definitions Dialog" -modality application \
+            -mask *.xml]
       $dialog center
    }
 
    if { [$dialog activate] } {
-      set filename [$dialog get]
-      if { [file exists $filename] } {
-         set ans [tk_messageBox -icon warning -parent $itk_interior \
-             -type yesno -message \
-             "file \"$filename\" already exist. Do you want to overwrite it?"] 
-      } else {
-         set ans yes
+
+# Create xml document and find its root node.
+      set doc [dom::DOMImplementation create]
+      set node [dom::document createElement $doc tcc_tcs_config_file]
+
+# Save selected components.
+      set complist [[$dialog component select] getrhs]
+      if { [lsearch -exact $complist "Coordinate frames"] >= 0 } {
+         save CosysList CosysNames $node
       }
-      if {[string equal $ans yes]} {
-         if { [catch {set file [open $filename {WRONLY CREAT TRUNC}]} msg]} {
-            tk_messageBox -icon error -message $msg -parent $itk_interior
+      if { [lsearch -exact $complist "Tracking frames"] >= 0 } {
+         save TrackFrameList TrackFrameNames $node
+      }
+      if { [lsearch -exact $complist "Wavelengths"] >= 0 } {
+         save WavelengthList WavelengthNames $node
+      }
+      if { [lsearch -exact $complist "Instrument origins"] >= 0 } {
+         save PointOrigList PointOrigNames $node
+      }
+      if { [lsearch -exact $complist "Differential track rates"] >= 0 } {
+         save TrackRateList TrackRateNames $node
+      }
+      if { [lsearch -exact $complist "Field definitions"] >= 0 } {
+         save FieldList FieldNames $node
+      }
+      if { [lsearch -exact $complist "Field orientations"] >= 0 } {
+         save RotatorList RotatorNames $node
+      }
+      if { [lsearch -exact $complist "Chop configurations"] >= 0 } {
+         save ChopList ChopNames $node
+      }
+      if { [lsearch -exact $complist "Slew options"] >= 0 } {
+         save SlewOptionsList SlewOptionsNames $node
+      }
+      if { [lsearch -exact $complist "Instrument configurations"] >= 0 } {
+         save InstrumentList InstrumentNames $node
+      }
+      if { [lsearch -exact $complist "Guide configurations"] >= 0 } {
+         save GuideList GuideNames $node
+      }
+      if { [lsearch -exact $complist Configurations] >= 0 } {
+         save TcsConfigList TcsConfigNames $node
+      }
+      if { [dom::node hasChildNodes $node] } {
+
+         set filename [$dialog get]
+         if { [file exists $filename] } {
+            set ans [tk_messageBox -icon warning -parent $itk_interior \
+                -type yesno -message \
+                "file \"$filename\" already exist. Do you want to overwrite it?"] 
          } else {
-            set complist [[$dialog component select] getrhs]
-            if { [lsearch -exact $complist "Coordinate frames"] >= 0 } {
-               save CosysList CosysNames $file
-            }
-            if { [lsearch -exact $complist "Tracking frames"] >= 0 } {
-               save TrackFrameList TrackFrameNames $file
-            }
-            if { [lsearch -exact $complist "Wavelengths"] >= 0 } {
-               save WavelengthList WavelengthNames $file
-            }
-            if { [lsearch -exact $complist "Instrument origins"] >= 0 } {
-               save PointOrigList PointOrigNames $file
-            }
-            if { [lsearch -exact $complist "Differential track rates"] >= 0 } {
-               save TrackRateList TrackRateNames $file
-            }
-            if { [lsearch -exact $complist "Science targets"] >= 0 } {
-               save ScienceTargetList ScienceTargetNames $file
-            }
-            if { [lsearch -exact $complist "Wave front sensor targets"] >= 0 } {
-               save WfsTargetList WfsTargetNames $file
-            }
-            if { [lsearch -exact $complist "Field orientations"] >= 0 } {
-               save RotatorList RotatorNames $file
-            }
-            if { [lsearch -exact $complist "Chop configurations"] >= 0 } {
-               save ChopList ChopNames $file
-            }
-            if { [lsearch -exact $complist "Slew options"] >= 0 } {
-               save SlewOptionsList SlewOptionsNames $file
-            }
-            if { [lsearch -exact $complist "Instrument configurations"] >= 0 } {
-               save InstrumentList InstrumentNames $file
-            }
-            if { [lsearch -exact $complist "Guide configurations"] >= 0 } {
-               save GuideList GuideNames $file
-            }
-            if { [lsearch -exact $complist Configurations] >= 0 } {
-               save TcsConfigList TcsConfigNames $file
-            }
-            if { [llength $complist] == 0 } {
-               tk_messageBox -icon error -parent $itk_interior \
-                     -message "No components exported"
-            }
-            close $file
+            set ans yes
+         }
+         if {[string equal $ans yes]} {
+            if { [catch {set file [open $filename {WRONLY CREAT TRUNC}]} msg]} {
+               tk_messageBox -icon error -message $msg -parent $itk_interior
+            } else {
+
+# Write the XML document to the file.
+               puts $file [dom::DOMImplementation serialize $doc]
+
+# Close file.
+               close $file
 
 # Update save file directory.
-            set dir [file dirname $filename]
-            if { [string compare [file pathtype $dir] relative] == 0 } {
-               set tcclib::SaveFileDirectory [pwd]/$dir
-            } else {
-               set tcclib::SaveFileDirectory $dir
+               set dir [file dirname $filename]
+               if { [string compare [file pathtype $dir] relative] == 0 } {
+                  set tcclib::SaveFileDirectory [pwd]/$dir
+               } else {
+                  set tcclib::SaveFileDirectory $dir
+               }
             }
          }
+      } else {
+         tk_messageBox -icon error -parent $itk_interior \
+               -message "No components to export"
       }
+# Delete document.
+      dom::DOMImplementation destroy $doc
    }
    $dialog deactivate
 
@@ -282,12 +299,12 @@ itcl::body TcsConfigPanel::purge {list namespace} {
    }
 }
 
-itcl::body TcsConfigPanel::save {list namespace file} {
+itcl::body TcsConfigPanel::save {list namespace node} {
    set n [$list length]
    for { set i 0 } { $i < $n } { incr i } {
       set name [$list get $i]
       if { $name != "" } {
-         ${namespace}::$name save $file
+         ${namespace}::$name save $node
       }
    }
 }

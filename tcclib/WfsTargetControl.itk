@@ -4,7 +4,7 @@
 #  A WfsTarget control is a TargetControl widget for entering a wave front
 #  sensor target.
 #
-#  D Terrett 18 June 2001
+#  D Terrett 27 February 2002
 #
 #  Copyright CCLRC
 #+
@@ -17,22 +17,13 @@ itcl::class WfsTargetControl {
 itk::usual WfsTargetControl {
    keep -borderwidth -cursor -font -highlightthickness -insertborderwidth \
          -insertofftime -insertontime -insertwidth -labelfont -popupcursor \
-         -selectborderwidth -textfont -title -applyarg -componentlist -namespace
+         -selectborderwidth -textfont -title
 }
 
 itcl::body WfsTargetControl::constructor args {
 
-# Add destinations to the copy menu.
-   $itk_component(copymenu) add command -label "Science targets" \
-         -command [code $this copy createScienceTarget "Science target name" \
-         tcsconfigscienceTarget]
-
-# Define the object class
-   set objclass WfsTargetComponent
-   set description target
-
-# Create the scatch target object used by apply.
-   set scratchobj [namespace which -command [WfsTarget #auto]]
+# Define the object description
+   set description "WFS target"
 
    eval itk_initialize $args
 }

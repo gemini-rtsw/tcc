@@ -5,7 +5,7 @@
 #  Arguments:
 #             Any command line options and values.
 #
-#  D Terrett 13 July 2001
+#  D Terrett 5 April 2002
 #
 #  Copyright CCLRC
 #-
@@ -30,6 +30,7 @@ proc tsdMain args {
    epics sa gissad
    epics sa pcssad
    epics sa gcalsad
+   epics sa gpolsad
 
 # Wait to get connected to the TCS.
    waitConnect

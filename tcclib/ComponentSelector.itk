@@ -12,20 +12,14 @@
 #
 #           -component      Merged from SubComponentSelector
 #
-#           -componentlist  Merged from SubComponentSelector
-#
-#           -editcontrol    Merged from SubComponentSelector
-#
 #           -labeltext      Merged from SubComponentSelector
-#
-#           -shadow         Merged from SubComponentSelector
 #
 #           -source         The source configuration of the component
 #
 #  Methods:
 #           select name   - Selects the component "name"
 #
-#  D Terrett  24 November 1999
+#  D Terrett  27 February 2002
 #
 #  Copyright CCLRC
 #+
@@ -63,18 +57,18 @@ itcl::body ComponentSelector::constructor args {
    }
 
    itk_component add enable {
-      checkbutton $w.enable -variable [scope enable]
+      checkbutton $w.enable -variable [itcl::scope enable]
    }
 
 # Set a trace on the variable to detect changes in the state of the 
 # checkbutton.
-   trace variable enable w [code $this enableTrace]
+   trace variable enable w [itcl::code $this enableTrace]
 
    itk_component add selector {
-      tcclib::SubComponentSelector $w.selector
+      SubComponentSelector $w.selector
    } {
       usual
-      keep -component -componentlist -editcontrol -labeltext -shadow
+      keep -component -labeltext
    }
 
    pack $itk_component(source) $itk_component(enable) -side left

@@ -1,34 +1,38 @@
 #+
-#  GuideControl <- tcclib::ComponentControl
+#  GuideControl <- ComponentControl
 #
 #  A GuideControl is a ComponentControl widget with widgets for the target 
 #  name and chop and node states for each of the wavefront sensors.
 #
 #  Options:
-#           -shadow         The names of this control's shadow.
 #
-#  D Terrett 1 December 2001
+#  D Terrett 9 April 2002
 #
 #  Copyright CCLRC
 #+
 
 itcl::class GuideControl {
-   inherit tcclib::ComponentControl
-   constructor args {}
-   itk_option define -shadow shadow Shadow {}
+   inherit ComponentControl
+   constructor {args} {}
+   itk_option define -component component Component {}
    public {
       method load {name}
+      method reset {}
       method save {name}
+   }
+   private {
+      method filter {wfs}
+      variable defaultwavels
    }
 }
 
 itk::usual GuideControl {
    keep -borderwidth -cursor -font -highlightthickness -insertborderwidth \
          -insertofftime -insertontime -insertwidth -labelfont -popupcursor \
-         -selectborderwidth -textfont -title -applyarg -namespace -componentlist
+         -selectborderwidth -textfont -title
 }
 
-itcl::body GuideControl::constructor args {
+itcl::body GuideControl::constructor {args} {
 
 # Create 3 panels, one for each of the wave front sensors.
    set w $itk_interior
@@ -42,17 +46,10 @@ itcl::body GuideControl::constructor args {
    foreach wfs {pwfs1 pwfs2 oiwfs} {
       set w $itk_component($wfs)
 
-# Target selector.
-      itk_component add ${wfs}Target {
-         tcclib::SubComponentSelector $w.target \
-               -labeltext "[string toupper $wfs] Target" \
-               -componentlist WfsTargetList -labelpos nw \
-               -component ${wfs}Target
-      }
-
 # Chop state
       itk_component add ${wfs}chop {
-         iwidgets::optionmenu $w.chop -labeltext "Probe follows star" \
+         iwidgets::optionmenu $w.chop \
+               -labeltext "[string toupper $wfs] probe follows star" \
                -labelpos nw
       }
       [$itk_component(${wfs}chop) component menuBtn] configure -anchor w
@@ -69,19 +66,45 @@ itcl::body GuideControl::constructor args {
       }
       [$itk_component(${wfs}nod) component menuBtn] configure -anchor w
       $itk_component(${wfs}nod) insert end \
-            "nod A only" "nod B only" "both nod states"
-      pack $itk_component(${wfs}Target) $itk_component(${wfs}chop) \
-            $itk_component(${wfs}nod) -padx 5 -pady 2 -anchor w
-}
+            "nod state A only" "nod state B only" "both nod states"
+      pack $itk_component(${wfs}chop) $itk_component(${wfs}nod) \
+            -padx 5 -pady 2 -anchor w
 
-# Define the object class
-   set objclass GuideComponent
+# Effective wavelength.
+      if { $wfs == "oiwfs" } {
+
+# A subcomponent selector for the OIWFS.
+         itk_component add oiwfsfilter {
+            WavelengthSelector $w.oiwfsfilter -labeltext "with filter" \
+                  -labelpos w
+         }
+         pack $itk_component(${wfs}filter) -anchor w -padx 3 -pady 3
+      } else {
+
+# An option menus and an entry field for the PWFSs.
+         itk_component add ${wfs}filter {
+            iwidgets::optionmenu $w.${wfs}filter -labeltext "with filter" \
+                  -command [itcl::code $this filter $wfs]
+         }
+         $itk_component(${wfs}filter) insert end neutral Blue Green Red Red04 \
+               Red1 ""
+         itk_component add ${wfs}wavel {
+            iwidgets::entryfield $w.${wfs}wavel -labeltext "Wavelength (mu)" \
+                  -width 8
+         }
+         pack $itk_component(${wfs}filter) $itk_component(${wfs}wavel) \
+               -anchor w -padx 3 -pady 3
+      }
+   }
+
+# Define the object description.
    set description "guide configuration"
 
-   eval itk_initialize $args
+# Define the default wavelengths for the peripheral wave-front filters.
+   array set defaultwavels {neutral 0.65 Blue 0.45 Green 0.55 Red 0.60 \
+         Red04 0.64 Red1 0.70}
 
-# Create guide object used by apply
-   set scratchobj [namespace which -command [Guide #auto]]
+   eval itk_initialize $args
 }
 
 itcl::body GuideControl::save {name} {
@@ -103,8 +126,13 @@ itcl::body GuideControl::save {name} {
          3 {set chop antiNod}
          4 {set chop never}
       }
-      $name configure -${wfs}Target [$itk_component(${wfs}Target) get] \
-             -${wfs}Active $chop -${wfs}NodState $nod
+      $name configure -${wfs}Active $chop -${wfs}NodState $nod
+      if { $wfs == "oiwfs" } {
+         $name configure -oiwfsWavelength [$itk_component(oiwfsfilter) get name]
+      } else {
+         $name configure -${wfs}Filter [$itk_component(${wfs}filter) get] \
+               -${wfs}Wavel [$itk_component(${wfs}wavel) get]
+      }
    }
 }
 
@@ -113,8 +141,6 @@ itcl::body GuideControl::load {name} {
 # Copy the contents of the guide object selected in the combobox
 # into the edit control.
    foreach wfs {pwfs1 pwfs2 oiwfs} {
-      $itk_component(${wfs}Target) configure -state normal
-      $itk_component(${wfs}Target) select [$name cget -${wfs}Target]
       switch [$name cget -${wfs}Active] {
          A {$itk_component(${wfs}chop) select 0}
          B {$itk_component(${wfs}chop) select 1}
@@ -127,12 +153,38 @@ itcl::body GuideControl::load {name} {
          A {$itk_component(${wfs}nod) select 1}
          B {$itk_component(${wfs}nod) select 2}
       }
+      if { $wfs != "oiwfs" } {
+         $itk_component(${wfs}filter) select [$name cget -${wfs}Filter]
+         set wavel [$name cget -${wfs}Wavel]
+         if { $wavel != "" } {
+            $itk_component(${wfs}wavel) clear
+            $itk_component(${wfs}wavel) insert end $wavel
+         }
+      } else {
+         set ::Config($itk_option(-component).oiwfswavelength,value) \
+               [$name cget -oiwfsWavelength]
+      }
    }
 }
 
-itcl::configbody GuideControl::shadow {
-   foreach wfs {pwfs1 pwfs2 oiwfs} {
-      $itk_component(${wfs}Target) configure -editcontrol \
-               $itk_option(-shadow)${wfs}Target -shadow $itk_option(-shadow)
+itcl::body GuideControl::reset {} {
+   $itk_component(pwfs1wavel) clear
+   $itk_component(pwfs2wavel) clear
+   $itk_component(pwfs1filter) select ""
+   $itk_component(pwfs2filter) select ""
+}
+
+itcl::configbody GuideControl::component {
+   if { $itk_option(-component) != "" } {
+      $itk_component(oiwfsfilter) configure \
+            -component $itk_option(-component).oiwfswavelength
+   }
+}
+
+itcl::body GuideControl::filter {wfs} {
+   set filt [$itk_component(${wfs}filter) get]
+   if { $filt != "" } {
+      $itk_component(${wfs}wavel) clear
+      $itk_component(${wfs}wavel) insert end $defaultwavels($filt)
    }
 }

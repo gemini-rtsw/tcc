@@ -39,7 +39,8 @@ itk::usual BeamSelector {
 itcl::body BeamSelector::constructor args {
 
    itk_component add beama {
-      button $itk_interior.beama -command [code $this pressed A] -text "Beam A"
+      button $itk_interior.beama -command [itcl::code $this pressed A] \
+            -text "Beam A"
    } {
       usual
       keep -state -width
@@ -47,7 +48,8 @@ itcl::body BeamSelector::constructor args {
       ignore -background
    }
    itk_component add beamb {
-      button $itk_interior.beamb -command [code $this pressed B] -text "Beam B"
+      button $itk_interior.beamb -command [itcl::code $this pressed B] \
+            -text "Beam B"
    } {
       usual
       keep -state -width
@@ -71,8 +73,8 @@ itcl::body BeamSelector::constructor args {
    }
 
 # Monitor the records.
-   set chopmonid [tcssad.chopState add [code $this monitor]]
-   set beammonid [tcssad.chopBeam add [code $this monitor]]
+   set chopmonid [tcssad.chopState add [itcl::code $this monitor]]
+   set beammonid [tcssad.chopBeam add [itcl::code $this monitor]]
 
 # Call the monitor routine to update the state.
    monitor tcssad.chopState [sa tcssad get chopState]

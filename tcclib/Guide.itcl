@@ -1,156 +1,128 @@
 #+
-#  Guide
+#  Guide <- tcclib::Paramset
 #
-#  A guide component contains the names of the targes for the 3 wavefront 
-#  sensors and which chop and nod states they should be active in.
+#  A guide component contains which chop and nod states the wave-front
+#  sensors should be active in.
 #
 #  Options:
-#           -oiwfsTarget    The target for the on-instrument wavefront sensor.
-#
 #           -oiwfsActive    The chop states in which the guide star is
 #                           active
 #
 #           -oiwfsNodState  The nod states in which the probe follows
 #                           the star.
 #
-#           -pwfs1Target    The target for peripheral wavefront sensor 1.
+#           -oiwfsWavelength The OIWFS guiding wavelength component
 #
 #           -pwfs1Active    The chop states in which the guide star is
 #                           active
 #
+#           -pwfs1Filter    The PWFS1 filter.
+#
 #           -pwfs1NodState  The nod states in which the probe follows
 #                           the star.
 #
-#           -pwfs2Target    The target for peripheral wavefront sensor 2.
+#           -pwfs1Wavel     The PFWS1 guiding wavelength
 #
 #           -pwfs2Active    The chop states in which the guide star is
 #                           active
 #
+#           -pwfs2Filter    The PWFS2 filter.
+#
 #           -pwfs2NodState  The nod states in which the probe follows
 #                           the star.
 #
+#           -pwfs2Wavel     The PFWS2 guiding wavelength
+#
 #  Methods:
-#           apply cs        Sets the system and equinox paramters of the
-#                           command sender "cs".
+#           apply comp      Sets the chop/nod flags
 #
 #           init            Returns the guide object to its initial state.
 #
-#           preview         Sets the guide information in the preview.
+#           save node       Saves the values of the options to the xml
+#                           node.
 #
-#           save file       Writes the values of the options to the file
-#                           descriptor "file".
+#  D Terrett 11 April 2002
 #
-#  Procs:
-#           subcomponents   Returns a list of the Guide components 
-#                           subcomponents.
-#
-#  D Terrett 2 June 2001
-#
-#  Copyright CCLRC
+#  copyright CCLRC
 #+
 
 itcl::class Guide {
+   inherit tcclib::Paramset
    constructor {} {}
-   destructor {$this init}
-   public proc subcomponents {}
    public {
-      method apply {args}
+      method apply {comp}
       method init {}
       method preview {}
-      method save {file}
-      variable oiwfsTarget "" {newTarget oiwfs $oiwfsTarget}
-      variable pwfs1Target "" {newTarget pwfs1 $pwfs1Target}
-      variable pwfs2Target "" {newTarget pwfs2 $pwfs2Target}
+      method save {node}
       variable pwfs1Active never
       variable pwfs2Active never
       variable oiwfsActive never
       variable pwfs1NodState AB
       variable pwfs2NodState AB
       variable oiwfsNodState AB
-
-# These variables are retained so as not to break existing configuration
-# definition files.
-      variable oiwfsChop
-      variable oiwfsNod
-      variable pwfs1Chop
-      variable pwfs1Nod
-      variable pwfs2Chop
-      variable pwfs2Nod
+      variable pwfs1Filter ""
+      variable pwfs2Filter ""
+      variable pwfs1Wavel ""
+      variable pwfs2Wavel ""
+      variable oiwfsWavelength ""
    }
    private {
       method setEnableFlags {wfs active nodstate}
-      method newTarget {wfs name}
-      method park {wfs}
-      variable current_target
    }
 }
 
-itcl::body Guide::constructor {} {
-   set current_target(oiwfs) ""
-   set current_target(pwfs1) ""
-   set current_target(pwfs2) ""
-}
-
-itcl::body Guide::subcomponents {} {
-   return { \
-      {pwfs1Target WfsTarget WfsTargetNames WfsTargetList {PWFS1 Target} pwfs1} \
-      {pwfs2Target WfsTarget WfsTargetNames WfsTargetList {PWFS2 Target} pwfs2} \
-      {oiwfsTarget WfsTarget WfsTargetNames WfsTargetList {OIWFS Target} oiwfs} \
-   }
-}
-
-itcl::body Guide::apply args {
-
-# Call the apply method of all the targets that have a value and set the
-# enable flags.
-   if { ![string is space $pwfs1Target] } {
-      ::WfsTargetNames::$pwfs1Target apply pwfs1
-   }
+itcl::body Guide::apply {comp} {
    setEnableFlags pwfs1 $pwfs1Active $pwfs1NodState
-   if { ![string is space $pwfs2Target] } {
-      ::WfsTargetNames::$pwfs2Target apply pwfs2
-   }
    setEnableFlags pwfs2 $pwfs2Active $pwfs2NodState
-   if { ![string is space $oiwfsTarget] } {
-      ::WfsTargetNames::$oiwfsTarget apply oiwfs
-   }
    setEnableFlags oiwfs $oiwfsActive $oiwfsNodState
+   if { ! [string equal $pwfs1Filter ""] } {
+      cs pwfs1Filter set filter $pwfs1Filter
+      logger command pwfs1Filter
+   }
+   if { ! [string equal $pwfs2Filter ""] } {
+      cs pwfs2Filter set filter $pwfs2Filter
+      logger command pwfs2Filter
+   }
+   if { ! [string equal $pwfs1Wavel ""] } {
+      cs wavelPwfs1 set wavel $pwfs1Wavel
+      logger command wavelPwfs1
+   }
+   if { ! [string equal $pwfs2Wavel ""] } {
+      cs wavelPwfs2 set wavel $pwfs2Wavel
+      logger command wavelPwfs2
+   }
+   if { ! [string equal $oiwfsWavelength ""] } {
+      ::OIWFSWavelengthNames::$oiwfsWavelength apply $comp.oiwfswavelength
+   }
 }
 
 itcl::body Guide::init {} {
-   $this configure -oiwfsTarget ""
    set oiwfsActive A
    set oiwfsNodState AB
-   $this configure -pwfs1Target ""
+   set oiwfsWavelength ""
    set pwfs1Active A
+   set pwfs1Filter ""
    set pwfs1NodState AB
-   $this configure -pwfs2Target ""
+   set pwfs1Wavel ""
    set pwfs2Active A
+   set pwfs2Filter ""
    set pwfs2NodState AB
+   set pwfs2Wavel ""
 }
 
-itcl::body Guide::preview {} {
-   if { ! [string equal $pwfs1Target ""] } {
-      ::WfsTargetNames::$pwfs1Target preview pwfs1
-   }
-   if { ! [string equal $pwfs2Target ""] } {
-      ::WfsTargetNames::$pwfs2Target preview pwfs2
-   }
-   if { ! [string equal $oiwfsTarget ""] } {
-      ::WfsTargetNames::$oiwfsTarget preview oiwfs
-   }
-}
-
-itcl::body Guide::save file {
-   puts $file "   -pwfs1Target [list $pwfs1Target] \\"
-   puts $file "   -pwfs1Active $pwfs1Active \\"
-   puts $file "   -pwfs1NodState $pwfs1NodState \\"
-   puts $file "   -pwfs2Target [list $pwfs2Target] \\"
-   puts $file "   -pwfs2Active $pwfs2Active \\"
-   puts $file "   -pwfs2NodState $pwfs2NodState \\"
-   puts $file "   -oiwfsTarget [list $oiwfsTarget] \\"
-   puts $file "   -oiwfsActive $oiwfsActive \\"
-   puts $file "   -oiwfsNodState $oiwfsNodState"
+itcl::body Guide::save {node} {
+   set node [paramset $node guide]
+   param $node pwfs1Active $pwfs1Active
+   param $node pwfs1NodState $pwfs1NodState
+   param $node pwfs1Filter $pwfs1Filter
+   param $node pwfs1Wavelength $pwfs1Wavel
+   param $node pwfs2Active $pwfs2Active
+   param $node pwfs2NodState $pwfs2NodState
+   param $node pwfs2Filter $pwfs2Filter
+   param $node pwfs2Wavelength $pwfs1Wavel
+   param $node oiwfsActive $oiwfsActive
+   param $node oiwfsNodState $oiwfsNodState
+   param $node oiwfsWavelength $oiwfsWavelength
 }
 
 itcl::body Guide::setEnableFlags {wfs active nodstate} {
@@ -253,29 +225,14 @@ itcl::body Guide::setEnableFlags {wfs active nodstate} {
    logger command ${wfs}Guide
 }
 
-itcl::body Guide::newTarget {wfs name} {
-   if { ! [string equal $current_target($wfs) ""] } {
-      WfsTargetNames::$current_target($wfs) refdec
+itcl::body Guide::preview {} {
+   if { ! [string equal $pwfs1Wavel ""] } {
+      tccPreview set wavelpwfs1 $pwfs1Wavel
    }
-   set current_target($wfs) ""
-   if { ! [string is space $name] } {
-      if { [catch {WfsTargetNames::$name refinc}] } {
-         error "Guide target \"$name\" does not exist"
-      } else {
-         set current_target($wfs) $name
-      }
+   if { ! [string equal $pwfs2Wavel ""] } {
+      tccPreview set wavelpwfs2 $pwfs2Wavel
    }
-}
-
-itcl::body Guide::park {wfs} {
-   switch $wfs {
-      pwfs1 {
-         cs pwfs1Park set dummy value 1
-         logger command pwfs1Park
-      }
-      pwfs2 {
-         cs pwfs2Park set dummy value 1
-         logger command pwfs2Park
-      }
+   if { ! [string equal $oiwfsWavelength ""] } {
+      ::OIWFSWavelengthNames::$oiwfsWavelength preview oiwfs
    }
 }

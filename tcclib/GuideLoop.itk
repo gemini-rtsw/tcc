@@ -10,7 +10,7 @@
 #  Methods:
 #           none
 #
-#  D Terrett  1 December 2001
+#  D Terrett  8 April 2002
 #
 #  Copyright CCLRC
 #+
@@ -69,7 +69,7 @@ itcl::body GuideLoop::constructor args {
                -validate real -labeltext "exp(s)"
       }
       $w create window 60 80 -window $w.${sys}_ex -tag $sys
-      $w.${sys}_ex insert list end 1.0 0.5 0.1 0.05 0.01 0.005
+      $w.${sys}_ex insert list end 1.0 0.5 0.1 0.05 0.02 0.01 0.005
       $w.${sys}_ex insert entry end [AO cget -${sys}Expose]
       [$w.${sys}_ex component list] configure -hscrollmode none \
             -vscrollmode none
@@ -213,7 +213,7 @@ itcl::body GuideLoop::constructor args {
 # Monitor the guide states
    foreach rec {p1state p2state oistate m2state absorbtilt m1state \
          m1source p1guide p1guide p1mweight p2mweight} {
-      sa guideConfig proc $rec [code $this recolour]
+      sa guideConfig proc $rec [itcl::code $this recolour]
    }
 
 # Schedule an update once the channels have connected.
@@ -225,7 +225,7 @@ itcl::body GuideLoop::constructor args {
 itcl::body GuideLoop::destructor {} {
    foreach rec {p1state p2state oistate m2state absorbtilt m1state \
          wfsstate wfsprobe} {
-      sa guideConfig unproc $rec [code $this recolour]
+      sa guideConfig unproc $rec [itcl::code $this recolour]
    }
 }
 

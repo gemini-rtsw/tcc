@@ -1,22 +1,25 @@
 #+
-#  TargetControl <- tcclib::ComponentControl
+#  TargetControl <- ComponentControl
 #
 #  A Target control is a ComponentControl widget with widgets for
 #  the target position etc. It is intended to be inherited by widgets
 #  for specific target types (science & wfs).
 #
 #  Options:
-#           -shadow         The name of the control's edit shadow.
+#           -component      The component that the control edits
 #
-#  D Terrett 1 October 2001
+#  Methods:
+#
+#  D Terrett 7 April 2002
 #
 #  Copyright CCLRC
 #+
 
 itcl::class TargetControl {
-   inherit tcclib::ComponentControl
+   inherit ComponentControl
    constructor args {}
-   itk_option define -shadow shadow Shadow ""
+   destructor {}
+   itk_option define -component component Component ""
    public {
       method load {name}
       method reset {}
@@ -26,6 +29,8 @@ itcl::class TargetControl {
    private {
       method checkcosys {}
       method grab {}
+      method newlist {n1 n2 op}
+      variable comp ""
    }
 }
 
@@ -35,7 +40,10 @@ itk::usual TargetControl {
          -selectborderwidth -textfont -title
 }
 
-itcl::body TargetControl::constructor args {
+itcl::body TargetControl::constructor {args} {
+
+# Expand component selector.
+   $itk_component(selector) configure -width 43
 
    itk_component add frame {
       frame $itk_interior.frame -borderwidth 2 -relief ridge
@@ -84,12 +92,13 @@ itcl::body TargetControl::constructor args {
       rename -textfont -majorfont majorFont Font
       rename -labelfont -majorfont majorFont Font
    }
+#   pack $itk_component(ra) $itk_component(dec) -side left -expand y -pady 10
+#   set w [winfo parent $w]
 
 #  Coordinate frame.
    itk_component add cosys {
-      tcclib::SubComponentSelector $w.cosys -labeltext "Coordinate system" \
-            -labelpos nw -componentlist CosysList -component cosys \
-            -selectioncommand [code $this checkcosys]
+      SubComponentSelector $w.cosys -labeltext "Coordinate system" \
+            -labelpos nw -selectioncommand [itcl::code $this checkcosys]
    }
    pack $itk_component(ra) $itk_component(dec) $itk_component(cosys) \
          -expand y -pady 10
@@ -110,12 +119,12 @@ itcl::body TargetControl::constructor args {
    }
 
 # Proper motions.
-   itk_component add dtheta1 {
-      iwidgets::entryfield $w.dtheta1 -width 11 \
+   itk_component add pm1 {
+      iwidgets::entryfield $w.pm1 -width 11 \
             -labeltext "RA (s/yr)"
    }
-   itk_component add dtheta2 {
-      iwidgets::entryfield $w.dtheta2 -width 11 \
+   itk_component add pm2 {
+      iwidgets::entryfield $w.pm2 -width 11 \
             -labeltext "Dec (arcsec/yr)"
    }
 
@@ -130,7 +139,7 @@ itcl::body TargetControl::constructor args {
       iwidgets::entryfield $w.rv -width 11 \
             -labeltext [lindex [cs sourceA info rv] 2]
    }
-   pack $itk_component(epoch) $itk_component(dtheta1) $itk_component(dtheta2) \
+   pack $itk_component(epoch) $itk_component(pm1) $itk_component(pm2) \
          $itk_component(parallax) $itk_component(rv) -padx 3 -pady 3 \
          -anchor e -expand yes
 
@@ -155,101 +164,82 @@ itcl::body TargetControl::constructor args {
    pack $itk_component(az) $itk_component(el) -side left -expand y -pady 40 \
       -anchor n
 
-# Frame for track rate and wavelength.
    set w $itk_component(frame)
    itk_component add trw {
       frame $w.trw
    }
-   pack $itk_component(trw) -side left
+   pack $itk_component(trw) -side left -fill x -expand yes
+
+# Display of brightness.
+   set w $itk_component(trw)
+   itk_component add brightness {
+      iwidgets::entryfield $w.brightness -labeltext Brightness -labelpos w
+   }
+   pack $itk_component(brightness) -side top -anchor w -padx 20 -pady 3 \
+         -fill x -expand y
 
 # Control for selecting a differential track rate.
-   set w $itk_component(trw)
    itk_component add trackrate {
-      tcclib::SubComponentSelector $w.trackrate \
-            -labeltext "Differential track rate" \
-            -labelpos nw -componentlist TrackRateList -component trackrate
+      SubComponentSelector $w.trackrate -labeltext "Track rate" -labelpos w
    }
-
-# Control for setting the effective wavelength.
-   itk_component add wavelength_name {
-      WavelengthSelector $w.wavelength
-   }
-   pack $itk_component(wavelength_name) $itk_component(trackrate) \
-         -side top -anchor w -padx 20 -pady 3
+   pack $itk_component(trackrate) -side top -anchor w -padx 20 -pady 3
 
 # Select the RA/Dec page.
   $itk_component(notebook) select RA/Dec
 
-# Add a menu button to the frame containing the selector.
-   set w [winfo parent $itk_component(selector)]
-   itk_component add copy {
-      menubutton $w.copy -text "Copy to..." -relief raised
-   }
-   pack $itk_component(copy) -side right -pady 4 -padx 4
-   itk_component add copymenu {
-      menu $itk_component(copy).menu -tearoff 0
-   } {
-      usual
-      ignore -tearoff
-   }
-   $itk_component(copy) configure -menu $itk_component(copymenu)
-
 # Add a grab button to the storeapply window.
-   set store  [$itk_component(storeapply) component store]
    itk_component add grab {
-      button [winfo parent $store].grab -text Grab -command [code $this grab]
+      button $itk_component(bottom).grab -text Grab \
+            -command [itcl::code $this grab]
    }
-   pack $store $itk_component(grab) -side left -pady 4 -expand y
+   pack $itk_component(grab) -side left -pady 4 -expand y
 
    eval itk_initialize $args
+}
+
+itcl::body TargetControl::destructor {} {
+   trace vdelete ::Config($comp,list) w [itcl::code $this newlist]
 }
 
 itcl::body TargetControl::reset {} {
    $itk_component(ra) clear
    $itk_component(dec) clear
    $itk_component(epoch) clear
-   $itk_component(dtheta1) clear
-   $itk_component(dtheta2) clear
+   $itk_component(pm1) clear
+   $itk_component(pm2) clear
    $itk_component(parallax) clear
    $itk_component(rv) clear
    $itk_component(az) clear
    $itk_component(el) clear
+   $itk_component(brightness) clear
 }
 
 itcl::body TargetControl::load {name} {
    switch [$name cget -type] {
-      radec {
+      hmsdegTarget {
          $itk_component(notebook) select RA/Dec
          set cosys [$name cget -cosys]
          if { [string is space $cosys] } {
-               $itk_component(cosys) select FK5/J2000
+               set ::Config($itk_option(-component).cosys,value) FK5/J2000
          } else {
-            $itk_component(cosys) select $cosys
+            set ::Config($itk_option(-component).cosys,value) $cosys
          }
-         set radec [$name cget -radec]
-         $itk_component(ra) insert end [lindex $radec 0]
-         $itk_component(dec) insert end [lindex $radec 1]
+         $itk_component(ra) insert end [$name cget -c1]
+         $itk_component(dec) insert end [$name cget -c2]
          $itk_component(epoch) insert end [$name cget -epoch]
-         set pm [$name cget -pm]
-         $itk_component(dtheta1) insert end [lindex $pm 0]
-         $itk_component(dtheta2) insert end [lindex $pm 1]
+         $itk_component(pm1) insert end [$name cget -pm1]
+         $itk_component(pm2) insert end [$name cget -pm2]
          $itk_component(parallax) insert end [$name cget -parallax]
          $itk_component(rv) insert end [$name cget -rv]
       }
-      azel {
+      degdegTarget {
          $itk_component(notebook) select Az/El
-         set azel [$name cget -azel]
-         $itk_component(az) insert end [lindex $azel 0]
-         $itk_component(el) insert end [lindex $azel 1]
+         $itk_component(az) insert end [$name cget -c1]
+         $itk_component(el) insert end [$name cget -c2]
       }
    }
-   set wavel [$name cget -wavelength_name]
-   $itk_component(wavelength_name) select $wavel
-   if { [string equal $wavel ""] } {
-      set wavel [$name cget -wavelength_value]
-      $itk_component(wavelength_name) value $wavel
-   }
-   $itk_component(trackrate) select [$name cget -trackrate]
+   $itk_component(brightness) insert end [$name cget -brightness]
+   set ::Config($itk_option(-component).trackrate,value) [$name cget -trackrate]
 }
 
 itcl::body TargetControl::save {name} {
@@ -258,42 +248,49 @@ itcl::body TargetControl::save {name} {
    switch $page {
       RA/Dec {
          $name configure \
-               -objName [$itk_component(selector) get] \
+               -type hmsdegTarget \
+               -objname [$itk_component(selector) get] \
                -cosys [$itk_component(cosys) get] \
-               -radec [list [$itk_component(ra) get] \
-               [$itk_component(dec) get]] \
+               -c1 [$itk_component(ra) get] \
+               -c2 [$itk_component(dec) get] \
                -epoch [$itk_component(epoch) get] \
-               -pm "[$itk_component(dtheta1) get] \
-               [$itk_component(dtheta2) get]" \
+               -pm1 [$itk_component(pm1) get] \
+               -pm2 [$itk_component(pm2) get] \
                -parallax [$itk_component(parallax) get] \
                -rv [$itk_component(rv) get] \
                -trackrate [$itk_component(trackrate) get]
       }
       Az/El {
          $name configure \
-               -azel [list [$itk_component(az) get] \
-               [$itk_component(el) get]] \
+               -type degdegTarget \
+               -c1 [$itk_component(az) get] \
+               -c2 [$itk_component(el) get]
       }
    }
-
-   set wavel [$itk_component(wavelength_name) get name]
-   $name configure -wavelength_name $wavel
-   if { [string equal $wavel ""] } {
-      $name configure \
-            -wavelength_value [$itk_component(wavelength_name) get value]
-   }
+   $name configure -brightness [$itk_component(brightness) get]
 }
 
-itcl::configbody TargetControl::shadow {
-   $itk_component(cosys) configure -editcontrol \
-            $itk_option(-shadow)cosys
-   $itk_component(wavelength_name) configure -editcontrol \
-            $itk_option(-shadow)wavelength_name
-   $itk_component(trackrate) configure -editcontrol \
-            $itk_option(-shadow)trackrate
-   $itk_component(cosys) configure -shadow $itk_option(-shadow)
-   $itk_component(wavelength_name) configure -shadow $itk_option(-shadow)
-   $itk_component(trackrate) configure -shadow $itk_option(-shadow)
+itcl::configbody TargetControl::component {
+
+# remove any existing trace.
+   trace vdelete ::Config($comp,list) w [itcl::code $this newlist]
+   set comp ""
+
+   if { $itk_option(-component) != "" } {
+
+# Record current component name.
+      set comp $itk_option(-component)
+
+      $itk_component(cosys) configure -component ${comp}.cosys
+      $itk_component(trackrate) configure -component ${comp}.trackrate
+
+# The list of targets changes when a new field is selected so we must
+# monitor the list name element of the config array.
+      trace variable ::Config($comp,list) w [itcl::code $this newlist]
+
+# Initialise with the current list name.
+      after idle [itcl::code $this newlist "" "" ""]
+   }
 }
 
 itcl::body TargetControl::checkcosys {} {
@@ -301,7 +298,7 @@ itcl::body TargetControl::checkcosys {} {
    if { ! [string equal $cosys ""] } {
       if { [CosysNames::$cosys cget -isazel] } {
          $itk_component(notebook) select Az/El
-         $itk_component(cosys) select ""
+         set ::Config($itk_option(-component).cosys,value) ""
       } else {
          $itk_component(notebook) select RA/Dec
       }
@@ -310,51 +307,19 @@ itcl::body TargetControl::checkcosys {} {
 
 body TargetControl::grab {} {
 
-# Get the name of the currently selected Target object.
-   set name [$itk_component(selector) get]
-   if { [string equal $name ""] } {
-      set fullname $scratchobj
-   } else {
-      set fullname ::$itk_option(-namespace)::$name
-   }
-
-# Create the object if it doesn't already exist.
-   if { [llength [find objects $name]] == 0 } {
-      $itk_option(-shadow) store $name
-   }
-
-# Grab the current position from the telescope.
-   $fullname grab $itk_option(-applyarg)
+# Grab the current position from the telescope into the scratch target.
+   $::Config($comp,anon) grab $comp
 
 # Load the object into the controls
    $this reset
-   $this load $fullname
+   $this load $::Config($comp,anon)
 }
 
-itcl::body TargetControl::copy {createproc prompt component} {
-   set name [$itk_component(selector) get]
-   if { [string is space $name] } {
-      iwidgets::promptdialog $itk_interior.pd -modality application \
-            -labeltext $prompt
-      $itk_interior.pd hide Apply
-      $itk_interior.pd center
-      if { [$itk_interior.pd activate] } {
-         set newname [$itk_interior.pd get]
-         if { [string is space $newname] } {
-            tk_messageBox -icon error -parent $itk_interior \
-                  -message "A name is required to copy a target"
-         }
-      }
-      destroy $itk_interior.pd
-      set name $scratchobj
-      store ""
-   } else {
-      set newname $name
-      store $name
-      set name $itk_option(-namespace)::$name
-   }
-   if { ![string is space $newname] } {
-      $name copy $createproc $newname
-      $component selectfromcontrol $newname
-   }
+itcl::body TargetControl::newlist {n1 n2 op} {
+
+# Re-configure the control.
+  $itk_component(selector) configure -componentlist $::Config($comp,list)
+
+# Select the current component.
+  $itk_component(selector) select $::Config($comp,value)
 }

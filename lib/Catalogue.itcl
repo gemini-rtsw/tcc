@@ -9,23 +9,23 @@
 #
 #        extract index   Returns the RA/Dec etc of the entry index.
 #
-#        load            Loads a catalogue from disk
+#        load chan       Loads a catalogue from disk
 #
 #        select index    Selects index in the catalogue listbox
 #
 #        view            Displays the catalogue in a listbox
 #
-# D Terrett 25 January 2001
+# D Terrett 25 September 2001
 #
 # Copyright CCLRC
 #+
 
 itcl::class Catalogue {
-   constructor {azelplot} {}
+   constructor {name azelplot colour} {}
    destructor {}
    public {
       method extract {index}
-      method load {}
+      method load {chan}
       method select {index}
       method view {}
       variable CatForm tpoint
@@ -35,116 +35,91 @@ itcl::class Catalogue {
       variable AzElPlot
       variable ListView {}
       variable Catalog {}
+      variable Name
    }
 }
 
-itcl::body Catalogue::constructor {azelplot} {
+itcl::body Catalogue::constructor {name azelplot colour} {
    set AzElPlot $azelplot
+   set Name $name
+   $AzElPlot register $name $colour
 }
 
 itcl::body Catalogue::destructor {} {
+   if { [winfo exists $AzElPlot] } {
+      $AzElPlot remove $Name
+   }
    if { [winfo exists $ListView] } {
       destroy [winfo toplevel $ListView]
    }
 }
 
-itcl::body Catalogue::load {} {
+itcl::body Catalogue::load {chan} {
 
 #  Loads the contents of a star catalog into the catalog list box
 #
 #  Description:
-#  This procedure opens a star catalog file and loads its contents into
-#  the catalogue list box, one line per entry. Comment line (lines starting
-#  with !), blank lines and the END line are discarded.
+#  This procedure laods a star catalog file into the catalogue.
+#  one line per entry. Comment line (lines starting with !), blank 
+#  lines and the END line are discarded.
 #
 #  Each star is loaded into the Az/El plot widget.
 #
 #  The first star in the catalog is then selected.
 #-
 
-# cd to the catalogue directory
-   set pwd [pwd]
-   global CATALOG_DIR
-   cd $CATALOG_DIR
-
-# Get the catalogue name.
-   set types {
-      {{Data Files} {.dat} {}}
-      {{All Files} * {}}
-   }
-   set catname [tk_getOpenFile -defaultextension .dat -parent . \
-                -initialdir $CATALOG_DIR \
-                -filetypes $types -title "Open star catalog"]
-
-   if { ! [string equal $catname ""] } {
-
-# Open the catalogue.
-      set chan [open $catname RDONLY]
-
 # Clear the current catalogue and delete the contents of the catalogue
 # list widget (if it exists).
-      unset Catalog
-      $AzElPlot remove ""
-      if { [winfo exists $ListView] } {
-         $ListView delete 0 end
-      }
+   unset Catalog
+   if { [winfo exists $ListView] } {
+      $ListView delete 0 end
+   }
 
 # Read the catalogue a line at a time.
-      while { [gets $chan line] != -1 } {
+   while { [gets $chan line] != -1 } {
 
 # The END keyword marks the end of the catalogue.
-         if { [string compare $line END] == 0 } break
-         set line [string trim $line]
+      if { [string compare $line END] == 0 } break
+      set line [string trim $line]
 
 # Comment lines start with !.
-         if { [string length $line] != 0 && \
-              ! [string equal [string range $line 0 0] !] } {
+      if { [string length $line] != 0 && \
+           ! [string equal [string range $line 0 0] !] } {
 
 # Add the line to the catalogue and load the line into the list widget.
-            lappend Catalog $line
-            if { [winfo exists $ListView] } {
-               $ListView insert end $line
-            }
+         lappend Catalog $line
+         if { [winfo exists $ListView] } {
+            $ListView insert end $line
          }
-      }
-      close $chan
-
-# Update the default catalogue directory.
-      set dir [file dirname $catname]
-      if { [string compare [file pathtype $dir] relative] == 0 } {
-         set CATALOG_DIR [pwd]/$dir
-      } else {
-         set CATALOG_DIR $dir
-      }
-
-      set n [llength $Catalog]
-
-# For each star in the catalogue.
-      for { set i 0} { $i < $n} {incr i} {
-
-# Decode the line.
-         set def [decodeStar $i]
-
-# Decode the RA and Dec.
-         set ra [expr [slaDafin [lindex $def 1]] * 15.0]
-         set dec [slaDafin [lindex $def 2]]
-
-# Add the star to the Az/El plot widget.
-         $AzElPlot add $i $ra $dec
-         update
-      }
-
-# Set the current selection in the view widget to the first line.
-      if { [winfo exists $ListView] } {
-         $ListView selection anchor 0
-         $ListView selection set 0
-         $ListView see 0
       }
    }
 
-# Restore the default directory
-   cd $pwd
-   return
+# Clear any exisiting stars belonging to this catalogue.
+   $AzElPlot remove $Name
+
+   set n [llength $Catalog]
+
+# For each star in the catalogue.
+   for { set i 0} { $i < $n} {incr i} {
+
+# Decode the line.
+      set def [decodeStar $i]
+
+# Decode the RA and Dec.
+      set ra [expr [slaDafin [lindex $def 1]] * 15.0]
+      set dec [slaDafin [lindex $def 2]]
+
+# Add the star to the Az/El plot widget.
+      $AzElPlot add $Name $i $ra $dec
+      update
+   }
+
+# Set the current selection in the view widget to the first line.
+   if { [winfo exists $ListView] } {
+      $ListView selection anchor 0
+      $ListView selection set 0
+      $ListView see 0
+   }
 }
 
 itcl::body Catalogue::decodeStar {index} {
@@ -190,8 +165,9 @@ itcl::body Catalogue::view {} {
 
 # Create the widget.
    if { ! [winfo exists $ListView] } {
-      toplevel .listtop
-      set ListView [iwidgets::scrolledlistbox .listtop.cat -width 500 \
+      set top [toplevel .${Name}listtop]
+      wm title $top $Name
+      set ListView [iwidgets::scrolledlistbox $top.cat -width 500 \
             -height 300]
       pack $ListView -fill both -expand yes
 
@@ -203,7 +179,7 @@ itcl::body Catalogue::view {} {
 
 # Make selecting a star in the listbox select the star on the plot.
       $ListView configure -selectmode single -selectioncommand \
-           "$AzElPlot select \[$ListView index anchor\]"
+           "$AzElPlot select $Name \[$ListView index anchor\]"
    }
 
 # Load the catalog into the widget.

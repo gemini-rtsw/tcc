@@ -1,5 +1,5 @@
 #+
-#  TrackFrame
+#  TrackFrame <- tcclib::Paramset
 #
 #  Implements the TrackFrame class. A TrackFrame object 
 #  stores all the parameters needed to specify the tracking frame for
@@ -21,36 +21,31 @@
 #           -oiwfsCosys     The oiwfs tracking frame
 #
 #  Methods:
-#           apply args   Applies the track frame definition to the TCS by 
+#           apply comp   Applies the track frame definition to the TCS by 
 #                        setting the values of the TrackFrame command 
-#                        parameters. Any parameters are ignored.
+#                        parameters.
 #
 #           init         Sets the track frame object to its initial state.
 #
 #           preview      The tracking frame does not effect the preview 
 #                        system so this method does nothing.
 #
-#           save file    Writes the values of the options to the channel
-#                        identifier "file".
+#           save node    Saves the values of the options to the xml node.
 #
-#  Procs:
-#           subcomponents   Returns a list of the subcomponents of the
-#                           TrackFrame objects.
-#
-#  D Terrett 15 March 2001
+#  D Terrett 21 March 2002
 #
 #  Copyright CCLRC
 #+
 
 itcl::class TrackFrame {
+   inherit tcclib::Paramset
    constructor {} {}
    destructor {$this init}
-   public proc subcomponents {}
    public {
-      method apply {args}
+      method apply {comp}
       method init {}
       method preview {} {}
-      method save {file}
+      method save {node}
       variable mountCosys {} {newCosys mount $mountCosys}
       variable sourceACosys {} {newCosys sourceA $sourceACosys}
       variable sourceBCosys {} {newCosys sourceB $sourceBCosys}
@@ -75,43 +70,32 @@ itcl::body TrackFrame::constructor {} {
    set current_cosys(oiwfs) ""
 }
 
-itcl::body TrackFrame::subcomponents {} {
-   return { \
-      {mountCosys Cosys CosysNames CosysList {Mount Tracking Frame} trackMount} \
-      {sourceACosys Cosys CosysNames CosysList {Source A Tracking Frame} trackSourceA} \
-      {sourceBCosys Cosys CosysNames CosysList {Source B Tracking Frame} trackSourceB} \
-      {sourceCCosys Cosys CosysNames CosysList {Source C Tracking Frame} trackSourceC} \
-      {pwfs1Cosys Cosys CosysNames CosysList {PWFS1 Tracking Frame} trackPwfs1} \
-      {pwfs2Cosys Cosys CosysNames CosysList {PWFS2 Tracking Frame} trackPwfs2} \
-      {oiwfsCosys Cosys CosysNames CosysList {OIWFS Tracking Frame} trackOiwfs} \
-   }
-}
-
-itcl::body TrackFrame::apply args {
+itcl::body TrackFrame::apply {comp} {
 
 # Set all the parameters.
    foreach cs {trackMount trackSourceA trackSourceB trackSourceC \
          trackPwfs1 trackPwfs2 trackOiwfs} \
-         comp {mount sourceA sourceB sourceC pwfs1 pwfs2 oiwfs} {
-      set cosys [set ${comp}Cosys]
+         vt {mount sourceA sourceB sourceC pwfs1 pwfs2 oiwfs} {
+      set cosys [set ${vt}Cosys]
       if { [string is space $cosys] } {
          cs $cs set system FK5
          cs $cs set equinox J2000
       } else {
-         CosysNames::$cosys apply $cs
+         CosysNames::$cosys apply $comp.${vt}cosys
       }
       logger command $cs
    }
 }
 
-itcl::body TrackFrame::save file {
-   puts $file "   -mountCosys [list $mountCosys] \\"
-   puts $file "   -sourceACosys [list $sourceACosys] \\"
-   puts $file "   -sourceBCosys [list $sourceBCosys] \\"
-   puts $file "   -sourceCCosys [list $sourceCCosys] \\"
-   puts $file "   -pwfs1Cosys [list $pwfs1Cosys] \\"
-   puts $file "   -pwfs2Cosys [list $pwfs2Cosys] \\"
-   puts $file "   -oiwfsCosys [list $oiwfsCosys]"
+itcl::body TrackFrame::save {node} {
+   set node [paramset $node tracking_frame]
+   param $node mountCosys $mountCosys
+   param $node sourceACosys $sourceACosys
+   param $node sourceBCosys $sourceBCosys
+   param $node sourceCCosys $sourceCCosys
+   param $node pwfs1Cosys $pwfs1Cosys
+   param $node pwfs2Cosys $pwfs2Cosys
+   param $node oiwfsCosys $oiwfsCosys
 }
 
 itcl::body TrackFrame::init {} {

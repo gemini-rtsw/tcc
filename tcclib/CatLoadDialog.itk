@@ -1,0 +1,50 @@
+#+
+#  CatLoadDialog <- iwidgets::FileSelectionDialog
+#
+#  An CatLoadDialog widget is a file selection dialog with 
+#  a combo box for selecting the colour used to plot the catalogue.
+#
+#  Options:
+#           none
+#
+#  Methods:
+#           none
+#
+#  D Terrett 24 September 2001
+#
+#  Copyright CCLRC
+#-
+
+itcl::class CatLoadDialog {
+   inherit iwidgets::Fileselectiondialog
+   constructor args {}
+}
+
+itk::usual CatLoadDialog {
+   keep -activebackground -activerelief -background -borderwidth -cursor \
+         -elementborderwidth -foreground -highlightcolor -highlightthickness \
+         -insertbackground -insertborderwidth -insertofftime -insertontime \
+         -insertwidth -jump -labelfont -modality -selectbackground \
+         -selectborderwidth -textbackground -textfont 
+}
+
+option add *CatLoadDialog.borderWidth 2 widgetDefault
+option add *CatLoadDialog.height 400 widgetDefault
+option add *CatLoadDialog.width 400 widgetDefault
+option add *CatLoadDialog.master "." widgetDefault
+option add *CatLoadDialog.title "Catalogue Selection Dialog" widgetDefault
+
+itcl::body CatLoadDialog::constructor args {
+
+   set w $itk_interior
+   itk_component add colour {
+      iwidgets::combobox $w.colour -labeltext "Plot colour" -labelpos nw \
+   }
+   $itk_component(colour) insert list 0 \
+         white red green orange black yellow
+   $itk_component(colour) insert entry 0 white
+
+   pack $itk_component(colour) -fill x -expand yes -pady 10
+
+   eval itk_initialize $args
+}

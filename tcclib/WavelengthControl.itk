@@ -1,16 +1,16 @@
 #+
-#  WavelengthControl <- tcclib::ComponentControl
+#  WavelengthControl <- ComponentControl
 #
 #  Implements the WavelengthControl widget. A ComponentControl widget with
 #  an entryfield widget for the wavelength.
 #
-#  D Terrett 18 June 2001
+#  D Terrett 7 January 2002
 #
 #  Copyright CCLRC
 #+
 
 itcl::class WavelengthControl {
-   inherit tcclib::ComponentControl
+   inherit ComponentControl
    constructor args {}
    public {
       method load {name}
@@ -22,7 +22,7 @@ itcl::class WavelengthControl {
 itk::usual WavelengthControl {
    keep -borderwidth -cursor -font -highlightthickness -insertborderwidth\
          -insertofftime -insertontime -insertwidth -labelfont -popupcursor \
-         -selectborderwidth -textfont -title -applyarg -namespace -componentlist
+         -selectborderwidth -textfont -title
 }
 
 itcl::body WavelengthControl::constructor args {
@@ -40,12 +40,8 @@ itcl::body WavelengthControl::constructor args {
    }
    pack $itk_component(wavel) -padx 4 -pady 4
 
-# Set the object class.
-   set objclass WavelengthComponent
+# Set the object description.
    set description wavelength
-
-# Create the wavelength object used by apply.
-   set scratchobj [namespace which -command [Wavelength #auto]]
 
    eval itk_initialize $args
 }

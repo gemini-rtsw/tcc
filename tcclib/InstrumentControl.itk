@@ -1,5 +1,5 @@
 #+
-#  InstrumentControl <- tcclib::ComponentControl
+#  InstrumentControl <- ComponentControl
 #
 #  An InstrumentControl is a ComponentControl widget with
 #  entry widgets for the IAA, baffle positions and ISS ports.
@@ -7,14 +7,15 @@
 #  Options:
 #           none
 #
-#  D Terrett 19 July 2001
+#  D Terrett 11 April 2002
 #
 #  Copyright CCLRC
 #+
 
 itcl::class InstrumentControl {
-   inherit tcclib::ComponentControl
+   inherit ComponentControl
    constructor args {}
+   itk_option define -component component Component {}
    public {
       method load {name}
       method reset {}
@@ -25,7 +26,7 @@ itcl::class InstrumentControl {
 itk::usual InstrumentControl {
    keep -borderwidth -cursor -font -insertborderwidth -insertofftime \
          -insertontime -insertwidth -labelfont -popupcursor \
-         -selectborderwidth -textfont -applyarg -title -namespace -componentlist
+         -selectborderwidth -textfont -title
 }
 
 itcl::body InstrumentControl::constructor args {
@@ -42,26 +43,27 @@ itcl::body InstrumentControl::constructor args {
       iwidgets::optionmenu $w.port -labeltext "ISS port"
    }
    $itk_component(port) insert end AC 1 2 3 4 5
-   pack $itk_component(port) -anchor e
+   pack $itk_component(port) -anchor e -padx 3 -pady 3
 
 # Entryfield for instrument name.
    itk_component add name {
       iwidgets::entryfield $w.name -labeltext Name -width 12
    }
-   pack $itk_component(name) -anchor e
+   pack $itk_component(name) -anchor e -padx 3 -pady 3
 
 # Entryfield for the angle.
    itk_component add iaa {
       iwidgets::entryfield $w.iaa -labeltext [lindex [cs rotator info iaa] 2] \
             -width 8
    }
-   pack $itk_component(iaa) -anchor e
+   pack $itk_component(iaa) -anchor e -padx 3 -pady 3
 
 # Focus offset.
    itk_component add focus {
-      iwidgets::entryfield $w.focus -labeltext "Focus offset (mm)" -width 8
+      iwidgets::entryfield $w.focus \
+            -labeltext "Focus offset (mm of M2 movement)" -width 8
    }
-   pack $itk_component(focus) -anchor e
+   pack $itk_component(focus) -anchor e -padx 3 -pady 3
 
 # Central baffle
    itk_component add central {
@@ -69,21 +71,17 @@ itcl::body InstrumentControl::constructor args {
    }
    $itk_component(central) insert end "" open closed
    $itk_component(central) select open
-   pack $itk_component(central) -anchor e
+   pack $itk_component(central) -anchor e -padx 3 -pady 3
 
 # Deployable baffle
    itk_component add deploy {
       iwidgets::optionmenu $w.deploy -labeltext "M2 Deployable baffle"
    }
    $itk_component(deploy) insert end "" "thermal IR" "near IR" visible
-   pack $itk_component(deploy) -anchor e
+   pack $itk_component(deploy) -anchor e -padx 3 -pady 3
 
-# Set the object class.
-   set objclass InstrumentComponent
+# Set the object description.
    set description "Instrument configuration"
-
-# Create the instrument object used by apply.
-   set scratchobj [namespace which -command [Instrument #auto]]
 
    eval itk_initialize $args
 }
@@ -92,12 +90,12 @@ itcl::body InstrumentControl::save {name} {
 #+
 # Updates the named instrument object.
 #-
-   $name configure -issPort [$itk_component(port) get]
-   $name configure -name [$itk_component(name) get]
-   $name configure -iaa [$itk_component(iaa) get]
-   $name configure -focusOffset [$itk_component(focus) get]
-   $name configure -centralBaffle [$itk_component(central) get]
-   $name configure -deployableBaffle [$itk_component(deploy) get]
+   $name configure -issPort [$itk_component(port) get] \
+         -name [$itk_component(name) get] \
+         -iaa [$itk_component(iaa) get] \
+         -focusOffset [$itk_component(focus) get] \
+         -centralBaffle [$itk_component(central) get] \
+         -deployableBaffle [$itk_component(deploy) get]
 }
 
 itcl::body InstrumentControl::reset {} {

@@ -80,15 +80,15 @@ itcl::body McsControl::constructor args {
    set w $itk_component(row1f1)
    itk_component add azel {
       tcclib::ApplyButton $w.azel -command azel \
-            -parcommand [code $this getParVal]
+            -parcommand [itcl::code $this getParVal]
    }
    itk_component add azimuth {
       tcclib::ApplyButton $w.azimuth -command azimuth \
-         -parcommand [code $this getParVal]
+         -parcommand [itcl::code $this getParVal]
    }
    itk_component add elevation {
       tcclib::ApplyButton $w.elevation -command elevation \
-            -parcommand [code $this getParVal]
+            -parcommand [itcl::code $this getParVal]
    }
    pack $itk_component(azel) $itk_component(azimuth) \
          $itk_component(elevation) -side left -fill x -expand y -padx 4 -pady 4
@@ -117,7 +117,7 @@ itcl::body McsControl::constructor args {
    set w $itk_component(stop)
    itk_component add telstop {
       tcclib::ApplyButton $w.telstop -command telstop \
-            -parcommand [code $this getParVal]
+            -parcommand [itcl::code $this getParVal]
    }
    itk_component add stopAxis {
       iwidgets::optionmenu $w.stopAxis 
@@ -128,12 +128,12 @@ itcl::body McsControl::constructor args {
    set w $itk_component(row2f1)
    itk_component add azBrakes {
        checkbutton $w.azBrakes -onvalue Yes -offvalue No \
-            -variable [scope azBrakes] \
+            -variable [itcl::scope azBrakes] \
             -text [lindex [cs telstop info azBrakes] 2] 
    }
    itk_component add elBrakes {
        checkbutton $w.elBrakes -onvalue Yes -offvalue No \
-            -variable [scope elBrakes] \
+            -variable [itcl::scope elBrakes] \
             -text [lindex [cs telstop info elBrakes] 2]
    }
    pack $itk_component(telpark) $itk_component(stop) -side top -fill x \
@@ -149,7 +149,7 @@ itcl::body McsControl::constructor args {
    set w $itk_component(datum)
    itk_component add mountDatum {
       tcclib::ApplyButton $w.mountDatum -command mountDatum \
-            -parcommand [code $this getParVal]
+            -parcommand [itcl::code $this getParVal]
    }
    itk_component add datumAxis {
       iwidgets::optionmenu $w.datumAxis 
@@ -175,7 +175,7 @@ itcl::body McsControl::constructor args {
    set w $itk_component(row2f3)
    itk_component add azConfig {
       tcclib::ApplyButton $w.azConfig -command azConfig \
-            -parcommand [code $this getParVal]
+            -parcommand [itcl::code $this getParVal]
    }
    itk_component add azAlgorithm {
       iwidgets::optionmenu $w.azAlgorithm \
@@ -190,7 +190,7 @@ itcl::body McsControl::constructor args {
    set w $itk_component(row2f4)
    itk_component add elConfig {
       tcclib::ApplyButton $w.elConfig -command elConfig \
-            -parcommand [code $this getParVal]
+            -parcommand [itcl::code $this getParVal]
    }
    itk_component add elAlgorithm {
       iwidgets::optionmenu $w.elAlgorithm \
@@ -205,7 +205,7 @@ itcl::body McsControl::constructor args {
    set w $itk_component(row2f5)
    itk_component add mountLog {
       tcclib::ApplyButton $w.mountLog -command mountLog \
-            -parcommand [code $this getParVal]
+            -parcommand [itcl::code $this getParVal]
    }
    itk_component add switch {
       iwidgets::optionmenu $w.switch \
@@ -223,7 +223,7 @@ itcl::body McsControl::constructor args {
    set w $itk_component(row2f6)
    itk_component add mountTolerance {
       tcclib::ApplyButton $w.mountTolerance -command mountTolerance \
-            -parcommand [code $this getParVal]
+            -parcommand [itcl::code $this getParVal]
    }
    itk_component add mtazlab {
       label $w.azlab -text Az

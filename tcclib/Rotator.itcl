@@ -1,5 +1,5 @@
 #+
-#  Rotator
+#  Rotator <- tcclib::Paramset
 #
 #  Implements the Rotator class. A Rotator object stores the configuration 
 #  of the cass rotator.
@@ -10,33 +10,29 @@
 #          -ipa          The instrument position angle.
 #
 #  Methods:
-#          apply args    Applies the rotator configuration to the TCS by 
-#                        setting the values of the command parameters. Any
-#                        arguments are ignored.
+#          apply comp    Applies the rotator configuration to the TCS by 
+#                        setting the values of the command parameters. 
 #
 #          init          Returns the rotator object to its initial state.
 #
 #          preview       Sets the rotator configuration in the preview.
 #
-#          save file     Writes the values of the rotator configuration
-#                        to the channel identifier "file".
+#          save node     Saves the values of the rotator configuration
+#                        to the xml node.
 #
-#  Procs:
-#         subcomponents  Returns a list of the rotator classes subcomponents.
-#
-#  D Terrett 15 March 2001
+#  D Terrett 21 March 2002
 #
 #  Copyright CCLRC
 #+
 
 itcl::class Rotator {
+   inherit tcclib::Paramset
    destructor {$this init}
-   public proc subcomponents {}
    public {
-      method apply {args}
+      method apply {comp}
       method init {}
       method preview {}
-      method save {file}
+      method save {node}
       variable ipa {}
       variable cosys {}
    }
@@ -45,19 +41,13 @@ itcl::class Rotator {
    }
 }
 
-itcl::body Rotator::subcomponents {} {
-   return { \
-      {cosys Cosys CosysNames CosysList {Coordinate system} rotator} \
-   }
-}
-
-itcl::body Rotator::apply args {
+itcl::body Rotator::apply {comp} {
    cs rotator set ipa [list $ipa]
    if { [string equal $cosys ""] } {
       cs rotator set system FK5
       cs rotator set equinox J2000
    } else {
-      CosysNames::$cosys apply rotator
+      CosysNames::$cosys apply $comp.cosys
    }
    logger command rotator
 }
@@ -78,9 +68,10 @@ itcl::body Rotator::preview {} {
    tccPreview set ipa $a $frame $equinox
 }
 
-itcl::body Rotator::save file {
-   puts $file "   -ipa [list $ipa] \\"
-   puts $file "   -cosys [list $cosys]"
+itcl::body Rotator::save {node} {
+   set node [paramset $node rotator]
+   param $node ipa $ipa
+   param $node cosys $cosys
 }
 
 itcl::body Rotator::init {} {

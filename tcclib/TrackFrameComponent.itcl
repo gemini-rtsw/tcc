@@ -12,33 +12,16 @@
 #           constructor list  Creates the TrackFrame object and puts it onto
 #                           "list".
 #
-#           save file       Writes commands to re-create the object to the
-#                           channel identifier "file" and then calls the
-#                           TrackFrame save method to add the objects data.
-#
-#  D Terrett 15 March 2001
+#  D Terrett 19 September 2001
 #
 #  Copyright CCLRC
 #+
 
 itcl::class TrackFrameComponent {
-   inherit TrackFrame tcclib::Component
+   inherit tcclib::Component TrackFrame
    constructor {list args} {
       tcclib::Component::constructor $list
    } {
       eval configure $args
    }
-   public {
-      method save {file}
-   }
-}
-
-itcl::body TrackFrameComponent::save file {
-   set obj [namespace tail $this]
-   set namespace [namespace qualifiers $this]
-   puts $file \
-         "catch {TrackFrameComponent [list ${namespace}::$obj]  $componentList}"
-   puts $file "[list ${namespace}::$obj] init"
-   puts $file "[list ${namespace}::$obj] configure \\"
-   TrackFrame::save $file
 }

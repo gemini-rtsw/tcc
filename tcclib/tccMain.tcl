@@ -7,7 +7,7 @@
 #  Arguments:
 #            Any command line options and values.
 #
-#  D Terrett  6 September 2001
+#  D Terrett  11 April 2002
 #
 #  Copyright CCLRC
 #-
@@ -59,34 +59,8 @@ proc tccMain args {
    epics ss $env(TCC_TCSNAME):sad:programID
    epics ss $env(TCC_TCSNAME):sad:sourceAObjectName
 
-# Create the configuration component lists and the namespaces for the
-# components.
-   tcclib::ComponentList TcsConfigList
-   namespace eval TcsConfigNames {}
-   tcclib::ComponentList ScienceTargetList
-   namespace eval ScienceTargetNames {}
-   tcclib::ComponentList WfsTargetList
-   namespace eval WfsTargetNames {}
-   tcclib::ComponentList PointOrigList
-   namespace eval PointOrigNames {}
-   tcclib::ComponentList ChopList
-   namespace eval ChopNames {}
-   tcclib::ComponentList WavelengthList
-   namespace eval WavelengthNames {}
-   tcclib::ComponentList TrackRateList
-   namespace eval TrackRateNames {}
-   tcclib::ComponentList SlewOptionsList
-   namespace eval SlewOptionsNames {}
-   tcclib::ComponentList RotatorList
-   namespace eval RotatorNames {}
-   tcclib::ComponentList TrackFrameList
-   namespace eval TrackFrameNames {}
-   tcclib::ComponentList GuideList
-   namespace eval GuideNames {}
-   tcclib::ComponentList CosysList
-   namespace eval CosysNames {}
-   tcclib::ComponentList InstrumentList
-   namespace eval InstrumentNames {}
+# Create the configuration structures.
+   createConfig
 
 # Create all the panel manager objects.
    createPanels
@@ -105,7 +79,9 @@ proc tccMain args {
    epics cs wavelSourceA
    epics cs wavelSourceB
    epics cs wavelPwfs1
+   epics cs pwfs1Filter
    epics cs wavelPwfs2
+   epics cs pwfs2Filter
    epics cs wavelOiwfs
    epics cs difTrMount
    epics cs difTrSourceA
@@ -172,7 +148,10 @@ proc tccMain args {
    wm iconname . TCC
 
 # Load default components.
-   source $ROOT/default_components.tcl
+   set file [open $ROOT/default_components.xml RDONLY]
+   set config [TcsConfigFile #auto $file .]
+   delete object $config
+   close $file
 
 # Load initialisation files.
    if { ! [string equal $init ""] } {
@@ -189,7 +168,8 @@ proc tccMain args {
                         tk_messageBox -icon error -parent . -message \
                         "error opening initialization file \"$filename\": $msg"
                      } else {
-                        loadDefFile $file
+                        set config [TcsConfigFile #auto $file .]
+                        delete object $config
                         close $file
                      }
                   }
@@ -201,7 +181,8 @@ proc tccMain args {
                   "error opening initialization file \"$filespec\": $msg"
             } else {
                puts "processing $filespec"
-               loadDefFile $file
+               set config [TcsConfigFile #auto $file .]
+               delete object $config
                close $file
             }
          }
@@ -210,7 +191,7 @@ proc tccMain args {
 
 # Select the tcs configuration called default by pretending that it was
 # selected by its non-existent parent.
-   tcsconfig selectfromparent default
+#   tcsconfig selectfromparent default
 
 # Wait to connect to the tcs.
    waitConnect

@@ -1,5 +1,5 @@
 #+
-#  Wavelength
+#  Wavelength <- tcclib::Paramset
 #
 #  Implements the Wavelength class. A Wavelength object stores an effective 
 #  wavelength.
@@ -8,54 +8,64 @@
 #          -wavel      The wavelength.
 #
 #  Methods:
-#          apply vt    Applies the wavelength to the TCS by setting the 
-#                      values of the command parameters for virtual
-#                      telescope "vt".
+#          apply comp  Applies the wavelength to the TCS by setting the 
+#                      values of the command parameters for the virtual
+#                      telescope.
 #
 #          init          Returns the wavelength object to its initial state.
 #
-#          preview vt  Sets the preview wavelength for the virtual
-#                      telescope "vt".
+#          preview comp  Sets the preview wavelength for the virtual
+#                        telescope".
 #
-#          save        Writes the values of the options to the channel
-#                      identifier "file".
+#          save node   Writes the values of the options to the xml node.
 #
-#  Procs:
-#           subcomponents   Returns a list of the subcomponents of the
-#                           Wavelength objects (an empty list).
-#
-#  D Terrett 15 March 2001
+#  D Terrett 11 April 2002
 #
 #  Copyright CCLRC
 #+
 
 itcl::class Wavelength {
-   public proc subcomponents {} {return {}}
+   inherit tcclib::Paramset
    public {
-      method apply {vt}
+      method apply {comp}
       method init {}
-      method preview {vt}
-      method save {file}
+      method preview {comp}
+      method save {node}
       variable wavel {} {set wavel [valWavelength $wavel]}
    }
 }
 
-itcl::body Wavelength::apply vt {
-   set vt [string toupper [string range $vt 0 0]][string range $vt 1 end]
-   cs wavel${vt} set wavel $wavel
-   logger command wavel${vt}
+itcl::body Wavelength::apply {comp} {
+   switch $comp {
+      tcs.field.wavelength {
+         cs wavelSourceA set wavel $wavel
+         logger command wavelSourceA
+      }
+      tcs.field.guide.oiwfswavelength {
+         cs wavelOiwfs set wavel $wavel
+         logger command wavelOiwfs
+      }
+   }
 }
 
 itcl::body Wavelength::init {} {
    set wavel {}
 }
 
-itcl::body Wavelength::preview vt {
+itcl::body Wavelength::preview {comp} {
    if { ! [string equal $wavel ""] } {
-      tccPreview set wavel${vt} $wavel
+      switch $comp {
+         science {
+            tccPreview set wavelsourceA $wavel
+         }
+         oiwfs {
+            tccPreview set waveloiwfs $wavel
+         }
+      }
    }
 }
 
-itcl::body Wavelength::save file {
-   puts $file "   -wavel [list $wavel]"
+itcl::body Wavelength::save {node} {
+   set node [paramset $node wavelength]
+   param $node wavel $wavel
 }

@@ -1,5 +1,5 @@
 #+
-#  SlewOptionsPanel <- tcclib::Panel
+#  SlewOptionsPanel <- Panel
 #
 #  Implements the SlewOptionsPanel widget. A Panel widget with a 
 #  SlewOptionsControl widget packed into its interior.
@@ -8,14 +8,17 @@
 #           none
 #
 #
-#  D Terrett 29 March 2000
+#  D Terrett 6 March 2002
 #
 #  Copyright CCLRC
 #+
 
 itcl::class SlewOptionsPanel {
-   inherit tcclib::Panel
+   inherit Panel
    constructor args {}
+   public {
+      method sync {component name} {$itk_component(control) sync $name}
+   }
 }
 
 itk::usual SlewOptionsPanel {
@@ -25,6 +28,9 @@ itk::usual SlewOptionsPanel {
 itcl::body SlewOptionsPanel::constructor args {
    itk_component add control {
       SlewOptionsControl $itk_interior.control
+   } {
+      usual
+      rename -component -components components Components
    }
    setWidgetColors "$itk_component(menubar) $itk_component(control)" \
          $itk_option(-background) $itk_option(-foreground)

@@ -181,7 +181,7 @@ itcl::body TcsControl::constructor args {
 # Commands for datuming, initing or unparking mechanisms.
    itk_component add mcsdatum {
       tcclib::ApplyButton $w.mcsdatum -command mountDatum -text Datum \
-         -parcommand [code $this mountdatum]
+            -parcommand [itcl::code $this mountdatum]
    }
    itk_component add scsinit {
       tcclib::ApplyButton $w.scsinit -command m2Init -text Init
@@ -194,7 +194,7 @@ itcl::body TcsControl::constructor args {
    }
    itk_component add pcsunpark {
       tcclib::ApplyButton $w.pcsunpark -command m1Park -text Unpark \
-            -parcommand [code $this m1unpark]
+            -parcommand [itcl::code $this m1unpark]
    }
    itk_component add p1datum {
       tcclib::ApplyButton $w.p1datum -command pwfs1Datum -text Datum
@@ -221,7 +221,7 @@ itcl::body TcsControl::constructor args {
    }
    itk_component add pcspark {
       tcclib::ApplyButton $w.pcspark -command m1Park -text Park \
-            -parcommand [code $this m1park]
+            -parcommand [itcl::code $this m1park]
    }
    itk_component add p1park {
       tcclib::ApplyButton $w.p1park -command pwfs1Park -text Park
@@ -254,7 +254,7 @@ itcl::body TcsControl::constructor args {
    set w $itk_component(f3top)
    itk_component add carousel {
       tcclib::ApplyButton $w.carousel -command carousel -parcommand \
-            [code $this carousel]
+            [itcl::code $this carousel]
    }
    itk_component add domemode {
       iwidgets::optionmenu $w.domemode -labeltext \
@@ -264,23 +264,23 @@ itcl::body TcsControl::constructor args {
    itk_component add shuttermode {
       iwidgets::optionmenu $w.shuttermode -labeltext \
             [lindex [cs carousel info shuttermode] 2] \
-            -command [code $this shutterMode]
+            -command [itcl::code $this shutterMode]
    }
    $itk_component(shuttermode) insert end FullyOpen Tracking
    itk_component add slit {
        iwidgets::spinner $w.slit -labeltext "Shutter aperture (m)" -width 8 \
-             -validate real -increment [code $this shStep +] \
-             -decrement [code $this shStep -] -state disabled
+             -validate real -increment [itcl::code $this shStep +] \
+             -decrement [itcl::code $this shStep -] -state disabled
    }
    $itk_component(slit) insert end 9.320
    itk_component add dome {
       checkbutton $w.dome -text [lindex [cs carousel info dome] 2] \
-            -variable [scope dome] -onvalue On -offvalue Off
+            -variable [itcl::scope dome] -onvalue On -offvalue Off
    }
    $itk_component(dome) invoke
    itk_component add shutter {
       checkbutton $w.shutter -text [lindex [cs carousel info shutter] 2] \
-            -variable [scope shutter] -onvalue On -offvalue Off
+            -variable [itcl::scope shutter] -onvalue On -offvalue Off
    }
    pack $itk_component(carousel) -pady 4
    pack $itk_component(domemode) \
@@ -324,11 +324,11 @@ itcl::body TcsControl::constructor args {
    $itk_component(agmech) configure -editable 0
    itk_component add mechdatum {
       tcclib::LiveButton $w.mechdatum -text Datum \
-            -command [code $this agmech Datum]
+            -command [itcl::code $this agmech Datum]
    }
    itk_component add mechpark {
       tcclib::LiveButton $w.mechpark -text Park \
-            -command [code $this agmech Park]
+            -command [itcl::code $this agmech Park]
    }
 
    pack $itk_component(mechlab) $itk_component(agmech) \
@@ -419,7 +419,7 @@ itcl::body TcsControl::constructor args {
    set w $itk_component(vg)
    itk_component add ventgates {
       tcclib::ApplyButton $w.ventgates -command ventgates -parcommand \
-            [code $this parget]
+            [itcl::code $this parget]
    }
    itk_component add east {
       scale $w.east -label [lindex [cs ventgates info east] 2] \
@@ -447,7 +447,7 @@ itcl::body TcsControl::constructor args {
    set w $itk_component(row4f1)
    itk_component add thermal {
       tcclib::ApplyButton $w.thermal -command encThermal \
-            -parcommand [code $this parget]
+            -parcommand [itcl::code $this parget]
    }
    itk_component add mode {
       iwidgets::optionmenu $w.mode \
@@ -466,7 +466,7 @@ itcl::body TcsControl::constructor args {
 # Weather command.
    set w $itk_component(row4f2)
    itk_component add weather {
-      tcclib::LiveButton $w.weather -command [code $this weather] \
+      tcclib::LiveButton $w.weather -command [itcl::code $this weather] \
             -text [lindex [cs weather info] 1]
    }
    itk_component add source {

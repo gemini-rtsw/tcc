@@ -53,7 +53,7 @@ itcl::body StepSize::constructor args {
             -text [lindex $lablist $i]
       }
       pack $itk_component(step$i) -side left -ipady 2
-      bind  $itk_component(step$i)  <Button-1> [code $this push %W]
+      bind  $itk_component(step$i)  <Button-1> [itcl::code $this push %W]
    }
 
 # Create label.
@@ -68,14 +68,14 @@ itcl::body StepSize::constructor args {
 # Entry widget for setting the custom step sizes.
    itk_component add custom1 {
       iwidgets::entryfield $itk_interior.custom1 -width 4 \
-            -textvariable [scope custom1] -validate real
+            -textvariable [itcl::scope custom1] -validate real
    }
-   $itk_component(step6) configure -textvariable [scope custom1]
+   $itk_component(step6) configure -textvariable [itcl::scope custom1]
    itk_component add custom2 {
       iwidgets::entryfield $itk_interior.custom2 -width 4 \
-            -textvariable [scope custom2] -validate real
+            -textvariable [itcl::scope custom2] -validate real
    }
-   $itk_component(step7) configure -textvariable [scope custom2]
+   $itk_component(step7) configure -textvariable [itcl::scope custom2]
    pack $itk_component(custom1) $itk_component(custom2) -side left
 
 # Select the 1 button.

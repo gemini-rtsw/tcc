@@ -1,5 +1,5 @@
 #+
-#  TrackRate
+#  TrackRate <- tcclib::Paramset
 #
 #  Implements the TrackRate class. A TrackRate object 
 #  stores all the parameters needed to specify a differential track rate.
@@ -7,83 +7,89 @@
 #  Options:
 #           -cosys     The tracking rate coordinate frame.
 #
-#           -dtheta1   The track rate in RA or Azimuth.
+#           -c1Rate    The track rate in RA or Azimuth.
 #
-#           -dtheta2   The track rate in Dec or Elevation.
+#           -c2Rate    The track rate in Dec or Elevation.
 #
-#           -epoch     The epoch of the track rates.
+#           -t0        The epoch of the track rates.
 #
 #  Methods:
-#           apply vt   Applies the track rate definition to the TCS by setting 
+#           apply comp Applies the track rate definition to the TCS by setting 
 #                      the values of the command parameters for the virtual
-#                      telescope "vt".
+#                      telescope.
 #
 #           init       Sets the track rate object to its initial state.
 #
 #           preview vt The preview system does not support differential track 
 #                      rates so this method does nothing.
 #
-#           save file  Writes the values of the options to the channel
-#                      identifier "file".
+#           save node  Saves the values of the options to the xml node.
 #
-#  D Terrett 15 March 2001
+#  D Terrett 8 April 2002
 #
 #  Copyright CCLRC
 #+
 
 itcl::class TrackRate {
    destructor {$this init}
-   public proc subcomponents {}
    public {
-      method apply {vt}
+      method apply {comp}
       method init {}
       method preview {vt} {}
-      method save {file}
+      method save {node}
       variable cosys {}
-      variable epoch {}
-      variable dtheta1 {}
-      variable dtheta2 {}
+      variable t0 {}
+      variable c1Rate {}
+      variable c2Rate {}
    }
    private {
       variable current_cosys {}
    }
 }
 
-itcl::body TrackRate::subcomponents {} {
-   return { \
-      {cosys Cosys CosysNames CosysList {Coordinate system} difTr} \
+itcl::body TrackRate::apply {comp} {
+
+# Determine command sender name.
+   switch $comp {
+      tcs.field.sciencetarget.trackrate {
+         set cs difTrSourceA
+      }
+      tcs.field.pwfs1target.trackrate {
+         set cs difTrPwfs1
+      }
+      tcs.field.pwfs2target.trackrate {
+         set cs difTrPwfs2
+      }
+      tcs.field.oiwfstarget.trackrate {
+         set cs difTrOiwfs
+      }
    }
-}
-
-itcl::body TrackRate::apply vt {
-
-# Convert leading character of the virtual telescope name to upper case.
-   set vt [string toupper [string range $vt 0 0]][string range $vt 1 end]
 
 # Set all the parameters.
    if { [string equal $cosys ""] } {
-      CosysNames::FK5/J2000 apply difTr${vt}
+      CosysNames::FK5/J2000 apply $comp.cosys
    } else {
-      CosysNames::$cosys apply difTr${vt}
+      CosysNames::$cosys apply $comp.cosys
    }
-   cs difTr${vt} set epoch [list $epoch]
-   cs difTr${vt} set dtheta1 [list $dtheta1]
-   cs difTr${vt} set dtheta2 [list $dtheta2]
-   logger command difTr${vt}
+   cs $cs set t0 [list $t0]
+   cs $cs set dtheta1 [list $c2Rate]
+   cs $cs set dtheta1 [list $c2Rate]
+   logger command $cs
 }
 
 itcl::body TrackRate::init {} {
-   set epoch {}
-   set dtheta1 {}
-   set dtheta2 {}
+   set t0 {}
+   set c1Rate {}
+   set c2Rate {}
    $this configure -cosys {}
 }
 
-itcl::body TrackRate::save file {
-   puts $file "   -cosys [list $cosys] \\"
-   puts $file "   -epoch [list $epoch] \\"
-   puts $file "   -dtheta1 [list $dtheta1] \\"
-   puts $file "   -dtheta2 [list $dtheta2]"
+itcl::body TrackRate::save {node} {
+   set node [paramset $node track_rate]
+   param $node cosys $cosys
+   param $node t0 $t0
+   param $node c1Rate $c1Rate
+   param $node c2Rate $c2Rate
 }
 
 itcl::configbody TrackRate::cosys {

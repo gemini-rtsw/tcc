@@ -1,0 +1,53 @@
+#+
+#  StarSelectPanel <- Panel
+#
+#  Implements the StarSelectPanel widget. A Panel widget with a 
+#  StarSelectControl widget packed into its interior
+#
+#  Options:
+#          none
+#
+#  Methods:
+#          none
+#
+#  D Terrett 29 March 2001
+#
+#  Copyright CCLRC
+#+
+
+itcl::class StarSelectPanel {
+   inherit Panel
+   constructor args {}
+}
+
+itk::usual StarSelectPanel {
+   keep -background -cursor
+}
+
+itcl::body StarSelectPanel::constructor args {
+
+# Withdraw the top level window so that we don't see geometry changes as
+# we wait for sa to connect.
+   set toplevel [winfo toplevel $itk_interior]
+   wm withdraw $toplevel
+
+   itk_component add control {
+      StarSelectControl $itk_interior.control
+   }
+
+# Add the StarSelectControl load and view commands to the File menu.
+   $itk_component(menubar) insert .file.move command load \
+         -command "$itk_component(control) load" -label "Load catalog"
+   $itk_component(menubar) insert .file.move command view \
+         -command "$itk_component(control) view" -label "View catalog"
+   $itk_component(menubar) insert .file.move separator separator
+
+   setWidgetColors "$itk_component(menubar) $itk_component(control)" \
+         $itk_option(-background) $itk_option(-foreground)
+
+   pack $itk_component(control) -fill both -expand y
+
+   eval itk_initialize $args
+
+   wm deiconify $toplevel
+}

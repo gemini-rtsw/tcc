@@ -1,5 +1,5 @@
 #+
-#  Instrument
+#  Instrument <- tcclib::Paramset
 #
 #  Implements the Instrument class. An Instrument object stores an 
 #  instrument alignment angle.
@@ -22,33 +22,27 @@
 #          -name              The name of the instrument (as know to the A&G).
 #
 #  Methods:
-#          apply args  Applies the iaa to the TCS by setting the values of 
-#                      the command parameters. Any method arguments are 
-#                      ignored.
+#          apply comp  Applies the iaa to the TCS by setting the values of 
+#                      the command parameters. 
 #
 #          init        Returns the instrument object to its initial state.
 #
 #          preview     Sets the preview instrument configuration.
 #
-#          save        Writes the values of the options to the channel 
-#                      identifier "file".
+#          node        Saves the values of the options to the xml node. 
 #
-#  Procs:
-#           subcomponents   Returns a list of the subcomponents of the
-#                           Instrument objects (an empty list).
-#
-#  D Terrett 17 July 2001
+#  D Terrett 11 April 2002
 #
 #  Copyright CCLRC
 #+
 
 itcl::class Instrument {
-   public proc subcomponents {} {return {}}
+   inherit tcclib::Paramset
    public {
-      method apply {args}
+      method apply {comp}
       method init {}
       method preview {}
-      method save {file}
+      method save {node}
       variable iaa ""
       variable issPort 1
       variable centralBaffle open
@@ -58,7 +52,7 @@ itcl::class Instrument {
    }
 }
 
-itcl::body Instrument::apply args {
+itcl::body Instrument::apply {comp} {
 
 # Set iaa and focus.
    if { ![string is space $iaa] } {
@@ -108,11 +102,12 @@ itcl::body Instrument::preview {} {
    }
 }
 
-itcl::body Instrument::save file {
-   puts $file "   -iaa [list $iaa] \\"
-   puts $file "   -issPort [list $issPort] \\"
-   puts $file "   -centralBaffle [list $centralBaffle] \\"
-   puts $file "   -deployableBaffle [list $deployableBaffle] \\"
-   puts $file "   -focusOffset [list $focusOffset] \\"
-   puts $file "   -name [list $name]"
+itcl::body Instrument::save {node} {
+   set node [paramset $node instrument]
+   param $node iaa $iaa
+   param $node issPort $issPort
+   param $node centralBaffle $centralBaffle
+   param $node deployableBaffle $deployableBaffle
+   param $node focusOffset $focusOffset
+   param $node name $name
 }

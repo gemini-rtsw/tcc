@@ -57,7 +57,7 @@ itk::usual OnOffButton {
 itcl::body OnOffButton::constructor args {
 
    itk_component add button {
-      button $itk_interior.button -command [code $this pressed]
+      button $itk_interior.button -command [itcl::code $this pressed]
    } {
       usual
       keep -state -text -width
@@ -145,7 +145,7 @@ itcl::body OnOffButton::checkstate {} {
       }
 
 # Monitor the record.
-      set monid [$sa.$rec add [code $this monitor]]
+      set monid [$sa.$rec add [itcl::code $this monitor]]
 
 # Call the monitor routine to update the state.
       monitor $sa.$rec [sa $sa get $rec]

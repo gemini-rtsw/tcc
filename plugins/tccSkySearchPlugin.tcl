@@ -1,7 +1,7 @@
 #+
 #  tccSkySearchPlugin.tcl
 #
-#  D Terrett 13 July 2001
+#  D Terrett 7 March 2002
 #
 #  Copyright CCLRC
 #-
@@ -23,19 +23,16 @@ proc SkySearch_plugin {this} {
          -command "TccSkyQuery::define_selected science"
    $w add_menuitem $gemmenu command "Selection -> PWFS1 target" \
          "Define the selected entry as the peripheral wave front sensor 1 target" \
-         -command "TccSkyQuery::define_selected guidepwfs1"
+         -command "TccSkyQuery::define_selected pwfs1"
    $w add_menuitem $gemmenu command "Selection -> PWFS2 target" \
          "Define the selected entry as the peripheral wave front sensor 2 target" \
-         -command "TccSkyQuery::define_selected guidepwfs2"
+         -command "TccSkyQuery::define_selected pwfs2"
    $w add_menuitem $gemmenu command "Selection -> OIWFS target" \
          "Define the selected entry as the on instrument wave front sensor target" \
-         -command "TccSkyQuery::define_selected guideoiwfs"
-   $w add_menuitem $gemmenu command "Result -> Science targets" \
-         "Define the search result as science targets" \
+         -command "TccSkyQuery::define_selected oiwfs"
+   $w add_menuitem $gemmenu command "Result -> targets" \
+         "Define the search result as targets" \
          -command "TccSkyQuery::define_contents science"
-   $w add_menuitem $gemmenu command "Result -> WFS targets" \
-         "Define the search result as wave front sensor targets" \
-         -command "TccSkyQuery::define_contents wfs"
 }
 
 namespace eval TccSkyQuery {
@@ -79,19 +76,14 @@ namespace eval TccSkyQuery {
       set radvel [lsearch $headings radvel]
       set parallax [lsearch $headings parallax]
 
-      if { $type == "science" } {
-         set list Science
-      } else {
-         set list Wfs
-      }
-
       foreach target $targets {
-         set args [list -objName [lindex $target $id]]
+         set args [list -objname [lindex $target $id]]
+         lappend args -type hmsdegTarget
          if { $ra != -1 && $dec != -1 } {
             set rav [lindex $target $ra]
             set decv [lindex $target $dec]
             if { $rav != "" && $decv != "" } {
-               lappend args -radec [list $rav $decv]
+               lappend args -c1 $rav -c2 $decv
             }
          }
          set_frame $target $cooSystem $cooType
@@ -105,8 +97,8 @@ namespace eval TccSkyQuery {
             set pmav [lindex $target $pma]
             set pmdv [lindex $target $pmd]
             if { $pmav != "" && $pmdv != "" } {
-               lappend args -pm \
-                    "[expr $pmav * 13750.987] [expr $pmdv * 206264.806]"
+               lappend args -pm1 "[expr $pmav * 13750.987] \
+                     -pm2 [expr $pmdv * 206264.806]"
             }
          }
          if { $radvel != -1 } {
@@ -122,13 +114,14 @@ namespace eval TccSkyQuery {
             }
          }
          
-         send $tcc_interp create${list}Target \"[lindex $target $id]\" $args
-      }
+# Activate the appropriate editing panel and get the name of the scratch
+# target object associated with that edit control.
+         set panelmgr [send $tcc_interp set ::Config(tcs.field,panel)]
+         send $tcc_interp $panelmgr map ${type}target
+         set panel [send $tcc_interp $panelmgr cget -name]
 
-      if { [llength $targets] == 1 } {
-         send $tcc_interp tcsconfig${type}Target map
-         send $tcc_interp tcsconfig${type}Target \
-               selectfromcontrol \"[lindex [lindex $targets 0] $id]\"
+         send $tcc_interp $panel newtarget [list [lindex $target $id]] \
+               ${type}target $args
       }
    }
 
@@ -137,19 +130,15 @@ namespace eval TccSkyQuery {
 
       if { $cooType != -1 } {
          if { [lindex $target $cooType] == "A" } {
-            lappend args -cosys Apparent
+            lappend args -system apparent
             return
          }
       }
       if { $cooSystem != -1 } {
          set equinox [lindex $target $cooSystem]
-         if { [string range $equinox 0 0] == "B" } {
-            lappend args -cosys FK4/$equinox
-            return
-         }
-         lappend args -cosys FK5/$equinox
+         lappend args -system $equinox
          return
       }
-      lappend args -cosys FK5/J2000
+      lappend args -system J2000
    }
 }

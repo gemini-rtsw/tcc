@@ -1,5 +1,5 @@
 #+
-#  Chop
+#  Chop <- tcclib::Paramset
 #
 #  Implements the Chop class. A Chop object stores a chop configuration.
 #
@@ -18,30 +18,27 @@
 #          -throw        The chop throw.
 #
 #  Methods:
-#          apply args    Applies the chop configuration to the TCS by 
-#                        setting the values of the command parameters. Any
-#                        arguments are ignored.
+#          apply comp    Applies the chop configuration to the TCS by 
+#                        setting the values of the command parameters.
+#                        The argument is ignored.
 #
 #          init          Returns the chop object to its initial state.
 #
-#          save file     Writes the values of the chop configuration
-#                        to the channel identifier "file".
+#          save node     Saves the values of the chop configuration
+#                        to the xml node
 #
-#  Procs:
-#         subcomponents  Returns a list of the chop classes subcomponents.
-#
-#  D Terrett 15 March 2001
+#  D Terrett 21 March 2002
 #
 #  Copyright CCLRC
 #+
 
 itcl::class Chop {
+   inherit tcclib::Paramset
    destructor {$this init}
-   public proc subcomponents {}
    public {
-      method apply {args}
+      method apply {comp}
       method init {}
-      method save {file}
+      method save {node}
       variable angle {}
       variable cosys {}
       variable dutycycle {}
@@ -54,19 +51,13 @@ itcl::class Chop {
    }
 }
 
-itcl::body Chop::subcomponents {} {
-   return { \
-      {cosys Cosys CosysNames CosysList {Coordinate system} chop} \
-   }
-}
-
-itcl::body Chop::apply args {
+itcl::body Chop::apply {comp} {
    cs chopRelative set angle [list $angle]
    if { [string equal $cosys ""] } {
       cs chopRelative set system FK5
       cs chopRelative set equinox J2000
    } else {
-      CosysNames::$cosys apply chopRelative
+      CosysNames::$cosys apply $comp.cosys
    }
    cs chopRelative set throw [list $throw]
    cs chopConfig set type 2posn
@@ -77,13 +68,14 @@ itcl::body Chop::apply args {
    logger command chopConfig
 }
 
-itcl::body Chop::save file {
-   puts $file "   -angle [list $angle] \\"
-   puts $file "   -cosys [list $cosys] \\"
-   puts $file "   -dutycycle [list $dutycycle] \\"
-   puts $file "   -frequency [list $frequency] \\"
-   puts $file "   -source [list $source] \\"
-   puts $file "   -throw [list $throw]"
+itcl::body Chop::save {node} {
+   set node [paramset $node chop]
+   param $node angle $angle
+   param $node cosys $cosys
+   param $node dutycycle $dutycycle
+   param $node frequency $frequency
+   param $node source $source
+   param $node throw $throw
 }
 
 itcl::body Chop::init {} {

@@ -21,7 +21,7 @@ static char rcsid[]="$Id:";
 *            Tk_ItemCoordProc have been changed to use object instead of
 *            strings for the command arguments.
 *
-*   D L Terrett 27 June 2001
+*   D L Terrett 11 October 2001
 *
 *   Copyright CCLRC
 */

@@ -1,0 +1,360 @@
+#+
+#  TcsConfigFile
+#
+#  A TcsConfigFile object parses a file containing XML descriptions of
+#  tcs configuration components and creates and configures the
+#  components.
+#
+#  D Terrett 11 April 2002
+#
+#  Copyright CCLRC
+#+
+
+itcl::class TcsConfigFile {
+   constructor {file parent} {}
+   private {
+      method createComponent {type node}
+      method createTarget {node}
+      method report {code msg}
+      variable w
+   }
+}
+
+itcl::body TcsConfigFile::constructor {file parent} {
+
+# Create a document object from the XML file.
+   set doc [dom::DOMImplementation parse [read $file]]
+
+# Get the root node.
+   set root [dom::document cget $doc -documentElement]
+
+# Save the parent window for error report dialogs.
+   set w $parent
+
+# Initialise lists of nodes that represent configuration components.
+   set nodelist(chop) ""
+   set nodelist(cosys) ""
+   set nodelist(field) ""
+   set nodelist(guide) ""
+   set nodelist(instrument) ""
+   set nodelist(pointorig) ""
+   set nodelist(rotator) ""
+   set nodelist(slewoptions) ""
+   set nodelist(target) ""
+   set nodelist(tcsconfig) ""
+   set nodelist(trackframe) ""
+   set nodelist(trackrate) ""
+   set nodelist(wavelength) ""
+   set nodelist(oiwfswavelength) ""
+
+# Start with the root node.
+   set node $root
+   while { 1 } {
+
+# See if this node is a configuration component.
+      if { [string equal [dom::node cget $node -nodeType] element] } {
+         if { [string equal [dom::node cget $node -nodeName] paramset] } {
+             if { [dom::element getAttribute $node type] != "" } {
+                switch [dom::element getAttribute $node type] {
+                   chop {
+                      lappend nodelist(chop) $node
+                   }
+                   cosys {
+                      lappend nodelist(cosys) $node
+                   }
+                   field {
+                      lappend nodelist(field) $node
+                   }
+                   guide {
+                      lappend nodelist(guide) $node
+                   }
+                   instrument {
+                      lappend nodelist(instrument) $node
+                   }
+                   instrument_origin {
+                      lappend nodelist(pointorig) $node
+                   }
+                   rotator {
+                      lappend nodelist(rotator) $node
+                   }
+                   slew_options {
+                      lappend nodelist(slewoptions) $node
+                   }
+                   degdegTarget -
+                   conicTarget -
+                   namedTarget -
+                   hmsdegTarget {
+                      lappend nodelist(target) $node
+                   }
+                   tcs_configuration {
+                      lappend nodelist(tcsconfig) $node
+                   }
+                   tracking_frame {
+                      lappend nodelist(trackframe) $node
+                   }
+                   trackrate {
+                      lappend nodelist(trackrate) $node
+                   }
+                   wavelength {
+                      lappend nodelist(wavelength) $node
+                   }
+                   oiwfswavelength {
+                      lappend nodelist(oiwfswavelength) $node
+                   }
+                }
+             }
+         }
+      }
+
+# Get next node.
+      if { [llength [dom::node children $node]] } {
+
+# If the node has children, next node is the first child.
+         set node [dom::node cget $node -firstChild]
+      } else {
+
+# If not then search upwards looking for a node with a next sibling.
+         while { ! [string equal $node $root] } {
+            set sibling [dom::node cget $node -nextSibling]
+            if { $sibling == "" } {
+               set node [dom::node cget $node -parentNode]
+            } else {
+               set node $sibling
+               break
+            }
+         }
+      }
+      if { [string equal $node $root] } break
+   }
+
+# Process each of the lists of component types (note that the order is
+# important so that we don't get errors because a subcomponent isn't defined).
+   foreach type {cosys trackrate wavelength oiwfswavelength target rotator \
+         guide field instrument pointorig slewoptions trackframe chop \
+         tcsconfig} {
+
+# Targets are a special case.
+      if { $type == "target" } {
+         foreach node $nodelist($type) {
+            if { [createTarget $node] } break
+         }
+      } else {
+         foreach node $nodelist($type) {
+            if { [createComponent $type $node] } break
+         }
+      }
+   }
+
+# Free the document.
+   dom::DOMImplementation destroy $doc
+}
+
+itcl::body TcsConfigFile::createComponent {type node} {
+
+# The node must have a name attribute.
+   if { [dom::element getAttribute $node name] == "" } {
+      return [report "$type with no name" $node]
+   }
+   set name [dom::element getAttribute $node name]
+
+# Create a component of the appropriate type.
+   switch $type {
+      cosys {
+         set class CosysComponent
+         set namespace ::CosysNames
+         set list CosysList
+      }
+      trackrate {
+         set class TrackRateComponent
+         set namespace ::TrackRateNames
+         set list TrackRateList
+      }
+      wavelength {
+         set class WavelengthComponent
+         set namespace ::WavelengthNames
+         set list WavelengthList
+      }
+      oiwfswavelength {
+         set class WavelengthComponent
+         set namespace ::OIWFSWavelengthNames
+         set list OIWFSWavelengthList
+      }
+      field {
+         set class FieldComponent
+         set namespace ::FieldNames
+         set list FieldList
+      }
+      instrument {
+         set class InstrumentComponent
+         set namespace ::InstrumentNames
+         set list InstrumentList
+      }
+      rotator {
+         set class RotatorComponent
+         set namespace ::RotatorNames
+         set list RotatorList
+      }
+      guide {
+         set class GuideComponent
+         set namespace ::GuideNames
+         set list GuideList
+      }
+      pointorig {
+         set class PointOrigComponent
+         set namespace ::PointOrigNames
+         set list PointOrigList
+      }
+      slewoptions {
+         set class SlewOptionsComponent
+         set namespace ::SlewOptionsNames
+         set list SlewOptionsList
+      }
+      trackframe {
+         set class TrackFrameComponent
+         set namespace ::TrackFrameNames
+         set list TrackFrameList
+      }
+      chop {
+         set class ChopComponent
+         set namespace ::ChopNames
+         set list ChopList
+      }
+      tcsconfig {
+         set class TcsConfigComponent
+         set namespace ::TcsConfigNames
+         set list TcsConfigList
+      }
+   }
+
+# Create or init the component. We can't simply delete a component and 
+# re-create it because there might be a reference to it somewhere.
+   set component ${namespace}::$name
+   if { [lsearch -exact [itcl::find objects -class $class] $component] < 0 } {
+      set component [$class ${namespace}::$name $list]
+   } else {
+      $component init
+   }
+
+# Configure the component from the child nodes of type param.
+   foreach child [dom::node children $node] {
+
+# If it is an element node.
+      if { [string equal [dom::node cget $child -nodeType] element] } {
+
+# And its type is param.
+         if { [string equal [dom::node cget $child -nodeName] param] } {
+
+# Get the attribute name.
+            set name [dom::element getAttribute $child name]
+
+# If the component has an option of that name.
+            if { ! [catch {$component cget -$name}] } {
+
+# Configure the option value.
+               $component configure \
+                     -$name [dom::element getAttribute $child value]
+            }
+         }
+      }
+   }
+   update
+   return 0
+}
+
+itcl::body TcsConfigFile::createTarget {node} {
+
+# The node must have a name and a type attribute.
+   set name [dom::element getAttribute $node name]
+   if { $name== "" } {
+      return [report "target with no name" $node]
+   }
+   set type [dom::element getAttribute $node type]
+   if { $type== "" } {
+      return [report "target \"$name\" has no type" $node]
+   }
+
+# Targets only exist in field so we have to search for the enclosing field
+# in the nodes parents.
+   set parent [dom::node cget $node -parentNode]
+   set field ""
+   while { $parent != "" } {
+      if { [string equal [dom::node cget $parent -nodeType] element] } {
+         if { [string equal [dom::node cget $parent -nodeName] paramset] } {
+             if { [dom::element getAttribute $parent type] != "" } {
+                if { [string equal [dom::element getAttribute $parent type] \
+                         field] } {
+                   set field [dom::element getAttribute $parent name]
+                   break
+                }
+             }
+          }
+      }
+      set parent [dom::node cget $parent parentNode]
+   }
+
+# If there is no parent field then use the target name.
+   set nofield 0
+   if { $field == "" } {
+      set field $name
+      set nofield 1
+   }
+
+# Create the field if it doesn't exist
+   set field ::FieldNames::$field
+   if { [lsearch -exact [itcl::find objects -class FieldComponent] \
+         $field] < 0 } {
+      set field [FieldComponent $field FieldList]
+   }
+
+# Add the target to the field.
+   set target $name
+   if { [catch {$field targetinit $target}] } {
+      $field add $target
+   } else {
+      $field targetinit $target
+   }
+
+# Configure the target type.
+   $field targetconfigure $target -type $type
+
+# Build a list of all the parameter nodes for the target.
+   set parlist ""
+   foreach child [dom::node children $node] {
+      if { [string equal [dom::node cget $child -nodeType] element] } {
+         if { [string equal [dom::node cget $child -nodeName] param] } {
+            lappend parlist $child
+         } elseif { [string equal [dom::node cget $child -nodeName] paramset] \
+               } {
+            foreach child [dom::node children $child] {
+               if { [string equal [dom::node cget $child -nodeType] element] } {
+                  if { [string equal [dom::node cget $child -nodeName] param] \
+                        } {
+                     lappend parlist $child
+                  }
+               }
+            }
+         }
+      }
+   }
+
+# Configure the component from the param nodes.
+   foreach child $parlist {
+      set name [dom::element getAttribute $child name]
+      if { ! [catch {$field targetcget $target -$name}] } {
+         $field targetconfigure $target \
+               -$name [dom::element getAttribute $child value]
+      }
+   }
+
+# If the field was created implicitly then set the science target to be
+# this target.
+   $field configure -sciencetarget $target
+
+   update
+   return 0
+}
+
+itcl::body TcsConfigFile::report {message node} {
+   return [string equal [tk_messageBox -icon error -parent $w -type okcancel \
+         -message $message] cancel]
+}

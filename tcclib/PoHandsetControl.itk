@@ -65,11 +65,11 @@ itcl::body PoHandsetControl::constructor args {
 
 # Radio buttons for selecting which offset to adjust.
    itk_component add asel {
-      radiobutton $w.asel -variable [scope vt] -value sourceA \
+      radiobutton $w.asel -variable [itcl::scope vt] -value sourceA \
             -command [itcl::code $this setvt]
    }
    itk_component add bsel {
-      radiobutton $w.bsel -variable [scope vt] -value sourceB \
+      radiobutton $w.bsel -variable [itcl::scope vt] -value sourceB \
             -command [itcl::code $this setvt]
    }
 
@@ -136,7 +136,7 @@ itcl::body PoHandsetControl::constructor args {
    }
    itk_component add reset {
       tcclib::ApplyButton $w.reset -command clearPoOffset -text Reset -width 8 \
-            -parcommand [code $this offpars]
+            -parcommand [itcl::code $this offpars]
    }
    pack $itk_component(absorb) $itk_component(reset) -side left -expand y \
          -pady 10
@@ -148,7 +148,7 @@ itcl::body PoHandsetControl::constructor args {
    }
    pack $itk_component(pomgr) -pady 5
 
-   set refid [after 1000 [code $this refresh]]
+   set refid [after 1000 [itcl::code $this refresh]]
 
    eval itk_initialize $args
 }
@@ -212,7 +212,7 @@ itcl::body PoHandsetControl::refresh {} {
             -text [format %6.2f [expr {[lindex $target 7] / 0.62056151}]]
    }
 
-   set refid [after 1000 [code $this refresh]]
+   set refid [after 1000 [itcl::code $this refresh]]
 }
 
 itcl::body PoHandsetControl::update {} {

@@ -1,5 +1,5 @@
 #+
-#  CosysControl <- tcclib::ComponentControl
+#  CosysControl <- ComponentControl
 #
 #  A Cosys control is a ComponentControl widget with an optionmenu for the 
 #  frame and an entryfield widget for the equinox.
@@ -7,14 +7,14 @@
 #  Options:
 #           none
 #
-#  D Terrett 18 June 2001
+#  D Terrett 14 March 2002
 #
 #  Copyright CCLRC
 #+
 
 itcl::class CosysControl {
-   inherit tcclib::ComponentControl
-   constructor args {}
+   inherit ComponentControl
+   constructor {args} {}
    public {
       method load {name}
       method reset {}
@@ -25,10 +25,10 @@ itcl::class CosysControl {
 itk::usual CosysControl {
    keep -borderwidth -cursor -font -highlightthickness -insertborderwidth \
          -insertofftime -insertontime -insertwidth -labelfont -popupcursor \
-         -selectborderwidth -textfont -title -applyarg -namespace -componentlist
+         -selectborderwidth -textfont -title
 }
 
-itcl::body CosysControl::constructor args {
+itcl::body CosysControl::constructor {args} {
 
    itk_component add cframe {
       frame $itk_interior.cframe -bd 2 -relief ridge
@@ -41,7 +41,7 @@ itcl::body CosysControl::constructor args {
       iwidgets::optionmenu $w.frame \
             -labeltext [lindex [cs sourceA info system] 2]
    }
-   $itk_component(frame) insert end FK5 FK4 Appt AzEl
+   $itk_component(frame) insert end FK5 FK4 Appt AzEl ""
 
 # Entryfield for the equinox.
    itk_component add equinox {
@@ -51,12 +51,8 @@ itcl::body CosysControl::constructor args {
    }
    pack $itk_component(frame) $itk_component(equinox) -padx 4 -pady 4
 
-# Set the object class.
-   set objclass CosysComponent
+# Set the object description.
    set description "Coordinate system"
-
-# Create the scratch cosys object used by apply.
-   set scratchobj [namespace which -command [Cosys #auto]]
 
    eval itk_initialize $args
 }

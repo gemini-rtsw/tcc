@@ -1,7 +1,7 @@
 #+
 #  tccSkyCatPlugin.tcl
 #
-#  D Terrett & C Mayer  10 September 2001
+#  D Terrett & C Mayer  10 April 2002
 #
 #  Copyright CCLRC
 #-
@@ -25,13 +25,13 @@ proc SkyCat_plugin {this} {
          -command "TccSkyCat::pick_target science"
    $w add_menuitem $gemmenu command "Pick PWFS1 Target" \
          "Pick an object and define it as the peripheral wave front sensor 1 target" \
-         -command "TccSkyCat::pick_target guidepwfs1"
+         -command "TccSkyCat::pick_target pwfs1"
    $w add_menuitem $gemmenu command "Pick PWFS2 Target" \
          "Pick an object and define it as the peripheral wave front sensor 2 target" \
-         -command "TccSkyCat::pick_target guidepwfs2"
+         -command "TccSkyCat::pick_target pwfs2"
    $w add_menuitem $gemmenu command "Pick OIWFS Target" \
          "Pick an object and define it as the on instrument wave front sensor target" \
-         -command "TccSkyCat::pick_target guideoiwfs"
+         -command "TccSkyCat::pick_target oiwfs"
    $w add_menuitem $gemmenu command "Set IPD" \
          "Set Instrument Principle Direction" \
          -command "TccSkyCat::pick_angle"
@@ -153,20 +153,14 @@ namespace eval TccSkyCat {
 
 # Activate the appropriate editing panel and get the name of the scratch
 # target object associated with that edit control.
-      send $tcc_interp tcsconfig${type}Target map
-      set control [send $tcc_interp tcsconfig${type}Target cget -window]
-      set name [send $tcc_interp $control getscratch]
+      set panelmgr [send $tcc_interp set ::Config(tcs.field,panel)]
+      send $tcc_interp $panelmgr map ${type}target
+      set panel [send $tcc_interp $panelmgr cget -name]
 
-# Update the definition of the scratch object.
-      send $tcc_interp $name configure \
-            -objName \"$name\" \
-            -radec \"[list [lindex $result 2] [lindex $result 3]]\" \
-            -cosys \"FK5/J[lindex $result 4]\"
-
-# Clear the current target and load the contents of the scratch object
-      send $tcc_interp tcsconfig${type}Target selectfromcontrol \"\"
-      send $tcc_interp $control reset
-      send $tcc_interp $control load [list $name]
+# Create an unnamed target.
+      send $tcc_interp $panel newtarget [list "" ${type}target \
+            -c1 [lindex $result 2] -c2 [lindex $result 3] \
+            -system J[lindex $result 4]] -type hmsdegTarget
    }
 
 # This procedure displays an image or replots the field if the image has
@@ -248,23 +242,24 @@ namespace eval TccSkyCat {
          set ipa [expr $ipa + 6.283185307]
       }
 
-# Activate the rotator editing panel and get the name of the scratch
-# rotator object associated with that edit control.
+# Activate the rotator editing panel.
       global tcc_interp
-      send $tcc_interp tcsconfigrotator map
-      set control [send $tcc_interp tcsconfigrotator cget -window]
-      set name [send $tcc_interp $control getscratch]
+      set panelmgr [send $tcc_interp set ::Config(tcs.field.rotator,panel)]
+      send $tcc_interp $panelmgr map
 
-# Update the definition of the scratch object.
-      send $tcc_interp $name configure \
-            -ipa \"[expr $ipa * 57.295779513]\" \
-            -cosys FK5/J2000
+# Create and configure a temporary rotator object.
+      set name [send $tcc_interp RotatorComponent \
+            \$::Config(tcs.field.rotator,namespace)::#auto \
+            \$::Config(tcs.field.rotator,list)]
+      send $tcc_interp [list $name] configure \
+            -ipa [expr $ipa * 57.295779513] -cosys FK5/J2000
 
 # Select it.
-      send $tcc_interp tcsconfigrotator selectfromcontrol \"\"
-      send $tcc_interp $control reset
-      send $tcc_interp $control load [list $name]
-   }
+      send $tcc_interp set ::Config(tcs.field.rotator,value) \
+            [namespace tail $name]
+      send $tcc_interp set ::Config(tcs.field.rotator,value) ""
+      send $tcc_interp delete object $name
+  }
 
 # This procedure takes a  WFS object and draws its projected
 # shape in the focal plane of the image

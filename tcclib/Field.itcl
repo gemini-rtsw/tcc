@@ -1,0 +1,335 @@
+#+
+#  Field <- tcclib::Paramset
+#
+#  Implements the Field class. A Field contains a list of targets, guide
+#  and rotator configurations and an airmass limit and a gemini program
+#  id.
+#
+#  Options:
+#           -sciencetarget  The name of the science target
+#
+#           -pwfs1target    The name of the pwfs1 target
+#
+#           -pwfs2target    The name of the pwfs2 target
+#
+#           -oiwfstarget    The name of the oiwfs target
+#
+#           -rotator        The name of the rotator confguration
+#
+#           -guide          The name of the guide configuration
+#
+#           -airmassLimit   The airmass limit to
+#
+#           -programid      Gemini Program ID
+#
+#           -wavelength     The observing wavelength
+#
+#  Methods:
+#          apply comp   Applies all the active components to the TCS.
+#
+#          init         Sets the tcs config object to its initial state.
+#
+#          preview      Sets all the active components in the preview.
+#
+#          save node    Saves the values of all the component options to
+#                       the xml node.
+#
+#          add name     Adds a new target.
+#
+#          remove name  Removes a target
+#
+#          targetconfigure name  Configures a target.
+#
+#          targetinit name       Inits a target.
+#
+#          targetcget name option Gets a target option.
+#
+#          plot azelplot Plots the field position on an azelplot.
+#
+#  D Terrett 11 April 2002
+#
+#  Copyright CCLRC
+#+
+
+itcl::class Field {
+   inherit tcclib::Paramset
+   constructor {args} {}
+   destructor {}
+   public {
+      method apply {comp}
+      method init {}
+      method preview {}
+      method save {node}
+      method add {name args}
+      method remove {name}
+      method targetconfigure {name args}
+      method targetinit {name}
+      method targetcget {name option}
+      method plot {azelplot} {puts "plotting $this on $azelplot"}
+      variable sciencetarget ""
+      variable pwfs1target ""
+      variable pwfs2target ""
+      variable oiwfstarget ""
+      variable rotator ""
+      variable guide ""
+      variable wavelength ""
+      variable programid ""
+      variable airmassLimit ""
+      variable namespace
+      variable targetlist
+   }
+   private {
+      variable current_sciencetarget ""
+      variable current_pwfs1target ""
+      variable current_pwfs2target ""
+      variable current_oiwfstarget ""
+      variable current_guide ""
+      variable current_rotator ""
+      variable current_wavelength ""
+   }
+}
+
+itcl::body Field::constructor {args} {
+
+# Create the list and namespace for target names.
+   set targetlist [tcclib::ComponentList ${this}TargetList]
+   set namespace ${this}TargetNames
+   namespace eval $namespace {}
+
+   eval configure $args
+}
+
+itcl::body Field::destructor {} {
+
+# Set the object back to its default so that all the targets can be deleted.
+   $this init
+
+# Delete all the targets.
+   set n [${this}TargetList length]
+   set targets ""
+   for {set i 0} {$i < $n} {incr i} {
+      lappend targets [${this}TargetList get $i]
+   }
+   foreach name $targets {
+      if { ![string equal $name ""] } {
+         delete object ${this}TargetNames::$name
+      }
+   }
+
+# Delete the list and the namespace.
+   delete object ${this}TargetList
+   namespace delete ${this}TargetNames
+}
+
+itcl::body Field::apply {comp} {
+
+# Call the apply method of all the components that have a value.
+   if { ! [string equal $sciencetarget ""] } {
+      ${this}TargetNames::$sciencetarget apply $comp.sciencetarget
+   }
+   if { ! [string equal $pwfs1target ""] } {
+      ${this}TargetNames::$pwfs1target apply $comp.pwfs1target
+   }
+   if { ! [string equal $pwfs2target ""] } {
+      ${this}TargetNames::$pwfs2target apply $comp.pwfs2target
+   }
+   if { ! [string equal $oiwfstarget ""] } {
+      ${this}TargetNames::$oiwfstarget apply $comp.oiwfstarget
+   }
+   if { ! [string equal $guide ""] } {
+      ::GuideNames::$guide apply $comp.guide
+   }
+   if { ! [string equal $rotator ""] } {
+      ::RotatorNames::$rotator apply $comp.rotator
+   }
+   if { ! [string equal $wavelength ""] } {
+      ::WavelengthNames::$wavelength apply $comp.wavelength
+   }
+   if { ![string is space $airmassLimit] } {
+      cs airmassLimit set limit $airmassLimit
+      logger command airmassLimit
+   }
+   if { ![string is space $programid] } {
+      global env
+      ss $env(TCC_TCSNAME):sad:programID set value [list $programid]
+      ss $env(TCC_TCSNAME):sad:programID post
+   }
+
+}
+
+itcl::body Field::init {} {
+   $this configure -sciencetarget ""
+   $this configure -pwfs1target ""
+   $this configure -pwfs2target ""
+   $this configure -oiwfstarget ""
+   $this configure -guide ""
+   $this configure -rotator ""
+   $this configure -wavelength ""
+   set programid ""
+   set airmassLimit ""
+}
+
+itcl::body Field::preview {} {
+
+# Call the preview method of all the components that have a value.
+   if { ! [string equal $sciencetarget ""] } {
+      ${this}TargetNames::$sciencetarget preview sourceA
+   }
+   if { ! [string equal $pwfs1target ""] } {
+      ${this}TargetNames::$pwfs1target preview pwfs1
+   }
+   if { ! [string equal $pwfs2target ""] } {
+      ${this}TargetNames::$pwfs2target preview pwfs2
+   }
+   if { ! [string equal $oiwfstarget ""] } {
+      ${this}TargetNames::$oiwfstarget preview oiwfs
+   }
+   if { ! [string equal $guide ""] } {
+      ::GuideNames::$guide preview
+   }
+   if { ! [string equal $rotator ""] } {
+      ::RotatorNames::$rotator preview
+   }
+   if { ! [string equal $wavelength ""] } {
+      ::WavelengthNames::$wavelength preview science
+   }
+}
+
+itcl::body Field::save {node} {
+   set node [paramset $node field]
+   param $node sciencetarget $sciencetarget
+   param $node pwfs1target $pwfs1target
+   param $node pwfs2target $pwfs2target
+   param $node oiwfstarget $oiwfstarget
+   param $node guide $guide
+   param $node rotator $rotator
+   param $node wavelength $wavelength
+   param $node programid $programid
+   param $node airmassLimit $airmassLimit
+
+   for {set i 0} {$i < [${this}TargetList length]} {incr i} {
+      set target [${this}TargetList get $i]
+      if { ! [string equal $target ""] } {
+         ${this}TargetNames::$target save $node
+      }
+   }
+}
+
+itcl::configbody Field::sciencetarget {
+   if { ! [string equal $current_sciencetarget ""] } {
+      ${this}TargetNames::$current_sciencetarget refdec
+   }
+   set current_sciencetarget ""
+   if { ! [string equal $sciencetarget ""] } {
+      if { [catch {${this}TargetNames::$sciencetarget refinc}] } {
+         error "Target \"$sciencetarget\" does not exist"
+      } else {
+         set current_sciencetarget $sciencetarget
+      }
+   }
+}
+
+itcl::configbody Field::pwfs1target {
+   if { ! [string equal $current_pwfs1target ""] } {
+      ${this}TargetNames::$current_pwfs1target refdec
+   }
+   set current_pwfs1target ""
+   if { ! [string equal $pwfs1target ""] } {
+      if { [catch {${this}TargetNames::$pwfs1target refinc}] } {
+         error "Target \"$pwfs1target\" does not exist"
+      } else {
+         set current_pwfs1target $pwfs1target
+      }
+   }
+}
+
+itcl::configbody Field::pwfs2target {
+   if { ! [string equal $current_pwfs2target ""] } {
+      ${this}TargetNames::$current_pwfs2target refdec
+   }
+   set current_pwfs2target ""
+   if { ! [string equal $pwfs2target ""] } {
+      if { [catch {${this}TargetNames::$pwfs2target refinc}] } {
+         error "Target \"$pwfs2target\" does not exist"
+      } else {
+         set current_pwfs2target $pwfs2target
+      }
+   }
+}
+
+itcl::configbody Field::oiwfstarget {
+   if { ! [string equal $current_oiwfstarget ""] } {
+      ${this}TargetNames::$current_oiwfstarget refdec
+   }
+   set current_oiwfstarget ""
+   if { ! [string equal $oiwfstarget ""] } {
+      if { [catch {${this}TargetNames::$oiwfstarget refinc}] } {
+         error "Target \"$oiwfstarget\" does not exist"
+      } else {
+         set current_oiwfstarget $oiwfstarget
+      }
+   }
+}
+
+itcl::configbody Field::guide {
+   if { ! [string equal $current_guide ""] } {
+      GuideNames::$current_guide refdec
+   }
+   set current_guide ""
+   if { ! [string equal $guide ""] } {
+      if { [catch {GuideNames::$guide refinc}] } {
+         error "Guide configuration \"$guide\" does not exist"
+      } else {
+         set current_guide $guide
+      }
+   }
+}
+
+itcl::configbody Field::rotator {
+   if { ! [string equal $current_rotator ""] } {
+      RotatorNames::$current_rotator refdec
+   }
+   set current_rotator ""
+   if { ! [string equal $rotator ""] } {
+      if { [catch {RotatorNames::$rotator refinc}] } {
+         error "Field orientation \"$rotator\" does not exist"
+      } else {
+         set current_rotator $rotator
+      }
+   }
+}
+
+itcl::configbody Field::wavelength {
+   if { ! [string equal $current_wavelength ""] } {
+      WavelengthNames::$current_wavelength refdec
+   }
+   set current_wavelength ""
+   if { ! [string equal $wavelength ""] } {
+      if { [catch {WavelengthNames::$wavelength refinc}] } {
+         error "Wavelength definition \"$wavelength\" does not exist"
+      } else {
+         set current_wavelength $wavelength
+      }
+   }
+}
+
+itcl::body Field::add {name args} {
+   return [eval TargetComponent [list ${this}TargetNames::$name] \
+         [list ${this}TargetList] $args]
+}
+
+itcl::body Field::targetconfigure {name args} {
+   eval [list ${this}TargetNames::$name] configure $args
+}
+
+itcl::body Field::targetinit {name} {
+   ${this}TargetNames::$name init
+}
+
+itcl::body Field::targetcget {name option} {
+   return [${this}TargetNames::$name cget $option]
+}
+
+itcl::body Field::remove {name} {
+   delete object ${this}TargetNames::$name
+}

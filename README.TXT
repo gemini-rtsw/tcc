@@ -4,9 +4,7 @@ The tcc applications are now installed in /gemini/tcc/tcc. So:
 
 starts the status displays and
 
-	/gemini/tcc/tcc/tcc -init /gemini/files/tcc_data &
-
-starts the consoles and loads the sample targets, instrument definitions etc.
+	/gemini/tcc/tcc/tcc  &
 
 Similarly, the pointing test and probecal applications are started by:
 
@@ -27,15 +25,20 @@ before starting the applications and verify that the print the message
 
 	using tc1:
 
-as they start.
+as they start.i
 
-If you save your own definitions to a file you can loaded them when you
-next start the consoles by adding another -init option to the command line.
+You may have to also set the EPICS_CA_ADDR_LIST environment variable if
+the IOC running the tcs is not on the same IP sub-network as your workstation.
+
+If you save your own target etc. definitions to a file or have files generated
+some other way you can loaded them when you next start the consoles by adding 
+a -init option to the command line.
 e.g.:
 
-	/gemini/tcc/tcc/tcc -init /gemini/tcc/tcc/data -init mystuff.dat &
+	/gemini/tcc/tcc/tcc -init mytargets.xml &
 
-If the -init option is a directory then all the files in the directory are
+You can have more than one -init option if you want to read more than one file
+or the -init option is a directory then all the files in the directory are
 read.
 
 To start the consoles using a previously saved layout use the -layout option:

@@ -1,35 +1,31 @@
 #+
-#  FieldPanel <- tcclib::Panel
+#  FieldPanel <- Panel
 #
 #  Implements the FieldPanel widget. A Panel widget with a 
 #  SciTargetControl widget and a StarSelector widget packed into its interior.
 #
 #  Options:
-#           -componentlist - The -componentlist options of the controls
-#
-#           -namespace -     The -namespace options of the controls
-#
-#           -titlelist       The title options of the controls
-#
-#           -applyargs -     The -applyarg options of the controls
+#           -components -    The -component options of the controls
 #
 #  Methods:
 #           none
 #
-#  D Terrett 4 September 2001
+#  D Terrett 18 March 2002
 #
 #  Copyright CCLRC
 #+
 
 itcl::class FieldPanel {
-   inherit tcclib::Panel
+   inherit Panel
    constructor args {}
-   itk_option define -componentlist componentList ComponentList {}
-   itk_option define -namespace namespace Namespace {}
-   itk_option define -titlelist titleList TitleList {}
-   itk_option define -applyarg applyArg ApplyArg {}
    public {
       method show {component}
+      method sync {component name} {
+         $itk_component(control) sync component $name
+      }
+      method newtarget {args} {
+         eval $itk_component(control) newtarget $args
+      }
    }
 }
 
@@ -39,124 +35,47 @@ itk::usual FieldPanel {
 
 itcl::body FieldPanel::constructor args {
 
-# Notebook for target entry controls.
-   itk_component add targets {
-      iwidgets::tabnotebook $itk_interior.targets -height 540 -width 450 \
-            -tabpos n
-   }
-
-   set w [$itk_component(targets) add -label Science]
-   itk_component add scitarget {
-      SciTargetControl $w.scitarget
+# Field control.
+   itk_component add control {
+      FieldControl $itk_interior.field -menubar $itk_component(menubar)
    } {
       usual
-      ignore -namespace -componentlist -applyarg -title
+      rename -component -components components Components
    }
-   pack $itk_component(scitarget)
-   set w [$itk_component(targets) add -label PWFS1]
-   itk_component add pwfs1target {
-      WfsTargetControl $w.pwfs1target
-   } {
-      usual
-      ignore -namespace -componentlist -applyarg -title
-   }
-   pack $itk_component(pwfs1target)
-   set w [$itk_component(targets) add -label PWFS2]
-   itk_component add pwfs2target {
-      WfsTargetControl $w.pwfs2target
-   } {
-      usual
-      ignore -namespace -componentlist -applyarg -title
-   }
-   pack $itk_component(pwfs2target)
-   set w [$itk_component(targets) add -label OIWFS]
-   itk_component add oiwfstarget {
-      WfsTargetControl $w.oiwfstarget
-   } {
-      usual
-      ignore -namespace -componentlist -applyarg -title
-   }
-   pack $itk_component(oiwfstarget)
-   $itk_component(targets) select Science
+   pack $itk_component(control) -side left
 
-   itk_component add starselect {
-      StarSelectControl $itk_interior.starselect
-   }
-
-# Add the StarSelectControl load and view commands to the File menu.
-
+# Add the StarSelectControl load and command to the File menu.
    $itk_component(menubar) insert .file.move command load \
-         -command "$itk_component(starselect) load" -label "Load catalog"
-   $itk_component(menubar) insert .file.move command view \
-         -command "$itk_component(starselect) view" -label "View catalog"
+         -command "[$itk_component(control) component starselect] load" \
+         -label "Load catalog"
+
+# Add the view and unload menus
+   $itk_component(menubar) insert .file.move cascade view \
+         -label "View catalog"
+   $itk_component(menubar) insert .file.move cascade unload \
+         -label "Unload catalog"
    $itk_component(menubar) insert .file.move separator separator
 
-   setWidgetColors [list $itk_component(menubar) $itk_component(scitarget) \
-         $itk_component(starselect)] $itk_option(-background) \
+   setWidgetColors [list $itk_component(menubar) \
+         $itk_component(control)] $itk_option(-background) \
          $itk_option(-foreground)
-
-   pack $itk_component(targets) $itk_component(starselect) -side left
 
    eval itk_initialize $args
 }
 
-itcl::configbody FieldPanel::componentlist {
-   $itk_component(scitarget) configure \
-         -componentlist [lindex $itk_option(-componentlist) 0]
-   $itk_component(pwfs1target) configure \
-         -componentlist [lindex $itk_option(-componentlist) 1]
-   $itk_component(pwfs2target) configure \
-         -componentlist [lindex $itk_option(-componentlist) 2]
-   $itk_component(oiwfstarget) configure \
-         -componentlist [lindex $itk_option(-componentlist) 3]
-}
-
-itcl::configbody FieldPanel::namespace {
-   $itk_component(scitarget) configure \
-         -namespace [lindex $itk_option(-namespace) 0]
-   $itk_component(pwfs1target) configure \
-         -namespace [lindex $itk_option(-namespace) 1]
-   $itk_component(pwfs2target) configure \
-         -namespace [lindex $itk_option(-namespace) 2]
-   $itk_component(oiwfstarget) configure \
-         -namespace [lindex $itk_option(-namespace) 3]
-}
-
-itcl::configbody FieldPanel::applyarg {
-   $itk_component(scitarget) configure \
-         -applyarg [lindex $itk_option(-applyarg) 0]
-   $itk_component(pwfs1target) configure \
-         -applyarg [lindex $itk_option(-applyarg) 1]
-   $itk_component(pwfs2target) configure \
-         -applyarg [lindex $itk_option(-applyarg) 2]
-   $itk_component(oiwfstarget) configure \
-         -applyarg [lindex $itk_option(-applyarg) 3]
-}
-
-itcl::configbody FieldPanel::titlelist {
-   $itk_component(scitarget) configure \
-         -title [lindex $itk_option(-titlelist) 0]
-   $itk_component(pwfs1target) configure \
-         -title [lindex $itk_option(-titlelist) 1]
-   $itk_component(pwfs2target) configure \
-         -title [lindex $itk_option(-titlelist) 2]
-   $itk_component(oiwfstarget) configure \
-         -title [lindex $itk_option(-titlelist) 3]
-}
-
 itcl::body FieldPanel::show {component} {
    switch $component {
-      scitarget {
-         $itk_component(targets) select "Science"
+      sciencetarget {
+         [$itk_component(control) component targets] select Science
       }
       pwfs1target {
-         $itk_component(targets) select "PWFS1"
+         [$itk_component(control) component targets] select PWFS1
       }
       pwfs2target {
-         $itk_component(targets) select "PWFS2"
+         [$itk_component(control) component targets] select PWFS2
       }
       oiwfstarget {
-         $itk_component(targets) select "OIWFS"
+         [$itk_component(control) component targets] select OIWFS
       }
    }
 }

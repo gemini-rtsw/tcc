@@ -10,7 +10,7 @@
 #           update          Updates the view with the current state of the
 #                           telescope.
 #
-#  D Terrett 3 December 2001
+#  D Terrett 9 April 2002
 #
 #  Copyright CCLRC
 #-
@@ -78,6 +78,10 @@ itcl::body GraphicDisplay::constructor args {
 
 # Probe views in the last column.
    set w $itk_component(col4)
+   itk_component add oiwfs {
+      frame $w.oiwfs -borderwidth 2 -relief ridge
+   }
+   set w $itk_component(oiwfs)
    itk_component add oilabel {
       label $w.oilabel -text "OIWFS"
    }
@@ -89,22 +93,43 @@ itcl::body GraphicDisplay::constructor args {
       StatusField $w.oiy -labeltext y -entryborder 2 -entryrelief ridge \
             -width 6 -anchor e
    }
+   itk_component add oiwavel {
+      label $w.oiwavel
+   }
+   pack $itk_component(oilabel) $itk_component(oix) $itk_component(oiy) \
+         $itk_component(oiwavel) -padx 5 -pady 5
+   set w $itk_component(col4)
+   itk_component add pwfs1 {
+      frame $w.pwfs1 -borderwidth 2 -relief ridge
+   }
+   set w $itk_component(pwfs1)
    itk_component add probe1 {
       ProbeView $w.probe1 -probe p1
    }
    itk_component add p1label {
       label $w.p1label -text "PWFS1"
    }
+   itk_component add p1wavel {
+      label $w.p1wavel
+   }
+   pack $itk_component(p1label) $itk_component(probe1) $itk_component(p1wavel)
+   set w $itk_component(col4)
+   itk_component add pwfs2 {
+      frame $w.pwfs2 -borderwidth 2 -relief ridge
+   }
+   set w $itk_component(pwfs2)
    itk_component add probe2 {
       ProbeView $w.probe2 -probe p2
    }
    itk_component add p2label {
       label $w.p2label -text "PWFS2"
    }
-   pack $itk_component(p2label) $itk_component(probe2) \
-        $itk_component(p1label) $itk_component(probe1) \
-        $itk_component(oilabel) $itk_component(oiy) \
-        $itk_component(oix) -side bottom 
+   itk_component add p2wavel {
+      label $w.p2wavel
+   }
+   pack $itk_component(p2label) $itk_component(probe2) $itk_component(p2wavel)
+   pack $itk_component(pwfs2) $itk_component(pwfs1) $itk_component(oiwfs) \
+         -side bottom -pady 10
 
 # Configure the ISS port numbers.
    $itk_component(opticsview) configure -portAnumber 1 
@@ -130,6 +155,7 @@ itcl::body GraphicDisplay::update {} {
 #+
 #  Updates the display items.
 #-
+   set flash [expr { $flash ? 0 : 1 }]
 
 # Update the widgets.
    $itk_component(domeview) update
@@ -254,10 +280,8 @@ itcl::body GraphicDisplay::update {} {
       if { $sfmoving } {
          if { $flash } {
             $itk_component(opticsview) configure -scfold MOVING
-            set flash 0
          } else {
             $itk_component(opticsview) configure -scfold $sfpos
-            set flash 1
          }
       } else {
          $itk_component(opticsview) configure -scfold $sfpos
@@ -271,6 +295,47 @@ itcl::body GraphicDisplay::update {} {
          [sa gcalsad get CuArLampState value] == "ON" ||
          [sa gcalsad get ThArLampState value] == "ON" ||
          [sa gcalsad get QHLampState value] == "ON" }]
+
+# Configure GPOL
+   if { [sa gpolsad get upperParkSwitch] == "OPEN" } {
+      if { [sa gpolsad get upperBeamSwitch] == "CLOSED" } {
+         $itk_component(opticsview) configure -gpolustate IN
+      } else {
+         if { $flash } {
+            $itk_component(opticsview) configure -gpolustate IN
+         } else {
+            $itk_component(opticsview) configure -gpolustate OUT
+         }
+      }
+   } else {
+      $itk_component(opticsview) configure -gpolustate OUT
+   }
+   if { [sa gpolsad get middleParkSwitch] == "OPEN" } {
+      if { [sa gpolsad get middleBeamSwitch] == "CLOSED" } {
+         $itk_component(opticsview) configure -gpolmstate IN
+      } else {
+         if { $flash } {
+            $itk_component(opticsview) configure -gpolmstate IN
+         } else {
+            $itk_component(opticsview) configure -gpolmstate OUT
+         }
+      }
+   } else {
+      $itk_component(opticsview) configure -gpolmstate OUT
+   }
+   if { [sa gpolsad get lowerParkSwitch] == "OPEN" } {
+      if { [sa gpolsad get lowerBeamSwitch] == "CLOSED" } {
+         $itk_component(opticsview) configure -gpollstate IN
+      } else {
+         if { $flash } {
+            $itk_component(opticsview) configure -gpollstate IN
+         } else {
+            $itk_component(opticsview) configure -gpollstate OUT
+         }
+      }
+   } else {
+      $itk_component(opticsview) configure -gpollstate OUT
+   }
 
 # Configure the light path.
    $itk_component(opticsview) configure \
@@ -300,6 +365,21 @@ itcl::body GraphicDisplay::update {} {
 # Update the OIWFS position.
    $itk_component(oix) configure -text [format %.2f [sadVal agssad oiX 0.0]]
    $itk_component(oiy) configure -text [format %.2f [sadVal agssad oiY 0.0]]
+
+# Update the guiding wavelengths.
+   set wavel [sadVal tcssad pwfs1Wavelength ""]
+   if { $wavel != "" } {
+      $itk_component(p1wavel) configure -text "[expr {$wavel / 10000.0}] mu"
+   }
+   set wavel [sadVal tcssad pwfs2Wavelength ""]
+   if { $wavel != "" } {
+      $itk_component(p2wavel) configure -text "[expr {$wavel / 10000.0}] mu"
+   }
+   set wavel [sadVal tcssad oiwfsWavelength ""]
+   if { $wavel != "" } {
+      $itk_component(oiwavel) configure -text "[expr {$wavel / 10000.0}] mu"
+   }
+
 
 # Set the ISS port labels.
    $itk_component(opticsview) configure \

@@ -1,20 +1,20 @@
 #+
-#  TrackFrameControl <- tcclib::ComponentControl
+#  TrackFrameControl <- ComponentControl
 #
 #  Implements the TrackFrameControl widget.
 #
 #  Options:
-#           -shadow
+#           -component    The component that the control edits.
 #
-#  D Terrett 18 June 2001
+#  D Terrett 27 February 2002
 #
 #  Copyright CCLRC
 #+
 
 itcl::class TrackFrameControl {
-   inherit tcclib::ComponentControl
+   inherit ComponentControl
    constructor args {}
-   itk_option define -shadow shadow Shadow {}
+   itk_option define -component component Component {}
    public {
       method load {name}
       method save {name}
@@ -24,7 +24,7 @@ itcl::class TrackFrameControl {
 itk::usual TrackFrameControl {
    keep -borderwidth -cursor -font -highlightthickness -insertborderwidth \
          -insertofftime -insertontime -insertwidth -labelfont -popupcursor \
-         -selectborderwidth -textfont -title -applyarg -namespace -componentlist
+         -selectborderwidth -textfont -title
 }
 
 itcl::body TrackFrameControl::constructor args {
@@ -37,32 +37,32 @@ itcl::body TrackFrameControl::constructor args {
    set w $itk_component(trackframes)
 
    itk_component add mountCosys {
-      tcclib::SubComponentSelector $w.mount -labeltext "Mount" \
-            -labelpos w -componentlist CosysList -component mountCosys
+      SubComponentSelector $w.mount -labeltext "Mount" \
+            -labelpos w
    }
    itk_component add sourceACosys {
-      tcclib::SubComponentSelector $w.sourcea -labeltext "Source A" \
-            -labelpos w -componentlist CosysList -component sourceACosys
+      SubComponentSelector $w.sourcea -labeltext "Source A" \
+            -labelpos w
    }
    itk_component add sourceBCosys {
-      tcclib::SubComponentSelector $w.sourceb -labeltext "Source B" \
-            -labelpos w -componentlist CosysList -component sourceBCosys
+      SubComponentSelector $w.sourceb -labeltext "Source B" \
+            -labelpos w
    }
    itk_component add sourceCCosys {
-      tcclib::SubComponentSelector $w.sourcec -labeltext "Source C" \
-            -labelpos w -componentlist CosysList -component sourceCCosys
+      SubComponentSelector $w.sourcec -labeltext "Source C" \
+            -labelpos w
    }
    itk_component add pwfs1Cosys {
-      tcclib::SubComponentSelector $w.pwfs1 -labeltext "PWFS1" \
-            -labelpos w -componentlist CosysList -component pwfs1Cosys
+      SubComponentSelector $w.pwfs1 -labeltext "PWFS1" \
+            -labelpos w
    }
    itk_component add pwfs2Cosys {
-      tcclib::SubComponentSelector $w.pwfs2 -labeltext "PWFS2" \
-            -labelpos w -componentlist CosysList -component pwfs2Cosys
+      SubComponentSelector $w.pwfs2 -labeltext "PWFS2" \
+            -labelpos w
    }
    itk_component add oiwfsCosys {
-      tcclib::SubComponentSelector $w.oiwfs -labeltext "OIWFS" \
-            -labelpos w -componentlist CosysList -component oiwfsCosys
+      SubComponentSelector $w.oiwfs -labeltext "OIWFS" \
+            -labelpos w
    }
    grid $itk_component(mountCosys) -sticky e
    grid $itk_component(sourceACosys) -sticky e
@@ -72,12 +72,8 @@ itcl::body TrackFrameControl::constructor args {
    grid $itk_component(pwfs2Cosys) -sticky e
    grid $itk_component(oiwfsCosys) -sticky e
 
-# Set the object class.
-   set objclass TrackFrameComponent
+# Set the object description.
    set description "tracking frames"
-
-# Create the trackframe object used by apply.
-   set scratchobj [namespace which -command [TrackFrame #auto]]
 
    eval itk_initialize $args
 }
@@ -85,7 +81,8 @@ itcl::body TrackFrameControl::constructor args {
 itcl::body TrackFrameControl::load {name} {
    if { ! [string equal [namespace tail $name] ""] } {
       foreach tel {mount sourceA sourceB sourceC pwfs1 pwfs2 oiwfs} {
-         $itk_component(${tel}Cosys) select [$name cget -${tel}Cosys]
+         set ::Config($itk_option(-component).${tel}cosys,value) \
+               [$name cget -${tel}Cosys]
       }
    }
 }
@@ -101,26 +98,21 @@ itcl::body TrackFrameControl::save {name} {
          -oiwfsCosys [$itk_component(oiwfsCosys) get]
 }
 
-itcl::configbody TrackFrameControl::shadow {
-   $itk_component(mountCosys) configure -editcontrol \
-            $itk_option(-shadow)mountCosys
-   $itk_component(sourceACosys) configure -editcontrol \
-            $itk_option(-shadow)sourceACosys
-   $itk_component(sourceBCosys) configure -editcontrol \
-            $itk_option(-shadow)sourceBCosys
-   $itk_component(sourceCCosys) configure -editcontrol \
-            $itk_option(-shadow)sourceCCosys
-   $itk_component(pwfs1Cosys) configure -editcontrol \
-            $itk_option(-shadow)pwfs1Cosys
-   $itk_component(pwfs2Cosys) configure -editcontrol \
-            $itk_option(-shadow)pwfs2Cosys
-   $itk_component(oiwfsCosys) configure -editcontrol \
-            $itk_option(-shadow)oiwfsCosys
-   $itk_component(mountCosys) configure -shadow $itk_option(-shadow)
-   $itk_component(sourceACosys) configure -shadow $itk_option(-shadow)
-   $itk_component(sourceBCosys) configure -shadow $itk_option(-shadow)
-   $itk_component(sourceCCosys) configure -shadow $itk_option(-shadow)
-   $itk_component(pwfs1Cosys) configure -shadow $itk_option(-shadow)
-   $itk_component(pwfs2Cosys) configure -shadow $itk_option(-shadow)
-   $itk_component(oiwfsCosys) configure -shadow $itk_option(-shadow)
+itcl::configbody TrackFrameControl::component {
+   if { $itk_option(-component) != "" } {
+      $itk_component(mountCosys) configure -component \
+            $itk_option(-component).mountcosys
+      $itk_component(sourceACosys) configure -component \
+            $itk_option(-component).sourceAcosys
+      $itk_component(sourceBCosys) configure -component \
+            $itk_option(-component).sourceBcosys
+      $itk_component(sourceCCosys) configure -component \
+            $itk_option(-component).sourceCcosys
+      $itk_component(pwfs1Cosys) configure -component \
+            $itk_option(-component).pwfs1cosys
+      $itk_component(pwfs2Cosys) configure -component \
+            $itk_option(-component).pwfs2cosys
+      $itk_component(oiwfsCosys) configure -component \
+            $itk_option(-component).oiwfscosys
+   }
 }

@@ -1,0 +1,394 @@
+#+
+#  FieldControl <- ComponentControl
+#
+#  A FieldControl is a ComponentControl widget with widgets for the science
+#  and wave-front sensor targets
+#
+#  Options:
+#
+#           -component      The name of the component that the control
+#                           edits.
+#
+#  Methods:
+#           load name       Copies the contents of the Field object "name"
+#                           into the edit controls.
+#
+#           save name       Stores the contents of the edit controls in the
+#                           Field object "name".
+#
+#           newtarget name type args  Creates a new target in the currently 
+#                                     selected field.
+#
+#  D Terrett 13 April 2002
+#
+#  Copyright CCLRC
+#+
+
+itcl::class FieldControl {
+   inherit ComponentControl
+   constructor args {}
+   destructor {}
+   itk_option define -component component Component {}
+   public {
+      method load {name}
+      method reset {}
+      method save {name}
+      method sync {component name}
+      method newtarget {name type args}
+   }
+   private {
+      method newfieldval {n1 n2 op}
+      variable comp ""
+      variable currentname ""
+   }
+}
+
+itk::usual FieldControl {
+   keep -borderwidth -cursor -font -highlightthickness -insertborderwidth \
+         -insertofftime -insertontime -insertwidth -labelfont -popupcursor \
+         -selectborderwidth -textfont -title
+}
+
+itcl::body FieldControl::constructor args {
+
+# Expand the selector.
+   $itk_component(selector) configure -width 44
+
+   itk_component add display {
+      frame $itk_interior.display
+   }
+   pack $itk_component(display) -side top -anchor c
+   set w $itk_component(display)
+
+# Display of current targets.
+   itk_component add sciencelabel {
+      label $w.sciencelabel -text "SCIENCE Target"
+   }
+   itk_component add sciencename {
+      label $w.sciencename -width 23 -borderwidth 2 -relief sunken
+   }
+   itk_component add pwfs1label {
+      label $w.pwfs1label -text "PWFS1 Target"
+   }
+   itk_component add pwfs1name {
+      label $w.pwfs1name -width 23 -borderwidth 2 -relief sunken
+   }
+   itk_component add pwfs2label {
+      label $w.pwfs2label -text "PWFS2 Target"
+   }
+   itk_component add pwfs2name {
+      label $w.pwfs2name -width 23 -borderwidth 2 -relief sunken
+   }
+   itk_component add oiwfslabel {
+      label $w.oiwfslabel -text "OIWFS target"
+   }
+   itk_component add oiwfsname {
+      label $w.oiwfsname -width 23 -borderwidth 2 -relief sunken
+   }
+   grid $itk_component(sciencelabel) $itk_component(pwfs1label) \
+         $itk_component(pwfs2label) $itk_component(oiwfslabel)
+   grid $itk_component(sciencename) $itk_component(pwfs1name) \
+         $itk_component(pwfs2name) $itk_component(oiwfsname) -padx 5
+
+# Guide, rotator and wavelength selection.
+   itk_component add subsel {
+      frame $itk_interior.subsel
+   }
+   set w $itk_component(subsel)
+   itk_component add guide {
+      SubComponentSelector $w.guide -labeltext "Guide Configuration" \
+            -labelpos nw -width 25
+   }
+   itk_component add rotator {
+      SubComponentSelector $w.rotator -labeltext "Field Orientation" \
+            -labelpos nw -width 25
+   }
+   itk_component add wavelength {
+      SubComponentSelector $w.wavelength -labeltext "Observing wavelength" \
+            -labelpos nw -width 25
+   }
+   pack $itk_component(subsel)
+   pack $itk_component(guide) $itk_component(rotator) \
+         $itk_component(wavelength) -side left -padx 5
+
+# Data entry widgets.
+   itk_component add data {
+      frame $itk_interior.data
+   }
+   set w $itk_component(data)
+
+# Notebook for target entry controls.
+   itk_component add targets {
+      iwidgets::tabnotebook $w.targets -height 440 -width 450 \
+            -tabpos n
+   }
+
+   set w [$itk_component(targets) add -label Science]
+   itk_component add sciencecontrol {
+      SciTargetControl $w.sciencecontrol
+   } {
+      usual
+      ignore -title
+   }
+   pack $itk_component(sciencecontrol)
+   set w [$itk_component(targets) add -label PWFS1]
+   itk_component add pwfs1control {
+      WfsTargetControl $w.pwfs1control
+   } {
+      usual
+      ignore -title
+   }
+   pack $itk_component(pwfs1control)
+   set w [$itk_component(targets) add -label PWFS2]
+   itk_component add pwfs2control {
+      WfsTargetControl $w.pwfs2control
+   } {
+      usual
+      ignore -title
+   }
+   pack $itk_component(pwfs2control)
+   set w [$itk_component(targets) add -label OIWFS]
+   itk_component add oiwfscontrol {
+      WfsTargetControl $w.oiwfscontrol
+   } {
+      usual
+      ignore -title
+   }
+   pack $itk_component(oiwfscontrol)
+   pack $itk_component(targets) -side top
+
+# Airmass limit and program ID.
+   set w $itk_component(data)
+   itk_component add progid {
+      iwidgets::entryfield $w.progid -labeltext "Program ID" -width 15
+   }
+   itk_component add airmass {
+      iwidgets::entryfield $w.airmass -labeltext "Airmass limit" -width 8
+   }
+   pack $itk_component(airmass) $itk_component(progid) -side left \
+         -padx 5 -pady 10 -expand yes
+
+   $itk_component(targets) select Science
+   pack $itk_component(data) -side left -anchor n
+
+   itk_component add plots {
+      iwidgets::tabnotebook $itk_interior.plots -height 530 -width 450 \
+            -tabpos n
+   }
+   set w [$itk_component(plots) add -label "All Sky"]
+   itk_component add starselect {
+      StarSelectControl $w.starselect
+   }
+   pack $itk_component(starselect)
+   #set w [$itk_component(plots) add -label Field]
+   $itk_component(plots) select "All Sky"
+   pack $itk_component(plots) -side left
+
+# Set the current field name to the scratch field.
+   set currentname $::Config(tcs.field,anon)
+
+# Define the object description.
+   set description "field"
+
+   eval itk_initialize $args
+}
+
+itcl::body FieldControl::destructor {} {
+
+# Remove variable trace.
+   trace vdelete ::Config($comp,value) w [itcl::code $this newfieldval]
+}
+
+itcl::body FieldControl::save {name} {
+#+
+# Updates the named field object.
+#-
+
+# If this is a new field then add each target from the old field to the new 
+# provided that the old field still exists.
+   if { ![string equal $currentname $name] && \
+         ( [string equal $currentname $::Config(tcs.field,anon)] ||
+         [lsearch -exact [itcl::find objects -class FieldComponent] \
+         $currentname] >= 0 ) } {
+
+# Copy each target.
+      set n [${currentname}TargetList length]
+      for { set i 0 } { $i < $n } { incr i } {
+         set target [${currentname}TargetList get $i]
+         if { ![string is space $target] } {
+            $name add $target
+
+# Copy all parameters.
+            foreach par [$currentname targetconfigure $target] {
+               $name targetconfigure $target [lindex $par 0] [lindex $par 2]
+            }
+
+# Set refcount to zero since the new target isn't referenced anywhere yet.
+            ${name}TargetNames::$target configure -refcount 0
+         }
+      }
+
+# If we have just copied the anonymous field then delete all its targets.
+      if { [string equal $currentname $::Config(tcs.field,anon)] } {
+         while { [${currentname}TargetList length] > 1 } {
+            ${currentname}TargetList remove [${currentname}TargetList get 1]
+         }
+      }
+   }
+
+# Configure the targets.
+   foreach target {science pwfs1 pwfs2 oiwfs} {
+      $name configure -${target}target \
+            [$itk_component(${target}name) cget -text]
+   }
+
+# Set the remaining components.
+   $name configure -guide [$itk_component(guide) get] \
+         -rotator [$itk_component(rotator) get] \
+         -wavelength [$itk_component(wavelength) get] \
+         -programid [$itk_component(progid) get] \
+         -airmassLimit [$itk_component(airmass) get]
+
+# Record the new current object.
+   set currentname $name
+}
+
+itcl::body FieldControl::reset {} {
+   $itk_component(progid) clear
+   $itk_component(airmass) clear
+   set ::Config(tcs.field.sciencetarget,value) ""
+   set ::Config(tcs.field.pwfs1target,value) ""
+   set ::Config(tcs.field.pwfs2target,value) ""
+   set ::Config(tcs.field.oiwfstarget,value) ""
+}
+
+itcl::body FieldControl::load {name} {
+
+# Copy the contents of the field object selected in the combobox into the 
+# edit controls.
+
+# Save the existing name so that we can copy all the targets it
+# contains.
+   set currentname ${name}
+
+# Set the namespace and list to save targets in.
+   foreach target {science pwfs1 pwfs2 oiwfs} {
+      set ::Config($comp.${target}target,list) ${name}TargetList
+      set ::Config($comp.${target}target,namespace) ${name}TargetNames
+      set ::Config($comp.${target}target,value) [$name cget -${target}target]
+   }
+   set ::Config($comp.guide,value) [$name cget -guide]
+   set ::Config($comp.rotator,value) [$name cget -rotator]
+   set ::Config($comp.wavelength,value) [$name cget -wavelength]
+   $itk_component(progid) insert end [$name cget -programid]
+   $itk_component(airmass) insert end [$name cget -airmassLimit]
+}
+
+itcl::configbody FieldControl::component {
+
+# Remove any existing trace
+   trace vdelete ::Config($comp,value) w [itcl::code $this newname]
+   set comp ""
+
+   if { $itk_option(-component) != "" } {
+       set comp $itk_option(-component)
+
+# Configure the component options of the target controls.
+      foreach target {science pwfs1 pwfs2 oiwfs} {
+         $itk_component(${target}control) configure \
+               -component $comp.${target}target
+
+# Configure the textvariable option on the target display widgets to the
+# config array.
+         $itk_component(${target}name) configure -textvariable \
+               ::Config($comp.${target}target,value)
+      }
+
+# Configure the guide, rotator and wavelength components.
+      $itk_component(guide) configure -component $comp.guide
+      $itk_component(rotator) configure -component $comp.rotator
+      $itk_component(wavelength) configure -component $comp.wavelength
+
+# Set a trace on the component value so that we can detect the selection
+# of the scratch object.
+      trace variable ::Config($comp,value) w [itcl::code $this newfieldval]
+
+# Set the name of the current component and the list and namespace for
+# targets.
+      set currentname $::Config($comp,anon)
+      foreach target {science pwfs1 pwfs2 oiwfs} {
+         set ::Config($comp.${target}target,list) ${currentname}TargetList
+         set ::Config($comp.${target}target,namespace) ${currentname}TargetNames
+      }
+   }
+}
+
+itcl::body FieldControl::sync {component name} {
+
+   switch $component {
+      tcs.field.sciencetarget {
+         $itk_component(sciencecontrol) sync $name
+      }
+      tcs.field.pwfs1target {
+         $itk_component(pwfs1control) sync $name
+      }
+      tcs.field.pwfs2target {
+         $itk_component(pwfs2control) sync $name
+      }
+      tcs.field.oiwfstarget {
+         $itk_component(oiwfscontrol) sync $name
+      }
+   }
+}
+
+itcl::body FieldControl::newfieldval {n1 n2 op} {
+
+# Update the current name if the scratch object is selected. This is required
+# because load will not get called.
+   if { $::Config($comp,value) == "" } {
+      set currentname $::Config($comp,anon)
+   }
+}
+
+itcl::body FieldControl::newtarget {name type args} {
+   
+   if { $::Config(tcs.field,value) == "" } {
+      set field $::Config(tcs.field,anon)
+   } else {
+      set field $::Config(tcs.field,namespace)::$::Config(tcs.field,value)
+   }
+
+# See if a name was specified.
+   if { $name != "" } {
+      set target $name
+   } else {
+      set target "Unnamed target"
+   }
+
+# Remove any existing target with the specified name.
+   if { $target == $::Config(tcs.field.sciencetarget,value) } {
+      $field configure -sciencetarget ""
+   }
+   if { $target == $::Config(tcs.field.pwfs1target,value) } {
+      $field configure -pwfs1target ""
+   }
+   if { $target == $::Config(tcs.field.pwfs2target,value) } {
+      $field configure -pwfs2target ""
+   }
+   if { $target == $::Config(tcs.field.oiwfstarget,value) } {
+      $field configure -oiwfstarget ""
+   }
+   catch {$field remove $target}
+
+# Create the new target.
+   $field add $target
+
+# Configure the new target.
+   eval [list $field] targetconfigure [list $target] $args
+
+# Make it the specified target and select it.
+   if { $type != "" } {
+      $field configure -$type $target
+      set ::Config(tcs.field.$type,value) $target
+   }
+}

@@ -1,0 +1,183 @@
+#+
+#  PanelMgr
+#
+#  A PanelMgr object stores the information needed to create a panel window 
+#  and map it onto a screen. The panel window itself is created by calling 
+#  the panel object's map method.
+#
+#  Options:
+#           -class          The class of the real panel window.
+#
+#           -create         Specifies whether the window should be created as
+#                           the system is started up.
+#
+#           -geometry       Specifies the window's geometry when it is
+#                           created.
+#
+#           -name           The name of the real panel window.
+#
+#           -screen         The screen on which the window should be created. 
+#                           If this option is changed after the window has 
+#                           been created, it is destroyed and recreated.
+#
+#           -state          The state of the window (iconized, withdrawn etc.)
+#
+#           -title          The window title.
+#
+#  Methods:
+#           iconify         Iconifies the panel window if it exists.
+#
+#           map             Creates the panel window or maps it into the 
+#                           screen if it already exists.
+#
+#           updategeometry  Updates the -geometry and -state options from the 
+#                           panel window if it exists.
+#
+#           withdraw        Withdraws the panel window from the screen if 
+#                           it exists.
+#
+#  Notes:
+#        o The -geometry option is not automatically updated if the window
+#          is moved using the window manager.
+#
+#        o  Destroying the PanelMgr object does not destroy the panel window -
+#           PanelMgr objects are not intended to be destroyed.
+#
+#  D Terrett 29 March 2001
+#
+#  Copyright CCLRC
+#+
+
+itcl::class PanelMgr {
+   constructor args {eval configure $args}
+   public {
+      method iconify {}
+      method map {{component ""}}
+      method updategeometry {}
+      method withdraw {}
+      variable class ""
+      variable create 0 
+      variable geometry ""
+      variable name ""
+      variable screen ""
+      variable state normal
+      variable title ""
+   }
+}
+
+itcl::body PanelMgr::map {{component ""}} {
+#-
+# Putting an itk toplevel widget on another screen involves a horrible
+# hack. The widget doesn't have a -screen option and it isn't possible to
+# add one because the options are configured after the window has been
+# created and it is then too late. So, we rename the toplevel command
+# and define a new toplevel command that includes the -screen option.
+#
+# The widget creation then has to be protected by "catch" because if it
+# fails, tk can't create a top level window to report the error.
+#-
+
+# If the window already exists then just map it and raise it.
+   if [winfo exists $name] {
+      $name show $component
+      wm deiconify $name
+      raise $name
+      return 0
+   } else {
+
+# If the screen name isn't blank then save the toplevel command and re-define
+# it to add the -screen option.
+      if { ! [string equal $screen ""] } {
+         rename ::toplevel ::realToplevel
+         proc ::toplevel args "
+            eval realToplevel \$args -screen $screen
+         "
+         if [catch {$class $name} errMsg] {
+            rename ::toplevel ""
+            rename ::realToplevel ::toplevel
+            tk_messageBox -icon error -message \
+               "Error creating panel \"$name\" on screen \"$screen\": $errMsg"
+            $class $name
+         } else {
+
+# Restore the toplevel command.
+            rename ::toplevel ""
+            rename ::realToplevel ::toplevel
+         }
+      } else {
+
+# Otherwise, just create the panel.
+         $class $name
+      }
+      $name show $component
+
+# Position the window if a position was specified.
+      if { ! [string is space $geometry] } {
+         if [catch {wm geometry $name $geometry} errMsg] {
+            tk_messageBox -icon error -message \
+               "Error positioning panel \"$name\": $errMsg"
+         }
+      }
+
+# Configure the -title and -parent options of the panel object.
+      $name configure -title $title -panelmgr $this
+
+      return 1
+   }
+}
+
+itcl::configbody PanelMgr::title {
+   if [winfo exists $name] {
+      $name configure -title $title
+   }
+}
+
+itcl::configbody PanelMgr::geometry {
+   if [winfo exists $name] {
+      if [catch {wm geometry $name $geometry} errMsg] {
+         tk_messageBox -icon error -message \
+            "Error positioning panel \"$name\": $errMsg"
+      }
+   }
+}
+
+itcl::configbody PanelMgr::screen {
+   if [winfo exists $name] {
+
+# See which screen we are on now.
+      set oldscreen [winfo screen [winfo toplevel $name]]
+
+# Determine which screen we are being moved to.
+      if { [string is space $screen] } {
+         set newscreen [winfo screen .]
+      } else {
+         set newscreen $screen
+      }
+
+# If the old and new screens are different then destroy the window and
+# call the map method to r-create it on the new screen.
+      if { ! [string equal $newscreen $oldscreen] } {
+          destroy $name
+          $this map
+      }
+   }
+}
+
+itcl::body PanelMgr::iconify {} {
+   if [winfo exists $name] {
+      wm iconify $name
+   }
+}
+
+itcl::body PanelMgr::updategeometry {} {
+   if [winfo exists $name] {
+      set geometry [wm geometry $name]
+      set state [wm state $name]
+   }
+}
+
+itcl::body PanelMgr::withdraw {} {
+   if [winfo exists $name] {
+      wm withdraw $name
+   }
+}

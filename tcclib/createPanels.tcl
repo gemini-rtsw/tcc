@@ -6,7 +6,7 @@
 #  Arguments:
 #             none
 #
-#  D Terrett 6 June 2001
+#  D Terrett 6 April 2002
 #
 #  Copyright CCLRC
 #-
@@ -14,81 +14,154 @@
 proc createPanels {} {
 
 # Create all the simple command panels.
-   tcclib::PanelMgr observePanel -name .observePanel -class ObservePanel \
+   PanelMgr observePanel -name .observePanel -class ObservePanel \
          -title "Acquisition & Guiding"
-   tcclib::PanelMgr skycatPanel -name .skycatPanel -class SkycatPanel \
+   PanelMgr skycatPanel -name .skycatPanel -class SkycatPanel \
          -title "SkyCat"
-   tcclib::PanelMgr tcsPanel -name .tcsPanel -class TcsPanel \
+   PanelMgr tcsPanel -name .tcsPanel -class TcsPanel \
          -title "System Control"
-   tcclib::PanelMgr mcsPanel -name .mcsPanel -class McsPanel \
+   PanelMgr mcsPanel -name .mcsPanel -class McsPanel \
          -title "Mount Control"
-   tcclib::PanelMgr crsPanel -name .crsPanel -class CrsPanel \
+   PanelMgr crsPanel -name .crsPanel -class CrsPanel \
          -title "Cass Rotator Control"
-   tcclib::PanelMgr ecsPanel -name .ecsPanel -class EcsPanel \
+   PanelMgr ecsPanel -name .ecsPanel -class EcsPanel \
          -title "Enclosure Control"
-#   tcclib::PanelMgr m1sPanel -name .m1sPanel -class M1sPanel \
+#   PanelMgr m1sPanel -name .m1sPanel -class M1sPanel \
 #         -title "Primary Mirror Control"
-#   tcclib::PanelMgr m2sPanel -name .m2sPanel -class M2sPanel \
+#   PanelMgr m2sPanel -name .m2sPanel -class M2sPanel \
 #         -title "Secondary Mirror Control"
-#   tcclib::PanelMgr agsPanel -name .agsPanel -class AgsPanel \
+#   PanelMgr agsPanel -name .agsPanel -class AgsPanel \
 #         -title "A & G Control"
-#   tcclib::PanelMgr aosPanel -name .aosPanel -class AosPanel \
+#   PanelMgr aosPanel -name .aosPanel -class AosPanel \
 #         -title "Active Optics Control"
-   tcclib::PanelMgr previewPanel -name .previewPanel -class PreviewPanel \
+   PanelMgr previewPanel -name .previewPanel -class PreviewPanel \
          -title "Configuration Preview"
-   tcclib::PanelMgr logPanel -name .logPanel -class tcclib::LogPanel \
+   PanelMgr logPanel -name .logPanel -class tcclib::LogPanel \
          -title "Command Log"
-   tcclib::PanelMgr guideLoopPanel -name .guideLoopPanel \
+   PanelMgr guideLoopPanel -name .guideLoopPanel \
          -class GuideLoopPanel -title "Guiding Loop Control"
-#   tcclib::PanelMgr guideHandsetPanel -name .guideHandsetPanel \
-#         -class GuideHandsetPanel -title "Pointing Handset"
-#   tcclib::PanelMgr targetHandsetPanel -name .targetHandsetPanel \
-#         -class TargetHandsetPanel -title "Target Handset"
-#   tcclib::PanelMgr poHandsetPanel -name .poHandsetPanel \
-#         -class PoHandsetPanel -title "Instrument Handset"
-   tcclib::PanelMgr handsetPanel -name .handsetPanel \
+   PanelMgr handsetPanel -name .handsetPanel \
          -class HandsetPanel -title "Handsets"
-   tcclib::PanelMgr pointUpdatePanel -name .pointUpdatePanel \
+   PanelMgr pointUpdatePanel -name .pointUpdatePanel \
          -class PointUpdatePanel -title "Pointing model update"
-   tcclib::PanelMgr starSelectPanel -name .starSelectPanel \
+   PanelMgr starSelectPanel -name .starSelectPanel \
          -class StarSelectPanel -title "Star Selector"
 
-# Create all the edit panels.
-   createEditPanels "" tcsconfig TcsConfig TcsConfigNames \
-         TcsConfigList "" ""
-
-# Zap the Target edit panel managers.
-   delete object tcsconfigscienceTargetPanel
-   delete object tcsconfigguidepwfs1TargetPanel
-   delete object tcsconfigguidepwfs2TargetPanel
-   delete object tcsconfigguideoiwfsTargetPanel
-
-# Create a field panel in its place.
-    tcclib::EditPanelMgr tcsconfigfieldPanel \
-          -namespace {ScienceTargetNames WfsTargetNames WfsTargetNames \
-             WfsTargetNames} \
-          -applyarg {sourceA pwfs1 pwfs2 oiwfs} \
-          -componentlist { ScienceTargetList WfsTargetList WfsTargetList \
-             WfsTargetList} \
-          -titlelist [list "Science target" "PWFS1 target" "PWFS2 target" \
-             "OIWFS target"] \
-          -class FieldPanel -name .tcsconfigfieldPanel \
-          -title "Target Manager"
-
-# Redirect the target edit shadows.
-    tcsconfigscienceTarget configure -panel tcsconfigfieldPanel \
-          -control scitarget -alsomaps {tcsconfigguidepwfs1Target \
-          tcsconfigguidepwfs2Target tcsconfigguideoiwfsTarget}
-    tcsconfigguidepwfs1Target configure -panel tcsconfigfieldPanel \
-          -control pwfs1target -alsomaps {tcsconfigscienceTarget \
-          tcsconfigguidepwfs2Target tcsconfigguideoiwfsTarget}
-    tcsconfigguidepwfs2Target configure -panel tcsconfigfieldPanel \
-          -control pwfs2target -alsomaps {tcsconfigscienceTarget \
-          tcsconfigguidepwfs1Target tcsconfigguideoiwfsTarget}
-    tcsconfigguideoiwfsTarget configure -panel tcsconfigfieldPanel \
-          -control oiwfstarget -alsomaps {tcsconfigscienceTarget \
-          tcsconfigguidepwfs1Target tcsconfigguidepwfs1Target}
-
-# Configure the title of the observation editor.
-   tcsconfigPanel configure -title "Configuration Manager"
+# Create all the edit panel managers.
+   EditPanelMgr tcsConfigPanel -name .tcsConfigPanel \
+         -class TcsConfigPanel -title "Configuration Manager" \
+         -components tcs
+   EditPanelMgr tcsFieldPanel -name .tcsFieldPanel \
+         -class FieldPanel -title Field -components tcs.field 
+   EditPanelMgr tcsFieldScienceTargetCosysPanel \
+         -name .tcsFieldScienceTargetCosysPanel -class CosysPanel \
+         -title "Science Target Coordinate System" \
+         -components tcs.field.sciencetarget.cosys
+   EditPanelMgr tcsFieldScienceTargetTrackRatePanel \
+         -name .tcsFieldScienceTargetTrackRatePanel -class TrackRatePanel \
+         -title "Science Target Differential Track Rate" \
+         -components tcs.field.sciencetarget.trackrate
+   EditPanelMgr tcsFieldScienceTargetTrackRateCosysPanel \
+         -name .tcsFieldScienceTargetTrackRateCosysPanel -class CosysPanel \
+         -title "Science Target Differential Track Rate Coordinate System" \
+         -components tcs.field.sciencetarget.trackrate.cosys
+   EditPanelMgr tcsFieldPwfs1TargetCosysPanel \
+         -name .tcsFieldPwfs1TargetCosysPanel -class CosysPanel \
+         -title "Pwfs1 Target Coordinate System" \
+         -components tcs.field.pwfs1target.cosys
+   EditPanelMgr tcsFieldPwfs1TargetTrackRatePanel \
+         -name .tcsFieldPwfs1TargetTrackRatePanel -class TrackRatePanel \
+         -title "Pwfs1 Target Differential Track Rate" \
+         -components tcs.field.pwfs1target.trackrate
+   EditPanelMgr tcsFieldPwfs1TargetTrackRateCosysPanel \
+         -name .tcsFieldPwfs1TargetTrackRateCosysPanel -class CosysPanel \
+         -title "Pwfs1 Target Differential Track Rate Coordinate System" \
+         -components tcs.field.pwfs1target.trackrate.cosys
+   EditPanelMgr tcsFieldPwfs2TargetCosysPanel \
+         -name .tcsFieldPwfs2TargetCosysPanel -class CosysPanel \
+         -title "Pwfs2 Target Coordinate System" \
+         -components tcs.field.pwfs2target.cosys
+   EditPanelMgr tcsFieldPwfs2TargetTrackRatePanel \
+         -name .tcsFieldPwfs2TargetTrackRatePanel -class TrackRatePanel \
+         -title "Pwfs2 Target Differential Track Rate" \
+         -components tcs.field.pwfs2target.trackrate
+   EditPanelMgr tcsFieldPwfs2TargetTrackRateCosysPanel \
+         -name .tcsFieldPwfs2TargetTrackRateCosysPanel -class CosysPanel \
+         -title "Pwfs2 Target Differential Track Rate Coordinate System" \
+         -components tcs.field.pwfs2target.trackrate.cosys
+   EditPanelMgr tcsFieldOiwfsTargetCosysPanel \
+         -name .tcsFieldOiwfsTargetCosysPanel -class CosysPanel \
+         -title "Oiwfs Target Coordinate System" \
+         -components tcs.field.oiwfstarget.cosys
+   EditPanelMgr tcsFieldOiwfsTargetTrackRatePanel \
+         -name .tcsFieldOiwfsTargetTrackRatePanel -class TrackRatePanel \
+         -title "Oiwfs Target Differential Track Rate" \
+         -components tcs.field.oiwfstarget.trackrate
+   EditPanelMgr tcsFieldOiwfsTargetTrackRateCosysPanel \
+         -name .tcsFieldOiwfsTargetTrackRateCosysPanel -class CosysPanel \
+         -title "Oiwfs Target Differential Track Rate Coordinate System" \
+         -components tcs.field.oiwfstarget.trackrate.cosys
+   EditPanelMgr tcsGuidePanel -name .tcsGuidePanel \
+         -class GuidePanel -title "Guide Configuration" \
+         -components tcs.field.guide 
+   EditPanelMgr tcsGuideOiwfsWavelengthPanel \
+         -name .tcsGuideOiwfsWavelengthPanel -class WavelengthPanel \
+         -title "Oiwfs Guiding Wavelength" \
+         -components tcs.field.guide.oiwfswavelength
+   EditPanelMgr tcsRotatorPanel -name .tcsRotatorPanel \
+         -class RotatorPanel -title "Rotator Configuration" \
+         -components tcs.field.rotator 
+   EditPanelMgr tcsRotatorCosysPanel -name .tcsRotatorCosysPanel \
+         -class CosysPanel -title "Rotator Coordinate System" \
+         -components tcs.field.rotator.cosys
+   EditPanelMgr tcsPointOrigPanel -name .tcsPointOrigPanel \
+         -class PointOrigPanel -title "Pointing Origin" \
+         -components tcs.pointorig 
+   EditPanelMgr tcsChopPanel -name .tcsChopPanel \
+         -class ChopPanel -title "Chop Configuration" \
+         -components tcs.chop 
+   EditPanelMgr tcsChopCosysPanel -name .tcsChopCosysPanel \
+         -class CosysPanel -title "Chop Coordinate System" \
+         -components tcs.chop.cosys
+   EditPanelMgr tcsSlewOptionsPanel -name .tcsSlewOptionsPanel \
+         -class SlewOptionsPanel -title "Slew Options" \
+         -components tcs.slewoptions 
+   EditPanelMgr tcsTrackFramePanel -name .tcsTrackFramePanel \
+         -class TrackFramePanel -title "Tracking Frames" \
+         -components tcs.trackframe 
+   EditPanelMgr tcsTrackFrameMountCosysPanel \
+         -name .tcsTrackFrameMountCosysPanel \
+         -class CosysPanel -title "Mount Tracking Frame Coordinate System" \
+         -components tcs.trackframe.mountcosys
+   EditPanelMgr tcsTrackFrameSourceACosysPanel \
+         -name .tcsTrackFrameSourceACosysPanel \
+         -class CosysPanel -title "Source A Tracking Frame Coordinate System" \
+         -components tcs.trackframe.sourceAcosys
+   EditPanelMgr tcsTrackFrameSourceBCosysPanel \
+         -name .tcsTrackFrameSourceBCosysPanel \
+         -class CosysPanel -title "Source B Tracking Frame Coordinate System" \
+         -components tcs.trackframe.sourceBcosys
+   EditPanelMgr tcsTrackFrameSourceCCosysPanel \
+         -name .tcsTrackFrameSourceCCosysPanel \
+         -class CosysPanel -title "Source C Tracking Frame Coordinate System" \
+         -components tcs.trackframe.sourceCcosys
+   EditPanelMgr tcsTrackFramePwfs1CosysPanel \
+         -name .tcsTrackFramePwfs1CosysPanel \
+         -class CosysPanel -title "PWFS1 Tracking Frame Coordinate System" \
+         -components tcs.trackframe.pwfs1cosys
+   EditPanelMgr tcsTrackFramePwfs2CosysPanel \
+         -name .tcsTrackFramePwfs2CosysPanel \
+         -class CosysPanel -title "PWFS2 Tracking Frame Coordinate System" \
+         -components tcs.trackframe.pwfs2cosys
+   EditPanelMgr tcsTrackFrameOiwfsCosysPanel \
+         -name .tcsTrackFrameOiwfsCosysPanel \
+         -class CosysPanel -title "OIWFS Tracking Frame Coordinate System" \
+         -components tcs.trackframe.oiwfscosys
+   EditPanelMgr tcsInstrumentPanel -name .tcsInstrumentPanel \
+         -class InstrumentPanel -title "Instrument Configuration" \
+         -components tcs.instrument 
+   EditPanelMgr tcsFieldWavelengthPanel \
+         -name .tcsFieldWavelengthPanel -class WavelengthPanel \
+         -title "Observing Wavelength" \
+         -components tcs.field.wavelength
 }

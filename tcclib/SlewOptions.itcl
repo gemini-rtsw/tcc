@@ -1,5 +1,5 @@
 #+
-#  SlewOptions
+#  SlewOptions <- tcclib::Paramset
 #
 #  Implements the SlewOptions class. A SlewOptions object stores all the 
 #  flags of the Slew CAD command.
@@ -29,29 +29,28 @@
 #          -guideOffset      Guide star offsets.
 #
 #  Methods:
-#           apply     Applies the slew options to the TCS by setting 
-#                     the values of the command parameters.
+#           apply comp Applies the slew options to the TCS by setting 
+#                      the values of the command parameters.
 #
-#           init      Returns the slew options object to its initial state.
+#           init       Returns the slew options object to its initial state.
 #
-#           preview   Does nothing. The method exist so that all components
-#                     have a preview method.
+#           preview    Does nothing. The method exist so that all components
+#                      have a preview method.
 #
-#           save file Writes all the slew option values to the channel
-#                     identifier "file".
+#           save node  Saves all the slew option values to the xml node.
 #
-#  D Terrett 15 March 2001
+#  D Terrett 21 March 2002
 #
 #  Copyright CCLRC
 #+
 
 itcl::class SlewOptions {
-   public proc subcomponents {} {return {}}
+   inherit tcclib::Paramset
    public {
-      method apply {args}
+      method apply {comp}
       method init {}
       method preview {}
-      method save {file}
+      method save {node}
       variable chopThrow {}
       variable sourceOffset {}
       variable sourceDifTr {}
@@ -65,7 +64,7 @@ itcl::class SlewOptions {
    }
 }
 
-itcl::body SlewOptions::apply args {
+itcl::body SlewOptions::apply {comp} {
    cs slew set chopThrow [list $chopThrow]
    cs slew set sourceOffset [list $sourceOffset]
    cs slew set sourceDifTr [list $sourceDifTr]
@@ -94,15 +93,16 @@ itcl::body SlewOptions::init {} {
 
 itcl::body SlewOptions::preview {} {}
 
-body SlewOptions::save file {
-   puts $file "   -chopThrow [list $chopThrow] \\"
-   puts $file "   -sourceOffset [list $sourceOffset] \\"
-   puts $file "   -sourceDifTr [list $sourceDifTr] \\"
-   puts $file "   -mountOffset [list $mountOffset] \\"
-   puts $file "   -mountDifTr [list $mountDifTr] \\"
-   puts $file "   -filter1 [list $filter1] \\"
-   puts $file "   -filter2 [list $filter2] \\"
-   puts $file "   -pointing [list $pointing] \\"
-   puts $file "   -guiding [list $guiding] \\"
-   puts $file "   -guideOffset [list $guideOffset]"
+body SlewOptions::save {node} {
+   set node [paramset $node slew_options]
+   param $node chopThrow $chopThrow
+   param $node sourceOffset $sourceOffset
+   param $node sourceDifTr $sourceDifTr
+   param $node mountOffset $mountOffset
+   param $node mountDifTr $mountDifTr
+   param $node filter1 $filter1
+   param $node filter2 $filter2
+   param $node pointing $pointing
+   param $node guiding $guiding
+   param $node guideOffset $guideOffset
 }

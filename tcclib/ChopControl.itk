@@ -1,22 +1,23 @@
 #+
-#  ChopControl <- tcclib::ComponentControl
+#  ChopControl <- ComponentControl
 #
 #  A Chop control is a ComponentControl widget with widgets for the 
 #  instrument position angle, coordinate system throw, frequency, duty
 #  cycle, and chop source.
 #
 #  Options:
-#           -shadow         The name of the control's edit shadow.
+#           -component         The name of the component that this control
+#                              edits.
 #
-#  D Terrett 18 June 2001
+#  D Terrett 27 February 2002
 #
 #  Copyright CCLRC
 #+
 
 itcl::class ChopControl {
-   inherit tcclib::ComponentControl
+   inherit ComponentControl
    constructor args {}
-   itk_option define -shadow shadow Shadow {}
+   itk_option define -component component Component {}
    public {
       method load {name}
       method reset {}
@@ -32,7 +33,7 @@ itcl::class ChopControl {
 itk::usual ChopControl {
    keep -borderwidth -cursor -font -highlightthickness -insertborderwidth \
          -insertofftime -insertontime -insertwidth -labelfont -popupcursor \
-         -selectborderwidth -textfont -title -applyarg -namespace -componentlist
+         -selectborderwidth -textfont -title
 }
 
 itcl::body ChopControl::constructor args {
@@ -77,12 +78,12 @@ itcl::body ChopControl::constructor args {
    set w $itk_component(buttons)
    pack $itk_component(buttons) -fill x -expand yes
    itk_component add north {
-      radiobutton $w.north -text North -variable [scope refdir] \
-            -value north -command [code $this setdir]
+      radiobutton $w.north -text North -variable [itcl::scope refdir] \
+            -value north -command [itcl::code $this setdir]
    }
    itk_component add vertical {
-      radiobutton $w.vertical -text Up -variable [scope refdir] \
-            -value vertical -command [code $this setdir]
+      radiobutton $w.vertical -text Up -variable [itcl::scope refdir] \
+            -value vertical -command [itcl::code $this setdir]
    }
    pack $itk_component(north) -side left -padx 20
    pack $itk_component(vertical) -side right -padx 40
@@ -90,9 +91,8 @@ itcl::body ChopControl::constructor args {
 
 # Control for selecting a coordinate frame.
    itk_component add cosys {
-      tcclib::SubComponentSelector $w.cosys -labeltext "Coordinate system" \
-            -labelpos nw -componentlist CosysList -component cosys \
-            -selectioncommand [code $this checkcosys]
+      SubComponentSelector $w.cosys -labeltext "Coordinate system" \
+            -labelpos nw -selectioncommand [itcl::code $this checkcosys]
    }
    pack $itk_component(cosys) -anchor w
 
@@ -121,20 +121,16 @@ itcl::body ChopControl::constructor args {
 # Set initial state.
    set refdir vertical
 
-# Set the object class.
-   set objclass ChopComponent
+# Set the object description.
    set description "chop configuration"
-
-# Create rotator object used by apply
-   set scratchobj [namespace which -command [Chop #auto]]
 
    eval itk_initialize $args
 }
 
-itcl::configbody ChopControl::shadow {
-   $itk_component(cosys) configure -editcontrol \
-            $itk_option(-shadow)cosys
-   $itk_component(cosys) configure -shadow $itk_option(-shadow)
+itcl::configbody ChopControl::component {
+   if { $itk_option(-component) != "" } {
+      $itk_component(cosys) configure -component $itk_option(-component).cosys
+   }
 }
 
 itcl::body ChopControl::reset {} {
@@ -157,13 +153,13 @@ itcl::body ChopControl::load {name} {
    set cosys [$name cget -cosys]
    if { [string equal $cosys AzEl] } {
       set refdir vertical
-      $itk_component(cosys) select ""
+      set ::Config($itk_option(-component).cosys,value) ""
    } else {
       set refdir north
       if { [string is space $cosys] } {
-         $itk_component(cosys) select FK5/J2000
+         set ::Config($itk_option(-component).cosys,value) FK5/J2000
       } else {
-         $itk_component(cosys) select $cosys
+         set ::Config($itk_option(-component).cosys,value) $cosys
       }
    }
    setdir

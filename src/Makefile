@@ -8,24 +8,16 @@ TSDOBJ = tsdext.o tsdDomeView.o tsdWrapView.o tsdElView.o
 TIMEOBJ = tccTime.o
 SLAOBJ = slaext.o
 
-CC = /opt/SUNWspro/bin/cc 
 CFLAGS = -K pic -Xc -G -DUSE_TCL_STUBS -DUSE_TK_STUBS -DUSE_OLD_CANVAS \
-         -I${HLPG_INSTALL_BASE}/../packages/tcl$(TCL_VERS)/include \
+         -I${HLPG_INSTALL_BASE}/../hlpgruntime/tcl$(TCL_VERS)/include \
          -I/gemini/slalib/include \
          -I/gemini/timelib/include \
          -I/gemini/astlib/include
 
-#CC = gcc
-#CFLAGS =  -fPIC -G -DUSE_TCL_STUBS -DUSE_TK_STUBS -DUSE_OLD_CANVAS \
-#         -I/gemini/packages/tcl$(TCL_VERS)/include \
-#         -I$(HOME)/gemini/slalib/rel/include \
-#         -I$(HOME)/gemini/timelib/rel/include \
-#         -I$(HOME)/gemini/astlib/rel/include
-
 LDFLAGS = -L/gemini/slalib/lib/solaris \
           -L/gemini/timelib/lib/solaris \
           -L/gemini/astlib/lib/solaris \
-          -L${HLPG_INSTALL_BASE}/../packages/tcl$(TCL_VERS)/lib \
+          -L${HLPG_INSTALL_BASE}/../hlpgruntime/tcl$(TCL_VERS)/lib \
           -ltclstub$(TCL_VERS) -ltkstub$(TCL_VERS) -last -ltime -lsla -lposix4
 
 tccext.so : $(TCCOBJ) $(CMNOBJ)

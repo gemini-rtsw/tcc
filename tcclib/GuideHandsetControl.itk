@@ -73,7 +73,8 @@ itcl::body GuideHandsetControl::constructor args {
 
 # Buttons for zeroing guide adjustments.
    itk_component add clearl {
-      tcclib::LiveButton $w.clearl -command [code $this zerolocal] -text Clear
+      tcclib::LiveButton $w.clearl -command [itcl::code $this zerolocal] \
+            -text Clear
    }
    itk_component add clearg {
       tcclib::ApplyButton $w.clearg -command zeroGuide -text Clear
@@ -98,7 +99,7 @@ itcl::body GuideHandsetControl::constructor args {
    pack $itk_component(absorb) -pady 4
 
 # Schedule update of CA & CE displays.
-   set refid [after 1000 [code $this refresh]]
+   set refid [after 1000 [itcl::code $this refresh]]
 
    eval itk_initialize $args
 }
@@ -112,7 +113,7 @@ itcl::body GuideHandsetControl::refresh {} {
    $itk_component(ceguide) configure -text [sa tcssad get ceguide value]
 
 # Reschedule
-   set refid [after 1000 [code $this refresh]]
+   set refid [after 1000 [itcl::code $this refresh]]
 }
 
 itcl::body GuideHandsetControl::zerolocal {} {

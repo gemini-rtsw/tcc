@@ -39,8 +39,8 @@ itcl::body PointUpdateControl::constructor args {
    pack propagate $itk_component(obsframe) 0 
 
    itk_component add obs {
-      SelectGrid $itk_component(obsframe).obs -selectcommand [code $this fit] \
-            -columnhead \
+      SelectGrid $itk_component(obsframe).obs \
+            -selectcommand [itcl::code $this fit] -columnhead \
            {"  RA  " "  Dec  " "   Az   " " El " " dCA " " dCE " " dR "}
    }
    pack $itk_component(obs) -expand yes -fill x -anchor n
@@ -109,18 +109,18 @@ itcl::body PointUpdateControl::constructor args {
    pack $itk_component(buttons) -fill x -expand yes
    itk_component add take {
       button $itk_component(buttons).take -text Take \
-            -command [code $this take1]
+            -command [itcl::code $this take1]
    }
    itk_component add update {
       button $itk_component(buttons).update -text "Update Model" \
-            -command [code $this commit]
+            -command [itcl::code $this commit]
    }
 
 # Checkbutton for including IA in the fit.
    itk_component add iainfit {
       checkbutton $itk_component(buttons).iainfit -text "Include IA in fit" \
             -variable $itk_interior._ia \
-            -command [code $this setia]
+            -command [itcl::code $this setia]
    }
 
    pack $itk_component(take) $itk_component(update) $itk_component(iainfit) \
@@ -185,7 +185,7 @@ itcl::body PointUpdateControl::take1 {} {
 
    cs pointLog set log 0
    logger log pointlog
-   if { [catch {cs pointLog postCallback [code $this take2]}] } {
+   if { [catch {cs pointLog postCallback [itcl::code $this take2]}] } {
       set info [sa apply get mess value]
       tk_messageBox -icon error -message "Pointlog command failed: \"$info\"" \
             -parent $itk_interior

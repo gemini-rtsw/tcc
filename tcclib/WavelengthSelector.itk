@@ -18,7 +18,7 @@
 #
 #       Returns the wavelength
 #
-#  D Terrett 22 March 2001
+#  D Terrett 12 April 2002
 #
 #  Copyright CCLRC
 #+
@@ -26,13 +26,16 @@
 itcl::class WavelengthSelector {
    inherit itk::Widget
    constructor args {}
+   destructor {}
+   itk_option define -component component Component {}
    public {
-      method select {item}
       method value {value}
       method get {option}
    }
    private {
       method selectioncommand {}
+      method newvalue {n1 n2 op}
+      variable comp ""
    }
 }
 
@@ -51,43 +54,41 @@ itcl::body WavelengthSelector::constructor args {
 
 # SubComponentSelector.
    itk_component add selector {
-      tcclib::SubComponentSelector $w.selector -labeltext "Wavelength" \
-            -componentlist WavelengthList -editcontrol wavelengthControl \
-            -labelpos nw -component wavelength_name \
-            -selectioncommand [code $this selectioncommand]
+      SubComponentSelector $w.selector -labeltext "Wavelength" \
+            -labelpos nw -selectioncommand [itcl::code $this selectioncommand]
    } {
       usual
-      keep -editcontrol
-      keep -shadow
+      keep -component -labeltext -labelpos
    }
    pack $itk_component(selector) -padx 4 -pady 4 -anchor w
 
-# Entryfield for the wavelength.
+# Label for the wavelength.
+   itk_component add wavelab {
+      label $w.wavelab -text "Wavelength (mu)" 
+   }
    itk_component add wavel {
-      iwidgets::entryfield $w.wavel -labeltext mu -width 12 -labelpos w
+      label $w.wavel -relief sunken -width 8
    }
 
-   pack $itk_component(wavel) -anchor w
+   pack $itk_component(wavelab) $itk_component(wavel) -anchor w -side left
 
    eval itk_initialize $args
 }
 
-itcl::body WavelengthSelector::select item {
-   $itk_component(selector) select $item
-   selectioncommand
+itcl::body WavelengthSelector::destructor {} {
+
+# Remove variable trace.
+   trace vdelete ::Config($comp,value) w [itcl::code $this newvalue]
 }
 
 itcl::body WavelengthSelector::value value {
-   $itk_component(wavel) clear
-   if { [llength $value] > 0 } {
-      $itk_component(wavel) insert end $value
-   }
+   $itk_component(wavel) configure -text  $value
 }
 
 itcl::body WavelengthSelector::get option {
    switch $option {
       value {
-         return [$itk_component(wavel) get]
+         return [$itk_component(wavel) cget -text]
       }
       name {
          return [$itk_component(selector) get]
@@ -104,15 +105,28 @@ itcl::body WavelengthSelector::selectioncommand {} {
 # into the edit controls.
 #-
    set name [$itk_component(selector) get]
+   $itk_component(wavel) configure -text \
+            [$::Config($comp,namespace)::$name cget -wavel]
+}
 
-   $itk_component(wavel) clear
+itcl::configbody WavelengthSelector::component {
 
-   if { ! [string equal $name ""] } {
-      $itk_component(wavel) configure -state normal
-      $itk_component(wavel) clear
-      $itk_component(wavel) insert end [::WavelengthNames::$name cget -wavel]
-      $itk_component(wavel) configure -state disabled
+# remvoe existing trace.
+   trace vdelete ::Config($comp,value) w [itcl::code $this newvalue]
+
+# Set up a trace on the wavelength subcomponent name in order to detect
+# new wavelength definitions being stored.
+   set comp $itk_option(-component)
+   trace variable ::Config($comp,value) w [itcl::code $this newvalue]
+}
+
+itcl::body WavelengthSelector::newvalue {n1 n2 op} {
+
+   set name $::Config($comp,value)
+   if { $name == "" } {
+      $itk_component(wavel) configure -text ""
    } else {
-      $itk_component(wavel) configure -state normal
+      $itk_component(wavel) configure -text \
+            [$::Config($comp,namespace)::$name cget -wavel]
    }
 }

@@ -3,7 +3,7 @@
 #
 #  Implements the StarSelectControl widget.
 #
-#  D Terrett 18 June 2001
+#  D Terrett 10 April 2002
 #
 #  Copyright CCLRC
 #-
@@ -12,18 +12,19 @@ itcl::class StarSelectControl {
    inherit itk::Widget
    constructor args {}
    destructor {}
+   itk_option define -menubar menubar Menubar {}
    public {
-      method load {} {$StarCat load}
-      method view {} {$StarCat view}
+      method load {}
+      method unload {cat}
    }
    private {
-      method selectstar {index}
-      method loadposition {ra dec}
-      variable StarCat
+      method selectstar {cat tag}
+      variable StarCats
    }
 }
 
 itk::usual StarSelectControl {
+   keep -menubar
 }
 
 itcl::body StarSelectControl::constructor args {
@@ -31,58 +32,141 @@ itcl::body StarSelectControl::constructor args {
 # AzElPlot.
    itk_component add azelplot {
       AzElPlot $itk_interior.azelplot \
-            -selectioncommand [itcl::code $this selectstar] \
-            -hitcommand [itcl::code $this loadposition]
+            -selectioncommand [itcl::code $this selectstar]
    }
    pack $itk_component(azelplot)
 
-# Empty star catalog.
-   set StarCat [Catalogue #auto $itk_component(azelplot)]
+# Configure the field list with the name of the AzElPlot. This causes the
+# field to be plotted in the widget so it must be posponed until the
+# widget has been created.
+#   after idle FieldList configure -azelplot $itk_component(azelplot)
 
    eval itk_initialize $args
 }
 
 itcl::body StarSelectControl::destructor {} {
-   delete object $StarCat
+   foreach cat [array names StarCats] {
+      delete object $StarCats($cat)
+   }
 }
 
-itcl::body StarSelectControl::selectstar {index} {
+itcl::body StarSelectControl::selectstar {cat tag} {
+#+
+# If the name of the object being selected matches an existing field then
+# that field is selected; otherwise a new target is created in the current
+# field.
+#-
 
-   set object [$StarCat extract $index]
+# Get the object name.
+   set object [$StarCats($cat) extract $tag]
    set name [lindex $object 0]
 
+# Get the full name of the field with the same name.
+   set field $::Config(tcs.field,namespace)::$name
+
+# See if a field with the same name as the object exists.
+   if { [lsearch -exact [itcl::find objects -class FieldComponent] \
+         $field] < 0 } {
+
+# Field did not exist so create it.
+      FieldComponent $field $::Config(tcs.field,list)
+   }
+
+# Select the field
+   set ::Config(tcs.field,value) $name
+
+# Make sure that there is a cosys defined that matches this position.
    createCosys [lindex $object 3]/[lindex $object 4] \
          -frame [lindex $object 3] -equinox [lindex $object 4]
-   createScienceTarget $name -objName $name \
-         -radec [list [lindex $object 1] [lindex $object 2]] \
+
+   $::Config(tcs.field,panel) map sciencetarget
+   [$::Config(tcs.field,panel) cget -name] \
+         newtarget [lindex $object 0] sciencetarget \
+         -objname [lindex $object 0] \
+         -type hmsdegTarget \
+         -c1 [lindex $object 1] \
+         -c2 [lindex $object 2] \
          -cosys [lindex $object 3]/[lindex $object 4] \
          -epoch [lindex $object 5] \
-         -pm [list [lindex $object 6] [lindex $object 7]] \
-         -parallax [lindex $object 8]
-
-   tcsconfigscienceTarget selectfromcontrol $name
-   set window [tcsconfigscienceTarget cget -window]
-   $window reset
-   $window load [$window cget -namespace]::$name
+         -pm1 [lindex $object 6] \
+         -pm2 [lindex $object 7] \
+         -parallax [lindex $object 8] \
+         -rv [lindex $object 9] \
+         -brightness [lindex $object 10]
 }
 
-itcl::body StarSelectControl::loadposition {ra dec} {
+itcl::body StarSelectControl::load {} {
 
-# Format the RA/Dec as HH:MM and DD
-   set ram [expr round($ra*229.18)]
-   if { $ram < 0 } {set ram [expr $ram + 1440]}
-   set rah [expr round(floor($ram / 60.0))]
-   set ram [expr round($ram - $rah * 60.0)]
-   set decm [expr round($dec*3437.746)]
-   set dech [expr round(floor($decm / 60.0))]
-   set decm [expr round($decm - $dech * 60.0)]
-   set ra [format %02d:%02d $rah $ram]
-   set dec [format %0+3d:%02d $dech $decm]
+# cd to the catalogue directory
+   set pwd [pwd]
+   global CATALOG_DIR
+   cd $CATALOG_DIR
 
-   tcsconfigscienceTarget map
-   set name [[tcsconfigscienceTarget cget -window] getscratch]
-   $name configure -radec [list $ra $dec] -cosys Apparent
-   tcsconfigscienceTarget selectfromcontrol ""
-   [tcsconfigscienceTarget cget -window] reset
-   [tcsconfigscienceTarget cget -window] load $name
+# Create a dialog box for selecting the file and center it.
+   set dialog  $itk_interior.catloaddialog
+   if { ! [winfo exists $dialog] } {
+      set dialog [CatLoadDialog $dialog \
+            -modality application -title "Catalog File Selection Dialog" \
+            -master $itk_interior -mask *.dat]
+      $dialog center
+   }
+
+# Activate the dialog
+   if { [$dialog activate] } {
+
+# Get the colour for ploting.
+      set catcolour [[$dialog component colour] get]
+
+# Check that it is a valid colour.
+      if { [catch {winfo rgb . $catcolour}] } {
+         [$dialog component colour] clear entry
+         if { ! [catch { [$dialog component colour] get $catcolour}] } {
+            [$dialog component colour] delete list $catcolour
+         }
+         tk_messageBox -icon error -message \
+          "\"$catcolour\" is not a valid color"
+      } else {
+
+# Open the file.
+         set filename [$dialog get]
+         if { [catch {set file [open $filename RDONLY]} msg] } {
+            tk_messageBox -icon error -message $msg
+         } else {
+
+# Extract the file name to use as the catalogue name.
+            set catname [file rootname [file tail $filename]]
+
+# Create the catalogue if it doesn't exist.
+            if { [string is space [array names StarCats $catname]] } {
+               set StarCats($catname) [Catalogue #auto $catname \
+                     $itk_component(azelplot) $catcolour]
+
+# Add commands to the view and unload menus.
+               $itk_option(-menubar) add command .file.view.$catname \
+                    -command "[namespace code $StarCats($catname)] view" \
+                    -label $catname
+               $itk_option(-menubar) add command .file.unload.$catname \
+                    -command [itcl::code $this unload $catname] \
+                    -label $catname
+            }
+
+# Load it.
+            $StarCats($catname) load $file
+
+# Close the file.
+            close $file
+         }
+      }
+   }
+   $dialog deactivate
+
+# restore the default directory
+   cd $pwd
+}
+
+itcl::body StarSelectControl::unload {cat} {
+   delete object $StarCats($cat)
+   unset StarCats($cat)
+   $itk_option(-menubar) delete .file.view.$cat
+   $itk_option(-menubar) delete .file.unload.$cat
 }

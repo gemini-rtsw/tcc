@@ -12,33 +12,16 @@
 #           constructor list  Creates the Chop object and puts it onto
 #                           "list".
 #
-#           save file       Writes commands to re-create the object to the
-#                           channel identifier "file" and then calls the
-#                           Chop save method to add the objects data.
-#
-#  D Terrett 15 March 2001
+#  D Terrett 19 September 2001
 #
 #  Copyright CCLRC
 #+
 
 itcl::class ChopComponent {
-   inherit Chop tcclib::Component
+   inherit tcclib::Component Chop
    constructor {list args} {
       tcclib::Component::constructor $list
    } {
       eval configure $args
    }
-   public {
-      method save {file}
-   }
-}
-
-itcl::body ChopComponent::save file {
-   set obj [namespace tail $this]
-   set namespace [namespace qualifiers $this]
-   puts $file \
-         "catch {ChopComponent [list ${namespace}::$obj]  $componentList}"
-   puts $file "[list ${namespace}::$obj] init"
-   puts $file "[list ${namespace}::$obj] configure \\"
-   Chop::save $file
 }

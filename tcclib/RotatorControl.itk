@@ -1,23 +1,23 @@
 #+
-#  RotatorControl <- tcclib::ComponentControl
+#  RotatorControl <- ComponentControl
 #
 #  A Rotator control is a ComponentControl widget with widgets for the 
 #  instrument position angle and coordinate system.
 #
 #  Options:
-#           -shadow         The name of the control's edit shadow.
+#           -component         The name of component that the control edits
 #
-#  D Terrett 18 June 2001
+#  D Terrett 27 February 2001
 #
 #  Copyright CCLRC
 #+
 
 itcl::class RotatorControl {
-   inherit tcclib::ComponentControl
+   inherit ComponentControl
 
    constructor args {}
 
-   itk_option define -shadow shadow Shadow {}
+   itk_option define -component component Component {}
 
    public {
        method load {name}
@@ -34,7 +34,7 @@ itcl::class RotatorControl {
 itk::usual RotatorControl {
    keep -borderwidth -cursor -font -highlightthickness -insertborderwidth \
          -insertofftime -insertontime -insertwidth -labelfont -popupcursor \
-         -selectborderwidth -textfont -title -applyarg -componentlist -namespace
+         -selectborderwidth -textfont -title
 }
 
 itcl::body RotatorControl::constructor args {
@@ -67,21 +67,22 @@ itcl::body RotatorControl::constructor args {
 
 # Radiobuttons.
    itk_component add north {
-      radiobutton $w.north -text "Rotator tracking" -variable [scope refdir] \
-            -value north -command [code $this setdir]
+      radiobutton $w.north -text "Rotator tracking" \
+            -variable [itcl::scope refdir] -value north \
+            -command [itcl::code $this setdir]
    }
    itk_component add vertical {
-      radiobutton $w.vertical -text "Rotator fixed" -variable [scope refdir] \
-            -value vertical -command [code $this setdir]
+      radiobutton $w.vertical -text "Rotator fixed" \
+            -variable [itcl::scope refdir] -value vertical \
+            -command [itcl::code $this setdir]
    }
    pack $itk_component(vertical) $itk_component(north) -pady 5 -anchor w \
          -padx 5
 
 # Control for selecting a coordinate frame.
    itk_component add cosys {
-      tcclib::SubComponentSelector $w.cosys -labeltext "Coordinate system" \
-            -labelpos nw -componentlist CosysList -component cosys \
-            -selectioncommand [code $this checkcosys]
+      SubComponentSelector $w.cosys -labeltext "Coordinate system" \
+            -labelpos nw -selectioncommand [itcl::code $this checkcosys]
    }
    pack $itk_component(cosys) -anchor w -padx 5 -pady 5
    set w [winfo parent $w]
@@ -89,20 +90,16 @@ itcl::body RotatorControl::constructor args {
 # Set initial state.
    set refdir vertical
 
-# Set the object class.
-   set objclass RotatorComponent
+# Set the object description.
    set description "field orientation"
-
-# Create rotator object used by apply
-   set scratchobj [namespace which -command [Rotator #auto]]
 
    eval itk_initialize $args
 }
 
-itcl::configbody RotatorControl::shadow {
-   $itk_component(cosys) configure -editcontrol \
-            $itk_option(-shadow)cosys
-   $itk_component(cosys) configure -shadow $itk_option(-shadow)
+itcl::configbody RotatorControl::component {
+   if { $itk_option(-component) != "" } {
+      $itk_component(cosys) configure -component $itk_option(-component).cosys
+   }
 }
 
 itcl::body RotatorControl::reset {} {
@@ -117,13 +114,13 @@ itcl::body RotatorControl::load {name} {
    set cosys [$name cget -cosys]
    if { [string equal $cosys AzEl] } {
       set refdir vertical
-      $itk_component(cosys) select ""
+      set ::Config($itk_option(-component).cosys,value) ""
    } else {
       set refdir north
       if { [string is space $cosys] } {
-         $itk_component(cosys) select FK5/J2000
+         set ::Config($itk_option(-component).cosys,value) FK5/J2000
       } else {
-         $itk_component(cosys) select $cosys
+         set ::Config($itk_option(-component).cosys,value) $cosys
       }
    }
    setdir
@@ -140,10 +137,10 @@ itcl::body RotatorControl::save {name} {
 
 itcl::body RotatorControl::setdir {} {
    if { [string equal $refdir vertical] } {
-      $itk_component(cosys) select AzEl
+      set ::Config($itk_option(-component).cosys,value) AzEl
    } else {
       if { [string equal [$itk_component(cosys) get] AzEl] } {
-         $itk_component(cosys) select ""
+         set ::Config($itk_option(-component).cosys,value) ""
       }
    }
 }

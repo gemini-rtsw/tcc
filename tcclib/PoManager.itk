@@ -52,19 +52,19 @@ itcl::body PoManager::constructor {args} {
 
 # Chop state radiobuttons.
       itk_component add a$po {
-         radiobutton $w.a$po -variable [scope achop] -value $po \
+         radiobutton $w.a$po -variable [itcl::scope achop] -value $po \
                -command [itcl::code $this selecta $po]
       }
       itk_component add b$po {
-         radiobutton $w.b$po -variable [scope bchop] -value $po \
+         radiobutton $w.b$po -variable [itcl::scope bchop] -value $po \
                -command [itcl::code $this selectcmd $po]
       }
 
 # Subcomponent selector.
       itk_component add sel$po {
          tcclib::ListManager $w.sel$po -componentlist PointOrigList \
-               -selectioncommand [code $this selectcmd $po] \
-               -returncommand [code $this selectcmd $po]
+               -selectioncommand [itcl::code $this selectcmd $po] \
+               -returncommand [itcl::code $this selectcmd $po]
       }
 
 # Display of X & Y.

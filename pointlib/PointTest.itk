@@ -3,7 +3,7 @@
 #
 # A PointTest widget is the main interface of the pointtest application.
 #
-# D Terrett 22 June 2001
+# D Terrett 25 September 2001
 #
 # Copyright CCLRC
 #+
@@ -12,7 +12,7 @@ itcl::class PointTest {
    inherit itk::Widget
    constructor {args} {}
    private {
-      method selectstar {index}
+      method selectstar {cat index}
       method loadposition {ra dec}
       method pointobsopts {option}
       method nextstyle {widget}
@@ -20,6 +20,7 @@ itcl::class PointTest {
       method setlogdelay {name1 name2 op}
       method setoffloaddelay {name1 name2 op}
       method setlogrepeat {name1 name2 op}
+      method loadcat {}
       variable Options
       variable PointObs
       variable StarCat
@@ -47,7 +48,7 @@ itcl::body PointTest::constructor {args} {
    }
  
 # Create an empty star catalogue.
-   set StarCat [Catalogue #auto $itk_component(azelplot)]
+   set StarCat [Catalogue #auto pointing $itk_component(azelplot) white]
 
 # Create the PointObs object that sequences a pointing observation.
    set PointObs [PointObs #auto $itk_component(sourceentry) \
@@ -149,7 +150,7 @@ itcl::body PointTest::constructor {args} {
             command close -label "Close log file" -underline 0 \
                   -command "delete object pointlog" -state disabled
             command load -label "Load catalogue" -underline 0 \
-                  -command "[namespace code "$StarCat load"]"
+                  -command "[itcl::code $this loadcat]"
             command exit -label Exit -underline 1 \
                   -command "catch {delete object pointlog}; exit"
          }
@@ -196,7 +197,7 @@ itcl::body PointTest::constructor {args} {
    eval itk_initialize $args
 }
 
-itcl::body PointTest::selectstar {index} {
+itcl::body PointTest::selectstar {cat index} {
 
    $itk_component(sourceentry) clear
    foreach {objname ra dec frame equinox epoch pmra pmdec parallax rv comment} \
@@ -213,6 +214,8 @@ itcl::body PointTest::selectstar {index} {
    [$itk_component(sourceentry) component rv] insert end $rv
    [$itk_component(sourceentry) component comment] configure -text $comment
 
+# Mark and select the star.
+   $itk_component(azelplot) mark pointing $index
    $StarCat select $index
 
    if $Options(slew) "$PointObs slew"
@@ -285,4 +288,37 @@ itcl::body PointTest::setlogrepeat {name1 name2 op} {
    if { ! [string is space $LogRepeat] } {
       $PointObs configure -logrepeats $LogRepeat
    }
+}
+
+itcl::body PointTest::loadcat {} {
+
+# cd to the catalogue directory
+   set pwd [pwd]
+   global CATALOG_DIR
+   cd $CATALOG_DIR
+
+# Get the catalogue file name.
+   set types {
+      {{Data Files} {.dat} {}}
+      {{All Files} * {}}
+   }
+   set catname [tk_getOpenFile -defaultextension .dat -parent . \
+                -initialdir $CATALOG_DIR \
+                -filetypes $types -title "Open star catalog"]
+
+   if { ! [string equal $catname ""] } {
+
+# Open the catalogue file.
+      set chan [open $catname RDONLY]
+
+# Load it into the catalogue.
+      $StarCat load $chan
+
+# Close the file
+      close $chan
+   }
+
+# Restore the default directory
+   cd $pwd
+   return
 }

@@ -1,19 +1,21 @@
 #+
-#  Target
+#  Target <- tcclib::Paramset
 #
 #  Implements the Target class. A Target object stores all
 #  the parameters needed to specify a target.
 #
 #  Options:
-#           -objName       The object name
 #
-#           -type          The type of the coordinate (radec, or azel).
+#           -brightness    The object brightness (can be any character string
+#                          as the tcc doesn't do anyting with it except 
+#                          display it.)
 #
-#           -wavelength_name
+#           -objname       The object name
 #
-#           -wavelength_value
+#           -type          The type of the coordinate (hmsdegTarget, 
+#                          degdegTarget namedTarget or conicTarget).
 #
-#           The following options apply when -type is radec.
+#           The following options apply when -type is hmsdegTarget.
 #
 #              -cosys         The target coordinate system.
 #
@@ -21,164 +23,221 @@
 #
 #              -parallax      The parallax.
 #
-#              -radec         Right ascension and declination.
+#              -c1            Right ascension.
 #
-#              -pm            Proper motions in ra and dec
+#              -c1            Declination.
+#
+#              -pm1           Proper motion in ra.
+#
+#              -pm2           Proper motion in dec.
 #
 #              -rv            Radial velocity.
 #
-#           The following options apply when -type is radec.
+#           The following options apply when -type is degdegTarget.
 #
-#              -azel          Azimuth and elevation.
+#              -c1            Azimuth.
+#
+#              -c2            Elevation.
+#
+#           The following options apply when -type is namedTarget.
+#
+#              -planet        The planet name.
+#
+#           The following options apply when -type is conicTarget.
+#
+#              -eltype        Type of elements (major, minor or comet)
+#
+#              -epoch         Epoch of elements.
+#
+#              -inclination   Inclination.
+#
+#              -anode         Longitude of ascending node.
+#
+#              -perihelion    Longitude of perihelion.
+#
+#              -aorq          Argument of perihelion or perihelion distance.
+#
+#              -e             Eccentricity.
+#
+#              -LorM          Mean longitude or mean anomoly.
+#
+#              -n             Daily motion.
 #
 #  Methods:
-#           apply vt      Applies the target definition to the TCS by 
+#           apply comp    Applies the target definition to the TCS by 
 #                         setting the values of the command parameters
-#                         for virtual telescope "vt".
+#                         for appropriate virtual telescope.
 #
-#           grab vt       Grabs the current tracking position of the
-#                         virtual telescope vt.
+#           grab comp     Grabs the current tracking position of the
+#                         appropriate virtual telescope.
 #
 #           init          Returns the rotator object to its initial state.
 #
 #           preview item  Sets the preview target for "item".
 #
-#           save file     Writes the values of the target options to the
-#                         channel identifier "file".
+#           save node     Saves the values of the target options to the
+#                         xml node.
 #
-#  Procs:
-#           subcomponents Returns a list of the target classes subcomponents.
-#
-#  D Terrett 19 March 2001
+#  D Terrett 10 April 2002
 #
 #  Copyright CCLRC
 #+
 
 itcl::class Target {
-   constructor args {}
+   inherit tcclib::Paramset
    destructor {$this init}
-   public proc subcomponents {}
    public {
-      method apply {vt}
-      method copy {createproc name}
-      method grab {vt}
+      method apply {comp}
+      method grab {comp}
       method init {}
       method preview {vt}
-      method save {file}
+      method save {node}
       variable type {}
-      variable objName {}
-
-# Type "radec"
-      variable radec {} {if { ![string equal $radec ""] } {set type radec}}
+      variable objname {}
+      variable brightness {}
       variable cosys {}
       variable epoch {}
-      variable parallax 0
-      variable pm {}
-      variable rv 0
-
-# Type "azel"
-      variable azel {} {if { ! [string equal $azel ""] } {set type azel}}
-
-      variable wavelength_name {}
-      variable wavelength_value {} {
-         set wavelength_value [valWavelength $wavelength_value]
-      }
+      variable parallax {}
+      variable pm1 {}
+      variable pm2 {}
+      variable rv {}
+# Synonym for cosys
+      variable system {}
+      variable c1 {}
+      variable c2 {}
+      variable planet {}
+      variable eltype {}
+      variable inclination {}
+      variable anode {}
+      variable perihelion {}
+      variable aorq {}
+      variable e {}
+      variable LorM {}
+      variable n {}
       variable trackrate {}
-   }
-   protected {
-      common Wavelength ""
+
    }
    private {
       variable current_cosys {}
-      variable current_wavelength_name {}
       variable current_trackrate {}
    }
 }
 
-itcl::body Target::subcomponents {} {
-   return { \
-      {cosys Cosys CosysNames CosysList {Coordinate System} {}} \
-      {wavelength_name Wavelength WavelengthNames WavelengthList {Wavelength} {}} \
-      {trackrate TrackRate TrackRateNames TrackRateList {Differential Track Rate} {}} \
+itcl::body Target::apply {comp} {
+
+   switch $comp {
+      tcs.field.sciencetarget {
+         set vt sourceA
+      }
+      tcs.field.pwfs1target {
+         set vt pwfs1
+      }
+      tcs.field.pwfs2target {
+         set vt pwfs2
+      }
+      tcs.field.oiwfstarget {
+         set vt oiwfs
+      }
    }
-}
-
-itcl::body Target::constructor args {
-
-# Create the scratch wavelength object if it doesn't already exist.
-   if { [info commands $Wavelength] == "" } {
-      set Wavelength [Wavelength #auto]
-   }
-   eval configure $args
-}
-
-itcl::body Target::apply vt {
 
    switch $type {
-      radec {
-         cs $vt set objName [list $objName]
+      hmsdegTarget {
+         cs $vt set objName [list $objname]
          if { [string equal $cosys ""] } {
             cs $vt set system FK5
             cs $vt set equinox J2000
          } else {
-            CosysNames::$cosys apply $vt
+            CosysNames::$cosys apply $comp.cosys
          }
-         cs $vt set theta1 [list [lindex $radec 0]]
-         cs $vt set theta2 [list [lindex $radec 1]]
+         cs $vt set theta1 [list $c1]
+         cs $vt set theta2 [list $c2]
          cs $vt set epoch [list $epoch]
          cs $vt set parallax [list $parallax]
-         if { [string equal $pm ""] } {
-            cs $vt set dtheta1 ""
-            cs $vt set dtheta2 ""
-         } else {
-            cs $vt set dtheta1 [list [lindex $pm 0]]
-            cs $vt set dtheta2 [list [lindex $pm 1]]
-         }
+         cs $vt set dtheta1 [list $pm1]
+         cs $vt set dtheta2 [list $pm2]
          cs $vt set rv [list $rv]
       }
-      azel {
-         cs $vt set objName [list $objName]
+      degdegTarget {
+         cs $vt set objName [list $objname]
          cs $vt set system AZEL_TOPO
          cs $vt set equinox ""
-         cs $vt set theta1 [list [lindex $azel 0]]
-         cs $vt set theta2 [list [lindex $azel 1]]
+         cs $vt set theta1 [list $c1]
+         cs $vt set theta2 [list $c2]
          cs $vt set epoch ""
          cs $vt set parallax ""
          cs $vt set dtheta1 ""
          cs $vt set dtheta2 ""
          cs $vt set rv ""
       }
+      namedTarget {
+         if { [string equal $vt sourceA] } {
+            cs planet set object $planet
+            logger command planet
+         }
+      }
+      conicTarget {
+         if { [string equal $vt sourceA] } {
+            cs orbit set objName [list $objname]
+            switch $eltype {
+               major {
+                  cs orbit set eltype 1
+               }
+               minor {
+                  cs orbit set eltype 2
+               }
+               comet {
+                  cs orbit set eltype 3
+               }
+            }
+            cs orbit set epoch [list $epoch]
+            cs orbit set inclination [list $inclination]
+            cs orbit set anode [list $anode]
+            cs orbit set perihelion [list $perihelion]
+            cs orbit set aorq [list $aorq]
+            cs orbit set e [list $e]
+            if { $eltype == "major" || $eltype == "minor" } {
+               cs orbit set LorM [list $LorM]
+            } else {
+               cs orbit set LorM ""
+            }
+            if { $eltype == "major" } {
+               cs orbit set n [list $n]
+            } else {
+               cs orbit set n ""
+            }
+            logger command orbit
+         }
+      }
    }
    logger command $vt
-   if { [string equal $wavelength_name ""] } {
-      if { ! [string equal $wavelength_value ""] } {
-         $Wavelength configure -wavel $wavelength_value
-         $Wavelength apply $vt
-      }
-   } else {
-      if { ! [string equal $wavelength_name ""] } {
-         ::WavelengthNames::$wavelength_name apply $vt
-      }
-   }
    if { ! [string equal $trackrate ""] } {
-      ::TrackRateNames::$trackrate apply $vt
+      ::TrackRateNames::$trackrate apply $comp.trackrate
    }
 }
 
 itcl::body Target::init {} {
 
    set type {}
-   set objName {}
-   set radec {}
+   set objname {}
    $this configure -cosys {}
    set epoch {}
    set parallax 0
-   set pm {}
+   set pm1 {}
+   set pm2 {}
    set rv 0
-   set azel {}
-   $this configure -wavelength_name {}
-   set wavelength_value {}
+   set c1 {}
+   set c2 {}
    $this configure -trackrate {}
+   set planet {}
+   set type {}
+   set inclination {}
+   set anode {}
+   set perihlion {}
+   set aorq {}
+   set e {}
+   set LorM {}
+   set n {}
+   set brightness {}
 }
 
 itcl::body Target::preview vt {
@@ -191,43 +250,108 @@ itcl::body Target::preview vt {
       set equinox [CosysNames::$cosys cget -equinox]
    }
    switch $type {
-      radec {
-         tccPreview set $vt $system [lindex $radec 0] [lindex $radec 1] \
-               $equinox $epoch
+      hmsdegTarget {
+         tccPreview set $vt $system $c1 $c2 $equinox $epoch
       }
-      azel {
-         tccPreview set $vt AZEL [lindex $azel 0] [lindex $azel 1]
+      degdegTarget {
+         tccPreview set $vt AZEL $c1 $c2
+      }
+      namedTarget {
+         if { [string equal $vt sourceA] } {
+            tccPreview set planet $planet
+         }
+      }
+      conicTarget {
+         if { [string equal $vt sourceA] } {
+            switch $type {
+               major {
+                  tccPreview set orbit 1 $epoch $inclination $anode \
+                        $periheloin $aorq $e $LorM $n
+               }
+               minor {
+                  tccPreview set orbit 2 $epoch $inclination $anode \
+                        $perihelion $aorq $e $LorM
+               }
+               comet {
+                  tccPreview set orbit 3 $epoch $inclination $anode \
+                        $perihelion $aorq $e
+               }
+            }
+         }
       }
    }
       
-   if { [string equal $wavelength_name ""] } {
-      if { ! [string equal $wavelength_value ""] } {
-         $Wavelength configure -wavel $wavelength_value
-         $Wavelength preview $vt
-      }
-   } else {
-      ::WavelengthNames::$wavelength_name preview $vt
-   }
    if { ! [string equal $trackrate ""] } {
       ::TrackRateNames::$trackrate preview $vt
    }
 }
 
-itcl::body Target::save file {
-   puts $file "   -objName [list $objName] \\"
-   puts $file "   -cosys [list $cosys] \\"
-   puts $file "   -radec [list $radec] \\"
-   puts $file "   -epoch [list $epoch] \\"
-   puts $file "   -parallax [list $parallax] \\"
-   puts $file "   -pm [list $pm] \\"
-   puts $file "   -rv [list $rv] \\"
-   puts $file "   -azel [list $azel] \\"
-   puts $file "   -wavelength_name [list $wavelength_name] \\"
-   puts $file "   -wavelength_value [list $wavelength_value] \\"
-   puts $file "   -trackrate [list $trackrate]"
+itcl::body Target::save {node} {
+   switch $type {
+      hmsdegTarget {
+          set node [paramset $node hmsdegTarget]
+          param $node cosys $cosys
+          param $node c1 $c1
+          param $node c2 $c2
+          set node1 [paramset $node properMotion]
+          param $node1 epoch $epoch
+          param $node1 parallax $parallax
+          param $node1 pm1 $pm1
+          param $node1 pm2 $pm2
+          param $node1 rv $rv
+          if { ! [dom::node hasChildNodes $node1] } {
+             dom::node removeChild $node $node1
+          }
+          param $node trackrate $trackrate
+      }
+      degdegTarget {
+         set node [paramset $node degdegTarget]
+         param $node c1 $c1
+         param $node c2 $c2
+      }
+      namedTarget {
+         set node [paramset $node namedTarget]
+         param $node planet $planet
+      }
+      conicTarget {
+         set node [paramset $node conicTarget]
+         param $node type $eltype
+         param $node epoch $epoch
+         param $node inclination $inclination
+         param $node anode $anode
+         param $node perihelion $perihelion
+         param $node aorq $aorq
+         param $node e $e
+         if { $eltype == "major" || $eltype == "minor" } {
+            param $node LorM $LorM
+         }
+         if { $eltype == "major" } {
+            param $node n $n
+         }
+      }
+   }
+   param $node objname $objname
+   param $node brightness $brightness
 }
 
-body Target::grab vt {
+body Target::grab {comp} {
+
+# Determine name of the virtual telescope.
+   switch $comp {
+      tcs.field.sciencetarget {
+         set vt sourceA
+      }
+      tcs.field.pwfs1target {
+         set vt pwfs1
+      }
+      tcs.field.pwfs2target {
+         set vt pwfs2
+      }
+      tcs.field.oiwfstarget {
+         set vt oiwfs
+      }
+   }
+
 
 # Clear current state.
    init
@@ -243,29 +367,51 @@ body Target::grab vt {
       mount {set target [sa tcssad get targetMount]}
    }
 
-# Get the wavelength.
-   set wavelength_name ""
-   set wavelength_value [expr [sadVal tcssad ${vt}Wavelength 5000.0] / 10000.0]
-
-# And frame.
+# Get frame.
    set frame [sa tcssad get ${vt}TrackFrame]
    if { [string is space $frame] } {
       set frame FK5
    }
-   set eqx [formatEpoch $frame [sa tcssad get ${vt}TrackEq]]
-   createCosys ${frame}/$eqx -frame $frame -equinox $eqx
-   set cosys ${frame}/$eqx
 
-# Store the RA/Dec.
-   set type radec
-   set ra [slaDr2tf 3 [lindex $target 0]]
-   set dec [slaDr2af 2 [lindex $target 1]]
-   set radec [list \
-         [format "%02d:%02d:%02d.%03d" [lindex $ra 1] [lindex $ra 2] \
-         [lindex $ra 3] [lindex $ra 4]] \
-         [format "%s%02d:%02d:%02d.%02d" [lindex $dec 0] [lindex $dec 1] \
-         [lindex $dec 2] [lindex $dec 3] [lindex $dec 4]]]
-
+# Set coordinate system.
+   if { $frame == "FK5" || $frame == "FK4" } {
+      set eqx [formatEpoch $frame [sa tcssad get ${vt}TrackEq]]
+      createCosys ${frame}/$eqx -frame $frame -equinox $eqx
+      set cosys ${frame}/$eqx
+   } elseif { $frame == "APPT" } {
+      set cosys Apparent
+   } else {
+      set cosys AzEl
+   }
+    
+      
+   if { $frame == "AZEL_TOPO" } {
+      set type degdegTarget
+      set az [slaDr2af 2 [lindex $target 0]]
+      set el [slaDr2af 2 [lindex $target 1]]
+      set c1 [list \
+            [format "%02d:%02d:%02d.%03d" [lindex $az 1] [lindex $az 2] \
+            [lindex $az 3] [lindex $az 4]]]
+      set c2 [list \
+            [format "%s%02d:%02d:%02d.%02d" [lindex $el 0] [lindex $el 1] \
+            [lindex $el 2] [lindex $el 3] [lindex $el 4]]]
+   } else {
+      set type hmsdegTarget
+      set ra [slaDr2tf 3 [lindex $target 0]]
+      set dec [slaDr2af 2 [lindex $target 1]]
+      set c1 [list \
+            [format "%02d:%02d:%02d.%03d" [lindex $ra 1] [lindex $ra 2] \
+            [lindex $ra 3] [lindex $ra 4]]]
+      set c2 [list\
+            [format "%s%02d:%02d:%02d.%02d" [lindex $dec 0] [lindex $dec 1] \
+            [lindex $dec 2] [lindex $dec 3] [lindex $dec 4]]]
+   }
+   set epoch ""
+   set pm1 ""
+   set pm2 ""
+   set rv ""
+   set parallax ""
+   set trackrate ""
 }
 
 itcl::configbody Target::cosys {
@@ -278,20 +424,6 @@ itcl::configbody Target::cosys {
          error "Coordinate frame \"$cosys\" does not exist"
       } else {
          set current_cosys $cosys
-      }
-   }
-}
-
-itcl::configbody Target::wavelength_name {
-   if { ! [string equal $current_wavelength_name ""] } {
-      WavelengthNames::$current_wavelength_name refdec
-   }
-   set current_wavelength_name ""
-   if { ! [string equal $wavelength_name ""] } {
-      if { [catch {WavelengthNames::$wavelength_name refinc}] } {
-         error "Wavelength \"$wavelength_name\" does not exist"
-      } else {
-         set current_wavelength_name $wavelength_name
       }
    }
 }
@@ -310,17 +442,66 @@ itcl::configbody Target::trackrate {
    }
 }
 
-itcl::body Target::copy {createproc name} {
-   $createproc $name \
-      -objName $objName \
-      -cosys $cosys \
-      -radec $radec \
-      -epoch $epoch \
-      -parallax $parallax \
-      -pm $pm \
-      -rv $rv \
-      -azel $azel \
-      -wavelength_name $wavelength_name \
-      -wavelength_value $wavelength_value \
-      -trackrate $trackrate
+# The system config body sets the cosys option, creating the cosys component
+# if there isn't one that matches the system definition.
+itcl::configbody Target::system {
+
+# Do nothing if system is empty.
+   if { ! [string is space $system] } {
+
+# Construct the cosys component name.
+      switch $system {
+         apparent {
+            set cosysname Apparent
+         }
+         polarMount {
+            set cosysname AzEl
+         }
+         default {
+            switch [string range $system 0 0] {
+               J {
+                  set cosysname FK5/${system}
+               }
+               B {
+                  set cosysname FK4/${system}
+               }
+               default {
+                  error "\"$system\" is not a valid coordinate system"
+               }
+            }
+         }
+      }
+   
+# See if it already exists.
+      if { [lsearch -exact [itcl::find objects -class CosysComponent] \
+            ::CosysNames::$cosysname] < 0 } {
+
+# Create it.
+         switch $cosysname {
+            Apparent {
+               CosysComponent ::CosysNames::Apparent -frame Appt
+            }
+            AzEl {
+               CosysComponent ::CosysNames::AzEl -frame AzEl
+            }
+            default {
+               foreach {frame equinox} [split $cosysname /] {}
+               CosysComponent ::CosysNames::$cosysname ::CosysList \
+                     -frame $frame -equinox $equinox
+            }
+         }
+      }
+   
+# Set the cosys option.
+      $this configure -cosys $cosysname
+   }
+}
+
+# This config body traps attempts to set -type to an orbit type.
+
+itcl::configbody Target::type {
+   if { [lsearch -exact {major minor comet} $type] != -1 } {
+      set eltype $type
+      set type conicTarget
+   }
 }

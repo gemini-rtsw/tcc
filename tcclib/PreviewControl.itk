@@ -10,7 +10,7 @@
 #           update      Causes the preview configuration to be calculated 
 #                       and displayed.
 #
-#  D Terrett 13 July 2001
+#  D Terrett 7 April 2002
 #
 #  Copyright CCLRC
 #+
@@ -147,11 +147,6 @@ itcl::body PreviewControl::constructor args {
    }
    pack $itk_component(bot) -side top -fill x
    set w $itk_component(bot)
-   itk_component add left {
-      frame $w.left
-   }
-   pack $itk_component(left) -side left
-   set w $itk_component(left)
    itk_component add fwfs {
       frame $w.fwfs -bd 2 -relief groove
    }
@@ -163,11 +158,17 @@ itcl::body PreviewControl::constructor args {
    itk_component add pwfs1y {
       AlarmLabel $w.pwfs1y -width 8 -borderwidth 2 -relief groove -anchor e
    }
+   itk_component add pwfs1r {
+      AlarmLabel $w.pwfs1r -width 8 -borderwidth 2 -relief groove -anchor e
+   }
    itk_component add pwfs2x {
       AlarmLabel $w.pwfs2x -width 8 -borderwidth 2 -relief groove -anchor e
    }
    itk_component add pwfs2y {
       AlarmLabel $w.pwfs2y -width 8 -borderwidth 2 -relief groove -anchor e
+   }
+   itk_component add pwfs2r {
+      AlarmLabel $w.pwfs2r -width 8 -borderwidth 2 -relief groove -anchor e
    }
    itk_component add oiwfsx {
       AlarmLabel $w.oiwfsx -width 8 -borderwidth 2 -relief groove -anchor e
@@ -175,14 +176,20 @@ itcl::body PreviewControl::constructor args {
    itk_component add oiwfsy {
       AlarmLabel $w.oiwfsy -width 8 -borderwidth 2 -relief groove -anchor e
    }
+   itk_component add oiwfsr {
+      AlarmLabel $w.oiwfsr -width 8 -borderwidth 2 -relief groove -anchor e
+   }
  
    itk_component add x {
-      label $w.x -text X
+      label $w.x -text "X (mm)"
    }
    itk_component add y {
-      label $w.y -text Y
+      label $w.y -text "Y (mm)"
    }
-   grid x $itk_component(x) $itk_component(y)
+   itk_component add r {
+      label $w.r -text "R (arcm)"
+   }
+   grid x $itk_component(x) $itk_component(y) $itk_component(r)
    itk_component add l1 {
       label $w.l1 -text "Peripheral WFS 1"
    }
@@ -193,12 +200,17 @@ itcl::body PreviewControl::constructor args {
       label $w.lo -text "On-instrument WFS"
    }
    grid $itk_component(l1) $itk_component(pwfs1x) $itk_component(pwfs1y) \
-         -sticky e
+         $itk_component(pwfs1r) -sticky e
    grid $itk_component(l2) $itk_component(pwfs2x) $itk_component(pwfs2y) \
-         -sticky e
+         $itk_component(pwfs2r) -sticky e
    grid $itk_component(lo) $itk_component(oiwfsx) $itk_component(oiwfsy) \
-         -sticky e
+         $itk_component(oiwfsr) -sticky e
 
+   set w $itk_component(bot)
+   itk_component add left {
+      frame $w.left
+   }
+   pack $itk_component(left) -side left
    set w $itk_component(left)
    itk_component add lims {
       frame $w.lims -bd 2 -relief groove
@@ -212,7 +224,7 @@ itcl::body PreviewControl::constructor args {
    itk_component add wrap {
       frame $w.wrap -relief groove
    }
-   pack $itk_component(wrap)
+   pack $itk_component(wrap) -side left
    set w $itk_component(wrap)
    itk_component add wrapl {
       label $w.wrapl -text "Wrap state" -anchor e
@@ -249,12 +261,12 @@ itcl::body PreviewControl::constructor args {
 
    set w $itk_component(bot)
    itk_component add plot {
-      button $w.plot -text Plot -command [code $this plot]
+      button $w.plot -text Plot -command [itcl::code $this plot]
    }
    itk_component add update {
       button $w.update -text Update -command {
-         tcsconfig map
-         [tcsconfig cget -window] preview
+         tcsConfigPanel map
+         [tcsConfigPanel cget -name] preview
       }
    }
    itk_component add delta {
@@ -262,10 +274,10 @@ itcl::body PreviewControl::constructor args {
             -width 4
    }
    pack $itk_component(delta) $itk_component(update) $itk_component(plot) \
-         -pady 10 -side bottom
+         -pady 5 -side bottom
 
 # Schedule the countdown method for 1 minute in the future.
-   after 60000 [code $this countdown]
+   after 60000 [itcl::code $this countdown]
 
    eval itk_initialize $args
 }
@@ -273,7 +285,7 @@ itcl::body PreviewControl::constructor args {
 itcl::body PreviewControl::destructor {} {
 
 # Cancel the coundown "after" procedure.
-   after cancel [code $this countdown]
+   after cancel [itcl::code $this countdown]
 }
 
 itcl::body PreviewControl::update {} {
@@ -389,18 +401,23 @@ itcl::body PreviewControl::update {} {
          $itk_component(pwfs1x) configure -text $x
          $itk_component(pwfs1y) configure -text $y
          set r2 [expr $x * $x + $y * $y]
+         $itk_component(pwfs1r) configure -text \
+               [format "%.2f" [expr {sqrt($r2) * 0.0268573967}]]
          set rmax [sa tcssad get pwfs1Rmax]
          set rmin [sa tcssad get pwfs1Rmin]
          if { ($r2 > $rmax * $rmax) || ($r2 < $rmin * $rmin) } {
             $itk_component(pwfs1x) configure -state alarm
             $itk_component(pwfs1y) configure -state alarm
+            $itk_component(pwfs1r) configure -state alarm
          } else {
             $itk_component(pwfs1x) configure -state normal
             $itk_component(pwfs1y) configure -state normal
+            $itk_component(pwfs1r) configure -state normal
          }
       } else {
          $itk_component(pwfs1x) configure -text "" -state normal
          $itk_component(pwfs1y) configure -text "" -state normal
+         $itk_component(pwfs1r) configure -text "" -state normal
       }
       set pwfs2 [tccPreview get pwfs2]
       if { ! [string equal $pwfs2 ""] } {
@@ -411,18 +428,23 @@ itcl::body PreviewControl::update {} {
          $itk_component(pwfs2x) configure -text $x
          $itk_component(pwfs2y) configure -text $y
          set r2 [expr $x * $x + $y * $y]
+         $itk_component(pwfs2r) configure -text \
+               [format "%.2f" [expr {sqrt($r2) * 0.0268573967}]]
          set rmax [sa tcssad get pwfs2Rmax]
          set rmin [sa tcssad get pwfs2Rmin]
          if { ($r2 > $rmax * $rmax) || ($r2 < $rmin * $rmin) } {
             $itk_component(pwfs2x) configure -state alarm
             $itk_component(pwfs2y) configure -state alarm
+            $itk_component(pwfs2r) configure -state alarm
          } else {
             $itk_component(pwfs2x) configure -state normal
             $itk_component(pwfs2y) configure -state normal
+            $itk_component(pwfs2r) configure -state normal
          }
       } else {
          $itk_component(pwfs2x) configure -text "" -state normal
          $itk_component(pwfs2y) configure -text "" -state normal
+         $itk_component(pwfs2r) configure -text "" -state normal
       }
       set oiwfs [tccPreview get oiwfs]
       if { ! [string equal $oiwfs ""] } {
@@ -431,6 +453,8 @@ itcl::body PreviewControl::update {} {
          $itk_component(oiwfsx) configure -text $x
          $itk_component(oiwfsy) configure -text $y
          set r2 [expr $x * $x + $y * $y]
+         $itk_component(oiwfsr) configure -text \
+               [format "%.2f" [expr {sqrt($r2) * 0.0268573967}]]
          set inlimit 0
          if { [sa tcssad get oiwfsLimitType] } {
             set rmax [sa tcssad get oiwfsRmax]
@@ -450,13 +474,16 @@ itcl::body PreviewControl::update {} {
          if { $inlimit } {
             $itk_component(oiwfsx) configure -state alarm
             $itk_component(oiwfsy) configure -state alarm
+            $itk_component(oiwfsr) configure -state alarm
          } else {
             $itk_component(oiwfsx) configure -state normal
             $itk_component(oiwfsy) configure -state normal
+            $itk_component(oiwfsr) configure -state normal
          }
       } else {
          $itk_component(oiwfsx) configure -text "" -state normal
          $itk_component(oiwfsy) configure -text "" -state normal
+         $itk_component(oiwfsr) configure -text "" -state normal
       }
       set limits [tccPreview get limits]
       set az1time [lindex $limits 0]
@@ -544,7 +571,7 @@ itcl::body PreviewControl::countdown {} {
       $itk_component(delta) clear
       $itk_component(delta) insert end [incr c -1]
    }
-   after 60000 [code $this countdown]
+   after 60000 [itcl::code $this countdown]
 }
 
 itcl::body PreviewControl::plot {} {
@@ -557,7 +584,9 @@ itcl::body PreviewControl::plot {} {
 
 # Plot the target position.
    if { [llength $target] > 0 } {
+#      send -displayof .skycatPanel tccSkycat tccDisplayField \
+#            [lindex $target 0] [lindex $target 1] [lindex $target 3]
       send -displayof .skycatPanel tccSkycat tccDisplayField \
-            [lindex $target 0] [lindex $target 1] [lindex $target 3]
+            [lindex $target 0] [lindex $target 1] J2000
    }
 }

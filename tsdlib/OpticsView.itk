@@ -16,6 +16,12 @@
 #          -deployablebaffle  The postion of the deployable baffle (RETRACTED,
 #                             "NEAR IR", VISIBLE or EXTENDED).
 #
+#          -gpolustate        The state of the GPOL upper slide (IN or OUT)
+#
+#          -gpolmstate        The state of the GPOL middle slide (IN or OUT)
+#
+#          -gpollstate        The state of the GPOL lower slide (IN or OUT)
+#
 #          -holecover         The position of the M1 central hole cover (OPENED,
 #                             "MIDDLE POSITION" or CLOSED).
 #
@@ -48,7 +54,7 @@
 #
 #          -portEnumber       The number of port E
 #
-#          -pcsstate          The state of the PCS (OFF MOVING or OK)..
+#          -pcsstate          The state of the PCS (OFF, MOVING or OK)..
 #
 #          -scfold            The current science fold position.
 #
@@ -59,7 +65,7 @@
 #                             according to the state of the configuration
 #                             options.
 #
-#  D Terrett  30 Novemeber 2001
+#  D Terrett  5 April 2002
 #
 #  Copyright CCLRC
 #-
@@ -89,6 +95,9 @@ itcl::class OpticsView {
    itk_option define -portEnumber portENumber Number "" "renumber E"
    itk_option define -pcsstate pcsState PcsState OFF
    itk_option define -calunit calUnit CalUnit 0
+   itk_option define -gpolustate gpolUState GpolUState 0
+   itk_option define -gpolmstate gpolMState GpolMState 0
+   itk_option define -gpollstate gpolLState GpolLState 0
    public {
       method update {}
    }
@@ -186,6 +195,16 @@ itcl::body OpticsView::constructor args {
    $c create rectangle  80 -50 100 -70 -outline black
    $c create rectangle  75 -65 80 -55 -outline black
    $c create text 85 -80 -text AC/HRWFS -anchor c
+
+# GPOL
+   $c create rectangle -30 -50 -60 -70 -outline black
+   $c create line -30 -65 -15 -65 -width 2
+   $c create line -30 -60 -15 -60 -width 2
+   $c create line -30 -55 -15 -55 -width 2
+   $c create line -15 -65  15 -65 -width 2 -tags gpoll -fill ""
+   $c create line -15 -60  15 -60 -width 2 -tags gpolm -fill ""
+   $c create line -15 -55  15 -55 -width 2 -tags gpolu -fill ""
+   $c create text -40 -80 -text GPOL -anchor c
 
 # Incoming light beams
    $c create line -80 420 -80 143 -width 4 -tags SkyLight
@@ -470,6 +489,25 @@ itcl::body OpticsView::update {} {
       $c itemconfigure HrwfsFoldInBck -fill ""
       $c itemconfigure HrwfsFoldOut -fill white
       $c itemconfigure HrwfsFoldOutBck -fill black
+   }
+
+# Configure the GPOL slides.
+   if { $itk_option(-gpolustate) == "IN" } {
+      $c itemconfigure gpolu -fill black
+   } else {
+      $c itemconfigure gpolu -fill ""
+   }
+
+   if { $itk_option(-gpolmstate) == "IN" } {
+      $c itemconfigure gpolm -fill black
+   } else {
+      $c itemconfigure gpolm -fill ""
+   }
+
+   if { $itk_option(-gpollstate) == "IN" } {
+      $c itemconfigure gpoll -fill black
+   } else {
+      $c itemconfigure gpoll -fill ""
    }
 
 # Configure the light path

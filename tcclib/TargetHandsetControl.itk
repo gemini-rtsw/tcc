@@ -11,7 +11,7 @@
 #  Methods:
 #           none
 #
-#  D Terrett 16 January 2001
+#  D Terrett 11 April 2002
 #
 #  Copyright CCLRC
 #+
@@ -63,19 +63,19 @@ itcl::body TargetHandsetControl::constructor args {
 
 # Radio buttons for selecting which offset to adjust.
    itk_component add scisel {
-      radiobutton $w.scisel -variable [scope vt] -value sourceA \
+      radiobutton $w.scisel -variable [itcl::scope vt] -value sourceA \
             -command [itcl::code $this setvt]
    }
    itk_component add p1sel {
-      radiobutton $w.p1sel -variable [scope vt] -value pwfs1 \
+      radiobutton $w.p1sel -variable [itcl::scope vt] -value pwfs1 \
             -command [itcl::code $this setvt]
    }
    itk_component add p2sel {
-      radiobutton $w.p2sel -variable [scope vt] -value pwfs2 \
+      radiobutton $w.p2sel -variable [itcl::scope vt] -value pwfs2 \
             -command [itcl::code $this setvt]
    }
    itk_component add oisel {
-      radiobutton $w.oisel -variable [scope vt] -value oiwfs \
+      radiobutton $w.oisel -variable [itcl::scope vt] -value oiwfs \
             -command [itcl::code $this setvt]
    }
 
@@ -180,7 +180,7 @@ itcl::body TargetHandsetControl::constructor args {
    }
    itk_component add apply {
       tcclib::ApplyButton $w.apply -text Apply -command incrOffset \
-         -parcommand [code $this getOffset]
+         -parcommand [itcl::code $this getOffset]
   }
    pack $itk_component(theta1) $itk_component(theta2) $itk_component(apply) \
       -side left -padx 4 -pady 4
@@ -194,11 +194,11 @@ itcl::body TargetHandsetControl::constructor args {
    set w $itk_component(bot)
    itk_component add absorb {
       tcclib::ApplyButton $w.absorb -command absorbOffset -text "Absorb" \
-            -width 8 -parcommand [code $this abpars]
+            -width 8 -parcommand [itcl::code $this abpars]
    }
    itk_component add clear {
       tcclib::ApplyButton $w.clear -command clearOffset -text "Clear" -width 8 \
-            -parcommand [code $this clpars]
+            -parcommand [itcl::code $this clpars]
    }
    pack $itk_component(absorb) $itk_component(clear) -side left -expand y \
          -pady 4
@@ -212,7 +212,7 @@ itcl::body TargetHandsetControl::constructor args {
    }
 
 # Start process to refresh the position and offsets display.
-   set refid [after 1000 [code $this refresh]]
+   set refid [after 1000 [itcl::code $this refresh]]
 
    eval itk_initialize $args
 }
@@ -343,5 +343,16 @@ itcl::body TargetHandsetControl::refresh {} {
    }
    $itk_component(p2lab) configure -status $status
 
-   set refid [after 1000 [code $this refresh]]
+   if { [isFollowing agssad oiFollowS] } {
+      if { [isInPosition agssad oiInPosition] } {
+         set status ok
+      } else {
+         set status warning
+      }
+   } else {
+      set status error
+   }
+   $itk_component(oilab) configure -status $status
+
+   set refid [after 1000 [itcl::code $this refresh]]
 }

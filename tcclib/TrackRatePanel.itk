@@ -1,5 +1,5 @@
 #+
-#  TrackRatePanel <- tcclib::Panel
+#  TrackRatePanel <- Panel
 #
 #  Implements the TrackratePanel widget. A Panel widget with a 
 #  TrackRateControl widget packed into its interior.
@@ -7,14 +7,17 @@
 #  Methods:
 #           none
 #
-#  D Terrett 29 March 2001
+#  D Terrett 6 February 2002
 #
 #  Copyright CCLRC
 #+
 
 itcl::class TrackRatePanel {
-   inherit tcclib::Panel
+   inherit Panel
    constructor args {}
+   public {
+      method sync {component name} {$itk_component(control) sync $name}
+   }
 }
 
 itk::usual TrackRatePanel {
@@ -24,6 +27,9 @@ itk::usual TrackRatePanel {
 itcl::body TrackRatePanel::constructor args {
    itk_component add control {
       TrackRateControl $itk_interior.control
+   } {
+      usual
+      rename -component -components components Components
    }
    setWidgetColors "$itk_component(menubar) $itk_component(control)" \
          $itk_option(-background) $itk_option(-foreground)
