@@ -17,9 +17,8 @@ command m1Guide tcsApply M1 guiding
 command m1GuideConfig tcsApply Define M1 guiding
 {
    weighting  tc1:m1GuideConfig.A Weighting
-   pwfs1      tc1:m1GuideConfig.B P1 weight
-   pwfs2      tc1:m1GuideConfig.C P2 weight
-   frames     tc1:m1GuideConfig.D Frames to average
+   source     tc1:m1GuideConfig.B Signal source
+   frames     tc1:m1GuideConfig.C Frames to average
 }
 
 command mountGuide tcsApply Define mount guiding
@@ -113,8 +112,15 @@ status guideConfig
    m2state    tc1:om:m2GuideState.VAL       0   M2 guiding
    absorbtilt tc1:absorbTipTiltFlag.VAL     0   Absorb tilt errors
    m1state    tc1:im:m1GuideOn.VAL          0   M1 guiding
-   wfsstate   tc1:wfsGuideMode.VALA         0   WFS guiding
-   wfsprobe   tc1:wfsGuideMode.VALB         0   Probe being guided
+   m1source   tc1:m1GuideConfig.VALB        0   M1 guide source
+   p1guide    tc1:ak:wfsguide:p1weight.VAL  0   WFS guiding
+   p2guide    tc1:ak:wfsguide:p2weight.VAL  0   WFS guiding
+   p1mweight  tc1:mountGuideMode.VALC       0   Mount p1 wieght
+   p2mweight  tc1:mountGuideMode.VALD       0   Mount p1 wieght
+   m2p1guide  tc1:drives:p1GuideConfig      0   M2 P1 guide config
+   m2p2guide  tc1:drives:p2GuideConfig      0   M2 P2 guide config
+   m2oiguide  tc1:drives:oiGuideConfig      0   M2 OI guide config
+   coma       tc1:im:m2gm:comaCorrectFlag.VAL 0 Coma correction
 }
 
 command m2beam tcsApply M2 beam

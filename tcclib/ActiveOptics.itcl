@@ -18,7 +18,7 @@ itcl::class ActiveOptics {
       method source {component src}
       variable scssource none
       variable comacorr 0
-      variable m1figure ""
+      variable m1figure none
       variable probeguide none
       variable mountguide none
       variable pwfs1Expose 0.01
@@ -84,52 +84,95 @@ itcl::body ActiveOptics::constructor {args} {
 
 itcl::body ActiveOptics::enable {} {
 
-# Turn everything off.
-   disable
-
 # Set parameters according to the current state...
-# M2
-   if { [lsearch {PWFS1 PWFS2 OIWFS} $scssource] != -1 } {
-      cs m2GuideConfig set samplefreq 200
-      cs m2GuideConfig set filter raw
-      cs m2GuideConfig set freq1 ""
-      cs m2GuideConfig set freq2 ""
-      cs m2GuideConfig set beam A
-      cs m2GuideConfig set reset On
-      cs m2GuideConfig set source $scssource
-      logger command m2GuideConfig
-      if { [catch {cs m2GuideConfig post} msg] } {
-         tk_messageBox -icon error -parent $itk_interior -message \
-               "Error posting m2GuideConfig command: TCS reports \
-               \"$msg\""
+
+# M2 tip/tilt is on and we want it off.
+   if { $scssource == "none" } {
+      if { [state m2] } {
+
+# Turn guiding off.
+         cs m2Guide set state Off
+         logger command m2Guide
       }
+   } else { 
+
+# See if the current M2 source matches what we want.
+      set needchange 0
+      foreach source {PWFS1 PWFS2 OIWFS} {
+         if { $scssource == $source } {
+            if { ! [source m2 $source] } {
+               set needchange 1
+            }
+         } else {
+            if { [source m2 $source] } {
+               set needchange 1
+            }
+         }
+      }
+   
+      if { $needchange } {
+
+# We need to change the setup of M2. Turn it off first.
+         cs m2Guide set state Off
+         logger command m2Guide
+         if { [catch {cs m2Guide post} msg] } {
+            tk_messageBox -icon error -message \
+                  "Error posting m2Guide command: TCS reports \
+                  \"$msg\""
+         }
+
+# Now set the source we want.
+         cs m2GuideConfig set samplefreq 200
+         cs m2GuideConfig set filter raw
+         cs m2GuideConfig set freq1 ""
+         cs m2GuideConfig set freq2 ""
+         cs m2GuideConfig set beam A
+         cs m2GuideConfig set reset On
+         cs m2GuideConfig set source $scssource
+         logger command m2GuideConfig
+         if { [catch {cs m2GuideConfig post} msg] } {
+            tk_messageBox -icon error -message \
+                  "Error posting m2GuideConfig command: TCS reports \
+                  \"$msg\""
+         }
 
 # This delay is needed to allow M2 to action the reset before the command
 # is resent with reset = off. Maybe this won't be needed when the M2 BUSY/IDLE
 # is connected.
-      after 1000
-
-      cs m2GuideConfig set reset Off
-      logger command m2GuideConfig
-      if { [catch {cs m2GuideConfig post} msg] } {
-         tk_messageBox -icon error -parent $itk_interior -message \
-               "Error posting m2GuideConfig command: TCS reports \
-               \"$msg\""
-      }
+         after 1000
+         cs m2GuideConfig set reset Off
+         logger command m2GuideConfig
+         if { [catch {cs m2GuideConfig post} msg] } {
+            tk_messageBox -icon error -message \
+                  "Error posting m2GuideConfig command: TCS reports \
+                  \"$msg\""
+         }
 
 # Turn guiding on.
-      cs m2Guide set state On
-      logger command m2Guide
+         cs m2Guide set state On
+         logger command m2Guide
+      } elseif { ! [state m2] } {
+
+# Just need to turn it on if it is off.
+         cs m2Guide set state On
+           logger command m2Guide
+      }
    }
 
 # Coma correction.
-   if { $comacorr } {
+   if { [state coma] &&  ! $comacorr } {
+      cs m2GuideMode set coma Off
+      logger command m2GuideMode
+   } elseif {  ! [state coma] &&  $comacorr } {
       cs m2GuideMode set coma On
       logger command m2GuideMode
    }
 
 # Mount guide mode.
-   if { [lsearch {SCS PWFS1 PWFS2} $mountguide] != -1 } {
+   if { [state mount] && $mountguide == "none" } {
+      cs mountGuide set mode Off
+      logger command mountGuide
+   } elseif { $mountguide != "none" } {
       switch $mountguide {
          SCS {
              cs mountGuide set mode On
@@ -152,7 +195,10 @@ itcl::body ActiveOptics::enable {} {
    }
 
 # M1 figure.
-   if { [lsearch {PWFS1 PWFS2 OIWFS} $m1figure] != -1 } {
+   if { [state m1] && $m1figure == "none" } {
+      cs m1Guide set mode Off
+      logger command m1Guide
+   } elseif { $m1figure != "none" } {
       switch $m1figure {
          PWFS1 {
              cs m1Guide set mode On
@@ -173,20 +219,25 @@ itcl::body ActiveOptics::enable {} {
              cs m1GuideConfig set frames 1
          }
       }
+      logger command m1GuideConfig
       logger command m1Guide
    }
 
 # Probe guiding.
-   if { [lsearch {PWFS1 PWFS2 OIWFS} $probeguide] != -1 } {
+   if { $probeguide == "none" && ( [state p1guide] || [state p2guide] ) } {
+      cs wfsGuideMode set state Off
+      logger command wfsGuideMode
+   } elseif { $probeguide != "none" } {
       cs wfsGuideMode set state On
       cs wfsGuideMode set probe $probeguide
+      logger command wfsGuideMode
    }
 
 # Start wave-front sensors.
    foreach wfs {pwfs1 pwfs2 oiwfs} {
-      if { [set ${wfs}Active] } {
-         cs ${wfs}Observe set noexp -1
-         cs ${wfs}Observe set int [set ${wfs}Expose]
+      if { [set ${wfs}Active] && ! [state $wfs] } {
+        cs ${wfs}Observe set noexp -1
+        cs ${wfs}Observe set int [set ${wfs}Expose]
          if { [set ${wfs}Quicklook] } {
             cs ${wfs}Observe set outopt DHS
             cs ${wfs}Observe set output QL
@@ -195,12 +246,15 @@ itcl::body ActiveOptics::enable {} {
             cs ${wfs}Observe set output ""
          }
          logger command ${wfs}Observe
+      } elseif { ! [set ${wfs}Active] && [state $wfs] } {
+         cs ${wfs}StopObserve set dummy 1
+         logger command ${wfs}StopObserve
       }
    }
 
 # Post the commands.
    if { [catch {cs tcsApply post} msg] } {
-      tk_messageBox -icon error -parent $itk_interior -message \
+      tk_messageBox -icon error -message \
             "Error posting guide commands: TCS reports \
             \"$msg\""
    }
@@ -236,7 +290,7 @@ itcl::body ActiveOptics::disable {} {
 
 # Post the command.
    if { [catch {cs tcsApply post} msg] } {
-      tk_messageBox -icon error -parent $itk_interior -message \
+      tk_messageBox -icon error -message \
             "Error posting guide commands: TCS reports \
             \"$msg\""
    }
@@ -304,6 +358,13 @@ itcl::body ActiveOptics::state {component} {
             } else {
                return 0
             }
+         } else {
+            return 0
+         }
+      }
+      coma {
+         if { [sa guideConfig get coma value] == "On" } {
+            return 1
          } else {
             return 0
          }
