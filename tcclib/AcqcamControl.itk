@@ -91,6 +91,14 @@ itcl::body AcqcamControl::constructor {args} {
    $itk_component(col) insert end neutral  U-red1 B-blue V-green R-red2 \
          I-red3
 
+   itk_component add currNDFilt {
+      MonitorLabel $w.currNDFilt hrwfs::currStatus ndfilt -width 7 -anchor e
+   }
+
+   itk_component add currColFilt {
+      MonitorLabel $w.currColFilt hrwfs::currStatus colfilt -width 7 -anchor e
+   }
+
    itk_component add window {
       iwidgets::optionmenu $w.window -labeltext Window -labelpos w -width 100 \
             -command [itcl::code $this window]
@@ -104,8 +112,12 @@ itcl::body AcqcamControl::constructor {args} {
    $itk_component(expose) insert list end 0.01 0.1 1.0 10.0
    $itk_component(expose) insert entry end 0.01
 
-   pack $itk_component(lens) $itk_component(nd) $itk_component(col) \
-         $itk_component(window) $itk_component(expose) -anchor e
+   grid $itk_component(lens) x -sticky nes
+   grid $itk_component(nd) $itk_component(currNDFilt) -sticky nes
+   grid $itk_component(col) $itk_component(currColFilt) -sticky nes
+   grid $itk_component(window) x -sticky nes
+   grid $itk_component(expose) - -sticky news
+
    pack $itk_component(label)
    pack $itk_component(control) -expand yes -fill x
    pack $itk_component(setup)
