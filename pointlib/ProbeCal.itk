@@ -1,0 +1,405 @@
+#+
+# ProbeCal <- itk::Widget
+#
+# The interface of the probe calibration procedure.
+#
+# D Terrett 4 October 2000
+#
+# Copyright CCLRC
+#+
+
+itcl::class ProbeCal {
+   inherit itk::Widget
+
+   constructor {args} {}
+   destructor {}
+
+   public variable guidetelwait  10000
+   public variable guidewfswait 120000
+
+   private method start {}
+   private method isinposition {p}
+   private method report {act msg}
+   private method log {step p}
+   private method follow {p}
+   private method finish {}
+   private method manual {p}
+
+   private variable probe
+   private variable logfd
+   private variable poindex
+   private variable polist
+   private variable action
+   private variable inposition1
+   private variable inposition2
+}
+
+itk::usual ProbeCal {
+   keep -labelfont -selectcolor
+   keep -background -cursor -foreground -font
+   keep -activebackground -activeforeground -disabledforeground
+   keep -highlightcolor -highlightthickness
+}
+
+itcl::body ProbeCal::constructor {args} {
+
+   itk_component add options {
+      frame $itk_interior.options
+   }
+   set w $itk_component(options)
+
+   itk_component add probe {
+      iwidgets::radiobox $w.probe -labeltext Probe
+   }
+   $itk_component(probe) add 1 -text "P1      "
+   $itk_component(probe) add 2 -text P2
+   $itk_component(probe) select 0
+
+   itk_component add mode {
+      iwidgets::radiobox $w.mode -labeltext Mode
+   }
+   $itk_component(mode) add auto -text Auto
+   $itk_component(mode) add manual -text Manual
+   $itk_component(mode) select 0
+
+   itk_component add pattern {
+      iwidgets::radiobox $w.pattern -labeltext "Pattern size"
+   }
+   $itk_component(pattern) add normal -text Normal
+   $itk_component(pattern) add full -text Full
+   $itk_component(pattern) select 1
+
+   pack $itk_component(probe) $itk_component(mode) $itk_component(pattern) \
+      -side left -anchor n -padx 5
+   
+   set w $itk_interior
+   itk_component add buttons {
+      frame $w.buttons -borderwidth 2 -relief sunken
+   }
+   set w $itk_component(buttons)
+   itk_component add start {
+      button $w.start -text Start -command [itcl::code $this start]
+   }
+   itk_component add stop {
+      button $w.stop -text Stop -state disabled \
+            -command "[itcl::code $this finish]"
+   }
+   pack $itk_component(start) $itk_component(stop) -padx 50 -pady 10 \
+         -fill x -side left -expand y
+   pack $itk_component(options) $itk_component(buttons) -fill x \
+      -expand yes
+
+# Create all the actions needed to drive the calibration process.
+   foreach p {1 2} {
+
+# Setting up M2 and parking the other probe arm.
+      set action($p,setup) [seq::Action #auto tcs]
+      $action($p,setup) set m2GuideConfig source PWFS${p}
+      switch $p {
+         1 {
+            $action($p,setup) set pwfs2Park
+            $action($p,setup) configure -waitvar [scope inposition2(value)] \
+                  -oktest [itcl::code $this isinposition 2] 
+         }
+         2 {
+            $action($p,setup) set pwfs1Park
+            $action($p,setup) configure -waitvar [scope inposition1(value)] \
+                  -oktest [itcl::code $this isinposition 2]
+         }
+      }
+      $action($p,setup) set pwfs1Guide nodachopa off
+      $action($p,setup) set pwfs1Guide nodbchopa off
+      $action($p,setup) set pwfs1Guide nodachopb off
+      $action($p,setup) set pwfs1Guide nodbchopb off
+      $action($p,setup) set pwfs2Guide nodachopa off
+      $action($p,setup) set pwfs2Guide nodbchopa off
+      $action($p,setup) set pwfs2Guide nodachopb off
+      $action($p,setup) set pwfs2Guide nodbchopb off
+
+# Centering the probe arm.
+      set action($p,centre) [seq::Action #auto tcs \
+            -waitvar [scope inposition${p}(value)] \
+            -oktest [itcl::code $this isinposition $p]]
+      $action($p,centre) set wfsGuideMode state off
+      $action($p,centre) set mountGuide mode off
+      $action($p,centre) set pwfs${p}StopObserve
+      $action($p,centre) set pwfs${p}Move x [calparam cget -pwfs${p}_center_x]
+      $action($p,centre) set pwfs${p}Move y [calparam cget -pwfs${p}_center_y]
+      $action($p,centre) set pwfs${p}Move z [calparam cget -pwfs${p}_center_z]
+      $action($p,centre) set pwfs${p}Guide nodachopa off
+      set xcenhs [calparam cget -pwfs${p}_hotspot_x]
+      set ycenhs [calparam cget -pwfs${p}_hotspot_y]
+      $action($p,centre) set poriginA x $xcenhs
+      $action($p,centre) set poriginA y $ycenhs
+      $action($p,centre) set poriginB x $xcenhs
+      $action($p,centre) set poriginB y $ycenhs
+      $action($p,centre) set poriginC x $xcenhs
+      $action($p,centre) set poriginC y $ycenhs
+
+
+# Guiding the telescope.
+      set action($p,guidetel) [seq::Action #auto tcs \
+            -waitvar [scope inposition${p}(value)] \
+            -oktest [itcl::code $this isinposition $p]]
+      $action($p,guidetel) set m2Guide state on
+      $action($p,guidetel) set pwfs${p}Observe noexp -1
+      $action($p,guidetel) set mountGuide mode on
+      $action($p,guidetel) set mountGuide source SCS
+      $action($p,guidetel) set clearOffset vt PWFS${p}
+
+# Set the arm following
+      set action($p,follow) [seq::Action #auto tcs \
+            -waitvar [scope inposition${p}(value)] \
+            -oktest [itcl::code $this isinposition $p]]
+      $action($p,follow) set mountGuide mode off
+      $action($p,follow) set m2Guide state off
+      $action($p,follow) set pwfs${p}StopObserve
+      $action($p,follow) set p${p}Follow followState on
+      $action($p,follow) set pwfs${p}Guide nodachopa on
+      $action($p,follow) set clearOffset index all
+
+# Start the WFS.
+      set action($p,observe) [seq::Action #auto tcs]
+      $action($p,observe) set pwfs${p}Observe noexp -1
+
+# Guide the probe onto the star.
+      set action($p,guidewfs1) [seq::Action #auto tcs \
+            -waitvar [scope inposition${p}(value)] \
+            -oktest [itcl::code $this isinposition $p]]
+      $action($p,guidewfs1) set wfsGuideMode state on
+      $action($p,guidewfs1) set wfsGuideMode probe PWFS${p}
+
+# Flip the probe arm to its other orientation.
+#      set action($p,flip) [seq::Action #auto tcs \
+#            -waitvar [scope inposition${p}(value)] \
+#            -oktest [itcl::code $this isinposition $p]]
+#      $action($p,flip) set wfsGuideMode state off
+#      $action($p,flip) set pwfs${p}StopObserve
+#      $action($p,flip) set pwfs${p}Flip
+
+# Guide probe again.
+#      set action($p,guidewfs2) [seq::Action #auto tcs \
+#            -waitvar [scope inposition${p}(value)] \
+#            -oktest [itcl::code $this isinposition $p]]
+#      $action($p,guidewfs2) set pwfs${p}Observe noexp -1
+#      $action($p,guidewfs2) set wfsGuideMode state on
+
+# Finish
+      set action($p,finish) [seq::Action #auto tcs]
+      $action($p,finish) set wfsGuideMode state off
+      $action($p,finish) set pwfs${p}StopObserve
+
+# Chain the actions together.
+      $action($p,setup) configure \
+            -onok [namespace code "$action($p,centre) start"]
+      $action($p,centre) configure \
+            -onok [namespace code "$action($p,guidetel) start"]
+      $action($p,guidetel) configure \
+            -onok "after $guidetelwait [itcl::code $this follow $p]"
+      $action($p,follow) configure -onok [itcl::code $this manual $p]
+      $action($p,guidewfs1) configure \
+            -onok "after $guidewfswait [itcl::code $this log 2 $p]"
+#      $action($p,flip) configure \
+#            -onok [namespace code "$action($p,guidewfs2) start"]
+#      $action($p,guidewfs2) configure \
+#            -onok "after $guidewfswait [itcl::code $this log 2 $p]"
+
+# Monitor the probe arm inPosition status.
+      sa agssad link p${p}InPosition [scope inposition${p}]
+   }
+
+# Configure all the -onerror options.
+   foreach act [array names action] {
+      $action($act) configure \
+            -onerror [itcl::code $this report $act]
+   }
+
+   eval itk_initialize $args
+}
+
+itcl::body ProbeCal::destructor {} {
+
+# Delete all the action objects.
+   foreach act [array names action] {
+      itcl::delete object $action($act)
+   }
+}
+
+itcl::body ProbeCal::start {} {
+
+# Open a log file.
+   set filename [tk_getSaveFile -parent $itk_interior \
+         -title "Probe Calibration Log File"]
+
+   if { ![string is space $filename] } {
+      set logfd [open $filename {WRONLY CREAT TRUNC}]
+
+# Disable the start button.
+      $itk_component(start) configure -state disabled
+      $itk_component(stop) configure -state normal
+
+# Write the file header.
+      set probe [$itk_component(probe) get]
+      puts $logfd $probe
+      set dt [clock format [clock seconds] -format "%Y %B %d %H:%M" -gmt 1]
+      puts $logfd "# Probe geometry calibration started at $dt UTC"
+      puts $logfd "#"
+      puts $logfd "# Current settings of probe geometry model are:"
+      puts $logfd "#"
+      puts $logfd "#  Rotary table radius: [sa agssad get p${probe}RadiusRT]"
+      puts $logfd "#  Probe arm radius:    [sa agssad get p${probe}RadiusPA]"
+      puts $logfd "#  X translation:       [sa agssad get p${probe}XTranslation]"
+      puts $logfd "#  Y translation:       [sa agssad get p${probe}YTranslation]"
+      puts $logfd "#  Rotary table offset: [sa agssad get p${probe}TableOffset]"
+      puts $logfd "#  Probe arm offset:    [sa agssad get p${probe}ArmOffset]"
+      puts $logfd "#"
+      puts $logfd "#      X          Y         RT        PA"
+      flush $logfd
+
+# Start at the begining of the pointing origin list.
+      set poindex -1
+
+# Initialise the pointing origin list.
+      switch [$itk_component(pattern) get] {
+         normal {
+            switch $probe {
+               1 {
+                  set xlist {  0   0 100 100 200}
+                  set ylist {100 200 100 200 100}
+               }
+               2 {
+                  set xlist {  0   0 100 100 200}
+                  set ylist {100 200 100 200 100}
+               }
+            }
+         }
+         full {
+            switch $probe {
+              1 {
+                  set xlist {  0   0   0   0   0 \
+                              50  50  50  50 \
+                             100 100 100 100 \
+                             150 150 150 150 \
+                             200 200 200 \
+                  set ylist { 50 100 150 200 250 \
+                              50 100 150 200 \
+                              50 100 150 200 \
+                              50 100 150 200 \
+                              50 100 150 \
+              }
+              2 {
+                  set xlist {  0   0   0   0   0 \
+                              50  50  50  50 \
+                             100 100 100 100 \
+                             150 150 150 150 \
+                             200 200 200 \
+                  set ylist { 50 100 150 200 250 \
+                              50 100 150 200 \
+                              50 100 150 200 \
+                              50 100 150 200 \
+                              50 100 150 \
+              }
+            }
+         }
+      }
+      set polist {}
+      foreach x $xlist y $ylist {lappend polist "$x $y"}
+      foreach x $xlist y $ylist {lappend polist "$y -$x"}
+      foreach x $xlist y $ylist {lappend polist "-$x -$y"}
+      foreach x $xlist y $ylist {lappend polist "-$y $x"}
+
+# Start the calibration process.
+      $action($probe,setup) start
+   }
+}
+
+itcl::body ProbeCal::isinposition {p} {
+   set val [sa agssad get p${p}InPosition]
+   return $val
+}
+
+itcl::body ProbeCal::report {act msg} {
+   set reply [tk_messageBox -parent $itk_interior -icon error -type okcancel \
+         -message $msg]
+   if { [string equal $reply ok] } {
+      uplevel #0 [$action($act) cget -onok]
+   } else {
+      finish
+   }
+}
+
+itcl::body ProbeCal::follow {p} {
+
+# Get the next pointing origin in the list.
+   set po [lindex $polist [incr poindex]]
+
+# Configure the follow action to go to the next position and start it.
+   foreach {x y} $po {}
+   $action($p,follow) set poriginA x $x
+   $action($p,follow) set poriginA y $y
+   $action($p,follow) set poriginB x $x
+   $action($p,follow) set poriginB y $y
+   $action($p,follow) set poriginC x $x
+   $action($p,follow) set poriginC y $y
+   $action($p,follow) start
+
+# Update the window title to show how far we have got.
+   wm title . "Point [expr {$poindex + 1}] of [llength $polist]"
+}
+
+itcl::body ProbeCal::log {step p} {
+
+# Log the probe data.
+   set po [lindex $polist $poindex]
+   set table [sa agssad get p${p}TableAngle]
+   set arm [sa agssad get p${p}ArmAngle]
+   puts $logfd [format "%10.2f %10.2f %10.2f %10.2f" \
+         [lindex $po 0] [lindex $po 1] $table $arm]
+   flush $logfd
+
+# Start the next step.
+   switch $step {
+      1 {
+         $action($p,flip) start
+      }
+      2 {
+         if { $poindex >= [llength $polist] - 1 } {
+            $action($p,finish) start
+            finish
+         } else {
+            $action($p,centre) start
+         }
+      }
+   }
+}
+
+itcl::body ProbeCal::finish {} {
+
+# Cancel any outstanding actions.
+   tcs cancel ""
+
+# Kill any pending "after" events.
+  foreach id [after info] {
+     after cancel $id
+  }
+
+# Close the log file.
+   puts $logfd ""
+   set dt [clock format [clock seconds] -format "%Y %B %d %H:%M" -gmt 1]
+   puts $logfd "# finished at $dt UTC"
+   close $logfd
+
+# Re-enable the start button.
+   $itk_component(start) configure -state normal
+   $itk_component(stop) configure -state disabled
+}
+
+itcl::body ProbeCal::manual {p} {
+   cs pwfs${p}Observe set noexp -1
+   cs pwfs${p}Observe post
+   if { [string equal [$itk_component(mode) get] manual] } {
+      tk_messageBox -parent $itk_interior -type ok -icon question \
+            -message "Press Ok when the star is visible on the WFS"
+   }
+   $action($p,guidewfs1) start
+}
