@@ -10,14 +10,14 @@ SLAOBJ = slaext.o
 BITOBJ = bitmaps.o
 
 CC = /opt/SUNWspro/bin/cc 
-CFLAGS = -K pic -Xc -G -DUSE_TCL_STUBS -DUSE_TK_STUBS \
+CFLAGS = -K pic -Xc -G -DUSE_TCL_STUBS -DUSE_TK_STUBS -DUSE_OLD_CANVAS \
          -I${HLPG_INSTALL_BASE}/../packages/tcl$(TCL_VERS)/include \
          -I/gemini/slalib/include \
          -I/gemini/timelib/include \
          -I/gemini/astlib/include
 
 #CC = gcc
-#CFLAGS =  -fPIC -G -DUSE_TCL_STUBS -DUSE_TK_STUBS \
+#CFLAGS =  -fPIC -G -DUSE_TCL_STUBS -DUSE_TK_STUBS -DUSE_OLD_CANVAS \
 #         -I/gemini/packages/tcl$(TCL_VERS)/include \
 #         -I$(HOME)/gemini/slalib/rel/include \
 #         -I$(HOME)/gemini/timelib/rel/include \
