@@ -14,6 +14,8 @@
 #
 #           -oiwfstarget    The name of the oiwfs target
 #
+#           -altairtarget    The name of the oiwfs target
+#
 #           -rotator        The name of the rotator confguration
 #
 #           -guide          The name of the guide configuration
@@ -46,7 +48,7 @@
 #
 #          plot azelplot Plots the field position on an azelplot.
 #
-#  D Terrett 9 May 2002
+#  D Terrett 3 November 2002
 #
 #  Copyright CCLRC
 #+
@@ -70,6 +72,7 @@ itcl::class Field {
       variable pwfs1target ""
       variable pwfs2target ""
       variable oiwfstarget ""
+      variable altairtarget ""
       variable rotator ""
       variable guide ""
       variable wavelength ""
@@ -86,6 +89,7 @@ itcl::class Field {
       variable current_pwfs1target ""
       variable current_pwfs2target ""
       variable current_oiwfstarget ""
+      variable current_altairtarget ""
       variable current_guide ""
       variable current_rotator ""
       variable current_wavelength ""
@@ -160,6 +164,9 @@ itcl::body Field::apply {comp} {
    if { ! [string equal $oiwfstarget ""] } {
       ${targetns}::$oiwfstarget apply $comp.oiwfstarget
    }
+   if { ! [string equal $altairtarget ""] } {
+      ${targetns}::$altairtarget apply $comp.altairtarget
+   }
    if { ! [string equal $guide ""] } {
       ::GuideNames::$guide apply $comp.guide
    }
@@ -186,6 +193,7 @@ itcl::body Field::init {} {
    $this configure -pwfs1target ""
    $this configure -pwfs2target ""
    $this configure -oiwfstarget ""
+   $this configure -altairtarget ""
    $this configure -guide ""
    $this configure -rotator ""
    $this configure -wavelength ""
@@ -208,6 +216,9 @@ itcl::body Field::preview {} {
    if { ! [string equal $oiwfstarget ""] } {
       ${targetns}::$oiwfstarget preview oiwfs
    }
+   if { ! [string equal $altairtarget ""] } {
+      ${targetns}::$altairtarget preview altair
+   }
    if { ! [string equal $guide ""] } {
       ::GuideNames::$guide preview
    }
@@ -225,6 +236,7 @@ itcl::body Field::save {node} {
    param $node pwfs1target $pwfs1target
    param $node pwfs2target $pwfs2target
    param $node oiwfstarget $oiwfstarget
+   param $node altairtarget $altairtarget
    param $node guide $guide
    param $node rotator $rotator
    param $node wavelength $wavelength
@@ -297,6 +309,20 @@ itcl::configbody Field::oiwfstarget {
          error "Target \"$oiwfstarget\" does not exist"
       } else {
          set current_oiwfstarget $oiwfstarget
+      }
+   }
+}
+
+itcl::configbody Field::altairtarget {
+   if { ! [string equal $current_altairtarget ""] } {
+      ${targetns}::$current_altairtarget refdec
+   }
+   set current_altairtarget ""
+   if { ! [string equal $altairtarget ""] } {
+      if { [catch {${targetns}::$altairtarget refinc}] } {
+         error "Target \"$altairtarget\" does not exist"
+      } else {
+         set current_altairtarget $altairtarget
       }
    }
 }

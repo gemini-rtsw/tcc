@@ -1,0 +1,124 @@
+#+
+#  AltairControl <- ComponentControl
+#
+#  A Altair control is a ComponentControl widget with widgets for the 
+#  guide star magnitude, wind speed, seeing estimate and whether the
+#  ADC should be deployed.
+#
+#  Options:
+#           -component         The name of the component that this control
+#                              edits.
+#
+#  D Terrett 1 November 2002
+#
+#  Copyright CCLRC
+#+
+
+itcl::class AltairControl {
+   inherit ComponentControl
+   constructor args {}
+   itk_option define -component component Component {}
+   public {
+      method load {name}
+      method reset {}
+      method save {name}
+   }
+   private {
+      variable deployAdc 1
+      variable adjustAdc 1
+   }
+}
+
+itk::usual AltairControl {
+   keep -borderwidth -cursor -font -highlightthickness -insertborderwidth \
+         -insertofftime -insertontime -insertwidth -labelfont -popupcursor \
+         -selectborderwidth -textfont -title
+}
+
+itcl::body AltairControl::constructor args {
+
+# Frame.
+   itk_component add chop {
+      frame $itk_interior.chop -bd 2 -relief ridge
+   }
+   pack $itk_component(chop) -fill x -expand y
+   set w $itk_component(chop)
+
+# Guide star magnitude.
+   itk_component add gsmag {
+      iwidgets::entryfield $w.gsmag -labeltext "Guide star magnitude" -width 8
+   }
+   pack $itk_component(gsmag) -anchor e -pady 4
+
+# Seeing estimate
+   itk_component add seeing {
+      iwidgets::entryfield $w.seeing -labeltext "Seeing estimate r0" -width 8
+   }
+   pack $itk_component(seeing) -anchor e -pady 4
+
+# Wind speed
+   itk_component add windspeed {
+      iwidgets::entryfield $w.windspeed -labeltext "Wind speed (m/s)" -width 8
+   }
+   pack $itk_component(windspeed) -anchor e -pady 4
+
+# Deploy ADC.
+   itk_component add deployAdc {
+      checkbutton $w.deployAdc -text "Deploy ADC" \
+            -variable [itcl::scope deployAdc]
+   }
+   pack $itk_component(deployAdc) -pady 4
+
+# adjust ADC.
+   itk_component add adjustAdc {
+      checkbutton $w.adjustAdc -text "Adjust ADC" \
+            -variable [itcl::scope adjustAdc]
+   }
+   pack $itk_component(adjustAdc) -pady 4
+
+# Set the object description.
+   set description "ALTAIR configuration"
+
+   eval itk_initialize $args
+}
+
+itcl::body AltairControl::reset {} {
+   $itk_component(gsmag) clear
+   $itk_component(seeing) clear
+   $itk_component(windspeed) clear
+   set deployAdc 1
+   set adjustAdc 1
+}
+
+itcl::body AltairControl::load {name} {
+
+# Copy the contents of the specified chop object into the edit
+# controls.
+   $itk_component(gsmag) insert end [$name cget -gsmag]
+   $itk_component(seeing) insert end [$name cget -seeing]
+   $itk_component(windspeed) insert end [$name cget -windspeed]
+   switch [string toupper [$name cget -deployAdc]] {
+      IN {
+         set deployAdc 1
+      }
+      OUT {
+         set deployAdc 0
+      }
+   }
+   switch [string toupper [$name cget -adjustAdc]] {
+      ON {
+         set adjustAdc 1
+      }
+      OFF {
+         set adjustAdc 0
+      }
+   }
+}
+
+itcl::body AltairControl::save {name} {
+   $name configure -gsmag [$itk_component(gsmag) get]
+   $name configure -seeing [$itk_component(seeing) get]
+   $name configure -windspeed [$itk_component(windspeed) get]
+   $name configure -deployAdc [expr { $deployAdc ? "IN" : "OUT" }]
+   $name configure -adjustAdc [expr { $adjustAdc ? "ON" : "OFF" }]
+}

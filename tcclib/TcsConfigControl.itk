@@ -3,7 +3,7 @@
 #
 #  Implements the TcsConfigControl widget.
 #
-#  D Terrett 10 July 2002
+#  D Terrett 3 November 2002
 #
 #  Copyright CCLRC
 #+
@@ -20,10 +20,10 @@ itcl::class TcsConfigControl {
       method apply {}
       method wrap {par}
       variable components {
-         field pointOrig slewOptions chop trackFrame instrument
+         field pointOrig slewOptions chop altair trackFrame instrument
       }
       variable options {
-         -field -pointOrig -slewOptions -chop -trackFrame -instrument
+         -field -pointOrig -slewOptions -chop -altair -trackFrame -instrument
       }
    }
 }
@@ -78,6 +78,15 @@ itcl::body TcsConfigControl::constructor args {
       rename -textfont -majorfont majorFont Font
       rename -labelfont -majorfont majorFont Font
    }
+   itk_component add altair {
+      ComponentSelector $w.altair -labeltext ALTAIR \
+            -component tcs.altair \
+            -active 1 
+   } {
+      usual
+      rename -textfont -majorfont majorFont Font
+      rename -labelfont -majorfont majorFont Font
+   }
    itk_component add slewOptions {
       ComponentSelector $w.slewOptions -labeltext "Slew Options" \
             -component tcs.slewoptions \
@@ -107,8 +116,8 @@ itcl::body TcsConfigControl::constructor args {
    }
 
    pack $itk_component(field) $itk_component(pointOrig) \
-         $itk_component(chop) $itk_component(slewOptions) \
-         $itk_component(instrument) -fill x -pady 1
+         $itk_component(chop) $itk_component(altair) \
+         $itk_component(slewOptions) $itk_component(instrument) -fill x -pady 1
 
 # Wrap control
    set w $itk_component(row2)

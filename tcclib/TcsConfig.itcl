@@ -13,6 +13,8 @@
 #
 #           -chop           The name of the chop component.
 #
+#           -altair         The name of the ALTAIR component.
+#
 #           -slewOptions    The name of the slew options component.
 #
 #           -trackFrame     The name of the tracking frame component.
@@ -29,7 +31,7 @@
 #          save node    Saves the values of all the component options to
 #                       the xml node.
 #
-#  D Terrett 6 April 2002
+#  D Terrett 3 November 2002
 #
 #  Copyright CCLRC
 #+
@@ -45,6 +47,7 @@ itcl::class TcsConfig {
       variable field ""
       variable pointOrig ""
       variable chop ""
+      variable altair ""
       variable slewOptions ""
       variable trackFrame ""
       variable instrument ""
@@ -53,6 +56,7 @@ itcl::class TcsConfig {
       variable current_field ""
       variable current_pointOrig ""
       variable current_chop ""
+      variable current_altair ""
       variable current_slewOptions ""
       variable current_trackFrame ""
       variable current_instrument ""
@@ -71,6 +75,9 @@ itcl::body TcsConfig::apply {comp} {
    if { ! [string equal $chop ""] } {
       ::ChopNames::$chop apply $comp.chop
    }
+   if { ! [string equal $altair ""] } {
+      ::AltairNames::$altair apply $comp.altair
+   }
    if { ! [string equal $slewOptions ""] } {
       ::SlewOptionsNames::$slewOptions apply $comp.slewoptions
    }
@@ -86,6 +93,7 @@ itcl::body TcsConfig::init {} {
    $this configure -field ""
    $this configure -pointOrig ""
    $this configure -chop ""
+   $this configure -altair ""
    $this configure -slewOptions ""
    $this configure -trackFrame ""
    $this configure -instrument ""
@@ -116,6 +124,7 @@ itcl::body TcsConfig::save {node} {
    param $node field $field
    param $node pointOrig $pointOrig
    param $node chop $chop
+   param $node altair $altair
    param $node slewOptions $slewOptions
    param $node trackFrame $trackFrame
    param $node instrument $instrument
@@ -159,6 +168,20 @@ itcl::configbody TcsConfig::chop {
          error "Chop configuration \"$chop\" does not exist"
       } else {
          set current_chop $chop
+      }
+   }
+}
+
+itcl::configbody TcsConfig::altair {
+   if { ! [string equal $current_altair ""] } {
+      AltairNames::$current_altair refdec
+   }
+   set current_altair ""
+   if { ! [string equal $altair ""] } {
+      if { [catch {AltairNames::$altair refinc}] } {
+         error "Altair configuration \"$altair\" does not exist"
+      } else {
+         set current_altair $altair
       }
    }
 }

@@ -1,0 +1,123 @@
+#+
+#  Altair <- Paramset
+#
+#  Implements the Altair class. A Altair object stores various parameters
+#  that are needed for the initial setup of ALTAIR when the telescope is
+#  slewed.
+#
+#  Options:
+#
+#          -deployAdc    ADC position
+#
+#          -adjustAdc    Adjust ADC during exposure.
+#
+#          -gsmag        Guide star magnitude
+#
+#          -seeing       Seeing estimate.
+#
+#          -windspeed    Wind speed.
+#
+#  Methods:
+#          apply comp    Applies the Altair configuration to the TCS by 
+#                        setting the values of the command parameters.
+#                        The argument is ignored.
+#
+#          init          Returns the Altair object to its initial state.
+#
+#          save node     Saves the values of the Altair configuration
+#                        to the xml node
+#
+#  D Terrett 3 November 2002
+#
+#  Copyright CCLRC
+#+
+
+itcl::class Altair {
+   inherit Paramset
+   destructor {$this init}
+   public {
+      method apply {comp}
+      method init {}
+      method save {node}
+      variable adjustAdc {}
+      variable deployAdc {}
+      variable gsmag {}
+      variable seeing {}
+      variable windspeed {}
+   }
+}
+
+itcl::body Altair::apply {comp} {
+
+# In order to configure ALTAIR we need know the Cass rotator position and
+# guide start X/Y. If we are being called as part of an overall TCS
+# configuration then we must predict what these are going to be using the
+# tccPreview functions. If not, we use the current values from the telescope.
+   if { [string equal [uplevel 1 \$this info class] ::TcsConfigComponent] } {
+
+# Call the configuration's preview method.
+      tccPreview begin
+      uplevel 1 preview
+      tccPreview end 0.0
+
+# Fetch the predictions.
+      set rotpos [lindex [tccPreview get rotator] 1]
+      set zd [lindex [tccPreview get source] 1]
+      set xy [tccPreview get pwfs2]
+      if { [llength $xy] == 0 } {
+         error "Configuration must contain an ALTAIR guide star"
+      }
+      set x [lindex $xy 0]
+      set y [lindex $xy 1]
+   } else {
+      set rotpos [sa tcssad get demandRma]
+      set rotpos [expr { $rotpos < 0.0 ? $rotpos + 360.0 : $rotpos }]
+      scan [sa tcssad get demandEl] "%d:%d:%f" d m s
+      set el [expr { $d + $m / 60.0 + $s / 3600 }]
+      set zd [expr { 90.0 - $el }]
+      set x [sa tcssad get aoDemandx]
+      set y [sa tcssad get aoDemandy]
+   }
+
+   cs aoDeployAdc set position $deployAdc
+   logger command aoDeployAdc
+
+   cs aoMoveAdc set rotpos $rotpos
+   cs aoMoveAdc set zd $zd
+   cs aoMoveAdc set adjust $adjustAdc
+
+# Assume that the central waevelength is always the same as the sourceA
+# wavelength.
+   set wavel [cs wavelSourceA get wavel]
+   if { $wavel != "No Value" } {
+      cs aoMoveAdc wavel [expr { $wavel * 1000.0 }]
+   }
+   logger command aoMoveAdc
+
+   cs aoPrepareCm set x $x
+   cs aoPrepareCm set y $y
+   cs aoPrepareCm set gsmag $gsmag
+   cs aoPrepareCm set seeing $seeing
+   cs aoPrepareCm set windspeed $windspeed
+   logger command aoPrepareCm
+
+   cs aoFlatten dummy 1
+   logger command aoFlatten
+}
+
+itcl::body Altair::save {node} {
+   set node [paramset $node altair]
+   param $node adjustAdc $adjustAdc
+   param $node deployAdc $deployAdc
+   param $node gsmag $gsmag
+   param $node seeing $seeing
+   param $node windspeed $windspeed
+}
+
+itcl::body Altair::init {} {
+   set adjustAdc ""
+   set deployAdc ""
+   set gsmag ""
+   set seeing ""
+   set windspeed ""
+}

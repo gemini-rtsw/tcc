@@ -19,7 +19,7 @@
 #           newtarget name type args  Creates a new target in the currently 
 #                                     selected field.
 #
-#  D Terrett 9 May 2002
+#  D Terrett 3 November 2002
 #
 #  Copyright CCLRC
 #+
@@ -65,30 +65,38 @@ itcl::body FieldControl::constructor args {
       label $w.sciencelabel -text "SCIENCE Target"
    }
    itk_component add sciencename {
-      label $w.sciencename -width 23 -borderwidth 2 -relief sunken
+      label $w.sciencename -width 19 -borderwidth 2 -relief sunken
    }
    itk_component add pwfs1label {
       label $w.pwfs1label -text "PWFS1 Target"
    }
    itk_component add pwfs1name {
-      label $w.pwfs1name -width 23 -borderwidth 2 -relief sunken
+      label $w.pwfs1name -width 19 -borderwidth 2 -relief sunken
    }
    itk_component add pwfs2label {
       label $w.pwfs2label -text "PWFS2 Target"
    }
    itk_component add pwfs2name {
-      label $w.pwfs2name -width 23 -borderwidth 2 -relief sunken
+      label $w.pwfs2name -width 19 -borderwidth 2 -relief sunken
    }
    itk_component add oiwfslabel {
       label $w.oiwfslabel -text "OIWFS target"
    }
    itk_component add oiwfsname {
-      label $w.oiwfsname -width 23 -borderwidth 2 -relief sunken
+      label $w.oiwfsname -width 19 -borderwidth 2 -relief sunken
+   }
+   itk_component add altairlabel {
+      label $w.altairlabel -text "ALTAIR target"
+   }
+   itk_component add altairname {
+      label $w.altairname -width 19 -borderwidth 2 -relief sunken
    }
    grid $itk_component(sciencelabel) $itk_component(pwfs1label) \
-         $itk_component(pwfs2label) $itk_component(oiwfslabel)
+         $itk_component(pwfs2label) $itk_component(oiwfslabel) \
+         $itk_component(altairlabel)
    grid $itk_component(sciencename) $itk_component(pwfs1name) \
-         $itk_component(pwfs2name) $itk_component(oiwfsname) -padx 5
+         $itk_component(pwfs2name) $itk_component(oiwfsname) \
+         $itk_component(altairname) -padx 5
 
 # Guide, rotator and wavelength selection.
    itk_component add subsel {
@@ -155,6 +163,14 @@ itcl::body FieldControl::constructor args {
       ignore -title
    }
    pack $itk_component(oiwfscontrol)
+   set w [$itk_component(targets) add -label ALTAIR]
+   itk_component add altaircontrol {
+      WfsTargetControl $w.altaircontrol
+   } {
+      usual
+      ignore -title
+   }
+   pack $itk_component(altaircontrol)
    pack $itk_component(targets) -side top
 
 # Airmass limit and program ID.
@@ -261,7 +277,7 @@ itcl::body FieldControl::save {name} {
    }
 
 # Configure the targets.
-   foreach target {science pwfs1 pwfs2 oiwfs} {
+   foreach target {science pwfs1 pwfs2 oiwfs altair} {
       $name configure -${target}target \
             [$itk_component(${target}name) cget -text]
    }
@@ -284,6 +300,7 @@ itcl::body FieldControl::reset {} {
    set ::Config(tcs.field.pwfs1target,value) ""
    set ::Config(tcs.field.pwfs2target,value) ""
    set ::Config(tcs.field.oiwfstarget,value) ""
+   set ::Config(tcs.field.altairtarget,value) ""
 }
 
 itcl::body FieldControl::load {name} {
@@ -296,7 +313,7 @@ itcl::body FieldControl::load {name} {
    set currentname ${name}
 
 # Set the namespace and list to save targets and track rates in.
-   foreach target {science pwfs1 pwfs2 oiwfs} {
+   foreach target {science pwfs1 pwfs2 oiwfs altair} {
       set ::Config($comp.${target}target,list) ${name}TargetList
       set ::Config($comp.${target}target,namespace) ${name}TargetNames
       set ::Config($comp.${target}target,value) [$name cget -${target}target]
@@ -321,7 +338,7 @@ itcl::configbody FieldControl::component {
        set comp $itk_option(-component)
 
 # Configure the component options of the target controls.
-      foreach target {science pwfs1 pwfs2 oiwfs} {
+      foreach target {science pwfs1 pwfs2 oiwfs altair} {
          $itk_component(${target}control) configure \
                -component $comp.${target}target
 
@@ -365,6 +382,9 @@ itcl::body FieldControl::sync {component name} {
       tcs.field.oiwfstarget {
          $itk_component(oiwfscontrol) sync $name
       }
+      tcs.field.altairtarget {
+         $itk_component(altaircontrol) sync $name
+      }
    }
 }
 
@@ -404,6 +424,9 @@ itcl::body FieldControl::newtarget {name type args} {
    }
    if { $target == $::Config(tcs.field.oiwfstarget,value) } {
       $field configure -oiwfstarget ""
+   }
+   if { $target == $::Config(tcs.field.altairtarget,value) } {
+      $field configure -altairtarget ""
    }
    catch {$field remove target $target}
 

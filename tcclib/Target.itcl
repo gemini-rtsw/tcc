@@ -155,6 +155,9 @@ itcl::body Target::apply {comp} {
       tcs.field.oiwfstarget {
          set vt oiwfs
       }
+      tcs.field.altairtarget {
+         set vt pwfs2
+      }
    }
 
    switch $type {
@@ -309,6 +312,9 @@ itcl::body Target::init {} {
 }
 
 itcl::body Target::preview vt {
+   if { [string equal $vt altair] } {
+      set vt pwfs2
+   }
    if { [string equal $cosys ""] } {
       set system FK5
       set equinox J2000
@@ -482,6 +488,9 @@ itcl::body Target::grab {comp} {
       }
       tcs.field.oiwfstarget {
          set vt oiwfs
+      }
+      tcs.field.altairtarget {
+         set vt pwfs2
       }
    }
 

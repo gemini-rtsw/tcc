@@ -6,7 +6,7 @@
 #
 #  Options:
 #
-#  D Terrett 24 October 2002
+#  D Terrett 4 November 2002
 #
 #  Copyright CCLRC
 #+
@@ -43,13 +43,13 @@ itcl::body GuideControl::constructor {args} {
    }
    pack $itk_component(pwfs1) $itk_component(pwfs2) $itk_component(oiwfs)
 
-   foreach wfs {pwfs1 pwfs2 oiwfs} {
+   foreach wfs {pwfs1 pwfs2 oiwfs} label {PWFS1 P2/AO OIWFS} {
       set w $itk_component($wfs)
 
 # Chop state
       itk_component add ${wfs}chop {
          iwidgets::optionmenu $w.chop \
-               -labeltext "[string toupper $wfs] probe follows star" \
+               -labeltext "$label probe follows star" \
                -labelpos nw
       }
       [$itk_component(${wfs}chop) component menuBtn] configure -anchor w
@@ -88,6 +88,9 @@ itcl::body GuideControl::constructor {args} {
          }
          $itk_component(${wfs}filter) insert end neutral Blue Green Red Red04 \
                Red1 ""
+         if { $wfs == "pwfs2" } {
+            $itk_component(${wfs}filter) insert Red1 "ALTAIR"
+         }
          itk_component add ${wfs}wavel {
             iwidgets::entryfield $w.${wfs}wavel -labeltext "Wavelength (um)" \
                   -width 8
@@ -102,7 +105,7 @@ itcl::body GuideControl::constructor {args} {
 
 # Define the default wavelengths for the peripheral wave-front filters.
    array set defaultwavels {neutral 0.65 Blue 0.45 Green 0.55 Red 0.60 \
-         Red04 0.64 Red1 0.70}
+         Red04 0.64 Red1 0.70 ALTAIR 0.70}
 
    eval itk_initialize $args
 }

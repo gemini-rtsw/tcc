@@ -6,7 +6,7 @@
 #  Arguments:
 #             none
 #
-#  D Terrett 10 June 2002
+#  D Terrett 3 November 2002
 #
 #  Copyright CCLRC
 #-
@@ -101,6 +101,18 @@ proc createPanels {} {
          -name .tcsFieldOiwfsTargetTrackRateCosysPanel -class CosysPanel \
          -title "Oiwfs Target Differential Track Rate Coordinate System" \
          -components tcs.field.oiwfstarget.trackrate.cosys
+   EditPanelMgr tcsFieldAltairTargetCosysPanel \
+         -name .tcsFieldAltairTargetCosysPanel -class CosysPanel \
+         -title "ALTAIR Target Coordinate System" \
+         -components tcs.field.pwfs2target.cosys
+   EditPanelMgr tcsFieldAltairTargetTrackRatePanel \
+         -name .tcsFieldAltairTargetTrackRatePanel -class TrackRatePanel \
+         -title "ALTAIR Target Differential Track Rates" \
+         -components tcs.field.pwfs2target.trackrate
+   EditPanelMgr tcsFieldAltairTargetTrackRateCosysPanel \
+         -name .tcsFieldAltairTargetTrackRateCosysPanel -class CosysPanel \
+         -title "ALTAIR Target Differential Track Rate Coordinate System" \
+         -components tcs.field.pwfs2target.trackrate.cosys
    EditPanelMgr tcsGuidePanel -name .tcsGuidePanel \
          -class GuidePanel -title "Guide Configuration" \
          -components tcs.field.guide 
@@ -123,6 +135,9 @@ proc createPanels {} {
    EditPanelMgr tcsChopCosysPanel -name .tcsChopCosysPanel \
          -class CosysPanel -title "Chop Coordinate System" \
          -components tcs.chop.cosys
+   EditPanelMgr tcsAltairPanel -name .tcsAltairPanel \
+         -class AltairPanel -title "ALTAIR Configuration" \
+         -components tcs.altair 
    EditPanelMgr tcsSlewOptionsPanel -name .tcsSlewOptionsPanel \
          -class SlewOptionsPanel -title "Slew Options" \
          -components tcs.slewoptions 
@@ -157,6 +172,10 @@ proc createPanels {} {
          -name .tcsTrackFrameOiwfsCosysPanel \
          -class CosysPanel -title "OIWFS Tracking Frame Coordinate System" \
          -components tcs.trackframe.oiwfscosys
+   EditPanelMgr tcsTrackFrameAltairCosysPanel \
+         -name .tcsTrackFrameAltairCosysPanel \
+         -class CosysPanel -title "ALTAIR Tracking Frame Coordinate System" \
+         -components tcs.trackframe.altaircosys
    EditPanelMgr tcsInstrumentPanel -name .tcsInstrumentPanel \
          -class InstrumentPanel -title "Instrument Configuration" \
          -components tcs.instrument 
