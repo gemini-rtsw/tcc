@@ -147,7 +147,7 @@ itcl::body Handset::constructor {args} {
    pack $itk_component(aframe) -side left -pady 5
    set w $itk_component(aframe)
    itk_component add orient {
-      iwidgets::radiobox $w.orient -labeltext "Align with"
+      iwidgets::radiobox $w.orient -labeltext "Alignment"
    }
    $itk_component(orient) add tracking -text RA/Dec
    $itk_component(orient) add xy -text "Acq Cam"
@@ -178,21 +178,21 @@ itcl::body Handset::constructor {args} {
 # Title
    set w $itk_interior
    itk_component add title1 {
-      label $w.title1 -text "Adjusts telescope pointing model"
+      label $w.title1
    } {
       usual
       rename -font -majorfont majorFont Font
       ignore -foreground
    }
    itk_component add title2 {
-      label $w.title2 -text "Adjusts target alpha/delta"
+      label $w.title2
    } {
       usual
       rename -font -majorfont majorFont Font
       ignore -foreground
    }
    itk_component add title3 {
-      label $w.title3 -text "Adjusts instrument hot spot"
+      label $w.title3
    } {
       usual
       rename -font -majorfont majorFont Font
@@ -268,19 +268,28 @@ itcl::configbody Handset::adjust {
 
    switch $itk_option(-adjust) {
       pointing {
-         $itk_component(title1) configure -foreground red
-         $itk_component(title2) configure -foreground PeachPuff3
-         $itk_component(title3) configure -foreground PeachPuff3
+         $itk_component(title1) configure -foreground red \
+               -text "Adjusts telescope pointing"
+         $itk_component(title2) configure -foreground PeachPuff3 \
+               -text "Does not adjust target position"
+         $itk_component(title3) configure -foreground PeachPuff3 \
+               -text "Does not adjust instrument origin"
       }
       target {
-         $itk_component(title1) configure -foreground PeachPuff3
-         $itk_component(title2) configure -foreground red
-         $itk_component(title3) configure -foreground PeachPuff3
+         $itk_component(title1) configure -foreground PeachPuff3 \
+               -text "Does not adjust telescope pointing"
+         $itk_component(title2) configure -foreground red \
+               -text "Adjusts target position"
+         $itk_component(title3) configure -foreground PeachPuff3 \
+               -text "Does not adjust instrument origin"
       }
       instr {
-         $itk_component(title1) configure -foreground PeachPuff3
-         $itk_component(title2) configure -foreground PeachPuff3
-         $itk_component(title3) configure -foreground red
+         $itk_component(title1) configure -foreground PeachPuff3 \
+               -text "Does not adjust telescope pointing"
+         $itk_component(title2) configure -foreground PeachPuff3 \
+               -text "Does not adjust target position"
+         $itk_component(title3) configure -foreground red \
+               -text "adjusts instrument origin"
       }
    }
 }
