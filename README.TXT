@@ -39,16 +39,15 @@ e.g.:
 If the -init option is a directory then all the files in the directory are
 read.
 
-To start either the consoles or the status screens using a previously saved
-layout use the -layout option:
+To start the consoles using a previously saved layout use the -layout option:
 
-	/gemini/tcc/tcc/tsd -layout layout.dat &
+	/gemini/tcc/tcc/tcc -layout layout.dat &
 
 There is a default layout that is used if there is no -layout option; if 
 you want to start with no layout defined put -layout as the last option on
 the command line. e.g.:
 
-	/gemini/tcc/tcc/tsd -layout &
+	/gemini/tcc/tcc/tcc -layout &
 
 There are a number of star catalogues suitable for pointing tests in 
 /gemini/tcc/tcc/pointcats.
