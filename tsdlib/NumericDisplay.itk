@@ -4,14 +4,14 @@
 #  Implements the NumericDisplay widget.
 #
 #  Options:
-#          -vt
+#          none
 #
 #  Methods
 #          update      Updates the display from the SAD
 #
 #  options
 #
-#  D Terrett 16 November 1999
+#  D Terrett 6 April 2000
 #
 #  Copyright CCLRC
 #-
@@ -21,8 +21,6 @@ itcl::class NumericDisplay {
 
    constructor args {}
    destructor {}
-
-   itk_option define -vt vt Vt sourceA
 
    public method update
 
@@ -39,7 +37,6 @@ itk::usual NumericDisplay {
    keep -highlightcolor -highlightthickness
    keep -background -cursor
    keep -highlightcolor -highlightthickness
-   keep -vt
 }
 
 itcl::body NumericDisplay::constructor args {
@@ -138,6 +135,18 @@ itcl::body NumericDisplay::constructor args {
       StatusField $w.base2 -labelmargin 5 -width 11 -entryborder 3 \
             -entryrelief groove
    }
+   itk_component add choplab {
+      label $w.choplab -text "CHOP THROW (arcsec):"
+   }
+   itk_component add chop1 {
+      StatusField $w.chop1 -labelmargin 5 -width 8 -entryborder 3 \
+            -entryrelief groove -anchor e
+   }
+   itk_component add chop2 {
+      StatusField $w.chop2 -labelmargin 5 -width 8 -entryborder 3 \
+            -entryrelief groove -anchor e
+   }
+
    itk_component add instrlab {
       label $w.instrlab -text "INSTRUMENT:"
    }
@@ -251,6 +260,8 @@ itcl::body NumericDisplay::constructor args {
          -sticky e -padx 3 -pady 3
    grid $itk_component(baselab) $itk_component(base1) $itk_component(base2) \
          -sticky e -padx 3 -pady 3
+   grid $itk_component(choplab) $itk_component(chop1) $itk_component(chop2) \
+         -sticky e -padx 3 -pady 3
    grid $itk_component(instrlab) $itk_component(instrx) $itk_component(instry) \
          -sticky e -padx 3 -pady 3
    grid configure $itk_component(instrx) $itk_component(instry) -sticky e
@@ -290,6 +301,9 @@ itcl::body NumericDisplay::constructor args {
    inPosition crssad.xxxx {} {} {}
    inPosition ecssad.xxxx {} {} {}
 
+# Update the display.
+   newobject
+
    eval itk_initialize $args
 }
 
@@ -313,8 +327,7 @@ itcl::body NumericDisplay::destructor {} {
 
 itcl::body NumericDisplay::newtarget args {
 
-# Updates the display when the tracking frame or wavelength changes or
-# -vt is changed..
+# Updates the display when the tracking frame or wavelength changes.
    
 # Telescope position (in tracking frame of the mount).
    set system [sa tcssad get mountTrackFrame]
@@ -346,10 +359,10 @@ itcl::body NumericDisplay::newtarget args {
    $itk_component(telposwavel) configure -text $wavel
 
 # Target position.
-   set system [sa tcssad get $itk_option(-vt)TrackFrame]
-   scan [sa tcssad get $itk_option(-vt)TrackEq] "%c%d" type year
+   set system [sa tcssad get $sourceATrackFrame]
+   scan [sa tcssad get sourceATrackEq] "%c%d" type year
    set type [format "%c" $type]
-   set wavel [sadVal tcssad $itk_option(-vt)Wavelength ""]
+   set wavel [sadVal tcssad sourceAWavelength ""]
    if { $wavel != "" } {
       set wavel "[expr {$wavel / 10000.0}] mu"
    }
@@ -377,14 +390,14 @@ itcl::body NumericDisplay::newtarget args {
 
 itcl::body NumericDisplay::newobject args {
 
-# Updates the display when the source changes or -vt is changed..
+# Updates the display when the source changes.
    
 # Set object label.
-   $itk_component(objlabel) configure -text "OBJECT ($itk_option(-vt)):"
+   $itk_component(objlabel) configure -text "OBJECT:"
 
 # Object name
    $itk_component(objname) configure \
-         -text [sa tcssad get $itk_option(-vt)ObjectName]
+         -text [sa tcssad get sourceAObjectName]
 }
 
 itcl::body NumericDisplay::update {} {
@@ -403,16 +416,10 @@ itcl::body NumericDisplay::update {} {
    $itk_component(botshut) configure -text [sa ecssad get botShtrPos]
 
 # Target
-   switch $itk_option(-vt) {
-      sourceA {set chop A}
-      sourceB {set chop C}
-      sourceC {set chop C}
-   }
-   set wavel [sadVal tcssad $itk_option(-vt)Wavelength ""]
-   set demand [ast target $chop $chop \
-         [expr { $wavel / 10000.0 }] \
-         [sa tcssad get $itk_option(-vt)TrackFrame] \
-         [sa tcssad get $itk_option(-vt)TrackEq]]
+   set wavel [sadVal tcssad sourceAWavelength ""]
+   set demand [ast target A A [expr { $wavel / 10000.0 }] \
+         [sa tcssad get sourceATrackFrame] \
+         [sa tcssad get sourceATrackEq]]
    $itk_component(tar1) configure -text [lindex $demand 0]
    $itk_component(tar2) configure -text [lindex $demand 1]
    $itk_component(ha) configure -text [lindex $demand 2]
@@ -420,12 +427,7 @@ itcl::body NumericDisplay::update {} {
    $itk_component(am) configure -text [lindex $demand 4]
 
 # Offset and base
-   switch $itk_option(-vt) {
-      sourceA {set vt A}
-      sourceB {set vt C}
-      sourceC {set vt C}
-   }
-   set target [sa tcssad get target${vt}]
+   set target [sa tcssad get targetA]
    set ra [slaDr2tf 3 [lindex $target 0]]
    $itk_component(base1) configure -text \
          [format "%02d:%02d:%02d.%03d" [lindex $ra 1] [lindex $ra 2] \
@@ -439,7 +441,16 @@ itcl::body NumericDisplay::update {} {
    $itk_component(off2) configure -text \
          [format "%10.2f" [expr [lindex $target 3] * 206264.81] ]
 
-   set xy [ast instrument $chop]
+# Chop throw.
+   set targetb [sa tcssad get targetB]
+   $itk_component(chop1) configure -text [format "%10.2f" \
+         [expr ([lindex $targetb 0] + [lindex $targetb 2] - \
+         [lindex $target 0]) * 206264.81 * cos( [lindex $target 1] )] ]
+   $itk_component(chop2) configure -text [format "%10.2f" \
+         [expr ([lindex $targetb 1] + [lindex $targetb 3] - \
+         [lindex $target 1]) * 206264.81] ]
+
+   set xy [ast instrument A]
    $itk_component(instrx) configure -text [lindex $xy 0]
    $itk_component(instry) configure -text [lindex $xy 1]
 
@@ -534,11 +545,6 @@ itcl::body NumericDisplay::inPosition {rec status info value} {
          $itk_component(botshut) configure -status $botstat
       }
    }
-}
-
-itcl::configbody NumericDisplay::vt {
-   newobject
-   newtarget
 }
 
 itcl::body NumericDisplay::noheartbeat {} {
