@@ -4,7 +4,7 @@
 #  Implements the AzElPlot widget. A canvas with stars and the current
 #  telescope position plotted in Az/El.
 #
-#  D Terrett 29 June 2000
+#  D Terrett 10 July 2000
 #
 #  Copyright CCLRC
 #+
@@ -106,7 +106,7 @@ itcl::body AzElPlot::constructor args {
    set Slat [expr sin($lat)]
 
 # Start the replot process.
-   after 1000 [code $this replot]
+   after 1000 "catch \"[code $this replot]\""
 
    eval itk_initialize $args
 }
@@ -127,7 +127,7 @@ itcl::body AzElPlot::add {tag ra dec} {
 
 # Set its state to normal and create it.
    set StarsState($tag) ""
-   if { $StarsEl($tag) >= 0.2617993878 } {
+   if { $StarsEl($tag) >= 0.3491 } {
 
 # Star is above horizon.
       set r [el2r $StarsEl($tag)]
@@ -298,7 +298,7 @@ itcl::body AzElPlot::replot {} {
       set azel [radectoazel $StarsRa($tag) $StarsDec($tag)]
       set StarsAz($tag) [lindex $azel 0]
       set StarsEl($tag) [lindex $azel 1]
-      if { $StarsEl($tag) >= 0.2617993878 } {
+      if { $StarsEl($tag) >= 0.3491 } {
          set r [el2r $StarsEl($tag)]
          set x [expr $r * sin($StarsAz($tag)) + $Xc]
          set y [expr -$r * cos($StarsAz($tag)) + $Yc]
@@ -314,8 +314,8 @@ itcl::body AzElPlot::replot {} {
       }
    }
 
-# Reschedule in one minutes time.
-   after 1000 [code $this replot]
+# Reschedule in one seconds time.
+   after 1000 "catch \"[code $this replot]\""
 }
 
 itcl::body AzElPlot::next mode {
@@ -329,7 +329,7 @@ itcl::body AzElPlot::next mode {
       catorder {
          set tag [expr $CurrSelection + 1]
            while { [info exists StarsAz($tag)] } {
-              if { $StarsState($tag) == "" && $StarsEl($tag) > 0.2617993878 } {
+              if { $StarsState($tag) == "" && $StarsEl($tag) > 0.3491 } {
                  return $tag
               }
               incr tag
@@ -344,7 +344,7 @@ itcl::body AzElPlot::next mode {
          while { [info exists StarsAz($tag)] } {
 
 # Ignore stars below the horizon.
-            if { $StarsState($tag) == "" && $StarsEl($tag) > 0.2617993878 } {
+            if { $StarsState($tag) == "" && $StarsEl($tag) > 0.3491 } {
 
 # Distance to this star in elevation.
                set eldist [expr abs( $StarsEl($tag) - $TelEl)]

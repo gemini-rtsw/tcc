@@ -1,0 +1,153 @@
+#+
+#
+# SourceEntry <- itk::Widget
+#
+# A widget for entering a target position.
+#
+#    Methods:
+#
+#       clear        Clears all the entry fields
+#
+#    Components:
+#
+#       objname
+#       ra
+#       dec
+#       frame
+#       equinox
+#       pmra
+#       pmdec
+#       parallax
+#       rv
+#       comment
+#
+# D Terrett 10 July 2000
+#
+# Copyright CCLRC
+#+
+
+itcl::class SourceEntry {
+   inherit itk::Widget
+
+   constructor {args} {}
+
+   public method clear {}
+
+   private variable Status
+}
+
+itk::usual SourceEntry {
+   keep -background -borderwidth -cursor -foreground -highlightcolor \
+      -highlightthickness -insertbackground -insertborderwidth  \
+      -insertofftime -insertontime -insertwidth -labelfont \
+      -selectbackground -selectborderwidth -selectforeground \
+      -textbackground -textfont
+}
+
+itcl::body SourceEntry::constructor {args} {
+
+   set w $itk_interior
+
+# - entry widgets and labels
+   itk_component add objname {
+      iwidgets::entryfield $w.objname -labeltext "Object name:"
+   }
+   grid $itk_component(objname) -sticky ew
+   itk_component add ra {
+     iwidgets::entryfield $w.ra -labeltext "RA:"
+   }
+   itk_component add dec {
+     iwidgets::entryfield $w.dec -labeltext "Dec:"
+   }
+   grid $itk_component(ra) $itk_component(dec) -sticky ew
+   grid configure $itk_component(objname) -columnspan 2
+
+   itk_component add frame {
+      iwidgets::entryfield $w.frame -labeltext "Frame:"
+   }
+   itk_component add equinox {
+      iwidgets::entryfield $w.equinox -labeltext "Equinox:"
+   }
+   grid $itk_component(frame) $itk_component(equinox) -sticky ew
+
+   itk_component add -private f41 {
+      frame $w.f41
+   }
+
+   set w $itk_component(f41)
+   itk_component add -private pmlabel {
+      label $w.pmlabel -text "Proper motion:"
+   }
+   pack $itk_component(pmlabel) -side left
+   itk_component add pmra {
+      iwidgets::entryfield $w.pmra -labeltext "RA:" -width 10
+   }
+   pack $itk_component(pmra) -expand 1 -fill x -padx 2 -pady 2 -side left
+
+   set w [winfo parent $w]
+   itk_component add -private f42 {
+      frame $w.f42
+   }
+   set w $itk_component(f42)
+   itk_component add pmdec {
+      iwidgets::entryfield $w.pmdec -labeltext "Dec:" -width 6
+   }
+   pack $itk_component(pmdec) -expand 1 -fill x -padx 2 -pady 2 -side left
+   itk_component add epoch {
+      iwidgets::entryfield $w.epoch -labeltext "Epoch" -width 6
+   }
+   pack $itk_component(epoch) -expand 1 -fill x -pady 2 -side left
+   set w [winfo parent $w]
+   grid $itk_component(f41) $itk_component(f42) -sticky ew
+
+   itk_component add parallax {
+      iwidgets::entryfield $w.px -labeltext "Parallax:" -width 6
+   }
+   itk_component add rv {
+      iwidgets::entryfield $w.rv -labeltext "Radial velocity:" -width 6
+   }
+   grid $itk_component(parallax) $itk_component(rv) -sticky ew
+
+   itk_component add -private f6 {
+      frame $w.f6
+   }
+   set w $itk_component(f6)
+
+   itk_component add -private statuslabel {
+      label $w.statuslabel -text "TCS status"
+   }
+   itk_component add -private status {
+      label $w.status -textvariable [scope Status(value)] -bg grey54 \
+            -relief sunken -width 6
+   }
+   sa applyC link val [scope Status]
+
+   itk_component add -private commentlabel {
+      label $w.comentlabel -text "Comment:"
+   }
+   itk_component add  comment {
+      label $w.comment -bg grey54 -relief sunken -anchor w
+   }
+   pack $itk_component(statuslabel) $itk_component(status) \
+         $itk_component(commentlabel) -side left -padx 2 -pady 2
+   pack $itk_component(comment) -side left -pady 2 -expand 1 -fill x
+
+   grid $itk_component(f6) -columnspan 2 -sticky ew -pady 3
+
+
+   eval itk_initialize $args
+}
+
+itcl::body SourceEntry::clear {} {
+   $itk_component(objname) clear
+   $itk_component(ra) clear
+   $itk_component(dec) clear
+   $itk_component(frame) clear
+   $itk_component(equinox) clear
+   $itk_component(pmra) clear
+   $itk_component(pmdec) clear
+   $itk_component(epoch) clear
+   $itk_component(parallax) clear
+   $itk_component(rv) clear
+   $itk_component(comment) configure -text ""
+}

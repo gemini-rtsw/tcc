@@ -1,0 +1,230 @@
+#+
+#  PointLog
+#
+#  A pointlog object monitors the tcs pointObs SIR record and logs any
+#  changes to a file. When the object is destroyed the log file is converted
+#  to a tpoint input file.
+#
+#  D Terrett 17 July 2000
+#
+#  Copyright CCLRC
+#+
+
+itcl::class PointLog {
+
+   constructor {pointtest} {}
+   destructor {}
+
+   private method log {name alarm time values}
+   private method addcomment {}
+
+   private variable LogFileName {}
+   private variable Logchan {}
+   private variable LastObs {}
+   private variable PointTest
+
+# Log file format version number
+   private variable Version 1.0
+}
+
+itcl::body PointLog::constructor {pointtest} {
+
+# Save the name of the point test widget.
+   set PointTest $pointtest
+
+# cd to the save file directory.
+   set pwd [pwd]
+   global SAVE_FILE_DIR
+   catch {cd $SAVE_FILE_DIR}
+
+   set types {
+      {{Data Files} {.dat} {}}
+      {{All Files} * {}}
+   }
+   set LogFileName [tk_getSaveFile -defaultextension .dat -parent . \
+                -initialdir $SAVE_FILE_DIR \
+                -filetypes $types -title "Open log file"]
+
+   if { $LogFileName != {} } {
+      set Logchan [open $LogFileName {WRONLY CREAT TRUNC}]
+      [$pointtest component menus] menuconfigure file.open -state disabled
+      [$pointtest component menus] menuconfigure file.close -state normal
+      [$pointtest component log] configure -state normal
+   
+# Write a header line.
+      puts $Logchan \
+           "! Pointing test log file"
+
+# Create a dialog box for entering comments.
+      iwidgets::promptdialog .pd -title Comments \
+               -labeltext Comments: -modality global
+      .pd buttonconfigure OK -command ".pd deactivate 1"
+      .pd buttonconfigure Cancel -command ".pd deactivate 0"
+      .pd buttonconfigure Apply -command [code $this addcomment]
+      .pd center
+      if { [.pd activate] } {
+         addcomment
+      }
+      destroy .pd
+
+# Write a description of the keywords.
+      puts $Logchan "!"
+      puts $Logchan "! Keywords are:"
+      puts $Logchan "!               VERSION  file format version"
+      puts $Logchan \
+           "!               DATE     calendar date on which test started"
+      puts $Logchan "!               UTC      time at which test started"
+      puts $Logchan \
+           "!               TLATM    Mean latitude of observatory (degrees)"
+      puts $Logchan \
+           "!               TLONGM   Mean longitude of observatory (degrees)"
+      puts $Logchan "!               HEIGHT   Height above sea level (metres)"
+      puts $Logchan \
+           "!               XPM      X component of polar motion (arcsec)"
+      puts $Logchan \
+           "!               YPM      Y component of polar motion (arcsec)"
+      puts $Logchan "!               TTMTAI   TT-TAI (seconds)"
+      puts $Logchan "!               DJMLS    MJD following next leap second"
+      puts $Logchan "!               DELAT    TAI-UTC (seconds)"
+      puts $Logchan "!               DELUT    UT1-UTC (seconds)"
+      puts $Logchan "!"
+      puts $Logchan "! Records following the OBS keyword contain the following:"
+      puts $Logchan "!"
+      puts $Logchan "!  TAI of observation as MJD and time of day in seconds"
+      puts $Logchan "!  FK5/J2000 coordinates of object (radians)"
+      puts $Logchan "!  Effective wavelength (microns)"
+      puts $Logchan "!  Az and El of telescope (radians)"
+      puts $Logchan "!  Predicted rotator position angle (radians)"
+      puts $Logchan "!  Pointing origin x & y (millimetres)"
+      puts $Logchan "!  Telescope focal length (millimetres)"
+      puts $Logchan "!  Temperature (degrees K)"
+      puts $Logchan "!  Pressure (mBar)"
+      puts $Logchan "!  Relative humidity"
+      puts $Logchan "!  Tropospheric lapse rate"
+      puts $Logchan "!"
+      puts $Logchan "VERSION $Version"
+      set date [clock seconds]
+      puts $Logchan "DATE [clock format $date -format "%Y %b %d" -gmt 1]"
+      puts $Logchan "UTC [clock format $date -format "%H %M %S" -gmt 1]"
+      puts $Logchan "TLATM [sa tcssad get tlatm value]"
+      puts $Logchan "TLONGM [sa tcssad get tlongm value]"
+      puts $Logchan "HEIGHT [sa tcssad get height value]"
+      puts $Logchan "XPM [sa tcssad get xpm value]"
+      puts $Logchan "YPM [sa tcssad get ypm value]"
+      puts $Logchan "TTMTAI [sa tcssad get ttmtai value]"
+      puts $Logchan "DJMLS [sa tcssad get djmls value]"
+      puts $Logchan "DELAT [sa tcssad get delat value]"
+      puts $Logchan "DELUT [sa tcssad get delut value]"
+      flush $Logchan
+
+# Update save file directory.
+      set dir [file dirname $LogFileName]
+      if { [string compare [file pathtype $dir] relative] == 0 } {
+         set SAVE_FILE_DIR [pwd]/$dir
+      } else {
+         set SAVE_FILE_DIR $dir
+      }
+
+# Link the proc to the pointLog status acceptor.
+      sa tcssad proc pointObs [itcl::code $this log]
+   }
+
+# Restore the default directory
+   cd $pwd
+   return
+}
+
+itcl::body PointLog::log {name alarm time values} {
+   if {$Logchan != "" } {
+      if { ![string equal $values $LastObs] } {
+         puts $Logchan OBS
+         foreach item $values {
+            puts $Logchan $item
+         }
+         flush $Logchan
+         bell
+         set LastObs $values
+      }
+   }
+   return
+}
+
+itcl::body PointLog::destructor {} {
+
+# Disable the logging of observations.
+   sa tcssad unproc pointObs [itcl::code $this log]
+
+# Write and END record to the log file.
+   puts $Logchan \
+         "END ! [clock format [clock seconds] -format "%H %M %S" -gmt 1]"
+   set Logchan [close $Logchan]
+
+# cd to the save file directory.
+   set pwd [pwd]
+   global SAVE_FILE_DIR
+   cd $SAVE_FILE_DIR
+
+# Prompt for a file name for the tpoint input data file.
+   set types {
+      {{TPOINT Input Files} {.tpd} {}}
+      {{All Files} * {}}
+   }
+
+   file stat $LogFileName logstats
+   while 1 {
+
+# Get a name for the TPOINT input file.
+      set tpname [tk_getSaveFile -defaultextension .tpd -parent . \
+                -initialdir $SAVE_FILE_DIR \
+                -initialfile [file rootname [file tail $LogFileName]] \
+                -filetypes $types -title "Tpoint input file"]
+
+# Check that it is a different file from the log file.
+      if {[file exists $tpname]} {
+         file stat $tpname tpstats
+         if { $tpstats(ino) != $logstats(ino) || 
+               $tpstats(dev) != $logstats(dev) } {
+            break
+         }
+         tk_messageBox -icon error -parent . -message \
+               "The TPOINT input file must be different from the log file; \
+               please try again"
+      } else {
+         break
+      }
+   }
+
+# Convert the log file to tpoint format.
+   if { $tpname != {} } {
+      if { [catch { \
+            exec /gemini/tcs/tcs/bin/solaris/ptconv < $LogFileName > $tpname} \
+            msg] } {
+         tk_messageBox -icon error -parent . -message \
+               "Unable to convert the log file to a tpoint input file \
+               because \"$msg\". Please convert the file manually"
+      }
+
+
+# Update save file directory.
+      set dir [file dirname $tpname]
+      if { [string compare [file pathtype $dir] relative] == 0 } {
+         set SAVE_FILE_DIR [pwd]/$dir
+      } else {
+         set SAVE_FILE_DIR $dir
+      }
+   }
+
+# Adjust the menu.
+   [$PointTest component menus] menuconfigure file.open -state normal
+   [$PointTest component menus] menuconfigure file.close -state disabled
+   [$PointTest component log] configure -state disabled
+
+# Restore the default directory
+   cd $pwd
+   return
+}
+
+itcl::body PointLog::addcomment {} {
+   puts $Logchan "! [.pd get]"
+   .pd delete 0 end
+}

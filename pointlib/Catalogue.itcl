@@ -1,0 +1,217 @@
+#+
+# Catalogue
+#
+# A Catalogue object stores a start catalogue and can display it in a scrolled
+# listbox in a top level window. The catalogue is also loaded into the 
+# associated AzElPlot widget.
+#
+#    Methods:
+#
+#        extract index   Returns the RA/Dec etc of the entry index.
+#
+#        load            Loads a catalogue from disk
+#
+#        select index    Selects index in the catalogue listbox
+#
+#        view            Displays the catalogue in a listbox
+#
+# D Terrett 11 July 2000
+#
+# Copyright CCLRC
+#+
+
+itcl::class Catalogue {
+
+   constructor {azelplot} {}
+   public method extract {index}
+   public method load
+   public method select {index}
+   public method view
+
+   public variable CatForm tpoint
+
+   private variable AzElPlot
+   private variable ListView {}
+   private variable Catalog {}
+
+   private method decodeStar {index}
+}
+
+itcl::body Catalogue::constructor {azelplot} {
+   set AzElPlot $azelplot
+}
+
+itcl::body Catalogue::load {} {
+
+#  Loads the contents of a star catalog into the catalog list box
+#
+#  Description:
+#  This procedure opens a star catalog file and loads its contents into
+#  the catalogue list box, one line per entry. Comment line (lines starting
+#  with !), blank lines and the END line are discarded.
+#
+#  Each star is loaded into the Az/El plot widget.
+#
+#  The first star in the catalog is then selected.
+#-
+
+# cd to the catalogue directory
+   set pwd [pwd]
+   global CATALOG_DIR
+   cd $CATALOG_DIR
+
+# Get the catalogue name.
+   set types {
+      {{Data Files} {.dat} {}}
+      {{All Files} * {}}
+   }
+   set catname [tk_getOpenFile -defaultextension .dat -parent . \
+                -initialdir $CATALOG_DIR \
+                -filetypes $types -title "Open star catalog"]
+
+   if { $catname != {} } {
+
+# Open the catalogue.
+      set chan [open $catname RDONLY]
+
+# Clear the current catalogue and delete the contents of the catalogue
+# list widget (if it exists).
+      unset Catalog
+      $AzElPlot remove ""
+      if { [winfo exists $ListView] } {
+         $ListView delete 0 end
+      }
+
+# Read the catalogue a line at a time.
+      while { [gets $chan line] != -1 } {
+
+# The END keyword marks the end of the catalogue.
+         if { [string compare $line END] == 0 } break
+         set line [string trim $line]
+
+# Comment lines start with !.
+         if { [string length $line] != 0 && [string range $line 0 0] != "!" } {
+
+# Add the line to the catalogue and load the line into the list widget.
+            lappend Catalog $line
+            if { [winfo exists $ListView] } {
+               $ListView insert end $line
+            }
+         }
+      }
+      close $chan
+
+# Update the default catalogue directory.
+      set dir [file dirname $catname]
+      if { [string compare [file pathtype $dir] relative] == 0 } {
+         set CATALOG_DIR [pwd]/$dir
+      } else {
+         set CATALOG_DIR $dir
+      }
+
+      set n [llength $Catalog]
+
+# For each star in the catalogue.
+      for { set i 0} { $i < $n} {incr i} {
+
+# Decode the line.
+         set def [decodeStar $i]
+
+# Decode the RA and Dec.
+         set ra [expr [slaDafin [lindex $def 1]] * 15.0]
+         set dec [slaDafin [lindex $def 2]]
+
+# Add the star to the Az/El plot widget.
+         $AzElPlot add $i $ra $dec
+         update
+      }
+
+# Set the current selection in the view widget to the first line.
+      if { [winfo exists $ListView] } {
+         $ListView selection anchor 0
+         $ListView selection set 0
+         $ListView see 0
+      }
+   }
+
+# Restore the default directory
+   cd $pwd
+   return
+}
+
+itcl::body Catalogue::decodeStar {index} {
+
+#  Decodes an entry in the star catalogue
+
+   set rec [lindex $Catalog $index]
+   if { $rec != "" } {
+      switch $CatForm {
+         tpoint {
+            scan $rec "%s %s %s %s %s %s %s %s %s %s" \
+                 objname rah ram ras decd decm decs pmra pmdec equinox
+            set i [string first ! $rec]
+            if { $i >= 0 } {
+               set comment [string trimleft [string range $rec $i end] !]
+            } else {
+               set comment ""
+            }
+            set ra "$rah $ram $ras"
+            set dec "$decd $decm $decs"
+            set epoch $equinox
+            set frame FK5
+            set parallax 0.0
+            set rv 0.0
+         }
+      }
+   }
+
+   return [list $objname $ra $dec $frame $equinox $epoch $pmra $pmdec \
+         $parallax $rv $comment]
+}
+
+itcl::body Catalogue::extract {index} {
+
+   if { $index >= 0 && $index < [llength $Catalog] } {
+      return [decodeStar $index]
+   } else {
+      error "catalogue index \"$index\" put of range"
+   }
+}
+
+itcl::body Catalogue::view {} {
+
+# Create the widget.
+   if { ! [winfo exists $ListView] } {
+      toplevel .listtop
+      set ListView [iwidgets::scrolledlistbox .listtop.cat -width 500 \
+            -height 300]
+      pack $ListView -fill both -expand yes
+
+# Bind a mouse click in the list box to giving the focus to the list box and
+# selecting the star under the mouse.
+      bind [$ListView component listbox] <Button-1> {
+         focus %W
+      }
+
+# Make selecting a star in the listbox select the star on the plot.
+      $ListView configure -selectmode single -selectioncommand \
+           "$AzElPlot select \[$ListView index anchor\]"
+   }
+
+# Load the catalog into the widget.
+   foreach line $Catalog {
+      $ListView insert end $line
+   }
+   $ListView selection anchor 0
+   $ListView selection set 0
+   $ListView see 0
+}
+
+itcl::body Catalogue::select {index} {
+   if { [winfo exists $ListView] } {
+      $ListView selection clear 0 end
+      $ListView selection anchor $index
+      $ListView selection set $index
+      $ListView see $index
+   }
+}

@@ -1,0 +1,231 @@
+#+
+# PointObs
+#
+# A PointObs object sequences the actions needed to execute a pointing
+# sequence of pointing observations.
+#
+#    Methods:
+#
+#       slew   Slews to the next star
+#
+#       log    Logs the pointing data
+#
+#    Options:
+#
+#       delay          The number of seconds to wait after enabling guiding
+#                      before loging the pointing.
+#
+#       logafterslew   If true, the pointing is logged at the end of a slew.
+#
+#       nextstyle      The method for selecting the next star.
+#
+#       selectafterlog If true, slew to the next star after logging.
+#
+#       guide          If true, guiding is enabled before logging and
+#                      disbaled afterwards.
+#
+#       skiponerror    If true, slew to the next star if an error occurs.
+#
+#       zlpm           If true, zero the local pointing model when slewing.
+#
+#  D Terrett 14 July 2000
+#
+#  Copyright CCLRC
+#+
+
+itcl::class PointObs {
+
+   constructor {sourceentry args} {}
+
+   public method slew {}
+   public method log {}
+
+   public variable delay 1
+   public variable logafterslew 0
+   public variable nextstyle minslew
+   public variable selectafterlog 0
+   public variable guideafterslew 0
+   public variable skiponerror 0
+   public variable zlpm 0
+   public variable wfs PWFS1
+
+   private method nextstar {args}
+   private method nextaction {args}
+   private method reporterror {message}
+   private method start {action}
+   private method onerror {message}
+
+   private variable SlewAction
+   private variable GuidePwfs1Action
+   private variable GuidePwfs2Action
+   private variable GuideOffAction
+   private variable LogAction
+   private variable SourceEntry
+   private variable AzElPlot
+   private variable Catalogue
+   private variable Guiding 0
+}
+
+itcl::body PointObs::constructor {sourceentry azelplot catalogue args} {
+
+# Store the source entry etc object.
+   set SourceEntry $sourceentry
+   set AzElPlot $azelplot
+   set Catalogue $catalogue
+
+# Create the action that slews the telescope.
+   set SlewAction [seq::Action #auto tcs -timeout 600 \
+         -onok [code $this nextaction slew] \
+         -onerror [code $this onerror] \
+         -ontimeout [code $this onerror "Slew timed out"]]
+   $SlewAction set slew pointing Off
+
+# Create actions for enabling and disabling guiding.
+   set GuidePwfs1Action [seq::Action #auto tcs \
+         -onok "after 10000 [code $this nextaction guideon]" \
+         -onerror [code $this onerror] \
+         -ontimeout [code $this onerror "Attempt to guide timed out"]]
+   $GuidePwfs1Action set m2Guide state On
+   $GuidePwfs1Action set mountGuide mode On 
+   $GuidePwfs1Action set pwfs1Observe noexp -1
+   set GuidePwfs2Action [seq::Action #auto tcs \
+         -onok "after 10000 [code $this nextaction guideon]" \
+         -onerror [code $this onerror] \
+         -ontimeout [code $this onerror "Attempt to guide timed out"]]
+   $GuidePwfs2Action set m2Guide state On
+   $GuidePwfs2Action set mountGuide mode On 
+   $GuidePwfs2Action set pwfs2Observe noexp -1
+
+   set GuideOffAction [seq::Action #auto tcs \
+         -onok [code $this nextaction guideoff] \
+         -onerror [code $this onerror] \
+         -ontimeout [code $this onerror "Attempt to disable guiding timed out"]]
+   $GuideOffAction set m2Guide state Off
+   $GuideOffAction set mountGuide mode Off 
+   $GuideOffAction set pwfs1StopObserve dummy MARK
+   $GuideOffAction set pwfs2StopObserve dummy MARK
+
+# Create the action that logs the pointing.
+   set LogAction [seq::Action #auto tcs -timeout 600 \
+         -onok [code $this nextaction log] \
+         -onerror [code $this onerror] \
+         -ontimeout [code $this onerror "Logging pointing timed out"]]
+
+# Set the pointLog parameter to mark the CAD.
+   $LogAction set pointLog log Off
+
+   eval configure $args
+}
+
+itcl::body PointObs::slew {} {
+
+   $SlewAction set sourceA objName [[$SourceEntry component objname] get]
+   $SlewAction set sourceA system [[$SourceEntry component frame] get]
+   $SlewAction set sourceA theta1 [[$SourceEntry component ra] get]
+   $SlewAction set sourceA theta2 [[$SourceEntry component dec] get]
+   $SlewAction set sourceA equinox [[$SourceEntry component equinox] get]
+   $SlewAction set sourceA epoch [[$SourceEntry component epoch] get]
+   $SlewAction set sourceA parallax [[$SourceEntry component parallax] get]
+   $SlewAction set sourceA dtheta1 [[$SourceEntry component pmra] get]
+   $SlewAction set sourceA dtheta2 [[$SourceEntry component pmdec] get]
+   $SlewAction set sourceA rv [[$SourceEntry component rv] get]
+
+   start $SlewAction
+}
+
+itcl::body PointObs::log {} {
+   start $LogAction
+}
+
+itcl::body PointObs::nextaction {after} {
+   switch $after {
+      slew {
+         if { $guideafterslew } {
+            set Guiding 1
+            switch $wfs {
+               PWFS1 {
+                  start $GuidePwfs1Action
+               }
+               PWFS2 {
+                  start $GuidePwfs2Action
+               }
+            }
+         } elseif { $logafterslew } {
+            start $LogAction
+         }
+      }
+      guideon {
+         if { $logafterslew } {
+            start $LogAction
+         }
+      }
+      guideoff {
+         if { $selectafterlog } {
+            set Guiding 0
+            nextstar
+         }
+      }
+      log {
+         if { $Guiding } {
+            start $GuideOffAction
+         } elseif { $selectafterlog } {
+            nextstar
+         }
+      }
+   }
+}
+
+itcl::configbody PointObs::zlpm {
+   if { $zlpm } {
+      $SlewAction set slew pointing On
+   } else {
+      $SlewAction set slew pointing Off
+   }
+}
+
+itcl::body PointObs::nextstar {args} {
+   set tag [$AzElPlot next $nextstyle]
+   $Catalogue select $tag
+   $AzElPlot select $tag
+}
+
+itcl::configbody PointObs::skiponerror {
+   if { $skiponerror } {
+      $SlewAction configure -onerror [itcl::code $this nextstar]
+      $LogAction configure -onerror [itcl::code $this nextstar]
+   } else {
+      $SlewAction configure -onerror [itcl::code $this reporterror]
+      $LogAction configure -onerror [itcl::code $this reporterror]
+   }
+}
+
+itcl::body PointObs::reporterror {message} {
+   tk_messageBox -icon error -message $message -type ok \
+         -title "Point Test Error"
+}
+
+
+itcl::body PointObs::start {action} {
+   if { [catch {$action start} message] } {
+      if { $skiponerror } {
+         if { $selectafterlog } {nextaction slew}
+      } else {
+         reporterror $message
+      }
+   }
+}
+
+itcl::body PointObs::onerror {message} {
+   if { $skiponerror } {
+      nextaction slew
+   } else {
+      reporterror $message
+   }
+}
+
+itcl::configbody PointObs::delay {
+   $GuidePwfs1Action configure \
+         -onok "after [expr {$delay * 1000}] [code $this nextaction guideon]" 
+   $GuidePwfs2Action configure \
+         -onok "after [expr {$delay * 1000}] [code $this nextaction guideon]" 
+}

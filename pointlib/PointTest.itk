@@ -1,0 +1,243 @@
+#+
+# PointTest <- itk::Widget
+#
+# A PointTest widget is the main interface of the pointtest application.
+#
+# D Terrett 14 July 2000
+#
+# Copyright CCLRC
+#+
+
+itcl::class PointTest {
+   inherit itk::Widget
+
+   constructor {args} {}
+
+   private method selectstar {index}
+   private method loadposition {ra dec}
+   private method pointobsopts {option}
+   private method nextstyle {widget}
+   private method setdelay {name1 name2 op}
+
+   private variable Options
+   private variable PointObs
+   private variable StarCat
+   private variable Wfs PWFS1
+   private variable Delay 10
+}
+
+itcl::body PointTest::constructor {args} {
+
+# Source entry widget
+   itk_component add sourceentry {
+      SourceEntry $itk_interior.sourceentry
+   }
+
+# Skyplot window.
+   itk_component add azelplot {
+      AzElPlot $itk_interior.azelplot \
+            -selectioncommand [itcl::code $this selectstar] \
+            -hitcommand [itcl::code $this loadposition]
+   }
+ 
+# Create an empty star catalogue.
+   set StarCat [Catalogue #auto $itk_component(azelplot)]
+
+# Create the PointObs object that sequences a pointing observation.
+   set PointObs [PointObs #auto $itk_component(sourceentry) \
+        $itk_component(azelplot) [namespace code $StarCat]]
+
+# Options dialog box.
+   itk_component add options {
+      iwidgets::dialog $itk_interior.options
+   }
+   $itk_component(options) hide "Apply"
+   $itk_component(options) hide "Cancel"
+   $itk_component(options) hide "Help"
+   $itk_component(options) buttonconfigure "OK" -text "Dismiss"
+   set c [$itk_component(options) childsite]
+   pack [iwidgets::labeledframe $c.fopt -relief groove -labeltext Options \
+         -labelpos nw] \
+         -expand yes -fill both
+   set f [$c.fopt childsite]
+   pack [checkbutton $f.slew -variable [scope Options(slew)] \
+         -text "Slew when star is selected"] -anchor w -padx 5 -pady 3
+   pack [checkbutton $f.guide -variable [scope Options(guide)] \
+         -command [itcl::code $this pointobsopts guide] \
+         -text "Enable guiding before logging observation"] -anchor w \
+         -padx 5 -pady 3
+   pack [checkbutton $f.log -variable [scope Options(log)] \
+         -command [itcl::code $this pointobsopts log] \
+         -text "Log observation at end of slew"] -anchor w -padx 5 -pady 3
+   pack [checkbutton $f.select -variable [scope Options(select)] \
+         -command [itcl::code $this pointobsopts select] \
+         -text "Select next star after logging"] -anchor w -padx 5 -pady 3
+   pack [checkbutton $f.skip -variable [scope Options(skip)] \
+         -command [itcl::code $this pointobsopts skip] \
+         -text "Skip star on error"] -anchor w -padx 5 -pady 3
+   pack [checkbutton $f.zlpm -variable [scope Options(zlpm)] \
+         -command [itcl::code $this pointobsopts zlpm] \
+         -text "Zero local pointing model on slew"] -anchor w -padx 5 -pady 3
+
+   pack [iwidgets::labeledframe $c.fguide -relief groove \
+         -labeltext "Guide controls" -labelpos nw] \
+         -expand yes -fill both
+   set f [$c.fguide childsite]
+   pack [iwidgets::spinint $f.delay -labeltext "delay before logging (s)" \
+      -range {0 60} -width 2] \
+      -side bottom -pady 3 -anchor w
+   [$f.delay component entry] configure -textvariable [scope Delay]
+   trace variable Delay w [code $this setdelay]
+
+   pack [radiobutton $f.p1 -text PWFS1 -variable [scope Wfs] -value PWFS1 \
+         -command [itcl::code $this pointobsopts wfs]] \
+         [radiobutton $f.p2 -text PWFS2 -variable [scope Wfs] -value PWFS2 \
+         -command [itcl::code $this pointobsopts wfs]] \
+         -side left
+
+   pack [iwidgets::radiobox $c.nextstyle -labeltext "Star selection mode" \
+         -command [itcl::code $this nextstyle $c.nextstyle]] \
+         -expand yes -fill both -padx 5 -pady 3
+   $c.nextstyle add minslew -text "Shortest slew"
+   $c.nextstyle add catorder -text "Next in catalog"
+   $c.nextstyle select minslew
+   
+   pack [iwidgets::radiobox $c.catform -labeltext "Catalog format" \
+         -command "set CatForm \[$c.catform get\]"] -expand yes -fill both
+   $c.catform add tpoint -text "tpoint"
+   $c.catform select tpoint
+
+# Unpack the catalog format radio box because only one format is currently
+# supported.
+   pack forget $c.catform
+   
+   wm resizable $itk_component(options) 0 0
+
+# Create menus.
+   itk_component add menus {
+      iwidgets::menubar $itk_interior.menus -menubuttons {
+         menubutton file -text File -underline 0 -menu {
+            options -tearoff false
+            command open -label "Open log file" -underline 0 \
+                  -command "PointLog pointlog $this"
+            command close -label "Close log file" -underline 0 \
+                  -command "delete object pointlog" -state disabled
+            command load -label "Load catalogue" -underline 0 \
+                  -command "[namespace code "$StarCat load"]"
+            command exit -label Exit -underline 1 \
+                  -command "catch {delete object pointlog}; exit"
+         }
+         menubutton view -text View -underline 0 -menu {
+            options -tearoff false
+            command options -label "Options..." -underline 0 \
+                  -command "$itk_component(options) activate"
+            command catalog -label "Catalog" -underline 0 \
+                  -command "[namespace code "$StarCat view"]"
+         }
+      }
+   }
+
+   pack $itk_component(menus) -anchor w -fill x -expand y
+   pack $itk_component(sourceentry) -pady 5 -padx 5
+   pack $itk_component(azelplot)
+
+   itk_component add -private buttonframe {
+      frame $itk_interior.buttonframe
+   }
+   pack $itk_component(buttonframe) -fill x -expand yes -pady 5
+   set w $itk_component(buttonframe)
+
+   itk_component add slew {
+      button $w.slew -text "Slew to target" -underline 0 \
+            -command "[namespace code "$PointObs slew"]"
+   }
+   bind all <s> "$itk_component(slew) invoke"
+
+   itk_component add log {
+      button $w.log -text "Log pointing data" -underline 0 -state disabled \
+            -command "[namespace code "$PointObs log"]"
+   }
+   bind all <l> "$itk_component(log) invoke"
+   pack $itk_component(slew) $itk_component(log) -side left -expand yes
+
+# - Stop keypresses from triggering button bindings
+   bind Entry <Key> "[bind Entry <Key>]; break"
+
+   eval itk_initialize $args
+}
+
+itcl::body PointTest::selectstar {index} {
+
+   $itk_component(sourceentry) clear
+   foreach {objname ra dec frame equinox epoch pmra pmdec parallax rv comment} \
+         [$StarCat extract $index] {}
+   [$itk_component(sourceentry) component objname] insert end $objname
+   [$itk_component(sourceentry) component ra] insert end $ra
+   [$itk_component(sourceentry) component dec] insert end $dec
+   [$itk_component(sourceentry) component frame] insert end $frame
+   [$itk_component(sourceentry) component equinox] insert end $equinox
+   [$itk_component(sourceentry) component epoch] insert end $epoch
+   [$itk_component(sourceentry) component pmra] insert end $pmra
+   [$itk_component(sourceentry) component pmdec] insert end $pmdec
+   [$itk_component(sourceentry) component parallax] insert end $parallax
+   [$itk_component(sourceentry) component rv] insert end $rv
+   [$itk_component(sourceentry) component comment] configure -text $comment
+
+   $StarCat select $index
+
+   if $Options(slew) "$PointObs slew"
+   return
+}
+
+itcl::body PointTest::loadposition {ra dec} {
+
+# Format the RA/Dec as HH:MM and DD
+   set ram [expr round($ra*229.18)]
+   if { $ram < 0 } {set ram [expr $ram + 1440]}
+   set rah [expr round(floor($ram / 60.0))]
+   set ram [expr round($ram - $rah * 60.0)]
+   set decm [expr round($dec*3437.746)]
+   set dech [expr round(floor($decm / 60.0))]
+   set decm [expr round($decm - $dech * 60.0)]
+
+# Load the RA, Dec and frame source entry widgets and clear the rest.
+   $itk_component(sourceentry) clear
+   [$itk_component(sourceentry) component ra] insert end \
+         [format %02d:%02d $rah $ram]
+   [$itk_component(sourceentry) component dec] insert end \
+         [format %0+3d:%02d $dech $decm]
+   [$itk_component(sourceentry) component frame] insert end APPT
+}
+
+itcl::body PointTest::pointobsopts {option} {
+   switch $option {
+      log {
+         $PointObs configure -logafterslew $Options($option)
+      }
+      skip {
+         $PointObs configure -skiponerror $Options($option)
+      }
+      guide {
+         $PointObs configure -guideafterslew $Options($option)
+      }
+      select {
+         $PointObs configure -selectafterlog $Options($option)
+      }
+      zlpm {
+         $PointObs configure -zlpm $Options($option)
+      }
+      wfs {
+         $PointObs configure -wfs $Wfs
+      }
+   }
+}
+
+itcl::body PointTest::nextstyle {widget} {
+   $PointObs configure -nextstyle [$widget get]
+}
+
+itcl::body PointTest::setdelay {name1 name2 op} {
+   if { [string length $Delay] } {
+      $PointObs configure -delay $Delay
+   }
+}
