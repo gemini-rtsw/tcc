@@ -187,6 +187,8 @@ itcl::body ISS::posaofold {} {
                set aowaitid [after 1000 ISS::p2wait]
             } else {
                cs aoFold set aofold value IN
+               # turn off ag inpos override
+	       cs agInPosOver set override value 0
                logger command aoFold
             }
          }
@@ -194,6 +196,8 @@ itcl::body ISS::posaofold {} {
       OUT {
          if { [sa agssad get aoName] != "park-pos." } {
             cs aoFoldPark set dummy value MARK
+            # turn on ag inpos override
+	    cs agInPosOver set override value 1
             logger command aoFoldPark
          }
       }
@@ -209,6 +213,8 @@ itcl::body ISS::p2wait {} {
 
 # P2 is parked so we can put the AO fold in.
       cs aoFold set aofold value IN
+      # turn off ag inpos override
+      cs agInPosOver set override value 0
       logger command aoFold
       if { [catch {cs hrwfs post} msg] } {
          tk_messageBox -icon error -message \
