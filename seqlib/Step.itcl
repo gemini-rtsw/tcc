@@ -9,44 +9,44 @@
 itcl::class Step {
    constructor {args} {}
    destructor {}
-
-   public variable Next {}
-   public variable MoveAction
-   public variable Canvas {}
-   public variable List {}
-   public variable To 
-   public variable X 0.0
-   public variable Y 0.0
-   public variable GuideOnAction
-   public variable GuideOffAction
-   public variable Expose 1
-   public variable MaxGuideStep 1.5
-
-   private variable ListIndex
-   private variable ToggleGuide
-
-   protected method nextaction after
-   protected method error
-   private method begin
-   private method next
-   private method finish
-   private method isinposition
-
-   private common InPosition
-
-   public proc platescale {platescale} {set PlateScale $platescale}
-   public proc start {{step ""}}
-   public proc stop
-   public proc pause {} {set Paused 1}
-   public proc step
-
-   public common PlateScale 1.0
-   public common Paused 0
-   public common ProgressMessage "Idle"
-   public common CurrentStep ""
-   public common NextStep ""
-   public common CurrentP
-   public common CurrentQ
+   public {
+      proc platescale {platescale} {set PlateScale $platescale}
+      proc start {{step ""}}
+      proc stop
+      proc pause {} {set Paused 1}
+      proc step
+      common PlateScale 1.0
+      common Paused 0
+      common ProgressMessage "Idle"
+      common CurrentStep ""
+      common NextStep ""
+      common CurrentP
+      common CurrentQ
+      variable Next {}
+      variable MoveAction
+      variable Canvas {}
+      variable List {}
+      variable To 
+      variable X 0.0
+      variable Y 0.0
+      variable GuideOnAction
+      variable GuideOffAction
+      variable Expose 1
+      variable MaxGuideStep 1.5
+   }
+   protected {
+      method nextaction {after}
+      method error {message}
+   }
+   private {
+      method begin
+      method next
+      method finish
+      method isinposition
+      common InPosition
+      variable ListIndex
+      variable ToggleGuide
+   }
 }
 
 itcl::body Step::constructor {args} {

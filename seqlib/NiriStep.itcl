@@ -11,14 +11,15 @@
 
 itcl::class NiriStep {
    inherit Step
-
    constructor {args} {}
    destructor {}
-
-   protected method nextaction {after}
-   protected method error {msg} {Step::error $msg}
-
-   private variable ExposeAction
+   protected {
+      method nextaction {after}
+      method error {msg} {Step::error $msg}
+   }
+   private {
+      variable ExposeAction
+   }
 }
 
 itcl::body NiriStep::constructor {args} {

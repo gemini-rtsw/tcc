@@ -36,45 +36,44 @@
 #+
 
 itcl::class PointObs {
-
    constructor {sourceentry args} {}
-
-   public method slew {}
-   public method log {}
-
-   public variable logdelay 0
-   public variable guidedelay 10
-   public variable logafterslew 0
-   public variable nextstyle minslew
-   public variable selectafterlog 0
-   public variable guideafterslew 0
-   public variable zlpm 0
-   public variable wfs PWFS2
-
-   private method nextstar {args}
-   private method nextaction {args}
-   private method reporterror {message}
-   private method start {action}
-   private method onerror {message}
-   private method isinposition {} 
-   private method novignette
-   private method isguiding
-
-   private variable SlewAction
-   private variable Guide1Action
-   private variable Guide2Action
-   private variable MountGuideAction
-   private variable GuideOffAction
-   private variable DomeWaitAction
-   private variable LogAction
-   private variable SourceEntry
-   private variable AzElPlot
-   private variable Catalogue
-   private variable Guiding 0
-   private variable InPosition
-   private variable DomeVignette
-   private variable IsGuiding
-   private variable LogCount 0
+   public {
+      method slew {}
+      method log {}
+      variable logdelay 0
+      variable guidedelay 10
+      variable logafterslew 0
+      variable nextstyle minslew
+      variable selectafterlog 0
+      variable guideafterslew 0
+      variable zlpm 0
+      variable wfs PWFS2
+   }
+   private {
+      method nextstar {args}
+      method nextaction {args}
+      method reporterror {message}
+      method start {action}
+      method onerror {message}
+      method isinposition {} 
+      method novignette {}
+      method isguiding {}
+      variable SlewAction
+      variable Guide1Action
+      variable Guide2Action
+      variable MountGuideAction
+      variable GuideOffAction
+      variable DomeWaitAction
+      variable LogAction
+      variable SourceEntry
+      variable AzElPlot
+      variable Catalogue
+      variable Guiding 0
+      variable InPosition
+      variable DomeVignette
+      variable IsGuiding
+      variable LogCount 0
+   }
 }
 
 itcl::body PointObs::constructor {sourceentry azelplot catalogue args} {

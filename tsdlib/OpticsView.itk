@@ -52,9 +52,7 @@
 
 itcl::class OpticsView {
    inherit itk::Widget
-
    constructor args {}
-
    itk_option define -m1cover m1Cover M1Cover CLOSED 
    itk_option define -holecover holeCover HoleCover CLOSED 
    itk_option define -centralbaffle centralBaffle CentralBaffle "" 
@@ -70,9 +68,12 @@ itcl::class OpticsView {
    itk_option define -port3label port3Label Label "" "relabel 3"
    itk_option define -port4label port4Label Label "" "relabel 4"
    itk_option define -port5label port5Label Label "" "relabel 5"
-
-   public method update {}
-   private method relabel port
+   public {
+      method update {}
+   }
+   private {
+      method relabel {port}
+   }
 }
 
 itk::usual OpticsView {

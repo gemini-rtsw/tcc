@@ -56,17 +56,20 @@
 
 itcl::class HakuAction {
    constructor {psys args} {}
-   public method start {}
-   public method canceltimeout {} {after cancel [code $this timedout]}
-   public variable onok {}
-   public variable onerror {}
-   public variable ontimeout {}
-   public variable timeout 60
-   public variable command ""
-   public variable reply ""
-
-   private variable Haku
-   private variable ParList {}
+   public {
+      method start {}
+      method canceltimeout {} {after cancel [code $this timedout]}
+      variable onok {}
+      variable onerror {}
+      variable ontimeout {}
+      variable timeout 60
+      variable command ""
+      variable reply ""
+   }
+   private {
+      variable Haku
+      variable ParList {}
+   }
 }
 
 itcl::body HakuAction::constructor {haku args} {
