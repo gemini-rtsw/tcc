@@ -51,14 +51,14 @@
 #              complete.
 #
 #
-#  D Terrett 8 September 2000
+#  D Terrett 30 September 2000
 #
 #  Copyright CCLRC
 #+
 
 itcl::class seq::Action {
    constructor {psys args} {}
-   public method set {cs par val}
+   public method set {cs {par dummy} {val mark}}
    public method start {}
    public variable oktest {}
    public variable waitvar {}
@@ -68,7 +68,7 @@ itcl::class seq::Action {
    public variable timeout 60
 
    private variable Psys
-   private variable ParList {}
+   private variable ParList
 }
 
 itcl::body seq::Action::constructor {psys args} {
@@ -79,7 +79,7 @@ itcl::body seq::Action::constructor {psys args} {
    eval configure $args
 }
 
-itcl::body seq::Action::set {cs par val} {
+itcl::body seq::Action::set {cs {par dummy} {val mark}} {
 
 # Make sure that the command sender exists and that it has the specified
 # parameter.
@@ -91,7 +91,7 @@ itcl::body seq::Action::set {cs par val} {
    }
 
 # Add the parameter settings to the list.
-   lappend ParList $cs $par $val
+   ::set ParList($cs,$par) $val
 
    return
 }
@@ -99,8 +99,16 @@ itcl::body seq::Action::set {cs par val} {
 itcl::body seq::Action::start {} {
 
 # Set the command parameters.
-   foreach {cs par val} $ParList {
-      cs $cs set $par value \"$val\"
+   if { [array exists ParList] } {
+      foreach name [array names ParList] {
+         foreach {cs par} [split $name ,] {}
+         if { [$Psys cget -debug] } {
+            puts "cs $cs set $par value \"$ParList($name)\""
+         }
+         cs $cs set $par value \"$ParList($name)\"
+      }
+   } else {
+      error "action has no parameters"
    }
 
 # Post the command to the principal system.

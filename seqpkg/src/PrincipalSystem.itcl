@@ -19,16 +19,17 @@
 #
 #           Cancels an action.
 #
-#  D Terrett 13 September 2000
+#  D Terrett 30 September 2000
 #
 #  Copyright CLRC
 #+
 
 itcl::class seq::PrincipalSystem {
-   constructor {apply} {}
+   constructor {apply args} {}
    destructor {}
    public method post {action}
    public method cancel {action}
+   public variable debug 0
 
    private method monitor {name status info}
    private method timeout 
@@ -39,10 +40,12 @@ itcl::class seq::PrincipalSystem {
    private variable CurrentAction ""
 }
 
-itcl::body seq::PrincipalSystem::constructor {apply} {
+itcl::body seq::PrincipalSystem::constructor {apply args} {
 
 # Save the name of the apply
    set Apply $apply
+
+   eval configure $args
 }
 
 itcl::body seq::PrincipalSystem::destructor {} {
@@ -130,6 +133,9 @@ itcl::body seq::PrincipalSystem::monitor {name status info} {
 itcl::body seq::PrincipalSystem::post {action} {
 
 # Post the apply with our monitor method as callback.
+   if { $debug } {
+      puts "cs $Apply postCallback"
+   }
    if { [catch {cs $Apply postCallback [itcl::code $this monitor] -save} \
          msg] } {
       set errorcommand [$action cget -onerror]
