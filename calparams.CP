@@ -7,7 +7,7 @@ set ocs_proxy http://bill:9000/axis/services
 set tcs_root_dir /gemini/epics3.13.4/tcs/tcs
 
 # The root of the directory in when WFS images are stored.
-set m1_tune_dir /net/reggie/staging/acqcam
+set m1_tune_dir /gemini/epics3.13.4/tcs/tcs
 
 # The default directory for storing HRWFS images.
 #set default_wfs_dir /net/enif/export/home/wfs
