@@ -10,7 +10,7 @@
 #  Methods:
 #           none
 #
-#  D Terrett  16 July 2001
+#  D Terrett  3 September 2001
 #
 #  Copyright CCLRC
 #+
@@ -27,7 +27,7 @@ itcl::class GuideLoop {
       method mtmode {val}
       method probemode {val}
       method wfsmode {wfs val}
-      method wfsexpose {wfs}
+      method enable {}
    }
 }
 
@@ -66,8 +66,7 @@ itcl::body GuideLoop::constructor args {
 # WFS controls.
       itk_component add ${sys}_ex {
          iwidgets::combobox $w.${sys}_ex -arrowrelief flat -width 5 \
-               -validate real -labeltext "exp(s)" \
-               -selectioncommand [itcl::code $this wfsexpose $sys]
+               -validate real -labeltext "exp(s)"
       }
       $w create window 60 80 -window $w.${sys}_ex -tag $sys
       $w.${sys}_ex insert list end 1.0 0.5 0.1 0.05 0.01 0.005
@@ -197,7 +196,7 @@ itcl::body GuideLoop::constructor args {
 
 # ENABLE/DISABLE buttons.
    itk_component add on {
-      tcclib::LiveButton $w.on -text ENABLE -command {AO enable}
+      tcclib::LiveButton $w.on -text ENABLE -command [itcl::code $this enable]
    }
    itk_component add off {
       tcclib::LiveButton $w.off -text DISABLE -command {AO disable}
@@ -469,6 +468,9 @@ itcl::body GuideLoop::wfsmode {wfs val} {
    }
 }
 
-itcl::body GuideLoop::wfsexpose {wfs} {
-   AO configure -${wfs}Expose [$itk_component(${wfs}_ex) get]
+itcl::body GuideLoop::enable {} {
+   AO configure -pwfs1Expose [$itk_component(pwfs1_ex) get]
+   AO configure -pwfs2Expose [$itk_component(pwfs2_ex) get]
+   AO configure -oiwfsExpose [$itk_component(oiwfs_ex) get]
+   AO enable
 }
