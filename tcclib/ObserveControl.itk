@@ -144,16 +144,29 @@ itcl::body ObserveControl::constructor args {
             -sadrecord {tcssad nodState} -setvalue B
    }
 
-# OIWFS follow
+# OIWFS follow and Park
+   itk_component add oiwfs {
+      frame $w.oiwfs
+   }
+   set w $itk_component(oiwfs)
+   itk_component add oilab {
+      label $w.lab -text OI   
+   }
    itk_component add oifollow {
-      OnOffButton $w.oifollow -text "OIWFS Follow" \
+      OnOffButton $w.oifollow -text Follow \
             -oncommand {oiFollow followState On} \
             -offcommand {oiFollow followState Off} \
             -onvalue {ON On} -offvalue {OFF Off} \
             -sadrecord {agssad oiFollowS}
    }
+   itk_component add oipark {
+      ApplyButton $w.oipark -text Park -command oiwfsPark
+   }
+   pack $itk_component(oilab) $itk_component(oifollow) $itk_component(oipark) \
+      -side left -fill x -padx 3
 
 # PWFS1 controls.
+   set w $itk_component(buttons)
    itk_component add p1lab {
       label $w.p1lab -text "P1 probe"
    }
@@ -211,10 +224,9 @@ itcl::body ObserveControl::constructor args {
          $itk_component(p2unwrap) -sticky ew -padx 5
    grid $itk_component(noda) $itk_component(p1park) \
          $itk_component(p2park) -sticky ew -padx 5
-   grid $itk_component(nodb) $itk_component(oifollow) -sticky ew -padx 5
-   grid x $itk_component(oifollow) - -pady 3
+   grid $itk_component(nodb) $itk_component(oiwfs) -sticky ew -padx 5
    grid configure $itk_component(beam) -rowspan 2
-   grid configure $itk_component(oifollow) -rowspan 2
+   grid configure $itk_component(oiwfs) -columnspan 2
 
 # Create command senders.
    if { [catch {cs chop info}] } {
