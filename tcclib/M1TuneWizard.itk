@@ -6,7 +6,7 @@
 #
 #  Methods:
 #
-#  D Terrett 15 July 2003
+#  D Terrett 20 January 2005
 #
 #  Copyright CCLRC
 #-
@@ -36,7 +36,7 @@ itk::usual M1TuneWizard {
 option add *M1TuneWizard.borderWidth 2 widgetDefault
 option add *M1TuneWizard.height 300 widgetDefault
 option add *M1TuneWizard.master "." widgetDefault
-option add *M1TuneWizard.width 500 widgetDefault
+option add *M1TuneWizard.width 650 widgetDefault
 option add *M1TuneWizard.title "M1 tuning wizard"
 
 itcl::body M1TuneWizard::constructor {args} {
@@ -74,10 +74,10 @@ itcl::body M1TuneWizard::constructor {args} {
       label $w.meslab -text "WFS" -width 15
    }
    itk_component add lastlab {
-      label $w.lastlab -text "Last correction" -width 15
+      label $w.lastlab -text "Last corr" -width 15
    }
    itk_component add totlab {
-      label $w.totlab -text "Total correction" -width 15
+      label $w.totlab -text "Total corr" -width 15
    }
    itk_component add z4lab {
       label $w.z4lab -text "Z4 (0 astig)" -anchor w
@@ -199,6 +199,7 @@ itcl::body M1TuneWizard::step1 {} {
    set instructions "Select exposure time and neutral density filter\
       and press \"Take test exposure\" to take a test exposure. Press\
       \"Next\" to start the tuning process"
+   set backproc ""
    set nextproc [itcl::code $this step2]
    set actionproc [itcl::code $this tune]
 }
@@ -217,7 +218,7 @@ itcl::body M1TuneWizard::tune {} {
       set filt [string range $filt 4 end]
    }
    set filename hrwfs_sky_red_${filt}_[$itk_component(expose) get].fits
-   file copy -force [file join /home/ssa/SKY/ $filename] \
+   file copy -force [file join [calparam cget -hrwfs_sky_dir] $filename] \
          [file join $dir sky.fits]
 
 # Delete any existing output file.
@@ -226,9 +227,10 @@ itcl::body M1TuneWizard::tune {} {
 # Exec the analysis program.
    set home [pwd]
    cd $dir
-   logger log "/home/gemvx/bin/StartHrwfsAO"
+   set aoprog [calparam cget -hrwfs_ao_prog]
+   logger log $aoprog
    catch {unset ::env(IDL_STARTUP)}
-   set pid [exec /home/gemvx/bin/StartHrwfsAO &]
+   set pid [exec $aoprog &]
    cd $home
 
 # Start the M1 tuning.
