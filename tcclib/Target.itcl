@@ -90,7 +90,7 @@
 #           save node     Saves the values of the target options to the
 #                         xml node.
 #
-#  D Terrett 7 June 2002
+#  D Terrett 17 June 2002
 #
 #  Copyright CCLRC
 #+
@@ -172,7 +172,9 @@ itcl::body Target::apply {comp} {
          cs $vt set theta2 [list $c2]
          cs $vt set epoch [list $epoch]
          cs $vt set parallax [list $parallax]
-         set pm [pmconvert $c1 $c2 $pm1 $pm2 $pmunits]
+         if { [catch {set pm [pmconvert $c1 $c2 $pm1 $pm2 $pmunits]} ] } {
+            error "Unable to convert proper motions to sec & arcsec/year"
+         }
          cs $vt set dtheta1 [list [lindex $pm 0]]
          cs $vt set dtheta2 [list [lindex $pm 1]]
          cs $vt set rv [list $rv]
@@ -323,7 +325,7 @@ itcl::body Target::preview vt {
                         [slaPertel 2 $epoch $epoch $inclination $anode \
                               $perihelion $a $e $M] {}
                   tccPreview set orbit 2 $epoch1 $inclination1 $anode1 \
-                        $perihelion1 $a1 $e1 M1
+                        $perihelion1 $a1 $e1 $M1
                }
                comet {
                   if { [string equal AsA $format] } {
@@ -647,47 +649,53 @@ itcl::body Target::pmconvert {c1 c2 pm1 pm2 pmunits} {
 # Returns the proper motions in seconds and arcsec per year (the units used 
 # by the TCS).
 
-# Convert to per year.
-   switch $pmunits {
-      arcsec/century -
-      mas/century -
-      sec-arcsec/century {
-         if { [string is double -strict $pm1] } {
-            set pm1 [expr {$pm1 / 100.0}]
-         }
-         if { [string is double -strict $pm2] } {
-            set pm2 [expr {$pm2 / 100.0}]
-         }
-      }
-   }
+# If both strings are blank then don't bother.
+   if { [string is space $pm1] && [string is space $pm2] } {
+      return [list "" ""]
+   } else {
 
-# Convert mas to arcsec.
-   switch $pmunits {
-      mas/year -
-      mas/century {
-         if { [string is double -strict $pm1] } {
-            set pm1 [expr {$pm1 / 1000.0}]
-         }
-         if { [string is double -strict $pm2] } {
-            set pm2 [expr {$pm2 / 1000.0}]
+# Convert to per year.
+      switch $pmunits {
+         arcsec/century -
+         mas/century -
+         sec-arcsec/century {
+            if { [string is double -strict $pm1] } {
+               set pm1 [expr {$pm1 / 100.0}]
+            }
+            if { [string is double -strict $pm2] } {
+               set pm2 [expr {$pm2 / 100.0}]
+            }
          }
       }
-   }
+   
+   # Convert mas to arcsec.
+      switch $pmunits {
+         mas/year -
+         mas/century {
+            if { [string is double -strict $pm1] } {
+               set pm1 [expr {$pm1 / 1000.0}]
+            }
+            if { [string is double -strict $pm2] } {
+               set pm2 [expr {$pm2 / 1000.0}]
+            }
+         }
+      }
 
 # Convert arcsec to seconds of RA.
-   switch $pmunits {
-      mas/year -
-      mas/century -
-      arcsec/year -
-      arcsec/century {
-         set AS2R 0.0000048481368111
-         set raz [expr {[slaDafin $c1] * 15.0}]
-         set decz [slaDafin $c2]
-         set radec [slaDtp2s [expr {$pm1* $AS2R}] [expr {$pm2 * $AS2R}] \
-               $raz $decz]
-         set pm1 [expr { ([lindex $radec 0] - $raz) / $AS2R / 15.0 }]
-         set pm2 [expr { ([lindex $radec 1] - $decz) / $AS2R }]
+      switch $pmunits {
+         mas/year -
+         mas/century -
+         arcsec/year -
+         arcsec/century {
+            set AS2R 0.0000048481368111
+            set raz [expr {[slaDafin $c1] * 15.0}]
+            set decz [slaDafin $c2]
+            set radec [slaDtp2s [expr {$pm1* $AS2R}] [expr {$pm2 * $AS2R}] \
+                  $raz $decz]
+            set pm1 [expr { ([lindex $radec 0] - $raz) / $AS2R / 15.0 }]
+            set pm2 [expr { ([lindex $radec 1] - $decz) / $AS2R }]
+         }
       }
+      return [list $pm1 $pm2]
    }
-   return [list $pm1 $pm2]
 }
