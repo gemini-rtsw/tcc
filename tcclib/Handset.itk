@@ -21,7 +21,7 @@
 #         tcc application is destroyed while the pointer is in the window
 #         the keyboard will be left with autorepeat disabled.
 #
-#  D Terrett 30 January 2001
+#  D Terrett 21 April 2001
 #
 #  Copyright CCLRC
 #-
@@ -34,7 +34,8 @@ itcl::class Handset {
    private {
       method push {button}
       method rot {angle}
-      method flip {}
+      method hflip {}
+      method vflip {}
       method reset {}
       variable cs ""
       variable angles
@@ -97,8 +98,14 @@ itcl::body Handset::constructor {args} {
       usual
       ignore -background
    }
+
+# Reset button.
+   itk_component add reset {
+      button $w.reset -bitmap reset -command [itcl::code $this reset]
+   }
    grid x $itk_component(u) -sticky nsew
-   grid $itk_component(l) x $itk_component(r) -sticky nsew
+   grid $itk_component(l) $itk_component(reset) $itk_component(r)
+   grid configure $itk_component(l) $itk_component(r) -sticky nsew
    grid x $itk_component(d) -sticky nsew
    grid columnconfigure $w {0 1 2} -minsize 50
    grid rowconfigure $w {0 1 2} -minsize 50
@@ -121,22 +128,22 @@ itcl::body Handset::constructor {args} {
    $itk_component(orient) add pwfs2 -text PWFS2
    $itk_component(orient) select xy
 
-# buttons for rotating and flipping and reseting.
+# buttons for rotating and flipping.
    itk_component add rot {
       button $w.rot -bitmap rotate -command [itcl::code $this rot 90.0]
    }
    itk_component add arot {
       button $w.arot -bitmap arotate -command [itcl::code $this rot -90.0]
    }
-   itk_component add flip {
-      button $w.flip -bitmap flip -command [itcl::code $this flip]
+   itk_component add hflip {
+      button $w.hflip -bitmap hflip -command [itcl::code $this hflip]
    }
-   itk_component add reset {
-      button $w.reset -bitmap reset -command [itcl::code $this reset]
+   itk_component add vflip {
+      button $w.vflip -bitmap vflip -command [itcl::code $this vflip]
    }
    grid $itk_component(orient) - - -
-   grid $itk_component(rot) $itk_component(arot) $itk_component(flip) \
-         $itk_component(reset)
+   grid $itk_component(rot) $itk_component(arot) $itk_component(hflip) \
+         $itk_component(vflip)
 
 # Title
    set w $itk_interior
@@ -305,10 +312,16 @@ itcl::body Handset::rot {theta} {
    }
 }
 
-itcl::body Handset::flip {} {
+itcl::body Handset::hflip {} {
    set frame [$itk_component(orient) get]
    set angles($frame,l) [expr {$angles($frame,l) + 180}]
    set angles($frame,r) [expr {$angles($frame,r) - 180}]
+}
+
+itcl::body Handset::vflip {} {
+   set frame [$itk_component(orient) get]
+   set angles($frame,u) [expr {$angles($frame,u) + 180}]
+   set angles($frame,d) [expr {$angles($frame,d) - 180}]
 }
 
 itcl::body Handset::reset {} {
