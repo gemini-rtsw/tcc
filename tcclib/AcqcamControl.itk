@@ -9,7 +9,7 @@
 #  Methods:
 #           none
 #
-#  D Terrett  24 March 2003
+#  D Terrett  19 June 2003
 #
 #  Copyright CCLRC
 #+
@@ -25,6 +25,9 @@ itcl::class AcqcamControl {
       method expose {}
       method start {}
       method stop {}
+      method snapshot {}
+      variable filename ""
+      variable filedir ""
    }
 }
 
@@ -56,7 +59,12 @@ itcl::body AcqcamControl::constructor {args} {
       LiveButton $w.stop -text Stop \
             -command [itcl::code $this stop]
    }
-   pack $itk_component(start) $itk_component(stop) -side left -expand y -pady 2
+   itk_component add snap {
+      LiveButton $w.snap -text Snap \
+            -command [itcl::code $this snapshot]
+   }
+   pack $itk_component(start) $itk_component(stop) $itk_component(snap) \
+         -side left -expand y -pady 2
 
    set w [winfo parent $w]
    itk_component add setup {
@@ -106,31 +114,67 @@ itcl::body AcqcamControl::constructor {args} {
 }
 
 itcl::body AcqcamControl::lenssel {} {
+
+# Select hrwfs lens.
    hrwfs lenssel [$itk_component(lens) get]
 }
 
 itcl::body AcqcamControl::ndsel {} {
+
+# Select hrwfs neutral desity filter.
    hrwfs ndsel [$itk_component(nd) get]
 }
 
 itcl::body AcqcamControl::colsel {} {
+
+# Select hrwfs colout filter.
    hrwfs colsel [$itk_component(col) get]
 }
 
 itcl::body AcqcamControl::window {} {
+
+# Set window size.
    hrwfs window [$itk_component(window) get]
 }
 
 itcl::body AcqcamControl::expose {} {
+
+# Set exposure time.
    hrwfs expose [$itk_component(expose) get]
 }
 
 itcl::body AcqcamControl::stop {} {
+
+# Stop hrwfs.
    hrwfs stop
 }
 
 itcl::body AcqcamControl::start {} {
+
+# Start continuous exposures to DHS.
    hrwfs expose [$itk_component(expose) get]
    hrwfs output DHS
    hrwfs start -1
+}
+
+itcl::body AcqcamControl::snapshot {} {
+
+# Set exposure time
+   hrwfs expose [$itk_component(expose) get]
+
+# Get file name.
+   set file [tk_getSaveFile -defaultextension .fits \
+         -filetypes {{FITS .fits} {{All files} *}} \
+         -parent $itk_interior -title "HRWFS image file" \
+         -initialdir $filedir -initialfile $filename]
+   if { $file ne "" } {
+
+# Set hrwfs output parameters.
+      set filedir [file dirname $file]
+      set filename [file tail $file]
+      hrwfs output FILE $filedir $filename
+
+# Start single exposure.
+      hrwfs start 1
+   }
 }
