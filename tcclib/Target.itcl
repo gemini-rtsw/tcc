@@ -88,7 +88,7 @@
 #           save node     Saves the values of the target options to the
 #                         xml node.
 #
-#  D Terrett 7 October 2002
+#  D Terrett 27 November 2002
 #
 #  Copyright CCLRC
 #+
@@ -403,7 +403,7 @@ itcl::body Target::save {node} {
           param $node1 pm1 $pm1
           param $node1 pm2 $pm2
           param $node1 rv $rv
-          if { ! [dom::node hasChildNodes $node1] } {
+          if { [llength [dom::node children $node1]] == 0 } {
              dom::node removeChild $node $node1
           }
           param $node trackrate $trackrate

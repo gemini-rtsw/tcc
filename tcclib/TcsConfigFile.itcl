@@ -5,7 +5,7 @@
 #  tcs configuration components and creates and configures the
 #  components.
 #
-#  D Terrett 8 October 2002
+#  D Terrett 27 November 2002
 #
 #  Copyright CCLRC
 #+
@@ -21,6 +21,10 @@ itcl::class TcsConfigFile {
       method createTrackrate {node}
       method report {msg}
       method findcomp {node}
+      method elementis {node name}
+      method treewalk {node action}
+      method compconf {component node}
+      method targetconf {field target node}
       variable w
       variable nodelist
    }
@@ -29,15 +33,13 @@ itcl::class TcsConfigFile {
 itcl::body TcsConfigFile::constructor {xml parent} {
 
 # Create a document object from the XML.
-   set doc [dom::DOMImplementation parse $xml -parser expat \
-         -progresscommand update -chunksize 100]
+   set doc [dom::DOMImplementation parse $xml]
 
 # Get the root node.
    set root [dom::document cget $doc -documentElement]
 
 # Save the parent window for error report dialogs.
    set w $parent
-
 
 # Initialise lists of nodes that represent configuration components.
    set nodelist(chop) ""
@@ -55,20 +57,19 @@ itcl::body TcsConfigFile::constructor {xml parent} {
    set nodelist(wavelength) ""
    set nodelist(oiwfswavelength) ""
 
-# Start with the root node.
-   foreach node [dom::node children $root] {
-      if { $topname == "" } {
-
 # Set the name option to the name attribute of the first paramset element
 # in the document.
-         if { [string equal [dom::node cget $node -nodeType] element] } {
-            if { [string equal [dom::node cget $node -nodeName] paramset] } {
-               set topname [dom::element getAttribute $node name]
-            }
-         }
+   foreach node [dom::node children $root] {
+      if { [elementis $node paramset] } {
+         set topname [dom::element getAttribute $node name]
+         break
       }
-      findcomp $node
    }
+
+# Compile a lists of all the component define in the document.
+  foreach node [dom::DOMImplementation selectNode $root //paramset] {
+     findcomp $node
+  }
 
 # Process each of the lists of component types (note that the order is
 # important so that we don't get errors because a subcomponent isn't defined).
@@ -182,31 +183,9 @@ itcl::body TcsConfigFile::createComponent {type node} {
    }
 
 # Configure the component from the child nodes of type param.
-   foreach child [dom::node children $node] {
+   treewalk $node [list compconf $component]
 
-# If it is an element node.
-      if { [string equal [dom::node cget $child -nodeType] element] } {
-
-# And its type is param.
-         if { [string equal [dom::node cget $child -nodeName] param] } {
-
-# Get the attribute name.
-            set name [dom::element getAttribute $child name]
-
-# If the component has an option of that name.
-            if { ! [catch {$component cget -$name}] } {
-
-# Configure the option value.
-               if { [catch {$component configure \
-                     -$name [dom::element getAttribute $child value]} msg ]} {
-                  if { [report $msg] } {
-                     return 1
-                  }
-               }
-            }
-         }
-      }
-   }
+# Keep the display alive.
    update
    return 0
 }
@@ -224,16 +203,11 @@ itcl::body TcsConfigFile::createTarget {node} {
    set parent [dom::node cget $node -parentNode]
    set field ""
    while { $parent != "" } {
-      if { [string equal [dom::node cget $parent -nodeType] element] } {
-         if { [string equal [dom::node cget $parent -nodeName] paramset] } {
-             if { [dom::element getAttribute $parent type] != "" } {
-                if { [string equal [dom::element getAttribute $parent type] \
-                         field] } {
-                   set field [dom::element getAttribute $parent name]
-                   break
-                }
-             }
-          }
+      if { [elementis $parent paramset] } {
+          if { [string equal [dom::element getAttribute $parent type] field] } {
+             set field [dom::element getAttribute $parent name]
+             break
+         }
       }
       set parent [dom::node cget $parent parentNode]
    }
@@ -272,76 +246,7 @@ itcl::body TcsConfigFile::createTarget {node} {
    $field subconfigure target $target -objname $target
 
 # Process all the param and paramset descendents of the target node.
-   if { [dom::node hasChildNodes $node] } {
-
-# Start with the first child of the target node.
-      set n [dom::node cget $node -firstChild]
-
-# Until we get back to the target node...
-      while { ! [string equal $n $node] } {
-
-# If this is an element node...
-         if { [string equal [dom::node cget $n -nodeType] element] } {
-
-# and it is a param...
-            if { [string equal [dom::node cget $n -nodeName] param] } {
-
-# and the name attribute matches a target parameter name...
-               set name [dom::element getAttribute $n name]
-               if { ! [catch {$field subcget target $target -$name}] } {
-
-# configure the target parameter
-                  if { [catch {$field subconfigure target $target -$name \
-                           [dom::element getAttribute $n value]} msg] } {
-                     if { [report $msg] } {
-                        return 1
-                     }
-                  }
-               }
-            }
-
-# If it is a paramset...
-            if { [string equal [dom::node cget $n -nodeName] paramset] } {
-
-# and the name is "properMotion"..
-               set name [dom::element getAttribute $n name]
-               if { [string equal $name properMotion] } {
-
-# configure the -pmunits parameter of the target.
-                  if { [catch {$field subconfigure target $target -pmunits \
-                           [dom::element getAttribute $n units]} msg] } {
-                     if { [report $msg] } {
-                        return 1
-                     }
-                  }
-               }
-            }
-         }
-
-# Move on to this nodes children.
-         if { [string equal [dom::node cget $n -nodeType] element] && \
-               [dom::node hasChildNodes $n] } {
-            set n [dom::node cget $n -firstChild]
-         } else {
-
-# Or its next sibling.
-            set next [dom::node cget $n -nextSibling]
-
-# If there isn't a next sibling then search ancestors for a next sibling.
-            while { [string equal $next ""] } {
-               set n [dom::node cget $n -parentNode]
-
-# If we are back at the target node then stop searching.
-               if { [string equal $n $node] } {
-                  set next $n
-               } else {
-                  set next [dom::node cget $n -nextSibling]
-               }
-            }
-            set n $next
-         }
-      }
-   }
+   treewalk $node [list targetconf $field $target]
 
 # If the field was created implicitly then set the science target to be
 # this target.
@@ -364,17 +269,12 @@ itcl::body TcsConfigFile::createTrackrate {node} {
    set parent [dom::node cget $node -parentNode]
    set field ""
    while { $parent != "" } {
-      if { [string equal [dom::node cget $parent -nodeType] element] } {
-         if { [string equal [dom::node cget $parent -nodeName] paramset] } {
-             if { [dom::element getAttribute $parent type] != "" } {
-                if { [string equal [dom::element getAttribute $parent type] \
-                         field] } {
-                   set field [dom::element getAttribute $parent name]
-                   break
-                }
-             }
+      if { [elementis $node paramset] } {
+          if { [string equal [dom::element getAttribute $parent type] field] } {
+             set field [dom::element getAttribute $parent name]
+             break
           }
-      }
+       }
       set parent [dom::node cget $parent parentNode]
    }
 
@@ -400,18 +300,12 @@ itcl::body TcsConfigFile::createTrackrate {node} {
 # Build a list of all the parameter nodes for the track rate.
    set parlist ""
    foreach child [dom::node children $node] {
-      if { [string equal [dom::node cget $child -nodeType] element] } {
-         if { [string equal [dom::node cget $child -nodeName] param] } {
-            lappend parlist $child
-         } elseif { [string equal [dom::node cget $child -nodeName] paramset] \
-               } {
-            foreach child [dom::node children $child] {
-               if { [string equal [dom::node cget $child -nodeType] element] } {
-                  if { [string equal [dom::node cget $child -nodeName] param] \
-                        } {
-                     lappend parlist $child
-                  }
-               }
+      if { [elementis $child param] } {
+         lappend parlist $child
+      } elseif { [elementis $child paramset] } {
+         foreach child [dom::node children $child] {
+            if { [elementis $child param] } {
+                  lappend parlist $child
             }
          }
       }
@@ -429,7 +323,6 @@ itcl::body TcsConfigFile::createTrackrate {node} {
          }
       }
    }
-
    update
    return 0
 }
@@ -441,67 +334,171 @@ itcl::body TcsConfigFile::report {message} {
 
 itcl::body TcsConfigFile::findcomp {node} {
 
-# See if this node is a configuration component.
+# Adds a paramset node to the appropriate node list.
+   switch [dom::element getAttribute $node type] {
+      chop {
+         lappend nodelist(chop) $node
+      }
+      cosys {
+         lappend nodelist(cosys) $node
+      }
+      targetEnv {
+         dom::element setAttribute $node type field
+         lappend nodelist(field) $node
+      }
+      field {
+         lappend nodelist(field) $node
+      }
+      guide {
+         lappend nodelist(guide) $node
+      }
+      instrument {
+         lappend nodelist(instrument) $node
+      }
+      instrument_origin {
+         lappend nodelist(pointorig) $node
+      }
+      rotator {
+         lappend nodelist(rotator) $node
+      }
+      slew_options {
+         lappend nodelist(slewoptions) $node
+      }
+      degdegTarget -
+      conicTarget -
+      namedTarget -
+      hmsdegTarget {
+         lappend nodelist(target) $node
+      }
+      tcs_configuration {
+         lappend nodelist(tcsconfig) $node
+      }
+      tracking_frame {
+         lappend nodelist(trackframe) $node
+      }
+      trackrate {
+         lappend nodelist(trackrate) $node
+      }
+      wavelength {
+         lappend nodelist(wavelength) $node
+      }
+      oiwfswavelength {
+         lappend nodelist(oiwfswavelength) $node
+      }
+   }
+}
+
+itcl::body TcsConfigFile::elementis {node name} {
+
+# Return TRUE if the node is an element with nodename $name.
    if { [string equal [dom::node cget $node -nodeType] element] } {
-      if { [string equal [dom::node cget $node -nodeName] paramset] } {
-         switch [dom::element getAttribute $node type] {
-            chop {
-               lappend nodelist(chop) $node
+      if { [string equal [dom::node cget $node -nodeName] $name] } {
+         return 1
+      }
+   }
+   return 0
+}
+
+itcl::body TcsConfigFile::treewalk {node action} {
+
+# Initialize depth.
+   set depth 1
+
+# Get a list of the root nodes children.
+   set childlist(1) [dom::node children $node]
+
+# Initialise child index to first in the list
+   set childindex(1) 0
+
+   while { $depth > 0 } {
+
+# Next child node at this depth.
+      set child [lindex $childlist($depth) $childindex($depth)]
+
+# Process this node.
+      eval $action $child
+
+# Move 1 level deeper.
+      incr depth
+      set childindex($depth) 0
+
+# List of child nodes at this depth.
+      set childlist($depth) [dom::node children $child]
+
+# Any more children?
+      while { $childindex($depth) == [llength $childlist($depth)] } {
+
+# No. Go up one level.
+         incr depth -1
+
+# Back at the root?
+         if { $depth == 0 } {
+            break
+         }
+
+# Advance to the next node at this depth.
+         incr childindex($depth)
+      }
+   }
+}
+
+
+itcl::body TcsConfigFile::compconf {component node} {
+
+# If the node is a param element.
+   if { [elementis $node param] } {
+
+# Get the attribute name.
+      set name [dom::element getAttribute $node name]
+
+# If the component has an option of that name.
+      if { ! [catch {$component cget -$name}] } {
+
+# Configure the option value.
+         if { [catch {$component configure \
+               -$name [dom::element getAttribute $node value]} msg ]} {
+            if { [report $msg] } {
+               return 1
             }
-            cosys {
-               lappend nodelist(cosys) $node
-            }
-            targetEnv {
-               dom::element setAttribute $node type field
-               lappend nodelist(field) $node
-            }
-            field {
-               lappend nodelist(field) $node
-            }
-            guide {
-               lappend nodelist(guide) $node
-            }
-            instrument {
-               lappend nodelist(instrument) $node
-            }
-            instrument_origin {
-               lappend nodelist(pointorig) $node
-            }
-            rotator {
-               lappend nodelist(rotator) $node
-            }
-            slew_options {
-               lappend nodelist(slewoptions) $node
-            }
-            degdegTarget -
-            conicTarget -
-            namedTarget -
-            hmsdegTarget {
-               lappend nodelist(target) $node
-            }
-            tcs_configuration {
-               lappend nodelist(tcsconfig) $node
-            }
-            tracking_frame {
-               lappend nodelist(trackframe) $node
-            }
-            trackrate {
-               lappend nodelist(trackrate) $node
-            }
-            wavelength {
-               lappend nodelist(wavelength) $node
-            }
-            oiwfswavelength {
-               lappend nodelist(oiwfswavelength) $node
+         }
+      }
+   }
+}
+
+itcl::body TcsConfigFile::targetconf {field target node} {
+
+# If the element is a param.
+   if { [elementis $node param] } {
+
+# and the name attribute matches a target parameter name...
+      set name [dom::element getAttribute $node name]
+      if { ! [catch {$field subcget target $target -$name}] } {
+
+# configure the target parameter
+         if { [catch {$field subconfigure target $target -$name \
+                  [dom::element getAttribute $node value]} msg] } {
+            if { [report $msg] } {
+               return 1
             }
          }
       }
    }
 
-# Search child nodes.
-   foreach child [dom::node children $node] {
-      findcomp $child
-   }
+# If it is a paramset...
+   if { [elementis $node paramset] } {
 
-   update
+# and the name is "properMotion"..
+      set name [dom::element getAttribute $node name]
+      if { [string equal $name properMotion] } {
+
+# configure the -pmunits parameter of the target.
+         if { [catch {$field subconfigure target $target -pmunits \
+                  [dom::element getAttribute $node units]} msg] } {
+            if { [report $msg] } {
+               return 1
+            }
+         }
+      }
+   }
 }
+
