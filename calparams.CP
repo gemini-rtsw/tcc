@@ -1,7 +1,7 @@
 # This file is for Cerro Pachon
 
 # The name of the OCS session soap server.
-set ocs_proxy http://bill:9000/axis/services
+set ocs_proxy http://gsodb.cl.gemini.edu:9000/wdba/services
 
 # Where the tcs is stored.
 set tcs_root_dir /gemini/epics3.13.4/tcs/tcs
