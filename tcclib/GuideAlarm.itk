@@ -13,27 +13,28 @@ itcl::class GuideAlarm {
    constructor {args} {}
    destructor {after cancel $tid}
    common guideCounts
+   common alarmEnabled
+   common alarmOn
    public {
       method updateProc { name alarm time values }
       method scanLoop {}
       method setSilent {wfs}
       method alarmCheck {wfs}
-      variable alarm 0
       variable flash 0
-      variable pwfs1Limit 50.0
-      variable pwfs2Limit 50.0
-      variable oiwfsLimit 50.0
-      variable gaosLimit 50.0
+      variable pwfs1Limit 500.0
+      variable pwfs2Limit 500.0
+      variable oiwfsLimit 500.0
+      variable gaosLimit 500.0
       variable pwfs1Silent 0
       variable pwfs2Silent 0
       variable oiwfsSilent 0
       variable gaosSilent 0
+      variable exitnow 0
    }
    private {
       method ringBell {}
       method setWfsColor {wfs color}
       variable tid 0
-      variable currWfs ""
    }
 }
 
@@ -69,6 +70,8 @@ itcl::body GuideAlarm::constructor {args} {
    foreach wfs {pwfs1 pwfs2 oiwfs gaos} {
       #puts "setting up wfs: $wfs"
       set guideCounts($wfs) [sa guidects get $wfs]
+      set alarmEnabled($wfs) 0
+      set alarmOn($wfs) 0
       set ${wfs}CountLimit [set ${wfs}Limit]
       # puts "guideCounts($wfs) = $guideCounts($wfs)"
 
@@ -109,6 +112,14 @@ itcl::body GuideAlarm::constructor {args} {
    eval itk_initialize $args
 }
 
+itcl::body GuideAlarm::destructor {} {
+   after cancel $tid
+   sa guidects unproc pwfs1 "$this updateProc"
+   sa guidects unproc pwfs2 "$this updateProc"
+   sa guidects unproc oiwfs "$this updateProc"
+   sa guidects unproc gaos "$this updateProc"
+}
+
 itcl::body GuideAlarm::setWfsColor {wfs color} {
     
     foreach wid {frame title silent clab cnts limlab liment} {
@@ -124,18 +135,16 @@ itcl::body GuideAlarm::setSilent {wfs} {
 }
 
 itcl::body GuideAlarm::alarmCheck {wfs} {
-    global guideCounts guideAlarm
+    global guideCounts
 
-    if {$wfs == $currWfs} {
+    if {$alarmEnabled($wfs)} {
 	#puts "gonna compare  $guideCounts($wfs) [set ${wfs}Limit]"
 	if { $guideCounts($wfs) < [set ${wfs}Limit] } {
-	    $this configure -alarm 1
-	    set guideAlarm 1
-	    #puts "alarm ON"
+	    set alarmOn($wfs) 1
+	    #puts "alarm for $wfs ON"
 	} else {
-	    $this configure -alarm 0
-	    set guideAlarm 0
-	    #puts "alarm OFF"
+	    set alarmOn($wfs) 0
+	    #puts "alarm for $wfs OFF"
 	}
     }
 
@@ -148,7 +157,7 @@ itcl::body GuideAlarm::updateProc {name alarm time values} {
     set tname [lrange [split $name "."] 1 1]
     set tnamev [format "%s%s" $tname "(value)"]
     set $tnamev $values
-    set guideCounts($tname) [set $tnamev]
+    set guideCounts($tname) [format "%.0f" [set $tnamev]]
 
     alarmCheck $tname
 
@@ -158,36 +167,56 @@ itcl::body GuideAlarm::updateProc {name alarm time values} {
 }
 
 itcl::body GuideAlarm::ringBell {} {
-    #puts "in ring bell currWfs: $currWfs  silent: [set ${currWfs}Silent]"
-    if {![set ${currWfs}Silent]} {
-	bell
-	after 100
-	bell
+
+    set makeNoise 0
+
+    foreach wfs {pwfs1 pwfs2 oiwfs gaos} {
+       if {$alarmEnabled($wfs) && $alarmOn($wfs)} {
+          #puts "in ring bell wfs: $wfs silent: [set ${wfs}Silent]"
+          if {![set ${wfs}Silent]} {
+	      set makeNoise 1
+          }
+          if { $flash } {
+	      setWfsColor $wfs red
+          } else {
+	      setWfsColor $wfs yellow
+          }
+       }
     }
-    if { $flash } {
-	setWfsColor $currWfs red
-	set flash 0
-    } else {
-	setWfsColor $currWfs yellow
-	set flash 1
-    }   
+    if { $makeNoise } {
+       bell
+       after 100
+       bell
+    }
+    set flash [expr { ! $flash}]
 }
 
 itcl::body GuideAlarm::scanLoop {} {
-    
-    if {$alarm == 1} { 
-	ringBell
-    } else {
-    	foreach wfs {pwfs1 pwfs2 oiwfs gaos} {
-	    if {[AO state $wfs]} {
-	    	setWfsColor $wfs lightgreen
-	    	set currWfs $wfs
-    	    } else {
-	    	setWfsColor $wfs PeachPuff1
-	    }
-    	}
-    }   
 
+    set num_enabled 0
+    set gottaRingBell 0
+
+    foreach wfs {pwfs1 pwfs2 oiwfs gaos} {
+       if {[AO state $wfs]} {
+    	  set alarmEnabled($wfs) 1
+	  incr num_enabled
+       } else {
+    	  set alarmEnabled($wfs) 0
+	  setWfsColor $wfs PeachPuff1
+       }
+    }
+    if {$num_enabled > 0} {
+       foreach wfs {pwfs1 pwfs2 oiwfs gaos} {
+          if {$alarmOn($wfs) == 1} { 
+	      set gottaRingBell 1
+          } elseif {$alarmEnabled($wfs)} {
+	      setWfsColor $wfs lightgreen
+          }
+       }
+       if {$gottaRingBell} {
+          ringBell
+       }
+    }
     set tid [after 500 "$this scanLoop"]
     update
 }
