@@ -153,7 +153,7 @@ proc tccMain args {
 # Load default components.
    set file [open $ROOT/default_components.xml RDONLY]
    set config [TcsConfigFile #auto $file .]
-   delete object $config
+   itcl::delete object $config
    close $file
 
 # Load initialisation files.
@@ -172,7 +172,7 @@ proc tccMain args {
                         "error opening initialization file \"$filename\": $msg"
                      } else {
                         set config [TcsConfigFile #auto $file .]
-                        delete object $config
+                        itcl::delete object $config
                         close $file
                      }
                   }
@@ -185,7 +185,7 @@ proc tccMain args {
             } else {
                puts "processing $filespec"
                set config [TcsConfigFile #auto $file .]
-               delete object $config
+               itcl::delete object $config
                close $file
             }
          }

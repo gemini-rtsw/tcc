@@ -46,7 +46,7 @@ itcl::body StarSelectControl::constructor args {
 
 itcl::body StarSelectControl::destructor {} {
    foreach cat [array names StarCats] {
-      delete object $StarCats($cat)
+      itcl::delete object $StarCats($cat)
    }
 }
 
@@ -162,7 +162,7 @@ itcl::body StarSelectControl::load {} {
 }
 
 itcl::body StarSelectControl::unload {cat} {
-   delete object $StarCats($cat)
+   itcl::delete object $StarCats($cat)
    unset StarCats($cat)
    $itk_option(-menubar) delete .file.view.$cat
    $itk_option(-menubar) delete .file.unload.$cat

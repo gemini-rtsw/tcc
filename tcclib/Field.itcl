@@ -120,12 +120,12 @@ itcl::body Field::destructor {} {
    }
    foreach name $targets {
       if { ![string equal $name ""] } {
-         delete object ${targetns}::$name
+         itcl::delete object ${targetns}::$name
       }
    }
 
 # Delete the list and the namespace.
-   delete object $targetlist
+   itcl::delete object $targetlist
    namespace delete ${targetns}
 
 # Repeat for the track rates.
@@ -136,12 +136,12 @@ itcl::body Field::destructor {} {
    }
    foreach name $trackrates {
       if { ![string equal $name ""] } {
-         delete object ${trackratens}::$name
+         itcl::delete object ${trackratens}::$name
       }
    }
 
 # Delete the list and the namespace.
-   delete object $trackratelist
+   itcl::delete object $trackratelist
    namespace delete $trackratens
 }
 
@@ -406,10 +406,10 @@ itcl::body Field::subcget {type name option} {
 itcl::body Field::remove {type name} {
    switch $type {
       target {
-         delete object ${targetns}::$name
+         itcl::delete object ${targetns}::$name
       }
       trackrate {
-         delete object ${trackratens}::$name
+         itcl::delete object ${trackratens}::$name
       }
       default {
          error "\"$type"\ is not a valid field component"

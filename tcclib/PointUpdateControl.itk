@@ -156,7 +156,7 @@ itcl::body PointUpdateControl::destructor {} {
 
 # Delete all PtWeak objects.
    foreach obs [itcl::find objects -class Ptweak] {
-      delete object $obs
+      itcl::delete object $obs
    }
 }
 
@@ -173,7 +173,7 @@ itcl::body PointUpdateControl::purge {} {
       if { [$ptweak cget -enable] } {
          eval $itk_component(obs) add $ptweak [$ptweak display]
       } else {
-         delete object $ptweak
+         itcl::delete object $ptweak
       }
    }
 }
