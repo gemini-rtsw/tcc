@@ -9,9 +9,14 @@
 #  window exists. When the window is created it is set to the correct state.
 #
 #  Options:
+#           -alsomaps       A list of the other edit shadows who's windows
+#                           get mapped at the same time as this one.
+#
 #           -children       A list of the child EditShadow of this one.
 #
 #           -component      The component class that this EditShadow edits.
+#
+#           -index          The index of the edit window in the panel
 #
 #           -panel          The name of the panel that contains the edit
 #                           window.
@@ -29,6 +34,8 @@
 #
 #           map                    Calls the map method of the Panel that 
 #                                  contains this control.
+#
+#           prepare                Prepares the window for use.
 #
 #           selectfromcontrol name Sets the name of the object selected and
 #                                  updates the parent and child edit shadow
@@ -56,7 +63,7 @@
 #           storefromcontrol name  Calls store and then calls the childstored
 #                                  method of the parent
 #
-#  D Terrett 22 March 2000
+#  D Terrett 28 March 2001
 #
 #  Copyright CCLRC
 #+
@@ -65,6 +72,7 @@ itcl::class EditShadow {
    constructor {arg args} {}
    public {
       method map {}
+      method prepare {}
       method childstored {comp}
       method selectfromcontrol {name}
       method selectfromparent {name}
@@ -75,9 +83,11 @@ itcl::class EditShadow {
       method unmap {} {set scratchobj ""}
       variable children ""
       variable component ""
+      variable index 0
       variable namespace ""
       variable panel
       variable parent ""
+      variable alsomaps ""
       variable selection ""
       variable window ""
    }
@@ -109,21 +119,32 @@ itcl::body EditShadow::map {} {
 # Call the map method of the panel containing the edit control.
    if { [$panel map] } {
 
+# Prepare it for use.
+      prepare
+
+# Prepare the other windows that got mapped at the same time.
+      foreach w $alsomaps {
+         $w prepare
+      }
+   }
+}
+
+itcl::body EditShadow::prepare {} {
+
 # Store the name of the edit control window.
-      set window [lindex [$panel cget -windows] 0]
+   set window [lindex [$panel cget -windows] $index]
 
 # Set the name of the shadow in the window.
-      $window configure -shadow $this
+   $window configure -shadow $this
 
 # Store the name of the window's scratch object.
-      set scratchobj [$window scratchobj]
+   set scratchobj [$window scratchobj]
 
 # Configure the window by calling its select and subselect methods with
 # the current state of the shadow.
-      $window select [namespace tail $selection]
-      foreach el [array names subselections] {
-         $window subselect $el $subselections($el)
-      }
+   $window select [namespace tail $selection]
+   foreach el [array names subselections] {
+      $window subselect $el $subselections($el)
    }
 }
 
