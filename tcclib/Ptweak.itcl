@@ -5,7 +5,7 @@
 # of a pointing update run. The "fit" class method calculates a new estimate
 # of CE and CA and optionally IA from all the Ptweak objects that are enabled.
 #
-# D Terrett 16 July 2000
+# D Terrett 3 October 2000
 #
 # Copyright CCLRC
 #+
@@ -247,17 +247,20 @@ itcl::body Ptweak::commit {w inclia} {
 # Set CE.
    cs pointParam set name CE
    cs pointParam set value $fitce
+   logger command pointParam
    postparam
 
 # Set CA
    cs pointParam set name CA
    cs pointParam set value $fitca
+   logger command pointParam
    postparam
 
 # Set IA if requested.
    if { $inclia } {
       cs pointParam set name IA
       cs pointParam set value [expr $curia + $fitia]
+      logger command pointParam
       postparam
    }
 
@@ -265,16 +268,19 @@ itcl::body Ptweak::commit {w inclia} {
    cs pointParam set level Local
    cs pointParam set name CE
    cs pointParam set value 0.0
+   logger command pointParam
    postparam
    cs pointParam set name CA
+   logger command pointParam
    postparam
 
 # Zero the guiding offsets.
    cs zeroGuide set dummy mark
-      if [catch {cs zeroGuide post}] {
+   if { [catch {cs zeroGuide post}] } {
       set info [sa apply get mess value]
       error "zeroGuide command failed: \"$info\""
    }
+   logger command zeroGuide
 }
 
 itcl::body Ptweak::postparam {} {
