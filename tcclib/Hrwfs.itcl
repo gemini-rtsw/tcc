@@ -23,7 +23,7 @@
 #           wait applyC timeout Wait for timeout seconds for the applyC record
 #                               to go to IDLE.
 #
-#  D Terrett  27 October 2002
+#  D Terrett  14 October 2003
 #
 #  Copyright CCLRC
 #+
@@ -82,6 +82,9 @@ itcl::body Hrwfs::constructor {} {
    if { [catch {sa hrwfs::observeC info}] } {
       epics sa hrwfs::observeC
    }
+
+# Set timeout on apply
+   cs hrwfs::apply setTimeout 3
 
 }
 
