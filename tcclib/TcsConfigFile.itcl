@@ -176,14 +176,15 @@ itcl::body TcsConfigFile::createComponent {type node} {
 # Create or init the component. We can't simply delete a component and 
 # re-create it because there might be a reference to it somewhere.
    set component ${namespace}::$name
-   if { [lsearch -exact [itcl::find objects -class $class] $component] < 0 } {
-      set component [$class ${namespace}::$name $list]
-   } else {
+   if { [catch {$class $component $list}] } {
       $component init
    }
 
 # Configure the component from the child nodes of type param.
    treewalk $node [list compconf $component]
+   #foreach node [dom::DOMImplementation selectNode $node .//param] {
+   #   compconf $component $node
+   #}
 
 # Keep the display alive.
    update
@@ -221,8 +222,7 @@ itcl::body TcsConfigFile::createTarget {node} {
 
 # Create the field if it doesn't exist
    set field ::FieldNames::$field
-   if { [lsearch -exact [itcl::find objects -class FieldComponent] \
-         $field] < 0 } {
+   if { [catch {$field info class}] } {
       set field [FieldComponent $field FieldList]
    }
 
@@ -247,6 +247,9 @@ itcl::body TcsConfigFile::createTarget {node} {
 
 # Process all the param and paramset descendents of the target node.
    treewalk $node [list targetconf $field $target]
+   #foreach node [dom::DOMImplementation selectNode $node .//param|paramset] {
+   #   targetconf $field $target $node
+   #}
 
 # If the field was created implicitly then set the science target to be
 # this target.
@@ -286,8 +289,7 @@ itcl::body TcsConfigFile::createTrackrate {node} {
 
 # Create the field if it doesn't exist
    set field ::FieldNames::$field
-   if { [lsearch -exact [itcl::find objects -class FieldComponent] \
-         $field] < 0 } {
+   if { [catch {$field info class}] } {
       set field [FieldComponent $field FieldList]
    }
 
