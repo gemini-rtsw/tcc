@@ -69,13 +69,13 @@ itcl::body SelectButton::add {label args} {
 # Create the new button.
    itk_component add $n {
       LiveButton $itk_interior.$n \
-            -text $label -command [code $this selectioncommand $label]
+            -text $label -command [itcl::code $this selectioncommand $label]
    } {
       usual
       ignore -background
    }
    $itk_component($n) configure \
-      -command [code $this selectioncommand $itk_component($n)]
+      -command [itcl::code $this selectioncommand $itk_component($n)]
    eval $itk_component($n) configure $args
 
 # Unpack the existing buttons.
