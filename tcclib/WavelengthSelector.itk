@@ -18,7 +18,7 @@
 #
 #       Returns the wavelength
 #
-#  D Terrett 12 April 2002
+#  D Terrett 7 October 2002
 #
 #  Copyright CCLRC
 #+
@@ -105,13 +105,17 @@ itcl::body WavelengthSelector::selectioncommand {} {
 # into the edit controls.
 #-
    set name [$itk_component(selector) get]
-   $itk_component(wavel) configure -text \
+   if { [string equal $name ""] } {
+      $itk_component(wavel) configure -text ""
+   } else {
+      $itk_component(wavel) configure -text \
             [$::Config($comp,namespace)::$name cget -wavel]
+   }
 }
 
 itcl::configbody WavelengthSelector::component {
 
-# remvoe existing trace.
+# remove existing trace.
    trace vdelete ::Config($comp,value) w [itcl::code $this newvalue]
 
 # Set up a trace on the wavelength subcomponent name in order to detect
