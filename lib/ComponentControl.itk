@@ -166,7 +166,7 @@ itcl::body ComponentControl::store {name} {
       if { [catch {$this save $fullname} msg] } {
 
 # Delete the bad object and report the error.
-         delete object $fullname
+         itcl::delete object $fullname
          $itk_component(selector) insert $name
          tk_messageBox -icon error -parent $itk_interior -message \
                "Error creating $description \"$name\": $msg"
@@ -241,7 +241,7 @@ itcl::body ComponentControl::delselected {} {
    if { ! [string equal $name ""] } {
       set ::Config($comp,value) ""
       set fullname ::$::Config($comp,namespace)::$name
-      if { [catch {delete object $fullname} msg] } {
+      if { [catch {itcl::delete object $fullname} msg] } {
          tk_messageBox -icon error -message $msg \
                -parent $itk_interior -title "Component delete error"
          set ::Config($comp,value) $name
