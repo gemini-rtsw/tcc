@@ -69,7 +69,7 @@
 #                             according to the state of the configuration
 #                             options.
 #
-#  D Terrett  18 November 2002
+#  D Terrett  15 October 2003
 #
 #  Copyright CCLRC
 #-
@@ -524,6 +524,11 @@ itcl::body OpticsView::update {} {
    }
    $c itemconfigure SkyLight -fill $l
 
+# Configure light from M2 to sky
+   if { $itk_option(-centralbaffle) == "POSITION 2" } {
+      $c itemconfigure M2Light -fill $l
+   }
+
 # Assume no light emerging from the ISS.
    set outport ""
    set inport ""
@@ -581,6 +586,10 @@ itcl::body OpticsView::update {} {
 
 # Configure light from the calibration unit.
    if { $itk_option(-calunit) } {
+
+# GCAL is on so the beam is white even if the telescope is vignetted.
+      set l white
+
       $c itemconfigure IssLightD -fill $l
       switch $scfoldpos {
          DU -
@@ -618,11 +627,6 @@ itcl::body OpticsView::update {} {
       } else {
          $c itemconfigure TvOutLight -fill $l
       }
-   }
-
-# Configure light from M2 to sky
-   if { $itk_option(-centralbaffle) == "POSITION 2" } {
-      $c itemconfigure M2Light -fill $l
    }
 }
 
