@@ -1,4 +1,4 @@
-static char rcsid[] = "$Id: tccDecode.c,v 1.2 1999-11-12 00:19:56 dlt Exp $";
+static char rcsid[] = "$Id: tccDecode.c,v 1.3 2000-02-18 02:29:18 dlt Exp $";
 /* *INDENT-OFF* */
 /*
 *   FILENAME
@@ -12,9 +12,14 @@ static char rcsid[] = "$Id: tccDecode.c,v 1.2 1999-11-12 00:19:56 dlt Exp $";
 *   tccDcRadec    - decode an RA/Dec or Az/El
 *   tccDcT0       - decode a reference time
 *   tccDcUc       - convert a string to uppercase
+*   tccDcPlanet   - decode planet name
+*   tccDcT0       - Decode a reference epoch
 */
 /*
  * $Log: not supported by cvs2svn $
+ * Revision 1.2  1999/11/12 00:19:56  dlt
+ * Improve handling of errors getting epics process variables
+ *
  * Revision 1.1.1.1  1999/05/27 04:53:39  dlt
  * Initial load of Gemini telescope consoles
  *
@@ -861,8 +866,7 @@ int tccDcT0(Tcl_Interp *interp, char *string, double *t0)
 
 
 
-char *
- tccDcUc(char *in, int lout, char *out)
+char *tccDcUc(char *in, int lout, char *out)
 {
     int i, c;
 
@@ -874,4 +878,83 @@ char *
             break;
     }
     return out;
+}
+
+/* *INDENT-OFF* */
+/*
+**  - - - - - - - - - - - -
+**   t c s D c P l a n e t
+**  - - - - - - - - - - - -
+**
+**  Decode a string containing a planet name.
+**
+**  Given:
+**    interp    Tcl_Interp*
+**    string    char*    string to decode
+**
+**  Returned (arguments):
+**    planet    int*     code for planet
+**
+**  Returned (function value):
+**              int     TCL status
+**
+**  Called:  tcsDcUc, tcsDcLen
+**
+**  Notes:
+**
+**    1  If a blank or empty string is supplied, a planert name
+**       of NONE is returned.
+**
+**    2  If the string does not contain a recognized planet name,
+**       the planet id is not changed and a function value of
+**       TCL_ERROR is returned.
+**
+*/
+/* *INDENT-ON* */
+
+int tccDcPlanet(Tcl_Interp *interp, char *string, int *planet)
+{
+    int n, ls;
+    char suc[LSUC];
+
+/* Fold the planet name to uppercase, stripping trailing blanks. */
+    n = LSUC - 1;
+    if ((ls = tccDcLen(string)) > n)
+        ls = n;
+    tccDcUc(string, ls + 1, suc);
+
+/* Identify planet, return ID and status. */
+    if (!ls) {
+        return TCL_ERROR;
+    } else if (!strcmp(suc, "MERCURY") ) {
+        *planet = 1;
+        return TCL_OK;
+    } else if (!strcmp(suc, "VENUS") ) {
+        *planet = 2;
+        return TCL_OK;
+    } else if (!strcmp(suc, "MOON") ) {
+        *planet = 3;
+        return TCL_OK;
+    } else if (!strcmp(suc, "MARS") ) {
+        *planet = 4;
+        return TCL_OK;
+    } else if (!strcmp(suc, "JUPITER") ) {
+        *planet = 5;
+        return TCL_OK;
+    } else if (!strcmp(suc, "SATURN") ) {
+        *planet = 6;
+        return TCL_OK;
+    } else if (!strcmp(suc, "URANUS") ) {
+        *planet = 7;
+        return TCL_OK;
+    } else if (!strcmp(suc, "NEPTUNE") ) {
+        *planet = 8;
+        return TCL_OK;
+    } else if (!strcmp(suc, "PLUTO") ) {
+        *planet = 9;
+        return TCL_OK;
+    } else {
+        Tcl_AppendResult(interp, "unrecognized planet", (char*)NULL);
+        return TCL_ERROR;
+    }
 }
