@@ -9,12 +9,7 @@ static char rcsid[]="$Id:";
 *
 *   DESCRIPTION
 *
-*   WARNING: THIS CODE WILL BREAK AT TCL 8.4
-*            The interface to Tk_ItemCreatProc, Tk_ItemConfigureProc and
-*            Tk_ItemCoordProc have been changed to use object instead of
-*            strings for the command arguments.
-*
-*   D L Terrett 10 April 2000
+*   D L Terrett 19 October 2002
 *
 *   Copyright CCLRC
 */
@@ -37,9 +32,9 @@ static char rcsid[]="$Id:";
 /* Procedure definitions for static routines */
 
 static int CreateWV( Tcl_Interp *interp, Tk_Canvas canvas, Tk_Item *itemPtr,
-   int argc, char **argv);
+   int objc, Tcl_Obj* CONST objv[]);
 static int ConfigureWV( Tcl_Interp *interp, Tk_Canvas canvas, Tk_Item *itemPtr,
-   int argc, char **argv, int flags);
+   int objc, Tcl_Obj* CONST objv[], int flags);
 static void DeleteWV( Tk_Canvas canvas, Tk_Item *itemPtr, Display *display);
 static void DisplayWV( Tk_Canvas canvas, Tk_Item *itemPtr, Display *display,
    Drawable drawable, int x, int y, int width, int height);
@@ -125,7 +120,7 @@ static Tk_ItemType wrapViewType = {
    (Tk_ItemCoordProc *)NULL,            /* Coord proc */
    DeleteWV,                            /* Delete proc */
    DisplayWV,                           /* Display proc */
-   0,                                   /* alwaysRedraw */
+   TK_CONFIG_OBJS,                      /* flags */
    PointWV,                             /* Point proc */
    (Tk_ItemAreaProc *) NULL,            /* Area proc */
    (Tk_ItemPostscriptProc *) NULL,      /* Postscript proc */
@@ -152,7 +147,7 @@ void tsdWrapView()
 }
 
 static int CreateWV( Tcl_Interp *interp, Tk_Canvas canvas, Tk_Item *itemPtr,
-   int argc, char **argv)
+   int objc, Tcl_Obj* CONST objv[])
 {
    WrapViewItem *wrapviewPtr = (WrapViewItem *) itemPtr;
    Tk_Window tkwin = Tk_CanvasTkwin( canvas );
@@ -161,7 +156,7 @@ static int CreateWV( Tcl_Interp *interp, Tk_Canvas canvas, Tk_Item *itemPtr,
    int i;
    double phi, step, s, c, r;
 
-   if (argc < 2 ) {
+   if (objc < 2 ) {
       Tcl_AppendResult( interp, "wrong # args:  should be \"",
          Tk_PathName(Tk_CanvasTkwin(canvas)), " create ",
          itemPtr->typePtr->name, " x y ?options?\"", (char *) NULL);
@@ -182,15 +177,15 @@ static int CreateWV( Tcl_Interp *interp, Tk_Canvas canvas, Tk_Item *itemPtr,
    wrapviewPtr->mechptrGC = None;
 
 /* Process arguments. */
-   if ( (Tk_CanvasGetCoord( interp, canvas, argv[0], 
-      &wrapviewPtr->x0) != TCL_OK ) ||
-        (Tk_CanvasGetCoord( interp, canvas, argv[1], 
-      &wrapviewPtr->y0) != TCL_OK ) ) {
+   if ( (Tk_CanvasGetCoord( interp, canvas,
+        Tcl_GetStringFromObj(objv[0], NULL), &wrapviewPtr->x0) != TCL_OK ) ||
+        (Tk_CanvasGetCoord( interp, canvas,
+        Tcl_GetStringFromObj(objv[1], NULL), &wrapviewPtr->y0) != TCL_OK ) ) {
       return TCL_ERROR;
    }
 
 /* Configure options. */
-   if ( ConfigureWV( interp, canvas, itemPtr, argc-2, argv+2, 0) != TCL_OK ) {
+   if ( ConfigureWV( interp, canvas, itemPtr, objc-2, objv+2, 0) != TCL_OK ) {
       DeleteWV( canvas, itemPtr, Tk_Display( Tk_CanvasTkwin(canvas) ) );
       return TCL_ERROR;
    }
@@ -259,7 +254,7 @@ static int CreateWV( Tcl_Interp *interp, Tk_Canvas canvas, Tk_Item *itemPtr,
 }
 
 static int ConfigureWV( Tcl_Interp *interp, Tk_Canvas canvas, Tk_Item *itemPtr,
-   int argc, char **argv, int flags)
+   int objc, Tcl_Obj* CONST objv[], int flags)
 {
    WrapViewItem *wrapviewPtr = (WrapViewItem *) itemPtr;
    Tk_Window tkwin = Tk_CanvasTkwin( canvas );
@@ -272,8 +267,8 @@ static int ConfigureWV( Tcl_Interp *interp, Tk_Canvas canvas, Tk_Item *itemPtr,
    double az, el, ma, da, daoff, ha, dec, sdec, cdec;
    double s, c, r, r0, r1, a, a0, a1, delta;
 
-   if ( Tk_ConfigureWidget( interp, tkwin, configspecs, argc, argv, 
-      (char *) wrapviewPtr, flags ) != TCL_OK ) {
+   if ( Tk_ConfigureWidget( interp, tkwin, configspecs, objc, (char**)objv, 
+      (char *) wrapviewPtr, flags|TK_CONFIG_OBJS ) != TCL_OK ) {
       return TCL_ERROR;
    }
 

@@ -16,12 +16,7 @@ static char rcsid[]="$Id:";
 *   The only configuration option is -display which merely serves as a way
 *   of forcing the item to be redrawn and new data fetched from the TCS.
 *
-*   WARNING: THIS CODE WILL BREAK AT TCL 8.4
-*            The interface to Tk_ItemCreatProc, Tk_ItemConfigureProc and
-*            Tk_ItemCoordProc have been changed to use object instead of
-*            strings for the command arguments.
-*
-*   D L Terrett 11 October 2001
+*   D L Terrett 19 October 2002
 *
 *   Copyright CCLRC
 */
@@ -45,9 +40,9 @@ static char rcsid[]="$Id:";
 /* Procedure definitions for static routines */
 
 static int CreateDV( Tcl_Interp *interp, Tk_Canvas canvas, Tk_Item *itemPtr,
-   int argc, char **argv);
+   int objc, Tcl_Obj* CONST objv[]);
 static int ConfigureDV( Tcl_Interp *interp, Tk_Canvas canvas, Tk_Item *itemPtr,
-   int argc, char **argv, int flags);
+   int objc, Tcl_Obj* CONST objv[], int flags);
 static void DeleteDV( Tk_Canvas canvas, Tk_Item *itemPtr, Display *display);
 static void DisplayDV( Tk_Canvas canvas, Tk_Item *itemPtr, Display *display,
    Drawable drawable, int x, int y, int width, int height);
@@ -141,7 +136,7 @@ static Tk_ItemType domeViewType = {
    (Tk_ItemCoordProc *)NULL,            /* Coord proc */
    DeleteDV,                            /* Delete proc */
    DisplayDV,                           /* Display proc */
-   0,                                   /* alwaysRedraw */
+   TK_CONFIG_OBJS,                      /* flags */
    PointDV,                             /* Point proc */
    (Tk_ItemAreaProc *) NULL,            /* Area proc */
    (Tk_ItemPostscriptProc *) NULL,      /* Postscript proc */
@@ -168,7 +163,7 @@ void tsdDomeView()
 }
 
 static int CreateDV( Tcl_Interp *interp, Tk_Canvas canvas, Tk_Item *itemPtr,
-   int argc, char **argv)
+   int objc, Tcl_Obj* CONST objv[])
 {
    DomeViewItem *domeviewPtr = (DomeViewItem *) itemPtr;
    Tk_Window tkwin = Tk_CanvasTkwin( canvas );
@@ -177,7 +172,7 @@ static int CreateDV( Tcl_Interp *interp, Tk_Canvas canvas, Tk_Item *itemPtr,
    double date, dut, elongm, elatm, hm;
    double elat, elong;
 
-   if (argc < 2 ) {
+   if (objc < 2 ) {
       Tcl_AppendResult( interp, "wrong # args:  should be \"",
          Tk_PathName(Tk_CanvasTkwin(canvas)), " create ",
          itemPtr->typePtr->name, " x y ?options?\"", (char *) NULL);
@@ -210,10 +205,10 @@ static int CreateDV( Tcl_Interp *interp, Tk_Canvas canvas, Tk_Item *itemPtr,
    domeviewPtr->tpvalid = 0;
 
 /* Process arguments. */
-   if ( (Tk_CanvasGetCoord( interp, canvas, argv[0], 
-      &domeviewPtr->x0) != TCL_OK ) ||
-        (Tk_CanvasGetCoord( interp, canvas, argv[1], 
-      &domeviewPtr->y0) != TCL_OK ) ) {
+   if ( (Tk_CanvasGetCoord( interp, canvas, 
+         Tcl_GetStringFromObj( objv[0], NULL), &domeviewPtr->x0) != TCL_OK ) ||
+         (Tk_CanvasGetCoord( interp, canvas,
+         Tcl_GetStringFromObj(objv[1], NULL), &domeviewPtr->y0) != TCL_OK ) ) {
       return TCL_ERROR;
    }
 
@@ -263,7 +258,7 @@ static int CreateDV( Tcl_Interp *interp, Tk_Canvas canvas, Tk_Item *itemPtr,
    domeviewPtr->blackdotGC = Tk_GetGC( tkwin, mask, &gcvalues );
 
 /* Configure options. */
-   if ( ConfigureDV( interp, canvas, itemPtr, argc-2, argv+2, 0) != TCL_OK ) {
+   if ( ConfigureDV( interp, canvas, itemPtr, objc-2, objv+2, 0) != TCL_OK ) {
       DeleteDV( canvas, itemPtr, Tk_Display( Tk_CanvasTkwin(canvas) ) );
       return TCL_ERROR;
    }
@@ -318,7 +313,7 @@ static int CreateDV( Tcl_Interp *interp, Tk_Canvas canvas, Tk_Item *itemPtr,
 #define GATEWIDTH 40.0
 
 static int ConfigureDV( Tcl_Interp *interp, Tk_Canvas canvas, Tk_Item *itemPtr,
-   int argc, char **argv, int flags)
+   int objc, Tcl_Obj* CONST objv[], int flags)
 {
 /* This routine is called each time the -display option is configured. We
    use it as an opportunity to refresh the data from the TCS. */
@@ -331,8 +326,8 @@ static int ConfigureDV( Tcl_Interp *interp, Tk_Canvas canvas, Tk_Item *itemPtr,
    double vgpos;
    char savest[40];
 
-   if ( Tk_ConfigureWidget( interp, tkwin, configspecs, argc, argv, 
-      (char *) domeviewPtr, flags ) != TCL_OK ) {
+   if ( Tk_ConfigureWidget( interp, tkwin, configspecs, objc, (char**)objv, 
+      (char *) domeviewPtr, flags|TK_CONFIG_OBJS ) != TCL_OK ) {
       return TCL_ERROR;
    }
 

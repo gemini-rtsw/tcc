@@ -9,12 +9,7 @@ static char rcsid[]="$Id:";
 *
 *   DESCRIPTION
 *
-*   WARNING: THIS CODE WILL BREAK AT TCL 8.4
-*            The interface to Tk_ItemCreatProc, Tk_ItemConfigureProc and
-*            Tk_ItemCoordProc have been changed to use object instead of
-*            strings for the command arguments.
-*
-*   D L Terrett 10 April 2000
+*   D L Terrett 19 October 2002
 *
 *   Copyright CCLRC
 */
@@ -26,7 +21,6 @@ static char rcsid[]="$Id:";
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <tcl.h>
 #include <tk.h>
 #include <slalib.h>
 #include <astLib.h>
@@ -36,10 +30,10 @@ static char rcsid[]="$Id:";
 
 /* Procedure definitions for static routines */
 
-static int CreateEV( Tcl_Interp *interp, Tk_Canvas canvas, Tk_Item *itemPtr,
-   int argc, char **argv);
+static int CreateEV( Tcl_Interp *interp, Tk_Canvas canvas, 
+   Tk_Item *itemPtr, int objc, Tcl_Obj* CONST objv[]);
 static int ConfigureEV( Tcl_Interp *interp, Tk_Canvas canvas, Tk_Item *itemPtr,
-   int argc, char **argv, int flags);
+   int objc, Tcl_Obj* CONST objv[], int flags);
 static void DeleteEV( Tk_Canvas canvas, Tk_Item *itemPtr, Display *display);
 static void DisplayEV( Tk_Canvas canvas, Tk_Item *itemPtr, Display *display,
    Drawable drawable, int x, int y, int width, int height);
@@ -106,7 +100,7 @@ static Tk_ItemType elViewType = {
    (Tk_ItemCoordProc *)NULL,            /* Coord proc */
    DeleteEV,                            /* Delete proc */
    DisplayEV,                           /* Display proc */
-   0,                                   /* alwaysRedraw */
+   TK_CONFIG_OBJS,                      /* flags */
    PointEV,                             /* Point proc */
    (Tk_ItemAreaProc *) NULL,            /* Area proc */
    (Tk_ItemPostscriptProc *) NULL,      /* Postscript proc */
@@ -122,10 +116,12 @@ static Tk_ItemType elViewType = {
 
 void tsdElView()
 {
+
 /* Initialize the tagsOptions structure.  */
    tagsOption.parseProc = Tk_CanvasTagsParseProc;
    tagsOption.printProc = Tk_CanvasTagsPrintProc;
    tagsOption.clientData = (ClientData) NULL;
+
 
 /* Create the canvas item type. */
    Tk_CreateItemType( &elViewType );
@@ -133,7 +129,7 @@ void tsdElView()
 }
 
 static int CreateEV( Tcl_Interp *interp, Tk_Canvas canvas, Tk_Item *itemPtr,
-   int argc, char **argv)
+   int objc, Tcl_Obj* CONST objv[])
 {
    ElViewItem *elviewPtr = (ElViewItem *) itemPtr;
    Tk_Window tkwin = Tk_CanvasTkwin( canvas );
@@ -141,7 +137,7 @@ static int CreateEV( Tcl_Interp *interp, Tk_Canvas canvas, Tk_Item *itemPtr,
    unsigned long mask;
    double phi;
 
-   if (argc < 2 ) {
+   if (objc < 2 ) {
       Tcl_AppendResult( interp, "wrong # args:  should be \"",
          Tk_PathName(Tk_CanvasTkwin(canvas)), " create ",
          itemPtr->typePtr->name, " x y ?options?\"", (char *) NULL);
@@ -160,15 +156,15 @@ static int CreateEV( Tcl_Interp *interp, Tk_Canvas canvas, Tk_Item *itemPtr,
    elviewPtr->mechptrGC = None;
 
 /* Process arguments. */
-   if ( (Tk_CanvasGetCoord( interp, canvas, argv[0], 
-      &elviewPtr->x0) != TCL_OK ) ||
-        (Tk_CanvasGetCoord( interp, canvas, argv[1], 
-      &elviewPtr->y0) != TCL_OK ) ) {
+   if ( (Tk_CanvasGetCoord( interp, canvas, 
+        Tcl_GetStringFromObj(objv[0], NULL), &elviewPtr->x0) != TCL_OK ) || 
+        (Tk_CanvasGetCoord( interp, canvas,
+        Tcl_GetStringFromObj( objv[1], NULL), &elviewPtr->y0) != TCL_OK ) ) {
       return TCL_ERROR;
    }
 
 /* Configure options. */
-   if ( ConfigureEV( interp, canvas, itemPtr, argc-2, argv+2, 0) != TCL_OK ) {
+   if ( ConfigureEV( interp, canvas, itemPtr, objc-2, objv+2, 0) != TCL_OK ) {
       DeleteEV( canvas, itemPtr, Tk_Display( Tk_CanvasTkwin(canvas) ) );
       return TCL_ERROR;
    }
@@ -228,7 +224,7 @@ static int CreateEV( Tcl_Interp *interp, Tk_Canvas canvas, Tk_Item *itemPtr,
 }
 
 static int ConfigureEV( Tcl_Interp *interp, Tk_Canvas canvas, Tk_Item *itemPtr,
-   int argc, char **argv, int flags)
+   int objc, Tcl_Obj* CONST objv[], int flags)
 {
    ElViewItem *elviewPtr = (ElViewItem *) itemPtr;
    Tk_Window tkwin = Tk_CanvasTkwin( canvas );
@@ -240,8 +236,8 @@ static int ConfigureEV( Tcl_Interp *interp, Tk_Canvas canvas, Tk_Item *itemPtr,
    int i;
    double az, el, ha, dec, sdec, cdec;
 
-   if ( Tk_ConfigureWidget( interp, tkwin, configspecs, argc, argv, 
-      (char *) elviewPtr, flags ) != TCL_OK ) {
+   if ( Tk_ConfigureWidget( interp, tkwin, configspecs, objc, (char**) objv, 
+      (char *)elviewPtr, flags|TK_CONFIG_OBJS) != TCL_OK ) {
       return TCL_ERROR;
    }
 
