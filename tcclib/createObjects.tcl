@@ -3,76 +3,87 @@
 #
 #  This file contains a set of convenience routines for creating tcc objects
 #  designed to be used in initialisation files or via "send" from other
-#  tcl applications. If an object of the same name and type already exists 
-#  it is deleted.
+#  tcl applications.
 #
-#  D Terrett 22 May 2000
+#  D Terrett 1 November 2000
 #
 #  Copyright CCLRC
 #-
 
 proc createConfig {name args} {
-   catch {delete object ::TcsConfigNames::$name}
-   eval ConfigComponent \"::TcsConfigNames::$name\" TcsConfigList $args
+   catch {ConfigComponent ::TcsConfigNames::$name TcsConfigList}
+   ::TcsConfigNames::$name init
+   eval \"::TcsConfigNames::$name\" configure $args
 }
 
 proc createScienceTarget {name args} {
-   catch {delete object ::ScienceTargetNames::$name}
-   eval SciTargetComponent \"::ScienceTargetNames::$name\" ScienceTargetList $args
+   catch {SciTargetComponent ::ScienceTargetNames::$name ScienceTargetList}
+   ::ScienceTargetNames::$name init
+   eval \"::ScienceTargetNames::$name\" configure $args
 }
 
 proc createWfsTarget {name args} {
-   catch {delete object ::WfsTargetNames::$name}
-   eval WfsTargetComponent \"::WfsTargetNames::$name\" WfsTargetList $args
+   catch {WfsTargetComponent ::WfsTargetNames::$name WfsTargetList}
+   ::WfsTargetNames::$name init
+   eval \"::WfsTargetNames::$name\" configure $args
 }
 
 proc createPointingOrigin {name args} {
-   catch {delete object ::PointOrigNames::$name}
-   eval PointOrigComponent \"::PointOrigNames::$name\" PointOrigList $args
+   catch {PointOrigComponent ::PointOrigNames::$name PointOrigList}
+   ::PointOrigNames::$name init
+   eval \"::PointOrigNames::$name\" configure $args
 }
 
 proc createChop {name args} {
-   catch {delete object ::ChopNames::$name}
-   eval ChopComponent \"::ChopNames::$name\" ChopList $args
+   catch {ChopComponent ::ChopNames::$name ChopList}
+   ::ChopNames::$name init
+   eval \"::ChopNames::$name\" configure $args
 }
 
 proc createSlewOptions {name args} {
-   catch {delete object ::SlewOptionsNames::$name}
-   eval SlewOptionsComponent \"::SlewOptionsNames::$name\" SlewOptionsList $args
+   catch {SlewOptionsComponent ::SlewOptionsNames::$name SlewOptionsList}
+   ::SlewOptionsNames::$name init
+   eval \"::SlewOptionsNames::$name\" configure $args
 }
 
 proc createTrackFrame {name args} {
-   catch {delete object ::TrackFrameNames::$name}
-   eval TrackFrameComponent \"::TrackFrameNames::$name\" TrackFrameList $args
+   catch {TrackFrameComponent ::TrackFrameNames::$name TrackFrameList}
+   ::TrackFrameNames::$name init
+   eval \"::TrackFrameNames::$name\" configure $args
 }
 
 proc createWavelength {name args} {
-   catch {delete object ::WavelengthNames::$name}
-   eval WavelengthComponent \"::WavelengthNames::$name\" WavelengthList $args
+   catch {WavelengthComponent ::WavelengthNames::$name WavelengthList}
+   ::WavelengthNames::$name init
+   eval \"::WavelengthNames::$name\" configure $args
 }
 
 proc createInstrument {name args} {
-   catch {delete object ::InstrumentNames::$name}
-   eval InstrumentComponent \"::InstrumentNames::$name\" InstrumentList $args
+   catch {InstrumentComponent ::InstrumentNames::$name InstrumentList}
+   ::InstrumentNames::$name init
+   eval \"::InstrumentNames::$name\" configure $args
 }
 
 proc createTrackRate {name args} {
-   catch {delete object ::TrackRateNames::$name}
-   eval TrackRateComponent \"::TrackRateNames::$name\" TrackRateList $args
+   catch {TrackRateComponent ::TrackRateNames::$name TrackRateList}
+   ::TrackRateNames::$name init
+   eval \"::TrackRateNames::$name\" configure $args
 }
 
 proc createRotator {name args} {
-   catch {delete object ::RotatorNames::$name}
-   eval RotatorComponent \"::RotatorNames::$name\" RotatorList $args
+   catch {RotatorComponent ::RotatorNames::$name RotatorList}
+   ::RotatorNames::$name init
+   eval \"::RotatorNames::$name\" configure $args
 }
 
 proc createGuide {name args} {
-   catch {delete object ::GuideNames::$name}
-   eval GuideComponent \"::GuideNames::$name\" GuideList $args
+   catch {GuideComponent ::GuideNames::$name GuideList}
+   ::GuideNames::$name init
+   eval \"::GuideNames::$name\" configure $args
 }
 
 proc createCosys {name args} {
-   catch {delete object ::CosysNames::$name}
-   eval CosysComponent \"::CosysNames::$name\" CosysList $args
+   catch {CosysComponent ::CosysNames::$name CosysList}
+   ::CosysNames::$name init
+   eval \"::CosysNames::$name\" configure $args
 }
-
