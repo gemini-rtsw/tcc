@@ -1,7 +1,7 @@
 #+
 #  tccSkyCatPlugin.tcl
 #
-#  D Terrett 1 December 1998
+#  D Terrett & C Mayer  11 February 2000
 #
 #  Copyright CCLRC
 #-
@@ -85,22 +85,10 @@ namespace eval TccSkyCat {
 
       if {![info exists togglePwfs1]} {
         set togglePwfs1 subtract
-      } else {
-        if {$togglePwfs1 == "subtract"} {
-          set togglePwfs1 add
-        } else {
-          set togglePwfs1 subtract
-        }
       }
 
       if {![info exists togglePwfs2]} {
         set togglePwfs2 subtract
-      } else {
-        if {$togglePwfs2 == "subtract"} {
-          set togglePwfs2 add
-        } else {
-          set togglePwfs2 subtract
-        }
       }
 
 # Get the field centre in world coordinates.
@@ -342,7 +330,7 @@ namespace eval TccSkyCat {
 # X/Y of pivot.
       set xp [expr $xc + $r * cos ( $b + $d )]
       set yp [expr $yc - $r * sin ( $b + $d )]
-      $canvas create line $x $y $xp $yp -fill $pwfsColor -tags objects
+#      $canvas create line $x $y $xp $yp -fill $pwfsColor -tags objects
       if {$toggle == "add" } {
         set xpSave $xp
         set ypSave $yp
@@ -352,7 +340,7 @@ namespace eval TccSkyCat {
       set xp [expr $xc + $r * cos ( $b - $d )]
 
       set yp [expr $yc - $r * sin ( $b - $d )]
-      $canvas create line $x $y $xp $yp -fill $pwfsColor -tags objects
+#      $canvas create line $x $y $xp $yp -fill $pwfsColor -tags objects
       if {$toggle == "subtract" } {
         set xpSave $xp
         set ypSave $yp
