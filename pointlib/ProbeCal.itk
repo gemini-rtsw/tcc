@@ -3,7 +3,7 @@
 #
 # The interface of the probe calibration procedure.
 #
-# D Terrett 25 June 2001
+# D Terrett 26 June 2001
 #
 # Copyright CCLRC
 #+
@@ -13,12 +13,13 @@ itcl::class ProbeCal {
    constructor {args} {}
    destructor {}
    public {
-      variable guidetelwait 10000
-      variable guidewfswait 20000
+      variable guidetelwait 30000
+      variable guidewfswait 60000
    }
    private {
       method start {}
       method isinposition {p}
+      method isagidle {}
       method report {act msg}
       method log {p}
       method probesetup {p}
@@ -31,8 +32,9 @@ itcl::class ProbeCal {
       variable action
       variable inposition1
       variable inposition2
+      variable agidle
       variable xguide 150
-      variable yguide 150
+      variable yguide -150
    }
 }
 
@@ -112,14 +114,25 @@ itcl::body ProbeCal::constructor {args} {
       $action($p,setup) set pwfs2Guide nodbchopb off
 
 # Setting up for guiding the telescope.
-      set action($p,guidesetup) [seq::Action #auto tcs \
-            -waitvar [scope inposition${pg}(value)] \
-            -oktest [itcl::code $this isinposition $pg]]
-      $action($p,guidesetup) set pwfs${p}StopObserve
-      $action($p,guidesetup) set pwfs${p}Park
+      set action($p,guidesetup) [seq::Action #auto tcs]
       $action($p,guidesetup) set wfsGuideMode state off
       $action($p,guidesetup) set pwfs${p}StopObserve
-      $action($p,guidesetup) set p${pg}Follow followState on
+      switch $p {
+         1 {
+            $action($p,guidesetup) set pwfs2Guide nodachopa on
+            $action($p,guidesetup) set pwfs1Park
+            $action($p,guidesetup) configure \
+                  -oktest [itcl::code $this isagidle] \
+                  -waitvar [scope agidle(value)]
+         }
+         2 {
+            $action($p,guidesetup) set p1Follow followState on
+            $action($p,guidesetup) set pwfs2Guide nodachopa off
+            $action($p,guidesetup) configure \
+                  -waitvar [scope inposition${pg}(value)] \
+                  -oktest [itcl::code $this isinposition $pg]
+         }
+      }
       $action($p,guidesetup) set poriginA x $xguide
       $action($p,guidesetup) set poriginA y $yguide
       $action($p,guidesetup) set poriginB x $xguide
@@ -131,20 +144,34 @@ itcl::body ProbeCal::constructor {args} {
       set action($p,guidetel) [seq::Action #auto tcs \
             -waitvar [scope inposition${pg}(value)] \
             -oktest [itcl::code $this isinposition $pg]]
+      $action($p,guidetel) set pwfs${p}Observe noexp -1
       $action($p,guidetel) set m2Guide state on
-      $action($p,guidetel) set pwfs${pg}Observe noexp -1
       $action($p,guidetel) set mountGuide mode on
       $action($p,guidetel) set mountGuide source SCS
 
-# Set the arm following
+# Set switch to the probe we are calibrating.
       set action($p,probesetup) [seq::Action #auto tcs \
             -waitvar [scope inposition${p}(value)] \
             -oktest [itcl::code $this isinposition $p]]
       $action($p,probesetup) set mountGuide mode off
       $action($p,probesetup) set m2Guide state off
       $action($p,probesetup) set pwfs${pg}StopObserve
-      $action($p,probesetup) set pwfs${pg}Park
-      $action($p,probesetup) set p${p}Follow followState on
+      switch $p {
+         1 {
+            $action($p,probesetup) set p1Follow followState on
+            $action($p,probesetup) set pwfs2Guide nodachopa off
+            $action($p,probesetup) configure \
+                  -waitvar [scope inposition1(value)] \
+                  -oktest [itcl::code $this isinposition 1]
+         }
+         2 {
+            $action($p,probesetup) set pwfs2Guide nodachopa on
+            $action($p,probesetup) set pwfs1Park
+            $action($p,probesetup) configure \
+                  -waitvar [scope inposition2(value)] \
+                  -oktest [itcl::code $this isinposition 2]
+         }
+      }
       $action($p,probesetup) set clearOffset vt PWFS${p}
       $action($p,probesetup) set clearOffset index all
 
@@ -168,8 +195,9 @@ itcl::body ProbeCal::constructor {args} {
       $action($p,guideprobe) configure \
             -onok "after $guidewfswait [itcl::code $this log $p]"
 
-# Monitor the probe arm inPosition status.
+# Monitor the probe arm inPosition status and A & G active C.
       sa agssad link p${p}InPosition [scope inposition${p}]
+      sa agssad link activeC [scope agidle]
    }
 
 # Cleanup action.
@@ -289,7 +317,18 @@ itcl::body ProbeCal::start {} {
 }
 
 itcl::body ProbeCal::isinposition {p} {
+   set busy [sa agssad get activeC]
    set val [sa agssad get p${p}InPosition]
+   return $val
+}
+
+itcl::body ProbeCal::isagidle {} {
+   set activec [sa agssad get activeC]
+   if { [string equal $activec IDLE] } {
+      set val 1
+   } else {
+      set val 0
+   }
    return $val
 }
 
@@ -330,7 +369,7 @@ itcl::body ProbeCal::log {p} {
    set arm [sa agssad get p${p}ArmAngle]
    set caguide [sa tcssad get caguide]
    set ceguide [sa tcssad get ceguide]
-   puts $logfd [format "%10.2f %10.2f %10.2f %10.2f # %8.2f %8.2f" \
+   puts $logfd [format "%10.3f %10.3f %10.3f %10.3f # %8.3f %8.3f" \
          [lindex $po 0] [lindex $po 1] $table $arm $caguide $ceguide] 
    flush $logfd
 
@@ -365,8 +404,8 @@ itcl::body ProbeCal::finish {} {
 }
 
 itcl::body ProbeCal::manual {p} {
-   cs pwfs${p}Observe set noexp -1
-   cs pwfs${p}Observe post
+#   cs pwfs${p}Observe set noexp -1
+#   cs pwfs${p}Observe post
    if { [string equal [$itk_component(mode) get] manual] } {
       tk_messageBox -parent $itk_interior -type ok -icon question \
             -message "Press Ok when the star is visible on the WFS"
