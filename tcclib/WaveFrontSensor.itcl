@@ -56,14 +56,17 @@ itcl::body WaveFrontSensor::constructor {wfs args} {
       pwfs1 {
          set prefix p1
          set dirname pwfs1
+	 set exposetime 0.01
       }
       pwfs2 {
          set prefix p2
          set dirname pwfs2
+	 set exposetime 0.005
       }
       oiwfs {
          set prefix oi
          set dirname oiwfs
+	 set exposetime 0.005
       }
    }
 
@@ -140,7 +143,7 @@ itcl::body WaveFrontSensor::start {{frames -1}} {
 # If the mode is sky set the number if frames to default number for 
 #  sequence dark.
    if { $mode eq "sky" } {
-         set frames 100
+         set frames 200
    } else {
 
 # If the exposure time has changed then re-init the processing with
