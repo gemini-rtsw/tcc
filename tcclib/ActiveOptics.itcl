@@ -77,6 +77,9 @@ itcl::body ActiveOptics::constructor {args} {
    if { [catch {cs oiwfsStopObserve info}] } {
       epics cs oiwfsStopObserve
    }
+   if { [catch {cs oiwfsSelect info}] } {
+      epics cs oiwfsSelect
+   }
    if { [catch {sa guideConfig info}] } {
       epics sa guideConfig
    }
@@ -149,7 +152,22 @@ itcl::body ActiveOptics::enable {} {
          }
 
 # Add the desired guide sources.
+# N.B. at the moment only once source is actually useable as the M2 code
+# to blend multiple sources isn't debugged.
          foreach source $scssource {
+            if {$source == "GAOS"} {
+              cs oiwfsSelect set oiwfs NIRI 
+              cs oiwfsSelect set output AO
+            } else {
+              cs oiwfsSelect set oiwfs NIRI 
+              cs oiwfsSelect set output WFS
+            }
+            logger command oiwfsSelect
+            if { [catch { cs oiwfsSelect post} msg] } {
+              tk_messageBox -icon error -message \
+                  "Error posting oiwfsSelect command: TCS reports \
+                  \"$msg\""
+            }
             cs m2GuideConfig set reset Off
             cs m2GuideConfig set samplefreq 200
             cs m2GuideConfig set filter raw
