@@ -5,8 +5,7 @@
 #  frame and an entryfield widget for the equinox.
 #
 #  Options:
-#           -vt             The virtual telescope that the coordinate system 
-#                           applies to.
+#           none
 #
 #  Methods:
 #           selectobj name  Copies the contents of the Cosys object "name"
@@ -15,7 +14,7 @@
 #           updateobj name  Stores the contents of the edit controls in the
 #                           Cosys object "name".
 #
-#  D Terrett 24 November 1999
+#  D Terrett 5 June 2000
 #
 #  Copyright CCLRC
 #+
@@ -24,8 +23,6 @@ itcl::class CosysControl {
    inherit ComponentControl
 
    constructor args {}
-
-   itk_option define -vt vt Vt {}
 
    public method selectobj name
    public method updateobj name
@@ -68,13 +65,6 @@ itcl::body CosysControl::constructor args {
    set description "Coordinate system"
 
    eval itk_initialize $args
-}
-
-itcl::configbody CosysControl::vt {
-
-# Configure the StoreApply widget with a suitable log message.
-   $itk_component(storeapply) configure \
-         -logmessage "$itk_option(-vt) coordinate system"
 }
 
 itcl::body CosysControl::selectobj name {

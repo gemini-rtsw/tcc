@@ -9,7 +9,7 @@
 #  Methods:
 #          none
 #
-#  D Terrett 2 June 2000
+#  D Terrett 5 June 2000
 #
 #  Copyright CCLRC
 #+
@@ -29,6 +29,7 @@ itcl::class TcsControl {
    private method m1park {par} {return PARK}
    private method m1unpark {par} {return UNPARK}
    private method agmech cmd
+   private method mountdatum
    private variable dome
    private variable shutter
 }
@@ -152,7 +153,8 @@ itcl::body TcsControl::constructor args {
 
 # Commands for datuming, initing or unparking mechanisms.
    itk_component add mcsdatum {
-      ApplyButton $w.mcsdatum -command mountDatum -text Datum
+      ApplyButton $w.mcsdatum -command mountDatum -text Datum \
+         -parcommand [code $this mountdatum]
    }
    itk_component add scsinit {
       ApplyButton $w.scsinit -command m2Init -text Init
@@ -422,7 +424,7 @@ itcl::body TcsControl::constructor args {
    itk_component add weather {
       LiveButton $w.weather -command [code $this weather] \
             -text [lindex [cs weather info] 1] \
-            -logmessage "Weather"
+            -logcommand weather
    }
    itk_component add source {
       iwidgets::optionmenu $w.source \
@@ -557,9 +559,17 @@ itcl::body TcsControl::agmech cmd {
    cs $cmd set dummy MARK
    if [catch {cs tcsApply post} msg] {
       tk_messageBox -icon error -parent $itk_interior -message \
-            "Error posting weather command: TCS reports \
+            "Error posting A&G mechanism command: TCS reports \
             \"$msg\""
    } else {
       logger log $cmd
+   }
+}
+
+itcl::body TcsControl::mountdatum par {
+   switch $par {
+      datumAxis {return Both}
+      azDevice {return Switch}
+      elDevice {return Switch}
    }
 }

@@ -14,13 +14,13 @@
 #  Options:
 #          -command      A command to be executed when the button is pressed.
 #
-#          -logmessage - The message to send to the logger when the command 
+#          -logcommand - The command to send to the logger when the command 
 #                        is executed.
 #
 #  Methods:
 #          none
 #
-#  D Terrett 27 October 1998
+#  D Terrett 5 June 2000
 #
 #  Copyright CCLRC
 #-
@@ -31,7 +31,7 @@ itcl::class LiveButton {
    constructor args {}
 
    itk_option define -command command Command {}
-   itk_option define -logmessage logMessage LogMessage {}
+   itk_option define -logcommand logcommand LogCommand {}
 
    private method command
 }
@@ -58,14 +58,9 @@ itcl::body LiveButton::constructor args {
 
 itcl::body LiveButton::command {} {
    if { $itk_option(-command) != "" } {
-      if { [catch {uplevel #0 $itk_option(-command)} msg] } {
-         logger log "$itk_option(-logmessage) rejected..."
-         logger log $msg
-         tk_messageBox -icon error -parent $itk_interior -message $msg
-      } else {
-         if { $itk_option(-logmessage) != "" } {
-            logger log $itk_option(-logmessage)
-         }
+      catch {uplevel #0 $itk_option(-command)}
+      foreach cs $itk_option(-logcommand) {
+         logger command $cs
       }
    }
 }

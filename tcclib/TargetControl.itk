@@ -8,9 +8,6 @@
 #  Options:
 #           -shadow         The name of the control's edit shadow.
 #
-#           -vt             The virtual telescope that the coordinate system 
-#                           applies to.
-#
 #  Methods:
 #           selectobj name  Copies the contents of the Target object "name"
 #                           into the edit controls.
@@ -18,7 +15,7 @@
 #           updateobj name  Stores the contents of the edit controls in the
 #                           Target object "name".
 #
-#  D Terrett 26 May 2000
+#  D Terrett 5 June 2000
 #
 #  Copyright CCLRC
 #+
@@ -29,7 +26,6 @@ itcl::class TargetControl {
    constructor args {}
 
    itk_option define -shadow shadow Shadow ""
-   itk_option define -vt vt Vt ""
 
    public method selectobj name
    public method updateobj name
@@ -38,7 +34,7 @@ itcl::class TargetControl {
 itk::usual TargetControl {
    keep -borderwidth -cursor -font -highlightthickness -insertborderwidth \
          -insertofftime -insertontime -insertwidth -labelfont -popupcursor \
-         -selectborderwidth -textfont -title -vt
+         -selectborderwidth -textfont -title
 }
 
 itcl::body TargetControl::constructor args {
@@ -317,9 +313,4 @@ itcl::configbody TargetControl::shadow {
    $itk_component(cosys) configure -shadow $itk_option(-shadow)
    $itk_component(wavelength) configure -shadow $itk_option(-shadow)
    $itk_component(trackrate) configure -shadow $itk_option(-shadow)
-}
-
-itcl::configbody TargetControl::vt {
-   $itk_component(storeapply) configure \
-         -logmessage "$itk_option(-vt) target"
 }

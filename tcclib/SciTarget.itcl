@@ -53,7 +53,7 @@
 #  Procs:
 #           subcomponents Returns a list of the target classes subcomponents.
 #
-#  D Terrett 26 May 2000
+#  D Terrett 5 June 2000
 #
 #  Copyright CCLRC
 #+
@@ -93,10 +93,12 @@ itcl::body SciTarget::apply vt {
    $this Target::apply $vt
 
    cs airmassLimit set limit $airmassLimit
+   logger command airmassLimit
 
    switch $type {
       planet {
          cs $vt set planet $planet
+         logger command $vt
       }
       orbit {
          cs orbit set objName \"$objName\"
@@ -127,6 +129,7 @@ itcl::body SciTarget::apply vt {
          } else {
             cs orbit set dailymot \"\"
          }
+         logger command orbit
       }
    }
 }

@@ -8,15 +8,12 @@
 #  Options:
 #           -control
 #
-#           -logmessage    The message sent to the logger when the apply
-#                          button is pressed.
-#
 #           -vt
 #
 #  Methods:
 #           none
 #
-#  D Terrett 24 November 1999
+#  D Terrett 5 June 2000
 #
 #  Copyright CCLRC
 #+
@@ -27,7 +24,6 @@ itcl::class StoreApply {
    constructor args {}
 
    itk_option define -control control Control {}
-   itk_option define -logmessage logMessage LogMessage {}
    itk_option define -vt vt Vt {}
 
    private method apply
@@ -55,6 +51,9 @@ itcl::body StoreApply::constructor args {
    itk_component add apply {
       LiveButton $w.apply -text Apply -width 6 -command [code $this apply] \
             -state disabled
+   } {
+      usual
+      keep -logcommand
    }
    pack $itk_component(lock) $itk_component(apply) -side left
    itk_component add store {
@@ -75,10 +74,6 @@ itcl::body StoreApply::apply {} {
    set name [$itk_option(-combobox) get]
    if { $name != "" } {
       $itk_component(store) invoke
-
-# Add the component name to the apply button log message.
-      $itk_component(apply) configure \
-            -logmessage "$itk_option(-logmessage) \"$name\""
    }
 
 # Call the control window's apply method.

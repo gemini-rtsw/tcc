@@ -16,7 +16,7 @@
 #  Methods:
 #          none
 #
-#  D Terrett 1 June 2000
+#  D Terrett 2 June 2000
 #
 #  Copyright CCLRC
 #-
@@ -69,16 +69,9 @@ itcl::body FollowButton::command {} {
       } else {
          cs $itk_option(-command) set followState On
       }
+      logger command $itk_option(-command)
       if { [catch {cs tcsApply post} msg] } {
-         logger log "$itk_option(-subsysname) follow command rejected..."
-         logger log $msg
          tk_messageBox -icon error -parent $itk_interior -message $msg
-      } else {
-         if { $following } {
-            logger log "$itk_option(-subsysname) follow off"
-         } else {
-            logger log "$itk_option(-subsysname) follow on"
-         }
       }
    }
 }

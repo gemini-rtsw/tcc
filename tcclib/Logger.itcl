@@ -9,9 +9,12 @@
 #          none
 #
 #  Methods:
-#          log message  Writes "message" into the log window.
+#          log message   Writes "message" into the log window.
 #
-#  D Terrett 10 September 1998
+#          command cs    Writes the values of the command sender cs's
+#                        parameters to the log window.
+#
+#  D Terrett 5 June 2000
 #
 #  Copyright CCLRC
 #+
@@ -21,11 +24,12 @@ itcl::class Logger {
    constructor {} {}
 
    public method log message
+   public method command cs
 
    private method monitor {record status time value}
    private method send text
 
-   private variable clid {}
+   private variable clid 0
    private variable applyMess {}
 }
 
@@ -33,6 +37,7 @@ itcl::body Logger::constructor {} {
 
 # Set up monitors on the TCS epics records of interest.
    sa applyC proc clid [code $this monitor]
+   sa apply proc mess [code $this monitor]
    sa errMessage proc val [code $this monitor]
 }
 
@@ -48,26 +53,24 @@ itcl::body Logger::monitor {record status time value} {
    switch $record {
       applyC.clid {
 
-# Ignore the first event because this is just the event delivered when the
-# monitor is set up.
-         if { $clid == "" } {
-            set clid $value
-         } else {
-
 # If the client ID was incremented then a command was accepted by the TCS.
-            if { $value > $clid } {
-              set text "$utc: command accepted"
-              set clid $value
-            }
+         if { $value > $clid } {
+           set text "$utc: command accepted"
+           set clid $value
          }
       }
       errMessage.val {
          set text "$utc: $value"
       }
+      apply.mess {
+         if { ![string is space $value] } {
+            set text "$utc: rejected: $value"
+         }
+      }
    }
 
 # Send the text to the logger.
-   if { $text != "" } {
+   if { ![string is space $text] } {
       send $text
    }
 }
@@ -77,6 +80,36 @@ itcl::body Logger::log message {
 
 # Send the text to the logger.
    send $text
+}
+
+itcl::body Logger::command cs {
+
+# Get UTC timestamp for the message.
+   set utc [sa tcssad get UTC value]
+
+# Get the command info
+   set info [cs $cs info]
+
+# Write the name of the command.
+   send "$utc: [lindex $info 1]"
+
+# Get the names of the commands parameters.
+   set params [lindex $info 3]
+
+   foreach par $params {
+
+#  Ingnore parameters called dummy.
+      if { [string equal dummy $par] } continue
+
+#  Get the value
+      set val [cs $cs get $par]
+
+#  Ignore empty values.
+      if { [string is space $val] } continue
+
+#  write the name and value to the log window.
+      send "               $par = $val"
+   }
 }
 
 itcl::body Logger::send text {

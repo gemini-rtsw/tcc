@@ -35,7 +35,7 @@
 #           subcomponents   Returns a list of the subcomponents of the
 #                           Instrument objects (an empty list).
 #
-#  D Terrett 26 May 2000
+#  D Terrett 5 June 2000
 #
 #  Copyright CCLRC
 #+
@@ -60,19 +60,23 @@ itcl::body Instrument::apply args {
 
 # Set iaa and focus.
    cs rotator set iaa \"$iaa\"
+   logger command rotator
    cs dtelFocus set focusOffset \"$focusOffset\"
+   logger command dtelFocus
 
 # Configure ISS object.
    switch $centralBaffle {
       closed {cs m2Baffle set centralBaffle POS1}
       open {cs m2Baffle set centralBaffle POS2}
    }
+   logger command m2Baffle
    switch $deployableBaffle {
       "thermal IR" {cs m2Baffle set deployBaffle RETRACTED}
       "near IR" {cs m2Baffle set deployBaffle POS1}
       optical {cs m2Baffle set deployBaffle POS2}
       maintenance {cs m2Baffle set deployBaffle EXTENDED}
    }
+   logger command m2Baffle
    switch $issFace {
       "port 1" {iss configure -port 1}
       "port 3" {iss configure -port 3}

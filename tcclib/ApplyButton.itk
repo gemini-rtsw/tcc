@@ -27,7 +27,7 @@
 #
 #        o  If the epics command sender doesn't exist it is created.
 #
-#  D Terrett 28 October 1998
+#  D Terrett 5 June 2000
 #
 #  Copyright CCLRC
 #+
@@ -68,13 +68,12 @@ itcl::configbody ApplyButton::command {
       epics cs $itk_option(-command)
    }
 
-# Configure the -text and -logmessage options of the LiveButton.
+# Configure the -text and -logcommand options of the LiveButton.
    if { [string length $itk_option(-text)] == 0 } {
       $itk_component(lbutton) configure \
             -text [lindex [cs $itk_option(-command) info] 1]
    }
-   $itk_component(lbutton) configure \
-      -logmessage [lindex [cs $itk_option(-command) info] 1]
+   $itk_component(lbutton) configure -logcommand $itk_option(-command)
 }
 
 itcl::configbody ApplyButton::text {
