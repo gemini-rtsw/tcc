@@ -4,7 +4,7 @@
 #  A SciTarget control is a TargetControl widget with widgets for
 #  the target position etc.
 #
-#  D Terrett 22 February 2000
+#  D Terrett 18 October 2000
 #
 #  Copyright CCLRC
 #+
@@ -309,16 +309,21 @@ body SciTargetControl::grab {} {
 # Get the name of the currently selected SciTarget object.
    set name [$itk_component(selector) get]
    if { $name == "" } {
-      set name $scratchobj
+      set fullname $scratchobj
    } else {
-      set name ::ScienceTargetNames::$name
+      set fullname ::ScienceTargetNames::$name
    }
 
+# Create the object if it doesn't already exist.
+   if { [llength [find objects $name]] == 0 } {
+      $itk_option(-shadow) store $name
+   }
+      
 # Grab the current position from the telescope.
-   $name grab $itk_option(-vt)
+   $fullname grab $itk_option(-vt)
 
 # Reselect the object to display the new values
-   selectobj $name
+   selectobj $fullname
 }
 
 itcl::body SciTargetControl::copy createproc {
