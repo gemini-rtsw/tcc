@@ -24,10 +24,12 @@ itcl::class StepSize {
    }
    private {
       method push {w}
+      method highlight {w state}
       variable custom1 10
       variable custom2 20
       variable selected
    }
+   itk_option define -activebackground activeBackground Foreground #ececec
 }
 
 itk::usual StepSize {
@@ -54,6 +56,8 @@ itcl::body StepSize::constructor args {
       }
       pack $itk_component(step$i) -side left -ipady 2
       bind  $itk_component(step$i)  <Button-1> [itcl::code $this push %W]
+      bind  $itk_component(step$i)  <Enter> [itcl::code $this highlight %W on]
+      bind  $itk_component(step$i)  <Leave> [itcl::code $this highlight %W off]
    }
 
 # Create label.
@@ -94,4 +98,15 @@ itcl::body StepSize::push {w} {
 
 # Record the selection.
    set selected $w
+}
+
+itcl::body StepSize::highlight {w state} {
+   switch $state {
+      on {
+         $w configure -background $itk_option(-activebackground)
+      }
+      off {
+         $w configure -background $itk_option(-background)
+      }
+   }
 }
