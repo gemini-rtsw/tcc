@@ -1,0 +1,152 @@
+#+
+#  WfsDisplay <- itk::Widget
+#
+#  A WfsDisplay displays the target positions and offsets and follow/in
+#  position status of the wave front sensor probes.
+#
+#  Options:
+#           none
+#
+#  Methods:
+#           none
+#
+#  Notes:
+#
+#  D Terrett  10 April 2000
+#
+#  Copyright CCLRC
+#+
+
+itcl::class WfsDisplay {
+   inherit itk::Widget
+
+   constructor args {}
+   destructor {after cancel $refid}
+
+   private method refresh
+
+   private variable refid
+}
+
+itk::usual WfsDisplay {
+   keep -background -cursor -font -foreground -highlightcolor \
+         -highlightthickness -labelfont
+}
+
+itcl::body WfsDisplay::constructor args {
+
+   set w $itk_interior
+
+   itk_component add ralab {
+      label $w.ralab -text RA
+   }
+   itk_component add declab {
+      label $w.declab -text Dec
+   }
+   itk_component add offlab {
+      label $w.offlab -text Offsets
+   }
+   itk_component add p1lab {
+      label $w.p1lab -text P1
+   }
+   itk_component add p1ra {
+      StatusField $w.p1ra -labelmargin 5 -width 12 -entryborder 3 \
+            -entryrelief groove
+   }
+   itk_component add p1dec {
+      StatusField $w.p1dec -labelmargin 5 -width 12 -entryborder 3 \
+            -entryrelief groove
+   }
+   itk_component add p1off1 {
+      StatusField $w.p1off1 -labelmargin 5 -width 10 -entryborder 3 \
+            -entryrelief groove
+   }
+   itk_component add p1off2 {
+      StatusField $w.p1off2 -labelmargin 5 -width 10 -entryborder 3 \
+            -entryrelief groove
+   }
+   itk_component add p2lab {
+      label $w.p2lab -text P2
+   }
+   itk_component add p2ra {
+      StatusField $w.p2ra -labelmargin 5 -width 12 -entryborder 3 \
+            -entryrelief groove
+   }
+   itk_component add p2dec {
+      StatusField $w.p2dec -labelmargin 5 -width 12 -entryborder 3 \
+            -entryrelief groove
+   }
+   itk_component add p2off1 {
+      StatusField $w.p2off1 -labelmargin 5 -width 10 -entryborder 3 \
+            -entryrelief groove
+   }
+   itk_component add p2off2 {
+      StatusField $w.p2off2 -labelmargin 5 -width 10 -entryborder 3 \
+            -entryrelief groove
+   }
+   grid x $itk_component(ralab) $itk_component(declab) $itk_component(offlab) -
+   grid $itk_component(p1lab) $itk_component(p1ra) $itk_component(p1dec) \
+         $itk_component(p1off1) $itk_component(p1off2)
+   grid $itk_component(p2lab) $itk_component(p2ra) $itk_component(p2dec) \
+         $itk_component(p2off1) $itk_component(p2off2)
+
+# Create status acceptor for wfs probe status
+   if [catch {sa agssad info}] {
+      epics sa agssad
+   }
+
+   set refid [after 1000 [code $this refresh]]
+
+   eval itk_initialize $args
+}
+
+itcl::body WfsDisplay::refresh {} {
+
+# Update the fields.
+   foreach {wfs w} {Pwfs1 p1 Pwfs2 p2} {
+      set target [sa tcssad get target$wfs]
+      set ra [slaDr2tf 3 [lindex $target 0]]
+      $itk_component(${w}ra) configure -text \
+            [format "%02d:%02d:%02d.%03d" [lindex $ra 1] [lindex $ra 2] \
+            [lindex $ra 3] [lindex $ra 4]]
+      set dec [slaDr2af 2 [lindex $target 1]]
+      $itk_component(${w}dec) configure -text \
+            [format "%s%02d:%02d:%02d.%02d" [lindex $dec 0] [lindex $dec 1] \
+            [lindex $dec 2] [lindex $dec 3] [lindex $dec 4]]
+      $itk_component(${w}off1) configure -text [format "%10.2f" \
+         [expr [lindex $target 2] * 206264.81 * cos( [lindex $target 1] )] ]
+      $itk_component(${w}off2) configure -text \
+         [format "%10.2f" [expr [lindex $target 3] * 206264.81] ]
+   }
+
+# Set the status.
+   if { [isFollowing agssad p1FollowS] } {
+      if { [isInPosition agssad p1InPosition] } {
+         set status ok
+      } else {
+         set status warning
+      }
+   } else {
+      set status error
+   }
+   $itk_component(p1ra) configure -status $status
+   $itk_component(p1dec) configure -status $status
+   $itk_component(p1off1) configure -status $status
+   $itk_component(p1off2) configure -status $status
+
+   if { [isFollowing agssad p2FollowS] } {
+      if { [isInPosition agssad p2InPosition] } {
+         set status ok
+      } else {
+         set status warning
+      }
+   } else {
+      set status error
+   }
+   $itk_component(p2ra) configure -status $status
+   $itk_component(p2dec) configure -status $status
+   $itk_component(p2off1) configure -status $status
+   $itk_component(p2off2) configure -status $status
+
+   set refid [after 1000 [code $this refresh]]
+}

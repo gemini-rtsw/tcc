@@ -1,7 +1,7 @@
 #+
-#  GuideLoopControl <- itk::Widget
+#  GuideLoop <- itk::Widget
 #
-#  A GuideLoopControl is a diagram of the various guiding loops with control
+#  A GuideLoop is a diagram of the various guiding loops with control
 #  for setting them up and enabling them
 #
 #  Options:
@@ -13,12 +13,12 @@
 #  Notes:
 #        o This widget is incomplete
 #
-#  D Terrett  5 April 2000
+#  D Terrett  7 April 2000
 #
 #  Copyright CCLRC
 #+
 
-itcl::class GuideLoopControl {
+itcl::class GuideLoop {
    inherit itk::Widget
 
    constructor args {}
@@ -34,15 +34,16 @@ itcl::class GuideLoopControl {
    private variable m1Weight
 }
 
-itk::usual GuideLoopControl {
+itk::usual GuideLoop {
    keep -cursor
 }
 
-itcl::body GuideLoopControl::constructor args {
+itcl::body GuideLoop::constructor args {
 
 # Create canvas.
    itk_component add canv {
-      canvas $itk_interior.canv -width 630 -height 360
+      canvas $itk_interior.canv -width 630 -height 360 -borderwidth 2 \
+            -relief sunken
    }
    pack $itk_component(canv)
    set w $itk_component(canv)
@@ -79,7 +80,7 @@ itcl::body GuideLoopControl::constructor args {
 
       itk_component add ${sys}_ex {
          iwidgets::combobox $w.${sys}_ex -arrowrelief flat -width 5 \
-               -validate real -labeltext "exp (s)"
+               -validate real -labeltext "exp(s)"
       }
       $w create window 60 74 -window $w.${sys}_ex -tag $sys
       $w.${sys}_ex insert list end 1.0 0.5 0.1 0.05 0.01 0.005
@@ -238,13 +239,13 @@ itcl::body GuideLoopControl::constructor args {
    eval itk_initialize $args
 }
 
-itcl::body GuideLoopControl::destructor {} {
+itcl::body GuideLoop::destructor {} {
    foreach rec {p1state p2state oistate m2state absorbtilt m1state} {
       sa guideConfig unproc $rec [code $this recolour]
    }
 }
 
-body GuideLoopControl::recolour args {
+body GuideLoop::recolour args {
 
    set w $itk_component(canv)
 
@@ -391,7 +392,7 @@ body GuideLoopControl::recolour args {
    }
 }
 
-body GuideLoopControl::m1mode state {
+body GuideLoop::m1mode state {
 
    cs m1Guide set mode [expr {$state ? "On" : "Off"}]
    cs m1Guide set frames [$itk_component(m1Frames) get]
@@ -404,7 +405,7 @@ body GuideLoopControl::m1mode state {
    }
 }
 
-body GuideLoopControl::mtmode state {
+body GuideLoop::mtmode state {
 
    cs mountGuide set mode [expr {$state ? "On" : "Off"}]
    if { $state == -1 } {
@@ -423,7 +424,7 @@ body GuideLoopControl::mtmode state {
    }
 }
 
-body GuideLoopControl::m2mode state {
+body GuideLoop::m2mode state {
 
    cs m2Guide set state [expr {$state ? "On" : "Off"}]
 
@@ -434,7 +435,7 @@ body GuideLoopControl::m2mode state {
    }
 }
 
-body GuideLoopControl::wfsstart {wfs ql} {
+body GuideLoop::wfsstart {wfs ql} {
 
    cs ${wfs}Observe set noexp -1
    cs ${wfs}Observe set int [$itk_component(${wfs}_ex) get]
@@ -452,7 +453,7 @@ body GuideLoopControl::wfsstart {wfs ql} {
    }
 }
 
-body GuideLoopControl::wfsstop wfs {
+body GuideLoop::wfsstop wfs {
 
    cs ${wfs}StopObserve set dummy MARK
 

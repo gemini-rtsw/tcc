@@ -1,16 +1,13 @@
 #+
 #  ObserveControl <- itk::Widget
 #
-#  An ObserveControl widget contains various widget for controlling the 
-#  the AO fold mirror, science fold and acquisition camera pickoff mirror.
-#
 #  Options:
 #           none
 #
 #  Methods:
 #           none
 #
-#  D Terrett  17 February 2000
+#  D Terrett  11 April 2000
 #
 #  Copyright CCLRC
 #+
@@ -20,8 +17,10 @@ itcl::class ObserveControl {
 
    constructor args {}
 
-   private method setao state
-   private method setmode state
+   private method setchop state
+   private method setfold state
+   private method setnod state
+   private method trackon par {return On}
 }
 
 itk::usual ObserveControl {
@@ -31,60 +30,146 @@ itk::usual ObserveControl {
 itcl::body ObserveControl::constructor args {
 
    set w $itk_interior
-   itk_component add ao {
-      SelectButton $w.ao -command [code $this setao] \
-            -labeltext "Adaptive Optics:"
-   } {
-      usual
-      rename -offbackground -background background Background
-   }
-   $itk_component(ao) add IN -width 5
-   $itk_component(ao) add OUT -width 5
-#   pack $itk_component(ao)
 
-   itk_component add mode {
-      SelectButton $w.mode -command [code $this setmode]
-   } {
-      usual
-      rename -offbackground -background background Background
+   itk_component add wfsdisp {
+      WfsDisplay $w.wfsdisp
    }
-   $itk_component(mode) add Sky->Instr 
-   $itk_component(mode) add Cal->Instr
-   $itk_component(mode) add Sky->AC/HRWFS
-   pack $itk_component(mode)
+   pack $itk_component(wfsdisp) -anchor w
 
-   itk_component add loops {
-      PanelButton $w.loops -text "Guide Loop Control" \
-         -panel guideLoopPanel
+   itk_component add guideloop {
+      GuideLoop $w.guideloop
+   }
+   pack $itk_component(guideloop)
+
+   itk_component add buttons {
+      frame $w.buttons
+   }
+   pack $itk_component(buttons) -fill both -expand yes
+   set w $itk_component(buttons)
+
+# Buttons for popping up the handsets.
+   itk_component add handlab {
+      label $w.handlab -text Handsets
    }
    itk_component add tarhand {
-      PanelButton $w.tarhand -text "Target Handset" \
-         -panel offsetHandsetPanel
+      PanelButton $w.tarhand -text Targets -panel offsetHandsetPanel
    }
    itk_component add pohand {
-      PanelButton $w.pohand -text "Instrument Handset" \
-         -panel poHandsetPanel
+      PanelButton $w.pohand -text Instrument -panel poHandsetPanel
    }
    itk_component add guidehand {
-      PanelButton $w.guidehand -text "Pointing Handset" \
-         -panel guideHandsetPanel
+      PanelButton $w.guidehand -text Pointing -panel guideHandsetPanel
    }
-   pack $itk_component(loops) $itk_component(tarhand) $itk_component(pohand) \
-         $itk_component(guidehand) -fill x -expand yes
+
+# Selectbutton for configuring the A & G fold mirrors.
+   itk_component add foldlab {
+      label $w.foldlab -text "Fold mirrors"
+   }
+   itk_component add fold {
+      SelectButton $w.fold -command [code $this setfold] -orient vertical
+   } {
+      usual
+      rename -offbackground -background background Background
+   }
+   $itk_component(fold) add Sky->Instr 
+   $itk_component(fold) add Cal->Instr
+   $itk_component(fold) add Sky->AC/WFS
+
+# Buttons for controlling chopping and M2 beam.
+   itk_component add choplab {
+      label $w.choplab -text Chop/Nod
+   }
+   itk_component add chop {
+      SelectButton $w.chop -command [code $this setchop] -orient vertical
+   } {
+      usual
+      rename -offbackground -background background Background
+   }
+   $itk_component(chop) add Chop
+   $itk_component(chop) add "Beam A"
+   $itk_component(chop) add "Beam B"
+   itk_component add nod {
+      SelectButton $w.nod -command [code $this setnod] -orient vertical
+   } {
+      usual
+      rename -offbackground -background background Background
+   }
+   $itk_component(nod) add "Nod A"
+   $itk_component(nod) add "Nod B"
+
+# PWFS1 controls.
+   itk_component add p1lab {
+      label $w.p1lab -text "P1 probe"
+   }
+   itk_component add p1track {
+      ApplyButton $w.p1track -command p1Follow -text Track \
+            -parcommand [code $this trackon]
+   }
+   itk_component add p1flip {
+      ApplyButton $w.p1flip -command pwfs1Flip -text "Flip arm"
+   }
+   itk_component add p1unwrap {
+      ApplyButton $w.p1unwrap -command pwfs1Unwrap -text Unwrap
+   }
+   itk_component add p1park {
+      ApplyButton $w.p1park -command pwfs1Park -text Park
+   }
+   itk_component add p1stop {
+      ApplyButton $w.p1stop -command pwfs1Stop -text Stop
+   }
+
+# PWFS2 controls.
+   itk_component add p2lab {
+      label $w.p2lab -text "P2 probe"
+   }
+   itk_component add p2track {
+      ApplyButton $w.p2track -command p2Follow -text Track \
+            -parcommand [code $this trackon]
+   }
+   itk_component add p2flip {
+      ApplyButton $w.p2flip -command pwfs2Flip -text "Flip arm"
+   }
+   itk_component add p2unwrap {
+      ApplyButton $w.p2unwrap -command pwfs2Unwrap -text Unwrap
+   }
+   itk_component add p2park {
+      ApplyButton $w.p2park -command pwfs2Park -text Park
+   }
+   itk_component add p2stop {
+      ApplyButton $w.p2stop -command pwfs2Stop -text Stop
+   }
+
+   grid $itk_component(handlab) $itk_component(foldlab) \
+         $itk_component(choplab) $itk_component(p1lab) \
+         $itk_component(p2lab) -sticky ew -padx 5
+   grid $itk_component(tarhand) $itk_component(fold) $itk_component(chop) \
+         $itk_component(p1track) $itk_component(p2track) -sticky ew -padx 5
+   grid $itk_component(pohand) x x $itk_component(p1flip) \
+         $itk_component(p2flip) -sticky ew -padx 5
+   grid $itk_component(guidehand) x x $itk_component(p1unwrap) \
+         $itk_component(p2unwrap) -sticky ew -padx 5
+   grid x x $itk_component(nod) $itk_component(p1park) $itk_component(p2park) \
+         -sticky ew -padx 5
+   grid x x x $itk_component(p1stop) $itk_component(p2stop) -sticky ew -padx 5
+   grid configure $itk_component(fold) -rowspan 3
+   grid configure $itk_component(chop) -rowspan 3
+   grid configure $itk_component(nod) -rowspan 2
+
+# Create command senders.
+   if { [catch {cs chop info}] } {
+      epics cs chop
+   }
+   if { [catch {cs m2beam info}] } {
+      epics cs m2beam
+   }
+   if { [catch {cs nod info}] } {
+      epics cs nod
+   }
 
    eval itk_initialize $args
 }
 
-itcl::body ObserveControl::setao state {
-   iss configure -ao $state
-   iss update
-   if [catch {cs tcsApply post} msg] {
-      tk_messageBox -icon error -parent $itk_interior -message \
-            "Error posting command: TCS reports \"$msg\""
-   }
-}
-
-itcl::body ObserveControl::setmode state {
+itcl::body ObserveControl::setfold state {
    switch $state {
       Sky->Instr {iss configure -mode SKY}
       Cal->Instr {iss configure -mode CAL}
@@ -94,6 +179,39 @@ itcl::body ObserveControl::setmode state {
    if [catch {cs tcsApply post} msg] {
       logger log "rejected..."
       logger log $msg
+      tk_messageBox -icon error -parent $itk_interior -message $msg
+   }
+}
+
+itcl::body ObserveControl::setchop state {
+   switch $state {
+      Chop {
+         cs chop set chop value On
+       }
+      "Beam A" {
+         cs chop set chop value Off
+         cs m2beam set m2Beam value A
+       }
+      "Beam B" {
+         cs chop set chop value Off
+         cs m2beam set m2Beam value B
+       }
+   }
+   if [catch {cs tcsApply post} msg] {
+      tk_messageBox -icon error -parent $itk_interior -message $msg
+   }
+}
+
+itcl::body ObserveControl::setnod state {
+   switch $state {
+      "Nod A" {
+         cs nod set nod value A
+       }
+      "Nod B" {
+         cs nod set nod value B
+       }
+   }
+   if [catch {cs tcsApply post} msg] {
       tk_messageBox -icon error -parent $itk_interior -message $msg
    }
 }
