@@ -10,7 +10,7 @@
 #           update          Updates the view with the current state of the
 #                           telescope.
 #
-#  D Terrett 21 January 2004
+#  D Terrett 15 April 2004
 #
 #  Copyright CCLRC
 #-
@@ -94,14 +94,17 @@ itcl::body GraphicDisplay::constructor args {
    itk_component add oilabel {
       label $w.oilabel -text "OIWFS"
    }
+   itk_component add oiview {
+      OiwfsView $w.oiview
+   }
    itk_component add oixy {
-      OiwfsView $w.oixy
+      ProbePos $w.oixy -probe oi
    }
    itk_component add oiwavel {
       label $w.oiwavel
    }
-   pack $itk_component(oiname) $itk_component(oilabel) -padx 3
-   pack $itk_component(oixy) $itk_component(oiwavel) -padx 5 -pady 3
+   pack $itk_component(oiname) $itk_component(oilabel) $itk_component(oiview) \
+         $itk_component(oixy) $itk_component(oiwavel) -padx 5
 
 # AO WFS.
    set w $itk_component(col4)
@@ -112,15 +115,18 @@ itcl::body GraphicDisplay::constructor args {
    itk_component add aolabel {
       label $w.aolabel -text AOWFS
    }
+   itk_component add aoview {
+      AowfsView $w.aoview
+   }
    itk_component add aoxy {
-      AowfsView $w.aoxy
+      ProbePos $w.aoxy -probe ao
    }
    itk_component add aowavel {
       label $w.aowavel
    }
    pack $itk_component(aolabel) -padx 5
-   pack $itk_component(aowavel) $itk_component(aoxy) \
-         -padx 5 -pady 3 -side bottom
+   pack $itk_component(aowavel) $itk_component(aoxy) $itk_component(aoview) \
+         -padx 5 -side bottom
 
 # PWFS1.
    set w $itk_component(col4)
@@ -191,7 +197,9 @@ itcl::body GraphicDisplay::update {} {
    $itk_component(domeview) update
    $itk_component(elview) update
    $itk_component(wrapview) update
+   $itk_component(oiview) update
    $itk_component(oixy) update
+   $itk_component(aoview) update
    $itk_component(aoxy) update
    $itk_component(probe1) update
    $itk_component(probe2) update
