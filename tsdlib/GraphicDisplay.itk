@@ -10,7 +10,7 @@
 #           update          Updates the view with the current state of the
 #                           telescope.
 #
-#  D Terrett 11 September 2001
+#  D Terrett 1 November 2001
 #
 #  Copyright CCLRC
 #-
@@ -78,6 +78,17 @@ itcl::body GraphicDisplay::constructor args {
 
 # Probe views in the last column.
    set w $itk_component(col4)
+   itk_component add oilabel {
+      label $w.oilabel -text "OIWFS"
+   }
+   itk_component add oix {
+      StatusField $w.oix -labeltext x -entryborder 2 -entryrelief ridge \
+            -width 6 -anchor e
+   }
+   itk_component add oiy {
+      StatusField $w.oiy -labeltext y -entryborder 2 -entryrelief ridge \
+            -width 6 -anchor e
+   }
    itk_component add probe1 {
       ProbeView $w.probe1 -probe p1
    }
@@ -91,7 +102,9 @@ itcl::body GraphicDisplay::constructor args {
       label $w.p2label -text "PWFS2"
    }
    pack $itk_component(p2label) $itk_component(probe2) \
-         $itk_component(p1label) $itk_component(probe1) -side bottom
+        $itk_component(p1label) $itk_component(probe1) \
+        $itk_component(oilabel) $itk_component(oiy) \
+        $itk_component(oix) -side bottom 
 
 # Configure the ISS port numbers.
    $itk_component(opticsview) configure -portAnumber 1 
@@ -270,6 +283,23 @@ itcl::body GraphicDisplay::update {} {
          -calunit $calunit
    $itk_component(opticsview) update
 
+# Set the colour of the OIWFS according to the follow and in position state.
+   if { [isFollowing agssad oiFollowS] } {
+      if { [isInPosition agssad oiInPosition] } {
+         $itk_component(oix) configure -status ok
+         $itk_component(oiy) configure -status ok
+      } else {
+         $itk_component(oix) configure -status warning
+         $itk_component(oiy) configure -status warning
+      }
+   } else {
+      $itk_component(oix) configure -status error
+      $itk_component(oiy) configure -status error
+   }
+
+# Update the OIWFS position.
+   $itk_component(oix) configure -text [sa agssad get oiX]
+   $itk_component(oiy) configure -text [sa agssad get oiY]
 
 # Set the ISS port labels.
    $itk_component(opticsview) configure \
