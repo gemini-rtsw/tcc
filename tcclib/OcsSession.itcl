@@ -1,0 +1,210 @@
+#+
+#  OcsSession
+#
+#  Represents an OCS session with methods for retrieving the observations
+#  in the queue, fetching coordinate information associated with an
+#  observation and updating the state of an observation.
+#
+#  Options:
+#
+#  Methods:
+#          listObs   Returns a list of the observation ids currently in the
+#                   session.
+#
+#          getField  Returns the field definition associated with an
+#                    observation as an XML string.
+#
+#          getSequence   Returns the sequence definition associated with an
+#                   observation as an XML string.
+#
+#          idleReason Set the reason for the session being idle.
+#
+#          obsEnd    Informs the session that an observation has ended.
+#
+#          obsStart  Informs the session that an observation has started.
+#
+#          obsAbort  Informs the session that an observation has been
+#                    abandoned.
+#
+#          seqEnd    Informs the session that a sequence has ended.
+#
+#          seqStart  Informs the session that a sequence has started.
+#
+#          logInit   Initialises the observing log.
+#
+#          logAutoConfigure  Configures the automatic writing of the
+#                            obseriving log.
+#
+#          logObservation    Logs an observation in the observing log.
+#
+#  D Terrett 9 May 2003
+#
+#  Copyright CCLRC
+#+
+
+package require SOAP
+
+itcl::class OcsSession {
+   constructor {name} {}
+   public {
+      method datComplete {obsid datasetid fileid}
+      method getField {obsid}
+      method getSequence {obsid}
+      method listObs {}
+      method obsStart {obsid}
+      method obsEnd {obsid}
+      method idleReason {reason comment}
+      method obsAbort {obsid reason}
+      method seqEnd {obsid}
+      method seqStart {obsid fileid}
+      method logInit {}
+      method logAutoConfigure {on}
+      method logObservation {obsid}
+   }
+   private {
+      variable sessionName
+      variable sessionUri urn:gemini/session
+      variable tccUri urn:gemini/Tcc
+      variable execUri urn:gemini/Exec
+   }
+
+}
+
+itcl::body OcsSession::constructor {name} {
+
+# Store the session name.
+   set sessionName $name
+
+# Get the name of the server hosting the SOAP services.
+   set proxy [calparam cget -ocs_proxy]
+   if { [string equal $proxy <undefined>] } {
+      error "Ocs service proxy not defined"
+   }
+
+# Construct the proxy and Uri names.
+   set sessionProxy $proxy/Session
+   set tccProxy $proxy/Tcc
+   set execProxy $proxy/Exec
+   set sessionUri urn:gemini/session
+   set tccUri urn:gemini/Tcc
+   set execUri urn:gemini/Exec
+
+# Create a namespace for the SOAP methods.
+   namespace eval ocs {}
+
+# Create the soap methods.
+   if { [llength [info commands ::OcsSession::_datasetComplete]] == 0 } {
+      SOAP::create _datasetComplete -uri $sessionUri -proxy $sessionProxy \
+            -params {sessionid string obsid string datasetid string \
+            fileid string} -name datasetComplete -action datasetComplete
+   }
+   if { [llength [info commands ::OcsSession::_getCoordinates]] == 0 } {
+      SOAP::create _getCoordinates -uri $tccUri -proxy $tccProxy \
+            -params {obsid string} -name getCoordinates -action getCoordinates
+   }
+   if { [llength [info commands ::OcsSession::_getSequence]] == 0 } {
+      SOAP::create _getSequence -uri $execUri -proxy $execProxy \
+            -params {obsid string} -name getSequence -action getSequence
+   }
+   if { [llength [info commands ::OcsSession::_getObservations]] == 0 } {
+      SOAP::create _getObservations -uri $sessionUri -proxy $sessionProxy \
+            -params {sessionId string} -name getObservations \
+            -action getObservations
+   }
+   if { [llength [info commands ::OcsSession::_observationEnd]] == 0 } {
+      SOAP::create _observationEnd -uri $sessionUri -proxy $sessionProxy \
+            -params {sessionid string obsid string} -name observationEnd \
+            -action observationEnd
+   }
+   if { [llength [info commands ::OcsSession::_observationStart]] == 0 } {
+      SOAP::create _observationStart -uri $sessionUri -proxy $sessionProxy \
+            -params {sessionid string obsid string} -name observationStart \
+            -action observationStart
+   }
+   if { [llength [info commands ::OcsSession::_observationAbort]] == 0 } {
+      SOAP::create _observationAbort -uri $sessionUri -proxy $sessionProxy \
+            -params {sessionid string obsid string reason string} \
+            -name observationAbort -action observationAbort
+   }
+   if { [llength [info commands ::OcsSession::_sequenceEnd]] == 0 } {
+      SOAP::create _sequenceEnd -uri $sessionUri -proxy $sessionProxy \
+            -params {sessionid string obsid string} -name sequenceEnd \
+            -action sequenceEnd
+   }
+   if { [llength [info commands ::OcsSession::_sequenceStart]] == 0 } {
+      SOAP::create _sequenceStart -uri $sessionUri -proxy $sessionProxy \
+            -params {sessionid string obsid string fileid string} \
+            -name sequenceStart -action sequenceStart
+   }
+   if { [llength [info commands ::OcsSession::_setIdleCause]] == 0 } {
+      SOAP::create _setIdleCause -uri $sessionUri -proxy $sessionProxy \
+            -params {sessionid string catagory string comment string} \
+            -name setIdleCause -action setIdleCause
+   }
+   if { [llength [info commands ::OcsSession::_logInit]] == 0 } {
+      SOAP::create _logInit -uri $sessionUri -proxy $sessionProxy \
+            -params {sessionid string} -name logInit -action logInit
+   }
+   if { [llength [info commands ::OcsSession::_logAutoConfigure]] == 0 } {
+      SOAP::create _logAutoConfigure -uri $sessionUri -proxy $sessionProxy \
+            -params {on boolean} -name logAutoConfigure \
+            -action logAutoConfigure
+   }
+   if { [llength [info commands ::OcsSession::_logObservation]] == 0 } {
+      SOAP::create _logObservation -uri $sessionUri -proxy $sessionProxy \
+            -params {sessionid string obsid string} -name logObservation \
+            -action logObservation
+   }
+}
+
+itcl::body OcsSession::datComplete {obsid datasetid fileid} {
+   _datasetComplete $sessionName $obsid $datasetid $fileid
+}
+
+itcl::body OcsSession::getField {obsid} {
+   return [_getCoordinates $obsid]
+}
+
+itcl::body OcsSession::getSequence {obsid} {
+   return [_getSequence $obsid]
+}
+
+itcl::body OcsSession::listObs {} {
+   return [_getObservations $sessionName]
+}
+
+itcl::body OcsSession::obsEnd {obsid} {
+   _observationEnd $sessionName $obsid
+}
+
+itcl::body OcsSession::obsStart {obsid} {
+   _observationStart $sessionName $obsid
+}
+
+itcl::body OcsSession::idleReason {reason comment} {
+   _setIdleCause $sessionName $reason $comment
+}
+
+itcl::body OcsSession::obsAbort {obsid reason} {
+   _observationAbort $sessionName $obsid $reason
+}
+
+itcl::body OcsSession::seqEnd {obsid} {
+   _sequenceEnd $sessionName $obsid
+}
+
+itcl::body OcsSession::seqStart {obsid fileid} {
+   _sequenceStart $sessionName $obsid $fileid
+}
+
+itcl::body OcsSession::logInit {} {
+   _logInit $sessionName
+}
+
+itcl::body OcsSession::logAutoConfigure {on} {
+   _logAutoConfigure $on
+}
+
+itcl::body OcsSession::logObservation {obsid} {
+   _logObservation $sessionName $obsid
+}
