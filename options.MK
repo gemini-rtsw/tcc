@@ -1,11 +1,11 @@
 # Options database for the tcc & tsd - this version is for Mauna Kea
 
 # Labels for ISS ports.
-*graphicDisplay.port1Label:	
-*graphicDisplay.port2Label:	CurvWFS
+*graphicDisplay.port1Label:	OSCIR
+*graphicDisplay.port2Label:	
 *graphicDisplay.port3Label:     QUIRC/Hokupa'a
-*graphicDisplay.port4Label:     A&G cabinet
-*graphicDisplay.port5Label:	CurvWFS
+*graphicDisplay.port4Label:     GCAL
+*graphicDisplay.port5Label:	NIRI
 
 # Names of Science fold positions used by A & G.
 #   sky to port 3
