@@ -37,14 +37,14 @@
 *WavelengthPanel*background:		LightGray
 
 # Target entry pages
-*FieldPanel*data*page1*background: 	Pink
-*FieldPanel*data*page2*background: 	SkyBlue
-*FieldPanel*data*page3*background: 	OldLace
-*FieldPanel*data*page4*background: 	Wheat
-*FieldPanel*data*page5*background: 	LemonChiffon
+*FieldPanel*data*page1*background: 	LightGray
+*FieldPanel*data*page2*background: 	LightGray
+*FieldPanel*data*page3*background: 	LightGray
+*FieldPanel*data*page4*background: 	LightGray
+*FieldPanel*data*page5*background: 	LightGray
 
 # Font for "major" tcc items.
-*majorFont:			-*-*-bold-r-normal-sans-14-*-*-*-*-*-*-*
+*Font:			-*-*-bold-r-normal-sans-12-*-*-*-*-*-*-*
 
 # Fonts for tsd displays.
 *numericDisplay.Font:		-*-*-bold-r-normal-sans-18-*-*-*-*-*-*-*
