@@ -336,11 +336,11 @@ itcl::configbody TargetControl::shadow {
 }
 
 itcl::body TargetControl::checkcosys {} {
-   set cosys [$itk_component(cosys) get]
-   set frame [CosysNames::$cosys cget -frame]
-   if { [string equal $frame AZEL_TOPO] } {
-      $itk_component(cosys) select ""
-   }
+#   set cosys [$itk_component(cosys) get]
+#   set frame [CosysNames::$cosys cget -frame]
+#   if { [string equal $frame AZEL_TOPO] } {
+#      $itk_component(cosys) select ""
+#   }
 }
 
 body TargetControl::grab {} {
@@ -381,13 +381,14 @@ itcl::body TargetControl::copy {createproc prompt component} {
       }
       destroy $itk_interior.pd
       set name $scratchobj
+      store ""
    } else {
-      store $name
       set newname $name
+      store $name
       set name $itk_option(-namespace)::$name
    }
    if { ![string is space $newname] } {
       $name copy $createproc $newname
-      $component select $newname
+      $component selectfromcontrol $newname
    }
 }

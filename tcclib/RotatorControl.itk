@@ -157,8 +157,12 @@ itcl::body RotatorControl::setdir {} {
 
 itcl::body RotatorControl::checkcosys {} {
    set cosys [$itk_component(cosys) get]
-   set frame [CosysNames::$cosys cget -frame]
-   if { [string equal $frame AZEL_TOPO] } {
-      $itk_component(cosys) select ""
+   if { ![string equal $cosys ""] } {
+      set frame [CosysNames::$cosys cget -frame]
+      if { [string equal $frame AzEl] } {
+         set refdir vertical
+      } else {
+         set refdir north
+      }
    }
 }
