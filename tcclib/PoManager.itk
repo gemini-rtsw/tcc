@@ -8,7 +8,7 @@
 #     update    Updates the currently selected pointing origin with
 #                new values.
 #
-#  D Terrett  23 June 2001
+#  D Terrett  29 June 2001
 #
 #  Copyright CCLRC
 #+
@@ -22,8 +22,8 @@ itcl::class PoManager {
    private {
       method selectcmd {po}
       method selecta {po}
-      variable achop v
-      variable bchop v
+      variable achop w
+      variable bchop w
    }
 }
 
@@ -64,6 +64,7 @@ itcl::body PoManager::constructor {args} {
       itk_component add sel$po {
          tcclib::ListManager $w.sel$po -componentlist PointOrigList \
                -selectioncommand [code $this selectcmd $po] \
+               -returncommand [code $this selectcmd $po]
       }
 
 # Display of X & Y.
@@ -86,6 +87,10 @@ itcl::body PoManager::constructor {args} {
    if { [catch {cs poriginB info}] } {
       epics cs poriginB
    }
+
+# Select rotator axis in the top.
+   $itk_component(selv) select "Rotator axis"
+
    eval itk_initialize $args
 }
 
