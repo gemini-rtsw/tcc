@@ -36,7 +36,7 @@
 #                           it exists) and the shadow objects of all the 
 #                           subcomponents that have values.
 #
-#  D Terrett 24 November 1998
+#  D Terrett 13 March 2000
 #
 #  Copyright CCLRC
 #+
@@ -50,6 +50,7 @@ itcl::class EditShadow {
       method subselect {component name}
       variable children ""
       variable component ""
+      variable namespace ""
       variable panel
       variable parent ""
       variable selection ""
@@ -104,11 +105,23 @@ itcl::body EditShadow::select name {
       $window select $name
    }
 
+# Update the subselections array from the object just selected.
+   if { ![string equal $name ""] } {
+      foreach el [array names subselections] {
+         set subselections($el) [${namespace}::${name} cget -$el]
+      }
+   }
+
 # If this shadow has a parent, then call its subselect method.
    if { [string length $parent] } {
       $parent subselect $component $name
    }
 
+   foreach el [array names subselections] {
+      if { ! [string equal $subselections($el) ""] } {
+         $this$el select $subselections($el)
+      }
+   }
 # Store the current selection.
    set selection $name
 }
