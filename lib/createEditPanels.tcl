@@ -35,7 +35,7 @@ proc createEditPanels {parent component class namespace list title vt} {
 
 # Create the EditShadow.
    EditShadow ${parent}${component} ${parent}${component}Panel \
-         -parent $parent -component $component
+         -parent $parent -component $component -namespace $namespace
 
 # Create all the edit panels for the subcomponents.
    set children ""
