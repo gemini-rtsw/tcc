@@ -103,10 +103,16 @@ itcl::body BeamSelector::pressed beam {
 # If the mechanism wasn't already in the desired state then set the button 
 # background to indicate that a state change is in progress.
    if { ![string equal $state $beam] } {
-      $itk_component(beama) configure -background yellow \
-            -activebackground yellow
-      $itk_component(beamb) configure -background yellow \
-            -activebackground yellow
+      switch $beam {
+         A {
+            $itk_component(beama) configure -background yellow \
+                  -activebackground yellow
+         }
+         B {
+            $itk_component(beamb) configure -background yellow \
+                  -activebackground yellow
+         }
+      }
    }
 }
 
