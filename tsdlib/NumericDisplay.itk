@@ -11,7 +11,7 @@
 #
 #  options
 #
-#  D Terrett 16 July 2001
+#  D Terrett 31 October 2001
 #
 #  Copyright CCLRC
 #-
@@ -75,13 +75,13 @@ itcl::body NumericDisplay::constructor args {
    }
 
 # M2 tip/tilt & focus
-   itk_component add ttf {
-      label $w.ttf -text "M2 tip/tilt (on sky) & focus" -anchor center
+   itk_component add ttt {
+      label $w.ttf -text "M2 tip/tilt (arcsec on sky)" -anchor center
    }
-   itk_component add m2 {
-       frame $w.m2
+   itk_component add tt {
+       frame $w.tt
    }
-   set w $itk_component(m2)
+   set w $itk_component(tt)
    itk_component add tip {
        StatusField $w.tip -labelmargin 2 -width 5 -entryborder 3 \
             -entryrelief groove -labeltext X:
@@ -90,13 +90,13 @@ itcl::body NumericDisplay::constructor args {
        StatusField $w.tilt -labelmargin 2 -width 5 -entryborder 3 \
             -entryrelief groove -labeltext Y:
    }
+   pack $itk_component(tip) $itk_component(tilt) -side left
+   set w [winfo parent $w]
+
    itk_component add focus {
        StatusField $w.focus -labelmargin 2 -width 5 -entryborder 3 \
-            -entryrelief groove -labeltext Z:
+            -entryrelief groove -labeltext "Focus (mm):"
    }
-   pack $itk_component(tip) $itk_component(tilt) $itk_component(focus) \
-         -side left
-   set w [winfo parent $w]
 
    itk_component add telposlabel {
       label $w.telposlabel -text "TELESCOPE POSITION:"
@@ -323,12 +323,14 @@ itcl::body NumericDisplay::constructor args {
          x x $itk_component(chopping) -sticky e -padx 3 -pady 2
    grid configure $itk_component(chopping) -sticky w
    grid $itk_component(baselab) $itk_component(base1) $itk_component(base2) \
-         x $itk_component(ttf) - - -sticky e -padx 3 -pady 2
-   grid configure $itk_component(ttf) -sticky ew
+         x $itk_component(ttt) - - -sticky e -padx 3 -pady 2
+   grid configure $itk_component(ttt) -sticky ew
    grid $itk_component(ratelab) $itk_component(rate1) $itk_component(rate2) \
-         $itk_component(m2) - - - -sticky e -padx 3 -pady 2
+        x $itk_component(tt) - - -sticky e -padx 3 -pady 2
+   grid configure $itk_component(tt) -sticky {}
    grid $itk_component(choplab) $itk_component(chop1) $itk_component(chop2) \
-         -sticky e -padx 3 -pady 2
+         x $itk_component(focus) - - -sticky e -padx 3 -pady 2
+   grid configure $itk_component(focus) -sticky {}
    grid $itk_component(instrlab) $itk_component(instrx) $itk_component(instry) \
           x $itk_component(hazdam) - - -sticky e -padx 3 -pady 2
    grid configure $itk_component(instrx) $itk_component(instry) -sticky e
