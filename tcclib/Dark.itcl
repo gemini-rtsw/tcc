@@ -62,16 +62,15 @@ itcl::body Dark::constructor {wfs} {
       -oktest [itcl::code $this isinposition]]
    $offsetaction set targetAdjust frame 1
    $offsetaction set targetAdjust angle 0.0
+   $offsetaction set targetAdjust size 60.0
    switch $wfs {
       p1 {
          $offsetaction set targetAdjust vt -16
-   	 $offsetaction set targetAdjust size 30.0
          set wfsname pwfs1
          set wfsobj Pwfs1
       }
       p2 {
          $offsetaction set targetAdjust vt -32
-   	 $offsetaction set targetAdjust size 60.0
          set wfsname pwfs2
          set wfsobj Pwfs2
       }
@@ -100,7 +99,6 @@ itcl::body Dark::destructor {} {
 }
 
 itcl::body Dark::take {} {
-
 # Record the current state of guiding
    set guideenabled [AO cget -enabled]
 
@@ -109,7 +107,6 @@ itcl::body Dark::take {} {
 }
 
 itcl::body Dark::offset {} {
-
 # Link to TCS in position flag.
    sa tcssad link inPosition [itcl::scope InPosition]
 
@@ -122,8 +119,7 @@ itcl::body Dark::expose {} {
 
 # mbec - 9 Mar 2004
 # wait some extra time to make sure the probes actually got there
-   after 1000
-
+#   after 1000
 # Link to WFS exposing flag.
    switch $wfsname {
       pwfs1 {
@@ -142,7 +138,6 @@ itcl::body Dark::expose {} {
 }
 
 itcl::body Dark::zero {} {
-
 # Link to TCS in position flag.
    sa tcssad link inPosition [itcl::scope InPosition]
 
@@ -151,6 +146,7 @@ itcl::body Dark::zero {} {
 }
 
 itcl::body Dark::isinposition {} {
+   after 2000
    set val [sa tcssad get inPosition]
    return [string equal $val TRUE]
 }
