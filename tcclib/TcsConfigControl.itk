@@ -3,7 +3,7 @@
 #
 #  Implements the TcsConfigControl widget.
 #
-#  D Terrett 24 February 2003
+#  D Terrett 3 June 2003
 #
 #  Copyright CCLRC
 #+
@@ -39,6 +39,9 @@ itk::usual TcsConfigControl {
 }
 
 itcl::body TcsConfigControl::constructor {args} {
+
+# Expand the component selector.
+   $itk_component(selector) configure -width 43
 
 # Divide the window into 4 vertically.
    itk_component add row1 {
@@ -142,7 +145,7 @@ itcl::body TcsConfigControl::constructor {args} {
       label $w.obsidlab -text "Observation id:"
    }
    itk_component add obsid {
-      label $w.obsid -width 18 -relief sunken
+      label $w.obsid -width 40 -relief sunken -anchor w
    }
    pack $itk_component(obsidlab) $itk_component(obsid) -side left
    pack $itk_component(obsidf) $itk_component(idle) -side left -pady 3 -padx 2
