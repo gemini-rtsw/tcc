@@ -8,8 +8,10 @@ starts the status displays and
 
 starts the consoles and loads the sample targets, instrument definitions etc.
 
-Similarly, the pointing test and start of night calibration applications are
-started by:
+Similarly, the star selector, pointing test and start of night calibration 
+applications are started by:
+
+	/gemini/tcc/tcc/starselect &
 
 	/gemini/tcc/tcc/pointtest &
 
@@ -49,8 +51,8 @@ the command line. e.g.:
 
 	/gemini/tcc/tcc/tcc -layout &
 
-There are a number of star catalogues suitable for pointing tests in 
-/gemini/tcc/tcc/pointcats.
+There are a number of star catalogues suitable for enginneering activities
+and pointing tests in /gemini/tcc/tcc/pointcats.
 
 If, when you try to start Skycat from the tcc, using either with the Plot 
 button on the preview window or by selecting Skycat on the Windows menu of 
@@ -141,7 +143,7 @@ particular order) so you don't have to tell me that they are missing. Some
 of them are obscure internal things so don't worry if you don't understand
 what some of them mean.
 
-1) Extend the configurations to include offsets, chopping and filters.
+1) Extend the configurations to include offsets and filters.
 
 2) Add input validation to all data entry fields. Try daft wavelengths to
    see how the validation works.
@@ -172,15 +174,8 @@ what some of them mean.
 
 13) Re-think the way merging of configurations work.
 
-14) Add chopping information to status display.
-
 15) Revise the "export" function. What is required here ? Just save everything
     or something more ?
-
-16) Add a function to load new configuration/component definitions from 
-    a file after the tcc has been started.
-
-17) Implement control of nodding.
 
 There is of course more that I don't yet know how to do - acquisition of
 guide stars for example - that will have to wait until we know more about
