@@ -11,7 +11,7 @@
 #
 #           updateobj name
 #
-#  D Terrett 24 November 1999
+#  D Terrett 16 February 2000
 #
 #  Copyright CCLRC
 #+
@@ -28,13 +28,7 @@ itcl::class TrackFrameControl {
 
    private method setazel tel
 
-   private variable mountAzEl
-   private variable sourceAAzEl
-   private variable sourceBAzEl
-   private variable sourceCAzEl
-   private variable pwfs1AzEl
-   private variable pwfs2AzEl
-   private variable oiwfsAzEl
+   private variable AzEl
 }
 
 itk::usual TrackFrameControl {
@@ -53,7 +47,7 @@ itcl::body TrackFrameControl::constructor args {
    set w $itk_component(trackframes)
 
    itk_component add mountAzEl {
-      checkbutton $w.mountazel -text Az/El -variable [scope mountAzEl] \
+      checkbutton $w.mountazel -text Az/El -variable [scope AzEl(mount)] \
             -command [code $this setazel mount]
    }
    itk_component add mountCosys {
@@ -61,7 +55,7 @@ itcl::body TrackFrameControl::constructor args {
             -labelpos w -componentlist CosysList -component mountCosys
    }
    itk_component add sourceAAzEl {
-      checkbutton $w.sourceAazel -text Az/El -variable [scope sourceAAzEl] \
+      checkbutton $w.sourceAazel -text Az/El -variable [scope AzEl(sourceA)] \
             -command [code $this setazel sourceA]
    }
    itk_component add sourceACosys {
@@ -69,7 +63,7 @@ itcl::body TrackFrameControl::constructor args {
             -labelpos w -componentlist CosysList -component sourceACosys
    }
    itk_component add sourceBAzEl {
-      checkbutton $w.sourceBazel -text Az/El -variable [scope sourceBAzEl] \
+      checkbutton $w.sourceBazel -text Az/El -variable [scope AzEl(sourceB)] \
             -command [code $this setazel sourceB]
    }
    itk_component add sourceBCosys {
@@ -77,7 +71,7 @@ itcl::body TrackFrameControl::constructor args {
             -labelpos w -componentlist CosysList -component sourceBCosys
    }
    itk_component add sourceCAzEl {
-      checkbutton $w.sourceCazel -text Az/El -variable [scope sourceCAzEl] \
+      checkbutton $w.sourceCazel -text Az/El -variable [scope AzEl(sourceC)] \
             -command [code $this setazel sourceC]
    }
    itk_component add sourceCCosys {
@@ -85,7 +79,7 @@ itcl::body TrackFrameControl::constructor args {
             -labelpos w -componentlist CosysList -component sourceCCosys
    }
    itk_component add pwfs1AzEl {
-      checkbutton $w.pwfs1azel -text Az/El -variable [scope pwfs1AzEl] \
+      checkbutton $w.pwfs1azel -text Az/El -variable [scope AzEl(pwfs1)] \
             -command [code $this setazel pwfs1]
    }
    itk_component add pwfs1Cosys {
@@ -93,7 +87,7 @@ itcl::body TrackFrameControl::constructor args {
             -labelpos w -componentlist CosysList -component pwfs1Cosys
    }
    itk_component add pwfs2AzEl {
-      checkbutton $w.pwfs2azel -text Az/El -variable [scope pwfs2AzEl] \
+      checkbutton $w.pwfs2azel -text Az/El -variable [scope AzEl(pwfs2)] \
             -command [code $this setazel pwfs2]
    }
    itk_component add pwfs2Cosys {
@@ -101,7 +95,7 @@ itcl::body TrackFrameControl::constructor args {
             -labelpos w -componentlist CosysList -component pwfs2Cosys
    }
    itk_component add oiwfsAzEl {
-      checkbutton $w.oiwfsazel -text Az/El -variable [scope oiwfsAzEl] \
+      checkbutton $w.oiwfsazel -text Az/El -variable [scope AzEl(oiwfs)] \
             -command [code $this setazel oiwfs]
    }
    itk_component add oiwfsCosys {
@@ -136,9 +130,9 @@ itcl::body TrackFrameControl::selectobj name {
          set frame [$name cget -${tel}Cosys]
          $itk_component(${tel}Cosys) select $frame
          if {$frame == ""} {
-            set ${tel}AzEl 1
+            set AzEl($tel) 1
          } else {
-            set ${tel}AzEl 0
+            set AzEl($tel) 0
          }
       }
    }
@@ -150,7 +144,7 @@ itcl::body TrackFrameControl::updateobj name {
 #-
    foreach tel {mount sourceA sourceB sourceC pwfs1 pwfs2 oiwfs} {
       set ${tel}Cosys [$itk_component(${tel}Cosys) get]
-      if { ${tel}AzEl } {
+      if { $AzEl($tel) } {
          set ${tel}Cosys ""
       }
    }
@@ -192,8 +186,7 @@ itcl::body TrackFrameControl::setazel tel {
 #+
 # Clears the cosys selector when Az/El is selected.
 #-
-   upvar 0 ${tel}AzEl check
-   if { $check } {
+   if { $AzEl($tel) } {
       $itk_component(${tel}Cosys) select ""
    }
 }
