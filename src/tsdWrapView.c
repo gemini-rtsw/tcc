@@ -195,7 +195,7 @@ static int CreateWV( Tcl_Interp *interp, Tk_Canvas canvas, Tk_Item *itemPtr,
 
    mask = GCForeground | GCLineWidth;
    gcvalues.line_width = 2;
-   wrapviewPtr->cableColor = Tk_GetColor( interp, tkwin, Tk_GetUid("Red") );
+   wrapviewPtr->cableColor = Tk_GetColor( interp, tkwin, Tk_GetUid("Orange") );
    gcvalues.foreground = wrapviewPtr->cableColor->pixel;
    wrapviewPtr->cableGC = Tk_GetGC( tkwin, mask, &gcvalues );
 

@@ -173,7 +173,7 @@ static int CreateEV( Tcl_Interp *interp, Tk_Canvas canvas, Tk_Item *itemPtr,
 
    mask = GCForeground | GCLineWidth;
    gcvalues.line_width = 2;
-   elviewPtr->elpathColor = Tk_GetColor( interp, tkwin, Tk_GetUid("Red") );
+   elviewPtr->elpathColor = Tk_GetColor( interp, tkwin, Tk_GetUid("Orange") );
    gcvalues.foreground = elviewPtr->elpathColor->pixel;
    elviewPtr->elpathGC = Tk_GetGC( tkwin, mask, &gcvalues );
 
