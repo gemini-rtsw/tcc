@@ -3,7 +3,7 @@
 #
 #  Implements the PointUpdateControl widget.
 #
-#  D Terrett 6 February 2001
+#  D Terrett 1 May 2001
 #
 #  Copyright CCLRC
 #-
@@ -11,6 +11,7 @@
 itcl::class PointUpdateControl {
    inherit itk::Widget
    constructor args {}
+   destructor {}
    itk_option define -ia ia Ia 0
    public {
       method purge {}
@@ -146,6 +147,14 @@ itcl::body PointUpdateControl::constructor args {
    }
 
    eval itk_initialize $args
+}
+
+itcl::body PointUpdateControl::destructor {} {
+
+# Delete all PtWeak objects.
+   foreach obs [itcl::find objects -class Ptweak] {
+      delete object $obs
+   }
 }
 
 itcl::body PointUpdateControl::purge {} {
