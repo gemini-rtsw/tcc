@@ -15,7 +15,7 @@
 #
 #        view            Displays the catalogue in a listbox
 #
-# D Terrett 25 September 2001
+# D Terrett 18 April 2002
 #
 # Copyright CCLRC
 #+
@@ -94,7 +94,7 @@ itcl::body Catalogue::load {chan} {
       }
    }
 
-# Clear any exisiting stars belonging to this catalogue.
+# Clear any existing stars belonging to this catalogue.
    $AzElPlot remove $Name
 
    set n [llength $Catalog]
@@ -141,14 +141,13 @@ itcl::body Catalogue::decodeStar {index} {
             set ra "$rah $ram $ras"
             set dec "$decd $decm $decs"
             set epoch $equinox
-            set frame FK5
             set parallax 0.0
             set rv 0.0
          }
       }
    }
 
-   return [list $objname $ra $dec $frame $equinox $epoch $pmra $pmdec \
+   return [list $objname $ra $dec $equinox $epoch $pmra $pmdec \
          $parallax $rv $comment]
 }
 
