@@ -10,7 +10,7 @@
 #  Methods:
 #           none
 #
-#  D Terrett  13 November 2002
+#  D Terrett  15 November 2002
 #
 #  Copyright CCLRC
 #+
@@ -31,6 +31,7 @@ itcl::class GuideLoop {
       variable m2p2
       variable m2oi
       variable m2ao
+      variable monids
    }
 }
 
@@ -247,10 +248,13 @@ itcl::body GuideLoop::constructor args {
    $w create window 550 462 -window $itk_component(off)
 
 # Monitor the guide states
-   foreach rec {p1state p2state oistate m2state absorbtilt m1state \
+   foreach rec {p1state p2state oistate aostate m2state absorbtilt m1state \
          m1source p1guide p1guide p1mweight p2mweight m2p1guide m2p2guide \
          m2oiguide m2aoguide coma} {
-      sa guideConfig proc $rec [itcl::code $this recolour]
+      if { [llength [itcl::find objects ::guideConfig.$rec]] == 0 } {
+         RecordMonitor ::guideConfig.$rec guideConfig $rec
+      }
+      lappend monids [::guideConfig.$rec add [itcl::code $this recolour]]
    }
 
 # Schedule an update once the channels have connected.
@@ -260,10 +264,10 @@ itcl::body GuideLoop::constructor args {
 }
 
 itcl::body GuideLoop::destructor {} {
-   foreach rec {p1state p2state oistate m2state absorbtilt m1state \
+   foreach rec {p1state p2state oistate aostate m2state absorbtilt m1state \
          m1source p1guide p1guide p1mweight p2mweight m2p1guide m2p2guide \
-         m2oiguide m2aoguide coma} {
-      sa guideConfig unproc $rec [itcl::code $this recolour]
+         m2oiguide m2aoguide coma} mon $monids {
+      ::guideConfig.$rec remove $mon
    }
 }
 

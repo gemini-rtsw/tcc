@@ -20,7 +20,7 @@ itcl::class AoControl {
    constructor args {}
    private {
       method centre {}
-      method correct {}
+      method correct {arg}
    }
 }
 
@@ -61,7 +61,12 @@ itcl::body AoControl::constructor args {
 
 # Correct.
    itk_component add correct {
-      LiveButton $w.correct -text Correct -command [itcl::code $this correct]
+      OnOffButton $w.correct -text Correct \
+            -onproc [itcl::code $this correct ON] \
+            -offproc [itcl::code $this correct OFF] \
+            -onvalue {ON On} \
+            -offvalue {OFF Off} \
+            -sadrecord {guideConfig aostate}
    }
 
 # Offload tip/tilt & focus.
@@ -114,13 +119,26 @@ itcl::body AoControl::centre {} {
    logger command aoFlatten
    cs aoCentreWfs set retain 0
    logger command aoCentreWfs
+   if { [catch {cs tcsApply post} msg] } {
+      tk_messageBox -icon error -parent $itk_interior -message $msg
+   }
 }
 
-itcl::body AoControl::correct {} {
-   cs aoFlatten set dummy 1
-   logger command aoFlatten
-   cs aoCorrect set correct ON
-   cs aoCorrect set matrix ""
-   cs aoCorrect set gains 0
+itcl::body AoControl::correct {arg} {
+   switch $arg {
+      ON {
+         cs aoFlatten set dummy 1
+         logger command aoFlatten
+         cs aoCorrect set correct ON
+         cs aoCorrect set matrix ""
+         cs aoCorrect set gains 0
+      }
+      OFF {
+         cs aoCorrect set correct OFF
+      }
+   }
    logger command aoCorrect
+   if { [catch {cs tcsApply post} msg] } {
+      tk_messageBox -icon error -parent $itk_interior -message $msg
+   }
 }

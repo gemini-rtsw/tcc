@@ -4,7 +4,7 @@
 # An ActiveOptics object controls the state of the active optics (M2 tip/tilt,
 # coma correction, M1 figure). 
 #
-# D Terrett  13 November 2002
+# D Terrett  15 November 2002
 #
 # Copyright CLRC
 #+
@@ -355,8 +355,11 @@ itcl::body ActiveOptics::state {component} {
          }
       }
       gaos {
-# DON'T KNOW HOW TO DO THIS!!!
-         return 1
+         if { [string toupper [sa guideConfig get aostate]] == "ON" } {
+            return 1
+         } else {
+            return 0
+         }
       }
       p1guide {
          if { [sa guideConfig get p1guide value] == "1" } {
