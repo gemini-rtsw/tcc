@@ -394,9 +394,7 @@ proc createConfig {} {
 # Create the ComponentList objects
    foreach name [array names ::Config *,list] {
       if {  $::Config($name) != "" } {
-         if { [find objects $::Config($name)] == "" } {
-            ComponentList $::Config($name)
-         }
+         catch {ComponentList $::Config($name)}
       }
    }
 
