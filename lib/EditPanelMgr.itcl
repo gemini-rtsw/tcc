@@ -15,7 +15,7 @@
 #  Methods:
 #           map             Overrides the map method of PanelMgr
 #
-#  D Terrett 28 March 2001
+#  D Terrett 29 March 2001
 #
 #  Copyright CCLRC
 #+
@@ -24,15 +24,15 @@ itcl::class EditPanelMgr {
    inherit PanelMgr
    constructor args {eval configure $args}
    public {
-      method map {}
+      method map {component}
       variable componentlist {}
       variable namespace {}
       variable vt {}
    }
 }
 
-itcl::body EditPanelMgr::map {} {
-   if { [$this PanelMgr::map] } {
+itcl::body EditPanelMgr::map {component} {
+   if { [$this PanelMgr::map $component] } {
       $name configure -componentlist $componentlist -namespace $namespace \
             -vt $vt
       return 1

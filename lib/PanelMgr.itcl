@@ -52,7 +52,7 @@ itcl::class PanelMgr {
    constructor args {eval configure $args}
    public {
       method iconify {}
-      method map {}
+      method map {{component ""}}
       method updategeometry {}
       method withdraw {}
       variable class ""
@@ -65,7 +65,7 @@ itcl::class PanelMgr {
    }
 }
 
-itcl::body PanelMgr::map {} {
+itcl::body PanelMgr::map {{component ""}} {
 #-
 # Putting an itk toplevel widget on another screen involves a horrible
 # hack. The widget doesn't have a -screen option and it isn't possible to
@@ -79,6 +79,7 @@ itcl::body PanelMgr::map {} {
 
 # If the window already exists then just map it and raise it.
    if [winfo exists $name] {
+      $name show $component
       wm deiconify $name
       raise $name
       return 0
@@ -108,6 +109,7 @@ itcl::body PanelMgr::map {} {
 # Otherwise, just create the panel.
          $class $name
       }
+      $name show $component
 
 # Position the window if a position was specified.
       if { ! [string is space $geometry] } {
