@@ -588,15 +588,17 @@ itcl::body PreviewControl::countdown {} {
 itcl::body PreviewControl::plot {} {
 
 # Map skycat
-   skycatPanel map
+   if { [skycatPanel map] ne "" } {
 
 # Get the target coordinates.
-   set target [$view cget -target]
+      set target [$view cget -target]
 
 # Plot the target position.
-   if { [llength $target] > 0 } {
-      send -async -displayof .skycatPanel tccSkycat tccDisplayField \
-            [list [lindex $target 0] [lindex $target 1] \
-            [$view cget -p1xy] [$view cget -p2xy] [$view cget -oixy]]
+      if { [llength $target] > 0 } {
+         send -async -displayof .skycatPanel \
+               [[skycatPanel cget -name] cget -skycat] tccDisplayField \
+               [list [lindex $target 0] [lindex $target 1] \
+               [$view cget -p1xy] [$view cget -p2xy] [$view cget -oixy]]
+      }
    }
 }
