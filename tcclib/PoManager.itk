@@ -8,7 +8,7 @@
 #     update    Updates the currently selected pointing origin with
 #                new values.
 #
-#  D Terrett  15 March 2001
+#  D Terrett  22 April 2001
 #
 #  Copyright CCLRC
 #+
@@ -161,14 +161,16 @@ itcl::body PoManager::selectcmd {po} {
       }
    }
    if {  [string equal $achop $po] ||  [string equal $bchop $po] } {
+      set xmm [expr {[$itk_component(x$po) cget -text] * 0.62056151}]
+      set ymm [expr {[$itk_component(y$po) cget -text] * 0.62056151}]
       if { $achop == $po } {
-         cs poriginA set x [$itk_component(x$po) cget -text]
-         cs poriginA set y [$itk_component(y$po) cget -text]
+         cs poriginA set x $xmm
+         cs poriginA set y $ymm
          logger command poriginA
       }
       if { [string equal $bchop $po] } {
-         cs poriginB set x [$itk_component(x$po) cget -text]
-         cs poriginB set y [$itk_component(y$po) cget -text]
+         cs poriginB set x $xmm
+         cs poriginB set y $ymm
          logger command poriginB
       }
       if { [catch {cs tcsApply post} msg] } {
@@ -197,8 +199,8 @@ itcl::body PoManager::update {chop} {
 
 # Get the current values of the appropriate pointing origin.
       set tar [sa tcssad get $target]
-      set x [expr {[lindex $tar 4] + [lindex $tar 6]}]
-      set y [expr {[lindex $tar 5] + [lindex $tar 7]}]
+      set x [expr {([lindex $tar 4] + [lindex $tar 6]) / 0.62056151}]
+      set y [expr {([lindex $tar 5] + [lindex $tar 7]) / 0.62056151}]
    
       set name [$itk_component(sel$po) get]
       if { [string length $name] } {

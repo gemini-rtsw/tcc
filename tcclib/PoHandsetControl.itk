@@ -11,7 +11,7 @@
 #  Methods:
 #           none
 #
-#  D Terrett 21 April 2001
+#  D Terrett 22 April 2001
 #
 #  Copyright CCLRC
 #+
@@ -205,10 +205,14 @@ itcl::body PoHandsetControl::refresh {} {
 # Update the fields.
    foreach {src w} {A a B b} {
       set target [sa tcssad get target$src]
-      $itk_component(${w}x) configure -text [format %6.2f [lindex $target 4]]
-      $itk_component(${w}y) configure -text [format %6.2f [lindex $target 5]]
-      $itk_component(${w}off1) configure -text [format %6.2f [lindex $target 6]]
-      $itk_component(${w}off2) configure -text [format %6.2f [lindex $target 7]]
+      $itk_component(${w}x) configure \
+            -text [format %6.2f [expr {[lindex $target 4] / 0.62056151}]]
+      $itk_component(${w}y) configure \
+            -text [format %6.2f [expr {[lindex $target 5] / 0.62056151}]]
+      $itk_component(${w}off1) configure \
+            -text [format %6.2f [expr {[lindex $target 6] / 0.62056151}]]
+      $itk_component(${w}off2) configure \
+            -text [format %6.2f [expr {[lindex $target 7] / 0.62056151}]]
    }
 
    set refid [after 1000 [code $this refresh]]
