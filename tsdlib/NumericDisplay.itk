@@ -11,7 +11,7 @@
 #
 #  options
 #
-#  D Terrett 24 October 2002
+#  D Terrett 17 February 2003
 #
 #  Copyright CCLRC
 #-
@@ -109,11 +109,11 @@ itcl::body NumericDisplay::constructor args {
       StatusField $w.tepos2 -labelmargin 5 -width 11 -entryborder 3 \
             -entryrelief groove
    }
-   itk_component add telpossys {
-      label $w.telpossys -width 10
+   itk_component add palab {
+      label $w.palab -text "Pos Angle"
    }
-   itk_component add telposwavel {
-      label $w.telposwavel -width 8
+   itk_component add pa {
+      label $w.pa -relief groove -width 8
    }
 
    itk_component add tarlabel {
@@ -312,9 +312,10 @@ itcl::body NumericDisplay::constructor args {
          $itk_component(status) - - -sticky e -padx 3 -pady 2
    grid configure $itk_component(objname) -sticky w
    grid $itk_component(telposlabel) $itk_component(telpos1) \
-         $itk_component(telpos2) $itk_component(telpossys) \
-         $itk_component(telposwavel) -sticky e -padx 3 -pady 2
+         $itk_component(telpos2) $itk_component(palab) \
+         $itk_component(pa) -sticky e -padx 3 -pady 2
    grid configure $itk_component(status) -rowspan 2
+   grid configure $itk_component(pa) -sticky w
    grid $itk_component(tarlabel) $itk_component(tar1) \
          $itk_component(tar2) $itk_component(tarsys) $itk_component(tarwavel) \
          $itk_component(nod) -sticky e -padx 3 -pady 2
@@ -493,6 +494,7 @@ itcl::body NumericDisplay::update {} {
 # Telescope and dome position.
 #   $itk_component(telpos1) configure -text [sa tcssad get currentRA]
 #   $itk_component(telpos2) configure -text [sa tcssad get currentDec]
+   $itk_component(pa) configure -text [sa tcssad get instrPA]
    $itk_component(telaz) configure -text [sa tcssad get currentAz]
    $itk_component(azerr) configure -text [sa tcssad get azError]
    $itk_component(telel) configure -text [sa tcssad get currentEl]
