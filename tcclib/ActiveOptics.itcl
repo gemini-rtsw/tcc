@@ -4,7 +4,7 @@
 # An ActiveOptics object controls the state of the active optics (M2 tip/tilt,
 # coma correction, M1 figure). 
 #
-# D Terrett  16 July 2001
+# D Terrett  1 December 2001
 #
 # Copyright CLRC
 #+
@@ -14,9 +14,11 @@ itcl::class ActiveOptics {
    public {
       method enable {}
       method disable {}
+      method state {component}
+      method source {component src}
       variable scssource none
       variable comacorr 0
-      variable m1figure 0
+      variable m1figure ""
       variable probeguide none
       variable mountguide none
       variable pwfs1Expose 0.01
@@ -72,6 +74,9 @@ itcl::body ActiveOptics::constructor {args} {
    }
    if { [catch {cs oiwfsStopObserve info}] } {
       epics cs oiwfsStopObserve
+   }
+   if { [catch {sa guideConfig info}] } {
+      epics sa guideConfig
    }
 
    eval configure $args
@@ -147,8 +152,27 @@ itcl::body ActiveOptics::enable {} {
    }
 
 # M1 figure.
-   if { $m1figure } {
-      cs m1Guide set mode On
+   if { [lsearch {PWFS1 PWFS2 OIWFS} $m1figure] != -1 } {
+      switch $m1figure {
+         PWFS1 {
+             cs m1Guide set mode On
+             cs m1GuideConfig set weighting none
+             cs m1GuideConfig set source PWFS1
+             cs m1GuideConfig set frames 1
+         }
+         PWFS2 {
+             cs m1Guide set mode On
+             cs m1GuideConfig set weighting none
+             cs m1GuideConfig set source PWFS2
+             cs m1GuideConfig set frames 1
+         }
+         OIWFS {
+             cs m1Guide set mode On
+             cs m1GuideConfig set weighting none
+             cs m1GuideConfig set source OIWFS
+             cs m1GuideConfig set frames 1
+         }
+      }
       logger command m1Guide
    }
 
@@ -216,4 +240,122 @@ itcl::body ActiveOptics::disable {} {
             "Error posting guide commands: TCS reports \
             \"$msg\""
    }
+}
+
+itcl::body ActiveOptics::state {component} {
+
+# Returns the current state of a component.
+
+   switch $component {
+      pwfs1 {
+         if { [sa guideConfig get p1state value] == "Yes" } {
+            return 1
+         } else {
+            return 0
+         }
+      }
+      pwfs2 {
+         if { [sa guideConfig get p2state value] == "Yes" } {
+            return 1
+         } else {
+            return 0
+         }
+      }
+      oiwfs {
+         if { [sa guideConfig get oistate value] == "Yes" } {
+            return 1
+         } else {
+            return 0
+         }
+      }
+      p1guide {
+         if { [sa guideConfig get p1guide value] == "1" } {
+            return 1
+         } else {
+            return 0
+         }
+      }
+      p2guide {
+         if { [sa guideConfig get p2guide value] == "1" } {
+            return 1
+         } else {
+            return 0
+         }
+      }
+      m1 {
+         if { [sa guideConfig get m1state value] == "On" } {
+            return 1
+         } else {
+            return 0
+         }
+      }
+      m2 {
+         if { [sa guideConfig get m2state value] == "On" } {
+            return 1
+         } else {
+            return 0
+         }
+      }
+      mount {
+         set flag [sa guideConfig get absorbtilt value]
+         if { [string is integer -strict $flag] } {
+            if { $flag > 0 } {
+               return 1
+            } else {
+               return 0
+            }
+         } else {
+            return 0
+         }
+      }
+   }
+}
+
+itcl::body ActiveOptics::source {component src} {
+
+# Returns the source of input signals for the specified component.
+
+   switch $component {
+      m1 {
+         if { [sa guideConfig get m1source value] == $src } {
+            return 1
+         }
+      }
+      m2 {
+         if { $src == "PWFS1" && [sa guideConfig get m2p1guide] != "OFF" } {
+            return 1
+         }
+         if { $src == "PWFS2" && [sa guideConfig get m2p2guide] != "OFF" } {
+            return 1
+         }
+         if { $src == "OIWFS" && [sa guideConfig get m2oiguide] != "OFF" } {
+            return 1
+         }
+      }
+      mount {
+         switch [sa guideConfig get absorbtilt value] {
+            3 {
+               if { $src == "M2" } {
+                  return 1
+               }
+            }
+            4 {
+               set w [sa guideConfig get p1mweight value]
+               if { [string is double -strict $w] } {
+                  if { $w > 0.0 && $src == "PWFS1" } {
+                     return 1
+                  }
+               }
+               set w [sa guideConfig get p2mweight value]
+               if { [string is double -strict $w] } {
+                  if { $w > 0.0 && $src == "PWFS2" } {
+                     return 1
+                  }
+               }
+            }
+         }
+         return 0
+      }
+   }
+   return 0
 }
