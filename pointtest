@@ -14,7 +14,7 @@ exec $HLPG_INSTALL_BASE/bin/solaris/ocswish "$0" "$@"
 #  star positions stored in a file and writes a log that can be processed
 #  into a TPOINT data file.
 #
-#  D Terrett 8 July 2000
+#  D Terrett 5 November 2002
 #
 #  Copyright CCLRC
 #-
@@ -56,7 +56,8 @@ package require Ocspkg
 package require Seq
 
 # Set the name of the epics service configuration file.
-if { [info exists env(TCC_TCSNAME)] } {
+if { [info exists env(TCC_TCSNAME)] && \
+         ( ! [string equal $env(TCC_TCSNAME) tcs] ) } {
    puts "Using $env(TCC_TCSNAME)"
    set ext .$env(TCC_TCSNAME)
 } else {
