@@ -6,7 +6,7 @@
 #  tcl applications. If an object of the same name and type already exists 
 #  it is deleted.
 #
-#  D Terrett 22 September 1998
+#  D Terrett 21 February 2000
 #
 #  Copyright CCLRC
 #-
@@ -21,10 +21,10 @@ proc createConfig {name args} {
 
 proc createScienceTarget {name args} {
    if { [llength [itcl::find  objects ::ScienceTargetNames::$name \
-         -class TargetComponent]] != 0} {
+         -class SciTargetComponent]] != 0} {
       delete object ::ScienceTargetNames::$name
    }
-   eval TargetComponent \"::ScienceTargetNames::$name\" ScienceTargetList $args
+   eval SciTargetComponent \"::ScienceTargetNames::$name\" ScienceTargetList $args
 }
 
 proc createWfsTarget {name args} {
