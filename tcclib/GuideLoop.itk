@@ -10,7 +10,7 @@
 #  Methods:
 #           none
 #
-#  D Terrett  12 June 2000
+#  D Terrett  28 September 2000
 #
 #  Copyright CCLRC
 #+
@@ -24,6 +24,7 @@ itcl::class GuideLoop {
    private method m1mode state
    private method mtmode state
    private method m2mode state
+   private method prmode state
    private method wfsstart {wfs ql}
    private method wfsstop wfs
    private method recolour args
@@ -39,7 +40,7 @@ itcl::body GuideLoop::constructor args {
 
 # Create canvas.
    itk_component add canv {
-      canvas $itk_interior.canv -width 630 -height 400 -borderwidth 2 \
+      canvas $itk_interior.canv -width 630 -height 430 -borderwidth 2 \
             -relief sunken
    }
    pack $itk_component(canv)
@@ -152,34 +153,59 @@ itcl::body GuideLoop::constructor args {
    $w create window 32 32 -width 60 -height 20 -window $w.mtopen -tags mount
    $w create window 32 12 -width 60 -height 20 -window $w.mtpwfs -tags mount
 
+# Box for WFS probes.
+   $w create rectangle 0 0 132 63 -fill white -tags "active probes probes_bg"
+   $w create text 92 32 -text PROBES -tags probes -font $font
+
+# Controls for probes.
+   itk_component add propen {
+      LiveButton $w.propen -text OFF -command [code $this prmode 0]
+   }
+   itk_component add prp1 {
+      LiveButton $w.prp1 -text P1 -command [code $this prmode 1]
+   }
+   itk_component add prp2 {
+      LiveButton $w.prp2 -text P2 -command [code $this prmode 2]
+   }
+   $w create window 32 52 -width 60 -height 20 -window $w.prp1 -tags probes
+   $w create window 32 32 -width 60 -height 20 -window $w.prp2 -tags probes
+   $w create window 32 12 -width 60 -height 20 -window $w.propen -tags probes
+
 # Move boxes into position.
    $w move m2 250 20
-   $w move m1 250 120
-   $w move pwfs1 50 220
-   $w move oiwfs 250 220
-   $w move pwfs2 450 220
-   $w move mount 250 330
+   $w move m1 250 100
+   $w move pwfs1 50 180
+   $w move oiwfs 250 180
+   $w move pwfs2 450 180
+   $w move probes 250 280
+   $w move mount 250 360
 
 # PWFS1 to M1
-   $w create line 150 222 150 150 252 150 -width 3 -fill white \
+   $w create line 150 182 150 130 252 130 -width 3 -fill white \
          -tags {active pwfs1_m1} -arrow last -arrowshape {20 20 7}
 
 # WFS to M2
-   $w create line 100 222 100  60 252  60 -width 3 -fill white \
+   $w create line 100 182 100  60 252  60 -width 3 -fill white \
          -tags {active pwfs1_m2} -arrow last -arrowshape {20 20 7}
-   $w create line 379 250 410 250 410  60 379  60 -width 3 -fill white \
+   $w create line 379 210 410 210 410  60 379  60 -width 3 -fill white \
          -tags {active oiwfs_m2} -arrow last -arrowshape {20 20 7}
-   $w create line 580 240 610 240 610  40 379  40 -width 3 -fill white \
+   $w create line 580 190 610 190 610  40 379  40 -width 3 -fill white \
          -tags {active pwfs2_m2} -arrow last -arrowshape {20 20 7}
 
+# WFS to Probes
+   $w create line 180 200 220 200 220 310 251 310 -width 3 -fill white \
+         -tags {active pwfs1_pr} -arrow last -arrowshape {20 20 7}
+   $w create line 580 230 590 230 590 310 379 310 -width 3 -fill white \
+         -tags {active pwfs2_pr} -arrow last -arrowshape {20 20 7}
+
 # PWFS to mount
-   $w create line 180 250 200 250 200 350 251 350 -width 3 -fill white \
+   $w create line 180 220 200 220 200 380 251 380 -width 3 -fill white \
          -tags {active pwfs1_mt} -arrow last -arrowshape {20 20 7}
-   $w create line 580 260 610 260 610 350 379 350 -width 3 -fill white \
+   $w create line 580 210 610 210 610 380 379 380 -width 3 -fill white \
          -tags {active pwfs2_mt} -arrow last -arrowshape {20 20 7}
 
 # M2 to mount
-   $w create line 252  40  20  40  20 370 251 370 -width 3 -fill white \
+   $w create line 252  40  20  40  20 400 251 400 -width 3 -fill white \
          -tags {active m2_mt} -arrow last -arrowshape {20 20 7}
 
 # Create the command senders required by this screen.
@@ -194,6 +220,9 @@ itcl::body GuideLoop::constructor args {
    }
    if { [catch {cs m2Guide info}] } {
       epics cs m2Guide
+   }
+   if { [catch {cs wfsGuideMode info}] } {
+      epics cs wfsGuideMode
    }
    if { [catch {cs pwfs1Observe info}] } {
       epics cs pwfs1Observe
@@ -220,7 +249,8 @@ itcl::body GuideLoop::constructor args {
    }
 
 # Monitor the guide states
-   foreach rec {p1state p2state oistate m2state absorbtilt m1state} {
+   foreach rec {p1state p2state oistate m2state absorbtilt m1state \
+         wfsstate wfsprobe} {
       sa guideConfig proc $rec [code $this recolour]
    }
 
@@ -228,7 +258,8 @@ itcl::body GuideLoop::constructor args {
 }
 
 itcl::body GuideLoop::destructor {} {
-   foreach rec {p1state p2state oistate m2state absorbtilt m1state} {
+   foreach rec {p1state p2state oistate m2state absorbtilt m1state \
+         wfsstate wfsprobe} {
       sa guideConfig unproc $rec [code $this recolour]
    }
 }
@@ -296,6 +327,25 @@ body GuideLoop::recolour args {
          set mt_sw 0
       }
    }
+   switch [sa guideConfig get wfsstate value] {
+      On {
+         switch [sa guideConfig get wfsprobe value] {
+            PWFS1 {
+               set wfs_sw 1
+            }
+            PWFS2 {
+               set wfs_sw 2
+            }
+            default {
+               set wfs_sw 0
+            }
+         }
+      }
+      Off -
+      default {
+         set wfs_sw 0
+      }
+   }
 
    set m2 0
    set m1 0
@@ -308,6 +358,7 @@ body GuideLoop::recolour args {
       $w itemconfigure pwfs1_bg -fill green
       $w itemconfigure pwfs1_m1 -fill green
       $w itemconfigure pwfs1_m2 -fill green
+      $w itemconfigure pwfs1_pr -fill green
       $w itemconfigure pwfs1_mt -fill green
       if { $m1_sw } {
          $w itemconfigure m1_bg -fill green
@@ -317,6 +368,7 @@ body GuideLoop::recolour args {
       set pwfs 1
       $w itemconfigure pwfs2_bg -fill green
       $w itemconfigure pwfs2_m2 -fill green
+      $w itemconfigure pwfs2_pr -fill green
       $w itemconfigure pwfs2_mt -fill green
    }
    if { $oiwfs } {
@@ -353,6 +405,13 @@ body GuideLoop::recolour args {
          set m2 1
       } else {
          $w itemconfigure m1_bg -fill yellow
+      }
+   }
+   if { $wfs_sw } {
+      if { ($wfs_sw == 1 && $pwfs1) || ($wfs_sw == 2 && $pwfs2) } {
+         $w itemconfigure probes_bg -fill green
+      } else {
+         $w itemconfigure probes_bg -fill yellow
       }
    }
 }
@@ -403,7 +462,27 @@ body GuideLoop::m2mode state {
 
    if { [catch {cs m2Guide post} msg] } {
       tk_messageBox -icon error -parent $itk_interior -message \
-            "Error posting m2GuideCOntrol command: TCS reports \
+            "Error posting m2GuideControl command: TCS reports \
+            \"$msg\""
+   }
+}
+
+body GuideLoop::prmode state {
+
+   cs wfsGuideMode set state [expr {$state ? "On" : "Off"}]
+   switch $state {
+      1 {
+         cs wfsGuideMode set probe PWFS1
+      }
+      2 {
+         cs wfsGuideMode set probe PWFS2
+      }
+   }
+   logger command wfsGuideMode
+
+   if { [catch {cs wfsGuideMode post} msg] } {
+      tk_messageBox -icon error -parent $itk_interior -message \
+            "Error posting wfsGuideMode command: TCS reports \
             \"$msg\""
    }
 }

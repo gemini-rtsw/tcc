@@ -4,7 +4,7 @@
 # Channel access configuration file for tcs guiding and chopping related 
 # commands.
 #
-# D Terrett 6 June 2000
+# D Terrett 28 September 2000
 #
 # Copyright CCLRC
 #-
@@ -33,6 +33,12 @@ command mountGuide tcsApply Define mount guiding
 command m2Guide tcsApply M2 Guiding
 {
    state      tc1:m2GuideControl.A State
+}
+
+command wfsGuideMode tcsApply WFS Guide Mode
+{
+   state      tc1:wfsGuideMode.A State
+   probe      tc1:wfsGuideMode.B Probe
 }
 
 command pwfs1Observe tcsApply Start P1
@@ -91,6 +97,8 @@ status guideConfig
    m2state    tc1:om:m2GuideState.VAL       0   M2 guiding
    absorbtilt tc1:absorbTipTiltFlag.VAL     0   Absorb tilt errors
    m1state    tc1:im:m1GuideOn.VAL          0   M1 guiding
+   wfsstate   tc1:wfsGuideMode.VALA         0   WFS guiding
+   wfsprobe   tc1:wfsGuideMode.VALB         0   Probe being guided
 }
 
 command m2beam tcsApply M2 beam
