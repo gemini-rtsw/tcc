@@ -12,10 +12,12 @@
 #
 #           -vt             Configures the -vt option of the EditPanel
 #
+#           -titlelist      Configures the -titlelist option of the EditPanel
+#
 #  Methods:
 #           map             Overrides the map method of PanelMgr
 #
-#  D Terrett 29 March 2001
+#  D Terrett 30 March 2001
 #
 #  Copyright CCLRC
 #+
@@ -27,6 +29,7 @@ itcl::class EditPanelMgr {
       method map {component}
       variable componentlist {}
       variable namespace {}
+      variable titlelist {}
       variable vt {}
    }
 }
@@ -34,7 +37,7 @@ itcl::class EditPanelMgr {
 itcl::body EditPanelMgr::map {component} {
    if { [$this PanelMgr::map $component] } {
       $name configure -componentlist $componentlist -namespace $namespace \
-            -vt $vt
+            -vt $vt -titlelist $titlelist
       return 1
    }
    return 0
