@@ -10,7 +10,7 @@
 #           update      Causes the preview configuration to be calculated 
 #                       and displayed.
 #
-#  D Terrett 19 March 2003
+#  D Terrett 5 December 2003
 #
 #  Copyright CCLRC
 #+
@@ -464,11 +464,21 @@ itcl::body PreviewControl::update {} {
                   set inlimit 1
                }
             } else {
+
+# The OIWFS x,y limits are in the OIWFS coordinate system so the predicted
+# x,y has to be transformed from the tcs x,y before doing the check.
+# This means that the preview is only valid for the current instrument
                set xmax [sa tcssad get oiwfsXmax]
                set xmin [sa tcssad get oiwfsXmin]
                set ymax [sa tcssad get oiwfsYmax]
                set ymin [sa tcssad get oiwfsYmin]
-               if { $x > $xmax || $x < $xmin || $y > $ymax || $y < $ymin } {
+               set coeffs [sa agssad get oiwfsCoeffs]
+               set oix [expr { [lindex $coeffs 0] + [lindex $coeffs 1] * $x + \
+                     [lindex $coeffs 2] * $y} ]
+               set oiy [expr { [lindex $coeffs 3] + [lindex $coeffs 4] * $x + \
+                     [lindex $coeffs 5] * $y} ]
+               if { $oix > $xmax || $oix < $xmin || $oiy > $ymax || \
+                     $oiy < $ymin } {
                   set inlimit 1
                }
             }
