@@ -74,6 +74,30 @@ itcl::body NumericDisplay::constructor args {
       label $w.chopping -width 14 -anchor w
    }
 
+# M2 tip/tilt & focus
+   itk_component add ttf {
+      label $w.ttf -text "M2 tip/tilt & focus" -anchor center
+   }
+   itk_component add m2 {
+       frame $w.m2
+   }
+   set w $itk_component(m2)
+   itk_component add tip {
+       StatusField $w.tip -labelmargin 2 -width 5 -entryborder 3 \
+            -entryrelief groove -labeltext X:
+   }
+   itk_component add tilt {
+       StatusField $w.tilt -labelmargin 2 -width 5 -entryborder 3 \
+            -entryrelief groove -labeltext Y:
+   }
+   itk_component add focus {
+       StatusField $w.focus -labelmargin 2 -width 5 -entryborder 3 \
+            -entryrelief groove -labeltext Z:
+   }
+   pack $itk_component(tip) $itk_component(tilt) $itk_component(focus) \
+         -side left
+   set w [winfo parent $w]
+
    itk_component add telposlabel {
       label $w.telposlabel -text "TELESCOPE POSITION:"
    }
@@ -299,9 +323,10 @@ itcl::body NumericDisplay::constructor args {
          x x $itk_component(chopping) -sticky e -padx 3 -pady 2
    grid configure $itk_component(chopping) -sticky w
    grid $itk_component(baselab) $itk_component(base1) $itk_component(base2) \
-         -sticky e -padx 3 -pady 2
+         x $itk_component(ttf) - - -sticky e -padx 3 -pady 2
+   grid configure $itk_component(ttf) -sticky ew
    grid $itk_component(ratelab) $itk_component(rate1) $itk_component(rate2) \
-         -sticky e -padx 3 -pady 2
+         $itk_component(m2) - - - -sticky e -padx 3 -pady 2
    grid $itk_component(choplab) $itk_component(chop1) $itk_component(chop2) \
          -sticky e -padx 3 -pady 2
    grid $itk_component(instrlab) $itk_component(instrx) $itk_component(instry) \
@@ -566,6 +591,11 @@ itcl::body NumericDisplay::update {} {
          -text [format %.2f [expr {[lindex $xy 0] / 0.62056151}]]
    $itk_component(instry) configure \
          -text [format %.2f [expr {[lindex $xy 1] / 0.62056151}]]
+
+# M2 tip/tilt/focus.
+   $itk_component(tip) configure -text [sa m2ssad get xtilt]
+   $itk_component(tilt) configure -text [sa m2ssad get ytilt]
+   $itk_component(focus) configure -text [sa m2ssad get focus]
 
 # Time.
    $itk_component(utc) configure -text [tccTime utc]
