@@ -4,17 +4,20 @@
 #  Implements the SubComponentSelector widget.
 #
 #  Options:
-#           -component       The name of the subcomponent.
+#           -component         The name of the subcomponent.
 #
 #           -editcontrol
 #
-#           -shadow          The name of the component shadow.
+#           -shadow            The name of the component shadow.
+#
+#           -selectioncommand  Command to be executed when a new component
+#                              is selected.
 #
 #
 #  Methods:
 #           select item      Selects "item" into the list manager.
 #
-#  D Terrett  9 September 1998
+#  D Terrett  17 February 2000
 #
 #  Copyright CCLRC
 #+
@@ -27,6 +30,7 @@ itcl::class SubComponentSelector {
    itk_option define -editcontrol editControl EditControl {}
    itk_option define -shadow shadow Shadow {}
    itk_option define -component component Component {}
+   itk_option define -selectioncommand selectionCommand Command {}
 
    public method select item
    public method get
@@ -91,4 +95,7 @@ itcl::body SubComponentSelector::selectioncommand {} {
 #-
    set name [$itk_component(selector) get]
    $itk_option(-shadow) subselect $itk_option(-component) $name
+   if { $itk_option(-selectioncommand) != "" } {
+      uplevel 0 $itk_option(-selectioncommand)
+   }
 }
