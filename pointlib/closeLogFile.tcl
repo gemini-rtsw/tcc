@@ -9,13 +9,13 @@ proc closeLogFile {} {
 #  Description:
 #  The END record is written to the log file and the file closed.
 #
-#  D Terrett 29 April 1999
+#  D Terrett 26 May 1999
 #
 #  Copyright CCLRC
 #-
    global Logchan Widgets Menus LogFileName
 
-# Disable the loggin of observations.
+# Disable the logging of observations.
    sa tcssad unproc pointObs saveObs
 
 # Write and END record to the log file.
@@ -25,11 +25,31 @@ proc closeLogFile {} {
 
 # Prompt for a file name for the tpoint input data file.
    set types {
-      {{Data Files} {.dat} {}}
+      {{TPOINT Input Files} {.tpd} {}}
       {{All Files} * {}}
    }
-   set tpname [tk_getSaveFile -defaultextension .tpd -parent . \
+
+   file stat $LogFileName logstats
+   while 1 {
+
+# Get a name for the TPOINT input file.
+      set tpname [tk_getSaveFile -defaultextension .tpd -parent . \
                 -filetypes $types -title "Tpoint input file"]
+
+# Check that it is a different file from the log file.
+      if {[file exists $tpname]} {
+         file stat $tpname tpstats
+         if { $tpstats(ino) != $logstats(ino) || 
+               $tpstats(dev) != $logstats(dev) } {
+            break
+         }
+         tk_messageBox -icon error -parent . -message \
+               "The TPOINT input file must be different from the log file; \
+               please try again"
+      } else {
+         break
+      }
+   }
 
 # Convert the log file to tpoint format.
    if { $tpname != {} } {
