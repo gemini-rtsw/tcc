@@ -238,7 +238,7 @@ itcl::body EditShadow::subselectfromchild {comp name} {
 
 # If the edit control exists, call its subselect method.
    if { [winfo exists $window] } {
-      $window subselect $comp $name 
+      $window subselect $comp $name
    }
 }
 
@@ -264,6 +264,7 @@ itcl::body EditShadow::storefromcontrol {name} {
    if { [store $name] } {
       if { ! [string equal $parent ""] } {
          $parent childstored $component
+         $parent subselectfromchild $component $name
       }
       return 1
    }
