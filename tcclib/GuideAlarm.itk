@@ -21,7 +21,7 @@ itcl::class GuideAlarm {
       method setSilent {wfs}
       method alarmCheck {wfs}
       variable flash 0
-      variable pwfs1Limit 500.0
+      variable pwfs1Limit 2000.0
       variable pwfs2Limit 500.0
       variable oiwfsLimit 500.0
       variable gaosLimit 500.0
@@ -99,7 +99,7 @@ itcl::body GuideAlarm::constructor {args} {
       grid $itk_component(${wfs}clab) $itk_component(${wfs}cnts) -sticky news
       grid $itk_component(${wfs}limlab) $itk_component(${wfs}liment) -sticky news
    }
-   pack $itk_component(title) $itk_component(desc) $itk_component(pwfs1frame) $itk_component(pwfs2frame) $itk_component(oiwfsframe) $itk_component(gaosframe) -side top -padx 3 -pady 3 -ipadx 3 -ipady 3
+   pack $itk_component(title) $itk_component(pwfs1frame) $itk_component(pwfs2frame) $itk_component(oiwfsframe) $itk_component(gaosframe) -side top -padx 3 -pady 3 -ipadx 3 -ipady 3
 
    sa guidects proc pwfs1 "$this updateProc"
    sa guidects proc pwfs2 "$this updateProc"
@@ -196,8 +196,10 @@ itcl::body GuideAlarm::scanLoop {} {
     set num_enabled 0
     set gottaRingBell 0
 
+    set canguide [expr {[AO state mount] && [AO state m2]}]
+
     foreach wfs {pwfs1 pwfs2 oiwfs gaos} {
-       if {[AO state $wfs]} {
+       if {[AO state $wfs] && $canguide} {
     	  set alarmEnabled($wfs) 1
 	  incr num_enabled
        } else {
@@ -211,7 +213,7 @@ itcl::body GuideAlarm::scanLoop {} {
           if {$alarmOn($wfs) == 1} { 
 	      set gottaRingBell 1
           } elseif {$alarmEnabled($wfs)} {
-	      setWfsColor $wfs lightgreen
+             setWfsColor $wfs lightgreen
           }
        }
        if {$gottaRingBell} {
