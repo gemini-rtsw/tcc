@@ -83,6 +83,14 @@ command p1SeqDark tcsApply Take P1 dark frame
    filename   tc1:p1SeqDark.A     Dark filename
 }
 
+command p1Seq tcsApply P1 Sequence Closed Loop
+{
+   global     tc1:p1Seq.A         Time to global guide
+   ave        tc1:p1Seq.B         Frame to average
+   z2m2       tc1:p1Seq.C         Send Zernikies to M2
+   mult       tc1:p1Seq.D         Multiplication coefficient
+}
+
 command pwfs2Observe tcsApply Start P2
 {
    noexp      tc1:pwfs2Observe.A      Exposures
@@ -109,6 +117,14 @@ command p2SeqDark tcsApply Take P2 dark frame
    filename   tc2:p2SeqDark.A     Dark filename
 }
 
+command p2Seq tcsApply P2 Sequence Closed Loop
+{
+   global     tc1:p2Seq.A         Time to global guide
+   ave        tc1:p2Seq.B         Frame to average
+   z2m2       tc1:p2Seq.C         Send Zernikies to M2
+   mult       tc1:p2Seq.D         Multiplication coefficient
+}
+
 command oiwfsObserve tcsApply Start OIWFS
 {
    noexp      tc1:oiwfsObserve.A      Exposures
@@ -123,6 +139,24 @@ command oiwfsObserve tcsApply Start OIWFS
 command oiwfsStopObserve tcsApply Stop OIWFS
 {
    dummy      tc1:oiwfsStopObserve.A
+}
+
+command oiDetSigInit tcsApply Setup OI signal processing
+{
+   filename   tc1:oiDetSigInit.A     Dark filename
+}
+
+command oiSeqDark tcsApply Take OI dark frame
+{
+   filename   tc1:oiSeqDark.A     Dark filename
+}
+
+command oiSeq tcsApply OI Sequence Closed Loop
+{
+   global     tc1:oiSeq.A         Time to global guide
+   ave        tc1:oiSeq.B         Frame to average
+   z2m2       tc1:oiSeq.C         Send Zernikies to M2
+   mult       tc1:oiSeq.D         Multiplication coefficient
 }
 
 command m2beam tcsApply M2 beam
