@@ -14,7 +14,7 @@
 #           updateobj name  Stores the contents of the edit controls in the
 #                           Rotator object "name".
 #
-#  D Terrett 26 June 2000
+#  D Terrett 20 March 2001
 #
 #  Copyright CCLRC
 #+
@@ -46,7 +46,7 @@ itcl::body RotatorControl::constructor args {
    itk_component add angle {
       frame $itk_interior.angle -bd 2 -relief ridge
    }
-   pack $itk_component(angle) -fill x -expand y
+   pack $itk_component(angle) 
 
 # Entry field for angle.
    set w $itk_component(angle)
@@ -54,13 +54,13 @@ itcl::body RotatorControl::constructor args {
       iwidgets::entryfield $w.ipa -labeltext [lindex [cs rotator info ipa] 2] \
             -width 8
    }
-   pack $itk_component(ipa)
+   pack $itk_component(ipa) -padx 5 -pady 5
 
 # Frame for reference direction.
    itk_component add refdir {
       frame $itk_interior.refdir -bd 2 -relief ridge
    }
-   pack $itk_component(refdir) -fill x -expand y
+   pack $itk_component(refdir) -fill x -expand y -pady 5
 
 # Title
    itk_component add title {
@@ -69,22 +69,16 @@ itcl::body RotatorControl::constructor args {
    pack $itk_component(title) -anchor w
 
 # Radiobuttons.
-   itk_component add buttons {
-      frame $w.buttons
-   }
-   set w $itk_component(buttons)
-   pack $itk_component(buttons) -fill x -expand yes
    itk_component add north {
-      radiobutton $w.north -text "North" -variable [scope refdir] \
+      radiobutton $w.north -text "Rotator tracking" -variable [scope refdir] \
             -value north -command [code $this setdir]
    }
    itk_component add vertical {
-      radiobutton $w.vertical -text "Up" -variable [scope refdir] \
+      radiobutton $w.vertical -text "Rotator fixed" -variable [scope refdir] \
             -value vertical -command [code $this setdir]
    }
-   pack $itk_component(north) -side left -padx 20
-   pack $itk_component(vertical) -side right -padx 40
-   set w [winfo parent $w]
+   pack $itk_component(vertical) $itk_component(north) -pady 5 -anchor w \
+         -padx 5
 
 # Control for selecting a coordinate frame.
    itk_component add cosys {
@@ -92,7 +86,7 @@ itcl::body RotatorControl::constructor args {
             -labelpos nw -componentlist CosysList -component cosys \
             -selectioncommand [code $this checkcosys]
    }
-   pack $itk_component(cosys) -anchor w
+   pack $itk_component(cosys) -anchor w -padx 5 -pady 5
    set w [winfo parent $w]
 
 # Set initial state.
@@ -148,18 +142,19 @@ itcl::body RotatorControl::updateobj name {
 }
 
 itcl::body RotatorControl::setdir {} {
-   if { [string equal $refdir north] } {
-      $itk_component(cosys) configure -state normal
+   if { [string equal $refdir vertical] } {
+      $itk_component(cosys) select AzEl
    } else {
-      $itk_component(cosys) configure -state disabled
+      if { [string equal [$itk_component(cosys) get] AzEl] } {
+         $itk_component(cosys) select ""
+      }
    }
 }
 
 itcl::body RotatorControl::checkcosys {} {
    set cosys [$itk_component(cosys) get]
    if { ![string equal $cosys ""] } {
-      set frame [CosysNames::$cosys cget -frame]
-      if { [string equal $frame AzEl] } {
+      if { [CosysNames::$cosys cget -isazel] } {
          set refdir vertical
       } else {
          set refdir north
