@@ -48,7 +48,13 @@ itcl::body ObserveControl::constructor args {
    itk_component add guideloop {
       GuideLoop $w.guideloop
    }
-   grid $itk_component(guideloop) -columnspan 5
+
+# AWE Guide Alarm
+   itk_component add alarm {
+      GuideAlarm $w.alarm
+   }
+   #puts "created GuideAlarm object: $w.alarm"
+   grid $itk_component(guideloop) - - $itk_component(alarm) -sticky news
 
 # Sky offset control.
    itk_component add offframe {
@@ -264,7 +270,10 @@ itcl::body ObserveControl::setfold {path} {
       "AO cal>Instr" {iss configure -source AO -sink HRWFS}
       "AO cal>AC/HR" {iss configure -source AO -sink HRWFS}
    }
-   iss update
+   if {[iss update]} {
+	#puts "rejected"
+	$itk_component(lpath) clear
+   }
    if { [catch {cs tcsApply post} msg] } {
       tk_messageBox -icon error -parent $itk_interior -message $msg
    }
