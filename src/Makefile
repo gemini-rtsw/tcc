@@ -1,4 +1,4 @@
-All: tccext.so tsdext.so tcctime.so slaext.so
+All: tccext.so tsdext.so tcctime.so slaext.so bitmaps.so
 
 TCL_VERS = 8.2
 
@@ -7,6 +7,7 @@ TCCOBJ = tccext.o tccPreview.o autorepeat.o
 TSDOBJ = tsdext.o tsdDomeView.o tsdWrapView.o tsdElView.o
 TIMEOBJ = tccTime.o
 SLAOBJ = slaext.o
+BITOBJ = bitmaps.o
 
 CC = /opt/SUNWspro/bin/cc 
 CFLAGS = -K pic -Xc -G -DUSE_TCL_STUBS -DUSE_TK_STUBS \
@@ -40,9 +41,12 @@ tcctime.so : $(TIMEOBJ)
 slaext.so : $(SLAOBJ)
 	ld -G -z text -o $@ $(SLAOBJ) $(LDFLAGS) 
 
+bitmaps.so : $(BITOBJ)
+	ld -G -z text -o $@ $(BITOBJ) $(LDFLAGS) 
+
 tsdext.o : tccTime.h tccAst.h
 tccext.o : tccPreview.h tccTime.h autorepeat.h
-tccext.o : edit.xbm delete.xbm
+bitmaps.o : edit.xbm delete.xbm
 tccPreview.o : tccConstants.h tccUtil.h tccDecode.h
 tccUtil.o : tccConstants.h tccUtil.h
 tccTime.o : tccConstants.h
@@ -52,7 +56,7 @@ tsdWrapview.o : tccConstants.h tccDecode.h tccUtil.h
 tsdElview.o : tccConstants.h tccDecode.h tccUtil.h
 
 clean:
-	-rm $(TCCOBJ) $(TSDOBJ) $(CMNOBJ) $(SLAOBJ)
+	-rm $(TCCOBJ) $(TSDOBJ) $(CMNOBJ) $(SLAOBJ) $(BITOBJ)
 	-rm tccext.so
 
 install: All
@@ -60,3 +64,4 @@ install: All
 	cp tsdext.so ../tsdlib/solaris
 	cp tcctime.so ../lib/solaris
 	cp slaext.so ../lib/solaris
+	cp bitmaps.so ../lib/solaris
