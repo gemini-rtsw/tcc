@@ -13,7 +13,7 @@
 #  Notes:
 #        o This widget is incomplete
 #
-#  D Terrett  18 February 2000
+#  D Terrett  5 April 2000
 #
 #  Copyright CCLRC
 #+
@@ -27,12 +27,11 @@ itcl::class GuideLoopControl {
    private method m1mode state
    private method mtmode state
    private method m2mode state
-   private method wfsstart wfs
+   private method wfsstart {wfs ql}
    private method wfsstop wfs
    private method recolour args
 
    private variable m1Weight
-   private variable ql
 }
 
 itk::usual GuideLoopControl {
@@ -54,7 +53,10 @@ itcl::body GuideLoopControl::constructor args {
          LiveButton $w.${sys}_off -text OFF -command [code $this wfsstop $sys]
       }
       itk_component add ${sys}_on {
-         LiveButton $w.${sys}_on -text ON -command [code $this wfsstart $sys]
+         LiveButton $w.${sys}_on -text ON -command [code $this wfsstart $sys 0]
+      }
+      itk_component add ${sys}_ql {
+         LiveButton $w.${sys}_ql -text QL -command [code $this wfsstart $sys 1]
       }
 #      itk_component add ${sys}_setup {
 #         button $w.${sys}_setup -text SETUP
@@ -68,15 +70,12 @@ itcl::body GuideLoopControl::constructor args {
             -tags $sys
       $w create window 32 32 -width 60 -height 20 -window $w.${sys}_on \
             -tags $sys
+      $w create window 32 52 -width 60 -height 20 -window $w.${sys}_ql \
+            -tags $sys
 #      $w create window 32 52 -width 60 -height 20 -window $w.${sys}_setup \
             -tags $sys
 
 # WFS controls.
-      itk_component add ${sys}_ql {
-         checkbutton $w.${sys}_ql -text QL -relief raised -width 5 \
-               -height 1 -variable [scope ql($sys)]
-      }
-      $w create window 32 52 -window $w.${sys}_ql -tags $sys
 
       itk_component add ${sys}_ex {
          iwidgets::combobox $w.${sys}_ex -arrowrelief flat -width 5 \
@@ -108,7 +107,7 @@ itcl::body GuideLoopControl::constructor args {
    }
    $w create window 1 64 -window $itk_component(m1Weight) -anchor nw -tags m1
    itk_component add m1Frames {
-      iwidgets::entryfield $w.m1Frames -labeltext "No. frames to av" \
+      iwidgets::entryfield $w.m1Frames -labeltext "frames" \
             -width 5
    }
    $itk_component(m1Frames) insert end 60
@@ -117,12 +116,12 @@ itcl::body GuideLoopControl::constructor args {
 # Controls for Mount.
    itk_component add mtWeight {
       scale $w.mtWeight -from 0.0 -to 1.0 -resolution 0.1 -orient horizontal \
-            -showvalue 0 -length 80 -borderwidth 1 -label "WFS weight"
+            -showvalue 0 -length 120 -borderwidth 1 -label "WFS weight"
    }
    $w create window 15 66 -window $itk_component(mtWeight) -anchor nw \
          -tags mount
-   $w create text 7 90 -text P1 -tags mount -font $font
-   $w create text 105 90 -text P2 -tags mount -font $font
+   $w create text 5 90 -text P1 -tags mount -font $font
+   $w create text 150 90 -text P2 -tags mount -font $font
 
 # Move boxes into position.
    $w move oiwfs 20  30
@@ -435,12 +434,12 @@ body GuideLoopControl::m2mode state {
    }
 }
 
-body GuideLoopControl::wfsstart wfs {
+body GuideLoopControl::wfsstart {wfs ql} {
 
    cs ${wfs}Observe set noexp -1
    cs ${wfs}Observe set int [$itk_component(${wfs}_ex) get]
    cs ${wfs}Observe set output QL
-   if { $ql($wfs) } {
+   if { $ql } {
       cs ${wfs}Observe set outopt DHS
    } else {
       cs ${wfs}Observe set outopt None
