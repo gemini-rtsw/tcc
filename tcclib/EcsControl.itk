@@ -3,7 +3,7 @@
 #
 #  Implements the EcsControl widget.
 #
-#  D Terrett  5 August 1998
+#  D Terrett  12 November 1999
 #
 #  Copyright CCLRC
 #+
@@ -147,23 +147,14 @@ itcl::body EcsControl::constructor args {
    set w $itk_component(row3f2)
    itk_component add thermal {
       ApplyButton $w.thermal -command encThermal \
-            -parcommand [code $this parget]
+            -parcommand [code $this getParVal]
    }
    itk_component add mode {
       iwidgets::optionmenu $w.mode \
             -labeltext [lindex [cs encThermal info mode] 2] \
    }
-   $itk_component(mode) insert end Passive Active
-   itk_component add setpoint {
-      iwidgets::entryfield $w.setpoint \
-            -labeltext [lindex [cs encThermal info setpoint] 2] -width 8
-   }
-   itk_component add wind {
-      iwidgets::entryfield $w.wind -labelpos nw \
-            -labeltext [lindex [cs encThermal info wind] 2]
-   }
-   pack $itk_component(thermal) $itk_component(mode) \
-         $itk_component(setpoint) $itk_component(wind) -pady 4
+   $itk_component(mode) insert end Passive Active Shutdown
+   pack $itk_component(thermal) $itk_component(mode) -pady 4
    eval itk_initialize $args
 }
 

@@ -243,18 +243,8 @@ itcl::body TcsControl::constructor args {
       iwidgets::optionmenu $w.mode \
             -labeltext [lindex [cs encThermal info mode] 2] \
    }
-   $itk_component(mode) insert end Passive Active
-   itk_component add setpoint {
-      iwidgets::entryfield $w.setpoint \
-            -labeltext [lindex [cs encThermal info setpoint] 2] -width 8
-   }
-   itk_component add wind {
-      iwidgets::entryfield $w.wind \
-            -labeltext [lindex [cs encThermal info wind] 2] -width 8
-   }
-   pack $itk_component(thermal) $itk_component(mode) \
-         $itk_component(setpoint) $itk_component(wind) \
-         -pady 4
+   $itk_component(mode) insert end Passive Active Shutdown
+   pack $itk_component(thermal) $itk_component(mode) -pady 4
 
 # Create weather command sender here because we can't use an apply button
 # because the weather data CAD must not be marked if the data source is
@@ -343,7 +333,7 @@ itcl::body TcsControl::weather {} {
      set s 0
    }
    cs weather set source $s
-   if { $source == "local" } {
+   if { [string compare $source local] == 0 } {
       cs weather set temp [$itk_component(temp) get]
       cs weather set press [$itk_component(press) get]
       cs weather set humid [$itk_component(humid) get]
@@ -368,7 +358,7 @@ itcl::body TcsControl::shStep sign {
 }
 
 itcl::body TcsControl::shutterMode {} {
-   if { [$itk_component(shuttermode) get] == "Tracking" } {
+   if { [string compare [$itk_component(shuttermode) get] Tracking] == 0 } {
       $itk_component(slit) configure -state normal
    } else {
       $itk_component(slit) configure -state disabled
