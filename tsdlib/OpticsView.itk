@@ -45,7 +45,7 @@
 #                             according to the state of the configuration
 #                             options.
 #
-#  D Terrett  7 November 2000
+#  D Terrett  5 February 2001
 #
 #  Copyright CCLRC
 #-
@@ -68,6 +68,13 @@ itcl::class OpticsView {
    itk_option define -port3label port3Label Label "" "relabel 3"
    itk_option define -port4label port4Label Label "" "relabel 4"
    itk_option define -port5label port5Label Label "" "relabel 5"
+   itk_option define -scfoldpos0 scfoldPos0 ScfoldPos ""
+   itk_option define -scfoldpos1 scfoldPos1 ScfoldPos ""
+   itk_option define -scfoldpos2 scfoldPos2 ScfoldPos ""
+   itk_option define -scfoldpos4 scfoldPos4 ScfoldPos ""
+   itk_option define -scfoldpos5 scfoldPos5 ScfoldPos ""
+   itk_option define -scfoldpos9 scfoldPos9 ScfoldPos ""
+   itk_option define -scfoldpos11 scfoldPos11 ScfoldPos ""
    public {
       method update {}
    }
@@ -82,7 +89,8 @@ itk::usual OpticsView {
       -hrwfs -insertbackground -insertborderwidth -insertwidth \
       -insertontime -insertofftime -m1cover -m2sstate -port1label -port2label \
       -port3label -port4label -port5label -scfold -selectbackground \
-      -selectborderwidth -selectforeground
+      -selectborderwidth -selectforeground -scfoldpos0 -scfoldpos1 \
+      -scfoldpos2 -scfoldpos4 -scfoldpos5 -scfoldpos9 -scfoldpos11
 }
 
 itcl::body OpticsView::constructor args {
@@ -513,37 +521,14 @@ itcl::configbody OpticsView::port2label {
 }
 
 itcl::configbody OpticsView::scfold {
-   switch $itk_option(-scfold) {
-      cfwfs {
-         set itk_option(-scfold) U2
-      }
-      2 -
-      CurvWFS {
-         set itk_option(-scfold) U5
-      }
-      4 -
-      "A&Gcabinet" {
-         set itk_option(-scfold) U4
-      }
-      0 -
-      QUIRK -
-      Hokupaa {
-         set itk_option(-scfold) U3
-      }
-      9 {
-         set itk_option(-scfold) 54
-      }
-      5 {
-         set itk_option(-scfold) 34
-      }
-      11 {
-         set itk_option(-scfold) 41
-      }
-      INVALID {
-         set itk_option(-scfold) UNKNOWN
-      }
-      default {
-         set itk_option(-scfold) PARK
-      }
-   }
+   switch $itk_option(-scfold) \
+         0 - $itk_option(-scfoldpos0) {set itk_option(-scfold) U3} \
+         1 - $itk_option(-scfoldpos1) {set itk_option(-scfold) U2} \
+         2 - $itk_option(-scfoldpos2) {set itk_option(-scfold) U5} \
+         4 - $itk_option(-scfoldpos4) {set itk_option(-scfold) U4} \
+         5 - $itk_option(-scfoldpos5) {set itk_option(-scfold) 34} \
+         9 - $itk_option(-scfoldpos9) {set itk_option(-scfold) 54} \
+         11 - $itk_option(-scfoldpos11) {set itk_option(-scfold) 41} \
+         PARK {set itk_option(-scfold) PARK} \
+         default {set itk_option(-scfold) UNKNOWN}
 }
