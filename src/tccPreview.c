@@ -7,7 +7,7 @@ static char rcsid[]="$Id:";
 *   FUNCTION NAME(S)
 *   tccPreviewCmd - Implements the tccPreview tcl command.
 *
-*   D L Terrett 31 January 2001
+*   D L Terrett 22 February 2001
 *
 *   Copyright CCLRC
 */
@@ -971,13 +971,13 @@ int limitTimes( double ra, double dec)
 {
     double tlat, clat, slat;
     double ha, az[2], rma[2], cdec, sdec, cha, sha;
-    double azha1, azha2, azt1[2], azt2[2];
-    double rotha1, rotha2, rott1[2], rott2[2];
+    double azhalo[2], azhahi[2], azttl[2];
+    double rothalo[2], rothahi[2], rotttl[2];
     double x, y, a, r;
     double sqsz, cqsz;
-    int i, j;
-    int azlovalid[2], azhivalid[2], azhidone[2], azlodone[2];
-    int rotlovalid[2], rothivalid[2], rothidone[2], rotlodone[2];
+    int wrap, i, j;
+    int azlocount, azhicount, azhidone[2][2], azlodone[2][2], azvalid[2];
+    int rotlocount, rothicount, rothidone[2][2], rotlodone[2][2], rotvalid[2];
 
 /* Latitude and ST from apparent to observed array. */
     tlat = Aoprms[0];
@@ -1000,23 +1000,29 @@ int limitTimes( double ra, double dec)
 /* Azimuth and rotator wrap limits. */
 
 /* Hour angles at which azimuth limits are reached. */
-    azlovalid[0] = azlovalid[1] = (tccLimAz( cdec, sdec, Azlolim, clat,
-		slat, &azha1) == 0);
-    azhivalid[0] = azhivalid[1] = (tccLimAz( cdec, sdec, Azhilim, clat,
-		slat, &azha2) == 0);
+    azlocount = tccLimAz( cdec, sdec, Azlolim, clat, slat, azhalo);
+    azhicount = tccLimAz( cdec, sdec, Azhilim, clat, slat, azhahi);
 
 /* Hour angles at which rotator limits (adjusted for the desired
     rotator angle) are reached. */
-    rotlovalid[0] = rotlovalid[1] = (tccLimPa( cdec, sdec,
-        - PI - Rotlolim + Ipa - Iaa, clat, slat, &rotha1) == 0);
-    rothivalid[0] = rothivalid[1] = (tccLimPa( cdec, sdec,
-        - PI - Rothilim + Ipa - Iaa, clat, slat, &rotha2) == 0);
+    rotlocount = tccLimPa( cdec, sdec, PI - Rotlolim + Ipa - Iaa,
+        clat, slat, rothalo);
+    rothicount = tccLimPa( cdec, sdec, PI - Rothilim + Ipa - Iaa, 
+        clat, slat, rothahi);
 
 /* Adjust limit hour angles to be greater than current. */
-    if ( azha1 < HA ) azha1 += PI2;
-    if ( azha2 < HA ) azha2 += PI2;
-    if ( rotha1 < HA ) rotha1 += PI2;
-    if ( rotha2 < HA ) rotha2 += PI2;
+    for ( i = 0; i < azlocount; i++ ) {
+        if ( azhalo[i] < HA ) azhalo[i] += PI2;
+    }
+    for ( i = 0; i < azhicount; i++ ) {
+        if ( azhahi[i] < HA ) azhahi[i] += PI2;
+    }
+    for ( i = 0; i < rotlocount; i++ ) {
+        if ( rothalo[i] < HA ) rothalo[i] += PI2;
+    }
+    for ( i = 0; i < rothicount; i++ ) {
+        if ( rothahi[i] < HA ) rothahi[i] += PI2;
+    }
 
 /* Step the azimuth forward in 6 hour increments up to the hour
    angle of the limit. */
@@ -1027,11 +1033,15 @@ int limitTimes( double ra, double dec)
     a = slaDrange( Az1 );
     r = slaDrange( Rma1 );
     ha = floor(HA/D90) * D90;
-    for ( i = 0; i < 2; i++ ) {
-        azlodone[i] = azhidone[i] = 0;
-        rotlodone[i] = rothidone[i] = 0;
+    for ( wrap = 0; wrap < 2; wrap++ ) {
+        for ( i = 0; i < 2; i++ ) {
+            azlodone[wrap][i] = azhidone[wrap][i] = 0;
+            rotlodone[wrap][i] = rothidone[wrap][i] = 0;
+        }
     }
-    for ( j = 0; j < 6; j++)  {
+    azvalid[0] = azvalid[1] = 0;
+    rotvalid[0] = rotvalid[1] = 0;
+    for ( i = 0; i < 6; i++)  {
         ha += D90;
  
     /* Azimuth at this hour angle. */
@@ -1040,23 +1050,37 @@ int limitTimes( double ra, double dec)
         x = - cha * cdec * slat + sdec * clat;
         y = - sha * cdec;
         a = ( x == 0.0 && y == 0.0) ? a : atan2( y, x);
-        for ( i = 0; i < 2; i++ ) {
-            az[i] += slaDrange( a - az[i]);
+        for ( wrap = 0; wrap < 2; wrap++ ) {
+            az[wrap] += slaDrange( a - az[wrap]);
 
         /* Is the hour angle greater than any of the limits? */
-            if ( azlovalid[i] && !azlodone[i] && azha1 < ha ) {
-                azlodone[i] = 1;
+            for ( j = 0; j < azlocount; j++ ) {
+                if ( !azlodone[wrap][j] && azhalo[j] <= ha ) {
+                    azlodone[wrap][j] = 1;
 
             /* Is the azimuth close to the limit? */
-                if ( fabs( az[i] - Azlolim ) > PI ) azlovalid[i] = 0;
-                else azt1[i] = azha1 - HA;
+                    if ( fabs( az[wrap] - Azlolim ) <= PI ) {
+                       if ( !azvalid[wrap] || (azhalo[j] - HA) < azttl[wrap] ) {
+                           azttl[wrap] = azhalo[j] - HA;
+                           azvalid[wrap] = 1;
+                       }
+                    }
+                }
             }
 
         /* Repeat for the high limit. */
-            if ( azhivalid[i] && !azhidone[i] && azha2 < ha ) {
-                azhidone[i] = 1;
-                if ( fabs( az[i] - Azhilim ) > PI ) azhivalid[i] = 0;
-                else azt2[i] = azha2 - HA;
+            for ( j = 0; j < azhicount; j++ ) {
+                if ( !azhidone[wrap][j] && azhahi[j] <= ha ) {
+                    azhidone[wrap][j] = 1;
+
+            /* Is the azimuth close to the limit? */
+                    if ( fabs( az[wrap] - Azhilim ) <= PI ) {
+                       if ( !azvalid[wrap] || (azhahi[j] - HA) < azttl[wrap] ) {
+                           azttl[wrap] = azhahi[j] - HA;
+                           azvalid[wrap] = 1;
+                       }
+                    }
+                }
             }
         }
 
@@ -1065,77 +1089,66 @@ int limitTimes( double ra, double dec)
         cqsz = slat * cdec - clat * sdec * cha;
         r = ( sqsz != 0.0 || cqsz != 0.0 ) ? atan2 ( -sqsz, cqsz ) : r;
         r += PI + (Ipa - Iaa);
-        for ( i = 0; i < 2; i++ ) {
-            rma[i] += slaDrange( r - rma[i]);
+        for ( wrap = 0; wrap < 2; wrap++ ) {
+            rma[wrap] += slaDrange( r - rma[wrap]);
 
-        /* Is the hour angle greater than any of the limits? */
-            if ( rotlovalid[i] && !rotlodone[i] && rotha1 < ha ) {
-                rotlodone[i] = 1;
-    
-            /* Is the rotator angle close to the limit? */
-                if ( fabs( rma[i] - Rotlolim ) > PI ) rotlovalid[i] = 0;
-                else rott1[i] = rotha1 - HA;
+            for ( j = 0; j < rotlocount; j++ ) {
+                if ( !rotlodone[wrap][j] && rothalo[j] <= ha ) {
+                    rotlodone[wrap][j] = 1;
+
+            /* Is the rma close to the limit? */
+                    if ( fabs( rma[wrap] - Rotlolim ) <= PI ) {
+                       if ( !rotvalid[wrap] || (rothalo[j] - HA) < 
+                               rotttl[wrap] ) {
+                           rotttl[wrap] = rothalo[j] - HA;
+                           rotvalid[wrap] = 1;
+                       }
+                    }
+                }
             }
 
         /* Repeat for the high limit. */
-            if ( rothivalid[i] && !rothidone[i] && rotha2 < ha ) {
-                rothidone[i] = 1;
-                if ( fabs( rma[i] - Rothilim ) > PI ) rothivalid[i] = 0;
-                else rott2[i] = rotha2 - HA;
+            for ( j = 0; j < rothicount; j++ ) {
+                if ( !rothidone[wrap][j] && rothahi[j] <= ha ) {
+                    rothidone[wrap][j] = 1;
+
+            /* Is the azimuth close to the limit? */
+                    if ( fabs( rma[wrap] - Rothilim ) <= PI ) {
+                       if ( !rotvalid[wrap] || (rothahi[j] - HA) < 
+                               rotttl[wrap] ) {
+                           rotttl[wrap] = rothahi[j] - HA;
+                           rotvalid[wrap] = 1;
+                       }
+                    }
+                }
             }
         }
     }
-    for ( i = 0; i < 2; i++ ) {
-        if (!azlodone[i]) azlovalid[i] = 0;
-        if (!azhidone[i]) azhivalid[i] = 0;
-        if (!rotlodone[i]) rotlovalid[i] = 0;
-        if (!rothidone[i]) rothivalid[i] = 0;
-    }
 
-/* Copy nearest azimuth limit to outputs. */
-    if (azlovalid[0] && azhivalid[0]) {
-        Azttl1 = (azt1[0] < azt2[0] ? azt1[0] : azt2[0]) * ST2MIN;
-    } else if (azlovalid[0]) {
-        Azttl1 = azt1[0] * ST2MIN;
-    } else if (azhivalid[0]) {
-        Azttl1 = azt2[0] * ST2MIN;
+/* Copy azimuth limit to outputs. */
+    if (azvalid[0]) {
+        Azttl1 = azttl[0] * ST2MIN;
     } else {
         Azttl1 = -1.0;
     }
-    if (azlovalid[1] && azhivalid[1]) {
-        Azttl2 = (azt1[1] < azt2[1] ? azt1[1] : azt2[1]) * ST2MIN;
-    } else if (azlovalid[1]) {
-        Azttl2 = azt1[1] * ST2MIN;
-    } else if (azhivalid[1]) {
-        Azttl2 = azt2[1] * ST2MIN;
+    if (azvalid[1]) {
+        Azttl2 = azttl[1] * ST2MIN;
     } else {
         Azttl2 = -1.0;
     }
 
-
-/* Copy nearest rotator limit to outputs. */
+/* Copy rotator limit to outputs. */
     if (Rotsys != AZEL_MNT) {
-        if (rotlovalid[0] && rothivalid[0]) {
-            Rotttl1 = (rott1[0] < rott2[0] ? rott1[0] : rott2[0]) * ST2MIN;
-        } else if (rotlovalid[0]) {
-            Rotttl1 = rott1[0] * ST2MIN;
-        } else if (rothivalid[0]) {
-            Rotttl1 = rott2[0] * ST2MIN;
+        if (rotvalid[0]) {
+            Rotttl1 = rotttl[0] * ST2MIN;
         } else {
             Rotttl1 = -1.0;
         }
-        if (rotlovalid[1] && rothivalid[1]) {
-            Rotttl2 = (rott1[1] < rott2[1] ? rott1[1] : rott2[1]) * ST2MIN;
-        } else if (rotlovalid[1]) {
-            Rotttl2 = rott1[1] * ST2MIN;
-        } else if (rothivalid[1]) {
-            Rotttl2 = rott2[1] * ST2MIN;
+        if (rotvalid[1]) {
+            Rotttl2 = rotttl[1] * ST2MIN;
         } else {
             Rotttl2 = -1.0;
         }
-    } else {
-        Rotttl1 = -1.0;
-        Rotttl2 = -1.0;
     }
 
 /* Zenith at risk area limit */

@@ -22,9 +22,9 @@ void tccLimAzel2Hadec( double x, double y, double z, double clat, double slat,
 int tccLimEl( double cdec, double sdec, double el, double clat, double slat, 
    double *ha);
 int tccLimAz( double cdec, double sdec, double al, double clat, double slat,
-   double *ha);
+   double ha[2]);
 int tccLimPa( double cdec, double sdec, double pl, double clat, double slat,
-   double *ha);
+   double ha[2]);
 void tccDh2e ( double az, double el, double sp, double cp,
    double *ha, double *dec );
 void tccDe2h ( double ha, double sd, double cd, double sp, double cp,

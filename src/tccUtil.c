@@ -1,4 +1,4 @@
-static char rcsid[] = "$Id: tccUtil.c,v 1.1.1.1 1999-05-27 04:53:39 dlt Exp $";
+static char rcsid[] = "$Id: tccUtil.c,v 1.2 2001-02-22 16:26:37 dlt Exp $";
 /* *INDENT-OFF* */
 /*
 *   FILENAME
@@ -155,15 +155,15 @@ int tccLimEl( double cdec, double sdec, double el, double clat, double slat,
  *   tccLimAz
  *
  *   Purpose:
- *   Returns the hour angle at which a star at a given declination reaches
+ *   Returns the hour angles at which a star at a given declination reaches
  *   a given azimuth.
  *
  *   Description:
  *   Determines whether a star reaches a given azimuth, and if it does
- *   returns the hour angle at which it reaches it.
+ *   returns the hour angles at which it reaches it.
  *
  *   Invocation:
- *   istat = tccLimAz( cdec, sdec, al, clat, slat, &ha);
+ *   istat = tccLimAz( cdec, sdec, al, clat, slat, ha);
  *
  *   Parameters: (">" input, "!" modified, "<" output)  
  *      (>)    cdec     (double)   cosine declination of object
@@ -171,11 +171,11 @@ int tccLimEl( double cdec, double sdec, double el, double clat, double slat,
  *      (>)    al       (double)   azimuth limit
  *      (>)    clat     (double)   cosine of latitude
  *      (>)    slat     (double)   sine of latitude
- *      (<)    ha       (double*)  hour angle of setting
+ *      (<)    ha[2]    (double)   hour angles of setting
  *
  *   Function value:
  *   Return value from function e.g.
- *   (<)  status  (int)  Return status, 0 = OK, +1 = never sets
+ *   (<)  status  (int)  Number of hour angles.
  * 
  *   External functions:
  *   none
@@ -194,17 +194,18 @@ int tccLimEl( double cdec, double sdec, double el, double clat, double slat,
 /* *INDENT-ON* */
 
 int tccLimAz( double cdec, double sdec, double al, double clat, double slat, 
-   double *ha)
+   double ha[2])
 {
    double a, b, t, h1, h2;
    double sal, cal, asinab;
+   int i;
 
    sal = sin( al );
    cal = cos( al );
    a = sdec * sal * clat;
    b = cdec * sqrt( cal * cal + sal * sal * slat *slat );
 
-   if ( fabs(a) > fabs(b) || b == 0 ) return 1;
+   if ( fabs(a) > fabs(b) || b == 0 ) return 0;
 
    t = atan2( sal * slat, - cal);
 
@@ -212,14 +213,11 @@ int tccLimAz( double cdec, double sdec, double al, double clat, double slat,
    h1 = slaDrange( asinab - t );
    h2 = slaDrange( PI - ( asinab + t ) );
 
-   if ( ( sal > 0.0 && h1 < 0.0 ) || ( sal < 0.0 && h1 > 0.0 ) )
-      *ha = h1;
-   else if ( ( sal > 0.0 && h2 < 0.0 ) || ( sal < 0.0 && h2 > 0.0 ) )
-      *ha = h2;
-   else
-      return 1;
+   i = 0;
+   if ( ( sal > 0.0 && h1 < 0.0 ) || ( sal < 0.0 && h1 > 0.0 ) ) ha[i++] = h1;
+   if ( ( sal > 0.0 && h2 < 0.0 ) || ( sal < 0.0 && h2 > 0.0 ) ) ha[i++] = h2;
 
-   return 0;
+   return i;
 }
 
 /* *INDENT-OFF* */
@@ -228,7 +226,7 @@ int tccLimAz( double cdec, double sdec, double al, double clat, double slat,
  *   tccLimPa
  *
  *   Purpose:
- *   Returns the hour angle at which a star at a given declination reaches
+ *   Returns the hour angles at which a star at a given declination reaches
  *   a given parallactic angle.
  *
  *   Description:
@@ -236,7 +234,7 @@ int tccLimAz( double cdec, double sdec, double al, double clat, double slat,
  *   it does returns the hour angle at which it reaches it.
  *
  *   Invocation:
- *   istat = tccLimPa( cdec, sdec, ap, clat, slat, &ha);
+ *   istat = tccLimPa( cdec, sdec, ap, clat, slat, ha);
  *
  *   Parameters: (">" input, "!" modified, "<" output)  
  *      (>)    cdec     (double)   cosine declination of object
@@ -244,11 +242,11 @@ int tccLimAz( double cdec, double sdec, double al, double clat, double slat,
  *      (>)    pl       (double)   parallactic angle limit
  *      (>)    clat     (double)   cosine of latitude
  *      (>)    slat     (double)   sine of latitude
- *      (<)    ha       (double*)  hour angle of setting
+ *      (<)    ha[2]    (double)   hour angles of setting
  *
  *   Function value:
  *   Return value from function e.g.
- *   (<)  status  (int)  Return status, 0 = OK, +1 = never sets
+ *   (<)  status  (int)  Number of hour angles.
  * 
  *   External functions:
  *   none
@@ -266,17 +264,18 @@ int tccLimAz( double cdec, double sdec, double al, double clat, double slat,
 /* *INDENT-ON* */
 
 int tccLimPa( double cdec, double sdec, double pl, double clat, double slat, 
-   double *ha)
+   double ha[2])
 {
    double a, b, t, h1, h2;
    double spl, cpl, asinab;
+   int i;
 
    spl = sin( pl );
    cpl = cos( pl );
    a = slat * spl * cdec;
    b = clat * sqrt( cpl * cpl + spl * spl * sdec *sdec );
 
-   if ( fabs(a) > fabs(b) || b == 0.0 ) return 1;
+   if ( fabs(a) > fabs(b) || b == 0.0 ) return 0;
 
    t = atan2( spl * sdec, cpl);
 
@@ -284,14 +283,11 @@ int tccLimPa( double cdec, double sdec, double pl, double clat, double slat,
    h1 = slaDrange( asinab - t );
    h2 = slaDrange( PI - ( asinab + t ) );
 
-   if ( ( spl > 0.0 && h1 > 0.0 ) || ( spl < 0.0 && h1 < 0.0 ) )
-      *ha = h1;
-   else if ( ( spl > 0.0 && h2 > 0.0 ) || ( spl < 0.0 && h2 < 0.0 ) )
-      *ha = h2;
-   else
-      return 1;
+   i = 0;
+   if ( ( spl > 0.0 && h1 > 0.0 ) || ( spl < 0.0 && h1 < 0.0 ) ) ha[i++] = h1;
+   if ( ( spl > 0.0 && h2 > 0.0 ) || ( spl < 0.0 && h2 < 0.0 ) ) ha[i++] = h2;
 
-   return 0;
+   return i;
 }
 
 void tccDe2h ( double ha, double sd, double cd, double sp, double cp,
