@@ -4,7 +4,7 @@
 # An ActiveOptics object controls the state of the active optics (M2 tip/tilt,
 # coma correction, M1 figure). 
 #
-# D Terrett  16 October 2003
+# D Terrett  17 October 2003
 #
 # Copyright CLRC
 #+
@@ -256,17 +256,28 @@ itcl::body ActiveOptics::enable {} {
       logger command wfsGuideMode
    }
 
-   foreach wfs {pwfs1 pwfs2 oiwfs} wfsobj {Pwfs1 Pwfs2 Oiwfs} {
+   foreach wfs "pwfs1 pwfs2 oiwfs" \
+         active "$pwfs1Active $pwfs2Active $oiwfsActive" \
+         wfsobj "Pwfs1 Pwfs2 Oiwfs" \
+         guide "$p1guide $p2guide $oiguide" {
 
 # Stop the WFS we don't want.
-      if { [state $wfs] && ! [set ${wfs}Active] } {
+      if { [state $wfs] && ! $active } {
          $wfsobj stop
       }
 
 # Start all the active ones.
-      if { [set ${wfs}Active] } {
+      if { $active } {
+
+# Determine which processing mode to set the WFS to depending on whether
+# or not it is being used for M2 tip/tilt & focus.
+         if { $guide eq "" } {
+            set mode seqnz
+         } else {
+            set mode seq
+         }
          $wfsobj configure -exposetime [set ${wfs}Expose] \
-               -mode seq -quicklook 0
+               -mode $mode -quicklook 0
          $wfsobj start -1
       }
    }
