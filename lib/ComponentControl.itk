@@ -30,7 +30,7 @@
 #  Notes:
 #        o <useful stuff>
 #
-#  D Terrett  25 September 2000
+#  D Terrett  14 March 2001
 #
 #  Copyright CCLRC
 #+
@@ -58,6 +58,8 @@ itcl::class ComponentControl {
    }
    private {
       method selectioncommand {}
+      method returncom {}
+      variable cursel {}
    }
 }
 
@@ -91,7 +93,7 @@ itcl::body ComponentControl::constructor args {
       button $w.delete -bitmap delete
    }
    itk_component add selector {
-      ListManager $w.selector
+      ListManager $w.selector -returncommand [itcl::code $this returncom]
    } {
       usual
       keep -componentlist
@@ -117,11 +119,6 @@ itcl::body ComponentControl::constructor args {
    $itk_component(selector) configure \
          -selectioncommand [code $this selectioncommand]
    $itk_component(delete) configure -command [code $this delselected]
-
-# Bind the store button action to the return key in the component selector
-# combo box.
-   $itk_component(selector) configure -returncommand \
-         "[$itk_component(storeapply) component store] invoke"
 
    set itk_interior $itk_component(interior)
 
@@ -237,4 +234,18 @@ itcl::body ComponentControl::selectioncommand {} {
 #-
    set name [$itk_component(selector) get]
    $itk_option(-shadow) select $name
+   set cursel $name
+}
+
+itcl::body ComponentControl::returncom {} {
+
+# If the contents of the ListManager matches the current selection or doesn't
+# exist then store it otherwise select it.
+   set name [$itk_component(selector) get]
+   if { [string equal $cursel $name] || [string equal \
+         [info commands ::$itk_option(-namespace)::${name}] ""] } {
+      store $name
+  } else {
+      selectioncommand
+  }
 }
