@@ -7,7 +7,7 @@ static char rcsid[]="$Id:";
 *   FUNCTION NAME(S)
 *   astCmd - Implements the ast tcl command.
 *
-*   D L Terrett 7 December 2000
+*   D L Terrett 21 December 2000
 *
 *   Copyright CCLRC
 */
@@ -214,9 +214,10 @@ static int target( Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[] )
             if ( hmsf[0] == 24 ) hmsf[0] = 0;
             slaDr2af( 2, b, &sign, dmsf );
             sprintf( result, 
-  "%2.2d:%2.2d:%2.2d.%.3d %c%2.2d:%2.2d:%2.2d.%2.2d %c%2.2d:%2.2d %4.1f %4.2f",
+  "%2.2d:%2.2d:%2.2d.%.3d %c%2.2d:%2.2d:%2.2d.%2.2d %c%2.2d:%2.2d:%2.2d %4.1f %4.2f",
                 hmsf[0], hmsf[1], hmsf[2], hmsf[3], sign, dmsf[0], dmsf[1],
-                dmsf[2], dmsf[3], hasign, hahmsf[0], hahmsf[1], zd / D2R, am);
+                dmsf[2], dmsf[3], hasign, hahmsf[0], hahmsf[1], hahmsf[2], 
+                zd / D2R, am);
         }
         Tcl_SetResult( interp, result, TCL_VOLATILE);
     }
