@@ -6,7 +6,7 @@
 #  Arguments:
 #             none
 #
-#  D Terrett 16 January 2004
+#  D Terrett 17 January 2004
 #
 #  Copyright CCLRC
 #-
@@ -44,8 +44,8 @@ proc createPanels {} {
          -class HandsetPanel -title "Handsets"
    PanelMgr pointUpdatePanel -name .pointUpdatePanel \
          -class PointUpdatePanel -title "Pointing model update"
-   PanelMgr starSelectPanel -name .starSelectPanel \
-         -class StarSelectPanel -title "Star Selector"
+   PanelMgr skyPanel -name .skyPanel \
+         -class SkyPanel -title Catalogues
 
 # Create all the edit panel managers.
    EditPanelMgr tcsConfigPanel -name .tcsConfigPanel \

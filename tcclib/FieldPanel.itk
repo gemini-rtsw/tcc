@@ -2,7 +2,7 @@
 #  FieldPanel <- Panel
 #
 #  Implements the FieldPanel widget. A Panel widget with a 
-#  SciTargetControl widget and a StarSelector widget packed into its interior.
+#  FieldControl widget packed into its interior.
 #
 #  Options:
 #           -components -    The -component options of the controls
@@ -10,7 +10,7 @@
 #  Methods:
 #           none
 #
-#  D Terrett 28 November 2002
+#  D Terrett 16 January 2004
 #
 #  Copyright CCLRC
 #+
@@ -40,24 +40,12 @@ itcl::body FieldPanel::constructor args {
 
 # Field control.
    itk_component add control {
-      FieldControl $itk_interior.field -menubar $itk_component(menubar)
+      FieldControl $itk_interior.field
    } {
       usual
       rename -component -components components Components
    }
    pack $itk_component(control) -side left
-
-# Add the StarSelectControl load and command to the File menu.
-   $itk_component(menubar) insert .file.move command load \
-         -command "[$itk_component(control) component starselect] load" \
-         -label "Load catalog"
-
-# Add the view and unload menus
-   $itk_component(menubar) insert .file.move cascade view \
-         -label "View catalog"
-   $itk_component(menubar) insert .file.move cascade unload \
-         -label "Unload catalog"
-   $itk_component(menubar) insert .file.move separator separator
 
    eval itk_initialize $args
 }

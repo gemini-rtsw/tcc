@@ -1,0 +1,49 @@
+#+
+#  SkyControl <- ComponentControl
+#
+#  A SkyControl widget contains a tabbed notebook with a StarSelect widget
+#  on one page and a FieldPlot on the other.
+#
+#  D Terrett 16 January 2004
+#
+#  Copyright CCLRC
+#+
+
+itcl::class SkyControl {
+   inherit itk::Widget
+   constructor args {}
+   destructor {}
+   itk_option define -component component Component {}
+}
+
+itk::usual SkyControl {
+   keep -borderwidth -cursor -font
+}
+
+itcl::body SkyControl::constructor args {
+
+   itk_component add plots {
+      iwidgets::tabnotebook $itk_interior.plots -height 530 -width 450 \
+            -tabpos n
+   }
+   set w [$itk_component(plots) add -label "All Sky"]
+   itk_component add starselect {
+      StarSelectControl $w.starselect
+   }
+   pack $itk_component(starselect)
+   set w [$itk_component(plots) add -label Field]
+   itk_component add fieldplot {
+      FieldPlot $w.fieldplot
+   }
+   pack $itk_component(fieldplot)
+
+   $itk_component(plots) select "All Sky"
+   pack $itk_component(plots) -side left
+
+# Turn off geometry propogation once the widget is constructed so that
+# re-configuring the notebook widgets doesn't cause the top level window
+# to be re-sized.
+   #after idle pack propagate $itk_component(tarframe) 0
+
+   eval itk_initialize $args
+}
