@@ -3,7 +3,7 @@
 #
 # The interface of the probe calibration procedure.
 #
-# D Terrett 23 June 2001
+# D Terrett 25 June 2001
 #
 # Copyright CCLRC
 #+
@@ -225,7 +225,10 @@ itcl::body ProbeCal::start {} {
       puts $logfd "#  Rotary table offset: [sa agssad get p${probe}TableOffset]"
       puts $logfd "#  Probe arm offset:    [sa agssad get p${probe}ArmOffset]"
       puts $logfd "#"
-      puts $logfd "#      X          Y         RT        PA"
+      puts $logfd "#  CA & CE are the net guiding corrections resulting from"
+      puts $logfd "#  guiding the telescope prior to the calibration observation"
+      puts $logfd "#"
+      puts $logfd "#      X          Y         RT        PA         CA        CE"
       flush $logfd
 
 # Start at the begining of the pointing origin list.
@@ -325,8 +328,10 @@ itcl::body ProbeCal::log {p} {
    set po [lindex $polist $poindex]
    set table [sa agssad get p${p}TableAngle]
    set arm [sa agssad get p${p}ArmAngle]
-   puts $logfd [format "%10.2f %10.2f %10.2f %10.2f" \
-         [lindex $po 0] [lindex $po 1] $table $arm]
+   set caguide [sa tcssad get caguide]
+   set ceguide [sa tcssad get ceguide]
+   puts $logfd [format "%10.2f %10.2f %10.2f %10.2f # %8.2f %8.2f" \
+         [lindex $po 0] [lindex $po 1] $table $arm $caguide $ceguide] 
    flush $logfd
 
 # Start the next step.
