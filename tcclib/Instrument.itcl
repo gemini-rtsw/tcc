@@ -5,12 +5,6 @@
 #  instrument alignment angle.
 #
 #  Options:
-#          -centralBaffle     The position of the M2 central baffle ("open"
-#                             "closed" or "").
-#
-#          -deployableBaffle  The position of the M2 deployable baffle
-#                             ("thermal IR", "near IR", "visible",
-#                             "extended" or "").
 #
 #          -focusOffset       The focus offset to apply.
 #
@@ -45,8 +39,6 @@ itcl::class Instrument {
       method save {node}
       variable iaa ""
       variable issPort 1
-      variable centralBaffle open
-      variable deployableBaffle ""
       variable focusOffset ""
       variable name ""
    }
@@ -65,20 +57,6 @@ itcl::body Instrument::apply {comp} {
    }
 
 # Configure ISS object.
-   switch $centralBaffle {
-      closed {cs m2Baffle set centralBaffle Closed}
-      open {cs m2Baffle set centralBaffle Open}
-   }
-   switch $deployableBaffle {
-      "thermal IR" {cs m2Baffle set deployBaffle Retracted}
-      "near IR" {cs m2Baffle set deployBaffle [list "Near IR"]}
-      visible {cs m2Baffle set deployBaffle Visible}
-      extended {cs m2Baffle set deployBaffle Extended}
-   }
-   if { !( [string is space $centralBaffle] && \
-         [string is space $deployableBaffle] ) } {
-      logger command m2Baffle
-   }
    iss configure -port $issPort -instrument $name
 
 # Update ISS with new configuration.
@@ -88,8 +66,6 @@ itcl::body Instrument::apply {comp} {
 itcl::body Instrument::init {} {
    set iaa 0
    set issFace 1
-   set centralBaffle ""
-   set deployableBaffle ""
    set focusOffset 0
    set name ""
 }
@@ -106,8 +82,6 @@ itcl::body Instrument::save {node} {
    set node [paramset $node instrument]
    param $node iaa $iaa
    param $node issPort $issPort
-   param $node centralBaffle $centralBaffle
-   param $node deployableBaffle $deployableBaffle
    param $node focusOffset $focusOffset
    param $node name $name
 }

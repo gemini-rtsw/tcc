@@ -65,22 +65,6 @@ itcl::body InstrumentControl::constructor args {
    }
    pack $itk_component(focus) -anchor e -padx 3 -pady 3
 
-# Central baffle
-   itk_component add central {
-      iwidgets::optionmenu $w.central -labeltext "M2 Central hole cover"
-   }
-   $itk_component(central) insert end "" open closed
-   $itk_component(central) select open
-   pack $itk_component(central) -anchor e -padx 3 -pady 3
-
-# Deployable baffle
-   itk_component add deploy {
-      iwidgets::optionmenu $w.deploy -labeltext "M2 Deployable baffle"
-   }
-   $itk_component(deploy) insert end "" "thermal IR" "near IR" visible \
-      extended
-   pack $itk_component(deploy) -anchor e -padx 3 -pady 3
-
 # Set the object description.
    set description "Instrument configuration"
 
@@ -100,9 +84,7 @@ itcl::body InstrumentControl::save {name} {
    $name configure -issPort [$itk_component(port) get] \
          -name [$itk_component(name) get] \
          -iaa [$itk_component(iaa) get] \
-         -focusOffset [$itk_component(focus) get] \
-         -centralBaffle [$itk_component(central) get] \
-         -deployableBaffle [$itk_component(deploy) get]
+         -focusOffset [$itk_component(focus) get]
 }
 
 itcl::body InstrumentControl::reset {} {
@@ -120,6 +102,4 @@ itcl::body InstrumentControl::load {name} {
    $itk_component(name) insert end [$name cget -name]
    $itk_component(iaa) insert end [$name cget -iaa]
    $itk_component(focus) insert end [$name cget -focusOffset]
-   $itk_component(central) select [$name cget -centralBaffle]
-   $itk_component(deploy) select [$name cget -deployableBaffle]
 }
