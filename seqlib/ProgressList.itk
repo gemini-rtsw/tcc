@@ -1,0 +1,105 @@
+#+
+# ProgressList <- itk::Widget
+#
+# A ProgressList widget is a scrolledlistbox with one line of text highlighted
+# to show the progress of some task.
+#
+# Methods:
+#         delete index1 ?index2?  Removes a range of lines.
+#
+#         highlight ?index?       Highlights a line of text
+#
+#         insert index text       Inserts a line of text
+#
+#         size                    Returns the number of elements in the list
+#
+# Indexes are integers or the keyword end
+#
+# D Terrett 26 September 2000
+#
+# Copyright CCLRC
+#+
+
+itcl::class ProgressList {
+   inherit itk::Widget
+
+   constructor {args} {}
+   public method delete {index1 {index2 ""}}
+   public method highlight {{index ""}}
+   public method insert {index text}
+   public method size {}
+
+   private method linebegin {index}
+   private method lineend {index}
+}
+
+itk::usual ProgressList {
+    keep -activebackground -activerelief -background -borderwidth -cursor \
+          -elementborderwidth -foreground -highlightcolor -highlightthickness \
+          -insertbackground -insertborderwidth -insertofftime -insertontime \
+          -insertwidth -jump -labelfont -selectbackground -selectborderwidth \
+          -selectforeground -textbackground -textfont -troughcolor 
+}
+
+itcl::body ProgressList::constructor {args} {
+
+   itk_component add scrolledtext {
+      iwidgets::scrolledtext $itk_interior.scrolledtext -hscrollmode none \
+            -state disabled
+   } {
+      usual
+      keep -width -height
+   }
+   $itk_component(scrolledtext) tag configure current -background yellow
+   pack $itk_component(scrolledtext) -fill both -expand yes
+
+   eval itk_initialize $args
+}
+
+itcl::body ProgressList::delete {index1 {index2 ""}} {
+   if { [string is space $index2] } {
+      set index2 $index1
+   }
+   $itk_component(scrolledtext) configure -state normal
+   $itk_component(scrolledtext) delete [linebegin $index1] [lineend $index2]
+   $itk_component(scrolledtext) configure -state disabled
+}
+
+itcl::body ProgressList::insert {index text} {
+   $itk_component(scrolledtext) configure -state normal
+   $itk_component(scrolledtext) insert [linebegin $index] ${text}\n
+   $itk_component(scrolledtext) configure -state disabled
+}
+
+itcl::body ProgressList::highlight {{index ""}} {
+   set current [$itk_component(scrolledtext) tag ranges current]
+   if { ![string is space $current] } {
+      eval $itk_component(scrolledtext) tag remove current $current
+   }
+   if { ![string is space $index] } {
+      $itk_component(scrolledtext) tag add current [linebegin $index] \
+            [lineend $index]
+      $itk_component(scrolledtext) see [linebegin $index]
+   }
+}
+
+itcl::body ProgressList::size {} {
+   set end [$itk_component(scrolledtext) index end]
+   return [expr {[lindex [split $end .] 0] - 2}]
+}
+
+itcl::body ProgressList::linebegin {index} {
+   if { [string equal $index end] } {
+      return end
+   } else {
+      return [expr {$index + 1}].0
+   }
+}
+
+itcl::body ProgressList::lineend {index} {
+   if { [string equal $index end] } {
+      return end
+   } else {
+      return [expr {$index + 2}].0
+   }
+}

@@ -1,0 +1,135 @@
+#+
+#  SeqControl <- itk::Widget
+#
+#  Implements the sequence controller control panel widget.
+#
+#  D Terrett 4 October 2000
+#
+#  Copyright CCLRC
+#+
+
+itcl::class SeqControl {
+   inherit itk::Widget
+
+   constructor {args} {}
+}
+
+itk::usual SeqControl {
+   keep -activebackground -activeforeground -background -cursor \
+         -disabledforeground -font -foreground -highlightcolor \
+         -highlightthickness
+}
+
+itcl::body SeqControl::constructor {args} {
+
+# Menu bar and file menu.
+   itk_component add menus {
+      iwidgets::menubar $itk_interior.menus -menubuttons {
+         menubutton file -text File -menu {
+            options -tearoff false
+            command load -label "Load manual sequence..."
+            command load -label "Load QUIRC/Hokupaa sequence..."
+            command load -label "Load NIRI sequence..."
+            command exit -label Exit
+         }
+      }
+   }
+   pack $itk_component(menus) -fill x -expand yes
+
+# Label widgets to display the current offsets.
+   set w $itk_interior
+   itk_component add -private offsets {
+      frame $w.offsets
+   }
+   set w $itk_component(offsets)
+   itk_component add -private labelp {
+      label $w.labelp -text p:
+   }
+   itk_component add displayp {
+      label $w.displayp -width 8 -anchor e -relief sunken
+   }
+   itk_component add -private labelq {
+      label $w.labelq -text q:
+   }
+   itk_component add displayq {
+      label $w.displayq -width 8 -anchor e -relief sunken
+   }
+   pack $itk_component(labelp) $itk_component(displayp) $itk_component(labelq) \
+         $itk_component(displayq) -side left -padx 3 -pady 5
+
+# Current message.
+   set w $itk_interior
+   itk_component add message {
+      label $w.message -relief sunken
+   }
+
+# Canvas for displaying a map of the offsets.
+   itk_component add viewframe {
+      frame $w.viewframe
+   }
+   set w $itk_component(viewframe)
+   itk_component add canvas {
+      canvas $w.canvas -width 300 -height 300 -borderwidth 2 -relief sunken
+   }
+
+# Mark the center.
+   $itk_component(canvas) create line 130 150 170 150 -fill black
+   $itk_component(canvas) create line 150 130 150 170 -fill black
+
+# ProgressList for listing the sequence.
+   itk_component add list {
+      ProgressList $w.list -width 200
+   }
+   [[$itk_component(list) component scrolledtext] component text] configure \
+         -tabs {1c numeric 2c numeric}
+   pack $itk_component(canvas) -side left
+   pack $itk_component(list) -side left -expand yes -fill both
+   set w $itk_interior
+
+# The "GO TO" buttons
+   set w $itk_interior
+   itk_component add -private goto {
+      frame $w.goto
+   }
+   set w $itk_component(goto)
+   itk_component add -private gotolabel {
+      label $w.gotolabel -text "GO TO:"
+   }
+   itk_component add start {
+      button $w.start -text START -width 8
+   }
+   itk_component add base {
+      button $w.base -text BASE -width 8
+   }
+   pack $itk_component(gotolabel) $itk_component(start) $itk_component(base) \
+         -side left -padx 3 -pady 5
+
+# The sequence control buttons
+   set w $itk_interior
+   itk_component add -private sequence {
+      frame $w.sequence
+   }
+   set w $itk_component(sequence)
+   itk_component add run {
+      button $w.run -text RUN -width 6
+   }
+   itk_component add pause {
+      button $w.pause -text PAUSE -width 6
+   }
+   itk_component add step {
+      button $w.step -text STEP -width 6
+   }
+   itk_component add continue {
+      button $w.continue -text CONT -width 6
+   }
+   pack $itk_component(run) $itk_component(pause) $itk_component(step) \
+         $itk_component(continue) -side left -padx 3 -pady 5
+
+# Pack the frames etc.
+   pack $itk_component(offsets)
+   pack $itk_component(message) -fill x -expand yes
+   pack $itk_component(viewframe)
+   pack $itk_component(goto) $itk_component(sequence)
+
+   eval itk_initialize $args
+}

@@ -1,0 +1,146 @@
+#+
+#  PattGen <- itk::Widget
+#
+#  A widget for generating a rectagular pattern of offsets.
+#
+#  D Terrett 27 June 2000
+#
+#  Copyright CCLRC
+#+
+
+itcl::class PattGen {
+   inherit itk::Widget
+
+   constructor {args} {}
+
+   public method generate {}
+
+   private variable size small
+}
+
+itk::usual PattGen {
+    keep -background -cursor -foreground -font
+    keep -activebackground -activeforeground -disabledforeground
+    keep -highlightcolor -highlightthickness
+}
+
+itcl::body PattGen::constructor {args} {
+
+   itk_component add frame {
+      iwidgets::tabnotebook $itk_interior.frame -width 450 -height 180 \
+            -tabpos n
+   }
+
+# Custom pattern generator.
+   set w [$itk_component(frame) add -label custom]
+
+   itk_component add -private offl1 {
+      label $w.offl1 -text "Initial Offset"
+   }
+   itk_component add -private offl2 {
+      label $w.offl2 -text (arcsec)
+   }
+   itk_component add -private spacel1 {
+      label $w.spacel1 -text Spacing
+   }
+   itk_component add -private spacel2 {
+      label $w.spacel2 -text (arcsec)
+   }
+   itk_component add -private diml {
+      label $w.diml -text Dimensions
+   }
+   itk_component add -private p1 {
+      iwidgets::entryfield $w.p1 -labeltext p -width 8 -validate real
+   }
+   itk_component add -private p2 {
+      iwidgets::entryfield $w.p2 -labeltext p -width 8 -validate real
+   }
+   itk_component add -private row {
+      iwidgets::entryfield $w.row -labeltext Rows -width 8 -validate integer
+   }
+   itk_component add -private q1 {
+      iwidgets::entryfield $w.q1 -labeltext q -width 8 -validate real
+   }
+   itk_component add -private q2 {
+      iwidgets::entryfield $w.q2 -labeltext q -width 8 -validate real
+   }
+   itk_component add -private col {
+      iwidgets::entryfield $w.col -labeltext Cols -width 8 -validate integer
+   }
+   set w $itk_interior
+   itk_component add create {
+      button $w.create -text Create
+   }
+   grid $itk_component(offl1) $itk_component(spacel1) $itk_component(diml)
+   grid $itk_component(offl2) $itk_component(spacel2)
+   grid $itk_component(p1) $itk_component(p2) $itk_component(row) \
+         -pady 5 -sticky w -padx 5
+   grid $itk_component(q1) $itk_component(q2) $itk_component(col) \
+         -pady 10 -sticky w -padx 5
+
+# QUIRC pattern generator.
+   set w [$itk_component(frame) add -label QUIRC]
+   itk_component add -private small {
+      radiobutton $w.small -text "0.25 x 0.25" -variable [scope size] \
+            -value small
+   }
+   itk_component add -private medium {
+      radiobutton $w.medium -text "2 x 2" -variable [scope size] -value medium
+   }
+   itk_component add -private large {
+      radiobutton $w.large -text "25 x 25" -variable [scope size] -value large
+   }
+   pack $itk_component(small) $itk_component(medium) $itk_component(large) \
+      -side left -expand yes
+
+   pack $itk_component(frame)
+   pack $itk_component(create) -pady 5 -padx 20 -anchor w
+
+   $itk_component(frame) select custom
+
+   eval itk_initialize $args
+}
+
+itcl::body PattGen::generate {} {
+
+   switch [$itk_component(frame) view] {
+      0 {
+         set p0 [$itk_component(p1) get]
+         if { ![string length $p0] } {set p0 0.0}
+         set q0 [$itk_component(q1) get]
+         if { ![string length $q0] } {set q0 0.0}
+         set dp [$itk_component(p2) get]
+         if { ![string length $dp] } {set dp 0.0}
+         set dq [$itk_component(q2) get]
+         if { ![string length $dq] } {set dq 0.0}
+         set rows [$itk_component(row) get]
+         if { ![string length $rows] } {set rows 0.0}
+         set cols [$itk_component(col) get]
+         if { ![string length $cols] } {set cols 0.0}
+      
+         set pattern ""
+         for { set i 0 } { $i < $rows } { incr i } {
+            for { set j 0 } { $j < $cols } { incr j } {
+               lappend pattern [list [expr $p0 + $dp * $j] \
+                     [expr $q0 + $dq * $i]]
+            }
+         }
+      }
+      1 {
+         switch $size {
+            small {
+               set pattern [list {-0.125 0.125} {0.125 0.125} {0.125 -0.125} \
+                     {-0.125 -0.125}]
+            }
+            medium {
+               set pattern [list {-1.0 1.0} {1.0 1.0} {1.0 -1.0} {-1.0 -1.0}]
+            }
+            large {
+               set pattern [list {-12.5 12.5} {12.5 12.5} {12.5 -12.5} \
+                     {-12.5 -12.5}]
+            }
+         }
+      }
+   }
+   return $pattern
+}

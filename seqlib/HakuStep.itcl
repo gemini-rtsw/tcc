@@ -1,0 +1,89 @@
+#+
+#  HakuStep.itcl
+#
+#  Implements the HakuStep class. A HakuStep behaves in the same way as a
+#  Step object but also communicates with the QUIRC/Hopukaa server to
+#  coordinate its activity with the telescope offset.
+#
+#  D Terrett 13 September 2000
+#
+#  Copyright CCLRC
+#+
+
+itcl::class HakuStep {
+   inherit Step
+
+   constructor {args} {}
+   destructor {}
+
+   protected method nextaction {after}
+
+   private variable PrepareAction
+   private variable DitherAction
+   private variable DoneAction
+   private variable GoAction
+}
+
+itcl::body HakuStep::constructor {args} {
+
+# Create the actions for controlling Haku.
+   set PrepareAction [namespace current]::[HakuAction #auto haku]
+   $PrepareAction configure -command "hokupaa prepare_to_dither" \
+         -reply "hokupaa ready_to_dither" \
+         -onok [itcl::code $this nextaction haku_ready]
+
+   set DitherAction [namespace current]::[HakuAction #auto haku]
+   $DitherAction configure -command "hokupaa dither $X $Y" 
+
+   set DoneAction [namespace current]::[HakuAction #auto haku]
+   $DoneAction configure -command "telescope dither_done" \
+         -reply "hokupaa dither_done" \
+         -onok [itcl::code $this nextaction haku_dither_done]
+
+   set GoAction [namespace current]::[HakuAction #auto haku]
+   $GoAction configure -command "quirc go" -reply "quirc done" \
+         -onok [itcl::code $this nextaction expose]
+
+# Replace the onok option of the MoveOnAction and GuideOnAction to call this 
+# class's implementation of nextaction.
+   $MoveAction configure -onok [itcl::code $this nextaction move]
+   $GuideOnAction configure -onok [itcl::code $this nextaction offset]
+
+   eval configure $args
+}
+
+itcl::body HakuStep::destructor {} {
+   itcl::delete object $PrepareAction
+   itcl::delete object $DitherAction
+   itcl::delete object $DoneAction
+   itcl::delete object $GoAction
+}
+
+itcl::body HakuStep::nextaction {after} {
+
+   switch $after {
+      start {
+         set ProgressMessage "Preparing Hokuppa for move"
+         update
+         $PrepareAction start
+      }
+      haku_ready {
+         $DitherAction configure -command "hokupaa dither $X $Y" 
+         $DitherAction start
+         Step::nextaction start
+      }
+      offset {
+         set ProgressMessage "Waiting for Hokupaa dither to finish"
+         update
+         $DoneAction start
+      }
+      haku_dither_done {
+         set ProgressMessage "Starting QUIRC exposure"
+         update
+         $GoAction start
+      }
+      default {
+         Step::nextaction $after
+      }
+   }
+}

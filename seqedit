@@ -1,0 +1,93 @@
+#!/bin/sh
+# the next line restarts using ocswish \
+exec $HLPG_INSTALL_BASE/bin/solaris/ocswish "$0" "$@"
+
+# Define the root directory for locating libraries and applications.
+global ROOT
+set ROOT [file dirname [info script]]
+if { [string compare [file pathtype $ROOT] relative] == 0 } {
+   set ROOT [pwd]/$ROOT
+}
+
+lappend auto_path $ROOT/seqlib
+
+package require Itcl
+package require Itk
+package require Iwidgets
+
+# Create the user interface.
+pack [SeqEdit .main]
+
+# Connect up the interface.
+[.main component menus].menubar.file.menu entryconfigure Exit -command exit
+[.main component menus].menubar.file.menu entryconfigure Load... \
+      -command loadseq
+[.main component menus].menubar.file.menu entryconfigure Save... \
+      -command saveseq
+
+proc loadseq {} {
+
+# Prompt for a file.
+   set file [tk_getOpenFile]
+
+   if { [string length $file] } {
+
+# Delete the current sequence.
+      [.main component list] clear
+      [.main component edit] clear
+
+# Open the file
+      set chanid [open $file RDONLY]
+
+# Read in the sequence
+      while { ![eof $chanid] } {
+         if { [gets $chanid line] > 0 } {
+            eval $line
+         }
+      }
+
+# Select pattern A.
+      [.main component edit] select A
+
+# Close the file.
+      close $chanid
+   }
+}
+
+proc saveseq {} {
+
+# Prompt for a file.
+   set file [tk_getSaveFile]
+
+   if { [string length $file] } {
+
+# Open the file
+      set chanid [open $file {WRONLY CREAT TRUNC}]
+
+# Write out the sequence
+      puts $chanid "# [[.main component title] get]"
+      foreach element [[[.main component list] component listbox] get 0 end] {
+         puts $chanid "pattern $element"
+      }
+
+# Write out the patterns.
+      set patted [.main component edit]
+      foreach p {A B C D E F G H I J K L M N O P Q R S T U V W X Y Z} {
+         set pattern [$patted get $p]
+         if { [string length $pattern] } {
+            puts $chanid "patdef $p $pattern"
+         }
+      }
+
+# Close the file.
+      close $chanid
+   }
+}
+
+proc pattern {args} {
+   [.main component list] insert end $args
+}
+
+proc patdef {pattern args} {
+   [.main component edit] pset $pattern $args
+}

@@ -1,0 +1,56 @@
+#+
+#  NiriStep.itcl
+#
+#  Implements the NiriStep class. A NiriStep behaves in the same way as a
+#  Step object but also communicates NIRI to start an exposure.
+#
+#  D Terrett 28 September 2000
+#
+#  Copyright CCLRC
+#+
+
+itcl::class NiriStep {
+   inherit Step
+
+   constructor {args} {}
+   destructor {}
+
+   protected method nextaction {after}
+   protected method error {msg} {Step::error $msg}
+
+   private variable ExposeAction
+}
+
+itcl::body NiriStep::constructor {args} {
+
+# Create the actions for controlling Niri.
+   set ExposeAction [namespace current]::[seq::Action #auto niri]
+   $ExposeAction configure -onok [itcl::code $this nextaction expose] \
+         -onerror [itcl::code $this error] \
+         -ontimeout [itcl::code $this error "timed out"]
+   $ExposeAction set niriObserve dummy start
+
+# Replace the onok option of the GuideOnAction to call this 
+# class's implementation of nextaction.
+   $GuideOnAction configure -onok [itcl::code $this nextaction offset]
+
+   eval configure $args
+}
+
+itcl::body NiriStep::destructor {} {
+   itcl::delete object $ExposeAction
+}
+
+itcl::body NiriStep::nextaction {after} {
+
+   switch $after {
+      offset {
+         set ProgressMessage "Waiting for NIRI exposure to finish"
+         update
+         $ExposeAction start
+      }
+      default {
+         Step::nextaction $after
+      }
+   }
+}

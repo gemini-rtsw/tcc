@@ -1,0 +1,84 @@
+#+
+#  HakuAction.itcl
+#
+#  Implements the HakuAction class. HakuAction objects mimic Seq::Action
+#  objects by sending commands to the QUIRC/Hokupaa server.
+#
+#  seq::Action
+#
+#     Parameters:
+#
+#        haku   The Haku object that handles the comminication with the
+#               server
+#
+#     Methods:
+#
+#        start
+#
+#           Starts the execution of the action.
+#
+#        canceltimeout
+#
+#           Cancels the timeout handling of an in progress action.
+#
+#     Options:
+#
+#           -command
+#
+#              The message to send to the server to start the action.
+#
+#           -onok
+#
+#              The tcl script to execute when the action completes succesfully.
+#
+#           -onerror
+#
+#              The tcl script to execute when the action completes 
+#              unsuccesfully.
+#
+#           -ontimeout
+#
+#              The tcl script to execute if the action has not completed
+#              within the timeout period.
+#
+#           -reply
+#
+#              The reply expected from the server when the action is complete.
+#
+#           -timeout
+#
+#              The timeout period in seconds.
+#
+#  D Terrett 8 September 2000
+#
+#  Copyright CCLRC
+#+
+
+itcl::class HakuAction {
+   constructor {psys args} {}
+   public method start {}
+   public method canceltimeout {} {after cancel [code $this timedout]}
+   public variable onok {}
+   public variable onerror {}
+   public variable ontimeout {}
+   public variable timeout 60
+   public variable command ""
+   public variable reply ""
+
+   private variable Haku
+   private variable ParList {}
+}
+
+itcl::body HakuAction::constructor {haku args} {
+
+# Save the name of the Haku object
+   set Haku $haku
+
+   eval configure $args
+}
+
+itcl::body HakuAction::start {} {
+
+# Post the command to the server.
+   $Haku post $this
+}

@@ -1,0 +1,173 @@
+#+
+#  SeqEdit <- itk::Widget
+#
+#  A widget for editing sequences of patterns.
+#
+#  D Terrett 4 October 2000
+#
+#  Copyright CCLRC
+#+
+
+itcl::class SeqEdit {
+   inherit itk::Widget
+
+   constructor {args} {}
+
+   private method new
+   private method remall
+   private method remove
+   private method move {dir}
+}
+
+itk::usual SeqEdit {
+   keep -background -cursor -foreground -font
+   keep -activebackground -activeforeground -disabledforeground
+   keep -highlightcolor -highlightthickness
+}
+
+itcl::body SeqEdit::constructor {args} {
+
+# Menu bar and file menu.
+   itk_component add menus {
+      iwidgets::menubar $itk_interior.menus -menubuttons {
+         menubutton file -text File -menu {
+            options -tearoff false
+            command load -label Load...
+            command load -label Save...
+            command exit -label Exit
+         }
+      }
+   }
+   pack $itk_component(menus) -fill x -expand yes
+
+   itk_component add frame {
+      frame $itk_interior.frame -borderwidth 2 -relief ridge
+   }
+   set w $itk_component(frame)
+
+# Entry widget for title.
+   itk_component add title {
+      iwidgets::entryfield $w.title -labeltext Title
+   }
+
+# Pattern to add to the sequence.
+   itk_component add -private pattern {
+      iwidgets::optionmenu $w.pattern
+   }
+   $itk_component(pattern) insert end \
+      A B C D E F G H I J K L M N O P Q R S T U V W X Y Z
+
+# The repeat count.
+   itk_component add -private repeat {
+      iwidgets::spinint $w.repeat -labeltext repeat -width 2 \
+            -range {1 99}
+   }
+
+# Edit buttons.
+   itk_component add -private new {
+      button $w.new -text New -command [code $this new]
+   }
+   itk_component add -private remall {
+      button $w.remall -text "Rm. All" -command [code $this remall]
+   }
+   itk_component add -private rem {
+      button $w.rem -text Remove -command [code $this remove]
+   }
+
+# Listbox for the sequence.
+   itk_component add list {
+      iwidgets::scrolledlistbox $w.list -hscrollmode none
+   }
+
+# Buttons for shuffling the sequence.
+   global ROOT
+   itk_component add -private top {
+      button $w.top -bitmap @$ROOT/seqlib/top.xbm \
+            -command [code $this move top]
+   }
+   itk_component add -private up {
+      button $w.up -bitmap @$ROOT/seqlib/up.xbm \
+            -command [code $this move up]
+   }
+   itk_component add -private down {
+      button $w.down -bitmap @$ROOT/seqlib/down.xbm \
+            -command [code $this move down]
+   }
+   itk_component add -private bottom {
+      button $w.bottom -bitmap @$ROOT/seqlib/bottom.xbm \
+            -command [code $this move bottom]
+   }
+
+# Pattern editing widget.
+   itk_component add edit {
+      PattEdit $w.edit
+   }
+
+   grid $itk_component(title) - - -sticky ew -padx 5 -pady 5
+   grid $itk_component(pattern) $itk_component(list) $itk_component(top)
+   grid $itk_component(repeat) x $itk_component(up)
+   grid $itk_component(new)
+   grid $itk_component(remall) x $itk_component(down)
+   grid $itk_component(rem) x $itk_component(bottom)
+   grid $itk_component(edit) - - -padx 5 -pady 5
+   grid configure $itk_component(list) -rowspan 5
+   grid configure $itk_component(new) $itk_component(remall) \
+         $itk_component(rem) -sticky ew -padx 5
+   grid configure $itk_component(top) $itk_component(up) $itk_component(down) \
+         $itk_component(bottom) -pady 5
+   pack $itk_component(frame)
+
+   eval itk_initialize $args
+}
+
+itcl::body SeqEdit::new {} {
+   set p [$itk_component(pattern) get]
+   set repeat [$itk_component(repeat) get]
+   if { ![string length $repeat] } {set repeat 1}
+   if { $repeat == 1 } {
+      set pattern $p
+   } else {
+      set pattern [format "%s repeated %2d times" $p $repeat]
+   }
+
+   $itk_component(list) insert end $pattern
+}
+
+itcl::body SeqEdit::remall {} {
+   $itk_component(list) clear
+}
+
+itcl::body SeqEdit::remove {} {
+   set index [$itk_component(list) curselection]
+   if { [string length $index] } {
+      $itk_component(list) delete $index
+   }
+}
+
+itcl::body SeqEdit::move {dir} {
+
+   set cur [$itk_component(list) curselection]
+   if { [string length $cur] } {
+      set listbox [$itk_component(list) component listbox]
+      set element [$itk_component(list) get $cur]
+      $listbox delete $cur
+
+      switch $dir {
+         top {
+            set cur 0
+         }
+         up {
+            if { $cur > 0 } {incr cur -1}
+         }
+         down {
+            if { $cur < [$listbox size] } {incr cur 1}
+         }
+         bottom {
+            set cur end
+         }
+      }
+      $listbox insert $cur $element
+      $listbox selection set $cur
+      $listbox see $cur
+   }
+}
