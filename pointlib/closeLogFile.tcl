@@ -60,7 +60,7 @@ proc closeLogFile {} {
 
 # Convert the log file to tpoint format.
    if { $tpname != {} } {
-      exec /gemini/tcs/bin/solaris/ptconv < $LogFileName > $tpname
+      exec /gemini/tcs/tcs/bin/solaris/ptconv < $LogFileName > $tpname
 
 # Update save file directory.
       set dir [file dirname $tpname]
