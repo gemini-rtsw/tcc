@@ -39,6 +39,7 @@ itk::usual ShutterAlarm {
 }
 
 itcl::body ShutterAlarm::constructor {args} {
+   global shutterCurrent shutterPeakCurrent
 
    #puts "ShutterAlarm this: $this"
 
@@ -48,6 +49,13 @@ itcl::body ShutterAlarm::constructor {args} {
 
    set alarmBut $itk_component(button)
    pack $alarmBut
+
+   foreach drive {t1x t1y t1z t1w b2x b2y b2z b2w} {
+      #puts "setting up drive: $drive"
+      set shutterCurrent($drive) [sa shutterDriveCurrents get $drive]
+      set shutterPeakCurrent($drive) 1
+      #puts "shutterCurrent($drive) = $shutterCurrent($drive)"
+   }
 
    sa shutterDriveCurrents proc t1x "$this updateProc"
    sa shutterDriveCurrents proc t1y "$this updateProc"
@@ -67,7 +75,7 @@ itcl::body ShutterAlarm::constructor {args} {
 itcl::body ShutterAlarm::updateProc {name alarm time values} {
     global shutterCurrent shutterPeakCurrent shutterAlarm
 
-    #puts [format "%s %-20s\n%s\n" $time $name $values]
+    #puts [format "updateProc: %s %-20s\n%s\n" $time $name $values]
     set tname [lrange [split $name "."] 1 1]
     set tnamev [format "%s%s" $tname "(value)"]
     set $tnamev $values
@@ -137,8 +145,8 @@ itcl::body ShutterAlarm::resetPeak {} {
    global shutterPeakCurrent
 
    foreach drive {t1x t1y t1z t1w b2x b2y b2z b2w} {
-	set peak($drive) 0
-	set shutterPeakCurrent($drive) 0
+	set peak($drive) 0.0
+	set shutterPeakCurrent($drive) 0.0
    }
 
 }
