@@ -10,7 +10,7 @@
 #           update      Causes the preview configuration to be calculated 
 #                       and displayed.
 #
-#  D Terrett 24 November 1999
+#  D Terrett 16 February 2000
 #
 #  Copyright CCLRC
 #+
@@ -544,6 +544,8 @@ itcl::body PreviewControl::plot {} {
    skycatPanel map
 
 # Plot the target position.
-   send -displayof .skycatPanel tccSkycat tccDisplayField [lindex $target 0] \
-         [lindex $target 1] [lindex $target 2]
+   if { [llength $target] > 0 } {
+      send -displayof .skycatPanel tccSkycat tccDisplayField \
+            [lindex $target 0] [lindex $target 1] [lindex $target 2]
+   }
 }
