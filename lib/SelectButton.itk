@@ -19,7 +19,7 @@
 #           -orient        The orientation of the buttons (horizontal or
 #                          vertical).
 #
-#  D Terrett 25 October 2000
+#  D Terrett 18 October 2002
 #
 #  Copyright CCLRC
 #+
@@ -91,29 +91,13 @@ itcl::body SelectButton::add {label args} {
 
 itcl::body SelectButton::selectioncommand w {
    foreach button [winfo children $itk_interior] {
-      $button configure -state normal -background $itk_option(-offbackground)
+      $button configure -background $itk_option(-offbackground)
    }
-   $w configure -state disabled -background $itk_option(-onbackground)
+   $w configure -background $itk_option(-onbackground)
 
    set current [$w cget -text]
 
    if { ! [string equal $itk_option(-command) ""] } {
       uplevel #0 $itk_option(-command) \"[$w cget -text]\"
-   }
-}
-
-itcl::configbody SelectButton::onbackground {
-   foreach button [winfo children $itk_interior] {
-      if { [string equal [$button cget -state] disabled] } {
-         $button configure -background $itk_option(-onbackground)
-      }
-   }
-}
-
-itcl::configbody SelectButton::offbackground {
-   foreach button [winfo children $itk_interior] {
-      if { [string equal [$button cget -state] normal] } {
-         $button configure -background $itk_option(-offbackground)
-      }
    }
 }
