@@ -88,9 +88,11 @@ itcl::body TcsControl::constructor args {
    }
 
    grid $itk_component(f3top) - -sticky news
+   grid $itk_component(f3mid) - -sticky news
    grid $itk_component(f3top2) - -sticky news
    grid $itk_component(f3top3) - -sticky news
-   grid $itk_component(f3mid) $itk_component(f3bot) -sticky news
+   grid $itk_component(f3bot) - -sticky news
+#   grid $itk_component(f3mid) $itk_component(f3bot) -sticky news
 
 #   pack $itk_component(f3top) $itk_component(f3mid) $itk_component(f3bot) \
 #         -fill both -expand yes
@@ -221,6 +223,12 @@ itcl::body TcsControl::constructor args {
       LiveButton $w.aopark -command [itcl::code $this altairpark] -text Park
    }
 
+# AWE temporary placement of Shutter Alarm
+  # set w $itk_component(f3top3)
+   itk_component add alarm {
+      ShutterAlarm $w.alarm
+   }
+
    grid $itk_component(mcs) $itk_component(mcsdatum) $itk_component(mcspark) \
          -sticky nsew -padx 5 -pady 3
    grid $itk_component(scs) $itk_component(scsinit) $itk_component(scspark) \
@@ -239,6 +247,8 @@ itcl::body TcsControl::constructor args {
          -sticky ew -padx 5 -pady 3
    grid $itk_component(altair) $itk_component(aodatum) $itk_component(aopark) \
          -sticky ew -padx 5 -pady 3
+   grid $itk_component(alarm) - - \
+         -sticky ew -padx 10 -pady 3
 
 # Carousel driving mode command.
    set w $itk_component(f3top)
@@ -295,13 +305,6 @@ itcl::body TcsControl::constructor args {
    pack $itk_component(thermal) -fill x -pady 2
    pack $itk_component(mode) -pady 2
 
-# AWE temporary placement of Shutter Alarm
-   set w $itk_component(f3top3)
-   itk_component add alarm {
-      ShutterAlarm $w.alarm
-   }
-   pack $itk_component(alarm) -fill x -expand y
-
 # Close shutters command.
    set w $itk_component(f3mid)
    itk_component add closeshut {
@@ -311,7 +314,7 @@ itcl::body TcsControl::constructor args {
       ApplyButton $w.closegates -command ventgatesPark
    }
    pack $itk_component(closeshut) $itk_component(closegates) \
-         -fill both -expand yes -side top
+         -fill both -expand yes -side left
 
 # M2 coma and guide resets.
    set w $itk_component(f3bot)
@@ -323,6 +326,7 @@ itcl::body TcsControl::constructor args {
    }
    pack $itk_component(zerocoma) $itk_component(clearfocus) \
 	-side top -fill both -expand yes
+
 
 # A & G mechanism parking and datuming
    set w $itk_component(row2)
