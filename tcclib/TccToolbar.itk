@@ -10,7 +10,7 @@
 #  Methods:
 #           none
 #
-#  D Terrett 2 February 2001
+#  D Terrett 22 March 2001
 #
 #  Copyright CCLRC
 #-
@@ -160,9 +160,12 @@ itcl::body TccToolbar::import {} {
    catch {cd $SAVE_FILE_DIR}
 
 # Create a dialog box for selecting the file and center it.
-   set dialog [iwidgets::fileselectiondialog .fsd \
-         -modality application -title "Import File Selection Dialog"]
-   $dialog center
+   set dialog  $itk_interior.importdialog
+   if { ! [winfo exists $dialog] } {
+      set dialog [iwidgets::fileselectiondialog $dialog \
+            -modality application -title "Import File Selection Dialog"]
+      $dialog center
+   }
 
 # Activate the dialog
    if { [$dialog activate] } {
@@ -184,7 +187,7 @@ itcl::body TccToolbar::import {} {
          }
       }
    }
-   destroy $dialog
+   $dialog deactivate
 
 # Restore default directory
    cd $pwd
@@ -208,11 +211,12 @@ itcl::body TccToolbar::export {} {
    catch {cd $SAVE_FILE_DIR}
 
 # Create dialog.
-   set dialog [ExportDialog $itk_interior.exportDialog \
-         -title "Export Definitions Dialog" -modality application \
-         -master $itk_interior]
-
-   $dialog center
+   set dialog $itk_interior.exportdialog
+   if { ! [winfo exists $dialog] } {
+      set dialog [ExportDialog $dialog -master $itk_interior \
+            -title "Export Definitions Dialog" -modality application]
+      $dialog center
+   }
 
    if { [$dialog activate] } {
       set filename [$dialog get]
@@ -227,53 +231,49 @@ itcl::body TccToolbar::export {} {
          if { [catch {set file [open $filename {WRONLY CREAT TRUNC}]} msg]} {
             tk_messageBox -icon error -message $msg -parent $itk_interior
          } else {
-            upvar #0 [[$dialog component trackframe] cget -variable] trackframevar
-            if { $trackframevar } {
+            set complist [[$dialog component select] getrhs]
+            if { [lsearch -exact $complist "Coordinate frames"] >= 0 } {
+               save CosysList CosysNames $file
+            }
+            if { [lsearch -exact $complist "Tracking frames"] >= 0 } {
                save TrackFrameList TrackFrameNames $file
             }
-            upvar #0 [[$dialog component wavelength] cget -variable] wavelvar
-            if { $wavelvar } {
+            if { [lsearch -exact $complist "Wavelengths"] >= 0 } {
                save WavelengthList WavelengthNames $file
             }
-            upvar #0 [[$dialog component pointorig] cget -variable] povar
-            if { $povar } {
+            if { [lsearch -exact $complist "Instrument origins"] >= 0 } {
                save PointOrigList PointOrigNames $file
             }
-            upvar #0 [[$dialog component trackrate] cget -variable] trvar
-            if { $trvar } {
+            if { [lsearch -exact $complist "Differential track rates"] >= 0 } {
                save TrackRateList TrackRateNames $file
             }
-            upvar #0 [[$dialog component sciencetarget] cget -variable] scitargvar
-            if { $scitargvar } {
+            if { [lsearch -exact $complist "Science targets"] >= 0 } {
                save ScienceTargetList ScienceTargetNames $file
             }
-            upvar #0 [[$dialog component wfstarget] cget -variable] wfstargvar
-            if { $wfstargvar } {
+            if { [lsearch -exact $complist "Wave front sensor targets"] >= 0 } {
                save WfsTargetList WfsTargetNames $file
             }
-            upvar #0 [[$dialog component rotator] cget -variable] rotvar
-            if { $rotvar } {
+            if { [lsearch -exact $complist "Field orientations"] >= 0 } {
                save RotatorList RotatorNames $file
             }
-            upvar #0 [[$dialog component chop] cget -variable] chopvar
-            if { $chopvar } {
+            if { [lsearch -exact $complist "Chop configurations"] >= 0 } {
                save ChopList ChopNames $file
             }
-            upvar #0 [[$dialog component slewoptions] cget -variable] slewvar
-            if { $slewvar } {
+            if { [lsearch -exact $complist "Slew options"] >= 0 } {
                save SlewOptionsList SlewOptionsNames $file
             }
-            upvar #0 [[$dialog component instrument] cget -variable] instrumentvar
-            if { $instrumentvar } {
+            if { [lsearch -exact $complist "Instrument configurations"] >= 0 } {
                save InstrumentList InstrumentNames $file
             }
-            upvar #0 [[$dialog component guide] cget -variable] guidevar
-            if { $guidevar } {
+            if { [lsearch -exact $complist "Guide configurations"] >= 0 } {
                save GuideList GuideNames $file
             }
-            upvar #0 [[$dialog component config] cget -variable] configsvar
-            if { $configsvar } {
+            if { [lsearch -exact $complist Configurations] >= 0 } {
                save TcsConfigList TcsConfigNames $file
+            }
+            if { [llength $complist] == 0 } {
+               tk_messageBox -icon error -parent $itk_interior \
+                     -message "No components exported"
             }
             close $file
 
@@ -287,7 +287,7 @@ itcl::body TccToolbar::export {} {
          }
       }
    }
-   destroy $dialog
+   $dialog deactivate
 
 # Restore default directory
    cd $pwd

@@ -2,7 +2,7 @@
 #  EditDialog <- iwidgets::FileSelectionDialog
 #
 #  AnExportDialog widget is a file selection dialog with 
-#  checkbuttons for selecting which components are saved.
+#  a disjoint list box for selecting which components are saved.
 #
 #  Options:
 #           none
@@ -10,7 +10,7 @@
 #  Methods:
 #           none
 #
-#  D Terrett 26 May 2000
+#  D Terrett 22 March 2001
 #
 #  Copyright CCLRC
 #-
@@ -37,67 +37,26 @@ option add *ExportDialog.title "File Selection Dialog" widgetDefault
 itcl::body ExportDialog::constructor args {
 
    set w $itk_interior
+   itk_component add select {
+      iwidgets::disjointlistbox $w.select -lhslabeltext "Not exported" \
+            -rhslabeltext Exported -buttonplacement center
+   }
+   $itk_component(select) insertlhs [list \
+         Configurations \
+         "Science targets" \
+         "Guide configurations" \
+         "Field orientations" \
+         "Instrument origins" \
+         "Slew options" \
+         Wavelengths \
+         "Tracking frames" \
+         "Chop configurations" \
+         "Wave front sensor targets" \
+         "Instrument configurations" \
+         "Differential track rates" \
+         "Coordinate frames"]
 
-# Add check buttons to select which components to export.
-   itk_component add config {
-      checkbutton $w.config -text Configurations -variable $w._config
-   }
-
-   itk_component add sciencetarget {
-      checkbutton $w.scitarg -text "Science Targets" -variable $w._scitarg
-   }
-   grid $w.config $w.scitarg -sticky w
-
-   itk_component add rotator {
-      checkbutton $w.rot -text Rotators -variable $w._rot
-   }
-
-   itk_component add pointorig {
-      checkbutton $w.po -text "Instrument Origins" -variable $w._po
-   }
-   grid $w.rot $w.po -sticky w
-
-   itk_component add slewoptions {
-      checkbutton $w.slew -text "Slew Options" -variable $w._slew
-   }
-
-   itk_component add wavelength {
-      checkbutton $w.wavel -text Wavelengths -variable $w._wavel
-   }
-   grid $w.slew $w.wavel -sticky w
-
-   itk_component add trackframe {
-      checkbutton $w.trackframe -text "Tracking Frames" \
-             -variable $w._trackframe
-   }
-   itk_component add chop {
-      checkbutton $w.chop -text "Chop Configs" \
-             -variable $w._chop
-   }
-   grid $w.trackframe $w.chop -sticky w
-
-   itk_component add wfstarget {
-      checkbutton $w.wfstarg -text "Wave Front Sensor Targets" \
-            -variable $w._wfstarg
-   }
-      grid $w.wfstarg - -sticky w
-
-   itk_component add instrument {
-      checkbutton $w.instrument -text "Instrument Configurations" \
-            -variable $w._instrument
-   }
-   grid $w.instrument - -sticky w
-
-   itk_component add guide {
-      checkbutton $w.guide -text "Guide Configurations" -variable $w._guide
-   }
-   grid $w.guide - -sticky w
-
-   itk_component add trackrate {
-      checkbutton $w.trackrate -text "Differential Track Rates" \
-            -variable $w._trackrate
-   }
-   grid $w.trackrate - -sticky w
+   pack $itk_component(select)
 
    eval itk_initialize $args
 }
