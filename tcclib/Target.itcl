@@ -27,6 +27,8 @@
 #
 #              -c1            Declination.
 #
+#              -pmunits       The units of the proper motions.
+#
 #              -pm1           Proper motion in ra.
 #
 #              -pm2           Proper motion in dec.
@@ -78,7 +80,7 @@
 #           save node     Saves the values of the target options to the
 #                         xml node.
 #
-#  D Terrett 9 May 2002
+#  D Terrett 16 May 2002
 #
 #  Copyright CCLRC
 #+
@@ -98,6 +100,7 @@ itcl::class Target {
       variable cosys {}
       variable epoch {}
       variable parallax {}
+      variable pmunits {}
       variable pm1 {}
       variable pm2 {}
       variable rv {}
@@ -118,6 +121,7 @@ itcl::class Target {
       variable trackratens
    }
    private {
+      method pmconvert {c1 c2 pm1 pm2 pmunits}
       variable current_cosys {}
       variable current_trackrate {}
    }
@@ -153,8 +157,9 @@ itcl::body Target::apply {comp} {
          cs $vt set theta2 [list $c2]
          cs $vt set epoch [list $epoch]
          cs $vt set parallax [list $parallax]
-         cs $vt set dtheta1 [list $pm1]
-         cs $vt set dtheta2 [list $pm2]
+         set pm [pmconvert $c1 $c2 $pm1 $pm2 $pmunits]
+         cs $vt set dtheta1 [list [lindex $pm 0]]
+         cs $vt set dtheta2 [list [lindex $pm 1]]
          cs $vt set rv [list $rv]
       }
       degdegTarget {
@@ -407,6 +412,7 @@ body Target::grab {comp} {
             [lindex $dec 2] [lindex $dec 3] [lindex $dec 4]]]
    }
    set epoch ""
+   set pmunits ""
    set pm1 ""
    set pm2 ""
    set rv ""
@@ -439,6 +445,25 @@ itcl::configbody Target::trackrate {
       } else {
          set current_trackrate $trackrate
       }
+   }
+}
+
+itcl::configbody Target::pm1 {
+   if { ! [string is double $pm1 ] } {
+      error "Proper motion not a number"
+   }
+}
+
+itcl::configbody Target::pm2 {
+   if { ! [string is double $pm2 ] } {
+     error "Proper motion not a number"
+   }
+}
+
+itcl::configbody Target::pmunits {
+   if { [lsearch -exact [list mas/year mas/century arcsec/year arcsec/century \
+         "sec-arcsec/year" "sec-arcsec/century" ""] $pmunits] == -1 } {
+      error "invalid proper motion units"
    }
 }
 
@@ -520,4 +545,54 @@ itcl::configbody Target::type {
          error "\"$type\" is not a recognised target type"
      }
    }
+}
+
+itcl::body Target::pmconvert {c1 c2 pm1 pm2 pmunits} {
+
+# Returns the proper motions in seconds and arcsec per year (the units used 
+# by the TCS).
+
+# Convert to per year.
+   switch $pmunits {
+      arcsec/century -
+      mas/century -
+      sec-arcsec/century {
+         if { [string is double -strict $pm1] } {
+            set pm1 [expr {$pm1 / 100.0}]
+         }
+         if { [string is double -strict $pm2] } {
+            set pm2 [expr {$pm2 / 100.0}]
+         }
+      }
+   }
+
+# Convert mas to arcsec.
+   switch $pmunits {
+      mas/year -
+      mas/century {
+         if { [string is double -strict $pm1] } {
+            set pm1 [expr {$pm1 / 1000.0}]
+         }
+         if { [string is double -strict $pm2] } {
+            set pm2 [expr {$pm2 / 1000.0}]
+         }
+      }
+   }
+
+# Convert arcsec to seconds of RA.
+   switch $pmunits {
+      mas/year -
+      mas/century -
+      arcsec/year -
+      arcsec/century {
+         set AS2R 0.0000048481368111
+         set raz [expr {[slaDafin $c1] * 15.0}]
+         set decz [slaDafin $c2]
+         set radec [slaDtp2s [expr {$pm1* $AS2R}] [expr {$pm2 * $AS2R}] \
+               $raz $decz]
+         set pm1 [expr { ([lindex $radec 0] - $raz) / $AS2R / 15.0 }]
+         set pm2 [expr { ([lindex $radec 1] - $decz) / $AS2R }]
+      }
+   }
+   return [list $pm1 $pm2]
 }

@@ -7,7 +7,7 @@ static char rcsid[]="$Id:";
 *   FUNCTION NAME(S)
 *   Slaext_Init - Initialisation function for TCL loadable image
 *
-*   D L Terrett 5 December 2000
+*   D L Terrett 17 May 2002
 *
 *   Copyright CCLRC
 *
@@ -26,6 +26,8 @@ static int DafinCmd( ClientData clientdata, Tcl_Interp *interp, int objc,
 static int Dr2afCmd( ClientData clientdata, Tcl_Interp *interp, int objc,
     Tcl_Obj *CONST objv[]);
 static int Dr2tfCmd( ClientData clientdata, Tcl_Interp *interp, int objc,
+    Tcl_Obj *CONST objv[]);
+static int Dtp2sCmd( ClientData clientdata, Tcl_Interp *interp, int objc,
     Tcl_Obj *CONST objv[]);
 
 /* *INDENT-OFF* */
@@ -51,6 +53,8 @@ int Slaext_Init( Tcl_Interp *interp)
     Tcl_CreateObjCommand( interp, "slaDr2af", Dr2afCmd,
         (ClientData) NULL, (Tcl_CmdDeleteProc *) NULL);
     Tcl_CreateObjCommand( interp, "slaDr2tf", Dr2tfCmd,
+        (ClientData) NULL, (Tcl_CmdDeleteProc *) NULL);
+    Tcl_CreateObjCommand( interp, "slaDtp2s", Dtp2sCmd,
         (ClientData) NULL, (Tcl_CmdDeleteProc *) NULL);
 
     return TCL_OK;
@@ -160,6 +164,42 @@ static int Dr2tfCmd( ClientData clientdata, Tcl_Interp *interp, int objc,
    reslist[3] = Tcl_NewIntObj( hmsf[2] );
    reslist[4] = Tcl_NewIntObj( hmsf[3] );
    result = Tcl_NewListObj( 5, reslist );
+   Tcl_SetObjResult( interp, result);
+   return TCL_OK;
+}
+
+static int Dtp2sCmd( ClientData clientdata, Tcl_Interp *interp, int objc,
+    Tcl_Obj *CONST objv[])
+{
+/*
+ * TCL front end for slaDtp2s.
+ */
+   double xi, eta, raz, decz, ra, dec;
+   Tcl_Obj *result, *reslist[2];
+
+/* Check number of arguments. */
+   if ( objc != 5 ) {
+      Tcl_WrongNumArgs( interp, 1, objv, "xi eta ra dec");
+      return TCL_ERROR;
+   }
+
+/* Decode input arguments. */
+   if ( Tcl_GetDoubleFromObj( interp, objv[1], &xi) != TCL_OK) 
+         return TCL_ERROR;
+   if ( Tcl_GetDoubleFromObj( interp, objv[2], &eta) != TCL_OK) 
+         return TCL_ERROR;
+   if ( Tcl_GetDoubleFromObj( interp, objv[3], &raz) != TCL_OK) 
+         return TCL_ERROR;
+   if ( Tcl_GetDoubleFromObj( interp, objv[4], &decz) != TCL_OK) 
+         return TCL_ERROR;
+
+/* Convert tangent plane coordinates to spherical. */
+   slaDtp2s( xi, eta, raz, decz, &ra, &dec );
+
+/* Build result list. */
+   reslist[0] = Tcl_NewDoubleObj( ra );
+   reslist[1] = Tcl_NewDoubleObj( dec );
+   result = Tcl_NewListObj( 2, reslist );
    Tcl_SetObjResult( interp, result);
    return TCL_OK;
 }

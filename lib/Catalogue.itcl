@@ -15,7 +15,7 @@
 #
 #        view            Displays the catalogue in a listbox
 #
-# D Terrett 18 April 2002
+# D Terrett 24 May 2002
 #
 # Copyright CCLRC
 #+
@@ -59,7 +59,7 @@ itcl::body Catalogue::load {chan} {
 #  Loads the contents of a star catalog into the catalog list box
 #
 #  Description:
-#  This procedure laods a star catalog file into the catalogue.
+#  This procedure loads a star catalog file into the catalogue.
 #  one line per entry. Comment line (lines starting with !), blank 
 #  lines and the END line are discarded.
 #
@@ -138,6 +138,7 @@ itcl::body Catalogue::decodeStar {index} {
             } else {
                set comment ""
             }
+            set pmunits "sec-arcsec/year"
             set ra "$rah $ram $ras"
             set dec "$decd $decm $decs"
             set epoch $equinox
@@ -147,7 +148,7 @@ itcl::body Catalogue::decodeStar {index} {
       }
    }
 
-   return [list $objname $ra $dec $equinox $epoch $pmra $pmdec \
+   return [list $objname $ra $dec $equinox $epoch $pmunits $pmra $pmdec \
          $parallax $rv $comment]
 }
 

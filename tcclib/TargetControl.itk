@@ -10,7 +10,7 @@
 #
 #  Methods:
 #
-#  D Terrett 9 May 2002
+#  D Terrett 16 May 2002
 #
 #  Copyright CCLRC
 #+
@@ -120,28 +120,36 @@ itcl::body TargetControl::constructor {args} {
    }
 
 # Proper motions.
+   itk_component add pmunits {
+      iwidgets::optionmenu $w.pmunits -labeltext Units
+   }
+   [$itk_component(pmunits) component menuBtn] configure -anchor w
+   $itk_component(pmunits) insert 0 mas/year mas/century arcsec/year \
+         arcsec/century "sec-arcsec/year" "sec-arcsec/century"
+   itk_component add pm {
+      frame $w.pm
+   }
    itk_component add pm1 {
-      iwidgets::entryfield $w.pm1 -width 11 \
-            -labeltext "RA (s/yr)"
+      iwidgets::entryfield $w.pm.pm1 -labeltext RA -width 9
    }
    itk_component add pm2 {
-      iwidgets::entryfield $w.pm2 -width 11 \
-            -labeltext "Dec (arcsec/yr)"
+      iwidgets::entryfield $w.pm.pm2 -labeltext Dec -width 9
    }
+   pack $itk_component(pm1) $itk_component(pm2) -side left
 
 # Parallax
    itk_component add parallax {
       iwidgets::entryfield $w.parallax -width 11 \
-            -labeltext [lindex [cs sourceA info parallax] 2]
+            -labeltext "Parallax (arcsec)"
    }
 
 # Radial velocity.
    itk_component add rv {
       iwidgets::entryfield $w.rv -width 11 \
-            -labeltext [lindex [cs sourceA info rv] 2]
+            -labeltext "Radial velocity (km/s)"
    }
-   pack $itk_component(epoch) $itk_component(pm1) $itk_component(pm2) \
-         $itk_component(parallax) $itk_component(rv) -padx 3 -pady 3 \
+   pack $itk_component(epoch) $itk_component(pmunits) $itk_component(pm) \
+         $itk_component(parallax) $itk_component(rv) -padx 3 -pady 1 \
          -anchor e -expand yes
 
 # Page for Az/El
@@ -229,6 +237,11 @@ itcl::body TargetControl::load {name} {
          $itk_component(ra) insert end [$name cget -c1]
          $itk_component(dec) insert end [$name cget -c2]
          $itk_component(epoch) insert end [$name cget -epoch]
+         set units [$name cget -pmunits]
+         if { $units == "" } {
+            set units "sec-arcsec/year"
+         }
+         $itk_component(pmunits) select $units
          $itk_component(pm1) insert end [$name cget -pm1]
          $itk_component(pm2) insert end [$name cget -pm2]
          $itk_component(parallax) insert end [$name cget -parallax]
@@ -256,6 +269,7 @@ itcl::body TargetControl::save {name} {
                -c1 [$itk_component(ra) get] \
                -c2 [$itk_component(dec) get] \
                -epoch [$itk_component(epoch) get] \
+               -pmunits [$itk_component(pmunits) get] \
                -pm1 [$itk_component(pm1) get] \
                -pm2 [$itk_component(pm2) get] \
                -parallax [$itk_component(parallax) get] \

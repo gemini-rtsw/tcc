@@ -3,7 +3,7 @@
 #
 # A PointTest widget is the main interface of the pointtest application.
 #
-# D Terrett 17 May 2002
+# D Terrett 24 May 2002
 #
 # Copyright CCLRC
 #+
@@ -200,8 +200,11 @@ itcl::body PointTest::constructor {args} {
 itcl::body PointTest::selectstar {cat index} {
 
    $itk_component(sourceentry) clear
-   foreach {objname ra dec equinox epoch pmra pmdec parallax rv comment} \
-         [$StarCat extract $index] {}
+   foreach {objname ra dec equinox epoch pmunits pmra pmdec parallax \
+         rv comment} [$StarCat extract $index] {}
+   if { ! [string equal $pmunits "sec-arcsec/year"] } {
+      error "Catalogue has proper motions in the wrong units"
+   }
    [$itk_component(sourceentry) component objname] insert end $objname
    [$itk_component(sourceentry) component ra] insert end $ra
    [$itk_component(sourceentry) component dec] insert end $dec

@@ -331,35 +331,74 @@ itcl::body TcsConfigFile::createTarget {node} {
 # Configure the target object name from the target name.
    $field subconfigure target $target -objname $target
 
-# Build a list of all the parameter nodes for the target.
-   set parlist ""
-   foreach child [dom::node children $node] {
-      if { [string equal [dom::node cget $child -nodeType] element] } {
-         if { [string equal [dom::node cget $child -nodeName] param] } {
-            lappend parlist $child
-         } elseif { [string equal [dom::node cget $child -nodeName] paramset] \
-               } {
-            foreach child [dom::node children $child] {
-               if { [string equal [dom::node cget $child -nodeType] element] } {
-                  if { [string equal [dom::node cget $child -nodeName] param] \
-                        } {
-                     lappend parlist $child
+# Process all the param and paramset descendents of the target node.
+   if { [dom::node hasChildNodes $node] } {
+
+# Start with the first child of the target node.
+      set n [dom::node cget $node -firstChild]
+
+# Until we get back to the target node...
+      while { ! [string equal $n $node] } {
+
+# If this is an element node...
+         if { [string equal [dom::node cget $n -nodeType] element] } {
+
+# and it is a param...
+            if { [string equal [dom::node cget $n -nodeName] param] } {
+
+# and the name attribute matches a target parameter name...
+               set name [dom::element getAttribute $n name]
+               if { ! [catch {$field subcget target $target -$name}] } {
+
+# configure the target parameter
+                  if { [catch {$field subconfigure target $target -$name \
+                           [dom::element getAttribute $n value]} msg] } {
+                     if { [report $msg] } {
+                        return 1
+                     }
+                  }
+               }
+            }
+
+# If it is a paramset...
+            if { [string equal [dom::node cget $n -nodeName] paramset] } {
+
+# and the name is "properMotion"..
+               set name [dom::element getAttribute $n name]
+               if { [string equal $name properMotion] } {
+
+# configure the -pmunits parameter of the target.
+                  if { [catch {$field subconfigure target $target -pmunits \
+                           [dom::element getAttribute $n units]} msg] } {
+                     if { [report $msg] } {
+                        return 1
+                     }
                   }
                }
             }
          }
-      }
-   }
 
-# Configure the component from the param nodes.
-   foreach child $parlist {
-      set name [dom::element getAttribute $child name]
-      if { ! [catch {$field subcget target $target -$name}] } {
-         if { [catch {$field subconfigure target $target \
-               -$name [dom::element getAttribute $child value]} msg] } {
-            if { [report $msg] } {
-               return 1
+# Move on to this nodes children.
+         if { [string equal [dom::node cget $n -nodeType] element] && \
+               [dom::node hasChildNodes $n] } {
+            set n [dom::node cget $n -firstChild]
+         } else {
+
+# Or its next sibling.
+            set next [dom::node cget $n -nextSibling]
+
+# If there isn't a next sibling then search ancestors for a next sibling.
+            while { [string equal $next ""] } {
+               set n [dom::node cget $n -parentNode]
+
+# If we are back at the target node then stop searching.
+               if { [string equal $n $node] } {
+                  set next $n
+               } else {
+                  set next [dom::node cget $n -nextSibling]
+               }
             }
+            set n $next
          }
       }
    }

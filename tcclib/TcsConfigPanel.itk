@@ -158,12 +158,13 @@ itcl::body TcsConfigPanel::import {} {
       if { [catch {set file [open $filename RDONLY]} msg] } {
          tk_messageBox -icon error -message $msg
       } else {
-         if { [catch {set config [TcsConfigFile #auto $file $itk_interior]} \
-               msg] } {
-            tk_messageBox -icon error -message $msg
-         } else {
-            delete object $config
-         }
+         puts [time {set config [TcsConfigFile #auto $file $itk_interior]}]
+#         if { [catch {set config [TcsConfigFile #auto $file $itk_interior]} \
+#               msg] } {
+#            tk_messageBox -icon error -message $msg
+#         } else {
+#            delete object $config
+#         }
          close $file
 
 # Update save file directory.

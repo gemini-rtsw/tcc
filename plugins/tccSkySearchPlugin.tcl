@@ -1,7 +1,7 @@
 #+
 #  tccSkySearchPlugin.tcl
 #
-#  D Terrett 7 March 2002
+#  D Terrett 24 May 2002
 #
 #  Copyright CCLRC
 #-
@@ -97,8 +97,8 @@ namespace eval TccSkyQuery {
             set pmav [lindex $target $pma]
             set pmdv [lindex $target $pmd]
             if { $pmav != "" && $pmdv != "" } {
-               lappend args -pm1 "[expr $pmav * 13750.987] \
-                     -pm2 [expr $pmdv * 206264.806]"
+               lappend args -pm1 [expr $pmav * 13750.987] \
+                     -pm2 [expr $pmdv * 206264.806] -pmunits sec-arcsec/year
             }
          }
          if { $radvel != -1 } {
