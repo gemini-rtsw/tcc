@@ -5,7 +5,7 @@
 # of a pointing update run. The "fit" class method calculates a new estimate
 # of CE and CA and optionally IA from all the Ptweak objects that are enabled.
 #
-# D Terrett 4 September 2001
+# D Terrett 30 November 2001
 #
 # Copyright CCLRC
 #+
@@ -23,6 +23,7 @@ itcl::class Ptweak {
    }
    private {
       proc postparam {}
+      proc getparam {name}
       common fitca 0
       common fitce 0
       common fitia 0
@@ -202,15 +203,15 @@ itcl::body Ptweak::commit {w inclia} {
    }
 
 # Build a text string that displays the new model.
-   set text [format "The current session adjustment to pointing model is:\
+   set text [format \
+         "At present the session adjustments to the pointing model are:\
          CA = %.2f, CE = %.2f, IA = %.2f." $curca $curce $curia]
-   set text [format "%s The new adjustment will be CA = %.2f, CE = %.2f" \
-         $text $fitca $fitce]
+   set text [format "%s if you confirm the update the new adjustments will\
+         become CA = %.2f, CE = %.2f"  $text $fitca $fitce]
    if { $inclia } {
       set text [format "%s, IA = %.2f." $text [expr $curia + $fitia]]
    }
-   set text "$text Do you want to update the session pointing model\
-         with these values?"
+   set text "$text Do you want to update the session pointing model?"
 
    $w.md configure -title "Commit Confirmation" -bitmap questhead -text $text
    $w.md buttonconfigure OK -text Yes 
@@ -230,7 +231,6 @@ itcl::body Ptweak::commit {w inclia} {
          return
       }
    }
-   destroy $w.md
 
 # Set the parameter set to "Session".
    cs pointParam set level Session
@@ -272,6 +272,22 @@ itcl::body Ptweak::commit {w inclia} {
       error "zeroGuide command failed: \"$info\""
    }
    logger command zeroGuide
+
+# Get the permanent values and add the adjustments.
+   set ca [expr { [getparam CA] + $fitca }]
+   set ie [expr { [getparam IE] + $fitce }]
+   set ia [expr { [getparam IA] + $curia + $fitia }]
+
+   set text [format \
+         "Including the updated session adjustments, the net pointing\
+         coefficients are:\n\n    CA = %.2f, IE = %.2f, IA = %.2f
+         \n\nPlease record these in the night log." $ca $ie $ia]
+   $w.md configure -title "Updated Pointing Model" -bitmap info -text $text
+   $w.md buttonconfigure OK -text OK 
+   $w.md hide Cancel
+   $w.md center
+   $w.md activate
+   destroy $w.md
 }
 
 itcl::body Ptweak::postparam {} {
@@ -279,4 +295,15 @@ itcl::body Ptweak::postparam {} {
       set info [sa apply get mess value]
       error "pointParam command failed: \"$info\""
    }
+}
+
+itcl::body Ptweak::getparam {name} {
+
+# Gets the value of a permanent model parameter.
+   for {set i 0} {$i < 30} {incr i} {
+      if { [string equal [sa permanent get par${i}name] $name] } {
+         return [sa permanent get par${i}value]
+      }
+   }
+   error "Invalid pointing parameter \"$name\""
 }

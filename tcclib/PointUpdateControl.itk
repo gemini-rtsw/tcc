@@ -3,7 +3,7 @@
 #
 #  Implements the PointUpdateControl widget.
 #
-#  D Terrett 2 May 2001
+#  D Terrett 30 Novemeber 2001
 #
 #  Copyright CCLRC
 #-
@@ -144,6 +144,9 @@ itcl::body PointUpdateControl::constructor args {
    }
    if {[catch {sa session info}]} {
       epics sa session
+   }
+   if {[catch {sa permanent info}]} {
+      epics sa permanent
    }
 
    eval itk_initialize $args
