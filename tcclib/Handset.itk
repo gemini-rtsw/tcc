@@ -21,7 +21,7 @@
 #         tcc application is destroyed while the pointer is in the window
 #         the keyboard will be left with autorepeat disabled.
 #
-#  D Terrett 21 April 2001
+#  D Terrett 27 April 2001
 #
 #  Copyright CCLRC
 #-
@@ -33,12 +33,14 @@ itcl::class Handset {
    itk_option define -vt vt Vt sourceA
    private {
       method push {button}
-      method rot {angle}
+      method rot {dir}
       method hflip {}
       method vflip {}
       method reset {}
+      method relabel {}
       variable cs ""
       variable angles
+      variable labels
    }
 }
 
@@ -50,6 +52,33 @@ itk::usual Handset {
 }
 
 itcl::body Handset::constructor {args} {
+
+# Fill in the table of labels
+   foreach frame {tracking xy azel instr pwfs1 pwfs2} {
+      switch $frame {
+	 azel {
+            set labels($frame,u) +Az
+            set labels($frame,d) -Az
+            set labels($frame,l) +El
+            set labels($frame,r) -El
+         }
+	 tracking {
+            set labels($frame,u) N
+            set labels($frame,d) S
+            set labels($frame,l) E
+            set labels($frame,r) W
+	 }
+	 xy -
+	 instr -
+	 pwfs2 -
+	 pwfs1 {
+            set labels($frame,u) ""
+            set labels($frame,d) ""
+            set labels($frame,l) ""
+            set labels($frame,r) ""
+         }
+      }
+   }
 
    set w $itk_interior
 
@@ -122,18 +151,19 @@ itcl::body Handset::constructor {args} {
    }
    $itk_component(orient) add tracking -text RA/Dec
    $itk_component(orient) add xy -text "Acq Cam"
-   $itk_component(orient) add cace -text Az/El
+   $itk_component(orient) add azel -text Az/El
    $itk_component(orient) add instr -text Instr
    $itk_component(orient) add pwfs1 -text PWFS1
    $itk_component(orient) add pwfs2 -text PWFS2
    $itk_component(orient) select xy
+   $itk_component(orient) configure -command [itcl::code $this relabel]
 
 # buttons for rotating and flipping.
    itk_component add rot {
-      button $w.rot -bitmap rotate -command [itcl::code $this rot 90.0]
+      button $w.rot -bitmap rotate -command [itcl::code $this rot clock]
    }
    itk_component add arot {
-      button $w.arot -bitmap arotate -command [itcl::code $this rot -90.0]
+      button $w.arot -bitmap arotate -command [itcl::code $this rot anticlock]
    }
    itk_component add hflip {
       button $w.hflip -bitmap hflip -command [itcl::code $this hflip]
@@ -172,24 +202,24 @@ itcl::body Handset::constructor {args} {
          -anchor w
 
 # Fill in the table of angles
-   foreach frame {tracking xy cace instr pwfs1 pwfs2} {
+   foreach frame {tracking xy azel instr pwfs1 pwfs2} {
       switch $frame {
-	 cace -
-	 instr -
-	 tracking {
+         azel -
+         instr -
+         tracking {
             set angles($frame,u) 0.0
             set angles($frame,r) 90.0
             set angles($frame,d) 180.0
             set angles($frame,l) 270.0
-	 }
-	 pwfs1 {
+         }
+         pwfs1  {
             set angles($frame,l) 0.0
             set angles($frame,d) 90.0
             set angles($frame,r) 180.0
             set angles($frame,u) 270.0
          }
-	 pwfs2 -
-	 xy {
+         pwfs2 -
+         xy {
             set angles($frame,r) 0.0
             set angles($frame,u) 90.0
             set angles($frame,l) 180.0
@@ -197,7 +227,7 @@ itcl::body Handset::constructor {args} {
          }
       }
    }
-
+   
 # Create bindings on the top-level window for the arrow keys (this assumes
 # that there is only one HandPaddleButtons widget in the window).
    set top [winfo toplevel $itk_interior]
@@ -236,7 +266,6 @@ itcl::configbody Handset::adjust {
       }
    }
 
-# Highlight the appropriate title and dim the others.
    switch $itk_option(-adjust) {
       pointing {
          $itk_component(title1) configure -foreground red
@@ -264,11 +293,11 @@ itcl::body Handset::push {dir} {
 
 # Set the frame id. The pwfs frames are not supported by the tcs so
 # x/y used.
-      set frameid [lsearch -exact {cace xy instr tracking pwfs1 pwfs2} $frame]
+      set frameid [lsearch -exact {azel xy instr tracking pwfs1 pwfs2} $frame]
       if { $frameid > 3 } {
          set frameid 1
       }
-      cs $cs set frame  $frameid
+      cs $cs set frame $frameid
 
 # Set the step size.
       cs $cs set size [$itk_component(stepsize) get]
@@ -305,8 +334,26 @@ itcl::body Handset::push {dir} {
    }
 }
 
-itcl::body Handset::rot {theta} {
+itcl::body Handset::rot {dir} {
    set frame [$itk_component(orient) get]
+   set uplab $labels($frame,u)
+   switch $dir {
+      clock {
+         set theta -90.0
+         set labels($frame,u) $labels($frame,l)
+         set labels($frame,l) $labels($frame,d)
+         set labels($frame,d) $labels($frame,r)
+         set labels($frame,r) $uplab
+      }
+      anticlock {
+         set theta 90.0
+         set labels($frame,u) $labels($frame,r)
+         set labels($frame,r) $labels($frame,d)
+         set labels($frame,d) $labels($frame,l)
+         set labels($frame,l) $uplab
+      }
+   }
+   relabel
    foreach button {u l d r} {
       set angles($frame,$button) [expr {$angles($frame,$button) + $theta}]
    }
@@ -316,20 +363,28 @@ itcl::body Handset::hflip {} {
    set frame [$itk_component(orient) get]
    set angles($frame,l) [expr {$angles($frame,l) + 180}]
    set angles($frame,r) [expr {$angles($frame,r) - 180}]
+   set leftlab $labels($frame,l)
+   set labels($frame,l) $labels($frame,r)
+   set labels($frame,r) $leftlab
+   relabel
 }
 
 itcl::body Handset::vflip {} {
    set frame [$itk_component(orient) get]
    set angles($frame,u) [expr {$angles($frame,u) + 180}]
    set angles($frame,d) [expr {$angles($frame,d) - 180}]
+   set uplab $labels($frame,u)
+   set labels($frame,u) $labels($frame,d)
+   set labels($frame,d) $uplab
+   relabel
 }
 
 itcl::body Handset::reset {} {
 
-# Set all the button angles to their defaults.
+# Set all the button labels and angles to their defaults.
    set frame [$itk_component(orient) get]
    switch $frame {
-      cace -
+      azel -
       instr -
       tracking {
          set angles($frame,u) 0.0
@@ -351,4 +406,36 @@ itcl::body Handset::reset {} {
          set angles($frame,d) 270.0
       }
    }
+
+# Set all the button labels and angles to their defaults.
+   switch $frame {
+      azel {
+         set labels($frame,u) +Az
+         set labels($frame,d) -Az
+         set labels($frame,l) +El
+         set labels($frame,r) -El
+      }
+      tracking {
+         set labels($frame,u) N
+         set labels($frame,d) S
+         set labels($frame,l) W
+         set labels($frame,r) E
+      }
+   }
+   relabel
+}
+
+itcl::body Handset::relabel {} {
+   set frame [$itk_component(orient) get]
+   $itk_component(u) configure -text $labels($frame,u)
+   $itk_component(d) configure -text $labels($frame,d)
+   $itk_component(l) configure -text $labels($frame,l)
+}
+
+itcl::body Handset::relabel {} {
+   set frame [$itk_component(orient) get]
+   $itk_component(u) configure -text $labels($frame,u)
+   $itk_component(d) configure -text $labels($frame,d)
+   $itk_component(l) configure -text $labels($frame,l)
+   $itk_component(r) configure -text $labels($frame,r)
 }
