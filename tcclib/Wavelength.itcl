@@ -19,7 +19,7 @@
 #
 #          save node   Writes the values of the options to the xml node.
 #
-#  D Terrett 11 April 2002
+#  D Terrett 21 February 2003
 #
 #  Copyright CCLRC
 #+
@@ -29,7 +29,7 @@ itcl::class Wavelength {
    public {
       method apply {comp}
       method init {}
-      method preview {comp}
+      method preview {view comp}
       method save {node}
       variable wavel {} {set wavel [valWavelength $wavel]}
    }
@@ -52,14 +52,14 @@ itcl::body Wavelength::init {} {
    set wavel {}
 }
 
-itcl::body Wavelength::preview {comp} {
+itcl::body Wavelength::preview {view comp} {
    if { ! [string equal $wavel ""] } {
       switch $comp {
          science {
-            tccPreview configure -wavel $wavel
+            $view configure -wavel $wavel
          }
          oiwfs {
-            tccPreview configure -oiWavel $wavel
+            $view configure -oiWavel $wavel
          }
       }
    }

@@ -20,7 +20,7 @@
 #          save node     Saves the values of the rotator configuration
 #                        to the xml node.
 #
-#  D Terrett 30 January 2003
+#  D Terrett 21 February 2003
 #
 #  Copyright CCLRC
 #+
@@ -31,7 +31,7 @@ itcl::class Rotator {
    public {
       method apply {comp}
       method init {}
-      method preview {}
+      method preview {view}
       method save {node}
       variable ipa {}
       variable cosys {}
@@ -52,7 +52,7 @@ itcl::body Rotator::apply {comp} {
    logger command rotator
 }
 
-itcl::body Rotator::preview {} {
+itcl::body Rotator::preview {view} {
    if { [string equal $cosys ""] } {
       set frame FK5
       set equinox J2000
@@ -65,9 +65,9 @@ itcl::body Rotator::preview {} {
    } else {
       set a $ipa
    }
-   tccPreview configure -ipa $a 
-   tccPreview configure -rotSystem $frame
-   tccPreview configure -rotEquinox $equinox
+   $view configure -ipa $a 
+   $view configure -rotSystem $frame
+   $view configure -rotEquinox $equinox
 }
 
 itcl::body Rotator::save {node} {

@@ -31,7 +31,7 @@
 #
 #          node        Saves the values of the options to the xml node. 
 #
-#  D Terrett 29 January 2003
+#  D Terrett 21 February 2003
 #
 #  Copyright CCLRC
 #+
@@ -41,7 +41,7 @@ itcl::class Instrument {
    public {
       method apply {comp}
       method init {}
-      method preview {}
+      method preview {view}
       method save {node}
       variable iaa ""
       variable issPort 1
@@ -94,11 +94,11 @@ itcl::body Instrument::init {} {
    set name ""
 }
 
-itcl::body Instrument::preview {} {
+itcl::body Instrument::preview {view} {
    if { [string length $iaa] } {
-      tccPreview configure -iaa $iaa
+      $view configure -iaa $iaa
    } else {
-      tccPreview configure -iaa 0.0
+      $view configure -iaa 0.0
    }
 }
 

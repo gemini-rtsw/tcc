@@ -24,7 +24,7 @@
 #          save node     Saves the values of the pointing origin options
 #                        to the xml node.
 #
-#  D Terrett 29 January 2003
+#  D Terrett 21 February 2003
 #
 #  Copyright CCLRC
 #+
@@ -34,7 +34,7 @@ itcl::class PointOrig {
    public {
       method apply {comp}
       method init {}
-      method preview {item}
+      method preview {view item}
       method save {node}
       variable x 0.0
       variable y 0.0
@@ -60,9 +60,9 @@ itcl::body PointOrig::init {} {
    set y 0.0
 }
 
-itcl::body PointOrig::preview {item} {
-   tccPreview configure -pox [expr {$x * 0.62056151}]
-   tccPreview configure -poy [expr {$y * 0.62056151}]
+itcl::body PointOrig::preview {view item} {
+   $view configure -pox [expr {$x * 0.62056151}]
+   $view configure -poy [expr {$y * 0.62056151}]
 }
 
 itcl::body PointOrig::save {node} {

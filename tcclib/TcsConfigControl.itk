@@ -3,7 +3,7 @@
 #
 #  Implements the TcsConfigControl widget.
 #
-#  D Terrett 29 January 2003
+#  D Terrett 21 February 2003
 #
 #  Copyright CCLRC
 #+
@@ -25,6 +25,7 @@ itcl::class TcsConfigControl {
       variable options {
          -field -pointOrig -slewOptions -chop -altair -trackFrame -instrument
       }
+      variable view ""
    }
 }
 
@@ -212,21 +213,21 @@ itcl::body TcsConfigControl::preview {} {
    previewPanel map
 
 # Remove any exiting preview object.
-   catch {itcl::delete object tccPreview}
+   catch {itcl::delete object $view}
 
 # Store the values in the temporary config object.
    save $::Config(tcs,anon)
 
 # Create a preview object.
-   Preview ::tccPreview
+   set view [Preview ::#auto]
 
 # Load the preview the configuration.
-   if { [catch {$::Config(tcs,anon) preview} msg] } {
+   if { [catch {$::Config(tcs,anon) preview $view} msg] } {
       tk_messageBox -icon error -message $msg -parent $itk_interior
    } else {
 
 # Call the preview panel's update method to generate and display the preview.
-      [[previewPanel cget -name] component control] update
+      [[previewPanel cget -name] component control] update $view
    }
 }
 

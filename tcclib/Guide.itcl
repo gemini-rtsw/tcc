@@ -41,7 +41,7 @@
 #           save node       Saves the values of the options to the xml
 #                           node.
 #
-#  D Terrett 29 January 2003
+#  D Terrett 21 February 2003
 #
 #  copyright CCLRC
 #+
@@ -52,7 +52,7 @@ itcl::class Guide {
    public {
       method apply {comp}
       method init {}
-      method preview {}
+      method preview {view}
       method save {node}
       variable pwfs1Active never
       variable pwfs2Active never
@@ -226,14 +226,14 @@ itcl::body Guide::setEnableFlags {wfs active nodstate} {
    logger command ${wfs}Guide
 }
 
-itcl::body Guide::preview {} {
+itcl::body Guide::preview {view} {
    if { ! [string equal $pwfs1Wavel ""] } {
-      tccPreview configure -p1Wavel $pwfs1Wavel
+      $view configure -p1Wavel $pwfs1Wavel
    }
    if { ! [string equal $pwfs2Wavel ""] } {
-      tccPreview configure -p2Wavel $pwfs2Wavel
+      $view configure -p2Wavel $pwfs2Wavel
    }
    if { ! [string equal $oiwfsWavelength ""] } {
-      ::OIWFSWavelengthNames::$oiwfsWavelength preview oiwfs
+      ::OIWFSWavelengthNames::$oiwfsWavelength preview $view oiwfs
    }
 }

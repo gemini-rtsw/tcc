@@ -31,7 +31,7 @@
 #          save node    Saves the values of all the component options to
 #                       the xml node.
 #
-#  D Terrett 3 November 2002
+#  D Terrett 21 February 2003
 #
 #  Copyright CCLRC
 #+
@@ -42,7 +42,7 @@ itcl::class TcsConfig {
    public {
       method apply {comp}
       method init {}
-      method preview {}
+      method preview {view}
       method save {node}
       variable field ""
       variable pointOrig ""
@@ -99,23 +99,23 @@ itcl::body TcsConfig::init {} {
    $this configure -instrument ""
 }
 
-itcl::body TcsConfig::preview {} {
+itcl::body TcsConfig::preview {view} {
 
 # Call the preview method of all the components that have a value.
    if { ! [string equal $field ""] } {
-      ::FieldNames::$field preview
+      ::FieldNames::$field preview $view
    }
    if { ! [string equal $pointOrig ""] } {
-      ::PointOrigNames::$pointOrig preview poriginA
+      ::PointOrigNames::$pointOrig preview $view poriginA
    }
    if { ! [string equal $slewOptions ""] } {
-      ::SlewOptionsNames::$slewOptions preview
+      ::SlewOptionsNames::$slewOptions preview $view
    }
    if { ! [string equal $trackFrame ""] } {
-      ::TrackFrameNames::$trackFrame preview
+      ::TrackFrameNames::$trackFrame preview $view
    }
    if { ! [string equal $instrument ""] } {
-      ::InstrumentNames::$instrument preview
+      ::InstrumentNames::$instrument preview $view
    }
 }
 

@@ -20,7 +20,7 @@ itcl::class PreviewControl {
    constructor args {}
    destructor {}
    public {
-      method update {}
+      method update {view}
    }
    private {
       method countdown {}
@@ -288,7 +288,7 @@ itcl::body PreviewControl::destructor {} {
    after cancel [itcl::code $this countdown]
 }
 
-itcl::body PreviewControl::update {} {
+itcl::body PreviewControl::update {view} {
 
 # Reset the azimuth and rotator display reliefs
    $itk_component(az1) configure -relief flat
@@ -301,7 +301,7 @@ itcl::body PreviewControl::update {} {
    $itk_component(rot2lim) configure -text "" -relief groove
 
 # "Slew" the preview.
-   if { [catch {tccPreview slew [expr [$itk_component(delta) get] * 60]} msg] } {
+   if { [catch {$view slew [expr [$itk_component(delta) get] * 60]} msg] } {
       tk_messageBox -icon error -parent $itk_interior -message \
             "Error generating preview \"$msg\""
    } else {
@@ -323,7 +323,7 @@ itcl::body PreviewControl::update {} {
       }
 
 # Display the source position.
-      set target [tccPreview cget -target]
+      set target [$view cget -target]
       set ra [lindex $target 0]
       set dec [lindex $target 1]
       set frame [lindex $target 2]
@@ -334,13 +334,13 @@ itcl::body PreviewControl::update {} {
       $itk_component(radec) configure -text "$ra $dec $frame $equinox"
 
 # Display the time of the preview.
-      $itk_component(time) configure -text [tccPreview cget -utc]
+      $itk_component(time) configure -text [$view cget -utc]
 
 # Display the preview values of the mechanisms.
-      set vis [tccPreview cget -visible]
-      set az1 [tccPreview cget -az1]
-      set az2 [tccPreview cget -az2]
-      set el [tccPreview cget -el]
+      set vis [$view cget -visible]
+      set az1 [$view cget -az1]
+      set az2 [$view cget -az2]
+      set el [$view cget -el]
       $itk_component(az1) configure -text $az1
       $itk_component(az2) configure -text $az2
       $itk_component(el) configure -text $el
@@ -353,8 +353,8 @@ itcl::body PreviewControl::update {} {
       } else {
         set azwrap 0
       }
-      set rma1 [tccPreview cget -rma1]
-      set rma2 [tccPreview cget -rma2]
+      set rma1 [$view cget -rma1]
+      set rma2 [$view cget -rma2]
       $itk_component(rma1) configure -text [format %.1f $rma1]
       $itk_component(rma2) configure -text [format %.1f $rma2]
       if { [string compare $rma1 $rma2] } {
@@ -366,14 +366,14 @@ itcl::body PreviewControl::update {} {
       } else {
         set rotwrap 0
       }
-      set ha [tccPreview cget -ha]
-      set zd [tccPreview cget -zd]
-      set am [tccPreview cget -am]
+      set ha [$view cget -ha]
+      set zd [$view cget -zd]
+      set am [$view cget -am]
       $itk_component(ha) configure -text $ha
       $itk_component(zd) configure -text [format %.1f $zd]
       $itk_component(am) configure -text [format %.2f $am]
       $itk_component(moond) configure \
-            -text [format %.2f [tccPreview cget -moonSep]]
+            -text [format %.2f [$view cget -moonSep]]
 
 # Set the alarm state of the widgets depend on the visibility.
       if { $vis } {
@@ -384,7 +384,7 @@ itcl::body PreviewControl::update {} {
          $itk_component(el) configure -state alarm
       }
    
-      set pwfs1 [tccPreview cget -p1xy]
+      set pwfs1 [$view cget -p1xy]
       if { ! [string equal $pwfs1 ""] } {
          set x [lindex $pwfs1 0]
          set y [lindex $pwfs1 1]
@@ -409,7 +409,7 @@ itcl::body PreviewControl::update {} {
          $itk_component(pwfs1y) configure -text "" -state normal
          $itk_component(pwfs1r) configure -text "" -state normal
       }
-      set pwfs2 [tccPreview cget -p2xy]
+      set pwfs2 [$view cget -p2xy]
       if { ! [string equal $pwfs2 ""] } {
          set x [lindex $pwfs2 0]
          set y [lindex $pwfs2 1]
@@ -434,7 +434,7 @@ itcl::body PreviewControl::update {} {
          $itk_component(pwfs2y) configure -text "" -state normal
          $itk_component(pwfs2r) configure -text "" -state normal
       }
-      set oiwfs [tccPreview cget -oixy]
+      set oiwfs [$view cget -oixy]
       if { ! [string equal $oiwfs ""] } {
          set x [lindex $oiwfs 0]
          set y [lindex $oiwfs 1]
@@ -473,11 +473,11 @@ itcl::body PreviewControl::update {} {
          $itk_component(oiwfsy) configure -text "" -state normal
          $itk_component(oiwfsr) configure -text "" -state normal
       }
-      set az1time [tccPreview cget -azttl1]
-      set az2time [tccPreview cget -azttl2]
-      set eltime [tccPreview cget -elttl]
-      set rot1time [tccPreview cget -rotttl1]
-      set rot2time [tccPreview cget -rotttl2]
+      set az1time [$view cget -azttl1]
+      set az2time [$view cget -azttl2]
+      set eltime [$view cget -elttl]
+      set rot1time [$view cget -rotttl1]
+      set rot2time [$view cget -rotttl2]
 
 # Set message about time to elevation limit.
       if { $vis } {
@@ -564,7 +564,7 @@ itcl::body PreviewControl::countdown {} {
 itcl::body PreviewControl::plot {} {
 
 # Get the target position
-   set target [tccPreview get source_target]
+   set target [$view get source_target]
 
 # Map skycat
    skycatPanel map

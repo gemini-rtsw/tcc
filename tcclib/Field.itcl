@@ -48,7 +48,7 @@
 #
 #          plot azelplot Plots the field position on an azelplot.
 #
-#  D Terrett 3 November 2002
+#  D Terrett 21 February 2003
 #
 #  Copyright CCLRC
 #+
@@ -60,7 +60,7 @@ itcl::class Field {
    public {
       method apply {comp}
       method init {}
-      method preview {}
+      method preview {view}
       method save {node}
       method add {type name args}
       method remove {type name}
@@ -201,32 +201,32 @@ itcl::body Field::init {} {
    set airmassLimit ""
 }
 
-itcl::body Field::preview {} {
+itcl::body Field::preview {view} {
 
 # Call the preview method of all the components that have a value.
    if { ! [string equal $sciencetarget ""] } {
-      ${targetns}::$sciencetarget preview sourceA
+      ${targetns}::$sciencetarget preview $view sourceA
    }
    if { ! [string equal $pwfs1target ""] } {
-      ${targetns}::$pwfs1target preview pwfs1
+      ${targetns}::$pwfs1target preview $view pwfs1
    }
    if { ! [string equal $pwfs2target ""] } {
-      ${targetns}::$pwfs2target preview pwfs2
+      ${targetns}::$pwfs2target preview $view pwfs2
    }
    if { ! [string equal $oiwfstarget ""] } {
-      ${targetns}::$oiwfstarget preview oiwfs
+      ${targetns}::$oiwfstarget preview $view oiwfs
    }
    if { ! [string equal $altairtarget ""] } {
-      ${targetns}::$altairtarget preview altair
+      ${targetns}::$altairtarget preview $view altair
    }
    if { ! [string equal $guide ""] } {
-      ::GuideNames::$guide preview
+      ::GuideNames::$guide preview $view
    }
    if { ! [string equal $rotator ""] } {
-      ::RotatorNames::$rotator preview
+      ::RotatorNames::$rotator preview $view
    }
    if { ! [string equal $wavelength ""] } {
-      ::WavelengthNames::$wavelength preview science
+      ::WavelengthNames::$wavelength preview $view science
    }
 }
 

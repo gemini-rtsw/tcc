@@ -88,7 +88,7 @@
 #           save node     Saves the values of the target options to the
 #                         xml node.
 #
-#  D Terrett 30 January 2003
+#  D Terrett 21 February 2003
 #
 #  Copyright CCLRC
 #+
@@ -100,7 +100,7 @@ itcl::class Target {
       method apply {comp}
       method grab {comp}
       method init {}
-      method preview {vt}
+      method preview {view vt}
       method save {node}
       variable type {}
       variable objname {}
@@ -311,7 +311,7 @@ itcl::body Target::init {} {
    set brightness {}
 }
 
-itcl::body Target::preview vt {
+itcl::body Target::preview {view vt} {
    if { [string equal $vt altair] } {
       set vt pwfs2
    }
@@ -329,21 +329,21 @@ itcl::body Target::preview vt {
          }
          switch $vt {
             sourceA {
-               tccPreview target $type $c1 $c2 $system $equinox $epoch \
+               $view target $type $c1 $c2 $system $equinox $epoch \
                      [lindex $pm 0] [lindex $pm 1] $parallax $rv
             }
             pwfs1 {
-               tccPreview configure -p1Target [list $type $c1 $c2 $system \
+               $view configure -p1Target [list $type $c1 $c2 $system \
                      $equinox $epoch [lindex $pm 0] [lindex $pm 1] \
                      $parallax $rv]
             }
             pwfs2 {
-               tccPreview configure -p2Target [list $type $c1 $c2 $system \
+               $view configure -p2Target [list $type $c1 $c2 $system \
                      $equinox $epoch [lindex $pm 0] [lindex $pm 1] \
                      $parallax $rv]
             }
             oiwfs {
-               tccPreview configure -oiTarget [list $type $c1 $c2 $system \
+               $view configure -oiTarget [list $type $c1 $c2 $system \
                      $equinox $epoch [lindex $pm 0] [lindex $pm 1] \
                      $parallax $rv]
             }
@@ -352,16 +352,16 @@ itcl::body Target::preview vt {
       degdegTarget {
          switch $vt {
             sourceA {
-               tccPreview target $type AZEL $c1 $c2
+               $view target $type AZEL $c1 $c2
             }
             pwfs1 {
-               tccPreview configure -p1Target [list $type AZEL $c1 $c2]
+               $view configure -p1Target [list $type AZEL $c1 $c2]
             }
             pwfs2 {
-               tccPreview configure -p2Target [list $type AZEL $c1 $c2]
+               $view configure -p2Target [list $type AZEL $c1 $c2]
             }
             oiwfs {
-               tccPreview configure -oiTarget [list $type AZEL $c1 $c2]
+               $view configure -oiTarget [list $type AZEL $c1 $c2]
             }
          }
       }
@@ -369,7 +369,7 @@ itcl::body Target::preview vt {
          if { [string equal $vt sourceA] } {
             switch $format {
                "AsA major planet" {
-                  tccPreview target $type 1 $epochofel $orbinc $longascnode \
+                  $view target $type 1 $epochofel $orbinc $longascnode \
                         $longofperi $meandist $eccentricity $meanlong $dailymot
                }
                "JPL major planet" {
@@ -385,7 +385,7 @@ itcl::body Target::preview vt {
                      error "expecting floating point number but got
                            \"$longascnode\""
                   }
-                  tccPreview target $type 1 $epochofel $orbinc $longascnode \
+                  $view target $type 1 $epochofel $orbinc $longascnode \
                         [expr { $longascnode + $argofperi }] $meandist \
                         $eccentricity  \
                         [expr { $longascnode + $argofperi + $meananom }] \
@@ -397,7 +397,7 @@ itcl::body Target::preview vt {
                         [slaPertel 2 $epochofel $epochofel $orbinc \
                               $longascnode $argofperi $meandist $eccentricity \
                               $meananom] {}
-                  tccPreview target $type 2 $epoch1 $inclination1 $anode1 \
+                  $view target $type 2 $epoch1 $inclination1 $anode1 \
                         $perihelion1 $a1 $e1 $M1
                }
                "AsA comet" -
@@ -407,7 +407,7 @@ itcl::body Target::preview vt {
                         [slaPertel 3 $epochofel $epochofperi $orbinc \
                               $longascnode $argofperi $peridist \
                               $eccentricity] {}
-                  tccPreview target $type 3 $epoch1 $inclination1 $anode1 \
+                  $view target $type 3 $epoch1 $inclination1 $anode1 \
                         $perihelion1 $q1 $e1
                }
             }
@@ -416,7 +416,7 @@ itcl::body Target::preview vt {
    }
       
    if { ! [string equal $trackrate ""] } {
-      ${trackratens}::$trackrate preview $vt
+      ${trackratens}::$trackrate preview $view $vt
    }
 }
 
