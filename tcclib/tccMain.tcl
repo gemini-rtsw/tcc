@@ -4,7 +4,7 @@
 #  The main program for the Gemini control console. It creates the top level
 #  "toolbar" window.
 #
-#  D Terrett 26 May 1999
+#  D Terrett 12 November 1999
 #
 #  Copyright CCLRC
 #-
@@ -21,7 +21,8 @@ proc tccMain args {
    service epics
 
 # Process command line arguments.
-   set layout ""
+   global ROOT
+   set layout $ROOT/default_layout.tcc
    set init ""
    foreach {opt val} $args {
       switch -- $opt {

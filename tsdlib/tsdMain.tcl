@@ -2,7 +2,7 @@
 #
 #  The main routine of the Gemini telescope status display application.
 #
-#  D Terrett 1 September 1998
+#  D Terrett 10 November 1999
 #
 #  Copyright CCLRC
 #-
@@ -18,7 +18,8 @@ proc tsdMain args {
    service epics
 
 # Process command line arguments.
-   set layout ""
+   global ROOT
+   set layout $ROOT/default_layout.tsd
    foreach {opt val} $args {
       switch -- $opt {
          -layout {
