@@ -10,7 +10,7 @@
 #           update          Updates the view with the current state of the
 #                           telescope.
 #
-#  D Terrett 22 May 2000
+#  D Terrett 26 June 2001
 #
 #  Copyright CCLRC
 #-
@@ -247,4 +247,13 @@ itcl::body GraphicDisplay::update {} {
          -holecover [sa gissad get m1inst value] \
          -calunit [sa gcalsad get shutter value]
    $itk_component(opticsview) update
+
+
+# Set the ISS port labels.
+   $itk_component(opticsview) configure \
+         -port1label [sa agssad get port1Label] \
+         -port2label [sa agssad get port2Label] \
+         -port3label [sa agssad get port3Label] \
+         -port4label [sa agssad get port4Label] \
+         -port5label [sa agssad get port5Label] 
 }

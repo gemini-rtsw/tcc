@@ -1,12 +1,5 @@
 # Options database for the tcc & tsd - this version is for Cerro Pachon
 
-# Labels for ISS ports.
-*graphicDisplay.port1Label:
-*graphicDisplay.port2Label:
-*graphicDisplay.port3Label:     Alignment tel
-*graphicDisplay.port4Label:     A&G cabinet
-*graphicDisplay.port5Label:     cfwfs
-
 # Foreground for all windows.
 *foreground:				Black
 

@@ -1,12 +1,5 @@
 # Options database for the tcc & tsd - this version is for Mauna Kea
 
-# Labels for ISS ports.
-*graphicDisplay.port1Label:	OSCIR
-*graphicDisplay.port2Label:	
-*graphicDisplay.port3Label:     QUIRC/Hokupa'a
-*graphicDisplay.port4Label:     GCAL
-*graphicDisplay.port5Label:	NIRI
-
 # Foreground for all windows.
 *foreground:				Black
 
