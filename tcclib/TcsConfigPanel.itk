@@ -15,7 +15,7 @@
 #  Methods:
 #          none
 #
-#  D Terrett 24 November 1999
+#  D Terrett 2 October 2000
 #
 #  Copyright CCLRC
 #+
@@ -48,21 +48,24 @@ itcl::body TcsConfigPanel::constructor args {
    }
 
 # Add the edit menu to the menu bar.
-   set menubutton [$itk_component(menubar) add menubutton edit \
-         -text Edit]
+   $itk_component(menubar) add menubutton edit -text Edit
 
 # Generate the sub components menu items.
    createSubMenu .edit tcsconfig TcsConfig
 
 # Add the windows menu to the menu bar.
-   set menubutton [$itk_component(menubar) add menubutton windows \
-         -text Windows]
+   $itk_component(menubar) add menubutton windows -text Windows
 
 # Add a command for each panel object.
    foreach panel [itcl::find objects -class PanelMgr] {
       $itk_component(menubar) add command .windows.$panel \
          -command "$panel map" -label [$panel cget -title]
    }
+
+# Add tools menu to the menu bar.
+   $itk_component(menubar) add menubutton tools -text Tools
+   $itk_component(menubar) add command .tools.pointupdate \
+         -command "pointUpdatePanel map" -label "Pointing model update"
 
    setWidgetColors "$itk_component(menubar) $itk_component(control)" \
          $itk_option(-background) $itk_option(-foreground)

@@ -1,0 +1,48 @@
+#+
+#  PointUpdatePanel <- Panel
+#
+#  Implements the PointUpdatePanel widget. A Panel widget with a 
+#  PointUpdateControl widget packed into its interior
+#
+#  Options:
+#          none
+#
+#  Methods:
+#          none
+#
+#  D Terrett 2 October 2000
+#
+#  Copyright CCLRC
+#+
+
+itcl::class PointUpdatePanel {
+   inherit Panel
+
+   constructor args {}
+}
+
+itk::usual PointUpdatePanel {
+   keep -background -cursor
+}
+
+itcl::body PointUpdatePanel::constructor args {
+
+# Withdraw the top level window so that we don't see geometry changes as
+# we wait for sa to connect.
+   set toplevel [winfo toplevel $itk_interior]
+   wm withdraw $toplevel
+
+   itk_component add control {
+      PointUpdateControl $itk_interior.control
+   }
+   setWidgetColors "$itk_component(menubar) $itk_component(control)" \
+         $itk_option(-background) $itk_option(-foreground)
+
+   pack $itk_component(control) -fill both -expand y
+
+   set itk_option(-windows) $itk_component(control)
+
+   eval itk_initialize $args
+
+   wm deiconify $toplevel
+}

@@ -1,14 +1,14 @@
 #+
-#  PointUpdate.itk
+#  PointUpdateControl.itk
 #
-#  Implements the pointUpdate widget.
+#  Implements the PointUpdateControl widget.
 #
-#  D Terrett 28 May 1999
+#  D Terrett 2 October 2000
 #
 #  Copyright CCLRC
 #-
 
-itcl::class PointUpdate {
+itcl::class PointUpdateControl {
    inherit itk::Widget
 
    constructor args {}
@@ -23,10 +23,10 @@ itcl::class PointUpdate {
    private method setia
 }
 
-itk::usual PointUpdate {
+itk::usual PointUpdateControl {
 }
 
-itcl::body PointUpdate::constructor args {
+itcl::body PointUpdateControl::constructor args {
 
 # SelectGrid for observations.
    itk_component add obsframe {
@@ -124,10 +124,30 @@ itcl::body PointUpdate::constructor args {
    pack $itk_component(take) $itk_component(update) $itk_component(iainfit) \
          -side left -expand yes -pady 5
 
+# Create command senders and status acceptors.
+   if {[catch {cs pointLog info}]} {
+      epics cs pointLog
+   }
+   if {[catch {cs pointParam info}]} {
+      epics cs pointParam
+   }
+   if {[catch {cs zeroGuide info}]} {
+      epics cs zeroGuide
+   }
+   if {[catch {sa net info}]} {
+      epics sa net
+   }
+   if {[catch {sa guide info}]} {
+      epics sa guide
+   }
+   if {[catch {sa session info}]} {
+      epics sa session
+   }
+
    eval itk_initialize $args
 }
 
-itcl::body PointUpdate::purge {} {
+itcl::body PointUpdateControl::purge {} {
 #+
 # Deletes all disabled Ptweak objects and reloads the selectgrid.
 #-
@@ -145,7 +165,7 @@ itcl::body PointUpdate::purge {} {
    }
 }
 
-itcl::body PointUpdate::take1 {} {
+itcl::body PointUpdateControl::take1 {} {
 #+
 # Sends a pointlog command to the tcs with take2 as the callback routine.
 #-
@@ -157,7 +177,7 @@ itcl::body PointUpdate::take1 {} {
    }
 }
 
-itcl::body PointUpdate::take2 {mon status info} {
+itcl::body PointUpdateControl::take2 {mon status info} {
 #+
 # Creates a Pteak object and adds it to the SelectGrid.
 #-
@@ -174,7 +194,7 @@ itcl::body PointUpdate::take2 {mon status info} {
    fit
 }
 
-itcl::body PointUpdate::fit args {
+itcl::body PointUpdateControl::fit args {
 #+
 # Generates a new fit and then rewrites the contents of the SelectGrid.
 #-
@@ -202,7 +222,7 @@ itcl::body PointUpdate::fit args {
    }
 }
 
-itcl::body PointUpdate::commit {} {
+itcl::body PointUpdateControl::commit {} {
 
 # Commit the current fit to the session parameters.
    if { [catch {Ptweak::commit $itk_interior $itk_option(-ia)} info] } {
@@ -211,13 +231,13 @@ itcl::body PointUpdate::commit {} {
    }
 }
 
-itcl::configbody PointUpdate::ia {
+itcl::configbody PointUpdateControl::ia {
 
 # If the include IA flag is changed we need to re-compute the fit.
    fit
 }
 
-itcl::body PointUpdate::setia {} {
+itcl::body PointUpdateControl::setia {} {
 
    upvar #0 [$itk_component(iainfit) cget -variable] infit
    $this configure -ia $infit

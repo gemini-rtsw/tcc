@@ -6,7 +6,7 @@
 #  Arguments:
 #             none
 #
-#  D Terrett 7 June 2000
+#  D Terrett 2 October 2000
 #
 #  Copyright CCLRC
 #-
@@ -46,6 +46,8 @@ proc createPanels {} {
          -class OffsetHandsetPanel -title "Target Handset"
    PanelMgr poHandsetPanel -name .poHandsetPanel \
          -class PoHandsetPanel -title "Instrument Handset"
+   PanelMgr pointUpdatePanel -name .pointUpdatePanel \
+         -class PointUpdatePanel -title "Pointing model update"
 
 # Create all the edit panels.
    createEditPanels "" tcsconfig TcsConfig TcsConfigNames \
