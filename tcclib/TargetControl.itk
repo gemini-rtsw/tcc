@@ -259,8 +259,7 @@ itcl::body TargetControl::save {name} {
                -pm1 [$itk_component(pm1) get] \
                -pm2 [$itk_component(pm2) get] \
                -parallax [$itk_component(parallax) get] \
-               -rv [$itk_component(rv) get] \
-               -trackrate [$itk_component(trackrate) get]
+               -rv [$itk_component(rv) get] 
       }
       Az/El {
          $name configure \
@@ -269,7 +268,8 @@ itcl::body TargetControl::save {name} {
                -c2 [$itk_component(el) get]
       }
    }
-   $name configure -brightness [$itk_component(brightness) get]
+   $name configure -brightness [$itk_component(brightness) get] \
+         -trackrate [$itk_component(trackrate) get]
 }
 
 itcl::configbody TargetControl::component {
@@ -335,4 +335,8 @@ itcl::body TargetControl::newtrlist {n1 n2 op} {
 # Re-configure the control.
   $itk_component(trackrate) configure -componentlist \
        $::Config($comp.trackrate,list)
+
+# Select the current component.
+  [$itk_component(trackrate) component selector] \
+        select $::Config($comp.trackrate,value)
 }
