@@ -27,17 +27,19 @@
 itcl::class seq::PrincipalSystem {
    constructor {apply args} {}
    destructor {}
-   public method post {action}
-   public method cancel {action}
-   public variable debug 0
-
-   private method monitor {name status info}
-   private method timeout 
-   private method traceproc {name1 name2 op}
-   private method cleanup
-
-   private variable Apply
-   private variable CurrentAction ""
+   public {
+      method post {action}
+      method cancel {action}
+      variable debug 0
+   }
+   private {
+      method monitor {name status info}
+      method timeout 
+      method traceproc {name1 name2 op}
+      method cleanup
+      variable Apply
+      variable CurrentAction ""
+   }
 }
 
 itcl::body seq::PrincipalSystem::constructor {apply args} {
