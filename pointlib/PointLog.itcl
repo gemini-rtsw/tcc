@@ -5,7 +5,7 @@
 #  changes to a file. When the object is destroyed the log file is converted
 #  to a tpoint input file.
 #
-#  D Terrett 17 July 2000
+#  D Terrett 23 July 2000
 #
 #  Copyright CCLRC
 #+
@@ -45,7 +45,7 @@ itcl::body PointLog::constructor {pointtest} {
                 -initialdir $SAVE_FILE_DIR \
                 -filetypes $types -title "Open log file"]
 
-   if { $LogFileName != {} } {
+   if { ![string is space $LogFileName] } {
       set Logchan [open $LogFileName {WRONLY CREAT TRUNC}]
       [$pointtest component menus] menuconfigure file.open -state disabled
       [$pointtest component menus] menuconfigure file.close -state normal
@@ -131,7 +131,12 @@ itcl::body PointLog::constructor {pointtest} {
 
 # Restore the default directory
    cd $pwd
-   return
+
+   if { [string is space $LogFileName] } {
+      error "Log file not opened"
+   } else {
+      return
+   }
 }
 
 itcl::body PointLog::log {name alarm time values} {
