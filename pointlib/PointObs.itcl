@@ -24,13 +24,15 @@
 #       selectafterlog If true, slew to the next star after logging.
 #
 #       guide          If true, guiding is enabled before logging and
-#                      disbaled afterwards.
+#                      disabled afterwards.
 #
 #       wfs            Which WFS to use for guiding.
 #
 #       zlpm           If true, zero the local pointing model when slewing.
 #
-#  D Terrett 11 September 2000
+#       logrepeats     The number of time to log each star
+#
+#  D Terrett 31 January 2001
 #
 #  Copyright CCLRC
 #+
@@ -48,6 +50,7 @@ itcl::class PointObs {
       variable guideafterslew 0
       variable zlpm 0
       variable wfs PWFS2
+      variable logrepeats 1
    }
    private {
       method nextstar {args}
@@ -219,8 +222,8 @@ itcl::body PointObs::nextaction {after} {
          }
       }
       log {
-         if { $LogCount < 4 } {
-            incr LogCount
+         incr LogCount
+         if { $LogCount < $logrepeats } {
             after 100 [namespace code "$LogAction start"]
          } else {
             set LogCount 0

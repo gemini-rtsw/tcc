@@ -3,7 +3,7 @@
 #
 # A PointTest widget is the main interface of the pointtest application.
 #
-# D Terrett 26 July 2000
+# D Terrett 31 January 2001
 #
 # Copyright CCLRC
 #+
@@ -18,12 +18,14 @@ itcl::class PointTest {
       method nextstyle {widget}
       method setguidedelay {name1 name2 op}
       method setlogdelay {name1 name2 op}
+      method setlogrepeat {name1 name2 op}
       variable Options
       variable PointObs
       variable StarCat
       variable Wfs PWFS2
       variable LogDelay 20
       variable GuideDelay 10
+      variable LogRepeat 1
    }
 }
 
@@ -88,9 +90,14 @@ itcl::body PointTest::constructor {args} {
    pack [iwidgets::spinint $f.logdelay -labeltext "delay before logging (s)" \
       -range {0 60} -width 2] \
       -side bottom -pady 3 -anchor w
+   pack [iwidgets::spinint $f.logrepeat \
+      -labeltext "Number of times to log each star" -range {1 10} -width 2] \
+      -side bottom -pady 3 -anchor w
    [$f.logdelay component entry] configure -textvariable [scope LogDelay]
+   [$f.logrepeat component entry] configure -textvariable [scope LogRepeat]
    [$f.guidedelay component entry] configure -textvariable [scope GuideDelay]
    trace variable LogDelay w [itcl::code $this setlogdelay]
+   trace variable LogRepeat w [itcl::code $this setlogrepeat]
    trace variable GuideDelay w [itcl::code $this setguidedelay]
 
    pack [radiobutton $f.p1 -text PWFS1 -variable [scope Options(wfs)] \
@@ -252,5 +259,11 @@ itcl::body PointTest::setlogdelay {name1 name2 op} {
 itcl::body PointTest::setguidedelay {name1 name2 op} {
    if { [string length $GuideDelay] } {
       $PointObs configure -guidedelay $GuideDelay
+   }
+}
+
+itcl::body PointTest::setlogrepeat {name1 name2 op} {
+   if { [string length $LogRepeat] } {
+      $PointObs configure -logrepeats $LogRepeat
    }
 }
