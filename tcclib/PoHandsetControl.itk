@@ -10,7 +10,7 @@
 #  Methods:
 #           none
 #
-#  D Terrett 8 June 2000
+#  D Terrett 12 June 2000
 #
 #  Copyright CCLRC
 #+
@@ -21,9 +21,9 @@ itcl::class PoHandsetControl {
    constructor args {}
 
    private method offset dir
-   private method newstep size
    private method offpars par
    private method setvt
+   private variable currentstep -1
 }
 
 itk::usual PoHandsetControl {
@@ -42,8 +42,7 @@ itcl::body PoHandsetControl::constructor args {
 
    set w $itk_component(top)
    itk_component add stepsize {
-      StepSize $w.stepsize -text "Step size (mm)" \
-            -command [code $this newstep]
+      StepSize $w.stepsize -text "Step size (mm)"
    }
    pack $itk_component(stepsize)
 
@@ -102,28 +101,24 @@ itcl::body PoHandsetControl::constructor args {
    pack $itk_component(absorb) $itk_component(clear) -side left -expand y \
          -pady 4
 
-# Set the default step size in the TCS
-   newstep 1.0
-
    eval itk_initialize $args
 }
 
 itcl::body PoHandsetControl::offset dir {
+
+# Set step size if different from current.
+   set step [$itk_component(stepsize) get]
+   if { $step != $currentstep } {
+      cs poHandConfig set step $step
+      logger command poHandConfig
+   }
    cs poHandset set direction $dir
    logger command poHandset
    if { [catch {cs tcsApply post} msg] } {
       tk_messageBox -icon error -parent $itk_interior -message \
             "Error adjusting instrument origin: TCS reports \"$msg\""
    }
-}
-
-itcl::body PoHandsetControl::newstep size {
-   cs poHandConfig set step $size
-   logger command poHandConfig
-   if { [catch {cs tcsApply post} msg] } {
-      tk_messageBox -icon error -parent $itk_interior -message \
-            "Error setting step size: TCS reports \"$msg\""
-   }
+   set currentstep $step
 }
 
 itcl::body PoHandsetControl::offpars par {

@@ -11,7 +11,7 @@
 #  Methods:
 #           none
 #
-#  D Terrett 8 June 2000
+#  D Terrett 12 June 2000
 #
 #  Copyright CCLRC
 #+
@@ -22,13 +22,13 @@ itcl::class OffsetHandsetControl {
    constructor args {}
 
    private method offset dir
-   private method newstep size
    private method offpars par
    private method setvt
    private method settang
    private method getOffset
 
    private variable tangent
+   private variable currentstep -1
 }
 
 itk::usual OffsetHandsetControl {
@@ -47,8 +47,7 @@ itcl::body OffsetHandsetControl::constructor args {
 
    set w $itk_component(top)
    itk_component add stepsize {
-      StepSize $w.stepsize -text "Step size (arcsec)" \
-            -command [code $this newstep]
+      StepSize $w.stepsize -text "Step size (arcsec)"
    }
    pack $itk_component(stepsize)
 
@@ -136,28 +135,24 @@ itcl::body OffsetHandsetControl::constructor args {
    pack $itk_component(absorb) $itk_component(clear) -side left -expand y \
          -pady 4
 
-# Set the default step size in the TCS
-   newstep 1.0
-
    eval itk_initialize $args
 }
 
 itcl::body OffsetHandsetControl::offset dir {
+
+# Set the step size if different from current.
+   set step [$itk_component(stepsize) get]
+   if { $step != $currentstep } {
+      cs tarHandConfig set step $step
+      logger command tarHandConfig
+   }
    cs tarHandset set direction $dir
    logger command tarHandset
    if { [catch {cs tcsApply post} msg] } {
       tk_messageBox -icon error -parent $itk_interior -message \
             "Error adjusting offset: TCS reports \"$msg\""
    }
-}
-
-itcl::body OffsetHandsetControl::newstep size {
-   cs tarHandConfig set step $size
-   logger command tarHandConfig
-   if { [catch {cs tcsApply post} msg] } {
-      tk_messageBox -icon error -parent $itk_interior -message \
-            "Error setting step size: TCS reports \"$msg\""
-   }
+   set currentstep $step
 }
 
 itcl::body OffsetHandsetControl::offpars par {

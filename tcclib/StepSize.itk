@@ -5,12 +5,12 @@
 #  handset step size.
 #
 #  Options:
-#          -command    command to be executed when the step size is changed
-#
-#  Methods:
 #          none
 #
-#  D Terrett 28 May 1999
+#  Methods:
+#          get      Returns the current step size.
+#
+#  D Terrett 12 June 2000
 #
 #  Copyright CCLRC
 #-
@@ -21,12 +21,13 @@ itcl::class StepSize {
    constructor args {}
    destructor {}
 
-   itk_option define -command command Command ""
+   public method get {} {return [$selected cget -text]}
 
    private method push
 
-   private common Custom1
-   private common Custom2
+   private variable custom1 10
+   private variable custom2 20
+   private variable selected
 }
 
 itk::usual StepSize {
@@ -67,23 +68,18 @@ itcl::body StepSize::constructor args {
 # Entry widget for setting the custom step sizes.
    itk_component add custom1 {
       iwidgets::entryfield $itk_interior.custom1 -width 4 \
-            -textvariable [scope Custom1($this)] -validate real
+            -textvariable [scope custom1] -validate real
    }
-   $itk_component(step6) configure -textvariable [scope Custom1($this)]
-   set Custom1($this) 10
+   $itk_component(step6) configure -textvariable [scope custom1]
    itk_component add custom2 {
       iwidgets::entryfield $itk_interior.custom2 -width 4 \
-            -textvariable [scope Custom2($this)] -validate real
+            -textvariable [scope custom2] -validate real
    }
-   $itk_component(step7) configure -textvariable [scope Custom2($this)]
-   set Custom2($this) 20
+   $itk_component(step7) configure -textvariable [scope custom2]
    pack $itk_component(custom1) $itk_component(custom2) -side left
 
-# Bind <Return> in the entry widget to "pushing" the custom button.
-   bind [$itk_component(custom1) component entry] <Return> \
-         [code $this push $itk_component(step6)]
-   bind [$itk_component(custom2) component entry] <Return> \
-         [code $this push $itk_component(step7)]
+# Select the 1 button.
+   push $itk_component(step3)
 
    eval itk_initialize $args
 }
@@ -96,9 +92,6 @@ itcl::body StepSize::push w {
    }
    $w configure -relief sunken
 
-# Execute the -command option
-   set step [$w cget -text]
-   if { $itk_option(-command) != "" } {
-      uplevel #0 $itk_option(-command) \"$step\"
-   }
+# Record the selection.
+   set selected $w
 }

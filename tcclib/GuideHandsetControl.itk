@@ -9,7 +9,7 @@
 #  Methods:
 #           none
 #
-#  D Terrett 7 June 2000
+#  D Terrett 12 June 2000
 #
 #  Copyright CCLRC
 #+
@@ -21,11 +21,11 @@ itcl::class GuideHandsetControl {
    destructor {after cancel $refid}
 
    private method offset dir
-   private method newstep size
    private method refresh
    private method zerolocal
 
    private variable refid
+   private variable currentstep -1
 }
 
 itk::usual GuideHandsetControl {
@@ -44,13 +44,9 @@ itcl::body GuideHandsetControl::constructor args {
 
    set w $itk_component(top)
    itk_component add stepsize {
-      StepSize $w.stepsize -text "Step size (arcsec)" \
-            -command [code $this newstep]
+      StepSize $w.stepsize -text "Step size (arcsec)"
    }
    pack $itk_component(stepsize)
-
-# Set the default step size in the TCS.
-   newstep 1.0
 
 # Paddle buttons.
    itk_component add paddle {
@@ -133,6 +129,13 @@ itcl::body GuideHandsetControl::constructor args {
 }
 
 itcl::body GuideHandsetControl::offset dir {
+
+# Update stepsize if required.
+   set step [$itk_component(stepsize) get]
+   if { $step != $currentstep } {
+      cs guideHandConfig set step $step
+      logger command guideHandConfig
+   }
    cs guideHandset set direction $dir
    logger command guideHandset
 #   if { [catch {cs tcsApply post} msg] } {
@@ -144,16 +147,7 @@ itcl::body GuideHandsetControl::offset dir {
 #      tk_messageBox -icon error -parent $itk_interior -message \
 #            "Error adjusting pointing: TCS reports \"$msg\""
 #   }
-}
-
-itcl::body GuideHandsetControl::newstep size {
-   cs guideHandConfig set step $size
-   logger command guideHandConfig
-   catch {cs tcsApply post}
-#   if { [catch {cs tcsApply post} msg] } {
-#      tk_messageBox -icon error -parent $itk_interior -message \
-#            "Error setting step size: TCS reports \"$msg\""
-#   }
+   set currentstep $step
 }
 
 itcl::body GuideHandsetControl::refresh {} {
