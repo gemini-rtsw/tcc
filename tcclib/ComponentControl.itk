@@ -30,7 +30,7 @@
 #
 #           save object     Save the contents of the controls in the object.
 #
-#  D Terrett  11 April 2002
+#  D Terrett  8 May 2002
 #
 #  Copyright CCLRC
 #+
@@ -193,8 +193,10 @@ itcl::body ComponentControl::store {name} {
 
 # Update the global config array name - although the name hasn't changed
 # this enables other parts of the system to watch for changes in
-# component definitions.
-      set ::Config($comp,value) $name
+# component definitions. Only do this if the name isn't blank.
+      if { $name != "" } {
+         set ::Config($comp,value) $name
+      }
    } 
    return 1
 }
