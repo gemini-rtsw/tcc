@@ -8,7 +8,7 @@
 #     update    Updates the currently selected pointing origin with
 #                new values.
 #
-#  D Terrett  29 June 2001
+#  D Terrett  11 April 2003
 #
 #  Copyright CCLRC
 #+
@@ -16,12 +16,15 @@
 itcl::class PoManager {
    inherit itk::Widget
    constructor {args} {}
+   itk_option define -lock lock Lock 0 {
+      if { $itk_option(-lock) } {set bchop $achop}
+   }
    public {
       method update {chop}
    }
    private {
       method selectcmd {po}
-      method selecta {po}
+      method select {chop po}
       variable achop w
       variable bchop w
    }
@@ -53,11 +56,11 @@ itcl::body PoManager::constructor {args} {
 # Chop state radiobuttons.
       itk_component add a$po {
          radiobutton $w.a$po -variable [itcl::scope achop] -value $po \
-               -command [itcl::code $this selecta $po]
+               -command [itcl::code $this select a $po]
       }
       itk_component add b$po {
          radiobutton $w.b$po -variable [itcl::scope bchop] -value $po \
-               -command [itcl::code $this selectcmd $po]
+               -command [itcl::code $this select b $po]
       }
 
 # Subcomponent selector.
@@ -95,11 +98,8 @@ itcl::body PoManager::constructor {args} {
 }
 
 itcl::body PoManager::selectcmd {po} {
-   if { [string equal $po ra] } {
-      set name ""
-   } else {
-      set name [$itk_component(sel$po) get]
-   }
+
+   set name [$itk_component(sel$po) get]
    if { [string length $name] } {
 
 # There is a name in the combobox; check that it is the name of an existing
@@ -118,45 +118,50 @@ itcl::body PoManager::selectcmd {po} {
          $itk_component(y$po) configure \
                -text [format %6.2f [::PointOrigNames::$name cget -y]]
       }
-   }
 
 # If one of the chop states is selected for this pointing origin then 
 # absorb any offsets and send the X/Y to the TCS.
-
-   if { [string equal $achop $po] } {
-      cs absorbPoOffset set vt [list "SOURCE A"]
-      cs absorbPoOffset set index all
-      logger command absorbPoOffset
-      if { [catch {cs tcsApply post} msg] } {
-         tk_messageBox -icon error -parent $itk_interior -message \
-               "Error absorbing pointing origin offsets: TCS reports \"$msg\""
-      }
-   }
-   if { [string equal $bchop $po] } {
-      cs absorbPoOffset set vt [list "SOURCE B"]
-      cs absorbPoOffset set index all
-      logger command absorbPoOffset
-      if { [catch {cs tcsApply post} msg] } {
-         tk_messageBox -icon error -parent $itk_interior -message \
-               "Error absorbing pointing origin offsets: TCS reports \"$msg\""
-      }
-   }
-   if {  [string equal $achop $po] ||  [string equal $bchop $po] } {
-      set xmm [expr {[$itk_component(x$po) cget -text] * 0.62056151}]
-      set ymm [expr {[$itk_component(y$po) cget -text] * 0.62056151}]
-      if { $achop == $po } {
-         cs poriginA set x $xmm
-         cs poriginA set y $ymm
-         logger command poriginA
+      if { [string equal $achop $po] } {
+         cs absorbPoOffset set vt [list "SOURCE A"]
+         cs absorbPoOffset set index all
+         logger command absorbPoOffset
+         if { [catch {cs tcsApply post} msg] } {
+            tk_messageBox -icon error -parent $itk_interior -message \
+                  "Error absorbing pointing origin offsets: TCS reports \"$msg\""
+         }
       }
       if { [string equal $bchop $po] } {
-         cs poriginB set x $xmm
-         cs poriginB set y $ymm
-         logger command poriginB
+         cs absorbPoOffset set vt [list "SOURCE B"]
+         cs absorbPoOffset set index all
+         logger command absorbPoOffset
+         if { [catch {cs tcsApply post} msg] } {
+            tk_messageBox -icon error -parent $itk_interior -message \
+                  "Error absorbing pointing origin offsets: TCS reports \"$msg\""
+         }
+         cs absorbPoOffset set vt [list "SOURCE C"]
+         logger command absorbPoOffset
+         if { [catch {cs tcsApply post} msg] } {
+            tk_messageBox -icon error -parent $itk_interior -message \
+                  "Error absorbing pointing origin offsets: TCS reports \"$msg\""
+         }
       }
-      if { [catch {cs tcsApply post} msg] } {
-         tk_messageBox -icon error -parent $itk_interior -message \
-               "Error setting pointing origin: TCS reports \"$msg\""
+      if {  [string equal $achop $po] ||  [string equal $bchop $po] } {
+         set xmm [expr {[$itk_component(x$po) cget -text] * 0.62056151}]
+         set ymm [expr {[$itk_component(y$po) cget -text] * 0.62056151}]
+         if { [string equal $achop $po] } {
+            cs poriginA set x $xmm
+            cs poriginA set y $ymm
+            logger command poriginA
+         }
+         if { [string equal $bchop $po] } {
+            cs poriginB set x $xmm
+            cs poriginB set y $ymm
+            logger command poriginB
+         }
+         if { [catch {cs tcsApply post} msg] } {
+            tk_messageBox -icon error -parent $itk_interior -message \
+                  "Error setting pointing origin: TCS reports \"$msg\""
+         }
       }
    }
 }
@@ -182,9 +187,11 @@ itcl::body PoManager::update {chop} {
    if { [string length $name] } {
 
 # Update the pointing origin component, creating it if necessary.
-      if { [catch {::PointOrigNames::$name configure -x $x -y $y}] } {
+      if { [catch {::PointOrigNames::$name cget -x}] } {
          PointOrigComponent ::PointOrigNames::$name PointOrigList \
                 -x $x -y $y
+      } else {
+         ::PointOrigNames::$name configure -x $x -y $y
       }
    } else {
 
@@ -197,9 +204,20 @@ itcl::body PoManager::update {chop} {
    selectcmd $po
 }
 
-itcl::body PoManager::selecta {po} {
+itcl::body PoManager::select {chop po} {
 
-# Set the chop B pointing origin to the same as A and then select it.
-   set bchop $achop
+# If the lock parameter is true then set the other chop state as well.
+   if { $itk_option(-lock) } {
+      switch $chop {
+         a {
+            set bchop $achop
+         }
+         b {
+            set achop $bchop
+         }
+      }
+   }
+
+# Select the pointing origin.
    selectcmd $po
 }

@@ -11,7 +11,7 @@
 #  Methods:
 #           none
 #
-#  D Terrett 23 June 2001
+#  D Terrett 9 April 2003
 #
 #  Copyright CCLRC
 #+
@@ -21,13 +21,15 @@ itcl::class PoHandsetControl {
    constructor args {}
    destructor {after cancel $refid}
    private {
-      method offpars {par}
       method setvt {}
-      method getOffset {par}
       method refresh {}
       method update {}
+      method setlock {}
+      method copya {}
+      method reset
       variable vt
       variable refid
+      variable lock 1
    }
 }
 
@@ -114,8 +116,15 @@ itcl::body PoHandsetControl::constructor args {
    grid $itk_component(blab) $itk_component(bsel) $itk_component(bx) \
          $itk_component(by) $itk_component(boff1) $itk_component(boff2)
 
-# Handset
+# Check button for locking the A & B origins together.
    set w $itk_component(hsframe)
+   itk_component add lock {
+      checkbutton $w.lock -text "Lock B to A" -variable [itcl::scope lock] \
+            -command [itcl::code $this setlock]
+   }
+   pack $itk_component(lock)
+
+# Handset
    itk_component add handset {
       Handset $w.handset -adjust instr
    }
@@ -135,66 +144,63 @@ itcl::body PoHandsetControl::constructor args {
             -command [itcl::code $this update]
    }
    itk_component add reset {
-      ApplyButton $w.reset -command clearPoOffset -text Reset -width 8 \
-            -parcommand [itcl::code $this offpars]
+      LiveButton $w.reset -command [itcl::code $this reset] -text Reset \
+            -width 8
    }
    pack $itk_component(absorb) $itk_component(reset) -side left -expand y \
-         -pady 10
+         -pady 5
 
 # Pointing origin manager.
    set w $itk_interior
    itk_component add pomgr {
-      PoManager $w.pomgr
+      PoManager $w.pomgr -lock 1
    }
    pack $itk_component(pomgr) -pady 5
+
+   if { [catch {cs offsetPoB info}] } {
+      epics cs offsetPoB
+   }
+   if { [catch {cs offsetPoC info}] } {
+      epics cs offsetPoC
+   }
+   if { [catch {cs clearPoOffset info}] } {
+      epics cs clearPoOffset
+   }
+
+# Set lock state.
+   setlock
 
    set refid [after 1000 [itcl::code $this refresh]]
 
    eval itk_initialize $args
 }
 
-itcl::body PoHandsetControl::offpars par {
-   switch $par {
-      vt {
-         switch $vt {
-            sourceA {return "SOURCE A"}
-            sourceB {return "SOURCE B"}
-            sourceC {return "SOURCE C"}
-         }
-      }
-      index {
-         switch $vt {
-            sourceA -
-            sourceB -
-            sourceC {return all}
-         }
+itcl::body PoHandsetControl::reset {} {
+   if {$lock} {
+      set source ALL
+   } else {
+      if {[string equal $vt sourceA]} {
+         set source "SOURCE A"
+      } else {
+         set source "SOURCE B"
       }
    }
-}
-
-itcl::body PoHandsetControl::getOffset {par} {
-   switch $par {
-      theta1 {
-         return [$itk_component(theta1) get]
-      }
-      theta2 {
-         return [$itk_component(theta2) get]
-      }
-      vt {
-         switch $vt {
-            sourceA { return "Source A" }
-            sourceB { return "Source B" }
-            sourceC { return "Source C" }
-         }
-      }
-      ind {
-         return 0
-      }
+   cs clearPoOffset set vt [list $source]
+   cs clearPoOffset set index all
+   logger command clearPoOffset
+   if { [catch {cs tcsApply post} msg] } {
+      tk_messageBox -icon error -parent $itk_interior -message \
+            "Error posting pointing origin offset command: TCS reports \
+            \"$msg\""
    }
 }
 
 itcl::body PoHandsetControl::setvt {} {
-   $itk_component(handset) configure -vt $vt
+   if {$lock} {
+      $itk_component(handset) configure -vt {sourceA sourceB sourceC}
+   } else {
+      $itk_component(handset) configure -vt $vt
+   }
 }
 
 itcl::body PoHandsetControl::refresh {} {
@@ -217,4 +223,56 @@ itcl::body PoHandsetControl::refresh {} {
 
 itcl::body PoHandsetControl::update {} {
    $itk_component(pomgr) update $vt
+   if {$lock} {
+      copya
+   }
+}
+
+itcl::body PoHandsetControl::setlock {} {
+
+   if {$lock} {
+
+# Select A and disable the B radio button.
+      set vt sourceA
+      $itk_component(bsel) configure -state disabled
+
+# Configure the handset to adjust all 3 pointing origins.
+      $itk_component(handset) configure -vt {sourceA sourceB sourceC}
+
+# Copy A to B & C.
+      copya
+   } else {
+
+# Enable the B radio button.
+      $itk_component(bsel) configure -state normal
+
+# Set the active origin
+      setvt
+   }
+
+# Configure the pointing origin manager.
+   $itk_component(pomgr) configure -lock $lock
+}
+
+itcl::body PoHandsetControl::copya {} {
+
+# Copy the current settings of A into B & C.
+   set target [sa tcssad get targetA]
+   cs poriginB set x value [lindex $target 4]
+   cs poriginB set y value [lindex $target 5]
+   logger command poriginB
+   cs offsetPoB set x value [lindex $target 6]
+   cs offsetPoB set y value [lindex $target 7]
+   logger command offsetPoB
+   cs poriginC set x value [lindex $target 4]
+   cs poriginC set y value [lindex $target 5]
+   logger command poriginC
+   cs offsetPoC set x value [lindex $target 6]
+   cs offsetPoC set y value [lindex $target 7]
+   logger command offsetPoC
+   if { [catch {cs tcsApply post} msg] } {
+      tk_messageBox -icon error -parent $itk_interior -message \
+            "Error posting pointing origin offset command: TCS reports \
+            \"$msg\""
+   }
 }
