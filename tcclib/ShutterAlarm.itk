@@ -197,23 +197,20 @@ itcl::body ShutterAlarm::alarmPopup {} {
 
    itk_component add liml1 { label $lim.liml1 -text "Top Limit:" }
    itk_component add liml2 { label $lim.liml2 -text "Bottom Limit:" }
+
    itk_component add ent1 { entry $lim.ent1 -textvariable shutterTopLimit -width 5 }
-   bind $lim.ent1 <KeyPress-Return> {
-	#puts "in a bind ... key: %K"
-	.st.alarm configure -topLimit $shutterTopLimit
-   }
+   bind $lim.ent1 <KeyPress-Return> "$this configure -topLimit \$shutterTopLimit "
+
    itk_component add ent2 { entry $lim.ent2 -textvariable shutterBotLimit -width 5 }
-   bind $lim.ent2 <KeyPress-Return> {
-	#puts "in a bind ... key: %K"
-	.st.alarm configure -botLimit $shutterBotLimit
-   }
+   bind $lim.ent2 <KeyPress-Return> ".shutAlarm.alarm configure -botLimit \$shutterBotLimit"
+
    grid $lim.liml1 $lim.ent1 $lim.liml2 $lim.ent2 -sticky news -padx 3 -pady 3
 
 
    set alarmMess $sa.alarm
 
-   itk_component add clear { button $sa.clear -text "Clear Alarm" -command { .st.alarm clearAlarm } }
-   itk_component add reset { button $sa.reset -text "Reset Peaks" -command { .st.alarm resetPeak } }
+   itk_component add clear { button $sa.clear -text "Clear Alarm" -command "$this clearAlarm " }
+   itk_component add reset { button $sa.reset -text "Reset Peaks" -command "$this resetPeak " }
    itk_component add $alarmMess { 
 	label $alarmMess -text "Current Levels OK" -fg black -bg lightgreen -relief raised
    }
