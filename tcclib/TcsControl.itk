@@ -9,7 +9,7 @@
 #  Methods:
 #          none
 #
-#  D Terrett 27 April 2001
+#  D Terrett 23 June 2001
 #
 #  Copyright CCLRC
 #+
@@ -543,13 +543,8 @@ itcl::body TcsControl::weather {} {
 # set if the source is "local".
 #-
    set source [$itk_component(source) get]
-   if { [string equal $source server] } {
-     set s 1
-   } else {
-     set s 0
-   }
-   cs weather set source $s
-   if { [string equal $source local] == 0 } {
+   cs weather set source [string equal $source local]
+   if { [string equal $source local] } {
       cs weather set temp [$itk_component(temp) get]
       cs weather set press [$itk_component(press) get]
       cs weather set humid [$itk_component(humid) get]
