@@ -4,7 +4,10 @@
 set ocs_proxy http://bill:9000/axis/services
 
 # The root of the directory in when WFS images are stored.
-set wfs_image_root /net/reggie/staging/acqcam
+set m1_tune_dir /net/reggie/staging/acqcam
+
+# The default directory for storing HRWFS images.
+#set default_wfs_dir /net/enif/export/home/wfs
 
 # The x/y/z position that corresponds to the A&G PWFS1 probeSel center
 # command.
