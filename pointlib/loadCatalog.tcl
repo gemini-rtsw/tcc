@@ -15,11 +15,16 @@ proc loadCatalog {} {
 #
 #  The first star in the catalog is then selected.
 #
-#  D Terrett 26 October 1998
+#  D Terrett 17 September 1999
 #
 #  Copyright CCLRC
 #-
    global Widgets Catalog
+
+# cd to the catalogue directory
+   set pwd [pwd]
+   global CATALOG_DIR
+   cd $CATALOG_DIR
 
 # Get the catalogue name.
    set types {
@@ -27,6 +32,7 @@ proc loadCatalog {} {
       {{All Files} * {}}
    }
    set catname [tk_getOpenFile -defaultextension .dat -parent . \
+                -initialdir $CATALOG_DIR \
                 -filetypes $types -title "Open star catalog"]
 
    if { $catname != {} } {
@@ -61,6 +67,14 @@ proc loadCatalog {} {
       }
       close $chan
 
+# Update the default catalogue directory.
+      set dir [file dirname $catname]
+      if { [string compare [file pathtype $dir] relative] == 0 } {
+         set CATALOG_DIR [pwd]/$dir
+      } else {
+         set CATALOG_DIR $dir
+      }
+
       set n [llength $Catalog]
 
 # For each star in the catalogue.
@@ -86,5 +100,8 @@ proc loadCatalog {} {
          $Widgets(azelplot) select 0
       }
    }
+
+# Restore the default directory
+   cd $pwd
    return
 }

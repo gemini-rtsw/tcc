@@ -9,16 +9,23 @@ proc openLogFile {} {
 #
 #  Description:
 #
-#  D Terrett 5 January 1999
+#  D Terrett 17 September 1999
 #
 #  Copyright CCLRC
 #-
    global Widgets Menus LogFileName
+
+# cd to the save file directory.
+   set pwd [pwd]
+   global SAVE_FILE_DIR
+   cd $SAVE_FILE_DIR
+
    set types {
       {{Data Files} {.dat} {}}
       {{All Files} * {}}
    }
    set LogFileName [tk_getSaveFile -defaultextension .dat -parent . \
+                -initialdir $SAVE_FILE_DIR \
                 -filetypes $types -title "Open log file"]
 
    if { $LogFileName != {} } {
@@ -99,10 +106,20 @@ proc openLogFile {} {
       puts $Logchan "DELAT [sa tcssad get delat value]"
       puts $Logchan "DELUT [sa tcssad get delut value]"
       flush $Logchan
-   }
+
+# Update save file directory.
+      set dir [file dirname $LogFileName]
+      if { [string compare [file pathtype $dir] relative] == 0 } {
+         set SAVE_FILE_DIR [pwd]/$dir
+      } else {
+         set SAVE_FILE_DIR $dir
+      }
 
 # Link the proc to the pointLog status acceptor.
-   sa tcssad proc pointObs saveObs
+      sa tcssad proc pointObs saveObs
+   }
 
+# Restore the default directory
+   cd $pwd
    return
 }

@@ -4,7 +4,7 @@
 #  Implements the TccToolbar widget which is packed into . to make the
 #  root window of the Gemini tcc.
 #
-#  D Terrett 19 August 1999
+#  D Terrett 17 September 1999
 #
 #  Copyright CCLRC
 #-
@@ -145,6 +145,13 @@ itcl::body TccToolbar::save {list namespace file} {
 }
 
 itcl::body TccToolbar::export {} {
+
+# cd to save file directory.
+   global SAVE_FILE_DIR
+   set pwd [pwd]
+   cd $SAVE_FILE_DIR
+
+# Create dialog.
    set dialog [ExportDialog $itk_interior.exportDialog \
          -title "Export Definitions Dialog" -modality application \
          -master $itk_interior]
@@ -201,7 +208,18 @@ itcl::body TccToolbar::export {} {
             save TrackRateList TrackRateNames $file
          }
          close $file
+
+# Update save file directory.
+         set dir [file dirname $filename]
+         if { [string compare [file pathtype $dir] relative] == 0 } {
+            set SAVE_FILE_DIR [pwd]/$dir
+         } else {
+            set SAVE_FILE_DIR $dir
+         }
       }
    }
    destroy $dialog
+
+# Restore default directory
+   cd $pwd
 }

@@ -3,11 +3,16 @@
 #
 #  The saveLayout procedure saves the current panel layout to a file.
 #
-#  D Terrett 25 November 1998
+#  D Terrett 17 September 1999
 #
 #  Copyright CCLRC
 #-
 proc saveLayout {} {
+
+# cd to save file directory.
+   global SAVE_FILE_DIR
+   set pwd [pwd]
+   cd $SAVE_FILE_DIR
 
 # Create a dialog box for selecting the file.
    set dialog [iwidgets::fileselectiondialog .fsd \
@@ -24,7 +29,7 @@ proc saveLayout {} {
       } else {
 
 # Save the layout parameters for every panel object that exists.
-         foreach panelmgr [info objects -isa PanelMgr] {
+         foreach panelmgr [itcl::find objects -isa PanelMgr] {
 
 # Update the panel manager's geometry and state options from the window.
             $panelmgr updategeometry
@@ -44,7 +49,7 @@ proc saveLayout {} {
          }
 
 # Map the panels which have createset to 1.
-         foreach panelmgr [info objects -class PanelMgr] {
+         foreach panelmgr [itcl::find objects -class PanelMgr] {
             if { [$panelmgr cget -create] } {
                puts $file "$panelmgr configure -create 1"
                puts $file "$panelmgr map"
@@ -60,8 +65,8 @@ proc saveLayout {} {
          }
 
 # Do the same for the EditShadows (if such a class exists).
-         if { [info classes EditShadow] != "" } {
-            foreach editshadow [info objects -class EditShadow] {
+         if { [itcl::find classes EditShadow] != "" } {
+            foreach editshadow [itcl::find objects -class EditShadow] {
                set panelmgr [$editshadow cget -panel]
                if { [$panelmgr cget -create] } {
                   puts $file "$panelmgr configure -create 1"
@@ -79,7 +84,18 @@ proc saveLayout {} {
          }
 
          close $file
+
+# Update save file directory.
+         set dir [file dirname $filename]
+         if { [string compare [file pathtype $dir] relative] == 0 } {
+            set SAVE_FILE_DIR [pwd]/$dir
+         } else {
+            set SAVE_FILE_DIR $dir
+         }
       }
    }
    destroy $dialog
+
+# Restore default directory
+   cd $pwd
 }
