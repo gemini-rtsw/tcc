@@ -5,7 +5,7 @@
 #  Arguments:
 #             Any command line options and values.
 #
-#  D Terrett 10 November 1999
+#  D Terrett 11 February 2000
 #
 #  Copyright CCLRC
 #-
@@ -42,15 +42,24 @@ proc tsdMain args {
    epics sa m2ssad
    epics sa agssad
    epics sa ecssad
+   epics sa gissad
 
 # Wait to get connected to the TCS.
    waitConnect
 
+# Set the title for the windows.
+   global env
+   if { [info exists env(TCC_TCSNAME)] } {
+      set title "Simulated Gemini TCS ($env(TCC_TCSNAME))"
+   } else {
+      set title "Gemini North"
+   }
+
 # Create all the panel objects.
    PanelMgr graphicPanel -name .graphicPanel -class GraphicPanel \
-         -title "Gemini North"
+         -title $title
    PanelMgr numericPanel -name .numericPanel -class NumericPanel \
-         -title "Gemini North"
+         -title $title
    PanelMgr rcPanel -name .rcPanel -class RcPanel -title "Display configure"
 
 # Link updating the panels to the UTC sad record.
