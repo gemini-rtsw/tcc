@@ -35,6 +35,11 @@ itcl::body PointUpdatePanel::constructor args {
    itk_component add control {
       PointUpdateControl $itk_interior.control
    }
+
+# Add the PointUpdateControl purge command to the File menu.
+   $itk_component(menubar) add command .file.purge \
+         -command "$itk_component(control) purge" -label Purge
+
    setWidgetColors "$itk_component(menubar) $itk_component(control)" \
          $itk_option(-background) $itk_option(-foreground)
 
