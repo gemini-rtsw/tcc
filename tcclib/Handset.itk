@@ -1,0 +1,303 @@
+#+
+#  Handset <- itk::Widget
+#
+#  Implements a (new style) handset.
+#
+#  Options:
+#          -adjust    The entity that the handset adjusts (target, pointing
+#                     or instrument)
+#
+#          -vt        The virtual telescope being adjusted (target and 
+#                     instrument only
+#
+#  Notes:
+#       o Arrow keypress events in the widgets top level window are bound to
+#         the four -command options. This means that it is only possible
+#         to have one HandPaddleButtons widget in a window and have the
+#         arrow keys behave sensibly.
+#
+#       o When the mouse pointer is inside the widget's top level window
+#         keyboard autorepeat is turned off to avoid "flywheeling". If the
+#         tcc application is destroyed while the pointer is in the window
+#         the keyboard will be left with autorepeat disabled.
+#
+#  D Terrett 16 January 2001
+#
+#  Copyright CCLRC
+#-
+
+itcl::class Handset {
+   inherit itk::Widget
+   constructor args {}
+   itk_option define -adjust adjust Adjust ""
+   itk_option define -vt vt Vt sourceA
+   private {
+      method push {button}
+      method rot {angle}
+      method flip {}
+      method reset {}
+      variable cs ""
+      variable angles
+   }
+}
+
+itk::usual Handset {
+    keep -background -cursor -foreground -font \
+          -activebackground -activeforeground -disabledforeground \
+          -highlightcolor -highlightthickness \
+          -borderwidth -labelfont -selectcolor
+}
+
+itcl::body Handset::constructor {args} {
+
+   set w $itk_interior
+
+# Step size widget for setting the step size.
+   itk_component add stepsize {
+      StepSize $w.stepsize
+   }
+   pack $itk_component(stepsize)
+
+# Frame for buttons etc.
+   itk_component add frame {
+      frame $w.frame
+   }
+   pack $itk_component(frame) 
+   set w $itk_component(frame)
+
+# Frame for the buttons.
+   itk_component add bframe {
+      frame $w.bframe
+   }
+   pack $itk_component(bframe) -pady 5 -side left
+
+# The push buttons
+   set w $itk_component(bframe)
+   itk_component add u {
+      button $w.u -command [itcl::code $this push u] -background gray
+   } {
+      usual
+      ignore -background
+   }
+   itk_component add d {
+      button $w.d -command [itcl::code $this push d] -background grey
+   } {
+      usual
+      ignore -background
+   }
+   itk_component add l {
+      button $w.l -command [itcl::code $this push l] -background grey
+   } {
+      usual
+      ignore -background
+   }
+   itk_component add r {
+      button $w.r -command [itcl::code $this push r] -background grey
+   } {
+      usual
+      ignore -background
+   }
+   grid x $itk_component(u) -sticky nsew
+   grid $itk_component(l) x $itk_component(r) -sticky nsew
+   grid x $itk_component(d) -sticky nsew
+   grid columnconfigure $w {0 1 2} -minsize 50
+   grid rowconfigure $w {0 1 2} -minsize 50
+
+# frame for orientation.
+   set w $itk_component(frame)
+   itk_component add aframe {
+      frame $w.aframe
+   }
+   pack $itk_component(aframe) -side left -pady 5
+   set w $itk_component(aframe)
+   itk_component add orient {
+      iwidgets::radiobox $w.orient -labeltext "Align with"
+   }
+   $itk_component(orient) add tracking -text RA/Dec
+   $itk_component(orient) add xy -text TV
+   $itk_component(orient) add cace -text Az/El
+   $itk_component(orient) add instr -text Instrument
+   $itk_component(orient) add pwfs1 -text PWFS1
+   $itk_component(orient) add pwfs2 -text PWFS2
+   $itk_component(orient) select xy
+
+# buttons for rotating and flipping and reseting.
+   itk_component add rot {
+      button $w.rot -bitmap rotate -command [itcl::code $this rot 90.0]
+   }
+   itk_component add arot {
+      button $w.arot -bitmap arotate -command [itcl::code $this rot -90.0]
+   }
+   itk_component add flip {
+      button $w.flip -bitmap flip -command [itcl::code $this flip]
+   }
+   itk_component add reset {
+      button $w.reset -bitmap reset -command [itcl::code $this reset]
+   }
+   grid $itk_component(orient) - - -
+   grid $itk_component(rot) $itk_component(arot) $itk_component(flip) \
+         $itk_component(reset)
+
+# Title
+   set w $itk_interior
+   itk_component add title1 {
+      label $w.title1 -text "Adjusts telescope pointing model"
+   } {
+      usual
+      rename -font -majorfont majorFont Font
+      ignore -foreground
+   }
+   itk_component add title2 {
+      label $w.title2 -text "Adjusts target alpha/delta"
+   } {
+      usual
+      rename -font -majorfont majorFont Font
+      ignore -foreground
+   }
+   itk_component add title3 {
+      label $w.title3 -text "Adjusts instrument hot spot"
+   } {
+      usual
+      rename -font -majorfont majorFont Font
+      ignore -foreground
+   }
+   pack $itk_component(title1) $itk_component(title2) $itk_component(title3) \
+         -anchor w
+
+# Fill in the table of angles
+   foreach frame {tracking xy cace instr pwfs1 pwfs2} {
+      set angles($frame,u) 0.0
+      set angles($frame,r) 90.0
+      set angles($frame,d) 180.0
+      set angles($frame,l) 270.0
+   }
+
+# Create bindings on the top-level window for the arrow keys (this assumes
+# that there is only one HandPaddleButtons widget in the window).
+   set top [winfo toplevel $itk_interior]
+   foreach key {<Up> <Down> <Left> <Right>} button {u d l r} {
+      bind $top $key "$itk_component($button) invoke"
+   }
+
+# Bind to focus in and focus out events to turning off auto-repeat.
+   bind $top <FocusIn> autoRepeatOff
+   bind $top <FocusOut> autoRepeatOn
+   bind $top <Destroy> autoRepeatOn
+
+   eval itk_initialize $args
+}
+
+itcl::configbody Handset::adjust {
+
+# Create the command sender if necessary.
+   switch $itk_option(-adjust) {
+      target {
+         set cs targetAdjust
+      }
+      instr {
+         set cs poAdjust
+      }
+      pointing {
+         set cs collAdjust
+      }
+      default {
+         set cs ""
+      }
+   }
+   if { $cs != "" } {
+      if { [catch {cs $cs info}] } {
+         epics cs $cs
+      }
+   }
+
+# Highlight the appropriate title and dim the others.
+   switch $itk_option(-adjust) {
+      pointing {
+         $itk_component(title1) configure -foreground red
+         $itk_component(title2) configure -foreground PeachPuff3
+         $itk_component(title3) configure -foreground PeachPuff3
+      }
+      target {
+         $itk_component(title1) configure -foreground PeachPuff3
+         $itk_component(title2) configure -foreground red
+         $itk_component(title3) configure -foreground PeachPuff3
+      }
+      instr {
+         $itk_component(title1) configure -foreground PeachPuff3
+         $itk_component(title2) configure -foreground PeachPuff3
+         $itk_component(title3) configure -foreground red
+      }
+   }
+}
+
+itcl::body Handset::push {dir} {
+
+# Called whenever one of the handset buttons is pressed.
+   if { $cs != "" } {
+      set frame [$itk_component(orient) get]
+
+# Set the frame id. The pwfs frames are not supported by the tcs so
+# x/y used.
+      set frameid [lsearch -exact {cace xy instr tracking pwfs1 pwfs2} $frame]
+      if { $frameid > 3 } {
+         set frameid 1
+      }
+      cs $cs set frame  $frameid
+
+# Set the step size.
+      cs $cs set size [$itk_component(stepsize) get]
+
+# Set the angle. For the pwfs the arm and table angles have to be added.
+      switch $frame {
+         pwfs1 {
+            cs $cs set angle [expr {$angles($frame,$dir) + \
+                  [sa agssad get p1TableAngle] + \
+                  [sa agssad get p1TableAngle]}]
+         }
+         pwfs2 {
+            cs $cs set angle [expr {$angles($frame,$dir) + \
+                  [sa agssad get p2TableAngle] + \
+                  [sa agssad get p2TableAngle]}]
+         }
+         default {
+            cs $cs set angle $angles($frame,$dir)
+         }
+      }
+
+# Set the virtual telescope.
+      if { ![string equal $itk_option(-adjust) pointing] } {
+         cs $cs set vt [lsearch -exact \
+               {mount sourceA sourceB sourceC pwfs1 pwfs2 oiwfs} \
+               $itk_option(-vt)]
+      }
+
+      logger command $cs
+      if { [catch {cs tcsApply post} msg] } {
+         tk_messageBox -icon error -parent $itk_interior -message \
+               "Error setting local pointing model: TCS reports \"$msg\""
+      }
+   }
+}
+
+itcl::body Handset::rot {theta} {
+   set frame [$itk_component(orient) get]
+   foreach button {u l d r} {
+      set angles($frame,$button) [expr {$angles($frame,$button) + $theta}]
+   }
+}
+
+itcl::body Handset::flip {} {
+   set frame [$itk_component(orient) get]
+   set angles($frame,l) [expr {$angles($frame,l) + 180}]
+   set angles($frame,r) [expr {$angles($frame,r) - 180}]
+}
+
+itcl::body Handset::reset {} {
+
+# Set all the button angles to their defaults.
+   set frame [$itk_component(orient) get]
+   set angles($frame,u) 0.0
+   set angles($frame,r) 90.0
+   set angles($frame,d) 180.0
+   set angles($frame,l) 270.0
+}

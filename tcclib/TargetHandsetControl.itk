@@ -1,0 +1,347 @@
+#+
+#  TargetHandsetControl <- itk::Widget
+#
+#  A TargetHandsetControl implements a software handset for adjusting
+#  target positions.
+#
+#
+#  Options:
+#           none
+#
+#  Methods:
+#           none
+#
+#  D Terrett 16 January 2001
+#
+#  Copyright CCLRC
+#+
+
+itcl::class TargetHandsetControl {
+   inherit itk::Widget
+   constructor args {}
+   destructor {after cancel $refid}
+   private {
+      method abpars {par}
+      method clpars {par}
+      method setvt {}
+      method getOffset {par}
+      method refresh {}
+      variable vt
+      variable refid
+   }
+}
+
+itk::usual TargetHandsetControl {
+   keep -borderwidth -cursor -font -highlightthickness -insertborderwidth \
+         -insertofftime -insertontime -insertwidth -labelfont \
+         -selectborderwidth -textbackground -textfont
+}
+
+itcl::body TargetHandsetControl::constructor args {
+
+   set w $itk_interior
+
+   itk_component add sel {
+      frame $w.sel -borderwidth 2 -relief groove
+   }
+   pack $itk_component(sel) -padx 5 -pady 5
+   set w $itk_component(sel)
+
+# Column headings.
+   itk_component add adjust {
+      label $w.adjust -text Adjust
+   }
+   itk_component add ra {
+      label $w.ra -text RA
+   }
+   itk_component add dec {
+      label $w.dec -text Dec
+   }
+   itk_component add offset {
+      label $w.offset -text offset
+   }
+
+# Radio buttons for selecting which offset to adjust.
+   itk_component add scisel {
+      radiobutton $w.scisel -variable [scope vt] -value sourceA \
+            -command [itcl::code $this setvt]
+   }
+   itk_component add p1sel {
+      radiobutton $w.p1sel -variable [scope vt] -value pwfs1 \
+            -command [itcl::code $this setvt]
+   }
+   itk_component add p2sel {
+      radiobutton $w.p2sel -variable [scope vt] -value pwfs2 \
+            -command [itcl::code $this setvt]
+   }
+   itk_component add oisel {
+      radiobutton $w.oisel -variable [scope vt] -value oiwfs \
+            -command [itcl::code $this setvt]
+   }
+
+# Labels.
+   itk_component add scilab {
+      StatusField $w.scilab -text Sci -width 4 -background grey
+   }
+   itk_component add p1lab {
+      StatusField $w.p1lab -text P1 -width 4
+   }
+   itk_component add p2lab {
+      StatusField $w.p2lab -text P2 -width 4
+   }
+   itk_component add oilab {
+      StatusField $w.oilab -text OI -width 4
+   }
+
+# Display of positions and offsets.
+   itk_component add scira {
+      label $w.scira -width 12 -borderwidth 2 -relief groove
+   }
+   itk_component add scidec {
+      label $w.scidec -width 12 -borderwidth 2 -relief groove
+   }
+   itk_component add scioff1 {
+      label $w.scioff1 -width 6 -borderwidth 2 -relief groove
+   }
+   itk_component add scioff2 {
+      label $w.scioff2 -width 6 -borderwidth 2 -relief groove
+   }
+   itk_component add p1ra {
+      label $w.p1ra -width 12 -borderwidth 2 -relief groove
+   }
+   itk_component add p1dec {
+      label $w.p1dec -width 12 -borderwidth 2 -relief groove
+   }
+   itk_component add p1off1 {
+      label $w.p1off1 -width 6 -borderwidth 2 -relief groove
+   }
+   itk_component add p1off2 {
+      label $w.p1off2 -width 6 -borderwidth 2 -relief groove
+   }
+   itk_component add p2ra {
+      label $w.p2ra -width 12 -borderwidth 2 -relief groove
+   }
+   itk_component add p2dec {
+      label $w.p2dec -width 12 -borderwidth 2 -relief groove
+   }
+   itk_component add p2off1 {
+      label $w.p2off1 -width 6 -borderwidth 2 -relief groove
+   }
+   itk_component add p2off2 {
+      label $w.p2off2 -width 6 -borderwidth 2 -relief groove
+   }
+   itk_component add oira {
+      label $w.oira -width 12 -borderwidth 2 -relief groove
+   }
+   itk_component add oidec {
+      label $w.oidec -width 12 -borderwidth 2 -relief groove
+   }
+   itk_component add oioff1 {
+      label $w.oioff1 -width 6 -borderwidth 2 -relief groove
+   }
+   itk_component add oioff2 {
+      label $w.oioff2 -width 6 -borderwidth 2 -relief groove
+   }
+
+   grid $itk_component(adjust) - $itk_component(ra) $itk_component(dec) \
+         $itk_component(offset) -
+   grid $itk_component(scilab) $itk_component(scisel) $itk_component(scira) \
+         $itk_component(scidec) $itk_component(scioff1) $itk_component(scioff2)
+   grid $itk_component(p1lab) $itk_component(p1sel) $itk_component(p1ra) \
+         $itk_component(p1dec) $itk_component(p1off1) $itk_component(p1off2)
+   grid $itk_component(p2lab) $itk_component(p2sel) $itk_component(p2ra) \
+         $itk_component(p2dec) $itk_component(p2off1) $itk_component(p2off2)
+   grid $itk_component(oilab) $itk_component(oisel) $itk_component(oira) \
+         $itk_component(oidec) $itk_component(oioff1) $itk_component(oioff2)
+
+# Handset
+   set w $itk_interior
+   itk_component add handset {
+      Handset $w.handset -adjust target
+   }
+   pack $itk_component(handset)
+
+# Select the default virtual telescope.
+   set vt sourceA
+
+# Entry fields for entering an offset.
+   itk_component add manual {
+      iwidgets::labeledframe $itk_interior.manual -labeltext "Manual offset" \
+            -labelpos nw
+   }
+   pack $itk_component(manual) -expand yes -fill x
+   set w [$itk_component(manual) childsite]
+
+   itk_component add theta1 {
+      iwidgets::entryfield $w.theta1 -labeltext RA: -width 10
+   }
+   itk_component add theta2 {
+      iwidgets::entryfield $w.theta2 -labeltext Dec: -width 10
+   }
+   itk_component add apply {
+      ApplyButton $w.apply -text Apply -command incrOffset \
+         -parcommand [code $this getOffset]
+  }
+   pack $itk_component(theta1) $itk_component(theta2) $itk_component(apply) \
+      -side left -padx 4 -pady 4
+
+# Buttons for clearing and absorbing the offsets.
+   set w $itk_interior
+   itk_component add bot {
+      frame $w.bot
+   }
+   pack $itk_component(bot) -expand yes -fill x
+   set w $itk_component(bot)
+   itk_component add absorb {
+      ApplyButton $w.absorb -command absorbOffset -text "Absorb" -width 8 \
+            -parcommand [code $this abpars]
+   }
+   itk_component add clear {
+      ApplyButton $w.clear -command clearOffset -text "Clear" -width 8 \
+            -parcommand [code $this clpars]
+   }
+   pack $itk_component(absorb) $itk_component(clear) -side left -expand y \
+         -pady 4
+
+# Create status acceptor for mcs and wfs probe status
+   if { [catch {sa mcssad info}] } {
+      epics sa mcssad
+   }
+   if { [catch {sa agssad info}] } {
+      epics sa agssad
+   }
+
+# Start process to refresh the position and offsets display.
+   set refid [after 1000 [code $this refresh]]
+
+   eval itk_initialize $args
+}
+
+itcl::body TargetHandsetControl::abpars par {
+   switch $par {
+      vt {
+         switch $vt {
+            mount {return Mount}
+            sourceA {return "SOURCE A"}
+            sourceB {return "SOURCE B"}
+            sourceC {return "SOURCE C"}
+            pwfs1 {return PWFS1}
+            pwfs2 {return PWFS2}
+            oiwfs {return OIWFS}
+         }
+      }
+      index {
+         switch $vt {
+            mount -
+            sourceA -
+            sourceB -
+            sourceC {return all}
+            pwfs1 -
+            pwfs2 -
+            oiwfs {return 0}
+         }
+      }
+   }
+}
+
+itcl::body TargetHandsetControl::clpars par {
+   switch $par {
+      vt {
+         switch $vt {
+            mount {return Mount}
+            sourceA {return "SOURCE A"}
+            sourceB {return "SOURCE B"}
+            sourceC {return "SOURCE C"}
+            pwfs1 {return PWFS1}
+            pwfs2 {return PWFS2}
+            oiwfs {return OIWFS}
+         }
+      }
+      index {return all}
+   }
+}
+
+itcl::body TargetHandsetControl::getOffset {par} {
+   switch $par {
+      theta1 {
+         return [$itk_component(theta1) get]
+      }
+      theta2 {
+         return [$itk_component(theta2) get]
+      }
+      vt {
+         switch $vt {
+            sourceA { return "Source A" }
+            pwfs1 { return PWFS1 }
+            pwfs2 { return PWFS2 }
+            oiwfs { return OIWFS }
+         }
+      }
+      type {
+            return "TANGENT PLANE"
+      }
+      ind {
+         return 0
+      }
+   }
+}
+
+itcl::body TargetHandsetControl::setvt {} {
+   $itk_component(handset) configure -vt $vt
+}
+
+itcl::body TargetHandsetControl::refresh {} {
+
+# Update the fields.
+   foreach {src w} {A sci Pwfs1 p1 Pwfs2 p2 Oiwfs oi} {
+      set target [sa tcssad get target$src]
+      set ra [slaDr2tf 3 [lindex $target 0]]
+      $itk_component(${w}ra) configure -text \
+            [format "%02d:%02d:%02d.%03d" [lindex $ra 1] [lindex $ra 2] \
+            [lindex $ra 3] [lindex $ra 4]]
+      set dec [slaDr2af 2 [lindex $target 1]]
+      $itk_component(${w}dec) configure -text \
+            [format "%s%02d:%02d:%02d.%02d" [lindex $dec 0] [lindex $dec 1] \
+            [lindex $dec 2] [lindex $dec 3] [lindex $dec 4]]
+      $itk_component(${w}off1) configure -text [format "%8.2f" \
+         [expr [lindex $target 2] * 206264.81 * cos( [lindex $target 1] )] ]
+      $itk_component(${w}off2) configure -text \
+         [format "%8.2f" [expr [lindex $target 3] * 206264.81] ]
+   }
+
+# Set the status.
+   if { [isFollowing mcssad followS] } {
+      if { [isInPosition tcssad inPosition] } {
+         set status ok
+      } else {
+         set status warning
+      }
+   } else {
+      set status error
+   }
+   $itk_component(scilab) configure -status $status
+
+   if { [isFollowing agssad p1FollowS] } {
+      if { [isInPosition agssad p1InPosition] } {
+         set status ok
+      } else {
+         set status warning
+      }
+   } else {
+      set status error
+   }
+   $itk_component(p1lab) configure -status $status
+
+   if { [isFollowing agssad p2FollowS] } {
+      if { [isInPosition agssad p2InPosition] } {
+         set status ok
+      } else {
+         set status warning
+      }
+   } else {
+      set status error
+   }
+   $itk_component(p2lab) configure -status $status
+
+   set refid [after 1000 [code $this refresh]]
+}

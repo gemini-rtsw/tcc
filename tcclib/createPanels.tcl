@@ -6,7 +6,7 @@
 #  Arguments:
 #             none
 #
-#  D Terrett 1 November 2000
+#  D Terrett 12 January 2001
 #
 #  Copyright CCLRC
 #-
@@ -42,8 +42,8 @@ proc createPanels {} {
          -class GuideLoopPanel -title "Guiding Loop Control"
    PanelMgr guideHandsetPanel -name .guideHandsetPanel \
          -class GuideHandsetPanel -title "Pointing Handset"
-   PanelMgr offsetHandsetPanel -name .offsetHandsetPanel \
-         -class OffsetHandsetPanel -title "Target Handset"
+   PanelMgr targetHandsetPanel -name .targetHandsetPanel \
+         -class TargetHandsetPanel -title "Target Handset"
    PanelMgr poHandsetPanel -name .poHandsetPanel \
          -class PoHandsetPanel -title "Instrument Handset"
    PanelMgr pointUpdatePanel -name .pointUpdatePanel \
