@@ -5,7 +5,7 @@
 #
 #  methods
 #
-#  D Terrett 9 June 1999
+#  D Terrett 16 November 1999
 #
 #  Copyright CCLRC
 #-
@@ -24,11 +24,11 @@ itcl::class OpticsView {
    itk_option define -hrwfs hrwfs Hrwfs in redraw
    itk_option define -aopresent aoPresent AoPresent 0 {}
    itk_option define -vignette vignette Vignette 0 redraw
-   itk_option define -port1label port1Label Label "" "relabel 1"
+   itk_option define -port1label port1Label Label "Alignment Telescope" "relabel 1"
    itk_option define -port2label port2Label Label "cfwfs" "relabel 2"
    itk_option define -port3label port3Label Label "Hokupaa" "relabel 3"
    itk_option define -port4label port4Label Label "A&G cabinet" "relabel 4"
-   itk_option define -port5label port5Label Label "CurveWFS" "relabel 5"
+   itk_option define -port5label port5Label Label "CurvWFS" "relabel 5"
 
    private method redraw {}
    private method relabel port
@@ -101,12 +101,14 @@ itcl::body OpticsView::constructor args {
    $c create line 9 400 9 410 -fill black -width 2
    $c create rectangle -14 400 14 381 -outline black
 
-# Iss ports
-   $c create oval 35 70 65 40 -outline black -tags aoport -fill gray \
-         -stipple gray50
+# Iss ports (shading of ao and cal unit ports removed for the moment).
+#   $c create oval 35 70 65 40 -outline black -tags aoport -fill gray \
+#         -stipple gray50
+   $c create oval 35 70 65 40 -outline black -tags aoport
    $c create oval -35 70 -65 40 -outline black
    $c create oval 35 20 65 -10 -outline black
-   $c create oval -35 20 -65 -10 -outline black -fill gray -stipple gray50
+#   $c create oval -35 20 -65 -10 -outline black -fill gray -stipple gray50
+   $c create oval -35 20 -65 -10 -outline black
    $c create oval -15 -85 15 -115 -outline black
 
 # Iss port labels
@@ -234,9 +236,19 @@ itcl::body OpticsView::constructor args {
    $c scale ScFold51 0 30 -1 1
    $c scale ScFold51bck 0 30 -1 1
 
+# Science fold unknown
+   $c create bitmap 0 30 -anchor c -foreground black -tags ScFoldUnknown 
+
 # HRWFS fold
    $c create line -9 -51 9 -69 -width 2 -tags HrwfsFold
    $c create line -11 -53 7 -70 -tags HrwfsFoldBck
+
+# ISS port numbers
+   $c create text 0 -100 -anchor c -text 1
+   $c create text 50 55 -anchor c -text 2
+   $c create text -50 55 -anchor c -text 3
+   $c create text -50 5 -anchor c -text 4
+   $c create text 50 5 -anchor c -text 5
 
 # Raise the a&g outline so that the front edge cuts the light beam.
    $c raise ag
@@ -311,11 +323,17 @@ itcl::body OpticsView::redraw {} {
 
 # Configure the science fold mirror
    $c itemconfigure ScFold -fill ""
-   set scfoldpos ""
-   if { $itk_option(-scfold) != "PARK" } {
-      set scfoldpos [lindex $SfNames $itk_option(-scfold)]
-      $c itemconfigure ScFold${scfoldpos} -fill white
-      $c itemconfigure ScFold${scfoldpos}bck -fill black
+   $c itemconfigure ScFoldUnknown -bitmap ""
+   if { $itk_option(-scfold) == "PARK" } {
+      set scfoldpos ""
+   } else {
+      set scfoldpos $itk_option(-scfold)
+      if { $itk_option(-scfold) == "UNKNOWN" } {
+         $c itemconfigure ScFoldUnknown -bitmap question
+      } else {
+         $c itemconfigure ScFold$itk_option(-scfold) -fill white
+         $c itemconfigure ScFold$itk_option(-scfold)bck -fill black
+      }
    }
 
 # Configure the HRWFS fold mirror
@@ -365,6 +383,8 @@ itcl::body OpticsView::redraw {} {
                } else {
                   set outport 4
                }
+            } elseif { $scfoldpos == "UNKNOWN" } {
+                  set outport ""
             } else {
                if { $inport == [string index $scfoldpos 0] } {
                   set outport [string index $scfoldpos 1]
@@ -419,17 +439,20 @@ itcl::configbody OpticsView::port2label {
 
 itcl::configbody OpticsView::scfold {
    switch $itk_option(-scfold) {
-      cwfws {
+      cfwfs {
          set itk_option(-scfold) U2
       }
-      curvWFS {
-         set itk_option(-scfold) U3
+      CurvWFS {
+         set itk_option(-scfold) U5
       }
       "A&Gcabinet" {
          set itk_option(-scfold) U4
       }
       Hokupaa {
-         set itk_option(-scfold) U5
+         set itk_option(-scfold) U3
+      }
+      INVALID {
+         set itk_option(-scfold) UNKNOWN
       }
       default {
          set itk_option(-scfold) PARK
