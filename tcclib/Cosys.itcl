@@ -34,6 +34,7 @@ itcl::class Cosys {
       method save {file}
       variable frame {}
       variable equinox {}
+      variable isazel {}
    }
 }
 
@@ -51,4 +52,8 @@ itcl::body Cosys::init {} {
 itcl::body Cosys::save file {
    puts $file "   -frame [list $frame] \\"
    puts $file "   -equinox [list $equinox]"
+}
+
+itcl::configbody Cosys::frame {
+   set isazel [string equal -nocase $frame AzEl]
 }
