@@ -40,8 +40,17 @@ proc loadseq {} {
       set chanid [open $file RDONLY]
 
 # Read in the sequence
+      set notitle 1
       while { ![eof $chanid] } {
          if { [gets $chanid line] > 0 } {
+            if { $notitle } {
+               if { [string equal [string index $line 0] #] } {
+                  [.main component title] clear
+                  [.main component title] insert end \
+                        [string range $line 2 end]
+                  set notitle 0
+               }
+            }
             eval $line
          }
       }
