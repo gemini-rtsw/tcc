@@ -10,7 +10,7 @@
 #  Methods:
 #           none
 #
-#  D Terrett  17 January 2004
+#  D Terrett  29 April 2004
 #
 #  Copyright CCLRC
 #+
@@ -86,8 +86,8 @@ itcl::body GuideLoop::constructor args {
    }
 
 # GAOS
-   $w create rectangle 0 0 62 47 -fill white -tags "active gaos gaos_bg"
-   $w create text 32 25 -text GAOS -tags gaos -font $font
+   $w create rectangle 0 0 62 67 -fill white -tags "active gaos gaos_bg"
+   $w create text 32 33 -text GAOS -tags gaos -font $font
 
 # M1, M2 and Mount boxes.
    $w create rectangle 0 0 200 89 -fill white -tags "active m2 m2_bg"
@@ -127,8 +127,6 @@ itcl::body GuideLoop::constructor args {
    }
    $w create text 12 12 -text P1 -tags m2 -font $font
    $w create window 80 12 -width 110 -window $itk_component(m2p1) -tags m2
-#   $itk_component(m2p1) add A -pady 0 -padx 0
-#   $itk_component(m2p1) add B -pady 0 -padx 0
    $itk_component(m2p1) add ON -pady 0 -padx 0
    $itk_component(m2p1) add OFF -pady 0 -padx 0
 
@@ -141,8 +139,6 @@ itcl::body GuideLoop::constructor args {
    }
    $w create text 12 34 -text P2 -tags m2 -font $font
    $w create window 80 34 -width 110 -window $itk_component(m2p2) -tags m2
-#   $itk_component(m2p2) add A -pady 0 -padx 0
-#   $itk_component(m2p2) add B -pady 0 -padx 0
    $itk_component(m2p2) add ON -pady 0 -padx 0
    $itk_component(m2p2) add OFF -pady 0 -padx 0
 
@@ -155,8 +151,6 @@ itcl::body GuideLoop::constructor args {
    }
    $w create text 12 56 -text AO -tags m2 -font $font
    $w create window 80 56 -width 110 -window $itk_component(m2ao) -tags m2
-#   $itk_component(m2ao) add A -pady 0 -padx 0
-#   $itk_component(m2ao) add B -pady 0 -padx 0
    $itk_component(m2ao) add ON -pady 0 -padx 0
    $itk_component(m2ao) add OFF -pady 0 -padx 0
 
@@ -218,9 +212,9 @@ itcl::body GuideLoop::constructor args {
 
 # Move boxes into position.
    $w move m2 182 10
-   $w move m2xy 50 70
+   $w move m2xy 70 80
    $w move m1 250 115
-   $w move gaos 500 110
+   $w move gaos 500 90
    $w move pwfs1 50 242
    $w move oiwfs 250 242
    $w move pwfs2 450 242
@@ -228,7 +222,7 @@ itcl::body GuideLoop::constructor args {
    $w move mount 250 402
 
 # PWFS to M1
-   $w create line 170 243 170 160 252 160 -width 3 -fill white \
+   $w create line 170 243 170 180 252 180 -width 3 -fill white \
          -tags {active pwfs1_m1} -arrow last -arrowshape {20 20 7}
    $w create line 381 262 410 262 410 160 381 160 -width 3 -fill white \
          -tags {active oiwfs_m1} -arrow last -arrowshape {20 20 7}
@@ -238,16 +232,18 @@ itcl::body GuideLoop::constructor args {
          -tags {active gaos_m1} -arrow last -arrowshape {20 20 7}
 
 # WFS to M2
-   $w create line 150 243 150  60 183  60 -width 3 -fill white \
+   $w create line 60 243 60  60 183  60 -width 3 -fill white \
          -tags {active pwfs1_m2} -arrow last -arrowshape {20 20 7}
-   $w create line  90 243  90 160 -width 3 -fill white \
+   $w create line  120 243  120 168 -width 3 -fill white \
          -tags {active pwfs1_m2xy} -arrow last -arrowshape {20 20 7}
    $w create line 381 282 430 282 430  88 381  88 -width 3 -fill white \
          -tags {active oiwfs_m2} -arrow last -arrowshape {20 20 7}
    $w create line 582 257 610 257 610  44 381  44 -width 3 -fill white \
          -tags {active pwfs2_m2} -arrow last -arrowshape {20 20 7}
-   $w create line 530 111 530 65 381 65  -width 3 -fill white \
+   $w create line 530 91 530 65 381 65  -width 3 -fill white \
          -tags {active gaos_m2} -arrow last -arrowshape {20 20 7}
+   $w create line 501 107 152 107 -width 3 -fill white \
+         -tags {active gaos_m2xy} -arrow last -arrowshape {20 20 7}
 
 # WFS to Probes
    $w create line 182 262 220 262 220 352 251 352 -width 3 -fill white \
@@ -402,6 +398,11 @@ itcl::body GuideLoop::recolour args {
       } else {
          $w itemconfigure gaos_m2 -fill yellow
       }
+      if { [AO state coma] } {
+         $w itemconfigure gaos_m2xy -fill green
+      } else {
+         $w itemconfigure gaos_m2xy -fill yellow
+      }
    }
 
 # M1
@@ -441,7 +442,7 @@ itcl::body GuideLoop::recolour args {
 
 # M2 Coma
    if { [AO state coma] } {
-      if { [AO state pwfs1] } {
+      if { [AO state pwfs1] || [AO state gaos] } {
          $w itemconfigure m2xy_bg -fill green
       } else {
          $w itemconfigure m2xy_bg -fill yellow
