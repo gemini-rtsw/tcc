@@ -10,7 +10,7 @@ exec $HLPG_INSTALL_BASE/bin/solaris/ocswish "$0" "$@"
 #  the tcc uses. It is probably installation dependent and will need to be
 #  hacked to get it to work.
 #
-#  D Terrett 17 September 1999
+#  D Terrett 25 September 1999
 #
 #  Copyright CCLRC
 #-
@@ -38,7 +38,6 @@ load $ROOT/tcclib/solaris/tccext.so
 
 # Load all the packages required by the tcc.
 package require Itcl
-namespace import itcl::*
 package require Itk
 package require Iwidgets
 package require Ocspkg
