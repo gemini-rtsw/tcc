@@ -7,7 +7,7 @@
 #  Options:
 #           -shadow         The names of this control's shadow.
 #
-#  D Terrett 30 Novemeber 2001
+#  D Terrett 1 December 2001
 #
 #  Copyright CCLRC
 #+
@@ -52,12 +52,16 @@ itcl::body GuideControl::constructor args {
 
 # Chop state
       itk_component add ${wfs}chop {
-         iwidgets::optionmenu $w.chop
+         iwidgets::optionmenu $w.chop -labeltext "Probe follows star" \
+               -labelpos nw
       }
       [$itk_component(${wfs}chop) component menuBtn] configure -anchor w
-      $itk_component(${wfs}chop) insert end "guide when in beam A" \
-            "guide when in beam B" "guide when chop matches nod" \
-            "guide when chop doesn't match nod" "no guiding with this WFS"
+      $itk_component(${wfs}chop) insert end \
+            "when in chop beam A" \
+            "when in chop beam B" \
+            "when chop beam matches nod" \
+            "when chop beam doesn't match nod" \
+            "never"
 
 # Nod setting
       itk_component add ${wfs}nod {
