@@ -140,9 +140,9 @@ static int update( Tcl_Interp *interp )
 static int target( Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[] )
 {
     struct PO po;
-    const char* pos[] = { "M", "m", "A", "a", "B", "b", "C", "c"};
+    const char* pos[] = { "M", "m", "A", "a", "B", "b", "C", "c", NULL};
     int chop, ind;
-    const char* chops[] = { "A", "a", "B", "b", "C", "c"};
+    const char* chops[] = { "A", "a", "B", "b", "C", "c", NULL};
     double x, y;
     double wavel;
     FRAMETYPE frame;
@@ -289,7 +289,7 @@ static int format( Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[] )
 static int instrument( Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[] )
 {
     struct PO po;
-    const char* pos[] = { "M", "m", "A", "a", "B", "b", "C", "c"};
+    const char* pos[] = { "M", "m", "A", "a", "B", "b", "C", "c", NULL};
     int ind;
     double x, y;
     char result[40];
