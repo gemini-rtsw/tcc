@@ -14,11 +14,15 @@
 #          -onvalue        A list of the sad record values that indicate that
 #                          the mechanism is on.
 #
+#          -onproc         A script to be executed to turn the mechanism on.
+#
 #          -offcommand     The command sender, parameter and value that turns
 #                          the mechanism off.
 #
 #          -offvalue       A list of the sad record values that indicate that
 #                          the mechanism is off.
+#
+#          -offproc        A script to be executed to turn the mechanism on.
 #
 #          -sadrecord      The name of the sa that indicates the mechanism
 #                          state.
@@ -26,7 +30,7 @@
 #  Methods:
 #          none
 #
-#  D Terrett 12 June 2000
+#  D Terrett 15 November 2002
 #
 #  Copyright CCLRC
 #-
@@ -38,6 +42,8 @@ itcl::class OnOffButton {
    itk_option define -oncommand onCommand Command {}
    itk_option define -offcommand offCommand Command {}
    itk_option define -onvalue onValue Value {} checkstate
+   itk_option define -onproc onProc Proc {}
+   itk_option define -offproc offProc Proc {}
    itk_option define -offvalue offValue Value {} checkstate
    itk_option define -sadrecord sadrecord SadRecord {} checkstate
    private {
@@ -85,11 +91,17 @@ itcl::body OnOffButton::pressed {} {
 
 # Set the command sender parameter appropriate for the current state.
    if { $state } {
+      if { ! [string equal $itk_option(-offproc) ""] } {
+         uplevel #0 $itk_option(-offproc)
+      }
       if { ! [string equal $itk_option(-offcommand) ""] } {
          foreach {cs par val} $itk_option(-offcommand) {}
          cs $cs set $par $val
       }
    } else {
+      if { ! [string equal $itk_option(-onproc) ""] } {
+         uplevel #0 $itk_option(-onproc)
+      }
       if { ! [string equal $itk_option(-oncommand) ""] } {
          foreach {cs par val} $itk_option(-oncommand) {}
          cs $cs set $par $val
