@@ -16,7 +16,7 @@ static char rcsid[]="$Id:";
 *   The only configuration option is -display which merely serves as a way
 *   of forcing the item to be redrawn and new data fetched from the TCS.
 *
-*   D L Terrett 10 April 2000
+*   D L Terrett 3 May 2000
 *
 *   Copyright CCLRC
 */
@@ -102,6 +102,8 @@ typedef struct DomeViewItem {
    GC blackdotGC;
    GC evgGC;
    GC wvgGC;
+   GC vglabGC;
+   XColor* vglabColor;
 } DomeViewItem;
 
 static Tk_CustomOption tagsOption;
@@ -187,6 +189,7 @@ static int CreateDV( Tcl_Interp *interp, Tk_Canvas canvas, Tk_Item *itemPtr,
    domeviewPtr->blackColor = NULL;
    domeviewPtr->targetColor = NULL;
    domeviewPtr->moonColor = NULL;
+   domeviewPtr->vglabColor = NULL;
    domeviewPtr->domeLowGC = None;
    domeviewPtr->domeMidGC = None;
    domeviewPtr->domeHiGC = None;
@@ -197,6 +200,7 @@ static int CreateDV( Tcl_Interp *interp, Tk_Canvas canvas, Tk_Item *itemPtr,
    domeviewPtr->blackdotGC = None;
    domeviewPtr->evgGC = None;
    domeviewPtr->wvgGC = None;
+   domeviewPtr->vglabGC = None;
 
    domeviewPtr->mpvalid = 0;
    domeviewPtr->tpvalid = 0;
@@ -239,10 +243,18 @@ static int CreateDV( Tcl_Interp *interp, Tk_Canvas canvas, Tk_Item *itemPtr,
    gcvalues.foreground = domeviewPtr->moonColor->pixel;
    domeviewPtr->moonGC = Tk_GetGC( tkwin, mask, &gcvalues );
 
+   domeviewPtr->vglabColor = 
+      Tk_GetColor( interp, tkwin, Tk_GetUid("Yellow") );
+   gcvalues.foreground = domeviewPtr->vglabColor->pixel;
+   gcvalues.line_width = 3.0;
+   mask |= GCLineWidth;
+   domeviewPtr->vglabGC = Tk_GetGC( tkwin, mask, &gcvalues );
+
    domeviewPtr->blackColor = Tk_GetColor( interp, tkwin, Tk_GetUid("black") );
    gcvalues.foreground = domeviewPtr->blackColor->pixel;
    domeviewPtr->blackGC = Tk_GetGC( tkwin, mask, &gcvalues );
    gcvalues.line_style = LineOnOffDash;
+   gcvalues.line_width = 0.0;
    mask |= GCLineStyle;
    domeviewPtr->blackdotGC = Tk_GetGC( tkwin, mask, &gcvalues );
 
@@ -413,6 +425,9 @@ static void DeleteDV( Tk_Canvas canvas, Tk_Item *itemPtr, Display *display)
    if ( domeviewPtr->moonColor != NULL ) {
       Tk_FreeColor( domeviewPtr->moonColor );
    }
+   if ( domeviewPtr->vglabColor != NULL ) {
+      Tk_FreeColor( domeviewPtr->vglabColor );
+   }
    if ( domeviewPtr->domeLowGC != None ) {
       Tk_FreeGC( display, domeviewPtr->domeLowGC );
    }
@@ -442,6 +457,9 @@ static void DeleteDV( Tk_Canvas canvas, Tk_Item *itemPtr, Display *display)
    }
    if ( domeviewPtr->moonGC != None ) {
       Tk_FreeGC( display, domeviewPtr->moonGC );
+   }
+   if ( domeviewPtr->vglabGC != None ) {
+      Tk_FreeGC( display, domeviewPtr->vglabGC );
    }
 }
 
@@ -473,7 +491,7 @@ static void DisplayDV( Tk_Canvas canvas, Tk_Item *itemPtr, Display *display,
    double t, xi, eta;
    double domeazr, domeaz, amlimel;
    unsigned int width, height;
-   XPoint point[7];
+   XPoint point[7], w[5], e[7];
    XPoint p;
    struct EPOCH epochNow, eqx_unused;
    struct TELP tel_unused;
@@ -553,9 +571,46 @@ static void DisplayDV( Tk_Canvas canvas, Tk_Item *itemPtr, Display *display,
    if ( domeviewPtr->wvgGC != None ) {
       a1 = 30 * 64 + (short) ( D90X - domeviewPtr->domeaz * D2X );
       a2 = 120 * 64;
+      rgate = r - GATEWIDTH/2.0;
+      x = xc - rgate;
+      y = yc - rgate;
+      width = height = (unsigned) ( rgate * 2.0 );
       XDrawArc( display, drawable, domeviewPtr->wvgGC, x, y, width, height, 
          a1, a2);
    }
+
+/* Vent gate labels */
+   x = xc - (short) ( 0.9 * r * cos( domeazr ) );
+   y = yc - (short) ( 0.9 * r * sin( domeazr ) );
+   w[0].x = x + 10.0;
+   w[0].y = y;
+   w[1].x = x + 5.0;
+   w[1].y = y + 10.0;
+   w[2].x = x;
+   w[2].y = y + 2.0;
+   w[3].x = x - 5.0;
+   w[3].y = y + 10.0;
+   w[4].x = x - 10.0;
+   w[4].y = y;
+   XDrawLines( display, drawable, domeviewPtr->vglabGC, w, 5, CoordModeOrigin);
+   x = 2.0 * xc - x;
+   y = 2.0 * yc - y;
+   e[0].x = x + 8.0;
+   e[0].y = y + 8.0;
+   e[1].x = x;
+   e[1].y = y + 8.0;
+   e[2].x = x;
+   e[2].y = y;
+   e[3].x = x + 8.0;
+   e[3].y = y;
+   e[4].x = x;
+   e[4].y = y;
+   e[5].x = x;
+   e[5].y = y - 8.0;
+   e[6].x = x + 8.0;
+   e[6].y = y - 8.0;
+   XDrawLines( display, drawable, domeviewPtr->vglabGC, e, 7, CoordModeOrigin);
+
 
 /* Mirror */
    if ( !(domeviewPtr->mpvalid) ||
