@@ -17,7 +17,7 @@
 #  Methods:
 #          none
 #
-#  D Terrett 17 January 2001
+#  D Terrett 17 June 2002
 #
 #  Copyright CCLRC
 #-
@@ -53,6 +53,8 @@ itcl::body LiveButton::constructor args {
 
 itcl::body LiveButton::command {} {
    if { ! [string equal $itk_option(-command) ""] } {
-      catch {uplevel #0 $itk_option(-command)}
+      if { [catch {uplevel #0 $itk_option(-command)} msg] } {
+         tk_messageBox -icon error -parent $itk_interior -message $msg
+      }
    }
 }
