@@ -1,0 +1,135 @@
+#+
+#  ObsDialog <- iwidgets::Dialog
+#
+#  An ObsDialog widget is a dialog with a listbox for selecting an
+#  observation from the current session.
+#
+#  Options:
+#           -session  The name of the OcsSession object that implements
+#                     ocs session.
+#
+#  Methods:
+#           get   returns the id of the selected observation.
+#
+#  D Terrett 7 March 2003
+#
+#  Copyright CCLRC
+#-
+
+itcl::class ObsDialog {
+   inherit iwidgets::Dialog
+   constructor args {}
+   itk_option define -session session Session {} refresh
+   public {
+      method refresh {}
+   }
+   private {
+      method apply {}
+      method select {}
+      variable obslist {}
+   }
+}
+
+itk::usual ObsDialog {
+   keep -activebackground -activerelief -background -borderwidth -cursor \
+         -elementborderwidth -foreground -highlightcolor -highlightthickness \
+         -insertbackground -insertborderwidth -insertofftime -insertontime \
+         -insertwidth -jump -labelfont -modality -selectbackground \
+         -selectborderwidth -textbackground -textfont 
+}
+
+option add *ObsDialog.borderWidth 2 widgetDefault
+option add *ObsDialog.height 380 widgetDefault
+option add *ObsDialog.width 350 widgetDefault
+option add *ObsDialog.master "." widgetDefault
+option add *ObsDialog.title "Observation Import Dialog" widgetDefault
+
+itcl::body ObsDialog::constructor {args} {
+
+   set w $itk_interior
+
+# Label
+   itk_component add label {
+      label $w.label -text "Observation ID"
+   }
+
+# List box for all the observations in the queue.
+   itk_component add obslist {
+      iwidgets::scrolledlistbox $w.obslist -selectmode single 
+   }
+   [$itk_component(obslist) component listbox] configure \
+         -listvariable [itcl::scope obslist]
+
+# Entry for entering the observation to fetch.
+   itk_component add progid {
+      entry $w.progid
+   }
+
+# Bind listbox selection to a command that copies the selection into the
+# entry field.
+   bind [$itk_component(obslist) component listbox] <<ListboxSelect>> \
+         [itcl::code $this select]
+
+# Bind a double click to apply.
+   bind [$itk_component(obslist) component listbox] <Double-Button-1> \
+         [itcl::code $this apply]
+
+# Bind <Return> in the entry widget to the OK button. This causes the apply
+# function to be executed twice. Wierd Huh!
+#   bind [$itk_component(progid) component entry] <Return> \
+#         [itcl::code $this invoke OK]
+
+# Configure buttons.
+   buttonconfigure Help -text Update -command [itcl::code $this refresh]
+   buttonconfigure Apply -command [itcl::code $this apply]
+   buttonconfigure OK \
+          -command "[itcl::code $this apply]; [itcl::code $this deactivate]"
+   pack $itk_component(label) -anchor w
+   pack $itk_component(obslist) -fill both -expand yes -pady 5
+   pack $itk_component(progid) -fill x -pady 5
+
+   eval itk_initialize $args
+}
+
+itcl::body ObsDialog::select {} {
+   $itk_component(progid) delete 0 end
+   set ind [$itk_component(obslist) curselection]
+   if { ! [string equal $ind ""] } {
+      $itk_component(progid) insert end [$itk_component(obslist) get $ind]
+   }
+}
+
+
+itcl::body ObsDialog::apply {} {
+
+# Get the observation id.
+   set obsid [$itk_component(progid) get]
+   if { [string is space $obsid] } {
+      set ind [$itk_component(obslist) curselection]
+      if { ! [string equal $ind ""] } {
+         set obsid [$itk_component(obslist) get $ind]
+      }
+   }
+
+   if { ! [string is space $obsid] } {
+
+# Process the XML field description.
+      if { [catch {set config [TcsConfigFile #auto \
+            [ocssession getField $obsid] $itk_interior]} msg] } {
+         tk_messageBox -icon error -message $msg
+      } else {
+
+# Select the new field.
+         set ::Config(tcs,value) [$config cget -tcsconfig]
+
+# Delete the TcsConfigFile object.
+         itcl::delete object $config
+      }
+   }
+}
+
+itcl::body ObsDialog::refresh {} {
+   if { ! [string equal $itk_option(-session) ""] } {
+      set obslist [$itk_option(-session) listObs]
+   }
+}

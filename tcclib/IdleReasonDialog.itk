@@ -1,0 +1,94 @@
+#+
+#  IdleReasonDialog <- iwidgets::Dialog
+#
+#  An IdleReasonDialog widget is a dialog with a listbox for selecting a
+#  reason for suspending the session.
+#
+#  Methods:
+#           get   returns the reason or comment.
+#
+#  D Terrett 7 October 2002
+#
+#  Copyright CCLRC
+#-
+
+itcl::class IdleReasonDialog {
+   inherit iwidgets::Dialog
+   constructor args {}
+   public {
+      method get {item}
+   }
+}
+
+itk::usual IdleReasonDialog {
+   keep -activebackground -activerelief -background -borderwidth -cursor \
+         -elementborderwidth -foreground -highlightcolor -highlightthickness \
+         -insertbackground -insertborderwidth -insertofftime -insertontime \
+         -insertwidth -jump -labelfont -modality -selectbackground \
+         -selectborderwidth -textbackground -textfont 
+}
+
+option add *IdleReasonDialog.borderWidth 2 widgetDefault
+option add *IdleReasonDialog.height 300 widgetDefault
+option add *IdleReasonDialog.width 300 widgetDefault
+option add *IdleReasonDialog.master "." widgetDefault
+option add *IdleReasonDialog.title "Session Idle Reason" widgetDefault
+
+itcl::body IdleReasonDialog::constructor {args} {
+
+   set w $itk_interior
+   itk_component add reason {
+      iwidgets::radiobox $w.reason -labeltext Reason
+   }
+   $itk_component(reason) add tel -text "Telescope fault"
+   $itk_component(reason) add inst -text "Instrument fault"
+   $itk_component(reason) add comp -text "Computer/Network fault"
+   $itk_component(reason) add weath -text Weather
+   $itk_component(reason) add hume -text "Human Error"
+   $itk_component(reason) add other -text "Other"
+   $itk_component(reason) select hume
+   hide Help
+   hide Apply
+
+   itk_component add comframe {
+      iwidgets::labeledframe $w.comframe -labelpos nw -labeltext Comment
+   }
+   set w [$itk_component(comframe) childsite]
+   itk_component add comment {
+      entry $w.comment
+   }
+   pack $itk_component(comment) -fill x -expand yes -padx 3
+   pack $itk_component(reason) $itk_component(comframe) -fill both -expand yes
+
+   eval itk_initialize $args
+}
+
+itcl::body IdleReasonDialog::get {item} {
+   switch $item {
+      reason {
+         switch [$itk_component(reason) get] {
+            tel {
+               return "Telescope fault"
+            }
+            inst {
+               return "Instrument fault"
+            }
+            comp {
+               return "Computer/Network fault"
+            }
+            weath {
+               return Weather
+            }
+            hume {
+               return "Human error"
+            }
+         }
+      }
+      comment {
+         return [$itk_component(comment) get]
+      }
+      default {
+         error "item must be either reason or comment"
+      }
+   }
+}
