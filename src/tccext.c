@@ -19,7 +19,6 @@ static char rcsid[]="$Id:";
 
 #include <tcl.h>
 #include <tk.h>
-#include "tccPreview.h"
 #include "tccAst.h"
 #include "autorepeat.h"
 #include "plosc.h"
@@ -40,7 +39,7 @@ static char rcsid[]="$Id:";
  *   Initialisation function for TCL loadable image.
  *
  *   Description:
- *   Creates the tccPreview, ast and autorepeat On/off commands.
+ *   Creates the ast and autorepeat On/off commands.
  *-
  */
 /* *INDENT-ON* */
@@ -48,9 +47,6 @@ static char rcsid[]="$Id:";
 int Tccext_Init( Tcl_Interp *interp)
 {
     if ( Tcl_InitStubs( interp, "8.0", 0 ) == NULL ) return TCL_ERROR;
-
-    Tcl_CreateObjCommand( interp, "tccPreview", Tccext_PreviewCmd,
-        (ClientData) NULL, (Tcl_CmdDeleteProc *) NULL);
 
     Tcl_CreateObjCommand( interp, "ast", Tccext_AstCmd,
         (ClientData) NULL, (Tcl_CmdDeleteProc *) NULL);
