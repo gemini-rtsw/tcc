@@ -9,7 +9,7 @@
 #  Methods:
 #          none
 #
-#  D Terrett 3 May 2000
+#  D Terrett 1 June 2000
 #
 #  Copyright CCLRC
 #+
@@ -27,6 +27,8 @@ itcl::class TcsControl {
    private method shStep
    private method shutterMode
    private method closeDome
+   private method m1park {par} {return PARK}
+   private method m1unpark {par} {return UNPARK}
    private variable dome
    private variable shutter
 }
@@ -67,36 +69,6 @@ itcl::body TcsControl::constructor args {
          -side left -fill both -expand y
    pack $itk_component(row1f2) $itk_component(row1f3) \
          -side left -fill both -expand y
-
-# The second frame in the first row is divided into 8 horizontally
-   set w $itk_component(row1f2)
-   itk_component add f2r1 {
-      frame $w.f2r1 -bd 2
-   }
-   itk_component add f2r2 {
-      frame $w.f2r2 -bd 2
-   }
-   itk_component add f2r3 {
-      frame $w.f2r3 -bd 2
-   }
-   itk_component add f2r4 {
-      frame $w.f2r4 -bd 2
-   }
-   itk_component add f2r5 {
-      frame $w.f2r5 -bd 2
-   }
-   itk_component add f2r6 {
-      frame $w.f2r6 -bd 2
-   }
-   itk_component add f2r7 {
-      frame $w.f2r7 -bd 2
-   }
-   itk_component add f2r8 {
-      frame $w.f2r8 -bd 2
-   }
-   pack $itk_component(f2r1) $itk_component(f2r2) $itk_component(f2r3) \
-        $itk_component(f2r4) $itk_component(f2r5) $itk_component(f2r6) \
-        $itk_component(f2r7) $itk_component(f2r8) -fill both -expand yes 
 
 # The third frame in the first row is divided into 2 horizontally.
    set w $itk_component(row1f3)
@@ -142,109 +114,106 @@ itcl::body TcsControl::constructor args {
 #         -expand y -fill both 
 
 # Commands to enable/disable following in each subsystem 
-   set w $itk_component(f2r1)
-   itk_component add header {
-      label $w.followLabel -text "Set following state"
+   set w $itk_component(row1f2)
+   itk_component add mcs {
+      FollowButton $w.mcs -text MCS -command mcFollow \
+            -sadrecord {mcssad followS} -subsysname "Mount control system"
    }
-   set w $itk_component(f2r2)
-   itk_component add mcsLabel {
-      label $w.mcsLabel -text "Mount    " 
+   itk_component add scs {
+      FollowButton $w.scs -text SCS -command m2Follow \
+            -sadrecord {m2ssad followS} -subsysname "Secondary control system"
    }
-   itk_component add mcsOn {
-      ApplyButton $w.mcsOn -command mcFollow -text On -parcommand \
-          [code $this enable] 
+   itk_component add crs {
+      FollowButton $w.crs -text CRCS -command crFollow \
+            -sadrecord {crssad followS} \
+            -subsysname "Cass rotator control system"
    }
-   itk_component add mcsOff {
-      ApplyButton $w.mcsOff -command mcFollow -text Off -parcommand \
-          [code $this disable] 
+   itk_component add ecs {
+      button $w.ecs -text ECS -state disabled -disabledforeground black
    }
-   set w $itk_component(f2r3)
-   itk_component add crcsLabel {
-      label $w.crcsLabel -text "Rotator  " 
+   itk_component add pcs {
+      button $w.pcs -text PCS -state disabled -disabledforeground black
    }
-   itk_component add crcsOn {
-      ApplyButton $w.crcsOn -command crFollow -text On -parcommand \
-          [code $this enable] 
+   itk_component add p1 {
+      FollowButton $w.p1 -text P1 -command p1Follow \
+            -sadrecord {agssad p1FollowS} -subsysname PWFS1
    }
-   itk_component add crcsOff {
-      ApplyButton $w.crcsOff -command crFollow -text Off -parcommand \
-          [code $this disable] 
+   itk_component add p2 {
+      FollowButton $w.p2 -text P2 -command p2Follow \
+            -sadrecord {agssad p2FollowS} -subsysname PWFS2
    }
-   set w $itk_component(f2r4)
-   itk_component add p1Label {
-      label $w.p1Label -text "PWFS1    " 
-   }
-   itk_component add pwfs1On {
-      ApplyButton $w.pwfs1On -command p1Follow -text On -parcommand \
-          [code $this enable] 
-   }
-   itk_component add pwfs1Off {
-      ApplyButton $w.pwfs1Off -command p1Follow -text Off -parcommand \
-          [code $this disable] 
-   }
-   set w $itk_component(f2r5)
-   itk_component add p2Label {
-      label $w.p2Label -text "PWFS2    " 
-   }
-   itk_component add pwfs2On {
-      ApplyButton $w.pwfs2On -command p2Follow -text On -parcommand \
-          [code $this enable] 
-   }
-   itk_component add pwfs2Off {
-      ApplyButton $w.pwfs2Off -command p2Follow -text Off -parcommand \
-          [code $this disable] 
-   }
-   set w $itk_component(f2r6)
-   itk_component add oiLabel {
-      label $w.oiLabel -text "OIWFS    " 
-   }
-   itk_component add oiwfsOn {
-      ApplyButton $w.oiwfsOn -command oiFollow -text On -parcommand \
-          [code $this enable] 
-   }
-   itk_component add oiwfsOff {
-      ApplyButton $w.oiwfsOff -command oiFollow -text Off -parcommand \
-          [code $this disable] 
-   }
-   set w $itk_component(f2r7)
-   itk_component add m2Label {
-      label $w.oiLabel -text "Secondary" 
-   }
-   itk_component add scsOn {
-      ApplyButton $w.scsOn -command m2Follow -text On -parcommand \
-          [code $this enable] 
-   }
-   itk_component add scsOff {
-      ApplyButton $w.scsOff -command m2Follow -text Off -parcommand \
-          [code $this disable] 
-   }
-#   set w $itk_component(f2r8)
-#   itk_component add aoLabel {
-#      label $w.oiLabel -text "AOS      " 
+#   itk_component add oiwfs {
+#      FollowButton $w.oiwfs -text OIWFS -command oiFollow \
+#            -subsysname OIWFS
 #   }
-#   itk_component add aoOn {
-#      ApplyButton $w.aoOn -command aoFollow -text On -parcommand \
-#          [code $this enable] 
+
+# Commands for datuming, initing or unparking mechanisms.
+   itk_component add mcsdatum {
+      ApplyButton $w.mcsdatum -command mountDatum -text Datum
+   }
+   itk_component add scsinit {
+      ApplyButton $w.scsinit -command m2Init -text Init
+   }
+   itk_component add crsdatum {
+      ApplyButton $w.crsdatum -command rotDatum -text Datum
+   }
+   itk_component add ecsinit {
+      ApplyButton $w.ecsinit -command enclosureInit -text Init
+   }
+   itk_component add pcsunpark {
+      ApplyButton $w.pcsunpark -command m1Park -text Unpark \
+            -parcommand [code $this m1unpark]
+   }
+   itk_component add p1datum {
+      ApplyButton $w.p1datum -command pwfs1Datum -text Datum
+   }
+   itk_component add p2datum {
+      ApplyButton $w.p2datum -command pwfs2Datum -text Datum
+   }
+
+# Commands for parking mechanisms.
+   itk_component add mcspark {
+      ApplyButton $w.mcspark -command telpark -text Park
+   }
+   itk_component add scspark {
+      ApplyButton $w.scspark -command m2Park -text Park
+   }
+   itk_component add crspark {
+      ApplyButton $w.crspark -command rotPark -text Park
+   }
+   itk_component add ecspark {
+      ApplyButton $w.ecspark -command enclosurePark -text Park
+   }
+   itk_component add pcspark {
+      ApplyButton $w.pcspark -command m1Park -text Park \
+            -parcommand [code $this m1park]
+   }
+   itk_component add p1park {
+      ApplyButton $w.p1park -command pwfs1Park -text Park
+   }
+   itk_component add p2park {
+      ApplyButton $w.p2park -command pwfs2Park -text Park
+   }
+#   itk_component add oipark {
+#      ApplyButton $w.oipark -command oiwfsPark -text Park
 #   }
-#   itk_component add aoOff {
-#      ApplyButton $w.aoOff -command aoFollow -text Off -parcommand \
-#          [code $this disable] 
-#   }
-   pack $itk_component(header) 
-   pack $itk_component(mcsLabel) $itk_component(mcsOn) $itk_component(mcsOff) \
-        -side left 
-   pack $itk_component(crcsLabel) $itk_component(crcsOn) \
-        $itk_component(crcsOff) -side left 
-   pack $itk_component(p1Label) $itk_component(pwfs1On)\
-        $itk_component(pwfs1Off) -side left
-   pack $itk_component(p2Label) $itk_component(pwfs2On) \
-        $itk_component(pwfs2Off) -side left
-   pack $itk_component(oiLabel) $itk_component(oiwfsOn) \
-        $itk_component(oiwfsOff) -side left
-   pack $itk_component(m2Label) $itk_component(scsOn) \
-        $itk_component(scsOff) -side left
-#   pack $itk_component(aoLabel) $itk_component(aoOn) \
-        $itk_component(aoOff) -side left
+
+   grid $itk_component(mcs) $itk_component(mcsdatum) $itk_component(mcspark) \
+         -sticky ew -padx 5 -pady 3
+   grid $itk_component(scs) $itk_component(scsinit) $itk_component(scspark) \
+         -sticky ew -padx 5 -pady 3
+   grid $itk_component(crs) $itk_component(crsdatum) $itk_component(crspark) \
+         -sticky ew -padx 5 -pady 3
+   grid $itk_component(ecs) $itk_component(ecsinit) $itk_component(ecspark) \
+         -sticky ew -padx 5 -pady 3
+   grid $itk_component(pcs) $itk_component(pcsunpark) $itk_component(pcspark) \
+         -sticky ew -padx 5 -pady 3
+   grid $itk_component(p1) $itk_component(p1datum) $itk_component(p1park) \
+         -sticky ew -padx 5 -pady 3
+   grid $itk_component(p2) $itk_component(p2datum) $itk_component(p2park) \
+         -sticky ew -padx 5 -pady 3
+#   grid $itk_component(oiwfs) x $itk_component(oipark) \
+         -sticky ew -padx 5 -pady 3
 
 # Carousel driving mode command.
    set w $itk_component(f3top)

@@ -1,0 +1,112 @@
+#+
+#  FollowButton <- itk::Widget
+#
+#  Implements the FollowButton class. A FollowButton is a push button that
+#  toggles the follow state of a subsystem. The current state of the
+#  subsystem is indicated by the background colour (red for Off, green for
+#  on).
+#
+#  Options:
+#          -command        The name of the follow command for the subsystem.
+#
+#          -sadrecord      The name of the sa that contains the follow state.
+#
+#          -subsystemname  The name of the subsystem (for log messages)
+#
+#  Methods:
+#          none
+#
+#  D Terrett 1 June 2000
+#
+#  Copyright CCLRC
+#-
+
+itcl::class FollowButton {
+   inherit itk::Widget
+
+   constructor args {}
+   destructor {}
+
+   itk_option define -command command Command {}
+   itk_option define -sadrecord sadrecord SadRecord {}
+   itk_option define -subsysname subsysname SubsysName {}
+
+   private method command
+   private method monitor {record status time value}
+
+   private variable following 0
+}
+
+itk::usual FollowButton {
+   keep -activeforeground -cursor -disabledforeground \
+         -foreground -font -highlightcolor -highlightthickness -width
+}
+
+itcl::body FollowButton::constructor args {
+
+   itk_component add button {
+      button $itk_interior.button -command [code $this command]
+   } {
+      usual
+      keep -state -text -width
+      ignore -activebackground
+      ignore -background
+   }
+   pack $itk_component(button) -fill both -expand y
+
+   eval itk_initialize $args
+}
+
+itcl::body FollowButton::destructor {} {
+   sa [lindex $itk_option(-sadrecord) 0] unproc \
+        [lindex $itk_option(-sadrecord) 1] [code $this monitor]
+}
+
+itcl::body FollowButton::command {} {
+   if { $itk_option(-command) != "" } {
+      if { $following } {
+         cs $itk_option(-command) set followState Off
+      } else {
+         cs $itk_option(-command) set followState On
+      }
+      if { [catch {cs tcsApply post} msg] } {
+         logger log "$itk_option(-subsysname) follow command rejected..."
+         logger log $msg
+         tk_messageBox -icon error -parent $itk_interior -message $msg
+      } else {
+         if { $following } {
+            logger log "$itk_option(-subsysname) follow off"
+         } else {
+            logger log "$itk_option(-subsysname) follow on"
+         }
+      }
+   }
+}
+
+itcl::configbody FollowButton::command {
+   if [catch {cs $itk_option(-command) info}] {
+      epics cs $itk_option(-command)
+   }
+}
+
+itcl::configbody FollowButton::sadrecord {
+   if { [llength $itk_option(-sadrecord)] } {
+      if [catch {sa $itk_option(-sadrecord) info}] {
+         epics sa [lindex $itk_option(-sadrecord) 0]
+      }
+      sa [lindex $itk_option(-sadrecord) 0] proc \
+            [lindex $itk_option(-sadrecord) 1] [code $this monitor]
+   }
+}
+
+itcl::body FollowButton::monitor {record status time value} {
+   set following [isFollowing [lindex $itk_option(-sadrecord) 0] \
+         [lindex $itk_option(-sadrecord) 1]]
+   if { $following } {
+      $itk_component(button) configure -background green \
+            -activebackground green
+   } else {
+      $itk_component(button) configure -background red \
+            -activebackground red
+   }
+}
