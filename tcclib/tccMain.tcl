@@ -7,7 +7,7 @@
 #  Arguments:
 #            Any command line options and values.
 #
-#  D Terrett  26 September 2000
+#  D Terrett  27 September 2000
 #
 #  Copyright CCLRC
 #-
@@ -149,7 +149,7 @@ proc tccMain args {
    ISS iss
 
 # Create the logger object.
-   Logger logger
+   Logger logger apply applyC errMessage
 
 # Pack the toolbar.
    pack [TccToolbar .toolbar]
