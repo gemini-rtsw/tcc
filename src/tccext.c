@@ -7,7 +7,7 @@ static char rcsid[]="$Id:";
 *   FUNCTION NAME(S)
 *   Tccext_Init - Initialisation function for TCL loadable image
 *
-*   D L Terrett 8 May 2002
+*   D L Terrett 7 June 2002
 *
 *   Copyright CCLRC
 *
@@ -22,6 +22,7 @@ static char rcsid[]="$Id:";
 #include "tccPreview.h"
 #include "tccAst.h"
 #include "autorepeat.h"
+#include "plosc.h"
 #include "edit.xbm"
 #include "delete.xbm"
 #include "rotate.xbm"
@@ -58,6 +59,9 @@ int Tccext_Init( Tcl_Interp *interp)
         (ClientData) NULL, (Tcl_CmdDeleteProc *) NULL);
 
     Tcl_CreateObjCommand( interp, "autoRepeatOff", autoRepeatOffCmd,
+        (ClientData) NULL, (Tcl_CmdDeleteProc *) NULL);
+
+    Tcl_CreateObjCommand( interp, "plosc", ploscCmd,
         (ClientData) NULL, (Tcl_CmdDeleteProc *) NULL);
 
     if ( Tk_DefineBitmap( interp, Tk_GetUid("edit"), (char*)edit_bits,

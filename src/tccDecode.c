@@ -1,4 +1,4 @@
-static char rcsid[] = "$Id: tccDecode.c,v 1.4 2001-02-05 19:33:27 dlt Exp $";
+static char rcsid[] = "$Id: tccDecode.c,v 1.5 2002-06-06 13:09:59 dlt Exp $";
 /* *INDENT-OFF* */
 /*
 *   FILENAME
@@ -17,6 +17,9 @@ static char rcsid[] = "$Id: tccDecode.c,v 1.4 2001-02-05 19:33:27 dlt Exp $";
 */
 /*
  * $Log: not supported by cvs2svn $
+ * Revision 1.4  2001/02/05 19:33:27  dlt
+ * Eliminate use of AppendResult
+ *
  * Revision 1.3  2000/02/18 02:29:18  dlt
  * New routine for decoding planet names
  *
@@ -734,13 +737,13 @@ int tccDcRadec(Tcl_Interp *interp, FRAMETYPE frame, char *string1, char *string2
 
 /* Allowed MJD range */
 #define MINT0 10000.0
-#define MAXT0 100000.0
+#define MAXT0 24100000.0
 
 int tccDcT0(Tcl_Interp *interp, char *string, double *t0)
 {
-    int n, i, j;
-    long iy, imo, id, ih, im;
-    double d, s, t;
+    int n, i, j, k;
+    long iy, imo, id, ih, im, test;
+    double d, s, t, df;
 
 
 /* Look for blank input. */
@@ -765,21 +768,52 @@ int tccDcT0(Tcl_Interp *interp, char *string, double *t0)
 /* Examine number of fields. */
     if (n == 3) {
 
-        /* Handle time-of-day case. */
+        /* Handle time-of-day and date with fractions of a day cases. */
         d = 0.0;
-        i = 1;
-        slaIntin(string, &i, &ih, &j);
+
+        /* In order to distinguish between a time of day and a date we
+           need to examine the fist number. */
+        k = 1;
+        test = 0.0;
+        slaIntin(string, &k, &test, &j);
         if (j)
             n = 0;
-        slaIntin(string, &i, &im, &j);
-        if (j)
-            n = 0;
-        slaDfltin(string, &i, &s, &j);
-        if (j)
-            n = 0;
-        slaDtf2d((int) ih, (int) im, s, &d, &j);
-        if (j)
-            n = 0;
+
+        if ( test > 24 ) {
+
+           /* Handle date */
+           i = 1;
+           slaIntin(string, &i, &iy, &j);
+           if (j)
+               n = 0;
+           slaIntin(string, &i, &imo, &j);
+           if (j)
+               n = 0;
+           slaDfltin(string, &i, &df, &j);
+           if (j)
+               n = 0;
+           slaCaldj((int) iy, (int) imo, (int) floor( df ), &d, &j);
+           if (j)
+               n = 0;
+           d += df - floor( df );
+
+        } else {
+
+           /* Handle time of day. */
+           i = 1;
+           slaIntin(string, &i, &ih, &j);
+           if (j)
+               n = 0;
+           slaIntin(string, &i, &im, &j);
+           if (j)
+               n = 0;
+           slaDfltin(string, &i, &d, &j);
+           if (j)
+               n = 0;
+           slaDtf2d((int) ih, (int) im, s, &d, &j);
+           if (j)
+               n = 0;
+        }
 
     } else if (n == 6) {
 

@@ -43,7 +43,6 @@ static int setWavel( Tcl_Interp*, int, int, Tcl_Obj *CONST[]);
 static int setLimits( Tcl_Interp*, int, Tcl_Obj *CONST[]); 
 static int setIpa( Tcl_Interp*, int, Tcl_Obj *CONST[]); 
 static int setIaa( Tcl_Interp*, int, Tcl_Obj *CONST[]); 
-static int setPlanet( Tcl_Interp*, int, Tcl_Obj *CONST[]); 
 static int setOrbit( Tcl_Interp*, int, Tcl_Obj *CONST[]); 
 static int update( Tcl_Interp*, char*);
 static int limitTimes( double, double );
@@ -74,7 +73,6 @@ double Iaa;          /* Instrument alignment angle */
 double Ipa;          /* Sky position angle */
 double Pox[2];       /* Pointing origins */
 double Poy[2];
-int Planet;          /* Planet */
 int Jtype;           /* Orbital element type */
 double T0;           /* reference epoch */
 double Orbel[7];     /* Orbital elements */
@@ -161,12 +159,6 @@ double Zlim = 0.5 * D2R;
  *      set orbit <jtype> <epoch> <orbinc> <anode> <perih> <aorq> 
  *                <e> ?<aorl> <dm>?
  *
- *         Sets the Source A target position to the named planet.
- *
- *      set planet <planet>
- *
- *         Sets the Source A target position to the named planet.
- *
  *      set poriginA|poriginB <x> <y>
  *
  *         Sets a pointing origin.
@@ -223,7 +215,7 @@ int Tccext_PreviewCmd( ClientData clientdata, Tcl_Interp *interp, int objc,
             "oiwfs", "limits", "moondist", NULL};
     char *setopts[] = { "sourceA", "pwfs1", "pwfs2", "oiwfs", "poriginA",
             "poriginB", "wavelsourceA", "wavelpwfs1", "wavelpwfs2",
-            "waveloiwfs", "limits", "ipa", "iaa", "planet", "orbit", NULL};
+            "waveloiwfs", "limits", "ipa", "iaa", "orbit", NULL};
     int ind;
     int result;
 
@@ -343,9 +335,6 @@ int Tccext_PreviewCmd( ClientData clientdata, Tcl_Interp *interp, int objc,
                     result = setIaa( interp, objc, objv);
                     break;
                 case 13:
-                    result = setPlanet( interp, objc, objv);
-                    break;
-                case 14:
                     result = setOrbit( interp, objc, objv);
                     break;
             }
@@ -436,20 +425,24 @@ static int end( Tcl_Interp *interp, Tcl_Obj *obj )
           }
           break;
 
-/* Get planet position */
-       case PLANET:
-          slaRdplan( tt, Planet, Elong, Elat, &a, &b, &diam );
-          System[0] = APPT;
-          Theta1[0] = a;
-          Theta2[0] = b;
-          break;
-
 /* Get orbit position */
        case ORBIT:
+          if ( T0 > 2400000.5 ) T0 -= 2400000.5;
+
+/* Predict topocentric (i.e. no refraction) apparent place. */
           slaPlante( tt, Elong, Elat, Jtype, T0, Orbel[0] * D2R, 
              Orbel[1] * D2R, Orbel[2] * D2R, Orbel[3], Orbel[4], 
              Orbel[5] * D2R, Orbel[6] * D2R, &a, &b, &r, &jstat );
-          System[0] = APPT;
+
+/* to geocentric apparent */
+          slaOap( "r", a, b, tt, 0.0, Elong, Elat, 0.0, 0.0, 0.0,
+                0.0, 0.0, 0.0, 0.0, 0.0, &a, &b);
+
+/* To J2000. */
+          slaAmp( a, b, tt, 2000.0, &a, &b );
+          System[0] = FK5;
+          Equinox[0].year = 2000.0;
+          Equinox[0].type = 'J';
           Theta1[0] = a;
           Theta2[0] = b;
           break;
@@ -818,18 +811,6 @@ static int setTarget( Tcl_Interp *interp, int target, int objc,
             TCL_OK ) return TCL_ERROR;
     }
     TargetSet[target] = COORD;
-    return TCL_OK;
-}
-
-static int setPlanet( Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[])
-{
-    if ( objc != 4 ) {
-        Tcl_WrongNumArgs( interp, 3, objv, "planet");
-        return TCL_ERROR;
-    }
-    if ( tccDcPlanet( interp, Tcl_GetStringFromObj( objv[3], NULL), &Planet ) ) 
-        return TCL_ERROR;
-    TargetSet[0] = PLANET;
     return TCL_OK;
 }
 

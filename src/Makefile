@@ -3,7 +3,7 @@ All: tccext.so tsdext.so tcctime.so slaext.so
 TCL_VERS = 8.3
 
 CMNOBJ = tccDecode.o tccUtil.o tccAst.o
-TCCOBJ = tccext.o tccPreview.o autorepeat.o
+TCCOBJ = tccext.o tccPreview.o autorepeat.o plosc.o
 TSDOBJ = tsdext.o tsdDomeView.o tsdWrapView.o tsdElView.o
 TIMEOBJ = tccTime.o
 SLAOBJ = slaext.o
@@ -33,7 +33,7 @@ slaext.so : $(SLAOBJ)
 	ld -G -z text -o $@ $(SLAOBJ) $(LDFLAGS) 
 
 tsdext.o : tccAst.h
-tccext.o : tccAst.h tccPreview.h autorepeat.h
+tccext.o : tccAst.h tccPreview.h autorepeat.h plosc.h
 tccext.o : edit.xbm delete.xbm rotate.xbm arotate.xbm hflip.xbm vflip.xbm \
             reset.xbm
 tccPreview.o : tccPreview.h tccConstants.h tccUtil.h tccDecode.h
@@ -43,6 +43,7 @@ tccAst.o : tccConstants.h tccUtil.h tccAst.h
 tsdDomeview.o : tccConstants.h tccDecode.h tccUtil.h
 tsdWrapview.o : tccConstants.h tccDecode.h tccUtil.h
 tsdElview.o : tccConstants.h tccDecode.h tccUtil.h
+plosc.o : plosc.h
 
 clean:
 	-rm $(TCCOBJ) $(TSDOBJ) $(CMNOBJ) $(SLAOBJ)

@@ -49,6 +49,8 @@
 #
 #              -eltype        Type of elements (major, minor or comet)
 #
+#              -format        The element format (AsA, MPC or JPL).
+#
 #              -epoch         Epoch of elements.
 #
 #              -inclination   Inclination.
@@ -57,13 +59,23 @@
 #
 #              -perihelion    Longitude of perihelion.
 #
-#              -aorq          Argument of perihelion or perihelion distance.
+#              -a             Argument of perihelion.
+#
+#              -q             Perihelion distance.
 #
 #              -e             Eccentricity.
 #
-#              -LorM          Mean longitude or mean anomoly.
+#              -L             Mean longitude.
+#
+#              -M             Mean anomoly.
+#
+#              -TP            Time of perihelion.
 #
 #              -n             Daily motion.
+#
+#              -MA
+#
+#              -W
 #
 #  Methods:
 #           apply comp    Applies the target definition to the TCS by 
@@ -80,7 +92,7 @@
 #           save node     Saves the values of the target options to the
 #                         xml node.
 #
-#  D Terrett 16 May 2002
+#  D Terrett 6 June 2002
 #
 #  Copyright CCLRC
 #+
@@ -110,13 +122,19 @@ itcl::class Target {
       variable c2 {}
       variable planet {}
       variable eltype {}
+      variable format {}
       variable inclination {}
       variable anode {}
       variable perihelion {}
-      variable aorq {}
+      variable a {}
+      variable q {}
       variable e {}
-      variable LorM {}
+      variable L {}
+      variable M {}
+      variable TP {}
       variable n {}
+      variable MA {}
+      variable W {}
       variable trackrate {}
       variable trackratens
    }
@@ -161,6 +179,7 @@ itcl::body Target::apply {comp} {
          cs $vt set dtheta1 [list [lindex $pm 0]]
          cs $vt set dtheta2 [list [lindex $pm 1]]
          cs $vt set rv [list $rv]
+         logger command $vt
       }
       degdegTarget {
          cs $vt set objName [list $objname]
@@ -173,6 +192,7 @@ itcl::body Target::apply {comp} {
          cs $vt set dtheta1 ""
          cs $vt set dtheta2 ""
          cs $vt set rv ""
+         logger command $vt
       }
       namedTarget {
          if { [string equal $vt sourceA] } {
@@ -185,36 +205,56 @@ itcl::body Target::apply {comp} {
             cs orbit set objName [list $objname]
             switch $eltype {
                major {
+                  if { [string equal $format JPL] } {
+                     set L [expr { $anode + $W + $MA }]
+                     set perihelion [expr { $anode + $W }]
+                  }
                   cs orbit set eltype 1
+                  cs orbit set epoch [list $epoch]
+                  cs orbit set inclination [list $inclination]
+                  cs orbit set anode [list $anode]
+                  cs orbit set perihelion [list $perihelion]
+                  cs orbit set aorq [list $a]
+                  cs orbit set LorM [list $L]
+                  cs orbit set e [list $e]
+                  cs orbit set n [list $n]
                }
                minor {
+                  foreach {epoch1 inclination1 anode1 perihelion1 a1 e1 M1} \
+                        [slaPertel 2 $epoch $epoch $inclination $anode \
+                              $perihelion $a $e $M] {}
                   cs orbit set eltype 2
+                  cs orbit set epoch $epoch1
+                  cs orbit set inclination $inclination1
+                  cs orbit set anode $anode1
+                  cs orbit set perihelion $perihelion1
+                  cs orbit set aorq $a1
+                  cs orbit set LorM $M1
+                  cs orbit set e $e1
+                  cs orbit set n ""
                }
                comet {
+                  if { [string equal AsA $format] } {
+                     set TP $epoch
+                  }
+                  foreach {epoch1 inclination1 anode1 perihelion1 q1 e1} \
+                        [slaPertel 3 $epoch $TP $inclination $anode \
+                              $perihelion $q $e] {}
                   cs orbit set eltype 3
+                  cs orbit set epoch $epoch1
+                  cs orbit set inclination $inclination1
+                  cs orbit set anode $anode1
+                  cs orbit set perihelion $perihelion1
+                  cs orbit set aorq $q1
+                  cs orbit set e $e1
+                  cs orbit set LorM ""
+                  cs orbit set n ""
                }
-            }
-            cs orbit set epoch [list $epoch]
-            cs orbit set inclination [list $inclination]
-            cs orbit set anode [list $anode]
-            cs orbit set perihelion [list $perihelion]
-            cs orbit set aorq [list $aorq]
-            cs orbit set e [list $e]
-            if { $eltype == "major" || $eltype == "minor" } {
-               cs orbit set LorM [list $LorM]
-            } else {
-               cs orbit set LorM ""
-            }
-            if { $eltype == "major" } {
-               cs orbit set n [list $n]
-            } else {
-               cs orbit set n ""
             }
             logger command orbit
          }
       }
    }
-   logger command $vt
    if { ! [string equal $trackrate ""] } {
       ${trackratens}::$trackrate apply $comp.trackrate
    }
@@ -234,19 +274,24 @@ itcl::body Target::init {} {
    set c2 {}
    $this configure -trackrate {}
    set planet {}
-   set type {}
+   set eltype {}
+   set format {}
    set inclination {}
    set anode {}
    set perihlion {}
-   set aorq {}
+   set a {}
+   set q {}
    set e {}
-   set LorM {}
+   set L {}
+   set M {}
+   set TP {}
    set n {}
+   set MA {}
+   set W {}
    set brightness {}
 }
 
 itcl::body Target::preview vt {
-
    if { [string equal $cosys ""] } {
       set system FK5
       set equinox J2000
@@ -268,18 +313,31 @@ itcl::body Target::preview vt {
       }
       conicTarget {
          if { [string equal $vt sourceA] } {
-            switch $type {
+            switch $eltype {
                major {
+                  if { [string equal $format JPL] } {
+                     set L [expr { $anode + $W + $MA }]
+                     set perihelion [expr { $anode + $W }]
+                  }
                   tccPreview set orbit 1 $epoch $inclination $anode \
-                        $periheloin $aorq $e $LorM $n
+                        $perihelion $a $e $L $n
                }
                minor {
-                  tccPreview set orbit 2 $epoch $inclination $anode \
-                        $perihelion $aorq $e $LorM
+                  foreach {epoch1 inclination1 anode1 perihelion1 a1 e1 M1} \
+                        [slaPertel 2 $epoch $epoch $inclination $anode \
+                              $perihelion $a $e $M] {}
+                  tccPreview set orbit 2 $epoch1 $inclination1 $anode1 \
+                        $perihelion1 $a1 $e1 M1
                }
                comet {
-                  tccPreview set orbit 3 $epoch $inclination $anode \
-                        $perihelion $aorq $e
+                  if { [string equal AsA $format] } {
+                     set TP $epoch
+                  }
+                  foreach {epoch1 inclination1 anode1 perihelion1 q1 e1} \
+                        [slaPertel 3 $epoch $TP $inclination $anode \
+                              $perihelion $q $e] {}
+                  tccPreview set orbit 3 $epoch1 $inclination1 $anode1 \
+                        $perihelion1 $q1 $e1
                }
             }
          }
@@ -320,18 +378,59 @@ itcl::body Target::save {node} {
       }
       conicTarget {
          set node [paramset $node conicTarget]
-         param $node type $eltype
-         param $node epoch $epoch
-         param $node inclination $inclination
-         param $node anode $anode
-         param $node perihelion $perihelion
-         param $node aorq $aorq
-         param $node e $e
-         if { $eltype == "major" || $eltype == "minor" } {
-            param $node LorM $LorM
-         }
-         if { $eltype == "major" } {
-            param $node n $n
+         switch $eltype {
+            major {
+               switch $format {
+                  JPL {
+                     param $node type $eltype
+                     param $node format $format
+                     param $node epoch $epoch
+                     param $node inclination $inclination
+                     param $node anode $anode
+                     param $node W $W
+                     param $node a $a
+                     param $node e $e
+                     param $node MA $MA
+                     param $node n $n
+                  }
+                  default {
+                     param $node type $eltype
+                     param $node format $format
+                     param $node epoch $epoch
+                     param $node inclination $inclination
+                     param $node anode $anode
+                     param $node perihelion $perihelion
+                     param $node a $a
+                     param $node e $e
+                     param $node L $L
+                     param $node n $n
+                  }
+               }
+            }
+            minor {
+               param $node type $eltype
+               param $node format $format
+               param $node epoch $epoch
+               param $node inclination $inclination
+               param $node anode $anode
+               param $node perihelion $perihelion
+               param $node a $a
+               param $node e $e
+               param $node M $M
+            }
+            comet {
+               param $node type $eltype
+               param $node format $format
+               param $node epoch $epoch
+               param $node inclination $inclination
+               param $node anode $anode
+               param $node perihelion $perihelion
+               param $node q $q
+               param $node e $e
+               if { ![string equal $format AsA] } {
+                  param $node TP $TP
+               }
+            }
          }
       }
    }
