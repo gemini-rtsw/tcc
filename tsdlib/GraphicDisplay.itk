@@ -10,7 +10,7 @@
 #           update          Updates the view with the current state of the
 #                           telescope.
 #
-#  D Terrett 13 March 2003
+#  D Terrett 24 June 2003
 #
 #  Copyright CCLRC
 #-
@@ -50,7 +50,7 @@ itcl::body GraphicDisplay::constructor args {
       frame $itk_interior.col4
    }
    pack $itk_component(col1) $itk_component(col2) $itk_component(col3) \
-         $itk_component(col4) -side left -fill both -expand y
+         $itk_component(col4) -side left -fill both -expand y -anchor n
 
 # Put the dome view and the elevation view in the left column.
    set w $itk_component(col1)
@@ -76,7 +76,61 @@ itcl::body GraphicDisplay::constructor args {
    }
    pack $itk_component(opticsview) -expand y
 
-# Probe views in the last column.
+# M2 setup and probe views in the last column.
+   set w $itk_component(col4)
+   itk_component add m2setup {
+      frame $w.m2setup -borderwidth 2 -relief ridge
+   }
+   set w $itk_component(m2setup)
+   itk_component add m2lab {
+      label $w.m2lab -text "M2 configuration"
+   }
+   itk_component add m2p1lab {
+      label $w.m2p1lab -text PWFS1: -anchor e
+   }
+   itk_component add m2p1 {
+      label $w.m2p1 -relief sunken
+   } {
+      usual
+      ignore -font
+   }
+   itk_component add m2p2lab {
+      label $w.m2p2lab -text PWFS2: -anchor e
+   }
+   itk_component add m2p2 {
+      label $w.m2p2 -relief sunken
+   } {
+      usual
+      ignore -font
+   }
+   itk_component add m2oilab {
+      label $w.m2oilab -text OIWFS: -anchor e
+   }
+   itk_component add m2oi {
+      label $w.m2oi -relief sunken
+   } {
+      usual
+      ignore -font
+   }
+   itk_component add m2aolab {
+      label $w.m2aolab -text GAOS: -anchor e
+   }
+   itk_component add m2ao {
+      label $w.m2ao -relief sunken
+   } {
+      usual
+      ignore -font
+   }
+   grid $itk_component(m2lab) -
+   grid $itk_component(m2p1lab) $itk_component(m2p1) -pady 1 -sticky e
+   grid $itk_component(m2p2lab) $itk_component(m2p2) -pady 1 -sticky e
+   grid $itk_component(m2oilab) $itk_component(m2oi) -pady 1 -sticky e
+   grid $itk_component(m2aolab) $itk_component(m2ao) -pady 1 -sticky e
+   grid configure $itk_component(m2p1) $itk_component(m2p2) \
+         $itk_component(m2oi) $itk_component(m2ao) -stick ew -padx 2
+   grid columnconfigure $itk_component(m2setup) 1 -weight 1
+
+# OIWFS
    set w $itk_component(col4)
    itk_component add oiwfs {
       frame $w.oiwfs -borderwidth 2 -relief ridge
@@ -102,6 +156,32 @@ itcl::body GraphicDisplay::constructor args {
    pack $itk_component(oiname) $itk_component(oilabel) -padx 5
    pack $itk_component(oix) $itk_component(oiy) $itk_component(oiwavel) \
          -padx 5 -pady 3
+
+# ALTAIR WFS.
+   set w $itk_component(col4)
+   itk_component add aowfs {
+      frame $w.aowfs -borderwidth 2 -relief ridge
+   }
+   set w $itk_component(aowfs)
+   itk_component add aolabel {
+      label $w.aolabel -text "ALTAIR"
+   }
+   itk_component add aox {
+      StatusField $w.aox -labeltext x -entryborder 2 -entryrelief ridge \
+            -width 6 -anchor e
+   }
+   itk_component add aoy {
+      StatusField $w.aoy -labeltext y -entryborder 2 -entryrelief ridge \
+            -width 6 -anchor e
+   }
+   itk_component add aowavel {
+      label $w.aowavel
+   }
+   pack $itk_component(aolabel) -padx 5
+   pack $itk_component(aowavel) $itk_component(aoy) $itk_component(aox) \
+         -padx 5 -pady 3 -side bottom
+
+# PWFS1.
    set w $itk_component(col4)
    itk_component add pwfs1 {
       frame $w.pwfs1 -borderwidth 2 -relief ridge
@@ -117,6 +197,8 @@ itcl::body GraphicDisplay::constructor args {
       label $w.p1wavel
    }
    pack $itk_component(p1label) $itk_component(probe1) $itk_component(p1wavel)
+
+# PWFS2.
    set w $itk_component(col4)
    itk_component add pwfs2 {
       frame $w.pwfs2 -borderwidth 2 -relief ridge
@@ -132,8 +214,10 @@ itcl::body GraphicDisplay::constructor args {
       label $w.p2wavel
    }
    pack $itk_component(p2label) $itk_component(probe2) $itk_component(p2wavel)
-   pack $itk_component(pwfs2) $itk_component(pwfs1) $itk_component(oiwfs) \
-         -side bottom -pady 3
+
+   grid $itk_component(m2setup) - -sticky ew -padx 5 -pady 5
+   grid $itk_component(oiwfs) $itk_component(aowfs) -padx 5 -pady 5 -sticky ns
+   grid $itk_component(pwfs1) $itk_component(pwfs2) -padx 5 -pady 5
 
 # Configure the ISS port numbers and AO.
    $itk_component(opticsview) configure -portAnumber 1 
@@ -355,6 +439,12 @@ itcl::body GraphicDisplay::update {} {
          -calunit $calunit
    $itk_component(opticsview) update
 
+# Update the M2 setup.
+   $itk_component(m2p1) configure -text [sa m2ssad get p1GuideConfig]
+   $itk_component(m2p2) configure -text [sa m2ssad get p2GuideConfig]
+   $itk_component(m2oi) configure -text [sa m2ssad get oiGuideConfig]
+   $itk_component(m2ao) configure -text [sa m2ssad get aoGuideConfig]
+
 # Set the colour of the OIWFS according to the follow and in position state.
    if { [isFollowing agssad oiFollowS] } {
       if { [isInPosition agssad oiInPosition] } {
@@ -369,10 +459,31 @@ itcl::body GraphicDisplay::update {} {
       $itk_component(oiy) configure -status error
    }
 
-# Update the OIWFS name position.
+# Set the colour of the ALTAIR WFS according to the follow and in position 
+# state.
+   if { [isFollowing aossad followS] } {
+      if { [isInPosition aossad inPosition] } {
+         $itk_component(aox) configure -status ok
+         $itk_component(aoy) configure -status ok
+      } else {
+         $itk_component(aox) configure -status warning
+         $itk_component(aoy) configure -status warning
+      }
+   } else {
+      $itk_component(aox) configure -status error
+      $itk_component(aoy) configure -status error
+   }
+
+# Update the OIWFS name and position.
    $itk_component(oiname) configure -text [sa agssad get oiwfsName]
    $itk_component(oix) configure -text [format %.2f [sadVal agssad oiX 0.0]]
    $itk_component(oiy) configure -text [format %.2f [sadVal agssad oiY 0.0]]
+
+# Update the ALTAIR position.
+   $itk_component(aox) configure \
+         -text [format %.2f [sadVal aossad wfsXPosition 0.0]]
+   $itk_component(aoy) configure \
+         -text [format %.2f [sadVal aossad wfsYPosition 0.0]]
 
 # Update the guiding wavelengths.
    set wavel [sadVal tcssad pwfs1Wavelength ""]
@@ -382,6 +493,9 @@ itcl::body GraphicDisplay::update {} {
    set wavel [sadVal tcssad pwfs2Wavelength ""]
    if { $wavel != "" } {
       $itk_component(p2wavel) configure -text "[expr {$wavel / 10000.0}] mu"
+   }
+   if { $wavel != "" } {
+      $itk_component(aowavel) configure -text "[expr {$wavel / 10000.0}] mu"
    }
    set wavel [sadVal tcssad oiwfsWavelength ""]
    if { $wavel != "" } {
