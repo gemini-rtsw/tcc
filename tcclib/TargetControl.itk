@@ -9,13 +9,16 @@
 #           -shadow         The name of the control's edit shadow.
 #
 #  Methods:
+#           chidlstored name Updates the wavelength in the wavelength
+#                            selector if the wavelength definition changes.
+#
 #           selectobj name  Copies the contents of the Target object "name"
 #                           into the edit controls.
 #
 #           updateobj name  Stores the contents of the edit controls in the
 #                           Target object "name".
 #
-#  D Terrett 20 March 2001
+#  D Terrett 22 March 2001
 #
 #  Copyright CCLRC
 #+
@@ -27,6 +30,7 @@ itcl::class TargetControl {
    public {
       method selectobj {name}
       method updateobj {name}
+      method childstored {name}
    }
    protected {
       method copy {createproc prompt component}
@@ -394,5 +398,14 @@ itcl::body TargetControl::copy {createproc prompt component} {
    if { ![string is space $newname] } {
       $name copy $createproc $newname
       $component selectfromcontrol $newname
+   }
+}
+
+itcl::body TargetControl::childstored {name} {
+   switch $name {
+      wavelength_name {
+         $itk_component(wavelength_name) select \
+               [$itk_component(wavelength_name) get name]
+      }
    }
 }
