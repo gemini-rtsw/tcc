@@ -33,7 +33,7 @@ proc createEditPanels {parent component class namespace list title vt} {
          -title $title -componentlist $list -namespace $namespace -applyarg $vt
 
 # Create the EditShadow.
-   tcclib::EditShadow ${parent}${component} ${parent}${component}Panel \
+   tcclib::EditShadow ${parent}${component} -panel ${parent}${component}Panel \
          -parent $parent -component $component -namespace $namespace
 
 # Create all the edit panels for the subcomponents.

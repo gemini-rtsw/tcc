@@ -266,7 +266,7 @@ itcl::body TcsConfigControl::selectobj name {
 #+
 #  Updates the active components on the panel with the new configuration.
 #-
-   if { ! [string equal $name ""] } {
+   if { ! [string equal [namespace tail $name] ""] } {
       foreach component $components option $options list $lists {
          if { [$itk_component($component) cget -active] } {
             set comp [$name cget $option]

@@ -118,7 +118,7 @@ itcl::body GuideControl::selectobj name {
 
 # Copy the contents of the guide object selected in the combobox
 # into the edit control.
-   if { ! [string equal $name ""] } {
+   if { ! [string equal [namespace tail $name] ""] } {
       foreach wfs {pwfs1 pwfs2 oiwfs} {
          $itk_component(${wfs}Target) configure -state normal
          $itk_component(${wfs}Target) select [$name cget -${wfs}Target]
