@@ -9,7 +9,7 @@
 #  Methods:
 #           none
 #
-#  D Terrett 24 November 1999
+#  D Terrett 25 May 2000
 #
 #  Copyright CCLRC
 #+
@@ -18,9 +18,13 @@ itcl::class GuideHandsetControl {
    inherit itk::Widget
 
    constructor args {}
+   destructor {after cancel $refid}
 
    private method offset dir
    private method newstep size
+   private method refresh
+
+   private variable refid
 }
 
 itk::usual GuideHandsetControl {
@@ -65,6 +69,40 @@ itcl::body GuideHandsetControl::constructor args {
    }
    pack $itk_component(slider) -fill x -expand y
 
+# Display of current adjustments.
+   itk_component add disp {
+      frame $itk_interior.disp -bd 10
+   }
+   pack $itk_component(disp)
+   set w $itk_component(disp)
+   itk_component add ca {
+      label $w.ca -text CA
+   }
+   itk_component add ce {
+      label $w.ce -text CE
+   }
+   itk_component add local {
+      label $w.local -text Local
+   }
+   itk_component add guide {
+      label $w.guide -text Guide
+   }
+   itk_component add calocal {
+      label $w.calocal -relief groove -bd 2 -width 8 -anchor e
+   }
+   itk_component add celocal {
+      label $w.celocal -relief groove -bd 2 -width 8 -anchor e
+   }
+   itk_component add caguide {
+      label $w.caguide -relief groove -bd 2 -width 8 -anchor e
+   }
+   itk_component add ceguide {
+      label $w.ceguide -relief groove -bd 2 -width 8 -anchor e
+   }
+   grid x $itk_component(ca) $itk_component(ce)
+   grid $itk_component(local) $itk_component(calocal) $itk_component(celocal)
+   grid $itk_component(guide) $itk_component(caguide) $itk_component(ceguide)
+
 # Buttons for zeroing and absorbing the guide adjustments.
    itk_component add bot {
       frame $itk_interior.bot
@@ -79,6 +117,9 @@ itcl::body GuideHandsetControl::constructor args {
    }
    pack $itk_component(absorb) $itk_component(clear) -expand y \
          -pady 4 -side left
+
+# Schedule update of CA & CE displays.
+   set refid [after 1000 [code $this refresh]]
 
    eval itk_initialize $args
 }
@@ -103,4 +144,16 @@ itcl::body GuideHandsetControl::newstep size {
 #      tk_messageBox -icon error -parent $itk_interior -message \
 #            "Error setting step size: TCS reports \"$msg\""
 #   }
+}
+
+itcl::body GuideHandsetControl::refresh {} {
+
+# Update the displays of CA and CE.
+   $itk_component(calocal) configure -text [sa tcssad get calocal value]
+   $itk_component(celocal) configure -text [sa tcssad get celocal value]
+   $itk_component(caguide) configure -text [sa tcssad get caguide value]
+   $itk_component(ceguide) configure -text [sa tcssad get ceguide value]
+
+# Reschedule
+   set refid [after 1000 [code $this refresh]]
 }
