@@ -1,0 +1,163 @@
+#+
+#  Wizard <- iwidgets::Dialog
+#
+#  A dialog box widget that implements a "wizard". A wizard dialog has 
+#  Next, Back and Cancel buttons that step through a series of actions.
+#
+#  Options:
+#
+#  Methods:
+#
+#  D Terrett 30 October 2002
+#
+#  Copyright CCLRC
+#-
+
+itcl::class Wizard {
+   inherit iwidgets::Dialog
+   constructor {args} {}
+   public {
+      method childsite {} {return $itk_component(wizchildsite)}
+   }
+   protected {
+      method errorrep {msg}
+      variable actionproc {}
+      variable backproc {}
+      variable cancelproc {}
+      variable finishproc {}
+      variable instructions "There are no instructions"
+      variable nextproc {}
+   }
+   private {
+      method back {}
+      method cancel {}
+      method finish {}
+      method next {}
+   }
+}
+
+itk::usual Wizard {
+   keep -background -cursor -foreground -modality 
+}
+
+option add *Wizard.borderWidth 2 widgetDefault
+option add *Wizard.height 300 widgetDefault
+option add *Wizard.master "." widgetDefault
+option add *Wizard.width 400 widgetDefault
+
+itcl::body Wizard::constructor {args} {
+
+# Message widget for displaying the instructions.
+   set w $itk_component(dschildsite)
+   itk_component add instructions {
+      message $w.instructions -textvariable [itcl::scope instructions] \
+            -width 350
+   }
+
+# Child site.
+   itk_component add wizchildsite {
+      frame $w.wizchildsite
+   }
+   pack $itk_component(instructions) $itk_component(wizchildsite) \
+         -fill both -expand yes
+
+# Reorganize buttons.
+   hide Help
+   hide Apply
+   insert OK Back -text Back -command [itcl::code $this back] \
+         -state disabled
+   buttonconfigure OK -text Next -command [itcl::code $this next]
+   buttonconfigure Cancel -command [itcl::code $this cancel]
+
+   eval itk_initialize $args
+}
+
+itcl::body Wizard::back {} {
+
+# Call the back procedure.
+   if { $backproc != "" } {
+      if { [catch {eval $backproc} msg] } {
+         errorrep $msg
+      }
+   }
+
+# Set the button states and labels.
+   if { $backproc == ""} {
+      buttonconfigure Back -state disabled
+   } else {
+      buttonconfigure Back -state normal
+   }
+   if { $nextproc == ""} {
+      buttonconfigure OK -text Finish -command [itcl::code $this finish] \
+            -state normal
+   } else {
+      buttonconfigure OK -text Next -command [itcl::code $this next] \
+            -state normal
+   }
+}
+
+itcl::body Wizard::cancel {} {
+   if { $cancelproc != "" } {
+      if { [catch {eval $cancelproc} msg] } {
+         errorrep $msg
+      }
+   }
+   destroy [winfo toplevel $itk_interior]
+}
+
+itcl::body Wizard::finish {} {
+   if { $finishproc != "" } {
+      if { [catch {eval $finishproc} msg] } {
+         errorrep $msg
+      }
+   }
+   destroy [winfo toplevel $itk_interior]
+}
+
+itcl::body Wizard::next {} {
+
+# Unpack the custom widget.
+   foreach slave [pack slaves $itk_component(wizchildsite)] {
+      pack forget $slave
+   }
+
+# If there is an action procedure defined, disable the back and next buttons
+# and call it.
+   if { $actionproc != "" } {
+      buttonconfigure Back -state disabled
+      buttonconfigure OK -state disabled
+      if { [catch {eval $actionproc} msg] } {
+         errorrep $msg
+      }
+   }
+
+# Call the next procedure.
+   if { $nextproc != "" } {
+      if { [catch {eval $nextproc} msg] } {
+         errorrep $msg
+      }
+   }
+
+# Re-enable the back button if a back procedure is defined.
+   if { $backproc == ""} {
+      buttonconfigure Back -state disabled
+   } else {
+      buttonconfigure Back -state normal
+   }
+
+# Set the label on the next button to either next of finish depending on
+# whether there is a next procedure defined.
+   if { $nextproc == ""} {
+      buttonconfigure OK -text Finish -command [itcl::code $this finish] \
+            -state normal
+   } else {
+      buttonconfigure OK -text Next -command [itcl::code $this next] \
+            -state normal
+   }
+}
+
+itcl::body Wizard::errorrep {msg} {
+   tk_messageBox -icon error -parent $itk_interior -message \
+         "Error posting commands: TCS reports \
+         \"$msg\""
+}
