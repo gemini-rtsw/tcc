@@ -8,7 +8,7 @@
 #  Methods:
 #          none
 #
-#  D Terrett 16 July 2001
+#  D Terrett 19 September 2001
 #
 #  Copyright CCLRC
 #+
@@ -271,8 +271,11 @@ itcl::body TcsConfigPanel::export {} {
 
 itcl::body TcsConfigPanel::purge {list namespace} {
    set n [$list length]
+   set namelist ""
    for { set i 0 } { $i < $n } { incr i } {
-      set name [$list get $i]
+      lappend namelist [$list get $i]
+   }
+   foreach name $namelist {
       if { $name != "" } {
          catch {itcl::delete object ${namespace}::$name}
       }
