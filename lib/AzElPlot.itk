@@ -4,7 +4,7 @@
 #  Implements the AzElPlot widget. A canvas with stars and the current
 #  telescope position plotted in Az/El.
 #
-#  D Terrett 17 January 2004
+#  D Terrett 21 January 2004
 #
 #  Copyright CCLRC
 #+
@@ -410,6 +410,30 @@ itcl::body AzElPlot::next {mode} {
             incr tag
          }
          return $besttag
+      }
+      random {
+
+# Picks a star above the horizon limit at random.
+         set tag 0
+         set taglist [list]
+         while { [info exists StarsAz($cat,$tag)] } {
+
+# Build a list of all the stars that aren't marked are above the elevation 
+# limit.
+            if { [string equal $StarsState($cat,$tag) ""] && \
+                   $StarsEl($cat,$tag) > $itk_option(-ellimit) * $D2R } {
+               lappend taglist $tag
+            }
+            incr tag
+         }
+
+   # Select one of the tags at random.
+         if { [llength $taglist] } {
+            set n [expr { int(rand() * [llength $taglist]) }]
+            return [lindex $taglist $n]
+         } else {
+            return ""
+         }
       }
    }
 }
