@@ -78,7 +78,7 @@
 #           save node     Saves the values of the target options to the
 #                         xml node.
 #
-#  D Terrett 10 April 2002
+#  D Terrett 17 April 2002
 #
 #  Copyright CCLRC
 #+
@@ -450,6 +450,7 @@ itcl::configbody Target::system {
    if { ! [string is space $system] } {
 
 # Construct the cosys component name.
+      set system [string trim $system]
       switch $system {
          apparent {
             set cosysname Apparent
@@ -458,15 +459,25 @@ itcl::configbody Target::system {
             set cosysname AzEl
          }
          default {
-            switch [string range $system 0 0] {
+            switch [string index $system 0] {
+               j -
                J {
                   set cosysname FK5/${system}
                }
+               b -
                B {
                   set cosysname FK4/${system}
                }
                default {
-                  error "\"$system\" is not a valid coordinate system"
+                  if { [string is double $system] } {
+                     if { $system > 1984.0 } {
+                        set cosysname FK5/${system}
+                     } else {
+                        set cosysname FK4/${system}
+                     }
+                  } else {
+                     error "\"$system\" is not a valid coordinate system"
+                  }
                }
             }
          }
