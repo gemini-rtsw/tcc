@@ -179,7 +179,7 @@ proc tccMain args {
                tk_messageBox -icon error -parent . -message \
                   "error opening initialization file \"$filespec\": $msg"
             } else {
-               puts "processing $filename"
+               puts "processing $filespec"
                loadDefFile $file
                close $file
             }
