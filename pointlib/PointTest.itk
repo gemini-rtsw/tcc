@@ -3,7 +3,7 @@
 #
 # A PointTest widget is the main interface of the pointtest application.
 #
-# D Terrett 22 July 2000
+# D Terrett 23 July 2000
 #
 # Copyright CCLRC
 #+
@@ -75,9 +75,6 @@ itcl::body PointTest::constructor {args} {
    pack [checkbutton $f.select -variable [scope Options(select)] \
          -command [itcl::code $this pointobsopts select] \
          -text "Select next star after logging"] -anchor w -padx 5 -pady 3
-   pack [checkbutton $f.skip -variable [scope Options(skip)] \
-         -command [itcl::code $this pointobsopts skip] \
-         -text "Skip star on error"] -anchor w -padx 5 -pady 3
    pack [checkbutton $f.zlpm -variable [scope Options(zlpm)] \
          -command [itcl::code $this pointobsopts zlpm] \
          -text "Zero local pointing model on slew"] -anchor w -padx 5 -pady 3
@@ -227,9 +224,6 @@ itcl::body PointTest::pointobsopts {option} {
    switch $option {
       log {
          $PointObs configure -logafterslew $Options($option)
-      }
-      skip {
-         $PointObs configure -skiponerror $Options($option)
       }
       guide {
          $PointObs configure -guideafterslew $Options($option)

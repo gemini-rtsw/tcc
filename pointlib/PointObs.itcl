@@ -26,13 +26,11 @@
 #       guide          If true, guiding is enabled before logging and
 #                      disbaled afterwards.
 #
-#       skiponerror    If true, slew to the next star if an error occurs.
-#
 #       wfs            Which WFS to use for guiding.
 #
 #       zlpm           If true, zero the local pointing model when slewing.
 #
-#  D Terrett 22 July 2000
+#  D Terrett 23 July 2000
 #
 #  Copyright CCLRC
 #+
@@ -50,7 +48,6 @@ itcl::class PointObs {
    public variable nextstyle minslew
    public variable selectafterlog 0
    public variable guideafterslew 0
-   public variable skiponerror 0
    public variable zlpm 0
    public variable wfs PWFS2
 
@@ -252,16 +249,6 @@ itcl::body PointObs::nextstar {args} {
    $AzElPlot select $tag
 }
 
-itcl::configbody PointObs::skiponerror {
-   if { $skiponerror } {
-      $SlewAction configure -onerror [itcl::code $this nextstar]
-      $LogAction configure -onerror [itcl::code $this nextstar]
-   } else {
-      $SlewAction configure -onerror [itcl::code $this reporterror]
-      $LogAction configure -onerror [itcl::code $this reporterror]
-   }
-}
-
 itcl::body PointObs::reporterror {message} {
    tk_messageBox -icon error -message $message -type ok \
          -title "Point Test Error"
@@ -270,20 +257,12 @@ itcl::body PointObs::reporterror {message} {
 
 itcl::body PointObs::start {action} {
    if { [catch {$action start} message] } {
-      if { $skiponerror } {
-         if { $selectafterlog } {nextaction slew}
-      } else {
-         reporterror $message
-      }
+      reporterror $message
    }
 }
 
 itcl::body PointObs::onerror {message} {
-   if { $skiponerror } {
-      nextaction slew
-   } else {
-      reporterror $message
-   }
+   reporterror $message
 }
 
 itcl::configbody PointObs::logdelay {
