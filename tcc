@@ -26,8 +26,8 @@ if { [string compare [file pathtype $ROOT] relative] == 0 } {
 global CATALOG_DIR
 set CATALOG_DIR $ROOT/pointcats
 
-# Temporary location of DOM package.
-lappend auto_path ../templibs/lib
+# Temporary location of DOM & expat packages.
+set auto_path [concat $ROOT/../templibs/lib $auto_path]
 
 # The tcc library files live in the lib subdirectory.
 lappend auto_path $ROOT/lib
