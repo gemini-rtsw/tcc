@@ -10,7 +10,7 @@
 #           update      Causes the preview configuration to be calculated 
 #                       and displayed.
 #
-#  D Terrett 7 June 2000
+#  D Terrett 2 February 2001
 #
 #  Copyright CCLRC
 #+
@@ -314,8 +314,11 @@ itcl::body PreviewControl::update {} {
       }
 
 # Display the source position
-      $itk_component(radec) configure \
-         -text [tccPreview get source_target]
+      foreach {ra dec frame equinox} [tccPreview get source_target] {}
+      if { [string equal $frame FK4] || [string equal $frame FK5] } {
+         set equinox [formatEpoch $frame $equinox]
+      }
+      $itk_component(radec) configure -text "$ra $dec $frame $equinox"
 
 # Display the time of the preview.
       $itk_component(time) configure -text [lindex $end 0]
