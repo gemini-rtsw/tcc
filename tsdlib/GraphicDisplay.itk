@@ -10,7 +10,7 @@
 #           update          Updates the view with the current state of the
 #                           telescope.
 #
-#  D Terrett 7 September 2001
+#  D Terrett 10 September 2001
 #
 #  Copyright CCLRC
 #-
@@ -97,9 +97,9 @@ itcl::body GraphicDisplay::constructor args {
    $itk_component(opticsview) configure -portAnumber 1 
    switch [sa tcssad get name] {
       Gemini-North {
-         $itk_component(opticsview) configure -portBnumber 2
+         $itk_component(opticsview) configure -portBnumber 4
          $itk_component(opticsview) configure -portCnumber 3
-         $itk_component(opticsview) configure -portDnumber 4
+         $itk_component(opticsview) configure -portDnumber 2
          $itk_component(opticsview) configure -portEnumber 5
       }
       Gemini-South {
@@ -278,9 +278,9 @@ itcl::body GraphicDisplay::update {} {
    switch [sa tcssad get name] {
       Gemini-North {
          $itk_component(opticsview) configure \
-               -portBlabel [sa agssad get port2Label] \
+               -portBlabel [sa agssad get port4Label] \
                -portClabel [sa agssad get port3Label] \
-               -portDlabel [sa agssad get port4Label] \
+               -portDlabel [sa agssad get port2Label] \
                -portElabel [sa agssad get port5Label] 
       }
       Gemini-South {
