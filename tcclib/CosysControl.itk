@@ -7,14 +7,7 @@
 #  Options:
 #           none
 #
-#  Methods:
-#           selectobj name  Copies the contents of the Cosys object "name"
-#                           into the edit controls.
-#
-#           updateobj name  Stores the contents of the edit controls in the
-#                           Cosys object "name".
-#
-#  D Terrett 28 March 2001
+#  D Terrett 18 June 2001
 #
 #  Copyright CCLRC
 #+
@@ -23,8 +16,9 @@ itcl::class CosysControl {
    inherit tcclib::ComponentControl
    constructor args {}
    public {
-      method selectobj {name}
-      method updateobj {name}
+      method load {name}
+      method reset {}
+      method save {name}
    }
 }
 
@@ -61,27 +55,22 @@ itcl::body CosysControl::constructor args {
    set objclass CosysComponent
    set description "Coordinate system"
 
-   eval itk_initialize $args
-
 # Create the scratch cosys object used by apply.
    set scratchobj [namespace which -command [Cosys #auto]]
+
+   eval itk_initialize $args
 }
 
-itcl::body CosysControl::selectobj name {
-
-# Copy the contents of the Cosys object selected in the combobox
-# into the edit controls.
+itcl::body CosysControl::reset {} {
    $itk_component(equinox) clear
-
-   if { ! [string equal [namespace tail $name] ""] } {
-      $itk_component(frame) select [$name cget -frame]
-      $itk_component(equinox) insert end [$name cget -equinox]
-   }
 }
 
-itcl::body CosysControl::updateobj name {
+itcl::body CosysControl::load {name} {
+   $itk_component(frame) select [$name cget -frame]
+   $itk_component(equinox) insert end [$name cget -equinox]
+}
 
-# Load the control with data from the named cosys object.
+itcl::body CosysControl::save {name} {
    $name configure -frame [$itk_component(frame) get] \
          -equinox [$itk_component(equinox) get]
 }

@@ -6,14 +6,7 @@
 #  Options:
 #           -shadow
 #
-#  Methods:
-#           selectobj name  Copies the contents of the TrackRate object "name"
-#                           into the edit controls.
-#
-#           updateobj name  Stores the contents of the edit controls in the
-#                           Trackrate object "name".
-#
-#  D Terrett 28 March 2001
+#  D Terrett 18 June 2001
 #
 #  Copyright CCLRC
 #+
@@ -23,8 +16,8 @@ itcl::class TrackRateControl {
    constructor args {}
    itk_option define -shadow shadow Shadow {}
    public {
-      method selectobj {name}
-      method updateobj {name}
+      method load {name}
+      method save {name}
    }
    private {
       method checkcosys {}
@@ -97,44 +90,40 @@ itcl::body TrackRateControl::constructor args {
    set objclass TrackRateComponent
    set description "differential track rate"
 
-   eval itk_initialize $args
-
 # Create the trackrate object used by apply.
    set scratchobj [namespace which -command [TrackRate #auto]]
+
+   eval itk_initialize $args
 }
 
-itcl::body TrackRateControl::selectobj name {
-
+itcl::body TrackRateControl::reset {} {
    $itk_component(epoch) clear
    $itk_component(ra) clear
    $itk_component(dec) clear
    $itk_component(az) clear
    $itk_component(el) clear
+}
 
-   if { ! [string equal [namespace tail $name] ""] } {
-      $itk_component(epoch) insert end [$name cget -epoch]
-      set cosys [$name cget -cosys]
-      if { [string equal $cosys AzEl] } {
-         $itk_component(notebook) select Az/El
-         $itk_component(az) insert end [$name cget -dtheta1]
-         $itk_component(el) insert end [$name cget -dtheta2]
+itcl::body TrackRateControl::load {name} {
+   $itk_component(epoch) insert end [$name cget -epoch]
+   set cosys [$name cget -cosys]
+   if { [string equal $cosys AzEl] } {
+      $itk_component(notebook) select Az/El
+      $itk_component(az) insert end [$name cget -dtheta1]
+      $itk_component(el) insert end [$name cget -dtheta2]
+   } else {
+      $itk_component(notebook) select RA/Dec
+      if { [string is space $cosys] } {
+         $itk_component(cosys) select FK5/J2000
       } else {
-         $itk_component(notebook) select RA/Dec
-         if { [string is space $cosys] } {
-            $itk_component(cosys) select FK5/J2000
-         } else {
-            $itk_component(cosys) select $cosys
-         }
-         $itk_component(ra) insert end [$name cget -dtheta1]
-         $itk_component(dec) insert end [$name cget -dtheta2]
+         $itk_component(cosys) select $cosys
       }
+      $itk_component(ra) insert end [$name cget -dtheta1]
+      $itk_component(dec) insert end [$name cget -dtheta2]
    }
 }
 
-itcl::body TrackRateControl::updateobj name {
-#+
-# Updates the named trackrate object.
-#-
+itcl::body TrackRateControl::save {name} {
    if { [string equal [lindex [$itk_component(notebook) pageconfigure \
          [$itk_component(notebook) select select] -label] 4] Az/El] } {
       $name configure \

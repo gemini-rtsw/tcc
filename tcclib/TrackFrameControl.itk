@@ -6,12 +6,7 @@
 #  Options:
 #           -shadow
 #
-#  Methods:
-#           selectobj name
-#
-#           updateobj name
-#
-#  D Terrett 28 March 2001
+#  D Terrett 18 June 2001
 #
 #  Copyright CCLRC
 #+
@@ -21,8 +16,8 @@ itcl::class TrackFrameControl {
    constructor args {}
    itk_option define -shadow shadow Shadow {}
    public {
-      method selectobj {name}
-      method updateobj {name}
+      method load {name}
+      method save {name}
    }
 }
 
@@ -81,14 +76,13 @@ itcl::body TrackFrameControl::constructor args {
    set objclass TrackFrameComponent
    set description "tracking frames"
 
-   eval itk_initialize $args
-
 # Create the trackframe object used by apply.
    set scratchobj [namespace which -command [TrackFrame #auto]]
+
+   eval itk_initialize $args
 }
 
-itcl::body TrackFrameControl::selectobj name {
-
+itcl::body TrackFrameControl::load {name} {
    if { ! [string equal [namespace tail $name] ""] } {
       foreach tel {mount sourceA sourceB sourceC pwfs1 pwfs2 oiwfs} {
          $itk_component(${tel}Cosys) select [$name cget -${tel}Cosys]
@@ -96,10 +90,7 @@ itcl::body TrackFrameControl::selectobj name {
    }
 }
 
-itcl::body TrackFrameControl::updateobj name {
-#+
-# Updates the named trackframe object.
-#-
+itcl::body TrackFrameControl::save {name} {
    $name configure \
          -mountCosys [$itk_component(mountCosys) get] \
          -sourceACosys [$itk_component(sourceACosys) get] \

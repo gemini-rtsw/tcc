@@ -8,14 +8,7 @@
 #  Options:
 #           -shadow         The name of the control's edit shadow.
 #
-#  Methods:
-#           selectobj name  Copies the contents of the Chop object "name"
-#                           into the edit controls.
-#
-#           updateobj name  Stores the contents of the edit controls in the
-#                           Chop object "name".
-#
-#  D Terrett 27 March 2001
+#  D Terrett 18 June 2001
 #
 #  Copyright CCLRC
 #+
@@ -25,8 +18,9 @@ itcl::class ChopControl {
    constructor args {}
    itk_option define -shadow shadow Shadow {}
    public {
-      method selectobj {name}
-      method updateobj {name}
+      method load {name}
+      method reset {}
+      method save {name}
    }
    private {
       method checkcosys {}
@@ -131,10 +125,10 @@ itcl::body ChopControl::constructor args {
    set objclass ChopComponent
    set description "chop configuration"
 
-   eval itk_initialize $args
-
 # Create rotator object used by apply
    set scratchobj [namespace which -command [Chop #auto]]
+
+   eval itk_initialize $args
 }
 
 itcl::configbody ChopControl::shadow {
@@ -143,39 +137,39 @@ itcl::configbody ChopControl::shadow {
    $itk_component(cosys) configure -shadow $itk_option(-shadow)
 }
 
-itcl::body ChopControl::selectobj name {
-
-# Copy the contents of the specified chop object into the edit
-# controls.
+itcl::body ChopControl::reset {} {
    $itk_component(throw) clear
    $itk_component(pa) clear
    $itk_component(freq) clear
    $itk_component(duty) clear
    $itk_component(source) select SCS
-
-   if { ! [string equal [namespace tail $name] ""] } {
-      $itk_component(throw) insert end [$name cget -throw]
-      $itk_component(pa) insert end [$name cget -angle]
-      $itk_component(freq) insert end [$name cget -frequency]
-      $itk_component(duty) insert end [$name cget -dutycycle]
-      $itk_component(source) select [$name cget -source]
-      set cosys [$name cget -cosys]
-      if { [string equal $cosys AzEl] } {
-         set refdir vertical
-         $itk_component(cosys) select ""
-      } else {
-         set refdir north
-         if { [string is space $cosys] } {
-            $itk_component(cosys) select FK5/J2000
-         } else {
-            $itk_component(cosys) select $cosys
-         }
-      }
-      setdir
-   }
 }
 
-itcl::body ChopControl::updateobj name {
+itcl::body ChopControl::load {name} {
+
+# Copy the contents of the specified chop object into the edit
+# controls.
+   $itk_component(throw) insert end [$name cget -throw]
+   $itk_component(pa) insert end [$name cget -angle]
+   $itk_component(freq) insert end [$name cget -frequency]
+   $itk_component(duty) insert end [$name cget -dutycycle]
+   $itk_component(source) select [$name cget -source]
+   set cosys [$name cget -cosys]
+   if { [string equal $cosys AzEl] } {
+      set refdir vertical
+      $itk_component(cosys) select ""
+   } else {
+      set refdir north
+      if { [string is space $cosys] } {
+         $itk_component(cosys) select FK5/J2000
+      } else {
+         $itk_component(cosys) select $cosys
+      }
+   }
+   setdir
+}
+
+itcl::body ChopControl::save {name} {
    $name configure -throw [$itk_component(throw) get]
    $name configure -angle [$itk_component(pa) get]
    $name configure -frequency [$itk_component(freq) get]

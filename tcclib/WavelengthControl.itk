@@ -4,14 +4,7 @@
 #  Implements the WavelengthControl widget. A ComponentControl widget with
 #  an entryfield widget for the wavelength.
 #
-#  Methods:
-#           selectobj name  Copies the contents of the Wavelength object "name"
-#                           into the edit controls.
-#
-#           updateobj name  Stores the contents of the edit controls in the
-#                           Wavelength object "name".
-#
-#  D Terrett 6 June 2001
+#  D Terrett 18 June 2001
 #
 #  Copyright CCLRC
 #+
@@ -20,8 +13,9 @@ itcl::class WavelengthControl {
    inherit tcclib::ComponentControl
    constructor args {}
    public {
-      method selectobj {name}
-      method updateobj {name}
+      method load {name}
+      method reset {}
+      method save {name}
    }
 }
 
@@ -50,27 +44,20 @@ itcl::body WavelengthControl::constructor args {
    set objclass WavelengthComponent
    set description wavelength
 
-   eval itk_initialize $args
-
 # Create the wavelength object used by apply.
    set scratchobj [namespace which -command [Wavelength #auto]]
+
+   eval itk_initialize $args
 }
 
-itcl::body WavelengthControl::updateobj name {
-#+
-# Updates the named wavelength object.
-#-
+itcl::body WavelengthControl::save {name} {
    $name configure -wavel [$itk_component(wavel) get]
 }
 
-itcl::body WavelengthControl::selectobj name {
-#+
-# Copies the contents of the Wavelength object selected in the combobox
-# into the edit controls.
-#-
+itcl::body WavelengthControl::reset {} {
    $itk_component(wavel) clear
+}
 
-   if { ! [string equal [namespace tail $name] ""] } {
-      $itk_component(wavel) insert end [$name cget -wavel]
-   }
+itcl::body WavelengthControl::load {name} {
+   $itk_component(wavel) insert end [$name cget -wavel]
 }

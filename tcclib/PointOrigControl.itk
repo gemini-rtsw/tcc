@@ -4,16 +4,7 @@
 #  A PointOrigControl is a ComponentControl widget with entryfield widgets for 
 #  X and Y.
 #
-#  Options:
-#
-#  Methods:
-#           selectobj name  Copies the contents of the PointOrig object "name"
-#                           into the edit controls.
-#
-#           updateobj name  Stores the contents of the edit controls in the
-#                           PointOrig object "name".
-#
-#  D Terrett 7 June 2001
+#  D Terrett 18 June 2001
 #
 #  Copyright CCLRC
 #+
@@ -22,8 +13,9 @@ itcl::class PointOrigControl {
    inherit tcclib::ComponentControl
    constructor args {}
    public {
-      method selectobj {name}
-      method updateobj {name}
+      method load {name}
+      method reset {}
+      method save {name}
    }
 }
 
@@ -55,25 +47,26 @@ itcl::body PointOrigControl::constructor args {
    set objclass PointOrigComponent
    set description "pointing origin"
 
-   eval itk_initialize $args
-
 # Create the instrument object used by apply.
    set scratchobj [namespace which -command [PointOrig #auto]]
+
+   eval itk_initialize $args
 }
 
-itcl::body PointOrigControl::selectobj name {
+itcl::body PointOrigControl::reset {} {
+   $itk_component(x) clear
+   $itk_component(y) clear
+}
+
+itcl::body PointOrigControl::load {name} {
 #
 # Copy the contents of the PointOrig object selected in the combobox
 # into the edit controls.
-   $itk_component(x) clear
-   $itk_component(y) clear
-   if { ! [string equal [namespace tail $name] ""] } {
-      $itk_component(x) insert end [$name cget -x]
-      $itk_component(y) insert end [$name cget -y]
-   }
+   $itk_component(x) insert end [$name cget -x]
+   $itk_component(y) insert end [$name cget -y]
 }
 
-itcl::body PointOrigControl::updateobj name {
+itcl::body PointOrigControl::save {name} {
 
 # Update the named pointing origin object.
    $name configure -x [$itk_component(x) get] -y [$itk_component(y) get]

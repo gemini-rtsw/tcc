@@ -3,7 +3,7 @@
 #
 #  Implements the TcsConfigControl widget.
 #
-#  D Terrett 29 March 2001
+#  D Terrett 18 June 2001
 #
 #  Copyright CCLRC
 #+
@@ -13,9 +13,9 @@ itcl::class TcsConfigControl {
    constructor args {}
    itk_option define -shadow shadow Shadow {}
    public {
+      method load {name}
       method preview {}
-      method selectobj {name}
-      method updateobj {name}
+      method save {name}
    }
    private {
       method apply {}
@@ -195,13 +195,13 @@ itcl::body TcsConfigControl::constructor args {
 # Select the default configuration. This has to be postponed until after
 # the widget creation is complete in order that options crucial to the
 # operation of the widget have been set.
-   after idle [code $this selectobj TcsConfigNames::default]
+   after idle [code $this select default]
    after idle $itk_component(selector) select default
-
-   eval itk_initialize $args
 
 # Create the config object used by apply.
    set scratchobj [namespace which -command [TcsConfig #auto]]
+
+   eval itk_initialize $args
 }
 
 itcl::body TcsConfigControl::apply {} {
@@ -226,7 +226,7 @@ itcl::body TcsConfigControl::apply {} {
    $this ComponentControl::apply
 }
 
-itcl::body TcsConfigControl::updateobj name {
+itcl::body TcsConfigControl::save {name} {
 #+
 #  Updates the named configuration with the active components.
 #-
@@ -262,10 +262,7 @@ itcl::body TcsConfigControl::preview {} {
    [[previewPanel cget -name] component control] update
 }
 
-itcl::body TcsConfigControl::selectobj name {
-#+
-#  Updates the active components on the panel with the new configuration.
-#-
+itcl::body TcsConfigControl::load {name} {
    if { ! [string equal [namespace tail $name] ""] } {
       foreach component $components option $options list $lists {
          if { [$itk_component($component) cget -active] } {

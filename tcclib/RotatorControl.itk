@@ -7,14 +7,7 @@
 #  Options:
 #           -shadow         The name of the control's edit shadow.
 #
-#  Methods:
-#           selectobj name  Copies the contents of the Rotator object "name"
-#                           into the edit controls.
-#
-#           updateobj name  Stores the contents of the edit controls in the
-#                           Rotator object "name".
-#
-#  D Terrett 28 March 2001
+#  D Terrett 18 June 2001
 #
 #  Copyright CCLRC
 #+
@@ -26,12 +19,16 @@ itcl::class RotatorControl {
 
    itk_option define -shadow shadow Shadow {}
 
-   public method selectobj name
-   public method updateobj name
-
-   private method checkcosys
-   private variable refdir
-   private method setdir
+   public {
+       method load {name}
+       method reset {}
+       method save {name}
+   }
+   private {
+      method checkcosys
+      method setdir
+      variable refdir
+   }
 }
 
 itk::usual RotatorControl {
@@ -96,10 +93,10 @@ itcl::body RotatorControl::constructor args {
    set objclass RotatorComponent
    set description "field orientation"
 
-   eval itk_initialize $args
-
 # Create rotator object used by apply
    set scratchobj [namespace which -command [Rotator #auto]]
+
+   eval itk_initialize $args
 }
 
 itcl::configbody RotatorControl::shadow {
@@ -108,31 +105,31 @@ itcl::configbody RotatorControl::shadow {
    $itk_component(cosys) configure -shadow $itk_option(-shadow)
 }
 
-itcl::body RotatorControl::selectobj name {
+itcl::body RotatorControl::reset {} {
+   $itk_component(ipa) clear
+}
+
+itcl::body RotatorControl::load {name} {
 
 # Copy the contents of the specified rotator object into the edit
 # controls.
-   $itk_component(ipa) clear
-
-   if { ! [string equal [namespace tail $name] ""] } {
-      $itk_component(ipa) insert end [$name cget -ipa]
-      set cosys [$name cget -cosys]
-      if { [string equal $cosys AzEl] } {
-         set refdir vertical
-         $itk_component(cosys) select ""
+   $itk_component(ipa) insert end [$name cget -ipa]
+   set cosys [$name cget -cosys]
+   if { [string equal $cosys AzEl] } {
+      set refdir vertical
+      $itk_component(cosys) select ""
+   } else {
+      set refdir north
+      if { [string is space $cosys] } {
+         $itk_component(cosys) select FK5/J2000
       } else {
-         set refdir north
-         if { [string is space $cosys] } {
-            $itk_component(cosys) select FK5/J2000
-         } else {
-            $itk_component(cosys) select $cosys
-         }
+         $itk_component(cosys) select $cosys
       }
-      setdir
    }
+   setdir
 }
 
-itcl::body RotatorControl::updateobj name {
+itcl::body RotatorControl::save {name} {
    $name configure -ipa [$itk_component(ipa) get]
    if { [string equal $refdir north] } {
       $name configure -cosys [$itk_component(cosys) get]

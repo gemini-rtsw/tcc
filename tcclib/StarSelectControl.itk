@@ -3,7 +3,7 @@
 #
 #  Implements the StarSelectControl widget.
 #
-#  D Terrett 27 March 2001
+#  D Terrett 18 June 2001
 #
 #  Copyright CCLRC
 #-
@@ -49,18 +49,21 @@ itcl::body StarSelectControl::destructor {} {
 itcl::body StarSelectControl::selectstar {index} {
 
    set object [$StarCat extract $index]
+   set name [lindex $object 0]
 
    createCosys [lindex $object 3]/[lindex $object 4] \
          -frame [lindex $object 3] -equinox [lindex $object 4]
-   createScienceTarget [lindex $object 0] -objName [lindex $object 0] \
+   createScienceTarget $name -objName $name \
          -radec [list [lindex $object 1] [lindex $object 2]] \
          -cosys [lindex $object 3]/[lindex $object 4] \
          -epoch [lindex $object 5] \
          -pm [list [lindex $object 6] [lindex $object 7]] \
          -parallax [lindex $object 8]
 
-   tcsconfigscienceTarget map
-   tcsconfigscienceTarget selectfromcontrol [lindex $object 0]
+   tcsconfigscienceTarget selectfromcontrol $name
+   set window [tcsconfigscienceTarget cget -window]
+   $window reset
+   $window load [$window cget -namespace]::$name
 }
 
 itcl::body StarSelectControl::loadposition {ra dec} {
@@ -77,8 +80,9 @@ itcl::body StarSelectControl::loadposition {ra dec} {
    set dec [format %0+3d:%02d $dech $decm]
 
    tcsconfigscienceTarget map
-   set name [[tcsconfigscienceTarget cget -window] scratchobj]
+   set name [[tcsconfigscienceTarget cget -window] getscratch]
    $name configure -radec [list $ra $dec] -cosys Apparent
    tcsconfigscienceTarget selectfromcontrol ""
-   [tcsconfigscienceTarget cget -window] selectobj $name
+   [tcsconfigscienceTarget cget -window] reset
+   [tcsconfigscienceTarget cget -window] load $name
 }

@@ -4,17 +4,7 @@
 #  A SlewOptionsControl is a ComponentControl widget with checkbutton widgets 
 #  for each of the Slew CAD parameters.
 #
-#  Options:
-#           none
-#
-#  Methods:
-#           selectobj name  Copies the contents of the SlewOptions object "name"
-#                           into the edit controls.
-#
-#           updateobj name  Stores the contents of the edit controls in the
-#                           SlewOptions object "name".
-#
-#  D Terrett 28 March 2001
+#  D Terrett 18 June 2001
 #
 #  Copyright CCLRC
 #+
@@ -23,8 +13,9 @@ itcl::class SlewOptionsControl {
    inherit tcclib::ComponentControl
    constructor args {}
    public {
-      method selectobj {name}
-      method updateobj {name}
+      method load {name}
+      method reset {}
+      method save {name}
    }
    private {
       variable chopThrow
@@ -116,33 +107,29 @@ itcl::body SlewOptionsControl::constructor args {
    set objclass SlewOptionsComponent
    set description "slew options"
 
-   eval itk_initialize $args
-
 # Create the slewOptions object used by apply.
    set scratchobj [namespace which -command [SlewOptions #auto]]
+
+   eval itk_initialize $args
 }
 
-itcl::body SlewOptionsControl::selectobj name {
-
-# Copy the contents of the SlewOptions object selected in the combobox
-# into the checkbuttons.
-   if { ! [string equal [namespace tail $name] ""] } {
-      set chopThrow [$name cget -chopThrow]
-      set sourceOffset [$name cget -sourceOffset]
-      set sourceDifTr [$name cget -sourceDifTr]
-      set mountOffset [$name cget -mountOffset]
-      set mountDifTr [$name cget -mountDifTr]
-      set filter1 [$name cget -filter1]
-      set filter2 [$name cget -filter2]
-      set pointing [$name cget -pointing]
-      set guiding [$name cget -guiding]
-      set guideOffset [$name cget -guideOffset]
-   }
+itcl::body SlewOptionsControl::reset {} {
 }
 
-itcl::body SlewOptionsControl::updateobj name {
+itcl::body SlewOptionsControl::load {name} {
+   set chopThrow [$name cget -chopThrow]
+   set sourceOffset [$name cget -sourceOffset]
+   set sourceDifTr [$name cget -sourceDifTr]
+   set mountOffset [$name cget -mountOffset]
+   set mountDifTr [$name cget -mountDifTr]
+   set filter1 [$name cget -filter1]
+   set filter2 [$name cget -filter2]
+   set pointing [$name cget -pointing]
+   set guiding [$name cget -guiding]
+   set guideOffset [$name cget -guideOffset]
+}
 
-# Update the named slew options object.
+itcl::body SlewOptionsControl::load {name} {
    $name configure \
          -chopThrow $chopThrow -sourceOffset $sourceOffset \
          -sourceDifTr $sourceDifTr -mountOffset $mountOffset \
