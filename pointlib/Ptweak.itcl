@@ -5,7 +5,7 @@
 # of a pointing update run. The "fit" class method calculates a new estimate
 # of CE and CA and optionally IA from all the Ptweak objects that are enabled.
 #
-# D Terrett 10 May 1999
+# D Terrett 28 May 1999
 #
 # Copyright CCLRC
 #+
@@ -24,6 +24,7 @@ itcl::class Ptweak {
    private common fitca 0
    private common fitce 0
    private common fitia 0
+   private common nfitted
 
    proc fit inclia
    proc commit {w inclia}
@@ -77,7 +78,7 @@ itcl::body Ptweak::fit inclia {
 #-
 
 # Initialise count of enabled stars.
-   set n 0
+   set nfitted 0
 
 # Initialise sums.
    set sa 0.0
@@ -89,12 +90,11 @@ itcl::body Ptweak::fit inclia {
    set sacosel 0.0
 
 # For each enabled Ptweak object...
-#   foreach obs [info objects -class Ptweak] 
    foreach obs [itcl::find objects -class Ptweak] {
       if { [$obs cget -enable] } {
 
 # Keep a count of how many there are.
-         incr n
+         incr nfitted
 
 # Sum CA and CE.
          set sa [expr $sa + [$obs cget -ca]]
@@ -115,7 +115,7 @@ itcl::body Ptweak::fit inclia {
    if { $inclia } {
 
 # Compute determinant.
-      set det [expr $n * $scos2el - $scosel * $scosel]
+      set det [expr $nfitted * $scos2el - $scosel * $scosel]
 
 # If the determinant is too small to yield a reasonably accurate result
 # give up trying to compute IA.
@@ -125,26 +125,25 @@ itcl::body Ptweak::fit inclia {
    }
 
 # If there is at least one star...
-   if { $n > 0 } {
+   if { $nfitted > 0 } {
 
 # Compute mean CE.
-      set fitce [expr $se / $n]
+      set fitce [expr $se / $nfitted]
       if { $inclia } {
 
 # Compute CA and IA...
          set fitca [expr ( $scos2el * $sa - $scosel * $sacosel ) / $det]
-         set fitia [expr ( $n * $sacosel - $sa * $scosel ) / $det]
+         set fitia [expr ( $nfitted * $sacosel - $sa * $scosel ) / $det]
       } else {
 
 # or mean CA and set fitted IA to zero.
-         set fitca [expr $sa / $n]
+         set fitca [expr $sa / $nfitted]
          set fitia 0.0
       }
 
 # Initialise sum of squared deviation from fitted CA and CE.
       set sca2 0.0
       set sce2 0.0
-#      foreach obs [info objects -class Ptweak] 
       foreach obs [itcl::find objects -class Ptweak] {
          if { [$obs cget -enable] } {
 
@@ -160,8 +159,8 @@ itcl::body Ptweak::fit inclia {
       }
 
 # Compute root mean squared deviation.
-      set rmsca [expr sqrt($sca2 / $n)]
-      set rmsce [expr sqrt($sce2 / $n)]
+      set rmsca [expr sqrt($sca2 / $nfitted)]
+      set rmsce [expr sqrt($sce2 / $nfitted)]
       set rmsr [expr sqrt($rmsce * $rmsce + $rmsca * $rmsca)]
 
 # Return result of fit.
@@ -188,23 +187,55 @@ itcl::body Ptweak::commit {w inclia} {
    set curca [sa session get ca]
    set curia [sa session get ia]
 
-# If the model contains a large change for any of the parameters then ask
-# the user to confirm that they want to continue.
-   if { abs($fitca - $curca) > 10.0 || abs($fitce - $curce) > 10.0 ||
-         ( $inclia && abs($fitia) > 10.0 ) } {
-      iwidgets::messagedialog $w.md -title "Commit Confirmation" \
-            -bitmap questhead -modality application  -text \
-      "The fit contains alarmingly large adjustments; do you want to continue?"
+# Create confirmation dialog box.
+   iwidgets::messagedialog $w.md -title "Commit Error" -bitmap error \
+         -modality application -text "No stars to fit"
+   $w.md hide Help
+
+   if { $nfitted < 1 } {
       $w.md center
-      $w.md hide Help
-      $w.md buttonconfigure OK -text Yes 
-      $w.md buttonconfigure Cancel -text No 
+      $w.md hide Cancel
+      $w.md activate
+      destroy $w.md
+      return
+   }
+
+# Build a text string that displays the new model.
+   set text [format "The new model will be CA = %.2f, CE = %.2f" $fitca $fitce]
+   if { $inclia } {
+      set text [format "%s, IA = %.2f." $text [expr $curia + $fitia]]
+   }
+   set text "$text\nDo you want to update the session pointing model\
+         with these values?"
+
+   $w.md configure -title "Commit Confirmation" -bitmap questhead -text $text
+   $w.md buttonconfigure OK -text Yes 
+   $w.md buttonconfigure Cancel -text No 
+   $w.md center
+   if { ![$w.md activate] } {
+      destroy $w.md
+      return
+   }
+   if { $inclia && ( $nfitted < 5 ) || $nfitted < 4 } {
+      $w.md configure -text "Only $nfitted stars fitted\
+         Do you want to continue?" -bitmap warning
+      $w.md center
       if { ![$w.md activate] } {
          destroy $w.md
          return
       }
-      destroy $w.md
    }
+   if { abs($fitca - $curca) > 30.0 || abs($fitce - $curce) > 30.0 ||
+         ( $inclia && abs($fitia) > 30.0 ) } {
+      $w.md configure -text "The fit contains alarmingly large adjustments\
+         Do you want to continue?" -bitmap warning
+      $w.md center
+      if { ![$w.md activate] } {
+         destroy $w.md
+         return
+      }
+   }
+   destroy $w.md
 
 # Set the parameter set to "Session".
    cs pointParam set level Session
@@ -233,6 +264,13 @@ itcl::body Ptweak::commit {w inclia} {
    postparam
    cs pointParam set name CA
    postparam
+
+# Zero the guiding offsets.
+   cs zeroGuide set mark mark
+      if [catch {cs zeroGuide post}] {
+      set info [sa apply get mess value]
+      error "zeroGuide command failed: \"$info\""
+   }
 }
 
 itcl::body Ptweak::postparam {} {
