@@ -1,7 +1,7 @@
 #+
 # PointObs
 #
-# A PointObs object sequences the actions needed to execute a pointing
+# A PointObs object sequences the actions needed to execute a
 # sequence of pointing observations.
 #
 #    Methods:
@@ -20,6 +20,9 @@
 #       logafterslew   If true, the pointing is logged at the end of a slew.
 #
 #       nextstyle      The method for selecting the next star.
+#
+#       offloaddelay   The number of seconds to wait before offloading
+#                      m2 tip/tilt to the mount.
 #
 #       selectafterlog If true, slew to the next star after logging.
 #
@@ -43,14 +46,15 @@ itcl::class PointObs {
       method slew {}
       method log {}
       variable logdelay 0
-      variable guidedelay 10
+      variable guidedelay
+      variable offloaddelay
       variable logafterslew 0
       variable nextstyle minslew
       variable selectafterlog 0
       variable guideafterslew 0
       variable zlpm 0
       variable wfs PWFS2
-      variable logrepeats 1
+      variable logrepeats
    }
    private {
       method nextstar {args}
@@ -106,20 +110,17 @@ itcl::body PointObs::constructor {sourceentry azelplot catalogue args} {
 
 # Create actions for enabling and disabling guiding.
    set MountGuideAction [seq::Action #auto tcs \
-         -onok "after 10000 [code $this nextaction guideon]" \
          -onerror [code $this onerror] \
          -oktest [itcl::code $this isguiding] \
          -ontimeout [code $this onerror "Attempt to guide timed out"] \
          -waitvar [scope IsGuiding(value)]]
    $MountGuideAction set mountGuide mode On 
    set Guide1Action [seq::Action #auto tcs \
-         -onok "after 5000 [namespace code "$MountGuideAction start"]" \
          -onerror [code $this onerror]]
    $Guide1Action set m2Guide state On
    $Guide1Action set pwfs1Observe noexp -1
 
    set Guide2Action [seq::Action #auto tcs \
-         -onok "after 5000 [namespace code "$MountGuideAction start"]" \
          -onerror [code $this onerror]]
    $Guide2Action set m2Guide state On
    $Guide2Action set pwfs2Observe noexp -1
@@ -207,6 +208,18 @@ itcl::body PointObs::nextaction {after} {
          } elseif { $logafterslew } {
             log
          }
+      }
+      m2guide {
+         set xtilt [sa m2ssad get xtilt value]
+         set ytilt [sa m2ssad get ytilt value]
+         cs collAdjust set frame 0
+         cs collAdjust set size [expr {$xtilt / 3.86956518}]
+         cs collAdjust set angle 0.0
+         cs tcsApply post
+         cs collAdjust set size [expr {$ytilt / 3.86956518}]
+         cs collAdjust set angle 90.0
+         cs tcsApply post
+         $MountGuideAction start
       }
       guideon {
          set LogCount 0
@@ -301,4 +314,11 @@ itcl::body PointObs::isguiding {} {
 itcl::configbody PointObs::guidedelay {
    $SlewAction configure -onok "after [expr {$guidedelay * 1000}] \
          [code $this nextaction slew]"
+}
+
+itcl::configbody PointObs::offloaddelay {
+   $Guide1Action configure -onok "after [expr {$offloaddelay * 1000}] \
+         [code $this nextaction m2guide]"
+   $Guide2Action configure -onok "after [expr {$offloaddelay * 1000}] \
+         [code $this nextaction m2guide]"
 }
