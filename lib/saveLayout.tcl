@@ -5,7 +5,7 @@
 #     saveLayout  - saves the current panel layout to a file selected with
 #                   a dialog box.
 #
-#  D Terrett 31 May 2001
+#  D Terrett 19 July 2001
 #
 #  Copyright CCLRC
 #-
@@ -56,11 +56,29 @@ proc saveLayout {} {
 
          }
 
-# Write a map command for the panels which have createset to 1.
+# Write a map command for the panels which have create set to 1.
          foreach panelmgr [itcl::find objects -class tcclib::PanelMgr] {
             if { [$panelmgr cget -create] } {
                puts $file "$panelmgr configure -create 1"
                puts $file "$panelmgr map"
+               switch state {
+                  iconified {
+                     puts $file "$panelmgr iconify"
+                  }
+                  withdrawn {
+                     puts $file "$panelmgr withdraw"
+                  }
+               }
+            }
+         }
+
+# Do the same for all the edit panels except that the edit shadow's map
+# method is called instead of the panel directly.
+         foreach editshadow [itcl::find objects -class tcclib::EditShadow] {
+            set panelmgr [$editshadow cget -panel]
+            if { [$panelmgr cget -create] } {
+               puts $file "$panelmgr configure -create 1"
+               puts $file "$editshadow map"
                switch state {
                   iconified {
                      puts $file "$panelmgr iconify"
