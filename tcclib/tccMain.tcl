@@ -7,7 +7,7 @@
 #  Arguments:
 #            Any command line options and values.
 #
-#  D Terrett  22 May 2000
+#  D Terrett  31 May 2000
 #
 #  Copyright CCLRC
 #-
@@ -136,6 +136,7 @@ proc tccMain args {
    epics cs orbit
    epics cs chopRelative
    epics cs chopConfig
+   epics cs pointParam
 
 # Set the timeput period for posting commands to the TCS.
    cs tcsApply setTimeout 3

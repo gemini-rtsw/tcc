@@ -9,7 +9,7 @@
 #  Methods:
 #           none
 #
-#  D Terrett 25 May 2000
+#  D Terrett 31 May 2000
 #
 #  Copyright CCLRC
 #+
@@ -23,6 +23,7 @@ itcl::class GuideHandsetControl {
    private method offset dir
    private method newstep size
    private method refresh
+   private method zerolocal
 
    private variable refid
 }
@@ -103,20 +104,27 @@ itcl::body GuideHandsetControl::constructor args {
    grid $itk_component(local) $itk_component(calocal) $itk_component(celocal)
    grid $itk_component(guide) $itk_component(caguide) $itk_component(ceguide)
 
-# Buttons for zeroing and absorbing the guide adjustments.
+# Buttons for zeroing and absorbing the guide adjustments and zeroing the
+# local adjustments.
    itk_component add bot {
       frame $itk_interior.bot
    }
    pack $itk_component(bot) -expand yes -fill x
    set w $itk_component(bot)
    itk_component add absorb {
-      ApplyButton $w.absorb -command absorbGuide -text Absorb -width 8
+      ApplyButton $w.absorb -command absorbGuide \
+         -text "Absorb guide into local"
    }
-   itk_component add clear {
-      ApplyButton $w.clear -command zeroGuide -text Clear -width 8
+   itk_component add clearg {
+      ApplyButton $w.clearg -command zeroGuide -text "Clear guide"
    }
-   pack $itk_component(absorb) $itk_component(clear) -expand y \
-         -pady 4 -side left
+   itk_component add clearl {
+      LiveButton $w.clearl -command [code $this zerolocal] \
+            -text "Clear local"
+   }
+   pack $itk_component(absorb) -pady 4
+   pack $itk_component(clearg) $itk_component(clearl) -expand y -pady 4 \
+         -side left
 
 # Schedule update of CA & CE displays.
    set refid [after 1000 [code $this refresh]]
@@ -156,4 +164,13 @@ itcl::body GuideHandsetControl::refresh {} {
 
 # Reschedule
    set refid [after 1000 [code $this refresh]]
+}
+
+itcl::body GuideHandsetControl::zerolocal {} {
+   cs pointParam set name CA
+   cs pointParam set level Local
+   cs pointParam set value 0
+   cs tcsApply post
+   cs pointParam set name CE
+   cs tcsApply post
 }
