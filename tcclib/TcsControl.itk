@@ -26,9 +26,9 @@ itcl::class TcsControl {
    private method weather {}
    private method shStep
    private method shutterMode
-   private method closeDome
    private method m1park {par} {return PARK}
    private method m1unpark {par} {return UNPARK}
+   private method agmech cmd
    private variable dome
    private variable shutter
 }
@@ -51,8 +51,11 @@ itcl::body TcsControl::constructor args {
    itk_component add row3 {
       frame $itk_interior.row3
    }
+   itk_component add row4 {
+      frame $itk_interior.row4
+   }
    pack $itk_component(row1) $itk_component(row2) $itk_component(row3) \
-         -fill x -expand y
+         $itk_component(row4) -fill x -expand y
 
 # The first row contains 3 frames.
    set w $itk_component(row1)
@@ -80,15 +83,15 @@ itcl::body TcsControl::constructor args {
    }
    pack $itk_component(f3top) $itk_component(f3bot) -fill both -expand yes
 
-# The third row contains 2 frames.
-   set w $itk_component(row3)
-   itk_component add row3f1 {
+# The fourth row contains 2 frames.
+   set w $itk_component(row4)
+   itk_component add row4f1 {
       frame $w.f1 -bd 2 -relief ridge
    }
-   itk_component add row3f2 {
+   itk_component add row4f2 {
       frame $w.f2 -bd 2 -relief ridge
    }
-   pack $itk_component(row3f1) $itk_component(row3f2) \
+   pack $itk_component(row4f1) $itk_component(row4f2) \
          -side left -fill both -expand y
 
 # Park to Reboot buttons.
@@ -142,10 +145,10 @@ itcl::body TcsControl::constructor args {
       FollowButton $w.p2 -text P2 -command p2Follow \
             -sadrecord {agssad p2FollowS} -subsysname PWFS2
    }
-#   itk_component add oiwfs {
-#      FollowButton $w.oiwfs -text OIWFS -command oiFollow \
-#            -subsysname OIWFS
-#   }
+   itk_component add oiwfs {
+      FollowButton $w.oiwfs -text OIWFS -command oiFollow \
+            -subsysname OIWFS
+   }
 
 # Commands for datuming, initing or unparking mechanisms.
    itk_component add mcsdatum {
@@ -169,6 +172,9 @@ itcl::body TcsControl::constructor args {
    }
    itk_component add p2datum {
       ApplyButton $w.p2datum -command pwfs2Datum -text Datum
+   }
+   itk_component add oidatum {
+      ApplyButton $w.oidatum -command oiwfsDatum -text Datum
    }
 
 # Commands for parking mechanisms.
@@ -194,9 +200,9 @@ itcl::body TcsControl::constructor args {
    itk_component add p2park {
       ApplyButton $w.p2park -command pwfs2Park -text Park
    }
-#   itk_component add oipark {
-#      ApplyButton $w.oipark -command oiwfsPark -text Park
-#   }
+   itk_component add oipark {
+      ApplyButton $w.oipark -command oiwfsPark -text Park
+   }
 
    grid $itk_component(mcs) $itk_component(mcsdatum) $itk_component(mcspark) \
          -sticky ew -padx 5 -pady 3
@@ -212,7 +218,7 @@ itcl::body TcsControl::constructor args {
          -sticky ew -padx 5 -pady 3
    grid $itk_component(p2) $itk_component(p2datum) $itk_component(p2park) \
          -sticky ew -padx 5 -pady 3
-#   grid $itk_component(oiwfs) x $itk_component(oipark) \
+   grid $itk_component(oiwfs) $itk_component(oidatum) $itk_component(oipark) \
          -sticky ew -padx 5 -pady 3
 
 # Carousel driving mode command.
@@ -254,15 +260,119 @@ itcl::body TcsControl::constructor args {
    pack $itk_component(dome) $itk_component(shutter) \
          -side left -padx 4 -pady 5 -anchor w
 
-# Close dome command.
+# Close shutters command.
    set w $itk_component(f3bot)
-   itk_component add close {
-      ApplyButton $w.close -command domeClose
+   itk_component add closeshut {
+      ApplyButton $w.closeshut -command shutterPark
    }
-   pack $itk_component(close) -fill both -expand yes -padx 10 -pady 5
+   itk_component add closegates {
+      ApplyButton $w.closegates -command ventgatesPark
+   }
+   pack $itk_component(closeshut) $itk_component(closegates) \
+         -fill both -expand yes -padx 10 -pady 5 -side left
+
+# A & G mechanism parking and datuming
+   set w $itk_component(row2)
+   itk_component add mechlab {
+      label $w.mechlab -text "A&G mechanisms:"
+   }
+   itk_component add agmech {
+      iwidgets::combobox $w.mech
+   }
+   $itk_component(agmech) insert list end "Science fold" "HRWFS pickoff arm" \
+         "AO fold" \
+         "PWFS1 arm" "PWFS1 filter" "PWFS1 field stop" "PWFS1 focus" \
+         "PWFS2 arm" "PWFS1 filter" "PWFS2 field stop" "PWFS2 focus" \
+         "OIWFS arm" "OIWFS filter" "OIWFS field stop" "OIWFS focus"
+   $itk_component(agmech) insert entry end "Science fold"
+   itk_component add mechdatum {
+      LiveButton $w.mechdatum -text Datum -command [code $this agmech Datum]
+   }
+   itk_component add mechpark {
+      LiveButton $w.mechpark -text Park -command [code $this agmech Park]
+   }
+
+   pack $itk_component(mechlab) $itk_component(agmech) \
+         $itk_component(mechdatum)  $itk_component(mechpark) -side left \
+         -padx 5 -pady 5
+
+# Create the command senders for all A&G park and datum commands.
+   if [catch {cs scienceFoldDatum info}] {
+      epics cs scienceFoldDatum
+   }
+   if [catch {cs hrwfsDatum info}] {
+      epics cs hrwfsDatum
+   }
+   if [catch {cs aoFoldDatum info}] {
+      epics cs aoFoldDatum
+   }
+   if [catch {cs pwfs1FilterDatum info}] {
+      epics cs pwfs1FilterDatum
+   }
+   if [catch {cs pwfs1FldstopDatum info}] {
+      epics cs pwfs1FldstopDatum
+   }
+   if [catch {cs pwfs1FocusDatum info}] {
+      epics cs pwfs1FocusDatum
+   }
+   if [catch {cs pwfs2FilterDatum info}] {
+      epics cs pwfs2FilterDatum
+   }
+   if [catch {cs pwfs2FldstopDatum info}] {
+      epics cs pwfs2FldstopDatum
+   }
+   if [catch {cs pwfs2FocusDatum info}] {
+      epics cs pwfs2FocusDatum
+   }
+   if [catch {cs oiwfsFilterDatum info}] {
+      epics cs oiwfsFilterDatum
+   }
+   if [catch {cs oiwfsFldstopDatum info}] {
+      epics cs oiwfsFldstopDatum
+   }
+   if [catch {cs oiwfsFocusDatum info}] {
+      epics cs oiwfsFocusDatum
+   }
+   if [catch {cs scienceFoldPark info}] {
+      epics cs scienceFoldPark
+   }
+   if [catch {cs hrwfsPark info}] {
+      epics cs hrwfsPark
+   }
+   if [catch {cs aoFoldPark info}] {
+      epics cs aoFoldPark
+   }
+   if [catch {cs pwfs1FilterPark info}] {
+      epics cs pwfs1FilterPark
+   }
+   if [catch {cs pwfs1FldstopPark info}] {
+      epics cs pwfs1FldstopPark
+   }
+   if [catch {cs pwfs1FocusPark info}] {
+      epics cs pwfs1FocusPark
+   }
+   if [catch {cs pwfs2FilterPark info}] {
+      epics cs pwfs2FilterPark
+   }
+   if [catch {cs pwfs2FldstopPark info}] {
+      epics cs pwfs2FldstopPark
+   }
+   if [catch {cs pwfs2FocusPark info}] {
+      epics cs pwfs2FocusPark
+   }
+   if [catch {cs oiwfsFilterPark info}] {
+      epics cs oiwfsFilterPark
+   }
+   if [catch {cs oiwfsFldstopPark info}] {
+      epics cs oiwfsFldstopPark
+   }
+   if [catch {cs oiwfsFocusPark info}] {
+      epics cs oiwfsFocusPark
+   }
+   
 
 # Vent gates move command.
-   set w $itk_component(row2)
+   set w $itk_component(row3)
    itk_component add vg {
       frame $w.vg -bd 2 -relief ridge
    }
@@ -287,7 +397,7 @@ itcl::body TcsControl::constructor args {
    $itk_component(west) set [expr [sa ecssad get westVentGatePos value] / 100]
 
 # Enclosure thermal control command.
-   set w $itk_component(row3f1)
+   set w $itk_component(row4f1)
    itk_component add thermal {
       ApplyButton $w.thermal -command encThermal \
             -parcommand [code $this parget]
@@ -307,7 +417,7 @@ itcl::body TcsControl::constructor args {
    }
 
 # Weather command.
-   set w $itk_component(row3f2)
+   set w $itk_component(row4f2)
    itk_component add weather {
       LiveButton $w.weather -command [code $this weather] \
             -text [lindex [cs weather info] 1] \
@@ -425,12 +535,30 @@ itcl::body TcsControl::shutterMode {} {
    }
 }
 
-itcl::body TcsControl::closeDome {} {
-   cs shutterPark set dummy mark
-   cs ventgatesPark set dummy mark
+itcl::body TcsControl::agmech cmd {
+   switch [$itk_component(agmech) get] {
+      "Science fold"      {set cmd scienceFold$cmd}
+      "HRWFS pickoff arm" {set cmd hrwfs$cmd}
+       "AO fold"          {set cmd aoFold$cmd}
+       "PWFS1 arm"        {set cmd pwfs1$cmd}
+       "PWFS1 filter"     {set cmd pwfs1Filter$cmd}
+       "PWFS1 field stop" {set cmd pwfs1Fldstop$cmd}
+       "PWFS1 focus"      {set cmd pwfs1Focus$cmd}
+       "PWFS2 arm"        {set cmd pwfs2$cmd}
+       "PWFS1 filter"     {set cmd pwfs2Filter$cmd}
+       "PWFS2 field stop" {set cmd pwfs2Fldstop$cmd}
+       "PWFS2 focus"      {set cmd pwfs2Focus$cmd}
+       "OIWFS arm"        {set cmd oiwfs$cmd}
+       "OIWFS filter"     {set cmd oiwfsFilter$cmd}
+       "OIWFS field stop" {set cmd oiwfsFldstop$cmd}
+       "OIWFS focus"      {set cmd oiwfsFocus$cmd}
+   }
+   cs $cmd set dummy MARK
    if [catch {cs tcsApply post} msg] {
       tk_messageBox -icon error -parent $itk_interior -message \
-            "Error parking shutters and vent gates: TCS reports \
+            "Error posting weather command: TCS reports \
             \"$msg\""
+   } else {
+      logger log $cmd
    }
 }
