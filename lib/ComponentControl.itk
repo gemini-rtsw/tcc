@@ -27,7 +27,7 @@
 #
 #           subselect component subcomponent
 #
-#  D Terrett  19 March 2001
+#  D Terrett  20 March 2001
 #
 #  Copyright CCLRC
 #+
@@ -133,9 +133,7 @@ itcl::body ComponentControl::select name {
 # Set the selector to "name" and load its contents into the edit controls.
    set cursel $name
    $itk_component(selector) select $name
-   if { [string equal $name ""] } {
-      $this selectobj ""
-   } else {
+   if { ! [string equal $name ""] } {
       $this selectobj $itk_option(-namespace)::$name
    }
 }
@@ -182,10 +180,9 @@ itcl::body ComponentControl::store name {
       }
    } 
 
-# Select the new object in the shadow.
-   if { ! [string equal $name ""] } {
-      $itk_option(-shadow) selectfromcontrol $name
-   }
+# Select the new or updated object.
+   $itk_option(-shadow) selectfromcontrol $name
+
    return 1
 }
 
@@ -195,11 +192,22 @@ itcl::body ComponentControl::subselect {component name} {
 
 itcl::body ComponentControl::apply args {
 
-# Save the values in the control in the scratch object.
-   if { [store ""] } {
+# Get the name of the component begin applied
+   set name [$itk_component(selector) get]
+
+# Update the object from the edit controls.
+   if { [$itk_option(-shadow) store $name] } {
 
 # Apply the object
-      eval $scratchobj apply $args
+      if { [string equal $name ""] } {
+         eval $scratchobj apply $args
+
+# Return the scratch object to its initial state so that it doesn't prevent
+# the deletion of any of its subcomponents.
+          $scratchobj init
+      } else {
+         eval $itk_option(-namespace)::$name apply $args
+      }
 
 # Post the command.
       if [catch {cs $itk_option(-apply) post} msg] {
@@ -207,10 +215,6 @@ itcl::body ComponentControl::apply args {
                "Error posting command: $itk_option(-system) reports \"$msg\""
       }
    }
-
-# Return the scratch object to its initial state so that it doesn't prevent
-# the deletion of any of its subcomponents.
-   $scratchobj init
 }
 
 itcl::body ComponentControl::delselected {} {

@@ -50,7 +50,7 @@
 #                                  objects of all the subcomponents that have 
 #                                  values.
 #
-#  D Terrett 19 March 2000
+#  D Terrett 20 March 2000
 #
 #  Copyright CCLRC
 #+
@@ -73,6 +73,7 @@ itcl::class EditShadow {
       variable window ""
    }
    private {
+      variable scratchobj
       variable subselections
    }
 }
@@ -105,9 +106,12 @@ itcl::body EditShadow::map {} {
 # Set the name of the shadow in the window.
       $window configure -shadow $this
 
+# Store the name of the window's scratch object.
+      set scratchobj [$window scratchobj]
+
 # Configure the window by calling its select and subselect methods with
 # the current state of the shadow.
-      $window select $selection
+      $window select [namespace tail $selection]
       foreach el [array names subselections] {
          $window subselect $el $subselections($el)
       }
@@ -117,7 +121,11 @@ itcl::body EditShadow::map {} {
 itcl::body EditShadow::selectfromparent {name} {
 
 # Store the new object name.
-   set selection $name
+   if { [string equal $name ""] } {
+      set selection $scratchobj
+   } else {
+      set selection ${namespace}::$name
+   }
 
 # If the edit control exists, call its select method.
    if { [winfo exists $window] } {
@@ -125,14 +133,8 @@ itcl::body EditShadow::selectfromparent {name} {
    }
 
 # Update the subselections array from the object just selected.
-   if { ![string equal $name ""] } {
-      foreach el [array names subselections] {
-         set subselections($el) [${namespace}::${name} cget -$el]
-      }
-   } else {
-      foreach el [array names subselections] {
-         set subselections($el) ""
-      }
+   foreach el [array names subselections] {
+      set subselections($el) [$selection cget -$el]
    }
 
 # Call the selectfromparent method of all this objects subcomponents that
@@ -148,24 +150,49 @@ itcl::body EditShadow::store name {
 
 # If the edit control exists, call its store method.
    if { [winfo exists $window] } {
-      $window store $name 
+      if { ![$window store $name] } {
+         return 0
+      }
 
-# And select it.
-      $window select $name
+# And select it if it has a name.
+      if { [string equal $name ""] } {
+         $window select $name
+      }
+   }
+
+# Store the new object name.
+   if { [string equal $name ""] } {
+      set selection $scratchobj
+   } else {
+      set selection ${namespace}::$name
+   }
+
+# Update the subselections array from the object just selected.
+   if { ![string equal $name ""] } {
+      foreach el [array names subselections] {
+         set subselections($el) [$selection cget -$el]
+      }
    }
 
 # Call the store method of the edit shadow of the components that have values.
    foreach el [array names subselections] {
       if { ! [string equal $subselections($el) ""] } {
-         $this$el store $subselections($el)
+         if { ![$this$el store $subselections($el)] } {
+            return 0
+         }
       }
    }
+   return 1
 }
 
 itcl::body EditShadow::selectfromcontrol {name} {
 
 # Store the new object name.
-   set selection $name
+   if { [string equal $name ""] } {
+      set selection $scratchobj
+   } else {
+      set selection ${namespace}::$name
+   }
 
 # If the edit control exists, call its select method.
    if { [winfo exists $window] } {
@@ -173,10 +200,8 @@ itcl::body EditShadow::selectfromcontrol {name} {
    }
 
 # Update the subselections array from the object just selected.
-   if { ![string equal $name ""] } {
-      foreach el [array names subselections] {
-         set subselections($el) [${namespace}::${name} cget -$el]
-      }
+   foreach el [array names subselections] {
+      set subselections($el) [$selection cget -$el]
    }
 
 # If this shadow has a parent, then call its subselectfromchild method.
