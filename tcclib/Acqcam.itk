@@ -9,7 +9,7 @@
 #  Methods:
 #           none
 #
-#  D Terrett  11 April 2002
+#  D Terrett  27 May 2002
 #
 #  Copyright CCLRC
 #+
@@ -149,9 +149,11 @@ itcl::body Acqcam::window {} {
    after 1000
    switch [$itk_component(window) get] {
       full {
+         cs acqcam::detFrameSize set binning 0
          cs acqcam::detFrameSize set windowing 0
       }
       200x200 {
+         cs acqcam::detFrameSize set binning 0
          cs acqcam::detFrameSize set windowing 1
          cs acqcam::detFrameSize set x [calparam cget -acqcam_x]
          cs acqcam::detFrameSize set y [calparam cget -acqcam_y]
@@ -159,6 +161,7 @@ itcl::body Acqcam::window {} {
          cs acqcam::detFrameSize set height 200
       }
       100x100 {
+         cs acqcam::detFrameSize set binning 0
          cs acqcam::detFrameSize set windowing 1
          cs acqcam::detFrameSize set x [calparam cget -acqcam_x]
          cs acqcam::detFrameSize set y [calparam cget -acqcam_y]
