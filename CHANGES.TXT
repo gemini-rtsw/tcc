@@ -1,163 +1,18 @@
-Changes to the tcc software since 25 December 1998.
+Significant changes since V1-4
 
-1) An error in the formating of some records in some of the star catalogs
-   has been corrected.
+1) The star selection function of the pointtest application has been
+   integrated with the tcc; the "star selector" item on the "tools"
+   menu brings up the "radar screen" display; selecting a star on this
+   display copies the star position into the science target data entry
+   screen. The telescope can then be slewed to this star using the normal
+   tcc buttons.
 
-2) The handsets now catch errors returned by the tcs and display an error
-   box with the message from the tcs instead of a tcl error box.
+   The pointtest application should now only be used for pointing tests.
 
-3) The labelling of the axes in the pointing origin handset have been 
-   corrected from U/D/L/R to +X/-X/+Y/-Y.
+2) The three handsets have been revised and they can now be aligned with
+   RA/Dec, focal plane x/y (e.g. the acquisition camera), the instrument
+   (i.e. relative to the instrument principal direction), Az/El or either
+   of the peripheral wave-front sensors).
 
-4) The time that the tcc waits for the tcs to respond before timing-out
-   has been reduced to 10 seconds.
-
-5) The pointupdate tool no longer deletes all the observations if the
-   "apply model" button is pressed.
-
-6) The pointtest application has been revised to eliminate the problem
-   of sometimes logging the data from the previous observation instead
-   of the current one.
-
-7) The arrows on the direction indicators on the handsets have been removed.
-
-8) A bug in the display of the RA offset has been fixed.
-
-9) Interference between the step size buttons of different handsets has been
-   eliminated.
-
-10) A control for entering offset increments has been added to the target
-    offset handset.
-
-11) The pointtest application no longer generates apparent places with RAs
-    greater than 24hs.
-
-12) The pointtest application now displays the comment fields in the star
-    catalogues.
-
-13) The pointupdate application now centers the warning dialog.
-
-14) A bug in the setting of the chop/nod states for the wave front sensors 
-    has been fixed.
-
-15) Setting of panel colours and special fonts is now done with and options
-    file.
-
-V1.0 committed to CVS
-
-1) pointupdate now refuses to us the same file for the tpoint input file and
-   the log file.
-
-2) Various bugs due to the convertion to tcl 8 that caused tcl errors fixed.
-
-3) The colours of the guide configuration window have been corrected.
-
-4) Another tcl 8 conversion bug in "Save Layout" fixed.
-
-5) Handling of file dialogs improved so that by default files are saved in
-   /gemini/file and catalogues are read from tcc/pointcats. The default
-   directories are "sticky" so that if you change to a different directory
-   you get that directory next time you open a file. The file name for
-   an tpoint input file now defaults to the name of the point test log file.
-
-V1.1 committed
-
-1) The science target window now allows the entry of solar system object.
-
-2) The skycat plots now show the correct probe geometry and shade the 
-   area of the field vignetted by the arms.
-
-3) The handling of errors when getting values from EPICS record has been
-   improved.
-
-4) The apply button has been removed from the science target window to 
-   prevent the telescope being slewed inadvertently.
-
-5) The pointing origin control applies the pointing origin to all 3 chop
-   states - this is a temporary measure until chopping is suported.
-
-6) The control of the wrap state from the configuration editing window
-   has been revised.
-
-7) The thermal control command on the system control panel has been changed
-   to match the current tcs implementation.
-
-8) A race condition in the weather data command that could cause spurious
-  "pressure out of range" errors has been eliminated.
-
-9) There is now a default window layout.
-
-10) The Az, El and Cass rotator errors are now displayed on the numeric
-    display.
-
-11) There have been numerous minor improvements to the window layouts.
-
-12) There is now a screen for controlling guide loops (not all parameter
-    settings are available yet).
-
-13) The controls for the AO pickoff mirror have been hidden.
-
-14) The state of the M1 cover and instrument cover are now displayed on
-    the graphical display.
-
-15) The probe arm displays now show the "shadow" of the other arm and the
-    arms are now drawn with approximately the correct width.
-
-16) The skycat "toggle arm" menu items now toggle the correct arm.
-
-17) The "Acquisition support" window has been renamed "Acquisition & Guiding".
-
-18) The ISS control buttons on the Acquisition & Guiding screen have been
-    relabeled.
-
-19) Preview of planets and orbit has been implemented.
-
-20) The science target entry screen has a button labeled "Grab" which copies
-    the current position that the telescope is tracking.
-
-21) The Science target entry window has a "Copy" menu that allows the
-    currently selected science target to be copied to the wave front
-    sensor target list vice-versa.
-
-22) The labels on the ISS ports on the graphic display are now set in the
-    "options" file instead of through the "Configure control".
-
-Changes since March 2000.
-
-1) The log can be logged to a file.
-
-2) The log window can no longer be edited and there is an entry widget for
-    adding comments to the log. The log can now be written to a file.
-
-3) All TCS parameters values are logged.
-
-4) The acquisition and guiding screen has a diagram of the guiding loops
-    and controls for setting them.
-
-5) Nodding is implemented.
-
-6) Chopping is implemented.
-
-7) The system control screen has been revised and has had controls added
-   for M1, the Cass Rotator and the A & G.
-
-8) The tsd application is now a single window. The -layout option no longer
-   exists.
-
-9) The pointtest application now controls guiding.
-
-10) A new application called starselect replaces pointtest for selecting
-    stars for engineering purposes.
-
-Changes since July 24th
-
-1) The pointupdate application is now integrated with the tcc. It is reached
-   from the "tools" menu in the target selection screen.
-
-2) A new application "probecal" for calibration guide probe geometry has been
-   added.
-
-3) "Probe guiding" has been added to the A&G screen.
-
-4) Two new applications for defining and executing dither patterns have been
-   added.
+3) There is a (as yet incomplete) instrument origin management facility 
+   attached to the instrument handset.
