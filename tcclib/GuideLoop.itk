@@ -10,7 +10,7 @@
 #  Methods:
 #           none
 #
-#  D Terrett  2 October 2000
+#  D Terrett  31 October 2000
 #
 #  Copyright CCLRC
 #+
@@ -21,26 +21,25 @@ itcl::class GuideLoop {
    constructor args {}
    destructor {}
 
-   private method m1mode state
-   private method mtmode state
-   private method m2mode state
-   private method prmode state
-   private method wfsstart {wfs ql}
-   private method wfsstop wfs
-   private method recolour args
+   private method m1mode {state}
+   private method mtmode {state}
+   private method m2mode {state}
+   private method prmode {state}
+   private method wfsmode {wfs state}
+   private method recolour {args}
 
    private variable m1Weight
 }
 
 itk::usual GuideLoop {
-   keep -cursor
+   keep -cursor -foreground -background
 }
 
 itcl::body GuideLoop::constructor args {
 
 # Create canvas.
    itk_component add canv {
-      canvas $itk_interior.canv -width 630 -height 430 -borderwidth 2 \
+      canvas $itk_interior.canv -width 630 -height 455 -borderwidth 2 \
             -relief sunken
    }
    pack $itk_component(canv)
@@ -48,38 +47,28 @@ itcl::body GuideLoop::constructor args {
 
 # WFS boxes
    foreach sys {pwfs1 pwfs2 oiwfs} {
-      itk_component add ${sys}_off {
-         LiveButton $w.${sys}_off -text OFF -command [code $this wfsstop $sys]
-      }
-      itk_component add ${sys}_on {
-         LiveButton $w.${sys}_on -text ON -command [code $this wfsstart $sys 0]
-      }
-      itk_component add ${sys}_ql {
-         LiveButton $w.${sys}_ql -text QL -command [code $this wfsstart $sys 1]
-      }
-#      itk_component add ${sys}_setup {
-#         button $w.${sys}_setup -text SETUP
-#      }
       itk_component add $sys {
-         label $w.${sys} -text [string toupper $sys]
+         SelectButton $w.$sys -command [code $this wfsmode $sys] \
+               -orient vertical
+      } {
+         usual
+         rename -offbackground -background background Background
       }
-
-      $w create rectangle 0 0 132 63 -fill white -tags "active ${sys} ${sys}_bg"
-      $w create window 32 12 -width 60 -height 20 -window $w.${sys}_off \
-            -tags $sys
-      $w create window 32 32 -width 60 -height 20 -window $w.${sys}_on \
-            -tags $sys
-      $w create window 32 52 -width 60 -height 20 -window $w.${sys}_ql \
-            -tags $sys
-#      $w create window 32 52 -width 60 -height 20 -window $w.${sys}_setup \
-            -tags $sys
+      $w create window 32 34 -width 60 -window $w.$sys -tags $sys
+      $itk_component($sys) add ON -pady 0
+      $itk_component($sys) add OFF -pady 0
+      $itk_component($sys) add Q/L -pady 0
+      itk_component add ${sys}_label {
+         label $w.${sys}_label -text [string toupper $sys]
+      }
+      $w create rectangle 0 0 132 67 -fill white -tags "active ${sys} ${sys}_bg"
 
 # WFS controls.
       itk_component add ${sys}_ex {
          iwidgets::combobox $w.${sys}_ex -arrowrelief flat -width 5 \
                -validate real -labeltext "exp(s)"
       }
-      $w create window 60 74 -window $w.${sys}_ex -tag $sys
+      $w create window 60 80 -window $w.${sys}_ex -tag $sys
       $w.${sys}_ex insert list end 1.0 0.5 0.1 0.05 0.01 0.005
       $w.${sys}_ex insert entry end 0.05
       [$w.${sys}_ex component list] configure -hscrollmode none \
@@ -87,27 +76,32 @@ itcl::body GuideLoop::constructor args {
    }
 
 # Find the name of the font used for the buttons and use it for all text.
-   set font [$w.oiwfs_off cget -font]
+   set font [$w.oiwfs cget -font]
 
-   foreach sys {pwfs1 pwfs2 oiwfs} {
-      $w create text 92 32 -text [string toupper $sys] -tags $sys -font $font
+   foreach sys {pwfs1 pwfs2 oiwfs} label {PWFS1 PWFS2 OIWFS} {
+      $w create text 92 35 -text $label -tags $sys -font $font
    }
 
 # M1, M2 and Mount boxes.
-   foreach sys {m2 m1 mount} {
-      $w create rectangle 0 0 132 63 -fill white -tags "active ${sys} ${sys}_bg"
-      $w create text 92 32 -text [string toupper $sys] -tags $sys -font $font
-   }
+   $w create rectangle 0 0 132 89 -fill white -tags "active m2 m2_bg"
+   $w create text 92 45 -text M2 -tags m2 -font $font
+   $w create rectangle 0 0 132 47 -fill white -tags "active m1 m1_bg"
+   $w create text 92 25 -text "M1 FIG" -tags m1 -font $font
+   $w create rectangle 0 0 132 89 -fill white -tags "active mount mount_bg"
+   $w create text 92 44 -text MOUNT -tags mount -font $font
 
 # Controls for M2
-   itk_component add m2open {
-      LiveButton $w.m2open -text OFF -command [code $this m2mode 0]
+   itk_component add m2 {
+      SelectButton $w.m2 -command [code $this m2mode] -orient vertical
+   } {
+      usual
+      rename -offbackground -background background Background
    }
-   itk_component add m2close {
-      LiveButton $w.m2close -text ON -command [code $this m2mode 1]
-   }
-   $w create window 32 12 -width 60 -height 20 -window $w.m2open -tags m2
-   $w create window 32 32 -width 60 -height 20 -window $w.m2close -tags m2
+   $w create window 32 45 -width 60 -window $itk_component(m2) -tags m2
+   $itk_component(m2) add P1 -pady 0
+   $itk_component(m2) add P2 -pady 0
+   $itk_component(m2) add OIWFS -pady 0
+   $itk_component(m2) add OFF -pady 0
 
 # Controls for M1.
    itk_component add m1Weight {
@@ -121,59 +115,48 @@ itcl::body GuideLoop::constructor args {
    }
    $itk_component(m1Frames) insert end 60
    $w create window 170 30 -window $itk_component(m1Frames) -anchor nw -tags m1
-   itk_component add m1open {
-      LiveButton $w.m1open -text OFF -command [code $this m1mode 0]
+   itk_component add m1 {
+      SelectButton $w.m1 -command [code $this m1mode] -orient vertical
+   } {
+      usual
+      rename -offbackground -background background Background
    }
-   itk_component add m1close {
-      LiveButton $w.m1close -text ON -command [code $this m1mode 1]
-   }
-   $w create window 32 12 -width 60 -height 20 -window $w.m1open -tags m1
-   $w create window 32 32 -width 60 -height 20 -window $w.m1close -tags m1
-
+   $w create window 32 24 -width 60 -window $w.m1 -tags m1
+   $itk_component(m1) add ON -pady 0
+   $itk_component(m1) add OFF -pady 0
 
 # Controls for Mount.
-   itk_component add mtWeight {
-      scale $w.mtWeight -from 0.0 -to 1.0 -resolution 0.1 -orient horizontal \
-            -showvalue 0 -length 120 -borderwidth 1 -label "WFS weight"
+   itk_component add mt {
+      SelectButton $w.mt -command [code $this mtmode] -orient vertical
+   } {
+      usual
+      rename -offbackground -background background Background
    }
-   $w create window 170 25 -window $itk_component(mtWeight) -anchor nw \
-         -tags mount
-   $w create text 155 55 -text P1 -tags mount -font $font
-   $w create text 310 55 -text P2 -tags mount -font $font
-   itk_component add mtopen {
-      LiveButton $w.mtopen -text OFF -command [code $this mtmode 0]
-   }
-   itk_component add mtm2 {
-      LiveButton $w.mtm2 -text M2 -command [code $this mtmode 1]
-   }
-   itk_component add mtwfs {
-      LiveButton $w.mtpwfs -text WFS -command [code $this mtmode -1]
-   }
-   $w create window 32 52 -width 60 -height 20 -window $w.mtm2 -tags mount
-   $w create window 32 32 -width 60 -height 20 -window $w.mtopen -tags mount
-   $w create window 32 12 -width 60 -height 20 -window $w.mtpwfs -tags mount
+   $w create window 32 45 -width 60 -window $itk_component(mt) -tags mount
+   $itk_component(mt) add M2 -pady 0
+   $itk_component(mt) add P1 -pady 0
+   $itk_component(mt) add P2 -pady 0
+   $itk_component(mt) add OFF -pady 0
 
 # Box for WFS probes.
-   $w create rectangle 0 0 132 63 -fill white -tags "active probes probes_bg"
-   $w create text 92 32 -text PROBES -tags probes -font $font
+   $w create rectangle 0 0 132 67 -fill white -tags "active probes probes_bg"
+   $w create text 92 35 -text PROBES -tags probes -font $font
 
 # Controls for probes.
-   itk_component add propen {
-      LiveButton $w.propen -text OFF -command [code $this prmode 0]
+   itk_component add pr {
+      SelectButton $w.pr -command [code $this prmode] -orient vertical
+   } {
+      usual
+      rename -offbackground -background background Background
    }
-   itk_component add prp1 {
-      LiveButton $w.prp1 -text P1 -command [code $this prmode 1]
-   }
-   itk_component add prp2 {
-      LiveButton $w.prp2 -text P2 -command [code $this prmode 2]
-   }
-   $w create window 32 52 -width 60 -height 20 -window $w.prp1 -tags probes
-   $w create window 32 32 -width 60 -height 20 -window $w.prp2 -tags probes
-   $w create window 32 12 -width 60 -height 20 -window $w.propen -tags probes
+   $w create window 32 34 -width 60 -window $w.pr -tags probes
+   $itk_component(pr) add P1 -pady 0
+   $itk_component(pr) add P2 -pady 0
+   $itk_component(pr) add OFF -pady 0
 
 # Move boxes into position.
-   $w move m2 250 20
-   $w move m1 250 100
+   $w move m2 250 10
+   $w move m1 250 115
    $w move pwfs1 50 180
    $w move oiwfs 250 180
    $w move pwfs2 450 180
@@ -220,6 +203,9 @@ itcl::body GuideLoop::constructor args {
    }
    if { [catch {cs m2Guide info}] } {
       epics cs m2Guide
+   }
+   if { [catch {cs m2GuideConfig info}] } {
+      epics cs m2GuideConfig
    }
    if { [catch {cs wfsGuideMode info}] } {
       epics cs wfsGuideMode
@@ -377,7 +363,10 @@ body GuideLoop::recolour args {
       $w itemconfigure oiwfs_m2 -fill green
    }
    if { $m2_sw } {
-      if { $oiwfs || $pwfs1 || $pwfs2 } {
+      set p [$itk_component(m2) get]
+      if { ( $oiwfs && [string equal $p OIWFS] ) || 
+            ( $pwfs1 && [string equal $p P1] ) || 
+            ( $pwfs2 && [string equal $p P2] ) } {
          $w itemconfigure m2_bg -fill green
          $w itemconfigure m2_mt -fill green
          set m2 1
@@ -393,7 +382,9 @@ body GuideLoop::recolour args {
          $w itemconfigure mount_bg -fill yellow
       }
    } elseif { $mt_sw == -1 } {
-      if { $pwfs1 || $pwfs2 } {
+      set p [$itk_component(mt) get]
+      if { ( $pwfs1 && [string equal $p P1] ) || 
+            ( $pwfs2 && [string equal $p P2] ) } {
          $w itemconfigure mount_bg -fill green
       } else {
          $w itemconfigure mount_bg -fill yellow
@@ -418,13 +409,16 @@ body GuideLoop::recolour args {
 
 body GuideLoop::m1mode state {
 
-   if { $state } {
-      cs m1GuideConfig set frames [$itk_component(m1Frames) get]
-      cs m1GuideConfig set weighting $m1Weight
-      logger command m1GuideConfig
-      cs m1Guide set mode On
-   } else {
-      cs m1Guide set mode Off
+   switch $state {
+      ON {
+         cs m1GuideConfig set frames [$itk_component(m1Frames) get]
+         cs m1GuideConfig set weighting $m1Weight
+         logger command m1GuideConfig
+         cs m1Guide set mode On
+      }
+      OFF {
+         cs m1Guide set mode Off
+      }
    }
    logger command m1Guide
 
@@ -437,15 +431,27 @@ body GuideLoop::m1mode state {
 
 body GuideLoop::mtmode state {
 
-   cs mountGuide set mode [expr {$state ? "On" : "Off"}]
-   if { $state == -1 } {
-      cs mountGuide set source AG 
-   } else {
-      cs mountGuide set source SCS 
-   } 
-   set p1 [$itk_component(mtWeight) get]
-   cs mountGuide set p1weight $p1
-   cs mountGuide set p2weight [expr {1 - $p1}]
+   switch $state {
+      OFF {
+          cs mountGuide set mode Off
+      }
+      M2 {
+          cs mountGuide set mode On
+          cs mountGuide set source SCS 
+      }
+      P1 {
+          cs mountGuide set mode On
+          cs mountGuide set source AG 
+          cs mountGuide set p1weight 1.0
+          cs mountGuide set p2weight 0.0
+      }
+      P2 {
+          cs mountGuide set mode On
+          cs mountGuide set source AG 
+          cs mountGuide set p1weight 0.0
+          cs mountGuide set p2weight 1.0
+      }
+   }
    logger command mountGuide
 
    if { [catch {cs mountGuide post} msg] } {
@@ -453,28 +459,79 @@ body GuideLoop::mtmode state {
             "Error posting mountGuide command: TCS reports \
             \"$msg\""
    }
+   recolour
 }
 
 body GuideLoop::m2mode state {
 
-   cs m2Guide set state [expr {$state ? "On" : "Off"}]
+# Turn guiding off.
+   cs m2Guide set state Off
    logger command m2Guide
-
    if { [catch {cs m2Guide post} msg] } {
       tk_messageBox -icon error -parent $itk_interior -message \
-            "Error posting m2GuideControl command: TCS reports \
+            "Error posting m2Guide command: TCS reports \
             \"$msg\""
    }
+
+   if { ![string equal OFF $state] } {
+
+# Set up M2 guide parameters.
+      cs m2GuideConfig set samplefreq 100
+      cs m2GuideConfig set filter raw
+      cs m2GuideConfig set freq1 10
+      cs m2GuideConfig set freq2 100
+      cs m2GuideConfig set beam A
+      cs m2GuideConfig set reset On
+      switch $state {
+         P1 {
+            cs m2GuideConfig set source PWFS1
+         }
+         P2 {
+            cs m2GuideConfig set source PWFS2
+         }
+         OIWFS {
+            cs m2GuideConfig set source OIWFS
+         }
+      }
+      logger command m2GuideConfig
+      if { [catch {cs m2GuideConfig post} msg] } {
+         tk_messageBox -icon error -parent $itk_interior -message \
+               "Error posting m2GuideConfig command: TCS reports \
+               \"$msg\""
+      }
+
+      cs m2GuideConfig set reset Off
+      logger command m2GuideConfig
+      if { [catch {cs m2GuideConfig post} msg] } {
+         tk_messageBox -icon error -parent $itk_interior -message \
+               "Error posting m2GuideConfig command: TCS reports \
+               \"$msg\""
+      }
+
+# Turn guiding on.
+      cs m2Guide set state On
+      logger command m2Guide
+      if { [catch {cs m2Guide post} msg] } {
+         tk_messageBox -icon error -parent $itk_interior -message \
+               "Error posting m2Guide command: TCS reports \
+               \"$msg\""
+      }
+   }
+   recolour
 }
 
 body GuideLoop::prmode state {
 
-   cs wfsGuideMode set state [expr {$state ? "On" : "Off"}]
    switch $state {
-      1 {
+      OFF {
+         cs wfsGuideMode set state Off
+      }
+      P1 {
+         cs wfsGuideMode set state On
          cs wfsGuideMode set probe PWFS1
       }
-      2 {
+      P2 {
+         cs wfsGuideMode set state On
          cs wfsGuideMode set probe PWFS2
       }
    }
@@ -485,36 +542,33 @@ body GuideLoop::prmode state {
             "Error posting wfsGuideMode command: TCS reports \
             \"$msg\""
    }
+   recolour
 }
 
-body GuideLoop::wfsstart {wfs ql} {
+body GuideLoop::wfsmode {wfs state} {
 
-   cs ${wfs}Observe set noexp -1
-   cs ${wfs}Observe set int [$itk_component(${wfs}_ex) get]
-   if { $ql } {
-      cs ${wfs}Observe set outopt DHS
-      cs ${wfs}Observe set output QL
-   } else {
-      cs ${wfs}Observe set outopt NONE
-      cs ${wfs}Observe set output ""
+   switch $state {
+      ON -
+      Q/L {
+         cs ${wfs}Observe set noexp -1
+         cs ${wfs}Observe set int [$itk_component(${wfs}_ex) get]
+         if { [string equal $state Q/L] } {
+            cs ${wfs}Observe set outopt DHS
+            cs ${wfs}Observe set output QL
+         } else {
+            cs ${wfs}Observe set outopt NONE
+            cs ${wfs}Observe set output ""
+         }
+         logger command ${wfs}Observe
+      }
+      OFF {
+         cs ${wfs}StopObserve set dummy MARK
+         logger command ${wfs}StopObserve
+      }
    }
-   logger command ${wfs}Observe
 
    if { [catch {cs ${wfs}Observe post} msg] } {
       tk_messageBox -icon error -parent $itk_interior -message \
-            "Error posting ${wfs}Observe command: TCS reports \
-            \"$msg\""
-   }
-}
-
-body GuideLoop::wfsstop wfs {
-
-   cs ${wfs}StopObserve set dummy MARK
-   logger command ${wfs}StopObserve
-
-   if { [catch {cs ${wfs}StopObserve post} msg] } {
-      tk_messageBox -icon error -parent $itk_interior -message \
-            "Error posting ${wfs}StopObserve command: TCS reports \
-            \"$msg\""
+            "Error posting ${wfs} command: TCS reports \"$msg\""
    }
 }
