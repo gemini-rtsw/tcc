@@ -9,7 +9,7 @@
 #  Methods:
 #          none
 #
-#  D Terrett 13 July 2000
+#  D Terrett 30 January 2001
 #
 #  Copyright CCLRC
 #+
@@ -430,8 +430,16 @@ itcl::body TcsControl::constructor args {
    pack $itk_component(ventgates) -padx 4 -pady 2  -side left
    pack $itk_component(east) $itk_component(west) \
          -padx 4 -pady 2 -fill x -expand y -side left
-   $itk_component(east) set [expr [sa ecssad get eastVentGatePos value] / 100]
-   $itk_component(west) set [expr [sa ecssad get westVentGatePos value] / 100]
+   if { [catch \
+         {set open [expr [sa ecssad get eastVentGatePos value] / 100]}] } {
+      set open 0
+   }
+   $itk_component(east) set $open
+   if { [catch \
+         {set open [expr [sa ecssad get westVentGatePos value] / 100]}] } {
+      set open 0
+   }
+   $itk_component(west) set $open
 
 # Enclosure thermal control command.
    set w $itk_component(row4f1)
