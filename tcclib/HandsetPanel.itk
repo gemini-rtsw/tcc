@@ -10,7 +10,7 @@
 #  Methods:
 #          none
 #
-#  D Terrett 24 April 2001
+#  D Terrett 27 April 2001
 #
 #  Copyright CCLRC
 #+
@@ -32,6 +32,13 @@ itcl::body HandsetPanel::constructor args {
             -tabpos n -equaltabs no
    }
 
+# Target handset
+   set w [$itk_component(handsets) add -label Targets]
+   itk_component add targets {
+      TargetHandsetControl $w.targets
+   }
+   pack $itk_component(targets)
+
 # Guiding handset
    set w [$itk_component(handsets) add -label Guiding]
    itk_component add guiding {
@@ -46,14 +53,7 @@ itcl::body HandsetPanel::constructor args {
    }
    pack $itk_component(po)
 
-# Target handset
-   set w [$itk_component(handsets) add -label Targets]
-   itk_component add targets {
-      TargetHandsetControl $w.targets
-   }
-   pack $itk_component(targets)
-
-   $itk_component(handsets) select Guiding
+   $itk_component(handsets) select Targets
 
    pack $itk_component(handsets) -fill both -expand y
 
