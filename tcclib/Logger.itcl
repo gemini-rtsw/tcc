@@ -85,13 +85,13 @@ itcl::body Logger::log message {
 itcl::body Logger::command cs {
 
 # Get UTC timestamp for the message.
-   set utc [sa tcssad get UTC value]
+   set text [sa tcssad get UTC value]:
 
 # Get the command info
    set info [cs $cs info]
 
 # Write the name of the command.
-   send "$utc: [lindex $info 1]"
+   set text "$text [lindex $info 1]"
 
 # Get the names of the commands parameters.
    set params [lindex $info 3]
@@ -107,9 +107,12 @@ itcl::body Logger::command cs {
 #  Ignore empty values.
       if { [string is space $val] } continue
 
-#  write the name and value to the log window.
-      send "               $par = $val"
+#  add the name and value to the log window.
+      set text "$text, [lindex [cs $cs info $par] 2] = $val"
    }
+
+# Send the text to the logger.
+   send $text
 }
 
 itcl::body Logger::send text {
