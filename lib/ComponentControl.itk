@@ -17,6 +17,9 @@
 #                           error messages).
 #
 #  Methods:
+#           childstored name  Informs the window that one of its subcomponents
+#                             was stored.
+#
 #           select name     Selects the component "name".
 #
 #           store name      Stores the widget contents in a new or existing 
@@ -27,7 +30,7 @@
 #
 #           subselect component subcomponent
 #
-#  D Terrett  21 March 2001
+#  D Terrett  22 March 2001
 #
 #  Copyright CCLRC
 #+
@@ -41,6 +44,7 @@ itcl::class ComponentControl {
    itk_option define -namespace namespace Namespace {}
    itk_option define -system system System TCS
    public {
+      method childstored {name} {}
       method select {name}
       method store {name}
       method scratchobj {} {return $scratchobj}
@@ -182,10 +186,6 @@ itcl::body ComponentControl::store name {
          }
       }
    } 
-
-# Select the new or updated object.
-   $itk_option(-shadow) selectfromcontrol $name
-
    return 1
 }
 
@@ -199,7 +199,7 @@ itcl::body ComponentControl::apply args {
    set name [$itk_component(selector) get]
 
 # Update the object from the edit controls.
-   if { [$itk_option(-shadow) store $name] } {
+   if { [$itk_option(-shadow) storefromcontrol $name] } {
 
 # Apply the object
       if { [string equal $name ""] } {
@@ -248,7 +248,7 @@ itcl::body ComponentControl::returncom {} {
    set name [$itk_component(selector) get]
    if { [string equal $cursel $name] || [string equal \
          [info commands ::$itk_option(-namespace)::${name}] ""] } {
-      store $name
+      $itk_option(-shadow) storefromcontrol $name
   } else {
       selectioncommand
   }
