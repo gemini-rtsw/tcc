@@ -73,7 +73,7 @@ itcl::class EditShadow {
       variable window ""
    }
    private {
-      variable scratchobj
+      variable scratchobj ""
       variable subselections
    }
 }
@@ -121,7 +121,7 @@ itcl::body EditShadow::map {} {
 itcl::body EditShadow::selectfromparent {name} {
 
 # Store the new object name.
-   if { [string equal $name ""] } {
+   if { [string equal $name ""] && ![string equal $scratchobj ""] } {
       set selection $scratchobj
    } else {
       set selection ${namespace}::$name
@@ -161,7 +161,7 @@ itcl::body EditShadow::store name {
    }
 
 # Store the new object name.
-   if { [string equal $name ""] } {
+   if { [string equal $name ""] && ![string equal $scratchobj ""] } {
       set selection $scratchobj
    } else {
       set selection ${namespace}::$name
@@ -188,7 +188,7 @@ itcl::body EditShadow::store name {
 itcl::body EditShadow::selectfromcontrol {name} {
 
 # Store the new object name.
-   if { [string equal $name ""] } {
+   if { [string equal $name ""] && ![string equal $scratchobj ""] } {
       set selection $scratchobj
    } else {
       set selection ${namespace}::$name
