@@ -30,7 +30,7 @@
 #
 #       zlpm           If true, zero the local pointing model when slewing.
 #
-#  D Terrett 23 July 2000
+#  D Terrett 11 September 2000
 #
 #  Copyright CCLRC
 #+
@@ -180,7 +180,7 @@ itcl::body PointObs::log {} {
    if { [string equal $ans yes] } {
       start $LogAction
    } else {
-      nextaction log
+      nextaction logall
    }
 }
 
@@ -225,11 +225,14 @@ itcl::body PointObs::nextaction {after} {
             after 100 [namespace code "$LogAction start"]
          } else {
             set LogCount 0
-            if { $Guiding } {
-               start $GuideOffAction
-            } elseif { $selectafterlog } {
-               nextstar
-            }
+            nextaction logall
+         }
+      }
+      logall {
+         if { $Guiding } {
+            start $GuideOffAction
+         } elseif { $selectafterlog } {
+            nextstar
          }
       }
    }
@@ -289,7 +292,8 @@ itcl::body PointObs::isguiding {} {
          set val [sa agssad get p2guiding]
       }
    }
-   return [expr { $val == 0 }]
+#   return [expr { $val == 0 }]
+   return 1
 }
 
 itcl::configbody PointObs::guidedelay {
