@@ -98,6 +98,12 @@ itcl::body ActiveOptics::enable {} {
                "Error posting m2GuideConfig command: TCS reports \
                \"$msg\""
       }
+
+# This delay is needed to allow M2 to action the reset before the command
+# is resent with reset = off. Maybe this won't be needed when the M2 BUSY/IDLE
+# is connected.
+      after 1000
+
       cs m2GuideConfig set reset Off
       logger command m2GuideConfig
       if { [catch {cs m2GuideConfig post} msg] } {
