@@ -5,7 +5,7 @@
 #  tcs configuration components and creates and configures the
 #  components.
 #
-#  D Terrett 8 May 2002
+#  D Terrett 16 May 2002
 #
 #  Copyright CCLRC
 #+
@@ -93,7 +93,7 @@ itcl::body TcsConfigFile::constructor {file parent} {
                    tracking_frame {
                       lappend nodelist(trackframe) $node
                    }
-                   track_rate {
+                   trackrate {
                       lappend nodelist(trackrate) $node
                    }
                    wavelength {
@@ -130,8 +130,8 @@ itcl::body TcsConfigFile::constructor {file parent} {
 
 # Process each of the lists of component types (note that the order is
 # important so that we don't get errors because a subcomponent isn't defined).
-   foreach type {cosys wavelength oiwfswavelength target rotator \
-         guide field trackrate instrument pointorig slewoptions trackframe \
+   foreach type {cosys wavelength oiwfswavelength rotator guide trackrate \
+         target field instrument pointorig slewoptions trackframe \
          chop tcsconfig} {
 
 # Targets and track rates are special cases.
@@ -276,10 +276,6 @@ itcl::body TcsConfigFile::createTarget {node} {
    if { $name== "" } {
       return [report "target with no name" $node]
    }
-   set type [dom::element getAttribute $node type]
-   if { $type== "" } {
-      return [report "target \"$name\" has no type" $node]
-   }
 
 # Targets only exist in field so we have to search for the enclosing field
 # in the nodes parents.
@@ -321,6 +317,7 @@ itcl::body TcsConfigFile::createTarget {node} {
    }
 
 # Configure the target type.
+   set type [dom::element getAttribute $node type]
    if { [catch {$field subconfigure target $target -type $type} msg] } {
       if { [report $msg] } {
          return 1
@@ -378,14 +375,10 @@ itcl::body TcsConfigFile::createTrackrate {node} {
 # The node must have a name and a type attribute.
    set name [dom::element getAttribute $node name]
    if { $name== "" } {
-      return [report "target with no name"]
-   }
-   set type [dom::element getAttribute $node type]
-   if { $type== "" } {
-      return [report "target \"$name\" has no type"]
+      return [report "track rate with no name"]
    }
 
-# Targets only exist in field so we have to search for the enclosing field
+# Track rates only exist in field so we have to search for the enclosing field
 # in the nodes parents.
    set parent [dom::node cget $node -parentNode]
    set field ""
@@ -407,9 +400,15 @@ itcl::body TcsConfigFile::createTrackrate {node} {
 # If there is no parent field then this is an error.
    if { $field == "" } {
       return \
-            [report "Differential trake rate \"$name\" appears outside a field"]
+            [report "Differential track rate \"$name\" appears outside a field"]
    }
+
+# Create the field if it doesn't exist
    set field ::FieldNames::$field
+   if { [lsearch -exact [itcl::find objects -class FieldComponent] \
+         $field] < 0 } {
+      set field [FieldComponent $field FieldList]
+   }
 
 # Add the trackrate to the field.
    set trackrate $name
@@ -417,7 +416,7 @@ itcl::body TcsConfigFile::createTrackrate {node} {
       $field add trackrate $trackrate
    }
 
-# Build a list of all the parameter nodes for the target.
+# Build a list of all the parameter nodes for the track rate.
    set parlist ""
    foreach child [dom::node children $node] {
       if { [string equal [dom::node cget $child -nodeType] element] } {
