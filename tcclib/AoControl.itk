@@ -10,7 +10,7 @@
 #  Methods:
 #           none
 #
-#  D Terrett  16 December 2002
+#  D Terrett  17 December 2002
 #
 #  Copyright CCLRC
 #+
@@ -21,16 +21,12 @@ itcl::class AoControl {
    destructor {}
    private {
       method centre {}
-      method centrestart {}
       method correct {arg}
       method loop {state}
       method onerror {msg}
       method aoenable {}
       method preparecm {}
-      method cmPrepareIsDone {}
       variable dmh 0
-      variable cmPrepareBusy
-      variable centreaction
    }
 }
 
@@ -64,19 +60,9 @@ itcl::body AoControl::constructor args {
       button $w.takepic -text "Take Picture" -state disabled
    }
 
-# Create action that prepares a new command matrix, waits for it to be
-# ready.
-   set centreaction [seq::Action #auto tcs \
-         -onstart [itcl::code $this preparecm] \
-         -onok [itcl::code $this centre] \
-         -oktest [itcl::code $this cmPrepareIsDone] \
-         -waitvar [itcl::scope cmPrepareBusy(value)] \
-         -onerror [itcl::code $this onerror]]
-
 # Centre WFS.
    itk_component add centre {
-      LiveButton $w.centre -text "Center WFS" \
-            -command [itcl::code $this centrestart]
+      LiveButton $w.centre -text "Center WFS" -command [itcl::code $this centre]
    }
 
 # Close loop.
@@ -140,11 +126,8 @@ itcl::body AoControl::constructor args {
    eval itk_initialize $args
 }
 
-itcl::body AoControl::destructor {} {
-   itcl::delete object $centreaction
-}
-
 itcl::body AoControl::centre {} {
+   preparecm
    cs aoFlatten set dummy 1
    logger command aoFlatten
    cs aoCentreWfs set retain 0
@@ -241,20 +224,6 @@ itcl::body AoControl::preparecm {} {
    cs aoPrepareCm set x [sa tcssad get aoDemandx]
    cs aoPrepareCm set y [sa tcssad get aoDemandy]
    logger command aoPrepareCm
-}
-
-itcl::body AoControl::centrestart {} {
-
-# Link to the ALTAIR control matrix ready flag.
-   sa aossad link prepareCmBusy [itcl::scope cmPrepareBusy]
-
-# Start the action.
-   $centreaction start
-}
-
-itcl::body AoControl::cmPrepareIsDone {} {
-   set val [sa aossad get prepareCmBusy]
-   return [string equal $val IDLE]
 }
 
 itcl::body AoControl::onerror {msg} {
