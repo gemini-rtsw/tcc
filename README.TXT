@@ -19,7 +19,7 @@ respectively.
 To connect to a copy of the tcs with epics records starting with something
 other than tcs: - e.g. a simulated tcs running as tc1: - do:
 
-	setenv TCC_TCSNAME tc1:
+	setenv TCC_TCSNAME tc1
 
 before starting the applications and verify that the print the message 
 
