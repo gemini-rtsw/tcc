@@ -1,0 +1,133 @@
+#+
+#  Dark
+#
+#  A Dark object implements a sequence of operations to take a new dark
+#  (more properly called a sky) frame with one of the peripheral wave-
+#  front sensors.
+#
+#  The steps are are follows:
+#
+#     1. Disable guiding.
+#
+#     2. Offset the WFS RA/Dec of the guide star
+#
+#     3. Take a WFS frame
+#
+#     4. Zero the offset
+#
+#  D Terrett 5 December 2003
+#
+#  Copyright CCLRC
+#-
+
+itcl::class Dark {
+   constructor {wfs} {}
+   destructor {}
+   public {
+      method take {} {}
+   }
+   private {
+      method offset {}
+      method expose {} {}
+      method zero {} {}
+      method isinposition {}
+      method isexposedone {}
+      variable wfsname
+      variable seqdark
+      variable disableaction
+      variable offsetaction
+      variable exposeaction
+      variable InPosition
+      variable Exposing
+   }
+}
+
+itcl::body Dark::constructor {wfs} {
+
+# Create action for disabling guiding.
+   set disableaction [seq::Action #auto tcs \
+      -onstart "AO disable" \
+      -onok [itcl::code $this offset]]
+
+# Create action for offsetting the probe
+   set offsetaction [seq::Action #auto tcs \
+      -waitvar [itcl::scope InPosition(value)] \
+      -onok [itcl::code $this expose] \
+      -oktest [itcl::code $this isinposition]]
+   $offsetaction set targetAdjust frame 1
+   $offsetaction set targetAdjust size 30.0
+   $offsetaction set targetAdjust angle 0.0
+   switch $wfs {
+      p1 {
+         $offsetaction set targetAdjust vt -16
+      }
+      p2 {
+         $offsetaction set targetAdjust vt -32
+      }
+   }
+
+# Create action for taking the dark frame.
+   set exposeaction [seq::Action #auto tcs \
+      -waitvar [itcl::scope Exposing(value)] \
+      -onok [itcl::code $this zero] \
+      -oktest [itcl::code $this isexposedone]]
+   $exposeaction connect ${wfs}SeqDark
+
+ #Save the names of the command senders and the WFS for constructing
+# the file name.
+   set seqdark ${wfs}SeqDark
+   set wfsname $wfs
+}
+
+itcl::body Dark::destructor {} {
+   itcl::delete object $disableaction
+   itcl::delete object $offsetaction
+   itcl::delete object $exposeaction
+}
+
+itcl::body Dark::take {} {
+
+# Disable guiding.
+   $disableaction start
+}
+
+itcl::body Dark::offset {} {
+
+# Link to TCS in position flag.
+   sa tcssad link inPosition [itcl::scope InPosition]
+
+# Offset probe
+   $offsetaction start
+   logger command targetAdjust
+}
+   
+itcl::body Dark::expose {} {
+
+# Link to WFS exposing flag.
+   sa guideConfig link ${wfsname}state [itcl::scope Exposing]
+
+# Set the file name - some scheme needs to be invented for this.
+   $exposeaction set $seqdark filename ${wfsname}xxxxxxxx
+
+# Take the dark.
+   $exposeaction start
+   logger command $seqdark
+}
+
+itcl::body Dark::zero {} {
+
+# Reverse the probe offset.
+   cs targetAdjust set size -30.0
+   logger command targetAdjust
+   cs targetAdjust post
+}
+
+itcl::body Dark::isinposition {} {
+   set val [sa tcssad get inPosition]
+   return [string equal $val TRUE]
+}
+
+itcl::body Dark::isexposedone {} {
+   set val [sa guideConfig get ${wfsname}state]
+   return [string equal $val No]
+}
