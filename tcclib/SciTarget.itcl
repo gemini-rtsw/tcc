@@ -32,6 +32,8 @@
 #
 #           The following options apply when -type is orbit.
 #
+#              -eltype        Type of elements
+#
 #              -epochofel     Epoch of elements.
 #
 #              -inclination   Inclination.
@@ -242,8 +244,23 @@ itcl::body SciTarget::preview vt {
          tccPreview set $vt AZEL_TOPO [lindex $azel 0] [lindex $azel 1]
       }
       planet {
+         tccPreview set planet $planet
       }
       orbit {
+         switch $eltype {
+            1 {
+               tccPreview set orbit 1 $epochofel $inclination $longascnode \
+                     $longofper $meandist $eccentricity $meanlong $dailymot
+            }
+            2 {
+               tccPreview set orbit 2 $epochofel $inclination $longascnode \
+                     $argofper $meandist $eccentricity $meananom
+            }
+            3 {
+               tccPreview set orbit 3 $epochofel $inclination $longascnode \
+                     $argofper $perdist $eccentricity
+            }
+         }
       }
    }
    if { $wavelength_name != "" } {
