@@ -10,7 +10,7 @@
 #  Methods:
 #           none
 #
-#  D Terrett  23 June 2001
+#  D Terrett  28 June 2001
 #
 #  Copyright CCLRC
 #+
@@ -205,8 +205,8 @@ itcl::body GuideLoop::constructor args {
    if { [catch {cs m2GuideConfig info}] } {
       epics cs m2GuideConfig
    }
-   if { [catch {cs m2ComaCorr info}] } {
-      epics cs m2ComaCorr
+   if { [catch {cs m2GuideMode info}] } {
+      epics cs m2GuideMode
    }
    if { [catch {cs wfsGuideMode info}] } {
       epics cs wfsGuideMode
@@ -547,17 +547,17 @@ body GuideLoop::m2coma state {
 
    switch $state {
       OFF {
-         cs m2ComaCorr set state Off
+         cs m2GuideMode set coma Off
       }
       COMA {
-         cs m2ComaCorr set state On
+         cs m2GuideMode set coma On
       }
    }
-   logger command m2ComaCorr
+   logger command m2GuideMode
 
-   if { [catch {cs m2ComaCorr post} msg] } {
+   if { [catch {cs m2GuideMode post} msg] } {
       tk_messageBox -icon error -parent $itk_interior -message \
-            "Error posting m2ComaCorr command: TCS reports \
+            "Error posting m2GuideMode command: TCS reports \
             \"$msg\""
    }
 }
