@@ -4,7 +4,7 @@
 #  Implements the NiriStep class. A NiriStep behaves in the same way as a
 #  Step object but also communicates NIRI to start an exposure.
 #
-#  D Terrett 28 September 2000
+#  D Terrett 9 May 2001
 #
 #  Copyright CCLRC
 #+
@@ -18,6 +18,8 @@ itcl::class NiriStep {
       method error {msg} {Step::error $msg}
    }
    private {
+      method exposedone
+      common Exposing
       variable ExposeAction
    }
 }
@@ -28,7 +30,9 @@ itcl::body NiriStep::constructor {args} {
    set ExposeAction [namespace current]::[seq::Action #auto niri]
    $ExposeAction configure -onok [itcl::code $this nextaction expose] \
          -onerror [itcl::code $this error] \
-         -ontimeout [itcl::code $this error "timed out"]
+         -ontimeout [itcl::code $this error "timed out"] \
+         -oktest [itcl::code $this exposedone] \
+         -waitvar [scope Exposing(value)]
    $ExposeAction set niriObserve dummy start
 
 # Replace the onok option of the GuideOnAction to call this 
@@ -48,10 +52,17 @@ itcl::body NiriStep::nextaction {after} {
       offset {
          set ProgressMessage "Waiting for NIRI exposure to finish"
          update
+         sa niri link observe [scope Exposing]
+         cs niriObserve set datalab value [format "%03d" $ListIndex]
          $ExposeAction start
       }
       default {
          Step::nextaction $after
       }
    }
+}
+
+itcl::body NiriStep::exposedone {} {
+   set val [sa niri get observe]
+   return [string equal IDLE $val]
 }
