@@ -31,7 +31,7 @@ createTrackFrame FK5 \
    -sourceBCosys "FK5/J2000" \
    -sourceCCosys "FK5/J2000" \
    -pwfs1Cosys "FK5/J2000" \
-   -pwfs1Cosys "FK5/J2000" \
+   -pwfs2Cosys "FK5/J2000" \
    -oiwfsCosys "FK5/J2000" 
 
 createConfig default \
