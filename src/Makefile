@@ -1,8 +1,8 @@
 All: tccext.so tsdext.so tcctime.so slaext.so
 
-CMNOBJ = tccDecode.o tccUtil.o
+CMNOBJ = tccDecode.o tccUtil.o tccAst.o
 TCCOBJ = tccext.o tccPreview.o autorepeat.o
-TSDOBJ = tsdext.o tsdDomeView.o tsdWrapView.o tsdElView.o tccAst.o
+TSDOBJ = tsdext.o tsdDomeView.o tsdWrapView.o tsdElView.o
 TIMEOBJ = tccTime.o
 SLAOBJ = slaext.o
 
