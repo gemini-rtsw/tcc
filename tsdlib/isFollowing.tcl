@@ -9,7 +9,7 @@
 #
 #             rec   The name of the followS record.
 #
-#  D Terrett 10 November 1999
+#  D Terrett 18 February 2000
 #
 #  Copyright CCLRC
 #-
@@ -21,6 +21,7 @@ proc isFollowing {sad rec} {
 # Test against the various possible representations of "On".
    if { [string compare $val "ON"] == 0 } {return 1}
    if { [string compare $val "TRUE"] == 0 } {return 1}
+   if { [string compare $val "YES"] == 0 } {return 1}
    if { $val == 1 } {return 1}
 
 # No match so return false.
