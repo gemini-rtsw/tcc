@@ -22,8 +22,7 @@ if { [string compare [file pathtype $::ROOT] relative] == 0 } {
 }
 
 # Define the location of the star catalogue files.
-global CATALOG_DIR
-set CATALOG_DIR $::ROOT/pointcats
+set ::CATALOG_DIR $::ROOT/pointcats
 
 # Temporary location of DOM & expat packages.
 set auto_path [concat $::ROOT/../templibs/lib $auto_path]
