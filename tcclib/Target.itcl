@@ -88,7 +88,7 @@
 #           save node     Saves the values of the target options to the
 #                         xml node.
 #
-#  D Terrett 17 June 2003
+#  D Terrett 16 October 2003
 #
 #  Copyright CCLRC
 #+
@@ -173,6 +173,7 @@ itcl::body Target::apply {comp} {
          cs $vt set dtheta1 [list [lindex $pm 0]]
          cs $vt set dtheta2 [list [lindex $pm 1]]
          cs $vt set rv [list $rv]
+         cs $vt set mag [list $brightness]
          if { [string equal $cosys ""] } {
             cs $vt set system FK5
             cs $vt set equinox J2000
@@ -192,6 +193,7 @@ itcl::body Target::apply {comp} {
          cs $vt set dtheta1 ""
          cs $vt set dtheta2 ""
          cs $vt set rv ""
+         cs $vt set mag [list $brightness]
          logger command $vt
       }
       namedTarget {
