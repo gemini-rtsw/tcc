@@ -4,7 +4,7 @@
 set ocs_proxy http://bill:9000/axis/services
 
 # The root of the directory in when WFS images are stored.
-set wfs_image_root /net/tyle/export/data
+set wfs_image_root /net/reggie/staging/acqcam
 
 # The x/y/z position that corresponds to the A&G PWFS1 probeSel center
 # command.
