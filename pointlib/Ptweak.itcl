@@ -5,7 +5,7 @@
 # of a pointing update run. The "fit" class method calculates a new estimate
 # of CE and CA and optionally IA from all the Ptweak objects that are enabled.
 #
-# D Terrett 28 May 1999
+# D Terrett 29 May 1999
 #
 # Copyright CCLRC
 #+
@@ -189,8 +189,9 @@ itcl::body Ptweak::commit {w inclia} {
 
 # Create confirmation dialog box.
    iwidgets::messagedialog $w.md -title "Commit Error" -bitmap error \
-         -modality application -text "No stars to fit"
+         -modality application -text "No stars to fit" 
    $w.md hide Help
+   $w.md component message configure -wraplength 500 -justify left
 
    if { $nfitted < 1 } {
       $w.md center
@@ -201,11 +202,14 @@ itcl::body Ptweak::commit {w inclia} {
    }
 
 # Build a text string that displays the new model.
-   set text [format "The new model will be CA = %.2f, CE = %.2f" $fitca $fitce]
+   set text [format "The current model is: CA = %.2f, CE = %.2f, IA = %.2f." \
+         $curca $curce $curia]
+   set text [format "%s The new model will be CA = %.2f, CE = %.2f" \
+         $text $fitca $fitce]
    if { $inclia } {
       set text [format "%s, IA = %.2f." $text [expr $curia + $fitia]]
    }
-   set text "$text\nDo you want to update the session pointing model\
+   set text "$text Do you want to update the session pointing model\
          with these values?"
 
    $w.md configure -title "Commit Confirmation" -bitmap questhead -text $text
