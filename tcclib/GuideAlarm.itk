@@ -1,0 +1,193 @@
+#+
+#  guideAlarm <- itk::Widget
+#
+# Implements a guide Count alarm which will sound if guiding and the counts drop below a given threshhold.
+#
+#  Methods:
+#
+# AWEbbers  January, 2005
+#
+
+itcl::class GuideAlarm {
+   inherit itk::Widget
+   constructor {args} {}
+   destructor {after cancel $tid}
+   common guideCounts
+   public {
+      method updateProc { name alarm time values }
+      method scanLoop {}
+      method setSilent {wfs}
+      method alarmCheck {wfs}
+      variable alarm 0
+      variable flash 0
+      variable pwfs1Limit 50.0
+      variable pwfs2Limit 50.0
+      variable oiwfsLimit 50.0
+      variable gaosLimit 50.0
+      variable pwfs1Silent 0
+      variable pwfs2Silent 0
+      variable oiwfsSilent 0
+      variable gaosSilent 0
+   }
+   private {
+      method ringBell {}
+      method setWfsColor {wfs color}
+      variable tid 0
+      variable currWfs ""
+   }
+}
+
+itk::usual GuideAlarm {
+   keep -background -cursor -foreground -font \
+	-highlightcolor -highlightthickness \
+}
+
+itcl::body GuideAlarm::constructor {args} {
+   global guideCounts pwfs1CountLimit pwfs2CountLimit oiwfsCountLimit gaosCountLimit
+   global pwfs1silent pwfs2silent oiwfssilent gaossilent
+
+   #puts "GuideAlarm this: $this"
+   
+   itk_component add frame { 
+        frame $itk_interior.fr
+   }
+
+   itk_component add title { 
+        label $itk_component(frame).title -text "Guide Alarm"
+   } {
+	usual
+	rename -font -majorfont majorFont Font
+   }
+
+   itk_component add desc { 
+        message $itk_component(frame).desc -text "Alarm will sound if counts are below limit while wfs is in use.  \
+		Click on silent to disable audible alarm." -justify center -aspect 100
+   }
+
+   grid $itk_component(frame) -sticky news
+
+   foreach wfs {pwfs1 pwfs2 oiwfs gaos} {
+      #puts "setting up wfs: $wfs"
+      set guideCounts($wfs) [sa guidects get $wfs]
+      set ${wfs}CountLimit [set ${wfs}Limit]
+      # puts "guideCounts($wfs) = $guideCounts($wfs)"
+
+      # create the display widgets
+
+      itk_component add ${wfs}frame {
+	  frame $itk_component(frame).${wfs}frame -relief ridge -bd 2
+      }
+      set w $itk_component(${wfs}frame)
+      #  puts "w: $w"
+      itk_component add ${wfs}title { 
+	  label $w.lab -text $wfs
+      } {
+	  usual
+	  rename -font -majorfont majorFont Font
+      }
+      itk_component add ${wfs}silent { checkbutton $w.sil -variable ${wfs}silent -onvalue 1 -offvalue 0 -text silent -command "$this setSilent $wfs"}
+      itk_component add ${wfs}clab { label $w.clab -text "Counts:" }
+      itk_component add ${wfs}cnts { label $w.cnts -textvariable guideCounts($wfs) }
+      itk_component add ${wfs}limlab { label $w.limlab -text "Limit:" }
+      itk_component add ${wfs}liment { entry $w.liment -textvariable ${wfs}CountLimit -width 5 }
+      bind $itk_component(${wfs}liment) <KeyPress-Return> "$this configure -${wfs}Limit \[set ${wfs}CountLimit\] ; $this alarmCheck $wfs"
+
+      grid $itk_component(${wfs}title) $itk_component(${wfs}silent) -sticky news
+      grid $itk_component(${wfs}clab) $itk_component(${wfs}cnts) -sticky news
+      grid $itk_component(${wfs}limlab) $itk_component(${wfs}liment) -sticky news
+   }
+   pack $itk_component(title) $itk_component(desc) $itk_component(pwfs1frame) $itk_component(pwfs2frame) $itk_component(oiwfsframe) $itk_component(gaosframe) -side top -padx 3 -pady 3 -ipadx 3 -ipady 3
+
+   sa guidects proc pwfs1 "$this updateProc"
+   sa guidects proc pwfs2 "$this updateProc"
+   sa guidects proc oiwfs "$this updateProc"
+   sa guidects proc gaos  "$this updateProc"
+
+   # start the scan task ...
+   $this scanLoop
+
+   eval itk_initialize $args
+}
+
+itcl::body GuideAlarm::setWfsColor {wfs color} {
+    
+    foreach wid {frame title silent clab cnts limlab liment} {
+        $itk_component(${wfs}${wid}) configure -bg $color
+    }
+}
+
+itcl::body GuideAlarm::setSilent {wfs} {
+   global pwfs1silent pwfs2silent oiwfssilent gaossilent
+
+    #puts "setSilent wfs: $wfs val: [set ${wfs}silent]"
+    set ${wfs}Silent [set ${wfs}silent]
+}
+
+itcl::body GuideAlarm::alarmCheck {wfs} {
+    global guideCounts guideAlarm
+
+    if {$wfs == $currWfs} {
+	#puts "gonna compare  $guideCounts($wfs) [set ${wfs}Limit]"
+	if { $guideCounts($wfs) < [set ${wfs}Limit] } {
+	    $this configure -alarm 1
+	    set guideAlarm 1
+	    #puts "alarm ON"
+	} else {
+	    $this configure -alarm 0
+	    set guideAlarm 0
+	    #puts "alarm OFF"
+	}
+    }
+
+}
+
+itcl::body GuideAlarm::updateProc {name alarm time values} {
+    global guideCounts
+
+    #puts [format "updateProc: %s %-20s\n%s\n" $time $name $values]
+    set tname [lrange [split $name "."] 1 1]
+    set tnamev [format "%s%s" $tname "(value)"]
+    set $tnamev $values
+    set guideCounts($tname) [set $tnamev]
+
+    alarmCheck $tname
+
+    #puts "set guideCounts($tname) to $guideCounts($tname)"
+
+    return
+}
+
+itcl::body GuideAlarm::ringBell {} {
+    #puts "in ring bell currWfs: $currWfs  silent: [set ${currWfs}Silent]"
+    if {![set ${currWfs}Silent]} {
+	bell
+	after 100
+	bell
+    }
+    if { $flash } {
+	setWfsColor $currWfs red
+	set flash 0
+    } else {
+	setWfsColor $currWfs yellow
+	set flash 1
+    }   
+}
+
+itcl::body GuideAlarm::scanLoop {} {
+    
+    if {$alarm == 1} { 
+	ringBell
+    } else {
+    	foreach wfs {pwfs1 pwfs2 oiwfs gaos} {
+	    if {[AO state $wfs]} {
+	    	setWfsColor $wfs lightgreen
+	    	set currWfs $wfs
+    	    } else {
+	    	setWfsColor $wfs PeachPuff1
+	    }
+    	}
+    }   
+
+    set tid [after 500 "$this scanLoop"]
+    update
+}
