@@ -35,7 +35,7 @@
 #
 #       logrepeats     The number of time to log each star
 #
-#  D Terrett 20 September 2001
+#  D Terrett 20 January 2004
 #
 #  Copyright CCLRC
 #+
@@ -64,6 +64,7 @@ itcl::class PointObs {
       method onerror {message}
       method isinposition {} 
       method novignette {}
+      method actuatorsmoving {}
       method isguiding {}
       variable SlewAction
       variable Guide1Action
@@ -71,6 +72,7 @@ itcl::class PointObs {
       variable MountGuideAction
       variable GuideOffAction
       variable DomeWaitAction
+      variable PcsWaitAction
       variable LogAction
       variable SourceEntry
       variable AzElPlot
@@ -78,6 +80,7 @@ itcl::class PointObs {
       variable Guiding 0
       variable InPosition
       variable DomeVignette
+      variable ActuatorsMoving
       variable IsGuiding
       variable LogCount 0
    }
@@ -107,6 +110,14 @@ itcl::body PointObs::constructor {sourceentry azelplot catalogue args} {
          -oktest [itcl::code $this novignette] \
          -waitvar [itcl::scope DomeVignette(value)]]
    sa tcssad link domeVignette [itcl::scope DomeVignette]
+
+# Create action that waits for the PCS to settle.
+   set DomeWaitAction [seq::Action #auto tcs -timeout 300 \
+         -onok [itcl::code $this nextaction pcswait] \
+         -ontimeout [itcl::code $this onerror "timed out waiting for PCS to settle"] \
+         -oktest [itcl::code $this actuatorsmoving] \
+         -waitvar [itcl::scope ActuatorsMoving(value)]]
+   sa pcssad link aoMoving [itcl::scope ActuatorsMoving]
 
 # Create actions for enabling and disabling guiding.
    set MountGuideAction [seq::Action #auto tcs \
@@ -195,6 +206,9 @@ itcl::body PointObs::nextaction {after} {
          start $DomeWaitAction
       }
       domewait {
+         start $PcsWaitAction
+      }
+      pcswait {
          set LogCount 0
          if { $guideafterslew } {
             set Guiding 1
@@ -296,7 +310,12 @@ itcl::body PointObs::isinposition {} {
 
 itcl::body PointObs::novignette {} {
    set val [sa tcssad get domeVignette]
-   return [expr { $val <= 0.0 }]
+   return [expr { $val <= 0.1 }]
+}
+
+itcl::body PointObs::actuatorsmoving {} {
+   set val [sa pcssad get aoMoving]
+   return [expr { $val < 7 }]
 }
 
 itcl::body PointObs::isguiding {} {
