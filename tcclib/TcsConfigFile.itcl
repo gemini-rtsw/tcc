@@ -5,7 +5,7 @@
 #  tcs configuration components and creates and configures the
 #  components.
 #
-#  D Terrett 18 April 2002
+#  D Terrett 19 April 2002
 #
 #  Copyright CCLRC
 #+
@@ -15,7 +15,7 @@ itcl::class TcsConfigFile {
    private {
       method createComponent {type node}
       method createTarget {node}
-      method report {code msg}
+      method report {msg}
       variable w
    }
 }
@@ -251,8 +251,12 @@ itcl::body TcsConfigFile::createComponent {type node} {
             if { ! [catch {$component cget -$name}] } {
 
 # Configure the option value.
-               $component configure \
-                     -$name [dom::element getAttribute $child value]
+               if { [catch {$component configure \
+                     -$name [dom::element getAttribute $child value]} msg ]} {
+                  if { [report $msg] } {
+                     return 1
+                  }
+               }
             }
          }
       }
@@ -315,7 +319,13 @@ itcl::body TcsConfigFile::createTarget {node} {
    }
 
 # Configure the target type.
-   $field targetconfigure $target -type $type
+   if { [catch {$field targetconfigure $target -type $type} msg] } {
+      if { [report $msg] } {
+         return 1
+      } else {
+         return 0
+      }
+   }
 
 # Configure the target object name from the target name.
    $field targetconfigure $target -objname $target
@@ -344,8 +354,12 @@ itcl::body TcsConfigFile::createTarget {node} {
    foreach child $parlist {
       set name [dom::element getAttribute $child name]
       if { ! [catch {$field targetcget $target -$name}] } {
-         $field targetconfigure $target \
-               -$name [dom::element getAttribute $child value]
+         if { [catch {$field targetconfigure $target \
+               -$name [dom::element getAttribute $child value]} msg] } {
+            if { [report $msg] } {
+               return 1
+            }
+         }
       }
    }
 
@@ -357,7 +371,7 @@ itcl::body TcsConfigFile::createTarget {node} {
    return 0
 }
 
-itcl::body TcsConfigFile::report {message node} {
+itcl::body TcsConfigFile::report {message} {
    return [string equal [tk_messageBox -icon error -parent $w -type okcancel \
          -message $message] cancel]
 }
