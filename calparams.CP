@@ -1,28 +1,20 @@
-# This file is for Gemini South
-#
+# This file is for Mauna Kea
+
 # The x/y/z position that corresponds to the A&G PWFS1 probeSel center
 # command.
 
-set pwfs1_center_x -1.330
-set pwfs1_center_y -15.102
-set pwfs1_center_z  0.0 
-
-# The pointing origin that corresponds to the P1 probe at its center 
-# position.
-
-set pwfs1_hotspot_x  1.86
-set pwfs1_hotspot_y -16.44
+set pwfs1_center_x   2.324
+set pwfs1_center_y -12.213
+set pwfs1_center_z   0.0
 
 # The x/y/z position that corresponds to the A&G PWFS2 probeSel center
 # command.
 
-set pwfs2_center_x -0.567
-set pwfs2_center_y 0.771
+set pwfs2_center_x -3.493
+set pwfs2_center_y -2.480
 set pwfs2_center_z  0.0
 
-# The pointing origin that corresponds to the P2 probe at its center 
-# position.
-
-set pwfs2_hotspot_x 1.86
-set pwfs2_hotspot_y 0.62
+# The center position for the Acquisition camera window
+set acqcam_x 479
+set acqcam_y 513
 
