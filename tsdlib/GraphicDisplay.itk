@@ -10,7 +10,7 @@
 #           update          Updates the view with the current state of the
 #                           telescope.
 #
-#  D Terrett 15 January 2004
+#  D Terrett 21 January 2004
 #
 #  Copyright CCLRC
 #-
@@ -76,59 +76,11 @@ itcl::body GraphicDisplay::constructor args {
    }
    pack $itk_component(opticsview) -expand y
 
-# M2 setup and probe views in the last column.
+# ao setup and probe views in the last column.
    set w $itk_component(col4)
-   itk_component add m2setup {
-      frame $w.m2setup -borderwidth 2 -relief ridge
+   itk_component add aosetup {
+      AoConfig $w.aosetup
    }
-   set w $itk_component(m2setup)
-   itk_component add m2lab {
-      label $w.m2lab -text "M2 configuration"
-   }
-   itk_component add m2p1lab {
-      label $w.m2p1lab -text PWFS1: -anchor e
-   }
-   itk_component add m2p1 {
-      label $w.m2p1 -relief sunken
-   } {
-      usual
-      ignore -font
-   }
-   itk_component add m2p2lab {
-      label $w.m2p2lab -text PWFS2: -anchor e
-   }
-   itk_component add m2p2 {
-      label $w.m2p2 -relief sunken
-   } {
-      usual
-      ignore -font
-   }
-   itk_component add m2oilab {
-      label $w.m2oilab -text OIWFS: -anchor e
-   }
-   itk_component add m2oi {
-      label $w.m2oi -relief sunken
-   } {
-      usual
-      ignore -font
-   }
-   itk_component add m2aolab {
-      label $w.m2aolab -text GAOS: -anchor e
-   }
-   itk_component add m2ao {
-      label $w.m2ao -relief sunken
-   } {
-      usual
-      ignore -font
-   }
-   grid $itk_component(m2lab) -
-   grid $itk_component(m2p1lab) $itk_component(m2p1) -pady 1 -sticky e
-   grid $itk_component(m2p2lab) $itk_component(m2p2) -pady 1 -sticky e
-   grid $itk_component(m2oilab) $itk_component(m2oi) -pady 1 -sticky e
-   grid $itk_component(m2aolab) $itk_component(m2ao) -pady 1 -sticky e
-   grid configure $itk_component(m2p1) $itk_component(m2p2) \
-         $itk_component(m2oi) $itk_component(m2ao) -stick ew -padx 2
-   grid columnconfigure $itk_component(m2setup) 1 -weight 1
 
 # OIWFS
    set w $itk_component(col4)
@@ -148,7 +100,7 @@ itcl::body GraphicDisplay::constructor args {
    itk_component add oiwavel {
       label $w.oiwavel
    }
-   pack $itk_component(oiname) $itk_component(oilabel) -padx 5
+   pack $itk_component(oiname) $itk_component(oilabel) -padx 3
    pack $itk_component(oixy) $itk_component(oiwavel) -padx 5 -pady 3
 
 # AO WFS.
@@ -204,9 +156,9 @@ itcl::body GraphicDisplay::constructor args {
    }
    pack $itk_component(p2label) $itk_component(probe2) $itk_component(p2wavel)
 
-   grid $itk_component(m2setup) - -sticky ew -padx 5 -pady 5
-   grid $itk_component(oiwfs) $itk_component(aowfs) -padx 5 -pady 5 -sticky ns
-   grid $itk_component(pwfs1) $itk_component(pwfs2) -padx 5 -pady 5
+   grid $itk_component(aosetup) - -sticky ew -padx 5 -pady 2
+   grid $itk_component(oiwfs) $itk_component(aowfs) -padx 5 -pady 2 -sticky ns
+   grid $itk_component(pwfs1) $itk_component(pwfs2) -padx 5 -pady 2
 
 # Configure the ISS port numbers and AO.
    $itk_component(opticsview) configure -portAnumber 1 
@@ -430,11 +382,8 @@ itcl::body GraphicDisplay::update {} {
          -calunit $calunit
    $itk_component(opticsview) update
 
-# Update the M2 setup.
-   $itk_component(m2p1) configure -text [sa m2ssad get p1GuideConfig]
-   $itk_component(m2p2) configure -text [sa m2ssad get p2GuideConfig]
-   $itk_component(m2oi) configure -text [sa m2ssad get oiGuideConfig]
-   $itk_component(m2ao) configure -text [sa m2ssad get aoGuideConfig]
+# Update the ao configuration.
+   $itk_component(aosetup) update
 
 # Update the OIWFS name.
    $itk_component(oiname) configure -text [sa agssad get oiwfsName]
