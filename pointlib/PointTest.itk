@@ -148,13 +148,13 @@ itcl::body PointTest::constructor {args} {
          menubutton file -text File -underline 0 -menu {
             options -tearoff false
             command open -label "Open log file" -underline 0 \
-                  -command "catch {PointLog pointlog $this}"
+                  -command "PointLog pointlog $this"
             command close -label "Close log file" -underline 0 \
-                  -command "delete object pointlog" -state disabled
+                  -command "itcl::delete object pointlog" -state disabled
             command load -label "Load catalogue" -underline 0 \
                   -command "[itcl::code $this loadcat]"
             command exit -label Exit -underline 1 \
-                  -command "catch {delete object pointlog}; exit"
+                  -command "catch {itcl::delete object pointlog}; exit"
          }
          menubutton view -text View -underline 0 -menu {
             options -tearoff false
