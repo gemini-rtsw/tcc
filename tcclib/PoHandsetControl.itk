@@ -1,8 +1,9 @@
 #+
 #  PoHandsetControl <- itk::Widget
 #
-#  A PoHandsetControl implements a software handset for adjusting pointing
-#  origins.
+#  A PoHandsetControl implements a software handset for adjusting
+#  pointing origin positions.
+#
 #
 #  Options:
 #           none
@@ -10,147 +11,209 @@
 #  Methods:
 #           none
 #
-#  D Terrett 12 June 2000
+#  D Terrett 18 January 2001
 #
 #  Copyright CCLRC
 #+
 
 itcl::class PoHandsetControl {
    inherit itk::Widget
-
    constructor args {}
-
-   private method offset dir
-   private method offpars par
-   private method setvt
-   private variable currentstep -1
+   destructor {after cancel $refid}
+   private {
+      method offpars {par}
+      method setvt {}
+      method getOffset {par}
+      method refresh {}
+      method update {}
+      variable vt
+      variable refid
+   }
 }
 
 itk::usual PoHandsetControl {
-   keep -borderwidth -cursor -font -highlightthickness -insertborderwidth \
-         -insertofftime -insertontime -insertwidth -labelfont \
-         -selectborderwidth -textfont
+   keep -borderwidth -cursor -font -labelfont 
 }
 
 itcl::body PoHandsetControl::constructor args {
 
-# StepSize widget for setting the step associated with the paddle buttons.
-   itk_component add top {
-      frame $itk_interior.top -bd 2 -relief groove
-   }
-   pack $itk_component(top)
+   set w $itk_interior
 
-   set w $itk_component(top)
-   itk_component add stepsize {
-      StepSize $w.stepsize -text "Step size (mm)"
+# Frame for the handset.
+   itk_component add hsframe {
+      frame $w.hsframe
    }
-   pack $itk_component(stepsize)
+   pack $itk_component(hsframe)
+   set w $itk_component(hsframe)
 
-   itk_component add mid {
-      frame $itk_interior.mid
+   itk_component add sel {
+      frame $w.sel -borderwidth 2 -relief groove
    }
-   pack $itk_component(mid)
-   set w $itk_component(mid)
+   pack $itk_component(sel) -padx 5 -pady 5
+   set w $itk_component(sel)
+
+# Column headings.
+   itk_component add adjust {
+      label $w.adjust -text Adjust
+   }
+   itk_component add x {
+      label $w.ra -text X
+   }
+   itk_component add y {
+      label $w.dec -text Y
+   }
+   itk_component add offset {
+      label $w.offset -text offset
+   }
 
 # Radio buttons for selecting which offset to adjust.
-   itk_component add sel {
-      iwidgets::radiobox $w.sel -command [code $this setvt]
+   itk_component add asel {
+      radiobutton $w.asel -variable [scope vt] -value sourceA \
+            -command [itcl::code $this setvt]
    }
-   $itk_component(sel) add Mount -text Mount
-   $itk_component(sel) add A -text A
-   $itk_component(sel) add B -text B
-#   $itk_component(sel) add C -text C
-#   $itk_component(sel) add Source -text A+B+C
-   $itk_component(sel) add Source -text A+B
-   $itk_component(sel) add All -text All
-   $itk_component(sel) select Source
-   pack $itk_component(sel) -side right
-
-# Paddle buttons.
-   itk_component add paddle {
-      HandPaddleButtons $w.paddle \
-            -upcommand [code $this offset D] -uplabel +Y\
-            -downcommand [code $this offset U] -downlabel -Y \
-            -leftcommand [code $this offset R] -leftlabel +X \
-            -rightcommand [code $this offset L] -rightlabel -X
+   itk_component add bsel {
+      radiobutton $w.bsel -variable [scope vt] -value sourceB \
+            -command [itcl::code $this setvt]
    }
-   pack $itk_component(paddle)
 
-# Slider for adjusting the angle of the buttons.
-   itk_component add slider {
-      scale $itk_interior.slider -orient horizontal -to [expr 3.14159 * 2] \
-            -command "$itk_component(paddle) configure -angle" \
-            -resolution .01 -showvalue no
+# Labels.
+   itk_component add alab {
+      label $w.alab -text "Chop A"
    }
-   pack $itk_component(slider) -fill x -expand y
+   itk_component add blab {
+      label $w.blab -text "Chop B"
+   }
 
-# Buttons for clearing and absorbing the pointing origin offsets.
+# Display of positions and offsets.
+   itk_component add ax {
+      label $w.ax -width 8 -borderwidth 2 -relief groove
+   }
+   itk_component add ay {
+      label $w.ay -width 8 -borderwidth 2 -relief groove
+   }
+   itk_component add aoff1 {
+      label $w.aoff1 -width 8 -borderwidth 2 -relief groove
+   }
+   itk_component add aoff2 {
+      label $w.aoff2 -width 8 -borderwidth 2 -relief groove
+   }
+   itk_component add bx {
+      label $w.bx -width 8 -borderwidth 2 -relief groove
+   }
+   itk_component add by {
+      label $w.by -width 8 -borderwidth 2 -relief groove
+   }
+   itk_component add boff1 {
+      label $w.boff1 -width 8 -borderwidth 2 -relief groove
+   }
+   itk_component add boff2 {
+      label $w.boff2 -width 8 -borderwidth 2 -relief groove
+   }
+
+   grid $itk_component(adjust) - $itk_component(x) $itk_component(y) \
+         $itk_component(offset) -
+   grid $itk_component(alab) $itk_component(asel) $itk_component(ax) \
+         $itk_component(ay) $itk_component(aoff1) $itk_component(aoff2)
+   grid $itk_component(blab) $itk_component(bsel) $itk_component(bx) \
+         $itk_component(by) $itk_component(boff1) $itk_component(boff2)
+
+# Handset
+   set w $itk_component(hsframe)
+   itk_component add handset {
+      Handset $w.handset -adjust instr
+   }
+   pack $itk_component(handset)
+
+# Select the default virtual telescope.
+   set vt sourceA
+
+# Buttons for clearing and update the offsets.
    itk_component add bot {
-      frame $itk_interior.bot
+      frame $w.bot
    }
    pack $itk_component(bot) -expand yes -fill x
    set w $itk_component(bot)
-   itk_component add absorb {
-      ApplyButton $w.absorb -command absorbPoOffset -text "Absorb" -width 8 \
+   itk_component add update {
+      LiveButton $w.update -text Update -width 8 \
+            -command [itcl::code $this update]
+   }
+   itk_component add reset {
+      ApplyButton $w.reset -command clearPoOffset -text Reset -width 8 \
             -parcommand [code $this offpars]
    }
-   itk_component add clear {
-      ApplyButton $w.clear -command clearPoOffset -text "Clear" -width 8 \
-            -parcommand [code $this offpars]
+   pack $itk_component(update) $itk_component(reset) -side left -expand y \
+         -pady 10
+
+# Pointing origin manager.
+   set w $itk_interior
+   itk_component add pomgr {
+      PoManager $w.pomgr
    }
-   pack $itk_component(absorb) $itk_component(clear) -side left -expand y \
-         -pady 4
+   pack $itk_component(pomgr)
+
+   set refid [after 1000 [code $this refresh]]
 
    eval itk_initialize $args
-}
-
-itcl::body PoHandsetControl::offset dir {
-
-# Set step size if different from current.
-   set step [$itk_component(stepsize) get]
-   if { $step != $currentstep } {
-      cs poHandConfig set step $step
-      logger command poHandConfig
-   }
-   cs poHandset set direction $dir
-   logger command poHandset
-   if { [catch {cs tcsApply post} msg] } {
-      tk_messageBox -icon error -parent $itk_interior -message \
-            "Error adjusting instrument origin: TCS reports \"$msg\""
-   }
-   set currentstep $step
 }
 
 itcl::body PoHandsetControl::offpars par {
    switch $par {
       vt {
-         set vt [$itk_component(sel) get]
          switch $vt {
-            Mount {return Mount}
-            A {return "Source A"}
-            B {return "Source B"}
-            C {return "Source C"}
-            Source {return Source}
-            All {return All}
+            sourceA {return "SOURCE A"}
+            sourceB {return "SOURCE B"}
+            sourceC {return "SOURCE C"}
          }
       }
-      index {return 0}
+      index {
+         switch $vt {
+            sourceA -
+            sourceB -
+            sourceC {return all}
+         }
+      }
+   }
+}
+
+itcl::body PoHandsetControl::getOffset {par} {
+   switch $par {
+      theta1 {
+         return [$itk_component(theta1) get]
+      }
+      theta2 {
+         return [$itk_component(theta2) get]
+      }
+      vt {
+         switch $vt {
+            sourceA { return "Source A" }
+            sourceB { return "Source B" }
+            sourceC { return "Source C" }
+         }
+      }
+      ind {
+         return 0
+      }
    }
 }
 
 itcl::body PoHandsetControl::setvt {} {
-   set vt [$itk_component(sel) get]
-   switch $vt {
-      Mount { cs poHandConfig set tel Mount }
-      A { cs poHandConfig set tel "\"Source A\"" }
-      B { cs poHandConfig set tel "\"Source B\"" }
-      C { cs poHandConfig set tel "\"Source C\"" }
-      Source { cs poHandConfig set tel Source }
-      All { cs poHandConfig set tel All }
+   $itk_component(handset) configure -vt $vt
+}
+
+itcl::body PoHandsetControl::refresh {} {
+
+# Update the fields.
+   foreach {src w} {A a B b} {
+      set target [sa tcssad get target$src]
+      $itk_component(${w}x) configure -text [format %6.2f [lindex $target 4]]
+      $itk_component(${w}y) configure -text [format %6.2f [lindex $target 5]]
+      $itk_component(${w}off1) configure -text [format %6.2f [lindex $target 6]]
+      $itk_component(${w}off2) configure -text [format %6.2f [lindex $target 7]]
    }
-   logger command poHandConfig
-   if { [catch {cs tcsApply post} msg] } {
-      tk_messageBox -icon error -parent $itk_interior -message \
-            "Error setting virtual telescope: TCS reports \"$msg\""
-   }
+
+   set refid [after 1000 [code $this refresh]]
+}
+
+itcl::body PoHandsetControl::update {} {
+   $itk_component(pomgr) update $vt
 }

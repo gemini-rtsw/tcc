@@ -9,66 +9,40 @@
 #  Methods:
 #           none
 #
-#  D Terrett 12 June 2000
+#  D Terrett 11 January 2001
 #
 #  Copyright CCLRC
 #+
 
 itcl::class GuideHandsetControl {
    inherit itk::Widget
-
    constructor args {}
    destructor {after cancel $refid}
-
-   private method offset dir
-   private method refresh
-   private method zerolocal
-
-   private variable refid
-   private variable currentstep -1
+   private {
+      method refresh {}
+      method zerolocal {}
+      variable refid
+   }
 }
 
 itk::usual GuideHandsetControl {
-   keep -borderwidth -cursor -font -highlightthickness -insertborderwidth \
-         -insertofftime -insertontime -insertwidth -labelfont \
-         -selectborderwidth -textfont
+   keep -borderwidth -cursor -font -highlightthickness \
+         -labelfont
 }
 
 itcl::body GuideHandsetControl::constructor args {
 
-# StepSize widget for setting the step associated with the paddle buttons.
-   itk_component add top {
-      frame $itk_interior.top -bd 2 -relief groove
-   }
-   pack $itk_component(top)
+   set w $itk_interior
 
-   set w $itk_component(top)
-   itk_component add stepsize {
-      StepSize $w.stepsize -text "Step size (arcsec)"
+# Handset
+   itk_component add handset {
+      Handset $w.handset -adjust pointing
    }
-   pack $itk_component(stepsize)
-
-# Paddle buttons.
-   itk_component add paddle {
-      HandPaddleButtons $itk_interior.paddle \
-            -upcommand [code $this offset U] -uplabel +El\
-            -downcommand [code $this offset D] -downlabel -El\
-            -leftcommand [code $this offset L] -leftlabel -Az \
-            -rightcommand [code $this offset R] -rightlabel +Az
-   }
-   pack $itk_component(paddle)
-
-# Slider for adjusting the angle of the buttons.
-   itk_component add slider {
-      scale $itk_interior.slider -orient horizontal -to [expr 3.14159 * 2] \
-            -command "$itk_component(paddle) configure -angle" \
-            -resolution .01 -showvalue no
-   }
-   pack $itk_component(slider) -fill x -expand y
+   pack $itk_component(handset)
 
 # Display of current adjustments.
    itk_component add disp {
-      frame $itk_interior.disp -bd 10
+      frame $w.disp -bd 10
    }
    pack $itk_component(disp)
    set w $itk_component(disp)
@@ -96,14 +70,25 @@ itcl::body GuideHandsetControl::constructor args {
    itk_component add ceguide {
       label $w.ceguide -relief groove -bd 2 -width 8 -anchor e
    }
-   grid x $itk_component(ca) $itk_component(ce)
-   grid $itk_component(local) $itk_component(calocal) $itk_component(celocal)
-   grid $itk_component(guide) $itk_component(caguide) $itk_component(ceguide)
 
-# Buttons for zeroing and absorbing the guide adjustments and zeroing the
-# local adjustments.
+# Buttons for zeroing guide adjustments.
+   itk_component add clearl {
+      LiveButton $w.clearl -command [code $this zerolocal] -text Clear \
+            -relief groove
+   }
+   itk_component add clearg {
+      ApplyButton $w.clearg -command zeroGuide -text Clear -relief groove
+   }
+   grid x $itk_component(ca) $itk_component(ce)
+   grid $itk_component(local) $itk_component(calocal) $itk_component(celocal) \
+         $itk_component(clearl) -sticky ns
+   grid $itk_component(guide) $itk_component(caguide) $itk_component(ceguide) \
+         $itk_component(clearg) -sticky ns
+   set w $itk_interior
+
+# Button for absorbing the guide adjustments.
    itk_component add bot {
-      frame $itk_interior.bot
+      frame $w.bot
    }
    pack $itk_component(bot) -expand yes -fill x
    set w $itk_component(bot)
@@ -111,43 +96,12 @@ itcl::body GuideHandsetControl::constructor args {
       ApplyButton $w.absorb -command absorbGuide \
          -text "Absorb guide into local"
    }
-   itk_component add clearg {
-      ApplyButton $w.clearg -command zeroGuide -text "Clear guide"
-   }
-   itk_component add clearl {
-      LiveButton $w.clearl -command [code $this zerolocal] \
-            -text "Clear local"
-   }
    pack $itk_component(absorb) -pady 4
-   pack $itk_component(clearg) $itk_component(clearl) -expand y -pady 4 \
-         -side left
 
 # Schedule update of CA & CE displays.
    set refid [after 1000 [code $this refresh]]
 
    eval itk_initialize $args
-}
-
-itcl::body GuideHandsetControl::offset dir {
-
-# Update stepsize if required.
-   set step [$itk_component(stepsize) get]
-   if { $step != $currentstep } {
-      cs guideHandConfig set step $step
-      logger command guideHandConfig
-   }
-   cs guideHandset set direction $dir
-   logger command guideHandset
-#   if { [catch {cs tcsApply post} msg] } {
-#      tk_messageBox -icon error -parent $itk_interior -message \
-#            "Error adjusting pointing: TCS reports \"$msg\""
-#   }
-   catch {cs tcsApply post}
-#   if { [catch {cs tcsApply post} msg] } {
-#      tk_messageBox -icon error -parent $itk_interior -message \
-#            "Error adjusting pointing: TCS reports \"$msg\""
-#   }
-   set currentstep $step
 }
 
 itcl::body GuideHandsetControl::refresh {} {
