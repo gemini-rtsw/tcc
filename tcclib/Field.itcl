@@ -46,7 +46,7 @@
 #
 #          plot azelplot Plots the field position on an azelplot.
 #
-#  D Terrett 11 April 2002
+#  D Terrett 22 April 2002
 #
 #  Copyright CCLRC
 #+
@@ -77,6 +77,7 @@ itcl::class Field {
       variable airmassLimit ""
       variable namespace
       variable targetlist
+      variable posAngle
    }
    private {
       variable current_sciencetarget ""
@@ -332,4 +333,27 @@ itcl::body Field::targetcget {name option} {
 
 itcl::body Field::remove {name} {
    delete object ${this}TargetNames::$name
+}
+
+# The posAAngle config body sets the rotator option, creating the rotator 
+# component  if there isn't one that matches the posAngle definition. The
+# frame is assumed to by FK5/J2000.
+
+itcl::configbody Field::posAngle {
+
+# Do nothing if posAngle is empty.
+   if { ! [string is space $posAngle] } {
+
+# Construct the rotator component name.
+      set rotator "$posAngle ([namespace tail $this])"
+   
+# See if it already exists.
+      if { [lsearch -exact [itcl::find objects -class RotatorComponent] \
+            ::RotatorNames::$rotator] < 0 } {
+
+# Create it.
+         RotatorComponent ::RotatorNames::$rotator ::RotatorList \
+               -cosys FK5/J2000 -ipa $posAngle
+      }
+   }
 }
