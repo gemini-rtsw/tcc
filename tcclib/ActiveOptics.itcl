@@ -16,6 +16,7 @@ itcl::class ActiveOptics {
       method disable {}
       method state {component}
       method source {component src {beam A}}
+      variable enabled 0
       variable p1guide ""
       variable p2guide ""
       variable aoguide ""
@@ -327,7 +328,11 @@ itcl::body ActiveOptics::enable {} {
       tk_messageBox -icon error -message \
             "Error posting guide commands: TCS reports \
             \"$msg\""
+      return
    }
+
+# Set the state to "enabled"
+   set enabled 1
 }
 
 itcl::body ActiveOptics::disable {} {
@@ -360,7 +365,11 @@ itcl::body ActiveOptics::disable {} {
       tk_messageBox -icon error -message \
             "Error posting guide commands: TCS reports \
             \"$msg\""
+      return
    }
+
+# Set the state to "disabled"
+   set enabled 0
 }
 
 itcl::body ActiveOptics::state {component} {
