@@ -1,11 +1,20 @@
 # Define the NIRI apply record.
 
-apply niriApply niri:apply niri:applyC Primary NIRI Apply Record
+# Note that this file defines connections to the detector controller instead
+# of the NIRI sequencer and should change when the detector controller can
+# be commanded through the sequencer.
 
+apply niriApply niri:dc:apply niri:dc:applyC Primary NIRI Apply Record
 
 # NIRI observe command
 
 command niriObserve niriApply Start exposure
 {
-   dummy        niri:observe.A
+   dummy        niri:dc:observe.A
+   datalab      niri:dc:observeDetails.C
+}
+
+status niri
+{
+   observe   niri:dc:observeC.VAL   0  Observe progress
 }
