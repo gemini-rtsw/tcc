@@ -8,6 +8,8 @@
 #              -airmassLimit  The airmass limit to apply when using the
 #                             instrument.
 #
+#              -programid     Gemini Program ID
+#
 #           The following options apply when -type is planet.
 #
 #              -planet        The planet name.
@@ -55,7 +57,7 @@
 #  Procs:
 #           subcomponents Returns a list of the target classes subcomponents.
 #
-#  D Terrett 15 March 2001
+#  D Terrett 4 September 2001
 #
 #  Copyright CCLRC
 #+
@@ -69,6 +71,7 @@ itcl::class SciTarget {
       method init {}
       method preview {vt}
       method save {file}
+      variable programid {}
       variable airmassLimit {}
 
 # Type "planet"
@@ -93,6 +96,10 @@ itcl::class SciTarget {
 itcl::body SciTarget::apply vt {
 
    $this Target::apply $vt
+
+   global env
+   ss $env(TCC_TCSNAME):sad:programID set value $programid
+   ss $env(TCC_TCSNAME):sad:programID post
 
    if { ![string is space $airmassLimit] } {
       cs airmassLimit set limit $airmassLimit
@@ -140,6 +147,7 @@ itcl::body SciTarget::apply vt {
 
 itcl::body SciTarget::init {} {
    $this Target::init
+   set programid ""
    set airmassLimit ""
    set planet {}
    set eltype {}
@@ -185,9 +193,10 @@ itcl::body SciTarget::preview vt {
 itcl::body SciTarget::save file {
    $this Target::save $file
    puts $file "[list $this] configure \\"
+   puts $file "   -programid [list $programid] \\"
    switch $type {
       planet {
-         puts $file "   -planet [list $planet]"
+         puts $file "   -planet [list $planet] \\"
       }
       orbit {
          puts $file "   -eltype [list $eltype] \\"
@@ -217,4 +226,5 @@ itcl::body SciTarget::save file {
 itcl::body SciTarget::grab vt {
    Target::grab $vt
    set airmassLimit [sa tcssad get airMassLimit]
+   set programid [sa tcssad get programID]
 }

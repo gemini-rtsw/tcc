@@ -4,7 +4,7 @@
 #  A SciTarget control is a TargetControl widget with widgets for
 #  the target position etc.
 #
-#  D Terrett 29 June 2001
+#  D Terrett 4 September 2001
 #
 #  Copyright CCLRC
 #+
@@ -143,12 +143,19 @@ itcl::body SciTargetControl::constructor args {
    $itk_component(notebook) pageconfigure Az/El \
          -command "$itk_component(copy) configure -state normal"
 
+# Entry for program ID.
+   itk_component add progid {
+      iwidgets::entryfield $itk_component(frame).progid \
+            -labeltext "Program ID" -width 8
+   }
+   pack $itk_component(progid) -side left -padx 10 -pady 5
+
 # Add control for airmass limit.
    itk_component add airmass {
       iwidgets::entryfield $itk_component(frame).airmass \
             -labeltext "Airmass limit" -width 8
    }
-   pack $itk_component(airmass) -anchor w
+   pack $itk_component(airmass) -side left -padx 10 -pady 5
 
 
 # Add destinations to the copy menu.
@@ -174,6 +181,7 @@ itcl::body SciTargetControl::constructor args {
 
 itcl::body SciTargetControl::reset {} {
    $this TargetControl::reset
+   $itk_component(progid) clear
    $itk_component(epochofel) clear
    $itk_component(inclination) clear
    $itk_component(longascnode) clear
@@ -189,6 +197,7 @@ itcl::body SciTargetControl::load {name} {
 
    $this TargetControl::load $name
 
+   $itk_component(progid) insert end [$name cget -programid]
    switch [$name cget -type] {
       planet {
          $itk_component(notebook) select Planets
@@ -232,6 +241,7 @@ itcl::body SciTargetControl::save {name} {
 # control window.
 #-
    $this TargetControl::save $name
+   $name configure -programid [$itk_component(progid) get]
    set page [lindex [$itk_component(notebook) pageconfigure \
          [$itk_component(notebook) select select] -label] 4]
    switch $page {
