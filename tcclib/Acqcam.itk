@@ -9,7 +9,7 @@
 #  Methods:
 #           none
 #
-#  D Terrett  21 October 2001
+#  D Terrett  26 November 2001
 #
 #  Copyright CCLRC
 #+
@@ -145,6 +145,7 @@ itcl::body Acqcam::colsel {} {
 itcl::body Acqcam::window {} {
    cs acqcam::stop set dummy 1
    cs acqcam::apply postWait
+   after 1000
    switch [$itk_component(window) get] {
       full {
          cs acqcam::detFrameSize set windowing 0
@@ -170,6 +171,7 @@ itcl::body Acqcam::window {} {
 itcl::body Acqcam::expose {} {
    cs acqcam::stop set dummy 1
    cs acqcam::apply postWait
+   after 10
    cs acqcam::detExposure set exposure [$itk_component(expose) get]
    cs acqcam::apply post
 }
@@ -182,15 +184,21 @@ itcl::body Acqcam::stop {} {
 itcl::body Acqcam::start {} {
    cs acqcam::stop set dummy 1
    cs acqcam::apply postWait
+   after 10
    cs acqcam::detExposure set nframe -1
    cs acqcam::detExposure set exposure [$itk_component(expose) get]
+   cs acqcam::apply postWait
+   after 10
    cs acqcam::setDhsInfo stream hrwfsScience
    cs acqcam::setDhsInfo option 2
+   cs acqcam::apply postWait
+   after 10
    cs acqcam::setObserve output 1
    cs acqcam::setObserve dir .
    cs acqcam::setObserve file hrwfs.fits
    cs acqcam::setObserve simfile NONE
    cs acqcam::apply postWait
+   after 10
    cs acqcam::observe set dummy 1
    cs acqcam::apply post
 }
