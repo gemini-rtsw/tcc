@@ -8,16 +8,16 @@
 #  the mechanism has changed state.
 #
 #  Options:
-#          -oncommand      The command sender, parameter and value that turns
-#                          the mechanism on.
+#          -oncommand      The a list of command sender, parameter and value 
+#                          triplets that turns the mechanism on.
 #
 #          -onvalue        A list of the sad record values that indicate that
 #                          the mechanism is on.
 #
 #          -onproc         A script to be executed to turn the mechanism on.
 #
-#          -offcommand     The command sender, parameter and value that turns
-#                          the mechanism off.
+#          -offcommand     The a list of command sender, parameter and value 
+#                          triplets that turns the mechanism off.
 #
 #          -offvalue       A list of the sad record values that indicate that
 #                          the mechanism is off.
@@ -30,7 +30,7 @@
 #  Methods:
 #          none
 #
-#  D Terrett 15 November 2002
+#  D Terrett 26 June 2003
 #
 #  Copyright CCLRC
 #-
@@ -86,8 +86,8 @@ itcl::body OnOffButton::destructor {} {
 
 itcl::body OnOffButton::pressed {} {
 
-# Assume no command sender available
-   set cs ""
+# Assume no command senders.
+   set cslist [list]
 
 # Set the command sender parameter appropriate for the current state.
    if { $state } {
@@ -95,22 +95,28 @@ itcl::body OnOffButton::pressed {} {
          uplevel #0 $itk_option(-offproc)
       }
       if { ! [string equal $itk_option(-offcommand) ""] } {
-         foreach {cs par val} $itk_option(-offcommand) {}
-         cs $cs set $par $val
+         foreach {cs par val} $itk_option(-offcommand) {
+            cs $cs set $par $val
+            lappend cslist $cs
+         }
       }
    } else {
       if { ! [string equal $itk_option(-onproc) ""] } {
          uplevel #0 $itk_option(-onproc)
       }
       if { ! [string equal $itk_option(-oncommand) ""] } {
-         foreach {cs par val} $itk_option(-oncommand) {}
-         cs $cs set $par $val
+         foreach {cs par val} $itk_option(-oncommand) {
+            cs $cs set $par $val
+            lappend cslist $cs
+         }
       }
    }
 
 # If there is a commmand sender then log and post the command.
-   if { ! [string equal $cs ""] } {
-      logger command $cs
+   if { [llength $cslist] } {
+      foreach cs [lsort -unique $cslist] {
+         logger command $cs
+      }
       if { [catch {cs tcsApply post} msg] } {
          tk_messageBox -icon error -parent $itk_interior -message $msg
       }
