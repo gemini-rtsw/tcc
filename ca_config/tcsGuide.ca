@@ -3,7 +3,7 @@
 #
 # Channel access configuration file for tcs guiding related commands.
 #
-# D Terrett 9 February 2000
+# D Terrett 14 February 2000
 #
 # Copyright CCLRC
 #-
@@ -23,4 +23,67 @@ command mountGuide tcsApply Define mount guiding mode
    source     tcs:mountGuideMode.B Guide Source
    p1weight   tcs:mountGuideMode.C PWFS1 weighting
    p2weight   tcs:mountGuideMode.D PWFS2 weighting
+}
+
+command m2Guide tcsApply M2 Guide Control
+{
+   state      tcs:m2GuideControl.A Guiding state
+}
+
+command pwfs1Observe tcsApply Start PWFS1
+{
+   noexp      tcs:pwfs1Observe.A      Number of exposures
+   int        tcs:pwfs1Observe.B      Exposure interval
+   outopt     tcs:pwfs1Observe.C      Output options
+   label      tcs:pwfs1Observe.D      DHS label
+   output     tcs:pwfs1Observe.E      DHS output
+   path       tcs:pwfs1Observe.F      Path
+   name       tcs:pwfs1Observe.G      File name
+}
+
+command pwfs1StopObserve tcsApply Stop PWFS1
+{
+   dummy      tcs:pwfs1StopObserve.A  Stop observation
+}
+
+command pwfs2Observe tcsApply Start PWFS2
+{
+   noexp      tcs:pwfs2Observe.A      Number of exposures
+   int        tcs:pwfs2Observe.B      Exposure interval
+   outopt     tcs:pwfs2Observe.C      Output options
+   label      tcs:pwfs2Observe.D      DHS label
+   output     tcs:pwfs2Observe.E      DHS output
+   path       tcs:pwfs2Observe.F      Path
+   name       tcs:pwfs2Observe.G      File name
+}
+
+command pwfs2StopObserve tcsApply Stop PWFS2
+{
+   dummy      tcs:pwfs2StopObserve.A  Stop observation
+}
+
+command oiwfsObserve tcsApply Start OIWFs
+{
+   noexp      tcs:oiwfsObserve.A      Number of exposures
+   int        tcs:oiwfsObserve.B      Exposure interval
+   outopt     tcs:oiwfsObserve.C      Output options
+   label      tcs:oiwfsObserve.D      DHS label
+   output     tcs:oiwfsObserve.E      DHS output
+   path       tcs:oiwfsObserve.F      Path
+   name       tcs:oiwfsObserve.G      File name
+}
+
+command oiwfsStopObserve tcsApply Stop OIWFS
+{
+   dummy      tcs:oiwfsStopObserve.A  Stop observation
+}
+
+status guideConfig
+{
+   p1state    tcs:drives:p1Integrating.VAL  0   P1 integrating
+   p2state    tcs:drives:p2Integrating.VAL  0   P2 integrating
+   oistate    tcs:drives:oiIntegrating.VAL  0   OI integrating
+   m2state    tcs:om:m2GuideState.VAL       0   M2 guiding
+   absorbtilt tcs:absorbTipTiltFlag.VAL     0   Absorb tilt errors
+   m1state    tcs:im:m1GuideOn.VAL          0   M1 guiding
 }
