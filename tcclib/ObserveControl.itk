@@ -105,40 +105,21 @@ itcl::body ObserveControl::constructor args {
 
 # Button and option menu for configuring the A & G fold mirrors.
    set w $itk_component(mirrors)
-   itk_component add foldlab {
-      label $w.foldlab -text "Light Path:"
+   itk_component add lpath {
+      SelectButton $w.lpath -command [itcl::code $this setfold] \
+            -orient vertical
+   } {
+      usual
+      rename -offbackground -background background Background
    }
-   itk_component add si {
-      LiveButton $w.si -text "Sky>Instr" \
-            -command [itcl::code $this setfold "Sky>Instr"]
-   }
-   itk_component add sai {
-      LiveButton $w.sai -text "Sky>AO>Inst" \
-            -command [itcl::code $this setfold "Sky>AO>Inst"]
-   }
-   itk_component add gi {
-      LiveButton $w.gi -text "GCAL>Instr" \
-            -command [itcl::code $this setfold "GCAL>Instr"]
-   }
-   itk_component add sh {
-      LiveButton $w.sh -text "Sky>AC/HR" \
-            -command [itcl::code $this setfold "Sky>AC/HR"]
-   }
-   itk_component add sah {
-      LiveButton $w.sah -text "Sky>AO>AC/HR" \
-            -command [itcl::code $this setfold "Sky>AO>AC/HR"]
-   }
-   itk_component add agi {
-      LiveButton $w.agi -text "AO cal>Instr" \
-            -command [itcl::code $this setfold "AO cal>Instr"]
-   }
-   itk_component add agh {
-      LiveButton $w.agh -text "AO cal>AC/HR" \
-            -command [itcl::code $this setfold "AO cal>AC/HR"]
-   }
-   pack $itk_component(si) $itk_component(sai) $itk_component(gi) \
-         $itk_component(sh) $itk_component(sah) $itk_component(agi) \
-         $itk_component(agh) -expand y -fill x
+   $itk_component(lpath) add "Sky>Instr"
+   $itk_component(lpath) add "Sky>AO>Inst"
+   $itk_component(lpath) add "GCAL>Instr"
+   $itk_component(lpath) add "Sky>AC/HR"
+   $itk_component(lpath) add "Sky>AO>AC/HR"
+   $itk_component(lpath) add "AO cal>Instr"
+   $itk_component(lpath) add "AO cal>AC/HR"
+   pack $itk_component(lpath)
 
 # Buttons for controlling chopping and M2 beam.
    set w $itk_component(buttons)
