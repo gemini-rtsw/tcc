@@ -7,7 +7,7 @@
 #  Arguments:
 #             none
 #
-#  D Terrett 2 September 1998
+#  D Terrett 27 July 2000
 #
 #  Copyright CCLRC
 #-
@@ -29,9 +29,9 @@ proc previewUpdate {} {
       set data(tlr) [sa tcssad get tlr value]
 
       set data(fl) [sa tcssad get focalLength value]
-      set data(an) [sa tcssad get azTiltNorth value]
-      set data(aw) [sa tcssad get azTiltWest value]
-      set data(pnpae) [sa tcssad get nonPerp value]
+      set data(an) 0.0
+      set data(aw) 0.0
+      set data(pnpae) 0.0
       set data(ca) [sa tcssad get collErrAz value]
       set data(ce) [sa tcssad get collErrEl value]
 
