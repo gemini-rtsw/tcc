@@ -10,7 +10,7 @@
 #  Methods:
 #           none
 #
-#  D Terrett 1 February 2002
+#  D Terrett 25 October 2002
 #
 #  Copyright CCLRC
 #-
@@ -76,14 +76,14 @@ itcl::body TccToolbar::constructor args {
    }
    itk_component add eng {
       button $w.eng -text "Engineering Screen" \
-            -command "exec /gemini/tcs/tcs/data/tcs_dm.sh &"
+            -command "exec /gemini/epics3.13.4/tcs/tcs/data/tcs_dm.sh &"
    }
    global env
    if { [info exists env(TCC_TCSNAME)] } {
       switch $env(TCC_TCSNAME) {
          tc1 {
             $itk_component(eng) configure \
-                  -command "exec /gemini/tcs/tcs/data/tc1_dm.sh &"
+                  -command "exec /gemini/epics3.13.4/tcs/tcs/data/tc1_dm.sh &"
          }
          default {
             $itk_component(eng) configure -state disabled
