@@ -3,7 +3,7 @@
 #
 #  The saveLayout procedure saves the current panel layout to a file.
 #
-#  D Terrett 17 September 1999
+#  D Terrett 17 November 1999
 #
 #  Copyright CCLRC
 #-
@@ -34,13 +34,15 @@ proc saveLayout {} {
 # Update the panel manager's geometry and state options from the window.
             $panelmgr updategeometry
 
-            set s [$panelmgr cget -screen]
-            if { $s != "" } {
-               puts $file "$panelmgr configure -screen $s"
+            set screen [$panelmgr cget -screen]
+            if { $screen != "" } {
+               puts $file "$panelmgr configure -screen $screen"
             }
-            set g [$panelmgr cget -geometry]
-            if { $g != "" } {
-               puts $file "$panelmgr configure -geometry $g"
+            set geom [$panelmgr cget -geometry]
+            if { $geom != "" } {
+               if { [regexp {\+.*} $geom pos] } {
+                  puts $file "$panelmgr configure -geometry $pos"
+               }
             }
 
             set state [$panelmgr cget -state]
