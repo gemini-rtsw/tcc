@@ -27,7 +27,7 @@
 #          save node     Saves the values of the Altair configuration
 #                        to the xml node
 #
-#  D Terrett 14 November 2002
+#  D Terrett 21 February 2003
 #
 #  Copyright CCLRC
 #+
@@ -52,18 +52,18 @@ itcl::body Altair::apply {comp} {
 # In order to configure ALTAIR we need know the Cass rotator position and
 # guide start X/Y. If we are being called as part of an overall TCS
 # configuration then we must predict what these are going to be using the
-# tccPreview functions. If not, we use the current values from the telescope.
+# Preview functions. If not, we use the current values from the telescope.
    if { [string equal [uplevel 1 \$this info class] ::TcsConfigComponent] } {
 
 # Call the configuration's preview method.
-      tccPreview begin
-      uplevel 1 preview
-      tccPreview end 0.0
+      set view [Preview ::#auto]
+      uplevel 1 preview $view
+      $view slew 0.0
 
 # Fetch the predictions.
-      set rotpos [lindex [tccPreview get rotator] 0]
-      set zd [lindex [tccPreview get source] 1]
-      set xy [tccPreview get pwfs2]
+      set rotpos [lindex [$view cget -rma1] 0]
+      set zd [$view cget -zd]
+      set xy [$view cget -p2xy]
       if { [llength $xy] == 0 } {
          error "Configuration must contain an ALTAIR guide star"
       }
@@ -78,6 +78,9 @@ itcl::body Altair::apply {comp} {
       set y [sa tcssad get aoDemandy]
    }
 
+# Delete the preview.
+   itcl::delete object $view
+
    cs aoDeployAdc set position $deployAdc
    logger command aoDeployAdc
 
@@ -88,7 +91,8 @@ itcl::body Altair::apply {comp} {
 # Assume that the central wavelength is always the same as the sourceA
 # wavelength.
    set wavel [cs wavelSourceA get wavel]
-   if { $wavel != "No Value" } {
+   if { ! ( [string equal $wavel "No Value"] || [string equal $wavel ""] ) } {
+      puts "cs aoMoveAdc wavel [expr { $wavel * 1000.0 }]"
       cs aoMoveAdc wavel [expr { $wavel * 1000.0 }]
    }
    logger command aoMoveAdc
