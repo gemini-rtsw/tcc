@@ -71,46 +71,39 @@ possible).
    is the wrong size and you have to resize it to see the directory and file 
    lists properly.
 
-3) "Wave front sensor targets" is missing from the check buttons in the 
-   "Export" dialog box. (but this is probably going to change anyway).
-
-4) When a target with no wavelength defined is loaded the undefinition (!)
+3) When a target with no wavelength defined is loaded the undefinition (!)
    of the wavelength isn't propogated to the wavelength editing window.
 
-5) The update button on the preview window re-maps the observation editor
+4) The update button on the preview window re-maps the observation editor
    window.
 
-6) The sub-component apply buttons don't log the command if there is no
+5) The sub-component apply buttons don't log the command if there is no
    sub-component name.
 
-7) The skycatSearch define target commands don't check that the coodinate
+6) The skycatSearch define target commands don't check that the coodinate
    system object the refer to exists (all the GSC uses FK5/J2000 which is
    defined in the data files in the data subdirectory so this isn't a
    problem for the moment.
 
-8) The consoles sometimes get into a state where all commands sent to the
+7) The consoles sometimes get into a state where all commands sent to the
    TCS time out (after about 2 seconds) although the commands are in fact
    being accepted by the TCS. (This may well be a bug in either the TCS or
    ocswish).
 
-9) The controls for entering temperature etc. on the system control panel
+8) The controls for entering temperature etc. on the system control panel
    should be disabled when the weather data source is set to "server".
 
-10) If an object refers to a component that has been deleted, the component
-    is ignored without any message when the object is "applied".
+9) If an object refers to a component that has been deleted, the component
+   is ignored without any message when the object is "applied".
 
-11) The pointtest application needs a way of setting the slew options used
+10) The pointtest application needs a way of setting the slew options used
     when the "slew to next object" button is pressed.
 
-12) The behaviour of the entry field for setting a custom step size on the
+11) The behaviour of the entry field for setting a custom step size on the
     handsets is confusing and buggy (<Return should "press" the custom 
     button but doesn't).
 
-13) When the model is updated the guide adjustments should be zeroed.
-
-Unconfirmed bugs:
-
-1) The absorb button on the guide handset doesn't work.
+12) When the model is updated the guide adjustments should be zeroed.
 
 Obscure internal bugs:
 
@@ -153,33 +146,24 @@ what some of them mean.
 
 11) Put the object to moon and sun distance on the status display.
 
-12) Implement display of offset information.
+12) Implement "next object" on status display.
 
-13) Implement "next object" on status display.
-
-14) Change the label of the "Set/Slew" button to Set or Slew depending on 
+13) Change the label of the "Set/Slew" button to Set or Slew depending on 
     whether a SlewOptions component has been selected.
 
-15) Do something about management of pointing models.
+14) Do something about management of pointing models.
 
-16) Re-think the way merging of configurations work.
+15) Re-think the way merging of configurations work.
 
-17) Add chopping information to status display.
+16) Add chopping information to status display.
 
-18) Revise the "export" function. What is required here ? Just save everything
+17) Revise the "export" function. What is required here ? Just save everything
     or something more ?
 
-19) Add a function to load new configuration/component definitions from 
+18) Add a function to load new configuration/component definitions from 
     a file after the tcc has been started.
 
-20) Implement control of nodding.
-
-21) Allow tc1: or tc2. to be controlled instead of tcs:
-
-22) The default directories for the open catalog and open log file
-    dialog boxes need to be improved.
-
-23) There needs to be a way of driving tc1: and tc2: as well as tcs:
+19) Implement control of nodding.
 
 There is of course more that I don't yet know how to do - acquisition of
 guide stars for example - that will have to wait until we know more about
