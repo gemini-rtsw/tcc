@@ -12,6 +12,12 @@ set m1_tune_dir /gemini/epics3.13.4/tcs/tcs
 # The default directory for storing HRWFS images.
 #set default_wfs_dir /net/enif/export/home/wfs
 
+# The directory in which HRWFS sky background images are stored.
+set hrwfs_sky_dir /home/SSA/sky
+
+# The name of the script that starts the HRWFS AO program.
+set hrwfs_ao_prog /home/gemvx/bin/StartHrwfsAO
+
 # The x/y/z position that corresponds to the A&G PWFS1 probeSel center
 # command.
 
