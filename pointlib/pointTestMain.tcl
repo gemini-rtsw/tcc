@@ -6,7 +6,7 @@ proc pointTestMain {w} {
 #  Creates the user interface for the pointTest application and creates the
 #  command senders and status acceptors needed to drive the TCS.
 #
-#  D Terrett 22 June 2001
+#  D Terrett 20 January 2004
 #
 #  Copyright CCLRC
 #-
@@ -35,6 +35,7 @@ proc pointTestMain {w} {
    epics sa tcssad
    epics sa agssad
    epics sa m2ssad
+   epics sa pcssad
 
 # Wait to get connected to the TCS.
    waitConnect
