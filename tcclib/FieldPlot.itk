@@ -3,7 +3,7 @@
 #
 #  A widget that plots a map of the currently selected field.
 #
-#  D Terrett  14 April 2003
+#  D Terrett  17 June 2003
 #
 #  Copyright CCLRC
 #-
@@ -115,11 +115,11 @@ itcl::body FieldPlot::plot {} {
 # Kill off any pending plots.
    after cancel $afterid
 
-# Redraw everything.
-   redraw
-
 # Plot again in one second.
    set afterid [after 1000 [itcl::code $this plot]]
+
+# Redraw everything.
+   redraw
 }
 
 itcl::body FieldPlot::redraw {} {
@@ -147,17 +147,97 @@ itcl::body FieldPlot::redraw {} {
          set system [CosysNames::$cosys cget -frame]
          set equinox [CosysNames::$cosys cget -equinox]
       }
+      set targetType [${namespace}::$name cget -type]
+      switch $targetType {
+         hmsdegTarget {
+            $telsim configure \
+               -targetType $targetType \
+               -theta1 [${namespace}::$name cget -c1] \
+               -theta2 [${namespace}::$name cget -c2] \
+               -system $system \
+               -equinox $equinox \
+               -epoch [${namespace}::$name cget -epoch] \
+               -pm1 [${namespace}::$name cget -pm1] \
+               -pm2 [${namespace}::$name cget -pm2] \
+               -parallax [${namespace}::$name cget -parallax] \
+               -rv [${namespace}::$name cget -rv] 
+         }
+         degdegTarget {
+            $telsim configure \
+               -targetType $targetType \
+               -theta1 [${namespace}::$name cget -c1] \
+               -theta2 [${namespace}::$name cget -c2]
+         }
+         conicTarget {
+            set epochofel [${namespace}::$name cget -epochofel]
+            set orbinc [${namespace}::$name cget -orbinc]
+            set longascnode [${namespace}::$name cget -longascnode]
+            set longofperi [${namespace}::$name cget -longofperi]
+            set argofperi [${namespace}::$name cget -argofperi]
+            set meandist [${namespace}::$name cget -meandist]
+            set peridist [${namespace}::$name cget -peridist]
+            set eccentricity [${namespace}::$name cget -eccentricity]
+            set meanlong [${namespace}::$name cget -meanlong]
+            set meananom [${namespace}::$name cget -meananom]
+            set dailymot [${namespace}::$name cget -dailymot]
+            set epochofperi [${namespace}::$name cget -epochofperi]
+            switch [${namespace}::$name cget -format] {
+               "AsA major planet" {
+                  $telsim configure \
+                        -targetType $targetType -orbType 1 -orbElements \
+                        [list $epochofel $orbinc $longascnode \
+                        $longofperi $meandist $eccentricity $meanlong \
+                        $dailymot]
+               }
+               "JPL major planet" {
+                  if { ! [string is double -strict $longascnode] } {
+                     error "expecting floating point number but got
+                           \"$longascnode\""
+                  }
+                  if { ! [string is double -strict $argofperi] } {
+                     error "expecting floating point number but got
+                           \"$argofperi\""
+                  }
+                  if { ! [string is double -strict $meananom] } {
+                     error "expecting floating point number but got
+                           \"$longascnode\""
+                  }
+                  $telsim configure \
+                        -targetType $targetType -orbType 1 -orbElements \
+                        [list $epochofel $orbinc $longascnode \
+                        [expr { $longascnode + $argofperi }] $meandist \
+                        $eccentricity \
+                        [expr { $longascnode + $argofperi + $meananom }] \
+                        $dailymot]
+               }
+               "AsA minor planet" -
+               "MPC minor planet" {
+                  foreach {epoch1 inclination1 anode1 perihelion1 a1 e1 M1} \
+                        [slaPertel 2 $epochofel $epochofel $orbinc \
+                              $longascnode $argofperi $meandist $eccentricity \
+                              $meananom] {}
+                  $telsim configure -targetType $targetType -orbType 2 \
+                        -orbElements [list $epoch1 $inclination1 $anode1 \
+                        $perihelion1 $a1 $e1 $M1]
+               }
+               "AsA comet" -
+               "JPL minor body" -
+               "MPC comet" {
+                  foreach {epoch1 inclination1 anode1 perihelion1 q1 e1} \
+                        [slaPertel 3 $epochofel $epochofperi $orbinc \
+                              $longascnode $argofperi $peridist \
+                              $eccentricity] {}
+                  $telsim configure -targetType $targetType -orbType 3 \
+                        -orbElements [list $epoch1 $inclination1 $anode1 \
+                        $perihelion1 $q1 $e1]
+               }
+            }
+
+         }
+      }
+
+# Configure rotator position.
       $telsim configure \
-            -targetType [${namespace}::$name cget -type] \
-            -theta1 [${namespace}::$name cget -c1] \
-            -theta2 [${namespace}::$name cget -c2] \
-            -system $system \
-            -equinox $equinox \
-            -epoch [${namespace}::$name cget -epoch] \
-            -pm1 [${namespace}::$name cget -pm1] \
-            -pm2 [${namespace}::$name cget -pm2] \
-            -parallax [${namespace}::$name cget -parallax] \
-            -rv [${namespace}::$name cget -rv] \
             -ipa [sadVal tcssad instrPA 0.0] \
             -iaa [sadVal tcssad instrAA 0.0]
 
