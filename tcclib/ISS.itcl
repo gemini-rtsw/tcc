@@ -176,7 +176,7 @@ itcl::body ISS::posaofold {} {
    switch $ao {
       IN {
          if { [sa agssad get aoName] != "IN" } {
-            if { [sa agssad get p2Parked] != "PARKED" } {
+            if { [sa agssad get p2Parked] != "1" } {
 
 # Park P2. This takes a long time and we can't move the AO mirror
 # until it is ready.
@@ -201,7 +201,7 @@ itcl::body ISS::posaofold {} {
 }
 
 itcl::body ISS::p2wait {} {
-   if { [sa agssad get p2Parked] != "PARKED" } {
+   if { [sa agssad get p2Parked] != "1" } {
 
 # Not ready yet so try again later.
      set aowaitid [after 1000 ISS::p2wait]
