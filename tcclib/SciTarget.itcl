@@ -51,7 +51,7 @@
 #  Procs:
 #           subcomponents Returns a list of the target classes subcomponents.
 #
-#  D Terrett 21 February 2000
+#  D Terrett 5 April 2000
 #
 #  Copyright CCLRC
 #+
@@ -170,9 +170,10 @@ itcl::body SciTarget::preview vt {
 
 itcl::body SciTarget::save file {
    $this Target::save $file
+   puts $file "$this configure \\"
    switch $type {
       planet {
-         puts $file "   -planet \"$planet\" \\"
+         puts $file "   -planet \"$planet\""
       }
       orbit {
          puts $file "   -eltype \"$eltype\" \\"
@@ -187,13 +188,13 @@ itcl::body SciTarget::save file {
          puts $file "   -meandist \"$meandist\" \\"
          puts $file "   -perdist \"$perdist\" \\"
          puts $file "   -eccentricity \"$eccentricity\" \\"
-         puts $file "   -meanlong \"$meanlong\" \\"
          if { $eltype == 1 || $eltype == 2 } {
             puts $file "   -meananom \"$meananom\" \\"
          }
          if { $eltype == 1 } {
             puts $file "   -dailymot \"$dailymot\" \\"
          }
+         puts $file "   -meanlong \"$meanlong\""
       }
    }
 }
