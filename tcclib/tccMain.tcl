@@ -7,7 +7,7 @@
 #  Arguments:
 #            Any command line options and values.
 #
-#  D Terrett  19 November 2002
+#  D Terrett  16 December 2002
 #
 #  Copyright CCLRC
 #-
@@ -49,6 +49,7 @@ proc tccMain args {
    epics sa ecssad
    epics sa agssad
    epics sa gpolsad
+   epics sa aossad
 
 # Create status acceptors for tcs status and messages.
    epics sa apply
