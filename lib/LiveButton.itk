@@ -8,16 +8,13 @@
 #  that prevents the telescope being moved). An optional message is sent to
 #  the logger when the button is pressed.
 #
-#  The distinctive feature at present is that the active background colour
-#  is red.
-#
 #  Options:
 #          -command      A command to be executed when the button is pressed.
 #
 #  Methods:
 #          none
 #
-#  D Terrett 17 June 2002
+#  D Terrett 19 June 2003
 #
 #  Copyright CCLRC
 #-
@@ -39,12 +36,10 @@ itk::usual LiveButton {
 itcl::body LiveButton::constructor args {
 
    itk_component add button {
-      button $itk_interior.button -activebackground red \
-         -command [itcl::code $this command]
+      button $itk_interior.button -command [itcl::code $this command]
    } {
       usual
       keep -state -text -width -height -padx -pady -relief
-      ignore -activebackground
    }
    pack $itk_component(button) -fill both -expand y
 
