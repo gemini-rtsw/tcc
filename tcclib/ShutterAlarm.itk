@@ -1,0 +1,229 @@
+#+
+#  shutterAlarm <- itk::Widget
+#
+# Implements a shutter current alarm
+#
+#  Methods:
+#
+# AWEbbers  June, 2004
+#
+
+itcl::class ShutterAlarm {
+   inherit itk::Widget
+   constructor {args} {}
+   destructor {after cancel $tid}
+   common current
+   common peak
+   public {
+      method updateProc { name alarm time values }
+      method scanLoop {}
+      method alarmPopup {}
+      method clearAlarm {}
+      method resetPeak {}
+      variable alarm 0
+      variable flash 0
+      variable topLimit 35.0
+      variable botLimit 30.0
+      variable alarmBut ""
+      variable alarmMess ""
+   }
+   private {
+      method ringBell {}
+      variable tid 0
+   }
+}
+
+itk::usual ShutterAlarm {
+   keep -background -cursor -foreground -font \
+	-highlightcolor -highlightthickness \
+}
+
+itcl::body ShutterAlarm::constructor {args} {
+
+   #puts "ShutterAlarm this: $this"
+
+   itk_component add button { 
+        button $itk_interior.alarmButton -text "Shutter Current Monitor" -command "$this alarmPopup"
+   }
+
+   set alarmBut $itk_component(button)
+   pack $alarmBut
+
+   sa shutterDriveCurrents proc t1x "$this updateProc"
+   sa shutterDriveCurrents proc t1y "$this updateProc"
+   sa shutterDriveCurrents proc t1z "$this updateProc"
+   sa shutterDriveCurrents proc t1w "$this updateProc"
+   sa shutterDriveCurrents proc b2x "$this updateProc"
+   sa shutterDriveCurrents proc b2y "$this updateProc"
+   sa shutterDriveCurrents proc b2z "$this updateProc"
+   sa shutterDriveCurrents proc b2w "$this updateProc"
+
+   # start the scan task ...
+   $this scanLoop
+
+   eval itk_initialize $args
+}
+
+itcl::body ShutterAlarm::updateProc {name alarm time values} {
+    global shutterCurrent shutterPeakCurrent shutterAlarm
+
+    #puts [format "%s %-20s\n%s\n" $time $name $values]
+    set tname [lrange [split $name "."] 1 1]
+    set tnamev [format "%s%s" $tname "(value)"]
+    set $tnamev $values
+    set current($tname) [set $tnamev]
+
+    if {[info exists peak($tname)]} {
+	if {$current($tname) > $peak($tname)} {
+	    set peak($tname) $current($tname)
+        }
+    } else {
+	set peak($tname) $current($tname)
+    }
+
+    if {([string index $tname 0]=="t") && ($current($tname) > $topLimit)} {
+	$this configure -alarm 1
+	set shutterAlarm 1
+    }
+
+    if {([string index $tname 0]=="b") && ($current($tname) > $botLimit)} {
+	$this configure -alarm 1
+	set shutterAlarm 1
+    }
+
+    set shutterCurrent($tname) $current($tname)
+    set shutterPeakCurrent($tname) $peak($tname)
+    #puts "set current($tname) to $current($tname)"
+    return
+}
+
+itcl::body ShutterAlarm::ringBell {} {
+    #puts "in ring bell alarmMess: $alarmMess  exists?: [winfo exists alarmMess]"
+    bell
+    if { $flash } {
+	$alarmBut configure -bg red -text "Shutter Current Monitor"
+	if {[string length $alarmMess] > 0} {
+	    $alarmMess configure -bg red -text "Current over limit"
+	}
+	set flash 0
+    } else {
+	$alarmBut configure -bg yellow -text "Click here"
+	if {[string length $alarmMess] > 0} {
+	    $alarmMess configure -bg yellow -text "Current over limit"
+	}
+	set flash 1
+    }   
+}
+
+itcl::body ShutterAlarm::scanLoop {} {
+    
+    if {$alarm == 1} { 
+	ringBell
+    } else {
+	$alarmBut configure -bg lightgreen -text "Shutter Current Monitor"
+	if {[string length $alarmMess] > 0} {
+	    $alarmMess configure -bg lightgreen -text "Current levels OK"
+	}
+    }
+    set tid [after 500 "$this scanLoop"]
+    update
+}
+
+itcl::body ShutterAlarm::clearAlarm {} {
+   set alarm 0
+}
+
+itcl::body ShutterAlarm::resetPeak {} {
+   global shutterPeakCurrent
+
+   foreach drive {t1x t1y t1z t1w b2x b2y b2z b2w} {
+	set peak($drive) 0
+	set shutterPeakCurrent($drive) 0
+   }
+
+}
+
+itcl::body ShutterAlarm::alarmPopup {} {
+
+   global shutterTopLimit shutterBotLimit shutterCurrent shutterPeakCurrent shutterAlarm
+   set shutterTopLimit $topLimit
+   set shutterBotLimit $botLimit
+   set shutterAlarm $alarm
+
+   set sa .shutAlarm
+   if {[winfo exists $sa]} {
+	destroy $sa
+   }
+
+   itk_component add sa {
+                    	toplevel $sa
+   }
+   wm title $sa "ECS shutter current alarm"
+   wm transient $sa
+
+   #
+   # display drive current levels
+   #
+
+   itk_component add lev { iwidgets::Labeledframe $sa.lev -labeltext "Drive Current Levels" -labelpos nw }
+ 
+   set lev [$sa.lev childsite]
+
+   # set up some fonts
+
+   itk_component add tit1 { label $lev.tit1 -text "Top" }
+   itk_component add tit2 { label $lev.tit2 -text "Peak" }
+   itk_component add tit3 { label $lev.tit3 -text "Bot" }
+   itk_component add tit4 { label $lev.tit4 -text "Peak" }
+
+   foreach drive {t1x t1y t1z t1w b2x b2y b2z b2w} {
+      itk_component add ${drive}l { label $lev.${drive}l -text "$drive:" }
+      itk_component add $drive { label $lev.$drive -textvariable shutterCurrent($drive) -width 4 }
+      itk_component add ${drive}p { label $lev.${drive}p -textvariable shutterPeakCurrent($drive) -width 4 }
+   }
+ 
+   grid x $lev.tit1 $lev.tit2 x $lev.tit3 $lev.tit4 -padx 3 -pady 3 -sticky news
+   grid $lev.t1xl $lev.t1x $lev.t1xp $lev.b2xl $lev.b2x $lev.b2xp -sticky news -padx 3 -pady 3
+   grid $lev.t1yl $lev.t1y $lev.t1yp $lev.b2yl $lev.b2y $lev.b2yp -sticky news -padx 3 -pady 3
+   grid $lev.t1zl $lev.t1z $lev.t1zp $lev.b2zl $lev.b2z $lev.b2zp -sticky news -padx 3 -pady 3
+   grid $lev.t1wl $lev.t1w $lev.t1wp $lev.b2wl $lev.b2w $lev.b2wp -sticky news -padx 3 -pady 3
+
+   #
+   # display drive current limits
+   #
+
+   itk_component add lim {  iwidgets::Labeledframe $sa.lim -labeltext "Drive Current Limits" -labelpos nw }
+   set lim [$sa.lim childsite]
+
+   itk_component add liml1 { label $lim.liml1 -text "Top Limit:" }
+   itk_component add liml2 { label $lim.liml2 -text "Bottom Limit:" }
+   itk_component add ent1 { entry $lim.ent1 -textvariable shutterTopLimit -width 5 }
+   bind $lim.ent1 <KeyPress-Return> {
+	#puts "in a bind ... key: %K"
+	.st.alarm configure -topLimit $shutterTopLimit
+   }
+   itk_component add ent2 { entry $lim.ent2 -textvariable shutterBotLimit -width 5 }
+   bind $lim.ent2 <KeyPress-Return> {
+	#puts "in a bind ... key: %K"
+	.st.alarm configure -botLimit $shutterBotLimit
+   }
+   grid $lim.liml1 $lim.ent1 $lim.liml2 $lim.ent2 -sticky news -padx 3 -pady 3
+
+
+   set alarmMess $sa.alarm
+
+   itk_component add clear { button $sa.clear -text "Clear Alarm" -command { .st.alarm clearAlarm } }
+   itk_component add reset { button $sa.reset -text "Reset Peaks" -command { .st.alarm resetPeak } }
+   itk_component add $alarmMess { 
+	label $alarmMess -text "Current Levels OK" -fg black -bg lightgreen -relief raised
+   }
+   itk_component add exit { 
+   	button $sa.exit -text Exit -command " \
+	    $this configure -alarmMess \"\" ; \
+	    destroy .shutAlarm"
+   }
+   grid $alarmMess - - -sticky news -padx 2 -pady 2
+   grid $sa.lev - - -sticky news -padx 2 -pady 2
+   grid $sa.lim - - -sticky news -padx 2 -pady 2
+   grid $sa.clear $sa.reset $sa.exit -sticky news -padx 2 -pady 2
+}
