@@ -32,6 +32,7 @@ lappend auto_path $ROOT/tcclib
 
 # Load the time and tcc extensions to tcl.
 load $ROOT/lib/solaris/tcctime.so
+load $ROOT/lib/solaris/slaext.so
 load $ROOT/tcclib/solaris/tccext.so
 
 # Load all the packages required by the tcc.
