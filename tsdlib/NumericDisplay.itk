@@ -11,7 +11,7 @@
 #
 #  options
 #
-#  D Terrett 12 July 2000
+#  D Terrett 11 September 2000
 #
 #  Copyright CCLRC
 #-
@@ -329,9 +329,10 @@ itcl::body NumericDisplay::constructor args {
 
 # Call inPosition whenever any of the inPosition or followS records change.
    foreach sa {mcssad mcssad mcssad crssad ecssad ecssad ecssad \
-         tcssad mcssad crssad} \
+         tcssad mcssad crssad tcssad tcssad} \
          par {inPosition inPositionAz inPositionEl inPosition \
-         domeInPos topShtrInPos botShtrInPos inPosition followS followS} {
+         domeInPos topShtrInPos botShtrInPos inPosition followS followS \
+         autoMoveDome autoMoveShtrs} {
          if { [llength [find object $sa.$par]] == 0 } {
             RecordMonitor $sa.$par $sa $par
          }
@@ -560,67 +561,71 @@ itcl::body NumericDisplay::inPosition {rec value} {
 # Extract the subsystem and record from the name of the record that changed.
    foreach {subsys record} [split $rec .] {}
 
-   switch $subsys {
-      tcssad -
-      mcssad {
-
 # Telescope position.
-         if { [isFollowing mcssad followS] } {
-            if { [isInPosition tcssad inPosition] } {
-               set status ok
-            } else {
-               set status warning
-            }
+   if { [string equal $subsys tcssad] || [string equal $subsys mcssad] } {
+      if { [isFollowing mcssad followS] } {
+         if { [isInPosition tcssad inPosition] } {
+            set status ok
          } else {
-            set status error
+            set status warning
          }
-         $itk_component(telpos1) configure -status $status
-         $itk_component(telpos2) configure -status $status
+      } else {
+         set status error
+      }
+      $itk_component(telpos1) configure -status $status
+      $itk_component(telpos2) configure -status $status
+   }
 
 # Telescope Az/El.
-         if { [isFollowing mcssad followS] } {
-            if { [isInPosition mcssad inPositionAz] } {
+   if { [string equal $subsys mcssad] } {
+      if { [isFollowing mcssad followS] } {
+         if { [isInPosition mcssad inPositionAz] } {
                set azstat ok
-            } else {
-               set azstat warning
-            }
-            if { [isInPosition mcssad inPositionEl] } {
-               set elstat ok
-            } else {
-               set elstat warning
-            }
          } else {
-            set azstat error
-            set elstat error
+            set azstat warning
          }
-         $itk_component(telaz) configure -status $azstat
-         $itk_component(azerr) configure -status $azstat
-         $itk_component(telel) configure -status $elstat
-         $itk_component(elerr) configure -status $elstat
+         if { [isInPosition mcssad inPositionEl] } {
+            set elstat ok
+         } else {
+            set elstat warning
+         }
+      } else {
+         set azstat error
+         set elstat error
       }
-      crssad {
+      $itk_component(telaz) configure -status $azstat
+      $itk_component(azerr) configure -status $azstat
+      $itk_component(telel) configure -status $elstat
+      $itk_component(elerr) configure -status $elstat
+   }
 
 # Cass rotator position.
-         if { [isFollowing crssad followS] } {
-            if { [isInPosition crssad inPosition] } {
-               set status ok
-            } else {
-               set status warning
-            }
+   if { [string equal $subsys crssad] } {
+      if { [isFollowing crssad followS] } {
+         if { [isInPosition crssad inPosition] } {
+            set status ok
          } else {
-            set status error
+            set status warning
          }
-         $itk_component(rot) configure -status $status
-         $itk_component(roterr) configure -status $status
+      } else {
+         set status error
       }
-      ecssad {
+      $itk_component(rot) configure -status $status
+      $itk_component(roterr) configure -status $status
+   }
 
 # Dome az and shutter positions.
+   if { [string equal $subsys tcssad] || [string equal $subsys ecssad] } {
+      if { [string equal [sa tcssad get autoMoveDome] On ] } {
          if { [isInPosition ecssad domeInPos] } {
             set domestat ok
          } else {
             set domestat warning
          }
+      } else {
+         set domestat error
+      }
+      if { [string equal [sa tcssad get autoMoveShtrs] On ] } {
          if { [isInPosition ecssad topShtrInPos] } {
             set topstat ok
          } else {
@@ -631,10 +636,13 @@ itcl::body NumericDisplay::inPosition {rec value} {
          } else {
             set botstat warning
          }
-         $itk_component(domeaz) configure -status $domestat
-         $itk_component(topshut) configure -status $topstat
-         $itk_component(botshut) configure -status $botstat
+      } else {
+         set topstat error
+         set botstat error
       }
+      $itk_component(domeaz) configure -status $domestat
+      $itk_component(topshut) configure -status $topstat
+      $itk_component(botshut) configure -status $botstat
    }
 }
 
