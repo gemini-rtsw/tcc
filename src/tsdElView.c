@@ -9,7 +9,7 @@ static char rcsid[]="$Id:";
 *
 *   DESCRIPTION
 *
-*   D L Terrett 22 January 1999
+*   D L Terrett 11 November 1999
 *
 *   Copyright CCLRC
 */
@@ -61,9 +61,14 @@ typedef struct ElViewItem {
    XPoint amlim[2];
    XPoint pointer[2];
    XPoint mechptr[2];
+   double el;
+   double az;
+   double maz;
+   double mel;
+   double amlimel;
+   FRAMETYPE frame;
    int npc;
    int display;
-   int configOk;
 } ElViewItem;
 
 static Tk_CustomOption tagsOption = {
@@ -204,6 +209,14 @@ static int CreateEV( Tcl_Interp *interp, Tk_Canvas canvas, Tk_Item *itemPtr,
    elviewPtr->xc = 0;
    elviewPtr->yc = 0;
 
+/* Initialise telescope data to safe values. */
+   elviewPtr->el = 90.0 * D2R;
+   elviewPtr->az = 0.0;
+   elviewPtr->mel = 90.0 * D2R;
+   elviewPtr->maz = 0.0;
+   elviewPtr->frame = AZEL_MNT;
+   elviewPtr->amlimel = 90.0 * D2R;
+
    return TCL_OK;
 }
 
@@ -218,8 +231,7 @@ static int ConfigureEV( Tcl_Interp *interp, Tk_Canvas canvas, Tk_Item *itemPtr,
    unsigned long mask;
    char savest[40];
    int i;
-   double az, el, ha, dec, sdec, cdec, amlimel, maz, mel;
-   FRAMETYPE frame;
+   double az, el, ha, dec, sdec, cdec;
 
    if ( Tk_ConfigureWidget( interp, tkwin, configspecs, argc, argv, 
       (char *) elviewPtr, flags ) != TCL_OK ) {
@@ -227,49 +239,44 @@ static int ConfigureEV( Tcl_Interp *interp, Tk_Canvas canvas, Tk_Item *itemPtr,
    }
 
 /* Get data from the TCS */
-   elviewPtr->configOk = 0;
-   if ( Tcl_Eval( interp, "sa tcssad get demandAz value" ) != TCL_OK )
-       return TCL_OK;
-   strcpy( savest, interp->result);
-   if ( Tcl_Eval( interp, "sa tcssad get demandEl value" ) != TCL_OK )
-       return TCL_OK;
-   if ( tccDcRadec( interp, AZEL_MNT, savest, interp->result, &az, &el ) != 
-      TCL_OK ) return TCL_ERROR;
-   if ( Tcl_Eval( interp, "sa tcssad get mountTrackFrame value" ) != TCL_OK ) 
-      return TCL_OK;
-   if ( tccDcFrame( interp, interp->result, &frame) != TCL_OK )
-      return TCL_OK;
-   if ( Tcl_Eval( interp, "sa tcssad get airMassLimitEl value" ) != TCL_OK ) 
-       return TCL_ERROR;
-   if ( Tcl_GetDouble( interp, interp->result, &amlimel ) != TCL_OK )
-       return TCL_ERROR;
-   amlimel *= D2R;
-   if ( Tcl_Eval( interp, "sa tcssad get currentAz value" ) != TCL_OK )
-       return TCL_OK;
-   strcpy( savest, interp->result);
-   if ( Tcl_Eval( interp, "sa tcssad get currentEl value" ) != TCL_OK )
-       return TCL_OK;
-   if ( tccDcRadec( interp, AZEL_MNT, savest, interp->result, &maz, &mel ) != 
-      TCL_OK ) return TCL_OK;
-   elviewPtr->configOk = 1;
+   if ( Tcl_Eval( interp, "sa tcssad get demandAz value" ) == TCL_OK ) {
+       strcpy( savest, interp->result);
+       if ( Tcl_Eval( interp, "sa tcssad get demandEl value" ) == TCL_OK )
+           tccDcRadec( interp, AZEL_MNT, savest, interp->result, 
+              &elviewPtr->az, &elviewPtr->el);
+   }
+   if ( Tcl_Eval( interp, "sa tcssad get mountTrackFrame value" ) == TCL_OK ) 
+      tccDcFrame( interp, interp->result, &elviewPtr->frame);
+   if ( Tcl_Eval( interp, "sa tcssad get airMassLimitEl value" ) == TCL_OK ) 
+       if ( Tcl_GetDouble( interp, interp->result, &elviewPtr->amlimel ) 
+           == TCL_OK ) elviewPtr->amlimel *= D2R;
+   if ( Tcl_Eval( interp, "sa tcssad get currentAz value" ) == TCL_OK ) {
+       strcpy( savest, interp->result);
+       if ( Tcl_Eval( interp, "sa tcssad get currentEl value" ) == TCL_OK )
+           tccDcRadec( interp, AZEL_MNT, savest, interp->result, 
+               &elviewPtr->maz, &elviewPtr->mel );
+   }
 
 /* Generate the pointers */
    elviewPtr->pointer[0].x = 1 + elviewPtr->xc;
    elviewPtr->pointer[0].y = 
-            (short) ( ( D90 - el ) * 110.0 / ( 75.0 * D2R ) ) + elviewPtr->yc;
+            (short) ( ( D90 - elviewPtr->el ) * 110.0 / ( 75.0 * D2R ) ) + 
+            elviewPtr->yc;
    elviewPtr->pointer[1].x = 20 + elviewPtr->xc;
    elviewPtr->pointer[1].y = elviewPtr->pointer[0].y;
 
    elviewPtr->mechptr[0].x = 1 + elviewPtr->xc;
    elviewPtr->mechptr[0].y = 
-            (short) ( ( D90 - mel ) * 110.0 / ( 75.0 * D2R ) ) + elviewPtr->yc;
+            (short) ( ( D90 - elviewPtr->mel ) * 110.0 / ( 75.0 * D2R ) ) 
+            + elviewPtr->yc;
    elviewPtr->mechptr[1].x = 20 + elviewPtr->xc;
    elviewPtr->mechptr[1].y = elviewPtr->mechptr[0].y;
 
 /* Generate the elevation path */
    elviewPtr->npc = 0;
-   if ( frame != AZEL_TOPO ) {
-      tccDh2e( az, el, elviewPtr->sphi, elviewPtr->cphi, &ha, &dec);
+   if ( elviewPtr->frame != AZEL_TOPO ) {
+      tccDh2e( elviewPtr->az, elviewPtr->el, elviewPtr->sphi, elviewPtr->cphi, 
+          &ha, &dec);
       sdec = sin ( dec );
       cdec = cos ( dec );
       for ( i = 0; i < 144; i++ ) {
@@ -288,7 +295,8 @@ static int ConfigureEV( Tcl_Interp *interp, Tk_Canvas canvas, Tk_Item *itemPtr,
 /* Generate the airmass limit */
    elviewPtr->amlim[0].x = 20 + elviewPtr->xc;
    elviewPtr->amlim[0].y =
-      (short) ( ( D90 - amlimel ) * 110.0 / ( 75.0 * D2R ) ) + elviewPtr->yc;
+      (short) ( ( D90 - elviewPtr->amlimel ) * 110.0 / ( 75.0 * D2R ) )
+      + elviewPtr->yc;
    elviewPtr->amlim[1].x = 300 + elviewPtr->xc;
    elviewPtr->amlim[1].y = elviewPtr->amlim[0].y;
 
@@ -336,45 +344,43 @@ static void DisplayEV( Tk_Canvas canvas, Tk_Item *itemPtr, Display *display,
    Tk_CanvasDrawableCoords( canvas, elviewPtr->x0, elviewPtr->y0, &xc, &yc);
 
 /* Adjust the coordinates */
-   if ( elviewPtr->configOk ) {
-      elviewPtr->pointer[0].x += xc - elviewPtr->xc;
-      elviewPtr->pointer[0].y += yc - elviewPtr->yc;
-      elviewPtr->pointer[1].x += xc - elviewPtr->xc;
-      elviewPtr->pointer[1].y += yc - elviewPtr->yc;
-      elviewPtr->mechptr[0].x += xc - elviewPtr->xc;
-      elviewPtr->mechptr[0].y += yc - elviewPtr->yc;
-      elviewPtr->mechptr[1].x += xc - elviewPtr->xc;
-      elviewPtr->mechptr[1].y += yc - elviewPtr->yc;
-      elviewPtr->amlim[0].x += xc - elviewPtr->xc;
-      elviewPtr->amlim[0].y += yc - elviewPtr->yc;
-      elviewPtr->amlim[1].x += xc - elviewPtr->xc;
-      elviewPtr->amlim[1].y += yc - elviewPtr->yc;
-      for ( i = 0; i < elviewPtr->npc; i++ ) {
-         elviewPtr->elpath[i].x += xc - elviewPtr->xc;
-         elviewPtr->elpath[i].y += yc - elviewPtr->yc;
-      }
+   elviewPtr->pointer[0].x += xc - elviewPtr->xc;
+   elviewPtr->pointer[0].y += yc - elviewPtr->yc;
+   elviewPtr->pointer[1].x += xc - elviewPtr->xc;
+   elviewPtr->pointer[1].y += yc - elviewPtr->yc;
+   elviewPtr->mechptr[0].x += xc - elviewPtr->xc;
+   elviewPtr->mechptr[0].y += yc - elviewPtr->yc;
+   elviewPtr->mechptr[1].x += xc - elviewPtr->xc;
+   elviewPtr->mechptr[1].y += yc - elviewPtr->yc;
+   elviewPtr->amlim[0].x += xc - elviewPtr->xc;
+   elviewPtr->amlim[0].y += yc - elviewPtr->yc;
+   elviewPtr->amlim[1].x += xc - elviewPtr->xc;
+   elviewPtr->amlim[1].y += yc - elviewPtr->yc;
+   for ( i = 0; i < elviewPtr->npc; i++ ) {
+      elviewPtr->elpath[i].x += xc - elviewPtr->xc;
+      elviewPtr->elpath[i].y += yc - elviewPtr->yc;
+   }
    
 /* Draw the ponters */
-      XDrawLine( display, drawable, elviewPtr->mechptrGC, 
-         elviewPtr->mechptr[0].x, elviewPtr->mechptr[0].y,
-         elviewPtr->mechptr[1].x, elviewPtr->mechptr[1].y);
-      XDrawLine( display, drawable, elviewPtr->pointerGC, 
-         elviewPtr->pointer[0].x, elviewPtr->pointer[0].y,
-         elviewPtr->pointer[1].x, elviewPtr->pointer[1].y);
+   XDrawLine( display, drawable, elviewPtr->mechptrGC, 
+      elviewPtr->mechptr[0].x, elviewPtr->mechptr[0].y,
+      elviewPtr->mechptr[1].x, elviewPtr->mechptr[1].y);
+   XDrawLine( display, drawable, elviewPtr->pointerGC, 
+      elviewPtr->pointer[0].x, elviewPtr->pointer[0].y,
+      elviewPtr->pointer[1].x, elviewPtr->pointer[1].y);
 
 /* Draw the elevation path */
-      XDrawLines( display, drawable, elviewPtr->elpathGC, 
-            elviewPtr->elpath, elviewPtr->npc, CoordModeOrigin);
+   XDrawLines( display, drawable, elviewPtr->elpathGC, 
+         elviewPtr->elpath, elviewPtr->npc, CoordModeOrigin);
 
 /* Draw the airmass limit */
-      XDrawLine( display, drawable, elviewPtr->amlimGC, 
-         elviewPtr->amlim[0].x, elviewPtr->amlim[0].y,
-         elviewPtr->amlim[1].x, elviewPtr->amlim[1].y);
+   XDrawLine( display, drawable, elviewPtr->amlimGC, 
+      elviewPtr->amlim[0].x, elviewPtr->amlim[0].y,
+      elviewPtr->amlim[1].x, elviewPtr->amlim[1].y);
 
 /* Save the drawable coordinate offset */
-      elviewPtr->xc = xc;
-      elviewPtr->yc = yc;
-   }
+   elviewPtr->xc = xc;
+   elviewPtr->yc = yc;
 }
 
 static void BboxEV( Tk_Canvas canvas, Tk_Item *itemPtr)

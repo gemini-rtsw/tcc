@@ -9,7 +9,7 @@
 #
 #       Updates the display.
 #
-#  D Terrett 25 August 1998
+#  D Terrett 10 November 1999
 #
 #  Copyright CCLRC
 #-
@@ -94,11 +94,11 @@ itcl::body WrapView::update {} {
 #-
    $itk_component(azwrap) itemconfigure wrapview -display 1
    $itk_component(rotwrap) itemconfigure wrapview -display 1
-   set elttl [sa tcssad get currentTimeToSet value]
+   set elttl [sadVal tcssad currentTimeToSet ""]
    if { $elttl == "" } {
       set elttl 99999999
    }
-   set azttl [sa tcssad get timeToAzlim value]
+   set azttl [sadVal tcssad timeToAzlim ""]
    $itk_component(azttl) configure -text "" \
          -background [$itk_interior cget -background]
    if { $azttl != "" } {
@@ -119,7 +119,7 @@ itcl::body WrapView::update {} {
       }
    }
 
-   set rotttl [sa tcssad get timeToRotlim value]
+   set rotttl [sadVal tcssad timeToRotlim ""]
    $itk_component(rotttl) configure -text "" \
          -background [$itk_interior cget -background]
    if { $rotttl != "" } {

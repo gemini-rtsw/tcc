@@ -7,7 +7,7 @@
 #
 #       Updates the display.
 #
-#  D Terrett 4 September 1998
+#  D Terrett 10 November 1999
 #
 #  Copyright CCLRC
 #-
@@ -71,8 +71,8 @@ itcl::body ElevationView::update {} {
 #-
    $itk_component(elview) itemconfigure elview -display 1
 
-   set ttl [sa tcssad get currentTimeToSet value]
-   set ttz [sa tcssad get timeToBlindSpot value]
+   set ttl [sadVal tcssad currentTimeToSet ""]
+   set ttz [sadVal tcssad timeToBlindSpot ""]
    $itk_component(ttl) configure -background $itk_option(-background)
    if { $ttl != "" } {
       set h [expr int($ttl / 60.0)]
@@ -99,8 +99,8 @@ itcl::body ElevationView::update {} {
       }
    }
 
-   set aml [sa tcssad get airMassLimit value]
-   set ttl [sa tcssad get timeToAmSet value]
+   set aml [sadVal tcssad airMassLimit ""]
+   set ttl [sadVal tcssad timeToAmSet ""]
    if { $ttl == "" } {
       $itk_component(amttl) configure -text "airmass $aml not reached"
    } else {

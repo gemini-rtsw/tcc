@@ -9,7 +9,7 @@
 #
 #       Updates the display from the SAD
 #
-#  D Terrett 6 June 1999
+#  D Terrett 10 November 1999
 #
 #  Copyright CCLRC
 #-
@@ -108,18 +108,16 @@ itcl::body GraphicDisplay::update {} {
    $itk_component(domeview) update
    $itk_component(elview) update
    $itk_component(wrapview) update
-#   $itk_component(probe1) update
-#   $itk_component(probe2) update
+   $itk_component(probe1) update
+   $itk_component(probe2) update
 
-   set v [sa tcssad get domeVignette value]
+   set v [sadVal tcssad domeVignette -1]
    if { $v > 0.0 && $Vignette == 0 } {
       $itk_component(opticsview) configure -vignette 1
       set Vignette 1
-   } else {
-      if { $v == 0 && $Vignette == 1 } {
-         $itk_component(opticsview) configure -vignette 0
-         set Vignette 0
-      }
+   } elseif { $v == 0 && $Vignette == 1 } {
+      $itk_component(opticsview) configure -vignette 0
+      set Vignette 0
    }
    $itk_component(opticsview) configure \
          -deployablebaffle [sa m2ssad get deployBafflePos value] \

@@ -16,7 +16,7 @@ static char rcsid[]="$Id:";
 *   The only configuration option is -display which merely serves as a way
 *   of forcing the item to be redrawn and new data fetched from the TCS.
 *
-*   D L Terrett 22 January 1999
+*   D L Terrett 11 November 1999
 *
 *   Copyright CCLRC
 */
@@ -320,10 +320,10 @@ static int ConfigureDV( Tcl_Interp *interp, Tk_Canvas canvas, Tk_Item *itemPtr,
 
 /* If the vent gate positions have changed new GC for drawing them have to
    be allocated. */
-   if ( Tcl_Eval( interp, "sa ecssad get eastVentGatePos value" ) != TCL_OK ) 
-       return TCL_OK;
-   if ( Tcl_GetDouble( interp, interp->result, &vgpos ) != TCL_OK )
-       return TCL_OK;
+   vgpos = 0.0;
+   if ( Tcl_Eval( interp, "sa ecssad get eastVentGatePos value" ) == TCL_OK )
+       Tcl_GetDouble( interp, interp->result, &vgpos );
+   if ( vgpos > 100.0 ) vgpos = 100.0;
    mask = GCForeground | GCLineWidth;
    gcvalues.foreground = domeviewPtr->blackColor->pixel;
    if ( fabs( domeviewPtr->evgPos - vgpos ) > 0.05 ) {
@@ -337,10 +337,10 @@ static int ConfigureDV( Tcl_Interp *interp, Tk_Canvas canvas, Tk_Item *itemPtr,
       }
       domeviewPtr->evgPos = vgpos;
    }
-   if ( Tcl_Eval( interp, "sa ecssad get westVentGatePos value" ) != TCL_OK ) 
-       return TCL_OK;
-   if ( Tcl_GetDouble( interp, interp->result, &vgpos ) != TCL_OK )
-       return TCL_OK;
+   vgpos = 0.0;
+   if ( Tcl_Eval( interp, "sa ecssad get westVentGatePos value" ) == TCL_OK )
+       Tcl_GetDouble( interp, interp->result, &vgpos );
+   if ( vgpos > 100.0 ) vgpos = 100.0;
    if ( fabs( domeviewPtr->wvgPos - vgpos ) > 0.05 ) {
       if ( domeviewPtr->wvgGC != None ) {
          Tk_FreeGC( display, domeviewPtr->wvgGC );
@@ -353,51 +353,36 @@ static int ConfigureDV( Tcl_Interp *interp, Tk_Canvas canvas, Tk_Item *itemPtr,
       domeviewPtr->wvgPos = vgpos;
    }
 
-   if ( Tcl_Eval( interp, "sa tcssad get airMassLimitEl value" ) != TCL_OK ) 
-       return TCL_OK;
-   if ( Tcl_GetDouble( interp, interp->result, &domeviewPtr->amLimEl ) 
-       != TCL_OK ) return TCL_OK;
+   if ( Tcl_Eval( interp, "sa tcssad get airMassLimitEl value" ) == TCL_OK )
+       Tcl_GetDouble( interp, interp->result, &domeviewPtr->amLimEl );
+   if ( Tcl_Eval( interp, "sa ecssad get topShtrPos value" ) == TCL_OK ) 
+       Tcl_GetDouble( interp, interp->result, &domeviewPtr->topShutEl );
+   if ( Tcl_Eval( interp, "sa ecssad get botShtrPos value" ) == TCL_OK ) 
+       Tcl_GetDouble( interp, interp->result, &domeviewPtr->botShutEl );
 
-   if ( Tcl_Eval( interp, "sa ecssad get topShtrPos value" ) != TCL_OK ) 
-       return TCL_OK;
-   if ( Tcl_GetDouble( interp, interp->result, &domeviewPtr->topShutEl ) 
-       != TCL_OK ) return TCL_ERROR;
-   if ( Tcl_Eval( interp, "sa ecssad get botShtrPos value" ) != TCL_OK ) 
-       return TCL_OK;
-   if ( Tcl_GetDouble( interp, interp->result, &domeviewPtr->botShutEl ) 
-       != TCL_OK ) return TCL_ERROR;
+   if ( Tcl_Eval( interp, "sa ecssad get domePos value" ) == TCL_OK ) 
+       Tcl_GetDouble( interp, interp->result, &domeviewPtr->domeaz );
 
-   if ( Tcl_Eval( interp, "sa ecssad get domePos value" ) != TCL_OK ) 
-       return TCL_OK;
-   if ( Tcl_GetDouble( interp, interp->result, &domeviewPtr->domeaz ) 
-       != TCL_OK ) return TCL_ERROR;
-
-   if ( Tcl_Eval( interp, "sa tcssad get currentAz value" ) != TCL_OK ) 
-       return TCL_OK;
-   strcpy( savest, interp->result);
-   if ( Tcl_Eval( interp, "sa tcssad get currentEl value" ) != TCL_OK ) 
-       return TCL_OK;
-   if ( tccDcRadec( interp, AZEL_MNT, savest, interp->result, 
-       &domeviewPtr->telAz, &domeviewPtr->telEl ) != TCL_OK ) return TCL_ERROR;
-
-   if ( Tcl_Eval( interp, "sa tcssad get mountTrackFrame value" ) != TCL_OK ) 
-      return TCL_OK;
-   if ( tccDcFrame( interp, interp->result, &domeviewPtr->system ) != TCL_OK ) 
-      return TCL_OK;
-   if ( domeviewPtr->system != AZEL_TOPO ) {
-      if ( Tcl_Eval( interp, "sa tcssad get mountTrackEq value" ) != TCL_OK ) 
-         return TCL_OK;
-      if ( tccDcEpoch( interp, interp->result, &domeviewPtr->equinox.type, 
-         &domeviewPtr->equinox.year ) != TCL_OK ) return TCL_ERROR;
+   if ( Tcl_Eval( interp, "sa tcssad get currentAz value" ) == TCL_OK ) {
+       strcpy( savest, interp->result);
+       if ( Tcl_Eval( interp, "sa tcssad get currentEl value" ) == TCL_OK ) 
+           tccDcRadec( interp, AZEL_MNT, savest, interp->result, 
+               &domeviewPtr->telAz, &domeviewPtr->telEl );
    }
-   if ( Tcl_Eval( interp, "sa tcssad get demandRA value" ) != TCL_OK ) 
-      return TCL_OK;
-   strcpy( savest, interp->result);
-   if ( Tcl_Eval( interp, "sa tcssad get demandDec value" ) != TCL_OK ) 
-      return TCL_OK;
-   if ( tccDcRadec( interp, domeviewPtr->system, savest, interp->result, 
-       &domeviewPtr->ra, &domeviewPtr->dec ) != TCL_OK ) return TCL_ERROR;
 
+   if ( Tcl_Eval( interp, "sa tcssad get mountTrackFrame value" ) == TCL_OK ) 
+       tccDcFrame( interp, interp->result, &domeviewPtr->system ); 
+   if ( domeviewPtr->system != AZEL_TOPO ) {
+      if ( Tcl_Eval( interp, "sa tcssad get mountTrackEq value" ) == TCL_OK ) 
+          tccDcEpoch( interp, interp->result, &domeviewPtr->equinox.type, 
+              &domeviewPtr->equinox.year );
+   }
+   if ( Tcl_Eval( interp, "sa tcssad get demandRA value" ) == TCL_OK ) {
+       strcpy( savest, interp->result);
+       if ( Tcl_Eval( interp, "sa tcssad get demandDec value" ) == TCL_OK ) 
+           tccDcRadec( interp, domeviewPtr->system, savest, interp->result, 
+               &domeviewPtr->ra, &domeviewPtr->dec );
+   }
    return TCL_OK;
 }
 

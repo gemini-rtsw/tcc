@@ -1,4 +1,4 @@
-static char rcsid[] = "$Id: tccDecode.c,v 1.1.1.1 1999-05-27 04:53:39 dlt Exp $";
+static char rcsid[] = "$Id: tccDecode.c,v 1.2 1999-11-12 00:19:56 dlt Exp $";
 /* *INDENT-OFF* */
 /*
 *   FILENAME
@@ -15,6 +15,9 @@ static char rcsid[] = "$Id: tccDecode.c,v 1.1.1.1 1999-05-27 04:53:39 dlt Exp $"
 */
 /*
  * $Log: not supported by cvs2svn $
+ * Revision 1.1.1.1  1999/05/27 04:53:39  dlt
+ * Initial load of Gemini telescope consoles
+ *
  */
 /* *INDENT-ON* */
 
@@ -255,11 +258,11 @@ int tccDcEpoch(Tcl_Interp *interp, char *string, char *type, double *epoch)
         if (e >= MINEP && e <= MAXEP) {
             slaKbj(j2, e, &k, &j);
             if (!j) {
-                *type = (int) k;
-                *epoch = e;
 
                 /* OK: verify end of string reached. */
                 if ((int) string[n - 1] == '\0') {
+                    *type = (int) k;
+                    *epoch = e;
                     return TCL_OK;
                 } else {
                     Tcl_AppendResult( interp, "leftover text", 
@@ -508,14 +511,10 @@ int tccDcLen(char *string)
 **
 **         Supplied values are folded into the range 0-360.
 **
-**    4  If either coordinate is outside the allowed range, neither
-**       is changed and a function value of TCL_ERROR is returned.
+**    4  If any error occurs the output arguments are not changed
+**       and a function value of TCL_ERROR is returned.
 **
-**    5  If either coordinate has been decoded successfully but the
-**       string has not been exhausted, the value is returned but
-**       with a function value of TCL_ERROR.
-**
-**    6  See the code for the various messages that can result.
+**    5  See the code for the various messages that can result.
 **
 */
 /* *INDENT-ON* */
@@ -539,15 +538,11 @@ int tccDcRadec(Tcl_Interp *interp, FRAMETYPE frame, char *string1, char *string2
     if (!tccDcLen(string1)) {
         Tcl_AppendResult( interp, "blank RA/Azimuth", 
                    (char*)NULL);
-        *r = 0.0;
-        *d = 0.0;
         return TCL_ERROR;
     }
     if (!tccDcLen(string2)) {
         Tcl_AppendResult( interp, "blank Dec/Elevation", 
                    (char*)NULL);
-        *r = 0.0;
-        *d = 0.0;
         return TCL_ERROR;
     }
 
@@ -664,10 +659,10 @@ int tccDcRadec(Tcl_Interp *interp, FRAMETYPE frame, char *string1, char *string2
  */
 
 /* Return the values and verify end of string reached. */
-    *r = ar;
-    *d = ed;
     if ((int) lstr1[m - 1] == '\0' &&
         (int) lstr2[n - 1] == '\0') {
+        *r = ar;
+        *d = ed;
         return TCL_OK;
     } else {
         Tcl_AppendResult( interp, "leftover text", (char*)NULL);

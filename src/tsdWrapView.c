@@ -9,7 +9,7 @@ static char rcsid[]="$Id:";
 *
 *   DESCRIPTION
 *
-*   D L Terrett 22 January 1999
+*   D L Terrett 11 November 1999
 *
 *   Copyright CCLRC
 */
@@ -62,12 +62,17 @@ typedef struct WrapViewItem {
    GC mechptrGC;
    XPoint outline[1001];
    XPoint cable[1450];
+   double az;
+   double el;
+   double ma;
+   double mech;
+   double mel;
+   FRAMETYPE frame;
    int px1, px2, py1, py2;
    int mpx1, mpx2, mpy1, mpy2;
    int npc;
    int rotator;
    int display;
-   int configOk;
 } WrapViewItem;
 
 static Tk_CustomOption tagsOption = {
@@ -235,6 +240,14 @@ static int CreateWV( Tcl_Interp *interp, Tk_Canvas canvas, Tk_Item *itemPtr,
    wrapviewPtr->xc = 0;
    wrapviewPtr->yc = 0;
 
+/* Set tcs data to safe values. */
+   wrapviewPtr->az = 0.0;
+   wrapviewPtr->el = 90.0 * D2R;
+   wrapviewPtr->frame = AZEL_MNT;
+   wrapviewPtr->ma = 0.0;
+   wrapviewPtr->mech = 0.0;
+   wrapviewPtr->mel = 90.0 * D2R;
+
    return TCL_OK;
 }
 
@@ -249,9 +262,8 @@ static int ConfigureWV( Tcl_Interp *interp, Tk_Canvas canvas, Tk_Item *itemPtr,
    unsigned long mask;
    char savest[40];
    int i;
-   double az, azm, el, da, ma, daoff, ha, dec, sdec, cdec, mech, mel;
+   double az, el, ma, da, daoff, ha, dec, sdec, cdec;
    double s, c, r, r0, r1, a, a0, a1, delta;
-   FRAMETYPE frame;
 
    if ( Tk_ConfigureWidget( interp, tkwin, configspecs, argc, argv, 
       (char *) wrapviewPtr, flags ) != TCL_OK ) {
@@ -288,57 +300,45 @@ static int ConfigureWV( Tcl_Interp *interp, Tk_Canvas canvas, Tk_Item *itemPtr,
    }
 
 /* Get data from the TCS */
-   wrapviewPtr->configOk = 0;
-   if ( Tcl_Eval( interp, "sa tcssad get demandAz value" ) != TCL_OK )
-       return TCL_OK;
-   strcpy( savest, interp->result);
-   if ( Tcl_Eval( interp, "sa tcssad get demandEl value" ) != TCL_OK )
-       return TCL_OK;
-   if ( tccDcRadec( interp, AZEL_MNT, savest, interp->result, &az, &el ) != 
-      TCL_OK ) return TCL_ERROR;
-   if ( Tcl_Eval( interp, "sa tcssad get mountTrackFrame value" ) != TCL_OK ) 
-      return TCL_OK;
-   if ( tccDcFrame( interp, interp->result, &frame) != TCL_OK )
-      return TCL_OK;
+   if ( Tcl_Eval( interp, "sa tcssad get demandAz value" ) == TCL_OK ) {
+      strcpy( savest, interp->result);
+      if ( Tcl_Eval( interp, "sa tcssad get demandEl value" ) == TCL_OK )
+          tccDcRadec( interp, AZEL_MNT, savest, interp->result, 
+             &wrapviewPtr->az, &wrapviewPtr->el ); 
+   }
+   if ( Tcl_Eval( interp, "sa tcssad get mountTrackFrame value" ) == TCL_OK ) 
+      tccDcFrame( interp, interp->result, &wrapviewPtr->frame);
    if ( wrapviewPtr->rotator ) {
-      if ( Tcl_Eval( interp, "sa tcssad get demandRma value" ) != TCL_OK ) 
-         return TCL_OK;
-      if ( Tcl_GetDouble( interp, interp->result, &ma ) != TCL_OK )
-         return TCL_OK;
-      ma *= D2R;
-      if ( Tcl_Eval( interp, "sa crssad get currentRma value" ) != TCL_OK ) 
-         return TCL_OK;
-      if ( Tcl_GetDouble( interp, interp->result, &mech ) != TCL_OK )
-         return TCL_OK;
-      mech *= D2R;
-      if ( frame != AZEL_TOPO ) {
-         if ( Tcl_Eval( interp, "sa tcssad get rotTrackFrame value" ) !=
-            TCL_OK ) return TCL_OK;
-         if ( tccDcFrame( interp, interp->result, &frame) != TCL_OK )
-            return TCL_OK;
+      if ( Tcl_Eval( interp, "sa tcssad get demandRma value" ) == TCL_OK ) 
+         if ( Tcl_GetDouble( interp, interp->result, &wrapviewPtr->ma ) 
+            == TCL_OK ) wrapviewPtr->ma *= D2R;
+      if ( Tcl_Eval( interp, "sa crssad get currentRma value" ) == TCL_OK ) 
+         if ( Tcl_GetDouble( interp, interp->result, &wrapviewPtr->mech ) 
+            == TCL_OK ) wrapviewPtr->mech *= D2R;
+      if ( wrapviewPtr->frame != AZEL_TOPO ) {
+         if ( Tcl_Eval( interp, "sa tcssad get rotTrackFrame value" ) ==
+            TCL_OK ) tccDcFrame( interp, interp->result, &wrapviewPtr->frame);
       }
    } else {
-      if ( Tcl_Eval( interp, "sa tcssad get currentAz value" ) != TCL_OK )
-          return TCL_OK;
-      strcpy( savest, interp->result);
-      if ( Tcl_Eval( interp, "sa tcssad get currentEl value" ) != TCL_OK )
-          return TCL_OK;
-      if ( tccDcRadec( interp, AZEL_MNT, savest, interp->result, &mech, &mel ) 
-         != TCL_OK ) return TCL_ERROR;
+      if ( Tcl_Eval( interp, "sa tcssad get currentAz value" ) == TCL_OK ) {
+         strcpy( savest, interp->result);
+         if ( Tcl_Eval( interp, "sa tcssad get currentEl value" ) == TCL_OK )
+            tccDcRadec( interp, AZEL_MNT, savest, interp->result, 
+               &wrapviewPtr->mech, &wrapviewPtr->mel );
+      }
    }
-   wrapviewPtr->configOk = 1;
 
 /* Mechanical position pointer */
-   s = sin( mech );
-   c = cos( mech );
-   r = START_R + ( ( mech - wrapviewPtr->lolimit * D2R ) * PITCH );
+   s = sin( wrapviewPtr->mech );
+   c = cos( wrapviewPtr->mech );
+   r = START_R + ( ( wrapviewPtr->mech - wrapviewPtr->lolimit * D2R ) * PITCH );
    wrapviewPtr->mpx1 = (short) ( s * r ) + wrapviewPtr->xc;
    wrapviewPtr->mpy1 = - (short) ( c * r ) + wrapviewPtr->yc;
    wrapviewPtr->mpx2 = (short) ( s * ( r + WIDTH ) ) + wrapviewPtr->xc;
    wrapviewPtr->mpy2 = - (short) ( c * ( r + WIDTH ) ) + wrapviewPtr->yc;
 
 /* Generate the cable path */
-   ma = wrapviewPtr->rotator ? ma : az;
+   ma = wrapviewPtr->rotator ? wrapviewPtr->ma : wrapviewPtr->az;
    s = sin( ma );
    c = cos( ma );
    r0 = START_R + ( ( ma - wrapviewPtr->lolimit * D2R ) * PITCH );
@@ -353,14 +353,15 @@ static int ConfigureWV( Tcl_Interp *interp, Tk_Canvas canvas, Tk_Item *itemPtr,
    wrapviewPtr->cable[0].x = wrapviewPtr->px1;
    wrapviewPtr->cable[0].y = wrapviewPtr->py1;
    wrapviewPtr->npc = 1;
-   if ( frame != AZEL_TOPO ) {
-      tccDh2e( az, el, wrapviewPtr->sphi, wrapviewPtr->cphi, &ha, &dec);
+   if ( wrapviewPtr->frame != AZEL_TOPO ) {
+      tccDh2e( wrapviewPtr->az, wrapviewPtr->el, wrapviewPtr->sphi, 
+         wrapviewPtr->cphi, &ha, &dec);
       sdec = sin ( dec );
       cdec = cos ( dec );
       if ( wrapviewPtr->rotator )
          da = tccPa( ha, sdec, cdec, wrapviewPtr->sphi, wrapviewPtr->cphi);
       else
-         da = az;
+         da = wrapviewPtr->az;
       daoff = ma - ( PI - da );
       for ( i = 1; i < 144; i++ ) {
          ha += PI / 144.0;
@@ -475,39 +476,30 @@ static void DisplayWV( Tk_Canvas canvas, Tk_Item *itemPtr, Display *display,
       wrapviewPtr->outline, 1001, CoordModeOrigin);
 
 /* Adjust the pointer and cable coordinates */
-   if ( wrapviewPtr->configOk ) {
-      wrapviewPtr->mpx1 += xc - wrapviewPtr->xc;
-      wrapviewPtr->mpy1 += yc - wrapviewPtr->yc;
-      wrapviewPtr->mpx2 += xc - wrapviewPtr->xc;
-      wrapviewPtr->mpy2 += yc - wrapviewPtr->yc;
-      wrapviewPtr->px1 += xc - wrapviewPtr->xc;
-      wrapviewPtr->py1 += yc - wrapviewPtr->yc;
-      wrapviewPtr->px2 += xc - wrapviewPtr->xc;
-      wrapviewPtr->py2 += yc - wrapviewPtr->yc;
-      for ( i = 0; i < wrapviewPtr->npc; i++ ) {
-         wrapviewPtr->cable[i].x += xc - wrapviewPtr->xc;
-         wrapviewPtr->cable[i].y += yc - wrapviewPtr->yc;
-      }
+   wrapviewPtr->mpx1 += xc - wrapviewPtr->xc;
+   wrapviewPtr->mpy1 += yc - wrapviewPtr->yc;
+   wrapviewPtr->mpx2 += xc - wrapviewPtr->xc;
+   wrapviewPtr->mpy2 += yc - wrapviewPtr->yc;
+   wrapviewPtr->px1 += xc - wrapviewPtr->xc;
+   wrapviewPtr->py1 += yc - wrapviewPtr->yc;
+   wrapviewPtr->px2 += xc - wrapviewPtr->xc;
+   wrapviewPtr->py2 += yc - wrapviewPtr->yc;
+   for ( i = 0; i < wrapviewPtr->npc; i++ ) {
+      wrapviewPtr->cable[i].x += xc - wrapviewPtr->xc;
+      wrapviewPtr->cable[i].y += yc - wrapviewPtr->yc;
+   }
    
 /* Draw the pointers */
-      XDrawLine( display, drawable, wrapviewPtr->mechptrGC, wrapviewPtr->mpx1,
-         wrapviewPtr->mpy1, wrapviewPtr->mpx2, wrapviewPtr->mpy2);
-      XDrawLine( display, drawable, wrapviewPtr->pointerGC, wrapviewPtr->px1,
-         wrapviewPtr->py1, wrapviewPtr->px2, wrapviewPtr->py2);
+   XDrawLine( display, drawable, wrapviewPtr->mechptrGC, wrapviewPtr->mpx1,
+      wrapviewPtr->mpy1, wrapviewPtr->mpx2, wrapviewPtr->mpy2);
+   XDrawLine( display, drawable, wrapviewPtr->pointerGC, wrapviewPtr->px1,
+      wrapviewPtr->py1, wrapviewPtr->px2, wrapviewPtr->py2);
 
 /* Draw the cable path */
-#if 0
-      if ( wrapviewPtr->npc > 1 ) {
-         XDrawLines( display, drawable, wrapviewPtr->cableGC, 
-            wrapviewPtr->cable, wrapviewPtr->npc, CoordModeOrigin);
-      }
-#else
-      for ( i = 0; i < wrapviewPtr->npc; i++ ) {
-         XDrawLine( display, drawable, wrapviewPtr->cableGC,
-            wrapviewPtr->cable[i].x - 1, wrapviewPtr->cable[i].y - 1,
-            wrapviewPtr->cable[i].x + 1, wrapviewPtr->cable[i].y + 1);
-      }
-#endif
+   for ( i = 0; i < wrapviewPtr->npc; i++ ) {
+      XDrawLine( display, drawable, wrapviewPtr->cableGC,
+         wrapviewPtr->cable[i].x - 1, wrapviewPtr->cable[i].y - 1,
+         wrapviewPtr->cable[i].x + 1, wrapviewPtr->cable[i].y + 1);
    }
 
 /* Save the drawable coordinate offset */

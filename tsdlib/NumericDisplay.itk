@@ -11,7 +11,7 @@
 #
 #  options
 #
-#  D Terrett 6 June 1999
+#  D Terrett 10 November 1999
 #
 #  Copyright CCLRC
 #-
@@ -288,7 +288,10 @@ itcl::body NumericDisplay::newtarget args {
    set system [sa tcssad get mountTrackFrame]
    scan [sa tcssad get mountTrackEq] "%c%d" type year
    set type [format "%c" $type]
-   set wavel [expr [sa tcssad get mountWavelength] / 10000.0]
+   set wavel [sadVal tcssad mountWavelength ""]
+   if { $wavel != "" } {
+      set wavel "[expr {$wavel / 10000.0}] mu"
+   }
    if { $system == "AZEL_TOPO" } {
       $itk_component(telpos1) configure -labeltext Az
       $itk_component(telpos2) configure -labeltext El
@@ -308,13 +311,16 @@ itcl::body NumericDisplay::newtarget args {
          $itk_component(telpossys) configure -text ""
       }
    }
-   $itk_component(telposwavel) configure -text "$wavel mu"
+   $itk_component(telposwavel) configure -text $wavel
 
 # Target position.
    set system [sa tcssad get $itk_option(-vt)TrackFrame]
    scan [sa tcssad get $itk_option(-vt)TrackEq] "%c%d" type year
    set type [format "%c" $type]
-   set wavel [expr [sa tcssad get $itk_option(-vt)Wavelength] / 10000.0]
+   set wavel [sadVal tcssad $itk_option(-vt)Wavelength ""]
+   if { $wavel != "" } {
+      set wavel "[expr {$wavel / 10000.0}] mu"
+   }
    if { $system == "AZEL_TOPO" } {
       $itk_component(tar1) configure -labeltext Az
       $itk_component(tar2) configure -labeltext El
@@ -334,7 +340,7 @@ itcl::body NumericDisplay::newtarget args {
          $itk_component(tarsys) configure -text ""
       }
    }
-   $itk_component(tarwavel) configure -text "$wavel mu"
+   $itk_component(tarwavel) configure -text "$wavel"
 }
 
 itcl::body NumericDisplay::newobject args {
@@ -421,8 +427,8 @@ itcl::body NumericDisplay::inPosition {rec status info value} {
       mcssad {
 
 # Telescope position.
-         if { [sa mcssad get followS] == "ON" } {
-            if { [sa tcssad get inPosition] == "TRUE" } {
+         if { [isFollowing mcssad followS] } {
+            if { [isInPosition tcssad inPosition] == "TRUE" } {
                set status ok
             } else {
                set status warning
@@ -434,13 +440,13 @@ itcl::body NumericDisplay::inPosition {rec status info value} {
          $itk_component(telpos2) configure -status $status
 
 # Telescope Az/El.
-         if { [sa mcssad get followS] == "ON" } {
-            if { [sa mcssad get inPositionAz] } {
+         if { [isFollowing mcssad followS] } {
+            if { [isInPosition mcssad inPositionAz] } {
                set azstat ok
             } else {
                set azstat warning
             }
-            if { [sa mcssad get inPositionEl] } {
+            if { [isInPosition mcssad inPositionEl] } {
                set elstat ok
             } else {
                set elstat warning
@@ -455,8 +461,8 @@ itcl::body NumericDisplay::inPosition {rec status info value} {
       crssad {
 
 # Cass rotator position.
-         if { [sa crssad get followS] == "On" } {
-            if { [sa crssad get inPosition] } {
+         if { [isFollowing crssad followS] } {
+            if { [isInPosition crssad inPosition] } {
                set status ok
             } else {
                set status warning
@@ -469,17 +475,17 @@ itcl::body NumericDisplay::inPosition {rec status info value} {
       ecssad {
 
 # Dome az and shutter positions.
-         if { [sa ecssad get domeInPos] } {
+         if { [isInPosition ecssad domeInPos] } {
             set domestat ok
          } else {
             set domestat warning
          }
-         if { [sa ecssad get topShtrInPos] } {
+         if { [isInPosition ecssad topShtrInPos] } {
             set topstat ok
          } else {
             set topstat warning
          }
-         if { [sa ecssad get botShtrInPos] } {
+         if { [isInPosition ecssad botShtrInPos] } {
             set botstat ok
          } else {
             set botstat warning

@@ -10,7 +10,7 @@
 #
 #      updates the display
 #
-# D Terrett 3 June 1999
+# D Terrett 10 November 1999
 #
 #  Copyright CCLRC
 #-
@@ -97,19 +97,23 @@ itcl::body ProbeView::update {} {
 
 # Update the coordinates of the arm according to the x/y of the wfs and 
 # the angle of the pivot.
-   set a [sa agssad get $itk_option(-probe)TableAngle value]
-   set x [sa agssad get $itk_option(-probe)X value]
-   set y [sa agssad get $itk_option(-probe)Y value]
-   eval $itk_component(canvas) coords $armtag [pivot $a] [xy $x $y]
+   set a [sadVal agssad $itk_option(-probe)TableAngle ""]
+   set x [sadVal agssad $itk_option(-probe)X ""]
+   set y [sadVal agssad $itk_option(-probe)Y ""]
+
+   if { $a != "" && $x != "" && $y != "" } {
+      eval $itk_component(canvas) coords $armtag [pivot $a] [xy $x $y]
 
 # Set the colour according to the follow and in position state.
-   if { [sa agssad get $itk_option(-probe)FollowS value] == "ON" } {
-      if { [sa agssad get $itk_option(-probe)InPosition value] } {
-         $itk_component(canvas) itemconfigure $armtag -fill green
+      if { [isFollowing agssad $itk_option(-probe)FollowS] } {
+         if { [isInPosition agssad $itk_option(-probe)InPosition] } {
+            $itk_component(canvas) itemconfigure $armtag -fill green
+         } else {
+            $itk_component(canvas) itemconfigure $armtag -fill yellow
+         }
       } else {
-         $itk_component(canvas) itemconfigure $armtag -fill yellow
+         $itk_component(canvas) itemconfigure $armtag -fill red
       }
-   } else {
-      $itk_component(canvas) itemconfigure $armtag -fill red
    }
+   $itk_component(canvas) itemconfigure $armtag -fill red
 }
