@@ -7,7 +7,7 @@
 #  Arguments:
 #            Any command line options and values.
 #
-#  D Terrett  16 December 2004
+#  D Terrett  17 December 2004
 #
 #  Copyright CCLRC
 #-
@@ -162,6 +162,9 @@ proc tccMain args {
    WaveFrontSensor Pwfs1 pwfs1
    WaveFrontSensor Pwfs2 pwfs2
    WaveFrontSensor Oiwfs oiwfs
+
+# Create object for executing nods
+   Nod Nodder
 
 # Create the ocs session object for the one and only session.
    OcsSession ocssession sessionQueue
