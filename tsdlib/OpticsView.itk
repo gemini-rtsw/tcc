@@ -28,15 +28,25 @@
 #          -m2sstate          The follow/in position state of the m2
 #                             system (OFF FOLLOWING or INPOSITION).
 #
-#          -port1label        The label for ISS port 1.
+#          -portAlabel        The label for ISS port 1.
 #
-#          -port2label        The label for ISS port 2.
+#          -portBlabel        The label for ISS port 2 or 4.
 #
-#          -port3label        The label for ISS port 3.
+#          -portClabel        The label for ISS port 3 or 5.
 #
-#          -port4label        The label for ISS port 4.
+#          -portDnumber       The label for ISS port 4 or 2.
 #
-#          -port5label        The label for ISS port 5.
+#          -portEnumber       The label for ISS port 5 or 3.
+#
+#          -portAnumber       The number of port A
+#
+#          -portBnumber       The number of port B
+#
+#          -portCnumber       The number of port C
+#
+#          -portDnumber       The number of port D
+#
+#          -portEnumber       The number of port E
 #
 #          -pcsstate          The state of the PCS (OFF MOVING or OK)..
 #
@@ -49,7 +59,16 @@
 #                             according to the state of the configuration
 #                             options.
 #
-#  D Terrett  24 April 2001
+#  Notes:
+#         The ISS structures on Gemini North and Gemini South are rotated
+#         by 180 deg with respect to each other so that on Gemini North
+#         GCAL is on port 4 and the AO beam enters through port 2 but on
+#         Gemini South, GCAL is on 2 and the AO on 4. This code therefore
+#         labels the ports A,B,C,D and E where B is the AO port and D is
+#         GCAL. It is left to the caller to map the port number onto the
+#         correct port.
+#
+#  D Terrett  17 July 2001
 #
 #  Copyright CCLRC
 #-
@@ -67,11 +86,16 @@ itcl::class OpticsView {
    itk_option define -m2sstate m2sState M2sState OFF
    itk_option define -aopresent aoPresent AoPresent 0 {}
    itk_option define -vignette vignette Vignette 0 
-   itk_option define -port1label port1Label Label "" "relabel 1"
-   itk_option define -port2label port2Label Label "" "relabel 2"
-   itk_option define -port3label port3Label Label "" "relabel 3"
-   itk_option define -port4label port4Label Label "" "relabel 4"
-   itk_option define -port5label port5Label Label "" "relabel 5"
+   itk_option define -portAlabel portALabel Label "" "relabel A"
+   itk_option define -portBlabel portBLabel Label "" "relabel B"
+   itk_option define -portClabel portCLabel Label "" "relabel C"
+   itk_option define -portDlabel portDLabel Label "" "relabel D"
+   itk_option define -portElabel portELabel Label "" "relabel E"
+   itk_option define -portAnumber portANumber Number "" "renumber A"
+   itk_option define -portBnumber portBNumber Number "" "renumber B"
+   itk_option define -portCnumber portCNumber Number "" "renumber C"
+   itk_option define -portDnumber portDNumber Number "" "renumber D"
+   itk_option define -portEnumber portENumber Number "" "renumber E"
    itk_option define -pcsstate pcsState PcsState OFF
    itk_option define -calunit calUnit CalUnit CLOSE
    public {
@@ -79,16 +103,15 @@ itcl::class OpticsView {
    }
    private {
       method relabel {port}
+      method renumber {port}
    }
 }
 
 itk::usual OpticsView {
-   keep -aofold -aopresent -background -centralbaffle -cursor \
-      -deployablebaffle -highlightcolor -highlightthickness -holecover \
-      -hrwfs -insertbackground -insertborderwidth -insertwidth \
-      -insertontime -insertofftime -m1cover -m2sstate -port1label -port2label \
-      -port3label -port4label -port5label -scfold -selectbackground \
-      -selectborderwidth -selectforeground -calunit -pcsstate
+   keep -background -cursor -highlightcolor -highlightthickness \
+      -insertbackground -insertborderwidth -insertwidth \
+      -insertontime -insertofftime -selectbackground \
+      -selectborderwidth -selectforeground
 }
 
 itcl::body OpticsView::constructor args {
@@ -158,11 +181,11 @@ itcl::body OpticsView::constructor args {
    $c create oval -15 -85 15 -115 -outline black
 
 # Iss port labels
-   $c create text 0 -120 -anchor n -tags port1label
-   $c create text 40 95 -anchor w -tags port2label
-   $c create text -40 95 -anchor e -tags port3label
-   $c create text -40 -35 -anchor e -tags port4label
-   $c create text 40 -35 -anchor w -tags port5label
+   $c create text 0 -120 -anchor n -tags portAlabel
+   $c create text 40 95 -anchor w -tags portBlabel
+   $c create text -40 95 -anchor e -tags portClabel
+   $c create text -40 -35 -anchor e -tags portDlabel
+   $c create text 40 -35 -anchor w -tags portElabel
 
 # A&G outline
    $c create arc -100 90 100 -30 -style arc -start -80 -extent 340 \
@@ -199,11 +222,11 @@ itcl::body OpticsView::constructor args {
    $c create line 0 65  0 30 -width 6 -tags {Light NotAoLight}
 
 # Science fold to ISS face/HRWFS fold
-   $c create line 0 30 0 -60 -width 6 -tags {Light IssLight1}
-   $c create line 0 30 50 55 -width 6 -tags {Light IssLight2 AoLight}
-   $c create line 0 30 -50 55 -width 6 -tags {Light IssLight3}
-   $c create line 0 30 -50 5 -width 6 -tags {Light IssLight4}
-   $c create line 0 30 50 5 -width 6 -tags {Light IssLight5}
+   $c create line 0 30 0 -60 -width 6 -tags {Light IssLightA}
+   $c create line 0 30 50 55 -width 6 -tags {Light IssLightB AoLight}
+   $c create line 0 30 -50 55 -width 6 -tags {Light IssLightC}
+   $c create line 0 30 -50 5 -width 6 -tags {Light IssLightD}
+   $c create line 0 30 50 5 -width 6 -tags {Light IssLightE}
 
 # HRWFS fold to ISS face
    $c create line 0 -60 0 -100 -width 6 -tags {Light TvOutLight}
@@ -234,73 +257,73 @@ itcl::body OpticsView::constructor args {
    $c create line -11 72 7 53 -tags AoFoldBck
 
 # Science fold in various positions
-   $c create line -20 29 20 29 -width 2 -tags {ScFold ScFold32 ScFold23}
-   $c create line -20 27 20 27 -tags {ScFold ScFold32bck scFold23bck}
+   $c create line -20 29 20 29 -width 2 -tags {ScFold ScFoldCB ScFoldBC}
+   $c create line -20 27 20 27 -tags {ScFold ScFoldCBbck scFoldBCbck}
 
-   eval $c create line [$c coords ScFold32] -width 2 \
-         -tags [list {ScFold ScFold54 scFold45}]
-   eval $c create line [$c coords ScFold32bck] \
-         -tags [list {ScFold ScFold54bck ScFold45bck}]
+   eval $c create line [$c coords ScFoldCB] -width 2 \
+         -tags [list {ScFold ScFoldED scFoldDE}]
+   eval $c create line [$c coords ScFoldCBbck] \
+         -tags [list {ScFold ScFoldEDbck ScFoldDEbck}]
    $c scale ScFold54 0 30 1 -1
    $c scale ScFold54bck 0 30 1 -1
 
-   $c create line -1 10 -1 50 -width 2 -tags {ScFold ScFold25 ScFold52}
-   $c create line -3 10 -3 50 -tags {ScFold ScFold25bck ScFold52bck}
+   $c create line -1 10 -1 50 -width 2 -tags {ScFold ScFoldBE ScFoldEB}
+   $c create line -3 10 -3 50 -tags {ScFold ScFoldBEbck ScFoldEBbck}
 
-   eval $c create line [$c coords ScFold25] -width 2 \
-         -tags [list {ScFold ScFold34 ScFold43}]
-   eval $c create line [$c coords ScFold25bck] \
-         -tags [list {ScFold ScFold34bck scFold43bck}]
-   $c scale ScFold34 0 30 -1 1
-   $c scale ScFold34bck 0 30 -1 1
+   eval $c create line [$c coords ScFoldBE] -width 2 \
+         -tags [list {ScFold ScFoldCD ScFoldDC}]
+   eval $c create line [$c coords ScFoldBEbck] \
+         -tags [list {ScFold ScFoldCDbck scFoldDCbck}]
+   $c scale ScFoldCD 0 30 -1 1
+   $c scale ScFoldCDbck 0 30 -1 1
 
-   $c create line -10 13 10 47 -width 2 -tags {ScFold ScFold04 ScFold40}
-   $c create line -9 11 11 45 -tags {ScFold ScFold04bck ScFold40bck}
+   $c create line -10 13 10 47 -width 2 -tags {ScFold ScFoldUD ScFoldDU}
+   $c create line -9 11 11 45 -tags {ScFold ScFoldUDbck ScFoldDUbck}
 
-   eval $c create line [$c coords ScFold04] -width 2 \
-         -tags [list {ScFold ScFold05 ScFold50}]
-   eval $c create line [$c coords ScFold04bck] \
-         -tags [list {ScFold ScFold05bck ScFold50}]
-   $c scale ScFold05 0 30 -1 1
-   $c scale ScFold05bck 0 30 -1 1
+   eval $c create line [$c coords ScFoldUD] -width 2 \
+         -tags [list {ScFold ScFoldUE ScFoldEU}]
+   eval $c create line [$c coords ScFoldUDbck] \
+         -tags [list {ScFold ScFoldUEbck ScFoldEU}]
+   $c scale ScFoldUE 0 30 -1 1
+   $c scale ScFoldUEbck 0 30 -1 1
 
-   eval $c create line [$c coords ScFold04] -width 2 \
-         -tags [list {ScFold ScFold31 ScFold13}]
-   eval $c create line [$c coords ScFold04bck] \
-         -tags [list {ScFold ScFold31bck ScFold13bck}]
-   $c scale ScFold31 0 30 1 -1
-   $c scale ScFold31bck 0 30 1 -1
+   eval $c create line [$c coords ScFoldUD] -width 2 \
+         -tags [list {ScFold ScFoldCA ScFoldAC}]
+   eval $c create line [$c coords ScFoldUDbck] \
+         -tags [list {ScFold ScFoldCAbck ScFoldACbck}]
+   $c scale ScFoldCA 0 30 1 -1
+   $c scale ScFoldCAbck 0 30 1 -1
 
-   eval $c create line [$c coords ScFold31] -width 2 \
-         -tags [list {ScFold ScFold21 ScFold12}]
-   eval $c create line [$c coords ScFold31bck] \
-         -tags [list {ScFold ScFold21bck ScFold12bck}]
-   $c scale ScFold21 0 30 -1 1
-   $c scale ScFold21bck 0 30 -1 1
+   eval $c create line [$c coords ScFoldCA] -width 2 \
+         -tags [list {ScFold ScFoldBA ScFoldAB}]
+   eval $c create line [$c coords ScFoldCAbck] \
+         -tags [list {ScFold ScFoldBAbck ScFoldABbck}]
+   $c scale ScFoldBA 0 30 -1 1
+   $c scale ScFoldBAbck 0 30 -1 1
 
-   $c create line -17 20 17 40 -width 2 -tags {ScFold ScFold03 ScFold30}
-   $c create line -15 19 19 39 -tags {ScFold ScFold03bck ScFold30bck}
+   $c create line -17 20 17 40 -width 2 -tags {ScFold ScFoldUC ScFoldCU}
+   $c create line -15 19 19 39 -tags {ScFold ScFoldUCbck ScFoldCUbck}
 
-   eval $c create line [$c coords ScFold03] -width 2 \
-         -tags [list {ScFold ScFold02 ScFold20bck}]
-   eval $c create line [$c coords ScFold03bck] \
-         -tags [list {ScFold ScFold02bck ScFold20}]
-   $c scale ScFold02 0 30 -1 1
-   $c scale ScFold02bck 0 30 -1 1
+   eval $c create line [$c coords ScFoldUC] -width 2 \
+         -tags [list {ScFold ScFoldUB ScFoldBUbck}]
+   eval $c create line [$c coords ScFoldUCbck] \
+         -tags [list {ScFold ScFoldUBbck ScFoldBU}]
+   $c scale ScFoldUB 0 30 -1 1
+   $c scale ScFoldUBbck 0 30 -1 1
 
-   eval $c create line [$c coords ScFold03] -width 2 \
-         -tags [list {ScFold ScFold41 ScFold14}]
-   eval $c create line [$c coords ScFold03bck] \
-         -tags [list {ScFold ScFold41bck ScFold14bck}]
-   $c scale ScFold41 0 30 1 -1
-   $c scale ScFold41bck 0 30 1 -1
+   eval $c create line [$c coords ScFoldUC] -width 2 \
+         -tags [list {ScFold ScFoldDA ScFoldAD}]
+   eval $c create line [$c coords ScFoldUCbck] \
+         -tags [list {ScFold ScFoldDAbck ScFoldADbck}]
+   $c scale ScFoldDA 0 30 1 -1
+   $c scale ScFoldDAbck 0 30 1 -1
 
-   eval $c create line [$c coords ScFold41] -width 2 \
-         -tags [list {ScFold ScFold51 ScFold15}]
-   eval $c create line [$c coords ScFold41bck] \
-         -tags [list {ScFold ScFold51bck ScFold15bck}]
-   $c scale ScFold51 0 30 -1 1
-   $c scale ScFold51bck 0 30 -1 1
+   eval $c create line [$c coords ScFoldDA] -width 2 \
+         -tags [list {ScFold ScFoldEA ScFoldAE}]
+   eval $c create line [$c coords ScFoldDAbck] \
+         -tags [list {ScFold ScFoldEAbck ScFoldAEbck}]
+   $c scale ScFoldEA 0 30 -1 1
+   $c scale ScFoldEAbck 0 30 -1 1
 
 # Science fold unknown
    $c create bitmap 0 30 -anchor c -foreground black -tags ScFoldUnknown 
@@ -314,11 +337,11 @@ itcl::body OpticsView::constructor args {
    $c create line  39 -53 57 -70 -tags HrwfsFoldOutBck
 
 # ISS port numbers
-   $c create text 0 -100 -anchor c -text 1
-   $c create text 50 55 -anchor c -text 2
-   $c create text -50 55 -anchor c -text 3
-   $c create text -50 5 -anchor c -text 4
-   $c create text 50 5 -anchor c -text 5
+   $c create text 0 -100 -anchor c -tags portAnumber
+   $c create text 50 55 -anchor c -tags portBnumber
+   $c create text -50 55 -anchor c -tags portCnumber
+   $c create text -50 5 -anchor c -tags portDnumber
+   $c create text 50 5 -anchor c -tags portEnumber
 
 # Raise the a&g outline so that the front edge cuts the light beam.
    $c raise ag
@@ -478,11 +501,11 @@ itcl::body OpticsView::update {} {
 # Deal with the AO fold mirror position
          if { $itk_option(-aofold) != "IN" } {
             $c itemconfigure NotAoLight -fill $l
-            set inport 0
+            set inport U
          } else {
             if { $itk_option(-aopresent) == 1 } {
                $c itemconfigure AoLight -fill $l
-               set inport 2
+               set inport B
             } else {
                $c itemconfigure AoLightNoAo -fill $l
                set inport ""
@@ -492,10 +515,10 @@ itcl::body OpticsView::update {} {
 # Determine which (if any) ISS port the beam emerges from
          if { $inport != "" } {
             if { $scfoldpos == "" } {
-               if { $inport == "0" } {
-                  set outport 1
+               if { $inport == "U" } {
+                  set outport A
                } else {
-                  set outport 4
+                  set outport D
                }
             } elseif { $scfoldpos == "UNKNOWN"  || $scfoldpos == "MOVING" } {
                   set outport ""
@@ -518,27 +541,27 @@ itcl::body OpticsView::update {} {
 
 # Configure light from the calibration unit.
    if { [string equal $itk_option(-calunit) OPEN] } {
-      $c itemconfigure IssLight4 -fill $l
+      $c itemconfigure IssLightD -fill $l
       switch $scfoldpos {
-         40 -
-         04 {
+         DU -
+         UD {
             $c itemconfigure AoLight -fill $l
          }
-         43 -
-         34 {
-            $c itemconfigure IssLight3 -fill $l
+         DC -
+         CD {
+            $c itemconfigure IssLightC -fill $l
          }
-         45 -
-         54 {
-            $c itemconfigure IssLight5 -fill $l
+         DE -
+         ED {
+            $c itemconfigure IssLightE -fill $l
          }
-         14 -
-         41 {
-            $c itemconfigure IssLight1 -fill $l
-            set outport 1
+         AD -
+         DA {
+            $c itemconfigure IssLightA -fill $l
+            set outport A
          }
          "" {
-            $c itemconfigure IssLight2 -fill $l
+            $c itemconfigure IssLightB -fill $l
          }
       }
    }
@@ -549,7 +572,7 @@ itcl::body OpticsView::update {} {
    }
 
 # Configure the beam from the HRWFS to the upward looking ISS face or HRWFS
-   if { $outport == "1" } {
+   if { $outport == "A" } {
       if { $itk_option(-hrwfs) == "IN" } {
          $c itemconfigure TvInLight -fill $l
       } else {
@@ -563,21 +586,26 @@ itcl::body OpticsView::update {} {
    }
 }
 
-itcl::body OpticsView::relabel port {
+itcl::body OpticsView::relabel {port} {
    $itk_component(canvas) itemconfigure port${port}label \
          -text $itk_option(-port${port}label)
 }
 
+itcl::body OpticsView::renumber {port} {
+   $itk_component(canvas) itemconfigure port${port}number \
+         -text $itk_option(-port${port}number)
+}
+
 itcl::configbody OpticsView::aopresent {
    if { $itk_option(-aopresent) == 1 } {
-      $itk_component(canvas) itemconfigure port2label -text AO
+      $itk_component(canvas) itemconfigure portBlabel -text AO
    } else {
-      relabel 2
+      relabel B
    }
 }
 
-itcl::configbody OpticsView::port2label {
+itcl::configbody OpticsView::portBlabel {
    if { $itk_option(-aopresent) == 0 } {
-      relabel 2
+      relabel B
    }
 }

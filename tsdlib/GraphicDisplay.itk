@@ -10,7 +10,7 @@
 #           update          Updates the view with the current state of the
 #                           telescope.
 #
-#  D Terrett 26 June 2001
+#  D Terrett 17 July 2001
 #
 #  Copyright CCLRC
 #-
@@ -32,9 +32,6 @@ itk::usual GraphicDisplay {
         -highlightthickness -highlightcolor -highlightthickness \
         -insertbackground -insertborderwidth -insertwidth -insertontime \
         -insertofftime -selectbackground -selectborderwidth -selectforeground
-   keep -aofold -aopresent -centralbaffle -deployablebaffle -holecover -hrwfs \
-        -m1cover -m2sstate -port1label -port2label -port3label -port4label \
-        -port5label -scfold 
 }
 
 itcl::body GraphicDisplay::constructor args {
@@ -95,6 +92,23 @@ itcl::body GraphicDisplay::constructor args {
    }
    pack $itk_component(p2label) $itk_component(probe2) \
          $itk_component(p1label) $itk_component(probe1) -side bottom
+
+# Configure the ISS port numbers.
+   $itk_component(opticsview) configure -portAnumber 1 
+   switch [sa tcssad get name] {
+      Gemini-North {
+         $itk_component(opticsview) configure -portBnumber 2
+         $itk_component(opticsview) configure -portCnumber 3
+         $itk_component(opticsview) configure -portDnumber 4
+         $itk_component(opticsview) configure -portEnumber 5
+      }
+      Gemini-South {
+         $itk_component(opticsview) configure -portBnumber 4
+         $itk_component(opticsview) configure -portCnumber 5
+         $itk_component(opticsview) configure -portDnumber 2
+         $itk_component(opticsview) configure -portEnumber 3
+      }
+   }
 
    eval itk_initialize $args
 }
@@ -165,60 +179,60 @@ itcl::body GraphicDisplay::update {} {
       set rot [sadVal agssad sfRot 0.0]
       if { $tilt < 20.0 && $tilt > -20.0 } {
          if { $rot > 90.0 } {
-            set sfpos 45
+            set sfpos DE
             if { $rot < 140.0 || $rot > 130.0 } {
                set sfmoving 1
             }
          } elseif { $rot > 0.0 } {
-            set sfpos 34
+            set sfpos CD
             if { $rot < 40.0 || $rot > 50.0 } {
                set sfmoving 1
             }
          } elseif { $rot > -90.0 } {
-            set sfpos 32
+            set sfpos CB
             if { $rot < -50.0 || $rot > -40.0 } {
                set sfmoving 1
             }
          } else {
-            set sfpos 25
+            set sfpos BE
             if { $rot < -140.0 || $rot > -130.0 } {
                set sfmoving 1
             }
          }
       } else {
          if { $tilt > 20.0 } {
-            set sfpos 0
+            set sfpos U
             if { $tilt > 47.5 || $tilt < 42.5 } {
                set sfmoving 1
             }
          } else {
-            set sfpos 1
+            set sfpos A
             if { $tilt < -47.5 || $tilt > -42.5 } {
                set sfmoving 1
             }
          }
          if { $rot > 135.0 } {
-            append sfpos 5
+            append sfpos E
             if { $rot < 175.0 || $rot > 185.0 } {
                set sfmoving 1
             }
          } elseif { $rot > 45.0 } {
-            append sfpos 4
+            append sfpos D
             if { $rot < 85.0 || $rot > 95.0 } {
                set sfmoving 1
             }
          } elseif { $rot > -45.0 } {
-            append sfpos 3
+            append sfpos C
             if { $rot < -5.0 || $rot > 5.0 } {
                set sfmoving 1
             }
          } elseif { $rot > -135.0 } {
-            append sfpos 2
+            append sfpos B
             if { $rot < -95.0 || $rot > -85.0 } {
                set sfmoving 1
             }
          } else {
-            append sfpos 5
+            append sfpos E
             if { $rot < -185.0 || $rot > -175.0 } {
                set sfmoving 1
             }
@@ -251,9 +265,22 @@ itcl::body GraphicDisplay::update {} {
 
 # Set the ISS port labels.
    $itk_component(opticsview) configure \
-         -port1label [sa agssad get port1Label] \
-         -port2label [sa agssad get port2Label] \
-         -port3label [sa agssad get port3Label] \
-         -port4label [sa agssad get port4Label] \
-         -port5label [sa agssad get port5Label] 
+         -portAlabel [sa agssad get port1Label]
+
+   switch [sa tcssad get name] {
+      Gemini-North {
+         $itk_component(opticsview) configure \
+               -portBlabel [sa agssad get port2Label] \
+               -portClabel [sa agssad get port3Label] \
+               -portDlabel [sa agssad get port4Label] \
+               -portElabel [sa agssad get port5Label] 
+      }
+      Gemini-South {
+         $itk_component(opticsview) configure \
+               -portBlabel [sa agssad get port4Label] \
+               -portClabel [sa agssad get port5Label] \
+               -portDlabel [sa agssad get port2Label] \
+               -portElabel [sa agssad get port3Label] 
+      }
+   }
 }
