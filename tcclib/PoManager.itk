@@ -8,7 +8,7 @@
 #     update    Updates the currently selected pointing origin with
 #                new values.
 #
-#  D Terrett  26 January 2001
+#  D Terrett  31 January 2001
 #
 #  Copyright CCLRC
 #+
@@ -22,8 +22,8 @@ itcl::class PoManager {
    private {
       method selectcmd {po}
       method selecta {po}
-      variable achop v
-      variable bchop v
+      variable achop ra
+      variable bchop ra
    }
 }
 
@@ -50,6 +50,28 @@ itcl::body PoManager::constructor {args} {
    grid $itk_component(alab) $itk_component(blab) x $itk_component(xlab) \
          $itk_component(ylab)
 
+# First row of table is for the fixed rotator axis.
+   itk_component add ara {
+      radiobutton $w.ara -variable [scope achop] -value ra \
+            -command [itcl::code $this selecta ra]
+   }
+   itk_component add bra {
+      radiobutton $w.bra -variable [scope bchop] -value ra \
+            -command [itcl::code $this selectcmd ra]
+   }
+   itk_component add raname {
+      label $w.raname -text "Rotator axis" -relief sunken
+   }
+   itk_component add xra {
+      label $w.xra -text " 0.00" -relief groove -width 8
+   }
+   itk_component add yra {
+      label $w.yra -text " 0.00" -relief groove -width 8
+   }
+   grid $itk_component(ara) $itk_component(bra) $itk_component(raname) \
+         $itk_component(xra) $itk_component(yra) -sticky ew
+
+# Remaining rows.
    foreach po {v w x y z} {
 
 # Chop state radiobuttons.
@@ -64,10 +86,6 @@ itcl::body PoManager::constructor {args} {
 
 # Subcomponent selector.
       itk_component add sel$po {
-#         SubComponentSelector $w.sel$po -componentlist PointOrigList \
-#               -component pointOrig -editcontrol tcsconfigpointOrig \
-#               -selectioncommand [code $this selectcmd $po] \
-#               -shadow tcsconfig
          ListManager $w.sel$po -componentlist PointOrigList \
                -selectioncommand [code $this selectcmd $po] \
       }
@@ -96,7 +114,11 @@ itcl::body PoManager::constructor {args} {
 }
 
 itcl::body PoManager::selectcmd {po} {
-   set name [$itk_component(sel$po) get]
+   if { [string equal $po ra] } {
+      set name ""
+   } else {
+      set name [$itk_component(sel$po) get]
+   }
    if { [string length $name] } {
 
 # There is a name in the combobox; check that it is the name of an existing
@@ -168,34 +190,38 @@ itcl::body PoManager::update {chop} {
       }
    }
 
-# Get the current values of the appropriate pointing origin.
-   set tar [sa tcssad get $target]
-   set x [expr {[lindex $tar 4] + [lindex $tar 6]}]
-   set y [expr {[lindex $tar 5] + [lindex $tar 7]}]
-   
-   set name [$itk_component(sel$po) get]
-   if { [string length $name] } {
-
-# Update the pointing origin component, creating it if necessary.
-      if { [catch {::PointOrigNames::$name configure -x $y -y $y}] } {
-         PointOrigComponent ::PointOrigNames::$name PointOrigList \
-                -x $x -y $y
-      }
+# The ra pointing origin is a special case.
+   if { [string equal $po ra] } {
    } else {
 
+# Get the current values of the appropriate pointing origin.
+      set tar [sa tcssad get $target]
+      set x [expr {[lindex $tar 4] + [lindex $tar 6]}]
+      set y [expr {[lindex $tar 5] + [lindex $tar 7]}]
+   
+      set name [$itk_component(sel$po) get]
+      if { [string length $name] } {
+
+# Update the pointing origin component, creating it if necessary.
+         if { [catch {::PointOrigNames::$name configure -x $x -y $y}] } {
+            PointOrigComponent ::PointOrigNames::$name PointOrigList \
+                   -x $x -y $y
+         }
+      } else {
+
 # Update the X/Y display.
-      $itk_component(x$po) configure -text [format %6.2f $x]
-      $itk_component(y$po) configure -text [format %6.2f $y]
-   }
+         $itk_component(x$po) configure -text [format %6.2f $x]
+         $itk_component(y$po) configure -text [format %6.2f $y]
+      }
 
 # Select the pointing origin.
-   selectcmd $po
+      selectcmd $po
+   }
 }
 
 itcl::body PoManager::selecta {po} {
 
-# Set the chop pointing origin to the same as A and then select it.
+# Set the chop B pointing origin to the same as A and then select it.
    set bchop $achop
    selectcmd $po
 }
-
