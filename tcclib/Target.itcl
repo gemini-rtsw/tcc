@@ -42,7 +42,7 @@
 #  Procs:
 #           subcomponents Returns a list of the target classes subcomponents.
 #
-#  D Terrett 13 November 1999
+#  D Terrett 16 February 2000
 #
 #  Copyright CCLRC
 #+
@@ -157,8 +157,15 @@ itcl::body Target::preview vt {
       set system [CosysNames::$cosys cget -frame]
       set equinox [CosysNames::$cosys cget -equinox]
    }
-   tccPreview set $vt $system [lindex $radec 0] [lindex $radec 1] \
-         $equinox $epoch
+   switch $type {
+      radec {
+         tccPreview set $vt $system [lindex $radec 0] [lindex $radec 1] \
+               $equinox $epoch
+      }
+      azel {
+         tccPreview set $vt AZEL [lindex $azel 0] [lindex $azel 1]
+      }
+   }
       
    if { $wavelength_name != "" } {
       if { [info commands ::WavelengthNames::$wavelength_name] != "" } {
