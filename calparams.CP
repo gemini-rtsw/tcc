@@ -1,5 +1,11 @@
 # This file is for Cerro Pachon
 
+# The name of the OCS session soap server.
+set ocs_proxy http://bill:9000/axis/services
+
+# The root of the directory in when WFS images are stored.
+set wfs_image_root /net/tyle/export/data
+
 # The x/y/z position that corresponds to the A&G PWFS1 probeSel center
 # command.
 
