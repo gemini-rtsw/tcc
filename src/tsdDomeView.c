@@ -174,7 +174,6 @@ static int CreateDV( Tcl_Interp *interp, Tk_Canvas canvas, Tk_Item *itemPtr,
    Tk_Window tkwin = Tk_CanvasTkwin( canvas );
    XGCValues gcvalues;
    unsigned long mask;
-   XColor color;
    double date, dut, elongm, elatm, hm;
    double elat, elong;
 
