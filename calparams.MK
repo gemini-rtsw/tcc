@@ -4,7 +4,7 @@
 set ocs_proxy http://scott:9000/axis/services
 
 # The directory in which WFS images used for M1 tuning are are stored.
-set m1_tune_dir /net/tyle/export/data/astrodata
+set m1_tune_dir /net/pisces/export/gemdata
 
 # The default directory for storing HRWFS images.
 set default_wfs_dir /net/enif/export/home/wfs
