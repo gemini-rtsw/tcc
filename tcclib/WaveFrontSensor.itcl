@@ -100,7 +100,7 @@ itcl::body WaveFrontSensor::start {{frames -1}} {
    set stopped [expr {[sa guideConfig get ${prefix}state value] ne "Yes"}]
 
 # Set up controller.
-   setup
+   set frames [setup]
 
 # Save the new mode and exposure time and quicklook.
    set current_mode $mode
@@ -198,4 +198,5 @@ itcl::body WaveFrontSensor::setup {{frames -1}} {
          }
       }
    }
+   return $frames
 }
