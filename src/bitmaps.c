@@ -7,7 +7,7 @@ static char rcsid[]="$Id:";
 *   FUNCTION NAME(S)
 *   Bitmaps_Init - Initialisation function for TCL loadable image
 *
-*   D L Terrett 10 January 2001
+*   D L Terrett 21 April 2001
 *
 *   Copyright CCLRC
 *
@@ -41,7 +41,8 @@ int Bitmaps_Init( Tcl_Interp *interp)
 #include "delete.xbm"
 #include "rotate.xbm"
 #include "arotate.xbm"
-#include "flip.xbm"
+#include "hflip.xbm"
+#include "vflip.xbm"
 #include "reset.xbm"
 
     if ( Tcl_InitStubs( interp, "8.0", 0 ) == NULL ) return TCL_ERROR;
@@ -66,8 +67,13 @@ int Bitmaps_Init( Tcl_Interp *interp)
         return TCL_ERROR;
     }
 
-    if ( Tk_DefineBitmap( interp, Tk_GetUid("flip"), (char*)flip_bits, 
-        flip_width, flip_height) != TCL_OK ) {
+    if ( Tk_DefineBitmap( interp, Tk_GetUid("hflip"), (char*)hflip_bits, 
+        hflip_width, hflip_height) != TCL_OK ) {
+        return TCL_ERROR;
+    }
+
+    if ( Tk_DefineBitmap( interp, Tk_GetUid("vflip"), (char*)vflip_bits, 
+        vflip_width, vflip_height) != TCL_OK ) {
         return TCL_ERROR;
     }
 

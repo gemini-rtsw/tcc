@@ -46,7 +46,8 @@ bitmaps.so : $(BITOBJ)
 
 tsdext.o : tccAst.h
 tccext.o : tccAst.h tccPreview.h autorepeat.h
-bitmaps.o : edit.xbm delete.xbm rotate.xbm arotate.xbm flip.xbm reset.xbm
+bitmaps.o : edit.xbm delete.xbm rotate.xbm arotate.xbm hflip.xbm vflip.xbm \
+            reset.xbm
 tccPreview.o : tccPreview.h tccConstants.h tccUtil.h tccDecode.h
 tccUtil.o : tccConstants.h tccUtil.h
 tccTime.o : tccConstants.h
