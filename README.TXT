@@ -55,23 +55,13 @@ There are a number of star catalogues suitable for pointing tests in
 
 BUGS
 ----
-1) There is a bug in the version of Skycat that is built into ocswish so that
-   the first time you try to plot a field (with the "plot" button on the
-   preview window) skycat starts and then an error dialog box pops up with
-   the message "can't read "ra_" no such variable". It is then immediately
-   covered up by the image server window. To correct the problem, press the
-   close button on the image server window, then press the Ok button in the
-   error dialog and finally the plot button in the preview window again. It
-   will then work ok until you close the main skycat window and exit from the
-   skycat application.
 
 If you get a tcl error dialog box (one with with "OK, "Skip Messages" and
-"Stack Trace" buttons) in any other circumstances, you have found a bug I
-don't know about.  Please click on "Stack Trace" and cut and paste the
-contents of the "Stack Trace for Error" box into a file and mail it to me
-(d.terrett@rl.ac.uk). It is helpful if you can resize the window to
-eliminate the line wrapping before cutting the text (this isn't always
-possible).
+"Stack Trace" buttons) you have found a bug I don't know about.  Please 
+click on "Stack Trace" and cut and paste the contents of the "Stack Trace 
+for Error" box into a file and mail it to me (d.terrett@rl.ac.uk). It is 
+helpful if you can resize the window to eliminate the line wrapping before 
+cutting the text (this isn't always possible).
 
 1) When a target with no wavelength defined is loaded the undefinition (!)
    of the wavelength isn't propogated to the wavelength editing window.
