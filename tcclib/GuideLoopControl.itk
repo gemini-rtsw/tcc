@@ -13,7 +13,7 @@
 #  Notes:
 #        o This widget is incomplete
 #
-#  D Terrett  14 February 2000
+#  D Terrett  15 February 2000
 #
 #  Copyright CCLRC
 #+
@@ -32,6 +32,7 @@ itcl::class GuideLoopControl {
    private method recolour args
 
    private variable m1Weight
+   private variable ql
 }
 
 itk::usual GuideLoopControl {
@@ -55,9 +56,9 @@ itcl::body GuideLoopControl::constructor args {
       itk_component add ${sys}_on {
          LiveButton $w.${sys}_on -text ON -command [code $this wfsstart $sys]
       }
-      itk_component add ${sys}_setup {
-         button $w.${sys}_setup -text SETUP
-      }
+#      itk_component add ${sys}_setup {
+#         button $w.${sys}_setup -text SETUP
+#      }
       itk_component add $sys {
          label $w.${sys} -text [string toupper $sys]
       }
@@ -67,9 +68,24 @@ itcl::body GuideLoopControl::constructor args {
             -tags $sys
       $w create window 32 32 -width 60 -height 20 -window $w.${sys}_on \
             -tags $sys
-      $w create window 32 52 -width 60 -height 20 -window $w.${sys}_setup \
+#      $w create window 32 52 -width 60 -height 20 -window $w.${sys}_setup \
             -tags $sys
-#      $w create text 92 32 -text [string toupper $sys] -tags $sys
+
+# WFS controls.
+      itk_component add ${sys}_ql {
+         checkbutton $w.${sys}_ql -text QL -relief raised -width 5 \
+               -height 1 -variable [scope ql($sys)]
+      }
+      $w create window 32 52 -window $w.${sys}_ql -tags $sys
+
+      itk_component add ${sys}_ex {
+         iwidgets::combobox $w.${sys}_ex -arrowrelief flat -width 5 \
+               -validate real -labeltext "exp (s)"
+      }
+      $w create window 60 74 -window $w.${sys}_ex -tag $sys
+      $w.${sys}_ex insert list end 1.0 0.5 0.1 0.05 0.01 0.005
+      $w.${sys}_ex insert entry end 0.05
+
    }
 
 # Find the name of the font used for the buttons and use it for all text.
@@ -101,16 +117,16 @@ itcl::body GuideLoopControl::constructor args {
 # Controls for Mount.
    itk_component add mtWeight {
       scale $w.mtWeight -from 0.0 -to 1.0 -resolution 0.1 -orient horizontal \
-            -showvalue 0 -length 100 -borderwidth 1
+            -showvalue 0 -length 80 -borderwidth 1 -label "WFS weight"
    }
    $w create window 15 66 -window $itk_component(mtWeight) -anchor nw \
          -tags mount
-   $w create text 7 76 -text P1 -tags mount -font $font
-   $w create text 125 76 -text P2 -tags mount -font $font
+   $w create text 7 90 -text P1 -tags mount -font $font
+   $w create text 105 90 -text P2 -tags mount -font $font
 
 # Move boxes into position.
-   $w move oiwfs 20  90
-   $w move pwfs2 20 170
+   $w move oiwfs 20  30
+   $w move pwfs2 20 140
    $w move pwfs1 20 250
    $w move m2 250 20
    $w move mount 470 120
@@ -171,21 +187,22 @@ itcl::body GuideLoopControl::constructor args {
 
 # WFS to M2
 
-   $w create line 152 122 192 122 -width 3 -fill white -tags {active oiwfs_m2}
+   $w create line 152  62 192  62 192 122 -width 3 -fill white \
+         -tags {active oiwfs_m2}
    $w create line 192 122 242 122 -width 3 -fill white -tags {active wfs_m2}
    $w create oval 239 119 245 125 -width 3 -fill white -outline "" \
          -tags {active wfs_m2}
-   $w create line 152 192 192 192 -width 3 -fill white -tags {active pwfs2_m2}
-   $w create line 192 192 192 122 -width 3 -fill white -tags {active pwfs_m2}
-   $w create line 152 262 192 262 192 192 -width 3 -fill white \
+   $w create line 152 162 192 162 -width 3 -fill white -tags {active pwfs2_m2}
+   $w create line 192 164 192 122 -width 3 -fill white -tags {active pwfs_m2}
+   $w create line 152 262 192 262 192 164 -width 3 -fill white \
          -tags {active pwfs1_m2}
 
 # PWFS to mount
-   $w create line 152 211 189 211 -width 3 -fill white -tags {active pwfs2_mt}
-   $w create line 196 211 312 211 -width 3 -fill white -tags {active pwfs2_mt}
-   $w create line 152 282 312 282 312 211 -width 3 -fill white \
+   $w create line 152 181 189 181 -width 3 -fill white -tags {active pwfs2_mt}
+   $w create line 196 181 312 181 -width 3 -fill white -tags {active pwfs2_mt}
+   $w create line 152 282 312 282 312 183 -width 3 -fill white \
          -tags {active pwfs1_mt}
-   $w create line 312 211 312 167 390 167 -width 3 -fill white \
+   $w create line 312 183 312 167 390 167 -width 3 -fill white \
          -tags {active pwfs_mt}
    $w create oval 393 170 387 164 -width 3 -fill white -outline "" \
          -tags {active pwfs_mt}
@@ -421,12 +438,13 @@ body GuideLoopControl::m2mode state {
 body GuideLoopControl::wfsstart wfs {
 
    cs ${wfs}Observe set noexp -1
-   cs ${wfs}Observe set int 1
-   cs ${wfs}Observe set outopt DHS
-   cs ${wfs}Observe set label None
+   cs ${wfs}Observe set int [$itk_component(${wfs}_ex) get]
    cs ${wfs}Observe set output QL
-   cs ${wfs}Observe set path .
-   cs ${wfs}Observe set name ${wfs}.fits
+   if { $ql($wfs) } {
+      cs ${wfs}Observe set outopt DHS
+   } else {
+      cs ${wfs}Observe set outopt None
+   }
 
    if [catch {cs ${wfs}Observe post} msg] {
       tk_messageBox -icon error -parent $itk_interior -message \
