@@ -6,7 +6,7 @@
 #  Arguments:
 #             none
 #
-#  D Terrett 12 January 2001
+#  D Terrett 24 April 2001
 #
 #  Copyright CCLRC
 #-
@@ -40,12 +40,14 @@ proc createPanels {} {
          -title "Command Log"
    PanelMgr guideLoopPanel -name .guideLoopPanel \
          -class GuideLoopPanel -title "Guiding Loop Control"
-   PanelMgr guideHandsetPanel -name .guideHandsetPanel \
-         -class GuideHandsetPanel -title "Pointing Handset"
-   PanelMgr targetHandsetPanel -name .targetHandsetPanel \
-         -class TargetHandsetPanel -title "Target Handset"
-   PanelMgr poHandsetPanel -name .poHandsetPanel \
-         -class PoHandsetPanel -title "Instrument Handset"
+#   PanelMgr guideHandsetPanel -name .guideHandsetPanel \
+#         -class GuideHandsetPanel -title "Pointing Handset"
+#   PanelMgr targetHandsetPanel -name .targetHandsetPanel \
+#         -class TargetHandsetPanel -title "Target Handset"
+#   PanelMgr poHandsetPanel -name .poHandsetPanel \
+#         -class PoHandsetPanel -title "Instrument Handset"
+   PanelMgr handsetPanel -name .handsetPanel \
+         -class HandsetPanel -title "Handsets"
    PanelMgr pointUpdatePanel -name .pointUpdatePanel \
          -class PointUpdatePanel -title "Pointing model update"
    PanelMgr starSelectPanel -name .starSelectPanel \
@@ -55,6 +57,38 @@ proc createPanels {} {
    createEditPanels "" tcsconfig TcsConfig TcsConfigNames \
          TcsConfigList "" ""
 
+# Zap the Target edit panel managers.
+   delete object tcsconfigscienceTargetPanel
+   delete object tcsconfigguidepwfs1TargetPanel
+   delete object tcsconfigguidepwfs2TargetPanel
+   delete object tcsconfigguideoiwfsTargetPanel
+
+# Create a field panel in its place.
+    EditPanelMgr tcsconfigfieldPanel \
+          -namespace {ScienceTargetNames WfsTargetNames WfsTargetNames \
+             WfsTargetNames} \
+          -vt {sourceA pwfs1 pwfs2 oiwfs} \
+          -componentlist { ScienceTargetList WfsTargetList WfsTargetList \
+             WfsTargetList} \
+          -titlelist [list "Science target" "PWFS1 target" "PWFS2 target" \
+             "OIWFS target"] \
+          -class FieldPanel -name .tcsconfigfieldPanel \
+          -title "Target Manager"
+
+# Redirect the target edit shadows.
+    tcsconfigscienceTarget configure -panel tcsconfigfieldPanel \
+          -control scitarget -alsomaps {tcsconfigguidepwfs1Target \
+          tcsconfigguidepwfs2Target tcsconfigguideoiwfsTarget}
+    tcsconfigguidepwfs1Target configure -panel tcsconfigfieldPanel \
+          -control pwfs1target -alsomaps {tcsconfigscienceTarget \
+          tcsconfigguidepwfs2Target tcsconfigguideoiwfsTarget}
+    tcsconfigguidepwfs2Target configure -panel tcsconfigfieldPanel \
+          -control pwfs2target -alsomaps {tcsconfigscienceTarget \
+          tcsconfigguidepwfs1Target tcsconfigguideoiwfsTarget}
+    tcsconfigguideoiwfsTarget configure -panel tcsconfigfieldPanel \
+          -control oiwfstarget -alsomaps {tcsconfigscienceTarget \
+          tcsconfigguidepwfs1Target tcsconfigguidepwfs1Target}
+
 # Configure the title of the observation editor.
-   tcsconfigPanel configure -title "Target Selector"
+   tcsconfigPanel configure -title "Configuration Manager"
 }

@@ -7,7 +7,7 @@
 #  Methods:
 #           none
 #
-#  D Terrett  17 January 2001
+#  D Terrett  24 April 2001
 #
 #  Copyright CCLRC
 #+
@@ -40,20 +40,6 @@ itcl::body ObserveControl::constructor args {
    }
    pack $itk_component(buttons) -fill both -expand yes
    set w $itk_component(buttons)
-
-# Buttons for popping up the handsets.
-   itk_component add handlab {
-      label $w.handlab -text Handsets
-   }
-   itk_component add tarhand {
-      PanelButton $w.tarhand -text Targets -panel targetHandsetPanel
-   }
-   itk_component add pohand {
-      PanelButton $w.pohand -text Instrument -panel poHandsetPanel
-   }
-   itk_component add guidehand {
-      PanelButton $w.guidehand -text Pointing -panel guideHandsetPanel
-   }
 
 # Selectbutton for configuring the A & G fold mirrors.
    itk_component add foldlab {
@@ -140,18 +126,18 @@ itcl::body ObserveControl::constructor args {
             -parcommand [code $this center 2]
    }
 
-   grid $itk_component(handlab) $itk_component(foldlab) \
+   grid $itk_component(foldlab) \
          $itk_component(choplab) $itk_component(p1lab) \
          $itk_component(p2lab) -sticky ew -padx 5
-   grid $itk_component(tarhand) $itk_component(fold) $itk_component(chop) \
+   grid $itk_component(fold) $itk_component(chop) \
          $itk_component(p1follow) $itk_component(p2follow) -sticky ew -padx 5
-   grid $itk_component(pohand) x $itk_component(beam) $itk_component(p1flip) \
+   grid x $itk_component(beam) $itk_component(p1flip) \
          $itk_component(p2flip) -sticky ew -padx 5
-   grid $itk_component(guidehand) x x $itk_component(p1unwrap) \
+   grid x x $itk_component(p1unwrap) \
          $itk_component(p2unwrap) -sticky ew -padx 5
-   grid x x $itk_component(noda) $itk_component(p1center) \
+   grid x $itk_component(noda) $itk_component(p1center) \
          $itk_component(p2center) -sticky ew -padx 5
-   grid x x $itk_component(nodb) $itk_component(p1park) $itk_component(p2park) \
+   grid x $itk_component(nodb) $itk_component(p1park) $itk_component(p2park) \
          -sticky ew -padx 5
    grid configure $itk_component(fold) -rowspan 3
    grid configure $itk_component(beam) -rowspan 2

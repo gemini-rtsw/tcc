@@ -1,0 +1,61 @@
+#+
+#  HandsetPanel <- Panel
+#
+#  Implements the HandsetPanel widget. A Panel widget with various
+#  HandsetControl widgets packed into its interior.
+#
+#  Options:
+#          none
+#
+#  Methods:
+#          none
+#
+#  D Terrett 24 April 2001
+#
+#  Copyright CCLRC
+#+
+
+itcl::class HandsetPanel {
+   inherit Panel
+   constructor args {}
+}
+
+itk::usual HandsetPanel {
+   keep -background -cursor
+}
+
+itcl::body HandsetPanel::constructor args {
+
+# Notebook for the handset controls.
+   itk_component add handsets {
+      iwidgets::tabnotebook $itk_interior.targets -height 600 -width 360 \
+            -tabpos n -equaltabs no
+   }
+
+# Guiding handset
+   set w [$itk_component(handsets) add -label Guiding]
+   itk_component add guiding {
+      GuideHandsetControl $w.guiding
+   }
+   pack $itk_component(guiding)
+
+# Pointing origin handset
+   set w [$itk_component(handsets) add -label "Instrument Origins"]
+   itk_component add po {
+      PoHandsetControl $w.po
+   }
+   pack $itk_component(po)
+
+# Target handset
+   set w [$itk_component(handsets) add -label Targets]
+   itk_component add targets {
+      TargetHandsetControl $w.targets
+   }
+   pack $itk_component(targets)
+
+   $itk_component(handsets) select Guiding
+
+   pack $itk_component(handsets) -fill both -expand y
+
+   eval itk_initialize $args
+}
