@@ -15,7 +15,7 @@
 #           updateobj name  Stores the contents of the edit controls in the
 #                           Target object "name".
 #
-#  D Terrett 13 March 2001
+#  D Terrett 19 March 2001
 #
 #  Copyright CCLRC
 #+
@@ -27,6 +27,9 @@ itcl::class TargetControl {
    public {
       method selectobj {name}
       method updateobj {name}
+   }
+   protected {
+      method copy {createproc prompt component}
    }
    private {
       method checkcosys {}
@@ -362,3 +365,29 @@ body TargetControl::grab {} {
    selectobj $fullname
 }
 
+itcl::body TargetControl::copy {createproc prompt component} {
+   set name [$itk_component(selector) get]
+   if { [string is space $name] } {
+      iwidgets::promptdialog $itk_interior.pd -modality application \
+            -labeltext $prompt
+      $itk_interior.pd hide Apply
+      $itk_interior.pd center
+      if { [$itk_interior.pd activate] } {
+         set newname [$itk_interior.pd get]
+         if { [string is space $newname] } {
+            tk_messageBox -icon error -parent $itk_interior \
+                  -message "A name is required to copy a target"
+         }
+      }
+      destroy $itk_interior.pd
+      set name $scratchobj
+   } else {
+      store $name
+      set newname $name
+      set name $itk_option(-namespace)::$name
+   }
+   if { ![string is space $newname] } {
+      $name copy $createproc $newname
+      $component select $newname
+   }
+}

@@ -4,7 +4,7 @@
 #  A WfsTarget control is a TargetControl widget for entering a wave front
 #  sensor target.
 #
-#  D Terrett 16 March 2001
+#  D Terrett 19 March 2001
 #
 #  Copyright CCLRC
 #+
@@ -12,9 +12,6 @@
 itcl::class WfsTargetControl {
    inherit TargetControl
    constructor args {}
-   private {
-      method copy {createproc}
-   }
 }
 
 itk::usual WfsTargetControl {
@@ -27,7 +24,8 @@ itcl::body WfsTargetControl::constructor args {
 
 # Add destinations to the copy menu.
    $itk_component(copymenu) add command -label "Science targets" \
-         -command [code $this copy createScienceTarget]
+         -command [code $this copy createScienceTarget "Science target name" \
+         tcsconfigscienceTarget]
 
 
 # Create the scatch target object used by apply.
@@ -38,28 +36,4 @@ itcl::body WfsTargetControl::constructor args {
    set description target
 
    eval itk_initialize $args
-}
-
-
-itcl::body WfsTargetControl::copy createproc {
-   set name [$itk_component(selector) get]
-   if { [string is space $name] } {
-      iwidgets::promptdialog $itk_interior.pd -modality application \
-            -labeltext "Science target name"
-      $itk_interior.pd hide Apply
-      $itk_interior.pd center
-      if { [$itk_interior.pd activate] } {
-         set name [$itk_interior.pd get]
-         if { [string is space $name] } {
-            tk_messageBox -icon error -parent $itk_interior \
-                  -message "A name is required to copy a target"
-         }
-      } 
-      destroy $itk_interior.pd
-   }  
-   if { ![string is space $name] } {
-      store $name
-      WfsTargetNames::$name copy $createproc
-      tcsconfigscienceTarget select $name
-   }
 }

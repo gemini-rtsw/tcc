@@ -4,7 +4,7 @@
 #  A SciTarget control is a TargetControl widget with widgets for
 #  the target position etc.
 #
-#  D Terrett 16 March 2001
+#  D Terrett 19 March 2001
 #
 #  Copyright CCLRC
 #+
@@ -17,7 +17,6 @@ itcl::class SciTargetControl {
       method updateobj {name}
    }
    private {
-      method copy {createproc wfs}
       method orbtype {}
       method selplanet {}
       variable planet
@@ -152,12 +151,15 @@ itcl::body SciTargetControl::constructor args {
 
 
 # Add destinations to the copy menu.
-   $itk_component(copymenu) add command -label "PWFS1 targets" \
-         -command [code $this copy createWfsTarget pwfs1]
-   $itk_component(copymenu) add command -label "PWFS2 targets" \
-         -command [code $this copy createWfsTarget pwfs2]
+   $itk_component(copymenu) add command -label "PWFS1 targets" -command \
+         [code $this copy createWfsTarget "WFS target name" \
+         tcsconfigguidepwfs1Target]
+   $itk_component(copymenu) add command -label "PWFS2 targets" -command \
+         [code $this copy createWfsTarget "WFS target name" \
+         tcsconfigguidepwfs2Target]
    $itk_component(copymenu) add command -label "OIWFS targets" \
-         -command [code $this copy createWfsTarget oiwfs]
+         -command [code $this copy createWfsTarget "WFS target name" \
+         tcsconfigguideoiwfsTarget]
 
 # Unpack Apply button and checkbutton so that new science targets have to be
 # applied from the main configuration window.
@@ -313,29 +315,6 @@ itcl::body SciTargetControl::orbtype {} {
          $itk_component(meanxxxx) configure -state disabled
          $itk_component(dailymot) configure -state disabled
       }
-   }
-}
-
-itcl::body SciTargetControl::copy {createproc wfs} {
-   set name [$itk_component(selector) get]
-   if { [string is space $name] } {
-      iwidgets::promptdialog $itk_interior.pd -modality application \
-            -labeltext "WFS target name"
-      $itk_interior.pd hide Apply
-      $itk_interior.pd center
-      if { [$itk_interior.pd activate] } {
-         set name [$itk_interior.pd get]
-         if { [string is space $name] } {
-            tk_messageBox -icon error -parent $itk_interior \
-                  -message "A name is required to copy a target"
-         }
-      }
-      destroy $itk_interior.pd
-   }
-   if { ![string is space $name] } {
-      store $name
-      ScienceTargetNames::$name copy $createproc
-      tcsconfigguide${wfs}Target select $name
    }
 }
 
