@@ -19,7 +19,7 @@
 #
 #           Cancels an action.
 #
-#  D Terrett 4 October 2000
+#  D Terrett 22 May 2001
 #
 #  Copyright CLRC
 #+
@@ -166,10 +166,13 @@ itcl::body seq::PrincipalSystem::cancel {action} {
 }
 
 itcl::body seq::PrincipalSystem::timeout {} {
-   set timeoutcommand [$CurrentAction cget -ontimeout]
-   cleanup
-   if { ![string is space $timeoutcommand] } {
-      uplevel #0 $timeoutcommand
+
+   if { ![string is space $CurrentAction] } {
+      set timeoutcommand [$CurrentAction cget -ontimeout]
+      cleanup
+      if { ![string is space $timeoutcommand] } {
+         uplevel #0 $timeoutcommand
+      }
    }
 }
 
