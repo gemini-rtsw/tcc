@@ -33,6 +33,7 @@ itcl::class ObserveControl {
       variable wfs Pwfs1   
       variable Pwfs1Dark
       variable Pwfs2Dark
+      variable OiwfsDark
    }
 }
 
@@ -251,6 +252,7 @@ itcl::body ObserveControl::constructor args {
 # Create the objects for taking darks.
    set Pwfs1Dark [Dark #auto p1]
    set Pwfs2Dark [Dark #auto p2]
+   set OiwfsDark [Dark #auto oi]
 
    eval itk_initialize $args
 }
@@ -336,7 +338,11 @@ itcl::body ObserveControl::selwfs {} {
       }
       OI {
          set wfs Oiwfs
-         $itk_component(dark) configure -state disabled
+         if { [sa agssad get oiwfsName] == "GMOS" } {
+            $itk_component(dark) configure -state normal
+         } else {
+            $itk_component(dark) configure -state disabled
+         } 
       }
    }
 }

@@ -18,16 +18,16 @@
 #
 #  If the number of frames is zero the mode is set but the WFS is not started.
 #
-#  Only PWFS1 and PWFS2 are fully implemented. Do not use mode=sky for the
-#  OIWFS.
+#  Only PWFS1 and PWFS2 are fully implemented. For the oiwfs an 
+#  OiWaveFrontSensor object should be used instead.
 #
-#  D Terrett  20 January 2004
+#  D Terrett  24 January 2005
 #
 #  Copyright CLRC
 #-
 
 itcl::class WaveFrontSensor {
-   constructor {wfs $args} {}
+   constructor {wfs args} {}
    public {
       method start {{frames -1}}
       method stop {}
@@ -35,7 +35,8 @@ itcl::class WaveFrontSensor {
       variable exposetime 0.01
       variable mode seq
    }
-   private {
+   protected {
+      method setup
       variable prefix
       variable name
       variable dirname
@@ -47,6 +48,9 @@ itcl::class WaveFrontSensor {
 }
 
 itcl::body WaveFrontSensor::constructor {wfs args} {
+   set current_mode ""
+   set current_exposetime 0
+   set current_quicklook -1
  
 # Store the full name
    set name $wfs
@@ -95,71 +99,8 @@ itcl::body WaveFrontSensor::start {{frames -1}} {
 # Current state
    set stopped [expr {[sa guideConfig get ${prefix}state value] ne "Yes"}]
 
-# Set the sky name
-   set filename [expr { int(1.0/$exposetime)}]Hz.fits
-
-# If the mode or exposure time or output destination has been changed then
-# stop the sensor mode.
-   if { $mode ne $current_mode || $exposetime != $current_exposetime || \
-         $current_quicklook != $quicklook } {
-      stop
-      set stopped 1
-      after 10
-   }
-
-# If the mode has changed, set the new processing mode
-   if { $mode ne $current_mode } {
-      switch $mode {
-         sky {
-
-# Set the WFS mode to sequence dark.
-            cs ${prefix}SeqDark set filename $filename
-            logger command ${prefix}SeqDark
-         }
-         seq {
-
-# Set the mode to sequence closed loop. (don't do this for the OIWFS yet).
-            if { $prefix ne "oi" } {
-               cs ${prefix}Seq set z2m2 1
-               logger command ${prefix}Seq
-            }
-         }
-         seqnz {
-
-# Set the mode to sequence closed loop but disable sending Zernikes to M2.
-            if { $prefix ne "oi" } {
-               cs ${prefix}Seq set z2m2 0
-               logger command ${prefix}Seq
-            }
-         }
-      }
-      if { [catch {cs tcsApply post} msg] } {
-         tk_messageBox -icon error -message \
-               "Error posting guide commands: TCS reports \
-               \"$msg\""
-      }
-   }
-
-# If the mode is sky set the number if frames to default number for 
-#  sequence dark.
-   if { $mode eq "sky" } {
-         set frames 200
-   } else {
-
-# If the exposure time has changed then re-init the processing with
-# the new file name.
-      if { $exposetime != $current_exposetime } {
-            if { $prefix ne "oi" } {
-            cs ${prefix}DetSigInit set filename [file join data $filename]
-            logger command ${prefix}DetSigInit
-            if { [catch {cs tcsApply post} msg] } {
-               tk_messageBox -icon error -message \
-                     "Error posting guide commands: TCS reports \
-                  \"$msg\""
-            }
-         }
-      }
-   }
+# Set up controller.
+   setup
 
 # Save the new mode and exposure time and quicklook.
    set current_mode $mode
@@ -193,5 +134,68 @@ itcl::body WaveFrontSensor::stop {} {
       tk_messageBox -icon error -message \
             "Error posting guide commands: TCS reports \
                \"$msg\""
+   }
+}
+
+itcl::body WaveFrontSensor::setup {{frames -1}} {
+
+# Set the sky name
+   set filename [expr { int(1.0/$exposetime)}]Hz.fits
+
+# If the mode or exposure time or output destination has been changed then
+# stop the sensor mode.
+   if { $mode ne $current_mode || $exposetime != $current_exposetime || \
+         $current_quicklook != $quicklook } {
+      stop
+      set stopped 1
+      after 10
+   }
+
+# If the mode has changed, set the new processing mode
+   if { $mode ne $current_mode } {
+      switch $mode {
+         sky {
+
+# Set the WFS mode to sequence dark.
+            cs ${prefix}SeqDark set filename $filename
+            logger command ${prefix}SeqDark
+         }
+         seq {
+
+# Set the mode to sequence closed loop. (don't do this for the OIWFS yet).
+            cs ${prefix}Seq set z2m2 1
+            logger command ${prefix}Seq
+         }
+         seqnz {
+
+# Set the mode to sequence closed loop but disable sending Zernikes to M2.
+            cs ${prefix}Seq set z2m2 0
+            logger command ${prefix}Seq
+         }
+      }
+      if { [catch {cs tcsApply post} msg] } {
+         tk_messageBox -icon error -message \
+               "Error posting guide commands: TCS reports \
+               \"$msg\""
+      }
+   }
+
+# If the mode is sky set the number if frames to default number for 
+#  sequence dark.
+   if { $mode eq "sky" } {
+         set frames 200
+   } else {
+
+# If the exposure time has changed then re-init the processing with
+# the new file name.
+      if { $exposetime != $current_exposetime } {
+         cs ${prefix}DetSigInit set filename [file join data $filename]
+         logger command ${prefix}DetSigInit
+         if { [catch {cs tcsApply post} msg] } {
+            tk_messageBox -icon error -message \
+                  "Error posting guide commands: TCS reports \
+               \"$msg\""
+         }
+      }
    }
 }

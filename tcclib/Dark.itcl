@@ -79,6 +79,10 @@ itcl::body Dark::constructor {wfs} {
          set wfsname pwfs2
          set wfsobj Pwfs2
       }
+      oi {
+         set wfsname oiwfs
+         set wfsobj Oiwfs
+      }
    }
 
 # Create action for taking the dark frame.
@@ -154,6 +158,9 @@ itcl::body Dark::expose {} {
       pwfs2 {
          sa guideConfig link p2state [itcl::scope Exposing]
       }
+      oiwfs {
+         sa guideConfig link oistate [itcl::scope Exposing]
+      }
    }
 
 # Configure the WFS object.
@@ -185,6 +192,9 @@ itcl::body Dark::isexposedone {} {
       }
       pwfs2 {
          set val [sa guideConfig get p2state]
+      }
+      oiwfs {
+         set val [sa guideConfig get oistate]
       }
    }
    return [string equal $val No]

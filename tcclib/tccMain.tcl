@@ -167,7 +167,7 @@ proc tccMain args {
 # Create the objects that control the wave-front sensors
    WaveFrontSensor Pwfs1 pwfs1
    WaveFrontSensor Pwfs2 pwfs2
-   WaveFrontSensor Oiwfs oiwfs
+   OiWaveFrontSensor Oiwfs oiwfs
 
 # Create object for executing nods
    Nod Nodder

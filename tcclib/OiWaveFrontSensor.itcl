@@ -1,0 +1,88 @@
+#+
+#  OiWaveFrontSensor
+#
+#  Implements the interface to the on-instrument wave-front sensor
+#
+#  The setup method of WaveFrontSensor is re-implemented to set up
+#  the GMOS OIWFS by writing to EPICS variables directly
+#
+#  D Terrett  24 January 2005
+#
+#  Copyright CLRC
+#-
+
+itcl::class OiWaveFrontSensor {
+   inherit WaveFrontSensor
+   constructor {wfs args} {WaveFrontSensor::constructor $wfs} {}
+   protected {
+      method setup
+   }
+}
+
+itcl::body OiWaveFrontSensor::constructor {wfs args} {
+
+# Create command senders.
+   if { [catch {cs oiwfsSig info}] } {
+      epics cs oiwfsSig
+   }
+   eval configure $args
+}
+
+itcl::body OiWaveFrontSensor::setup {{frames -1}} {
+
+# Set the sky name
+   set filename [expr { int(1.0/$exposetime)}]Hz.fits
+
+# If the mode or exposure time or output destination has been changed then
+# stop the sensor mode.
+   if { $mode ne $current_mode || $exposetime != $current_exposetime || \
+         $current_quicklook != $quicklook } {
+      stop
+      set stopped 1
+      after 10
+   }
+
+# If the mode has changed, set the new processing mode
+   if { $mode ne $current_mode } {
+      switch $mode {
+         sky {
+
+# Set the WFS mode to sequence dark.
+            cs oiwfsSig set seqDarkFilename $filename
+            logger log "oiwfsSig seqDarkFilename $filename"
+            cs oiwfsSig set detSigModeSeqDark START
+            logger log "oiwfsSig detSigModeSeqDark START"
+         }
+         seqnz {
+            cs oiwfsSig set z2m2 0
+            logger log "oiwfsSig detSigModeSeq z2m2 0"
+            cs oiwfsSig set detSigModeSeq START
+            logger log "oiwfsSig detSigModeSeq START"
+         }
+         seq {
+
+# Set the mode to sequence closed loop. 
+            cs oiwfsSig set z2m2 1
+            logger log "oiwfsSig detSigModeSeq z2m2 1"
+            cs oiwfsSig set detSigModeSeq START
+            logger log "oiwfsSig detSigModeSeq START"
+         }
+      }
+   }
+
+# If the mode is sky set the number if frames to default number for 
+#  sequence dark.
+   if { $mode eq "sky" } {
+         set frames 200
+   } else {
+
+# If the exposure time has changed then re-init the processing with
+# the new file name.
+      if { $exposetime != $current_exposetime } {
+         cs oiwfsSig set darkFilename [file join data $filename]
+         logger log "oiwfsSig darkFilename $filename"
+         cs oiwfsSig set detSigInit START
+         logger log "oiwfsSig detSigInit START"
+      }
+   }
+}
