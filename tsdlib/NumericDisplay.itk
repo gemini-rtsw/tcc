@@ -11,7 +11,7 @@
 #
 #  options
 #
-#  D Terrett 12 August 2003
+#  D Terrett 18 January 2004
 #
 #  Copyright CCLRC
 #-
@@ -29,9 +29,11 @@ itcl::class NumericDisplay {
       method inPosition {rec value}
       method noheartbeat {}
       method heartbeat {rec value}
-      method chopbeam {name alarm time value}
+      method chopping {}
       variable nohbid
       variable hbid
+      variable chopdead 0
+      variable lastchop ""
    }
 }
 
@@ -75,21 +77,12 @@ itcl::body NumericDisplay::constructor args {
    itk_component add nod {
       label $w.nod -width 8 -anchor w
    }
-   itk_component add beam {
-      label $w.beam -text Beam
-   }
-   itk_component add beama {
-      label $w.beama -text A
-   }
-   itk_component add beamb {
-      label $w.beamb -text B
-   }
-   pack $itk_component(nod) $itk_component(beam) $itk_component(beama) \
-         $itk_component(beamb) -side left
+   pack $itk_component(nod) -side left
 
    set w $itk_component(top)
    itk_component add chopping {
-      label $w.chopping -width 14 -anchor w
+      StatusField $w.chopping -width 14 -anchor w -labelmargin 2 \
+            -entryrelief groove
    }
 
 # M2 tip/tilt & focus
@@ -401,13 +394,6 @@ itcl::body NumericDisplay::constructor args {
    catch {RecordMonitor tcssad.heartbeat tcssad heartbeat}
    set hbid(heartbeat) [tcssad.heartbeat add [itcl::code $this heartbeat]]
 
-# Monitor the chop beam (this changes faster than the 1 sec update of the
-# rest of the display).
-   sa tcssad proc chopBeam [itcl::code $this chopbeam]
-
-# Update the chop beam display after the widget is constructed.
-   after idle [itcl::code $this chopbeam "" "" "" [sa tcssad get chopBeam]]
-   
 # Trigger checks on the subsystem states
    inPosition mcssad.xxxx ""
    inPosition crssad.xxxx ""
@@ -536,13 +522,8 @@ itcl::body NumericDisplay::update {} {
    set nod [sa tcssad get nodState]
    $itk_component(nod) configure -text "Nod $nod"
 
-# Chopping
-   set chopping [sa m2ssad get chopping]
-   if { [string equal $chopping YES] } {
-      $itk_component(chopping) configure -text "Chopping"
-   } else {
-      $itk_component(chopping) configure -text "Not Chopping"
-   }
+# Chop state
+   chopping
 
 # Target info.
    set target [sa tcssad get targetA]
@@ -737,22 +718,32 @@ itcl::body NumericDisplay::heartbeat {rec value} {
    set nohbid [after 5000 [itcl::code $this noheartbeat]]
 }
 
-itcl::body NumericDisplay::chopbeam {name alarm time value} {
+itcl::body NumericDisplay::chopping {} {
 
-   set bg [$itk_interior cget -background]
-   set fg [$itk_interior cget -foreground]
-   switch $value {
-      A {
-         $itk_component(beama) configure -foreground $fg
-         $itk_component(beama) configure -background green
-         $itk_component(beamb) configure -foreground $bg
-         $itk_component(beamb) configure -background $bg
+   set chopping [sa m2ssad get chopping]
+   set beam [sa tcssad get chopBeam]
+   set time [sa tcssad get chopBeam time]
+   if { [string equal $chopping YES] } {
+
+# If we are chopping then check that the chop beam is still updating.
+      if { $time eq $lastchop } {
+         incr chopdead
+      } else {
+         set chopdead 0
+         set lastchop $time
       }
-      B {
-         $itk_component(beamb) configure -foreground $fg
-         $itk_component(beamb) configure -background green
-         $itk_component(beama) configure -foreground $bg
-         $itk_component(beama) configure -background $bg
-      }
+      if { $chopdead > 10 } {
+         $itk_component(chopping) configure -text "Chopping failed" \
+               -status error
+      } else {
+         $itk_component(chopping) configure -text "Chopping" \
+               -status ok
+      }  
+   } else {
+
+# Not chopping so set the count of dead cycles to zero.
+      set chopdead 0
+      $itk_component(chopping) configure -text "Beam $beam" \
+               -status ok
    }
 }
