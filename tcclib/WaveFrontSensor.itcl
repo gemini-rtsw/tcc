@@ -16,7 +16,10 @@
 #
 #           -mode
 #
-#  D Terrett  18 January 2004
+#  Only PWFS1 and PWFS2 are fully implemented. Do not use mode=sky for the
+#  OIWFS.
+#
+#  D Terrett  20 January 2004
 #
 #  Copyright CLRC
 #-
@@ -110,15 +113,19 @@ itcl::body WaveFrontSensor::start {{frames -1}} {
          }
          seq {
 
-# Set the mode to sequence closed loop.
-            cs ${prefix}Seq set z2m2 1
-            logger command ${prefix}Seq
+# Set the mode to sequence closed loop. (don't do this for the OIWFS yet).
+            if { $prefix ne "oi" } {
+               cs ${prefix}Seq set z2m2 1
+               logger command ${prefix}Seq
+            }
          }
          seqnz {
 
 # Set the mode to sequence closed loop but disable sending Zernikes to M2.
-            cs ${prefix}Seq set z2m2 0
-            logger command ${prefix}Seq
+            if { $prefix ne "oi" } {
+               cs ${prefix}Seq set z2m2 0
+               logger command ${prefix}Seq
+            }
          }
       }
       if { [catch {cs tcsApply post} msg] } {
@@ -137,12 +144,14 @@ itcl::body WaveFrontSensor::start {{frames -1}} {
 # If the exposure time has changed then re-init the processing with
 # the new file name.
       if { $exposetime != $current_exposetime } {
-         cs ${prefix}DetSigInit set filename [file join data $filename]
-         logger command ${prefix}DetSigInit
-         if { [catch {cs tcsApply post} msg] } {
-            tk_messageBox -icon error -message \
-                  "Error posting guide commands: TCS reports \
+            if { $prefix ne "oi" } {
+            cs ${prefix}DetSigInit set filename [file join data $filename]
+            logger command ${prefix}DetSigInit
+            if { [catch {cs tcsApply post} msg] } {
+               tk_messageBox -icon error -message \
+                     "Error posting guide commands: TCS reports \
                   \"$msg\""
+            }
          }
       }
    }
