@@ -11,7 +11,7 @@
 #          -centralbaffle     The position of the central baffle (OPEN or
 #                             CLOSED).
 #
-#          -calunit           Calibration unit shutter position (OPEN or CLOSE)
+#          -calunit           Calibration unit on (boolean)
 #
 #          -deployablebaffle  The postion of the deployable baffle (RETRACTED,
 #                             "NEAR IR", VISIBLE or EXTENDED).
@@ -68,7 +68,7 @@
 #         GCAL. It is left to the caller to map the port number onto the
 #         correct port.
 #
-#  D Terrett  17 July 2001
+#  D Terrett  7 September 2001
 #
 #  Copyright CCLRC
 #-
@@ -97,7 +97,7 @@ itcl::class OpticsView {
    itk_option define -portDnumber portDNumber Number "" "renumber D"
    itk_option define -portEnumber portENumber Number "" "renumber E"
    itk_option define -pcsstate pcsState PcsState OFF
-   itk_option define -calunit calUnit CalUnit CLOSE
+   itk_option define -calunit calUnit CalUnit 0
    public {
       method update {}
    }
@@ -540,7 +540,7 @@ itcl::body OpticsView::update {} {
    }
 
 # Configure light from the calibration unit.
-   if { [string equal $itk_option(-calunit) OPEN] } {
+   if { $itk_option(-calunit) } {
       $c itemconfigure IssLightD -fill $l
       switch $scfoldpos {
          DU -
