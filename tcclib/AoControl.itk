@@ -21,6 +21,7 @@ itcl::class AoControl {
    private {
       method centre {}
       method correct {arg}
+      method closeloop {}
    }
 }
 
@@ -69,6 +70,12 @@ itcl::body AoControl::constructor args {
             -sadrecord {guideConfig aostate}
    }
 
+# Close loop.
+   itk_component add closeloop {
+      LiveButton $w.closeloop -text "Close Loop" \
+            -command [itcl::code $this closeloop]
+   }
+
 # Create command senders.
    if { [catch {cs aoFlatten info}] } {
       epics cs aoFlatten
@@ -104,6 +111,7 @@ itcl::body AoControl::constructor args {
    grid $itk_component(correct) -padx 5 -sticky ew
    grid $itk_component(entshut) -padx 5 -sticky ew
    grid $itk_component(exshut) -padx 5 -sticky ew
+   grid $itk_component(closeloop) -padx 5 -sticky ew
 
    eval itk_initialize $args
 }
@@ -135,4 +143,29 @@ itcl::body AoControl::correct {arg} {
    if { [catch {cs tcsApply post} msg] } {
       tk_messageBox -icon error -parent $itk_interior -message $msg
    }
+}
+
+itcl::body AoControl::closeloop {} {
+
+# Post flatten and centre commands.
+   centre
+
+# Disable guiding.
+   AO disable
+
+# Post ALTAIR correct command.
+   cs aoCorrect set correct ON
+   cs aoCorrect set matrix ""
+   cs aoCorrect set gains 0
+   logger command aoCorrect
+   if { [catch {cs tcsApply post} msg] } {
+      tk_messageBox -icon error -parent $itk_interior -message $msg
+   }
+   after 10
+
+# Change M2 settup to AOS.
+   AO configure -scssource GAOS
+
+# Re-enable guiding.
+   AO enable
 }
