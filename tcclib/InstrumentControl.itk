@@ -7,7 +7,7 @@
 #  Options:
 #           none
 #
-#  D Terrett 14 October 2003
+#  D Terrett 26 April 2002
 #
 #  Copyright CCLRC
 #+
@@ -20,9 +20,6 @@ itcl::class InstrumentControl {
       method load {name}
       method reset {}
       method save {name}
-   }
-   private {
-      variable oiwfs no
    }
 }
 
@@ -68,13 +65,6 @@ itcl::body InstrumentControl::constructor args {
    }
    pack $itk_component(focus) -anchor e -padx 3 -pady 3
 
-# OIWFS select.
-   itk_component add oiwfs {
-      checkbutton $w.oiwfs -text "Select OIWFS" -onvalue yes -offvalue no \
-            -variable [itcl::scope oiwfs]
-   }
-   pack $itk_component(oiwfs) -anchor e -padx 3 -pady 3
-
 # Central baffle
    itk_component add central {
       iwidgets::optionmenu $w.central -labeltext "M2 Central hole cover"
@@ -106,15 +96,13 @@ itcl::body InstrumentControl::save {name} {
          -iaa [$itk_component(iaa) get] \
          -focusOffset [$itk_component(focus) get] \
          -centralBaffle [$itk_component(central) get] \
-         -deployableBaffle [$itk_component(deploy) get] \
-         -oiwfs $oiwfs
+         -deployableBaffle [$itk_component(deploy) get]
 }
 
 itcl::body InstrumentControl::reset {} {
    $itk_component(name) clear
    $itk_component(iaa) clear
    $itk_component(focus) clear
-   set oiwfs no
 }
 
 itcl::body InstrumentControl::load {name} {
@@ -128,5 +116,4 @@ itcl::body InstrumentControl::load {name} {
    $itk_component(focus) insert end [$name cget -focusOffset]
    $itk_component(central) select [$name cget -centralBaffle]
    $itk_component(deploy) select [$name cget -deployableBaffle]
-   set oiwfs [$name cget -oiwfs]
 }
