@@ -19,6 +19,10 @@ proc setWidgetColors {widgets background foreground} {
          highlightColor} {
       set new($i) $new(foreground)
    }
+ 
+   foreach i {backdrop tabBackground} {
+      set new($i) $new(background)
+   }
 
    set new(disabledforeground) [format #%02x%02x%02x \
          [expr (3*[lindex $bg 0] + [lindex $fg 0])/1024] \
@@ -41,6 +45,7 @@ proc setWidgetColors {widgets background foreground} {
    set new(activeBackground) [format #%02x%02x%02x $light(0) \
          $light(1) $light(2)]
 
+   set new(disabledBackground) $darkerBg
    set new(selectBackground) $darkerBg
    set new(troughColor) $darkerBg
    set new(textBackground) $darkerBg
@@ -49,7 +54,7 @@ proc setWidgetColors {widgets background foreground} {
    set appname [winfo name .]
    foreach option [array names new] {
       foreach w $widgets {
-         option add ${appname}$w*$option $new($option)
+         option add ${appname}$w*$option $new($option) startupFile
       }
    }
 }
