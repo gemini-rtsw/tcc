@@ -11,7 +11,7 @@
 #
 #  options
 #
-#  D Terrett 31 October 2001
+#  D Terrett 28 November 2001
 #
 #  Copyright CCLRC
 #-
@@ -354,6 +354,11 @@ itcl::body NumericDisplay::constructor args {
          RecordMonitor tcssad.${vt}TrackWavelength tcssad ${vt}TrackWavelength
       }
       set hbid(${vt}TrackWavelength) [tcssad.${vt}TrackWavelength add \
+            [code $this newtarget]]
+      if { [llength [find object tcssad.${vt}Wavelength]] == 0 } {
+         RecordMonitor tcssad.${vt}Wavelength tcssad ${vt}Wavelength
+      }
+      set hbid(${vt}Wavelength) [tcssad.${vt}Wavelength add \
             [code $this newtarget]]
    }
 
