@@ -7,7 +7,7 @@
 #  Methods:
 #           none
 #
-#  D Terrett  24 April 2001
+#  D Terrett  2 July 2001
 #
 #  Copyright CCLRC
 #+
@@ -35,10 +35,15 @@ itcl::body ObserveControl::constructor args {
    }
    pack $itk_component(guideloop)
 
+# Acquisition Camera/HRWFS controls.
+   itk_component add acqcam {
+      Acqcam $w.acqcam
+   }
+
    itk_component add buttons {
       frame $w.buttons
    }
-   pack $itk_component(buttons) -fill both -expand yes
+   pack $itk_component(acqcam) $itk_component(buttons) -side left
    set w $itk_component(buttons)
 
 # Selectbutton for configuring the A & G fold mirrors.

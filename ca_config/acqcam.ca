@@ -1,0 +1,75 @@
+#+
+# acqcam.ca
+#
+# Channel access configuration file for the Acquisition Camera package
+#
+# D Terrett 2 July 2001
+#
+# Copyright CCLRC
+#-
+
+apply acqcam::apply hrwfs:apply hrwfs:applyC Primary Apply Record
+
+status acqcam::apply Apply message
+{
+   mess       hrwfs:applyC.OMSS    0    Command completion message
+}
+
+status acqcam::status Acquisition Camera status
+{
+   applyC     hrwfs:applyC.VAL     0    Command status
+   message    hrwfs:applyC.OMSS    0    Command completion message
+   observe    hrwfs:observeC.VAL   0    Observe status
+}
+
+command acqcam::lensSel acqcam::apply Set lens position
+{
+   name       hrwfs:lensSel.A  Filter name
+}
+
+command acqcam::ndfilterSel acqcam::apply Set ND filter position
+{
+   name       hrwfs:ndfilterSel.A  Filter name
+}
+
+command acqcam::clfilterSel acqcam::apply Set ND filter position
+{
+   name       hrwfs:clfilterSel.A  Filter name
+}
+
+command acqcam::detExposure acqcam::apply Set exposure parameters
+{
+   nframe     hrwfs:dc:detExposure.A  Number of frames
+   exposure   hrwfs:dc:detExposure.B  Exposure interval
+}
+
+command acqcam::detObstype acqcam::apply Set observation type
+{
+   type       hrwfs:dc:detObstype.A   Observation type
+}
+
+command acqcam::detFrameSize acqcam::apply Set frame size
+{
+   binning    hrwfs:dc:detFrameSize.A Binning
+   windowing  hrwfs:dc:detFrameSize.B WIndowing
+   x          hrwfs:dc:detFrameSize.C X center
+   y          hrwfs:dc:detFrameSize.D Y center
+   width      hrwfs:dc:detFrameSize.E Width
+   height     hrwfs:dc:detFrameSize.F Height
+}
+
+command acqcam::observe acqcam::apply Observe
+{
+   label      hrwfs:observe.A        DHS data label
+   dummy      hrwfs:observe.B
+}
+
+command acqcam::stop acqcam::apply Stop observation
+{
+   dummy      hrwfs:stop.A
+}
+
+command acqcam::abort acqcam::apply Abort observation
+{
+   dummy      hrwfs:abort.A
+}

@@ -1,0 +1,176 @@
+#+
+#  Acqcam <- itk::Widget
+#
+#  A Acqcam is a set of controls for controlling the Acquisition camera/HRWFS
+#
+#  Options:
+#           none
+#
+#  Methods:
+#           none
+#
+#  D Terrett  2 July 2001
+#
+#  Copyright CCLRC
+#+
+
+itcl::class Acqcam {
+   inherit itk::Widget
+   constructor {args} {}
+   private {
+      method lenssel {}
+      method ndsel {}
+      method colsel {}
+      method window {}
+      method expose {}
+      method start {}
+      method stop {}
+   }
+}
+
+itk::usual Acqcam {
+   keep -cursor -foreground -background
+}
+
+itcl::body Acqcam::constructor {args} {
+
+   set w $itk_interior
+#   itk_component add lens {
+#      iwidgets::optionmenu $w.lens -labeltext AC/HR -labelpos w \
+#            -command [itcl::code $this lenssel]
+#   }
+   itk_component add lens {
+      label $w.lens -text AC/HRWFS
+   }
+   pack $itk_component(lens)
+
+   itk_component add control {
+      frame $w.control
+   }
+   set w $itk_component(control)
+
+   itk_component add start {
+      tcclib::LiveButton $w.start -text Start \
+            -command [itcl::code $this start]
+   }
+   itk_component add stop {
+      tcclib::LiveButton $w.stop -text Stop \
+            -command [itcl::code $this stop]
+   }
+   pack $itk_component(start) $itk_component(stop) -padx 5 -pady 10
+
+   set w [winfo parent $w]
+   itk_component add setup {
+      frame $w.setup
+   }
+   set w $itk_component(setup)
+   
+   itk_component add nd {
+      iwidgets::optionmenu $w.nd -labeltext "ND filter" -labelpos w -width 100 \
+            -command [itcl::code $this ndsel]
+   }
+   $itk_component(nd) insert end neutral filt02 filt04 filt06 filt08 open
+
+   itk_component add col {
+      iwidgets::optionmenu $w.col -labeltext "Col filter" -labelpos w \
+            -width 100 -command [itcl::code $this colsel]
+   }
+   $itk_component(col) insert end neutral  U-red1 B-blue V-green R-red2 \
+         I-red3
+
+   itk_component add window {
+      iwidgets::optionmenu $w.window -labeltext Window -labelpos w -width 100 \
+            -command [itcl::code $this window]
+   }
+   $itk_component(window) insert end full 100x100
+
+   itk_component add expose {
+      iwidgets::optionmenu $w.expose -labeltext "Expose (s)" -labelpos w \
+         -width 100 -command [itcl::code $this expose]
+   }
+   $itk_component(expose) insert end 0.005 0.01 0.05 0.1 1.0
+
+   pack $itk_component(nd) $itk_component(col) $itk_component(window) \
+         $itk_component(expose) -anchor e
+   pack $itk_component(control) $itk_component(setup) -side left
+
+# Create required command senders.
+   if { [catch {cs acqcam::lensSel info}] } {
+      epics cs acqcam::lensSel
+   }
+   if { [catch {cs acqcam::ndfilterSel info}] } {
+      epics cs acqcam::ndfilterSel
+   }
+   if { [catch {cs acqcam::clfilterSel info}] } {
+      epics cs acqcam::clfilterSel
+   }
+   if { [catch {cs acqcam::detExposure info}] } {
+      epics cs acqcam::detExposure
+   }
+   if { [catch {cs acqcam::detFrameSize info}] } {
+      epics cs acqcam::detFrameSize
+   }
+   if { [catch {cs acqcam::observe info}] } {
+      epics cs acqcam::observe
+   }
+   if { [catch {cs acqcam::stop info}] } {
+      epics cs acqcam::stop
+   }
+
+   eval itk_initialize $args
+}
+
+itcl::body Acqcam::lenssel {} {
+   cs acqcam::lensSel set name [$itk_component(lens) get]
+   cs acqcam::apply post
+}
+
+itcl::body Acqcam::ndsel {} {
+   cs acqcam::ndfilterSel set name [$itk_component(nd) get]
+   cs acqcam::apply post
+}
+
+itcl::body Acqcam::colsel {} {
+   cs acqcam::clfilterSel set name [$itk_component(col) get]
+   cs acqcam::apply post
+}
+
+itcl::body Acqcam::window {} {
+   cs acqcam::stop set dummy 1
+   cs acqcam::apply postWait
+   switch [$itk_component(window) get] {
+      full {
+         cs acqcam::detFrameSize set windowing 0
+      }
+      100x100 {
+         cs acqcam::detFrameSize set windowing 1
+         cs acqcam::detFrameSize set x [calparam cget -acqcam_x]
+         cs acqcam::detFrameSize set y [calparam cget -acqcam_y]
+         cs acqcam::detFrameSize set width 100
+         cs acqcam::detFrameSize set height 100
+      }
+   }
+   cs acqcam::apply post
+}
+
+itcl::body Acqcam::expose {} {
+   cs acqcam::stop set dummy 1
+   cs acqcam::apply postWait
+   cs acqcam::detExposure set exposure [$itk_component(expose) get]
+   cs acqcam::apply post
+}
+
+itcl::body Acqcam::stop {} {
+   cs acqcam::stop set dummy 1
+   cs acqcam::apply post
+}
+
+itcl::body Acqcam::start {} {
+   cs acqcam::stop set dummy 1
+   cs acqcam::apply postWait
+   cs acqcam::detExposure set nframe -1
+   cs acqcam::apply postWait
+   cs acqcam::observe set dummy 1
+   cs acqcam::apply post
+}
+
