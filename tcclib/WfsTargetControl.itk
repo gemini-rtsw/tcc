@@ -43,10 +43,21 @@ itcl::body WfsTargetControl::constructor args {
 
 itcl::body WfsTargetControl::copy createproc {
    set name [$itk_component(selector) get]
-   if { [string equal $name ""] } {
-      tk_messageBox -icon error -parent $itk_interior \
-         -message "A name is required to copy a target"
-   } else {
+   if { [string is space $name] } {
+      iwidgets::promptdialog $itk_interior.pd -modality application \
+            -labeltext "Science target name"
+      $itk_interior.pd hide Apply
+      $itk_interior.pd center
+      if { [$itk_interior.pd activate] } {
+         set name [$itk_interior.pd get]
+         if { [string is space $name] } {
+            tk_messageBox -icon error -parent $itk_interior \
+                  -message "A name is required to copy a target"
+         }
+      } 
+      destroy $itk_interior.pd
+   }  
+   if { ![string is space $name] } {
       store $name
       WfsTargetNames::$name copy $createproc
       tcsconfigscienceTarget select $name

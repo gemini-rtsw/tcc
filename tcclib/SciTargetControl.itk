@@ -319,9 +319,20 @@ itcl::body SciTargetControl::orbtype {} {
 itcl::body SciTargetControl::copy {createproc wfs} {
    set name [$itk_component(selector) get]
    if { [string is space $name] } {
-      tk_messageBox -icon error -parent $itk_interior \
-         -message "A name is required to copy a target"
-   } else {
+      iwidgets::promptdialog $itk_interior.pd -modality application \
+            -labeltext "WFS target name"
+      $itk_interior.pd hide Apply
+      $itk_interior.pd center
+      if { [$itk_interior.pd activate] } {
+         set name [$itk_interior.pd get]
+         if { [string is space $name] } {
+            tk_messageBox -icon error -parent $itk_interior \
+                  -message "A name is required to copy a target"
+         }
+      }
+      destroy $itk_interior.pd
+   }
+   if { ![string is space $name] } {
       store $name
       ScienceTargetNames::$name copy $createproc
       tcsconfigguide${wfs}Target select $name
