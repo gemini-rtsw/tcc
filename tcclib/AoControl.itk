@@ -17,11 +17,17 @@
 
 itcl::class AoControl {
    inherit itk::Widget
-   constructor args {}
+   constructor {args} {}
+   destructor {}
    private {
       method centre {}
       method correct {arg}
-      method closeloop {}
+      method closeloop1 {}
+      method closeloop2 {}
+      method isinposition {}
+      method onerror {msg}
+      variable centreaction
+      variable InPosition
    }
 }
 
@@ -73,7 +79,7 @@ itcl::body AoControl::constructor args {
 # Close loop.
    itk_component add closeloop {
       LiveButton $w.closeloop -text "Close Loop" \
-            -command [itcl::code $this closeloop]
+            -command [itcl::code $this closeloop1]
    }
 
 # Create command senders.
@@ -113,7 +119,19 @@ itcl::body AoControl::constructor args {
    grid $itk_component(exshut) -padx 5 -sticky ew
    grid $itk_component(closeloop) -padx 5 -sticky ew
 
+# Create action that sends the flatten and centre commands and then
+# executed the rest of the close loop procedure.
+   set centreaction [seq::Action #auto tcs \
+         -onok [itcl::code $this closeloop2] \
+         -oktest [itcl::code $this isinposition] \
+         -waitvar [itcl::scope InPosition(value)] \
+         -onerror [itcl::code $this onerror]]
+
    eval itk_initialize $args
+}
+
+itcl::body AoControl::destructor {} {
+   itcl::delete $centreaction
 }
 
 itcl::body AoControl::centre {} {
@@ -145,10 +163,20 @@ itcl::body AoControl::correct {arg} {
    }
 }
 
-itcl::body AoControl::closeloop {} {
+itcl::body AoControl::closeloop1 {} {
+
+# Link to the TCS in postion flag.
+   sa tcssad link inPosition [itcl::scope InPosition]
 
 # Post flatten and centre commands.
-   centre
+   $centreaction set aoFlatten dummy 1
+   $centreaction set aoCentreWfs retain 0
+   logger command aoFlatten
+   logger command aoCentreWfs
+   $centreaction start
+}
+
+itcl::body AoControl::closeloop2 {} {
 
 # Disable guiding.
    AO disable
@@ -169,3 +197,15 @@ itcl::body AoControl::closeloop {} {
 # Re-enable guiding.
    AO enable
 }
+
+itcl::body AoControl::isinposition {} {
+   set val [sa tcssad get inPosition]
+   return [string equal $val TRUE]
+}
+
+itcl::body AoControl::onerror {msg} {
+   tk_messageBox -icon error -parent $itk_interior -message \
+         "Error posting commands: TCS reports \
+         \"$msg\""
+}
+
