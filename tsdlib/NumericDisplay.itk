@@ -11,7 +11,7 @@
 #
 #  options
 #
-#  D Terrett 28 April 2001
+#  D Terrett 23 June 2001
 #
 #  Copyright CCLRC
 #-
@@ -538,26 +538,26 @@ itcl::body NumericDisplay::update {} {
    $itk_component(base2) configure -text \
          [format "%s%02d:%02d:%02d.%02d" [lindex $dec 0] [lindex $dec 1] \
          [lindex $dec 2] [lindex $dec 3] [lindex $dec 4]]
-   set off1 \
-         [expr [lindex $target 2] * 206264.80624710 * cos( [lindex $target 1] )]
+   set off1 [expr {[lindex $target 2] * 206264.80624710}]
    if { $off1 > 648000.0 } {
       set off1 [expr { $off1 - 1296000.0 }]
    }
+   set off1 [expr {$off1 * cos( [lindex $target 1] )}]
    $itk_component(off1) configure -text [format "%10.2f" $off1]
    $itk_component(off2) configure -text \
-         [format "%10.2f" [expr [lindex $target 3] * 206264.80624710] ]
+         [format "%10.2f" [expr {[lindex $target 3] * 206264.80624710}] ]
    $itk_component(rate1) configure -text [sa tcssad get sourceADiffRA value]
    $itk_component(rate2) configure -text [sa tcssad get sourceADiffDec value]
 
 # Chop throw.
-   set throw1 [expr ([lindex $targetb 0] + [lindex $targetb 2] - \
+   set throw1 [expr {([lindex $targetb 0] + [lindex $targetb 2] - \
          [lindex $target 0] - [lindex $target 2]) * 206264.80624710 * \
-         cos( [lindex $target 1] )]
+         cos( [lindex $target 1] )}]
    if { $throw1 > 648000.0 } {
       set throw1 [expr { $throw1 - 1296000.0 }]
    }
-   set throw2 [expr ([lindex $targetb 1] + [lindex $targetb 3] - \
-         [lindex $target 1] - [lindex $target 3]) * 206264.80624710]
+   set throw2 [expr {([lindex $targetb 1] + [lindex $targetb 3] - \
+         [lindex $target 1] - [lindex $target 3]) * 206264.80624710}]
    $itk_component(chop1) configure -text [format "%10.2f" $throw1]
    $itk_component(chop2) configure -text [format "%10.2f" $throw2]
 
