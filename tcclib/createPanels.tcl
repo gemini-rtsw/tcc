@@ -45,7 +45,7 @@ proc createPanels {} {
    PanelMgr pointUpdatePanel -name .pointUpdatePanel \
          -class PointUpdatePanel -title "Pointing model update"
    PanelMgr skyPanel -name .skyPanel \
-         -class SkyPanel -title Catalogues
+         -class SkyPanel -title Catalogs
 
 # Create all the edit panel managers.
    EditPanelMgr tcsConfigPanel -name .tcsConfigPanel \
