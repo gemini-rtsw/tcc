@@ -3,6 +3,9 @@
 # The name of the OCS session soap server.
 set ocs_proxy http://scott:9000/axis/services
 
+# Where the tcs is stored.
+set tcs_root_dir /gemini/epics3.13.4/tcs/tcs
+
 # The directory in which WFS images used for M1 tuning are are stored.
 set m1_tune_dir /net/pisces/export/gemdata
 
