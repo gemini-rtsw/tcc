@@ -7,7 +7,7 @@
 #  Options:
 #           -shadow         The names of this control's shadow.
 #
-#  D Terrett 18 June 2001
+#  D Terrett 26 June 2001
 #
 #  Copyright CCLRC
 #+
@@ -19,9 +19,6 @@ itcl::class GuideControl {
    public {
       method load {name}
       method save {name}
-   }
-   private {
-      method setchop {wfs}
    }
 }
 
@@ -55,7 +52,7 @@ itcl::body GuideControl::constructor args {
 
 # Chop state
       itk_component add ${wfs}chop {
-         iwidgets::optionmenu $w.chop -command [itcl::code $this setchop $wfs]
+         iwidgets::optionmenu $w.chop
       }
       [$itk_component(${wfs}chop) component menuBtn] configure -anchor w
       $itk_component(${wfs}chop) insert end "guide when in beam A" \
@@ -121,7 +118,6 @@ itcl::body GuideControl::load {name} {
          antiNod {$itk_component(${wfs}chop) select 3}
          default {$itk_component(${wfs}chop) select 4}
       }
-      setchop $wfs
       switch [$name cget -${wfs}NodState] {
          AB {$itk_component(${wfs}nod) select 0}
          A {$itk_component(${wfs}nod) select 1}
@@ -134,14 +130,5 @@ itcl::configbody GuideControl::shadow {
    foreach wfs {pwfs1 pwfs2 oiwfs} {
       $itk_component(${wfs}Target) configure -editcontrol \
                $itk_option(-shadow)${wfs}Target -shadow $itk_option(-shadow)
-   }
-}
-
-itcl::body GuideControl::setchop {wfs} {
-   if { [string equal [$itk_component(${wfs}chop) get] \
-         "no guiding with this WFS"] } {
-      $itk_component(${wfs}Target) configure -state disabled
-   } else {
-      $itk_component(${wfs}Target) configure -state normal
    }
 }

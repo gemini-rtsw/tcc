@@ -44,7 +44,7 @@
 #           subcomponents   Returns a list of the Guide components 
 #                           subcomponents.
 #
-#  D Terrett 15 March 2001
+#  D Terrett 26 June 2001
 #
 #  Copyright CCLRC
 #+
@@ -105,24 +105,16 @@ itcl::body Guide::apply args {
 # enable flags.
    if { ![string is space $pwfs1Target] } {
       ::WfsTargetNames::$pwfs1Target apply pwfs1
-      setEnableFlags pwfs1 $pwfs1Active $pwfs1NodState
-   } else {
-      setEnableFlags pwfs1 "" ""
-      park pwfs1
    }
+   setEnableFlags pwfs1 $pwfs1Active $pwfs1NodState
    if { ![string is space $pwfs2Target] } {
       ::WfsTargetNames::$pwfs2Target apply pwfs2
-      setEnableFlags pwfs2 $pwfs2Active $pwfs2NodState
-   } else {
-      setEnableFlags pwfs2 "" ""
-      park pwfs2
    }
+   setEnableFlags pwfs2 $pwfs2Active $pwfs2NodState
    if { ![string is space $oiwfsTarget] } {
       ::WfsTargetNames::$oiwfsTarget apply oiwfs
-      setEnableFlags oiwfs $oiwfsActive $oiwfsNodState
-   } else {
-      setEnableFlags oiwfs "" ""
    }
+   setEnableFlags oiwfs $oiwfsActive $oiwfsNodState
 }
 
 itcl::body Guide::init {} {
