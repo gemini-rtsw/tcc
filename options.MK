@@ -17,6 +17,11 @@
 *tcsPanel*background:		PeachPuff1
 *m1sPanel*background:		PeachPuff1
 
+# Handset pages
+*handsetPanel*page1*background:	SkyBlue
+*handsetPanel*page2*background:	Pink
+*handsetPanel*page3*background:	LemonChiffon
+
 # Background for the configuration editing panels.
 *CosysPanel*background:		LightGray
 *GuidePanel*background:		LightGrey
@@ -30,6 +35,13 @@
 *TrackFramePanel*background:		LightGray
 *TrackRatePanel*background:		LightGray
 *WavelengthPanel*background:		LightGray
+
+# Target entry pages
+*FieldPanel*data*page1*background: 	Pink
+*FieldPanel*data*page2*background: 	SkyBlue
+*FieldPanel*data*page3*background: 	OldLace
+*FieldPanel*data*page4*background: 	Wheat
+*FieldPanel*data*page5*background: 	LemonChiffon
 
 # Font for "major" tcc items.
 *majorFont:			-*-*-bold-r-normal-sans-14-*-*-*-*-*-*-*

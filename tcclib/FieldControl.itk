@@ -19,7 +19,7 @@
 #           newtarget name type args  Creates a new target in the currently 
 #                                     selected field.
 #
-#  D Terrett 11 March 2003
+#  D Terrett 29 July 2003
 #
 #  Copyright CCLRC
 #+
@@ -38,6 +38,7 @@ itcl::class FieldControl {
    }
    private {
       method newfieldval {n1 n2 op}
+      method pageSelectCB {color}
       variable comp ""
       variable currentname ""
    }
@@ -126,12 +127,32 @@ itcl::body FieldControl::constructor args {
    set w $itk_component(data)
 
 # Notebook for target entry controls.
+   itk_component add tarframe {
+      frame $w.tarframe -borderwidth 2 -relief raised
+   }
+   pack $itk_component(tarframe)
+   set w $itk_component(tarframe)
+
    itk_component add targets {
       iwidgets::tabnotebook $w.targets -height 440 -width 450 \
             -tabpos n
+   } {
+      ignore -background -tabbackground
    }
 
+# Science target page.
    set w [$itk_component(targets) add -label Science]
+
+# Set colours from the options database
+   set bg [option get $w background Background] 
+   set fg [option get $w foreground Foreground] 
+   setWidgetColors $w [option get $w background Background] \
+         [option get $w foreground Foreground]
+
+# Configure page to set background when selected.
+   $itk_component(targets) pageconfigure Science -background $bg \
+         -foreground $fg -command [itcl::code $this pageSelectCB $bg]
+
    itk_component add sciencecontrol {
       SciTargetControl $w.sciencecontrol
    } {
@@ -139,39 +160,75 @@ itcl::body FieldControl::constructor args {
       ignore -title
    }
    pack $itk_component(sciencecontrol)
+
+# Repeat for PWFS1
    set w [$itk_component(targets) add -label PWFS1]
+   set bg [option get $w background Background] 
+   set fg [option get $w foreground Foreground] 
+   setWidgetColors $w [option get $w background Background] \
+         [option get $w foreground Foreground]
+   $itk_component(targets) pageconfigure PWFS1 -background $bg \
+         -foreground $fg -command [itcl::code $this pageSelectCB $bg]
+
    itk_component add pwfs1control {
-      WfsTargetControl $w.pwfs1control
+      TargetControl $w.pwfs1control
    } {
       usual
       ignore -title
    }
    pack $itk_component(pwfs1control)
+
+# and PWFS2
    set w [$itk_component(targets) add -label PWFS2]
+   set bg [option get $w background Background] 
+   set fg [option get $w foreground Foreground] 
+   setWidgetColors $w [option get $w background Background] \
+         [option get $w foreground Foreground]
+   $itk_component(targets) pageconfigure PWFS2 -background $bg \
+         -foreground $fg -command [itcl::code $this pageSelectCB $bg]
+
    itk_component add pwfs2control {
-      WfsTargetControl $w.pwfs2control
+      TargetControl $w.pwfs2control
    } {
       usual
       ignore -title
    }
    pack $itk_component(pwfs2control)
+
+# and OIWFS
    set w [$itk_component(targets) add -label OIWFS]
+   set bg [option get $w background Background] 
+   set fg [option get $w foreground Foreground] 
+   setWidgetColors $w [option get $w background Background] \
+         [option get $w foreground Foreground]
+   $itk_component(targets) pageconfigure OIWFS -background $bg \
+         -foreground $fg -command [itcl::code $this pageSelectCB $bg]
+
    itk_component add oiwfscontrol {
-      WfsTargetControl $w.oiwfscontrol
+      TargetControl $w.oiwfscontrol
    } {
       usual
       ignore -title
    }
    pack $itk_component(oiwfscontrol)
+
+# and ALTAIR
    set w [$itk_component(targets) add -label ALTAIR]
+   set bg [option get $w background Background] 
+   set fg [option get $w foreground Foreground] 
+   setWidgetColors $w [option get $w background Background] \
+         [option get $w foreground Foreground]
+   $itk_component(targets) pageconfigure ALTAIR -background $bg \
+         -foreground $fg -command [itcl::code $this pageSelectCB $bg]
+
    itk_component add altaircontrol {
-      WfsTargetControl $w.altaircontrol
+      TargetControl $w.altaircontrol
    } {
       usual
       ignore -title
    }
    pack $itk_component(altaircontrol)
-   pack $itk_component(targets) -side top
+   pack $itk_component(targets)
 
 # Airmass limit and program ID.
    set w $itk_component(data)
@@ -185,7 +242,7 @@ itcl::body FieldControl::constructor args {
          -padx 5 -pady 10 -expand yes
 
    $itk_component(targets) select Science
-   pack $itk_component(data) -side left -anchor n
+   pack $itk_component(data) -side left -padx 3 -pady 3 -expand yes -fill y
 
    itk_component add plots {
       iwidgets::tabnotebook $itk_interior.plots -height 530 -width 450 \
@@ -210,6 +267,11 @@ itcl::body FieldControl::constructor args {
 
 # Define the object description.
    set description "field"
+
+# Turn off geometry propogation once the widget is constructed so that
+# re-configuring the notebook widgets doesn't cause the top level window
+# to be re-sized.
+   after idle pack propagate $itk_component(tarframe) 0
 
    eval itk_initialize $args
 }
@@ -446,4 +508,23 @@ itcl::body FieldControl::newtarget {name type args} {
       $field configure -$type $target
       set ::Config(tcs.field.$type,value) $target
    }
+}
+
+itcl::body FieldControl::pageSelectCB {color} {
+
+# Re-configure the notebook background to match the selected page.
+   $itk_component(targets) config -background $color -tabbackground $color \
+         -backdrop $color
+
+# Restore the colours of the tabs.
+   $itk_component(targets) pageconfigure Science -background \
+         [option get $itk_component(sciencecontrol) background Background] 
+   $itk_component(targets) pageconfigure PWFS1 -background \
+         [option get $itk_component(pwfs1control) background Background] 
+   $itk_component(targets) pageconfigure PWFS2 -background \
+         [option get $itk_component(pwfs2control) background Background] 
+   $itk_component(targets) pageconfigure OIWFS -background \
+         [option get $itk_component(oiwfscontrol) background Background] 
+   $itk_component(targets) pageconfigure ALTAIR -background \
+         [option get $itk_component(altaircontrol) background Background] 
 }

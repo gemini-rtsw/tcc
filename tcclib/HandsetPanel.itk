@@ -10,7 +10,7 @@
 #  Methods:
 #          none
 #
-#  D Terrett 15 July 2003
+#  D Terrett 29 July 2003
 #
 #  Copyright CCLRC
 #+
@@ -18,15 +18,8 @@
 itcl::class HandsetPanel {
    inherit Panel
    constructor args {}
-   
-# $itk_component(handsets) config -background achieves this
-# but reconfigures the whole widget, which look bad on the screen
-# this avoid annoying flashing and does the job
-   private method pageSelectCB { color } {
-      [$itk_component(handsets) component tabset] config \
-            -selectbackground $color
-      [$itk_component(handsets) component canvas] config -bg $color
-      
+   private {
+      method pageSelectCB {color}
    }
 }
 
@@ -41,50 +34,81 @@ itcl::body HandsetPanel::constructor args {
 
 # Notebook for the handset controls.
    itk_component add handsets {
-      iwidgets::tabnotebook $itk_interior.targets -height 610 -width 450 \
+      iwidgets::tabnotebook $itk_interior.handsets -height 610 -width 450 \
             -tabpos n -equaltabs no
    } {
       ignore -background -tabbackground
    }
 
-# Fix up the backround of the tabs which is not set with a standard option.
-   $itk_component(handsets) configure -backdrop $itk_option(-background)
-   [$itk_component(handsets) component tabset] \
-         configure -background $itk_option(-background)
+# Target handset page.
+   set w [$itk_component(handsets) add -label Targets]
 
-# Target handset
-   set w [$itk_component(handsets)  add -label "Targets" \
-         -background "#add8e6" -tabbackground  "#add8e6" \
-         -command [itcl::code $this pageSelectCB #add8e6]]
-   setWidgetColors $w #add8e6 black
+# Set colours from the options database
+   set bg [option get $w background Background] 
+   set fg [option get $w foreground Foreground] 
+   setWidgetColors $w [option get $w background Background] \
+         [option get $w foreground Foreground]
+
+# Configure page to set background when selected.
+   $itk_component(handsets) pageconfigure Targets -background $bg \
+         -foreground $fg -command [itcl::code $this pageSelectCB $bg]
+
+# Add targets handset.
    itk_component add targets {
       TargetHandsetControl $w.targets
    }
    pack $itk_component(targets)
 
-# Guiding handset
-   set w [$itk_component(handsets) add -label "Pointing" -background "#ffdae9" \
-         -tabbackground "#ffdab9" \
-         -command [itcl::code $this pageSelectCB #ffdae9]]
-   setWidgetColors $w #ffdae9 black
-   itk_component add guiding {
-      GuideHandsetControl $w.guiding -background "#ffdae9"
+# Repeat for guiding handset
+   set w [$itk_component(handsets) add -label Pointing ]
+   set bg [option get $w background Background] 
+   set fg [option get $w foreground Foreground] 
+   setWidgetColors $w [option get $w background Background] \
+         [option get $w foreground Foreground]
+   $itk_component(handsets) pageconfigure Pointing -background $bg \
+         -foreground $fg -command [itcl::code $this pageSelectCB $bg]
+   itk_component add pointing {
+      GuideHandsetControl $w.pointing
    }
-   pack $itk_component(guiding)
+   pack $itk_component(pointing)
    
-# Pointing origin handset
-   set w [$itk_component(handsets) add -label "Instrument Origins" \
-         -background "#fffacd" -tabbackground "#fffacd" \
-         -command [itcl::code $this pageSelectCB #fffacd]]
-   setWidgetColors $w #fffacd black
-   itk_component add po {
-      PoHandsetControl $w.po -background "#fffacd"
+# Repeat for instrument origin handset
+   set w [$itk_component(handsets) add -label "Instrument Origins"]
+   set bg [option get $w background Background] 
+   set fg [option get $w foreground Foreground] 
+   setWidgetColors $w [option get $w background Background] \
+         [option get $w foreground Foreground]
+   $itk_component(handsets) pageconfigure "Instrument Origins" -background $bg \
+         -foreground $fg -command [itcl::code $this pageSelectCB $bg]
+   itk_component add instorigin {
+      PoHandsetControl $w.instorigin
    }
-   pack $itk_component(po)
+   pack $itk_component(instorigin)
 
+# Select the targets handset.
    $itk_component(handsets) select Targets
 
    pack $itk_component(handsets) -fill both -expand y
 
+# Turn off geometry propogation once the widget is constructed so that
+# re-configuring the notebook widgets doesn't cause the top level window
+# to be re-sized.
+   after idle pack propagate $itk_interior 0
+
    eval itk_initialize $args
+}
+
+itcl::body HandsetPanel::pageSelectCB {color} {
+
+# Re-configure the notebook background to match the selected page.
+   $itk_component(handsets) config -background $color -tabbackground $color \
+         -backdrop $color
+
+# Restore the colours of the tabs.
+   $itk_component(handsets) pageconfigure Targets -background \
+         [option get $itk_component(targets) background Background] 
+   $itk_component(handsets) pageconfigure Pointing -background \
+         [option get $itk_component(pointing) background Background] 
+   $itk_component(handsets) pageconfigure "Instrument Origins" -background \
+         [option get $itk_component(instorigin) background Background] 
 }
