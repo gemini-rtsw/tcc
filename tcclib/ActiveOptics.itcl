@@ -4,7 +4,7 @@
 # An ActiveOptics object controls the state of the active optics (M2 tip/tilt,
 # coma correction, M1 figure). 
 #
-# D Terrett  17 October 2003
+# D Terrett  20 October 2003
 #
 # Copyright CLRC
 #+
@@ -103,14 +103,6 @@ itcl::body ActiveOptics::enable {} {
                   append $statevar B
                } 
             }
-         }
-
-# If no chop states are set then this is an error.
-         if { [set $statevar] eq "" } {
-            tk_messageBox -icon error -message \
-                  "Tip/tilt guiding has been specified for $probe but it is \
-                  not tracking a star in either chop state"
-            return   
          }
       }
    }
