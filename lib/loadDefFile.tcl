@@ -6,7 +6,7 @@
 #  Arguments:
 #             chanid      The channel id to read from.
 #
-#  D Terrett 30 January 2001
+#  D Terrett 19 July 2001
 #
 #  Copyright CCLRC
 #-
@@ -19,6 +19,7 @@ proc loadDefFile chanid {
       incr lineno
       if { [gets $chanid line] > 1 } {
          set command ${command}\n${line}
+         update
          if { [info complete $command] && [string index $command \
                   [expr {[string length $command] - 1}]] != "\\"} {
             if { [catch {eval $command} msg] } {
