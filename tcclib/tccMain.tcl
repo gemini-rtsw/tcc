@@ -7,7 +7,7 @@
 #  Arguments:
 #            Any command line options and values.
 #
-#  D Terrett  9 May 2003
+#  D Terrett  15 October 2003
 #
 #  Copyright CCLRC
 #-
@@ -138,6 +138,7 @@ proc tccMain args {
    epics cs aoPrepareCm
    epics cs aoMoveAdc
    epics cs filter1
+   epics cs oiwfsSelect
 
 # Set the timeout period for posting commands to the TCS.
    cs tcsApply setTimeout 3
@@ -178,7 +179,7 @@ proc tccMain args {
    if { ! [string equal $init ""] } {
       foreach filespec $init {
          if { [file isdirectory $filespec] } {
-            if { [catch {glob $filespec/*} filenames] } {
+            if { [catch {glob $filespec/*.xml} filenames] } {
                tk_messageBox -icon error -parent . -message \
                   "initialization directory \"$filespec\" is empty"
             } else {
@@ -189,7 +190,7 @@ proc tccMain args {
                         tk_messageBox -icon error -parent . -message \
                         "error opening initialization file \"$filename\": $msg"
                      } else {
-                        set config [TcsConfigFile #auto $file .]
+                        set config [TcsConfigFile #auto [read $file] .]
                         itcl::delete object $config
                         close $file
                      }
@@ -202,7 +203,7 @@ proc tccMain args {
                   "error opening initialization file \"$filespec\": $msg"
             } else {
                puts "processing $filespec"
-               set config [TcsConfigFile #auto $file .]
+               set config [TcsConfigFile #auto [read $file] .]
                itcl::delete object $config
                close $file
             }
