@@ -6,7 +6,7 @@
 #  Arguments:
 #             none
 #
-#  D Terrett 6 April 2002
+#  D Terrett 10 June 2002
 #
 #  Copyright CCLRC
 #-
@@ -59,7 +59,7 @@ proc createPanels {} {
          -components tcs.field.sciencetarget.cosys
    EditPanelMgr tcsFieldScienceTargetTrackRatePanel \
          -name .tcsFieldScienceTargetTrackRatePanel -class TrackRatePanel \
-         -title "Science Target Differential Track Rate" \
+         -title "Science Target Differential Track Rates" \
          -components tcs.field.sciencetarget.trackrate
    EditPanelMgr tcsFieldScienceTargetTrackRateCosysPanel \
          -name .tcsFieldScienceTargetTrackRateCosysPanel -class CosysPanel \
@@ -71,7 +71,7 @@ proc createPanels {} {
          -components tcs.field.pwfs1target.cosys
    EditPanelMgr tcsFieldPwfs1TargetTrackRatePanel \
          -name .tcsFieldPwfs1TargetTrackRatePanel -class TrackRatePanel \
-         -title "Pwfs1 Target Differential Track Rate" \
+         -title "Pwfs1 Target Differential Track Rates" \
          -components tcs.field.pwfs1target.trackrate
    EditPanelMgr tcsFieldPwfs1TargetTrackRateCosysPanel \
          -name .tcsFieldPwfs1TargetTrackRateCosysPanel -class CosysPanel \
@@ -83,7 +83,7 @@ proc createPanels {} {
          -components tcs.field.pwfs2target.cosys
    EditPanelMgr tcsFieldPwfs2TargetTrackRatePanel \
          -name .tcsFieldPwfs2TargetTrackRatePanel -class TrackRatePanel \
-         -title "Pwfs2 Target Differential Track Rate" \
+         -title "Pwfs2 Target Differential Track Rates" \
          -components tcs.field.pwfs2target.trackrate
    EditPanelMgr tcsFieldPwfs2TargetTrackRateCosysPanel \
          -name .tcsFieldPwfs2TargetTrackRateCosysPanel -class CosysPanel \
@@ -95,7 +95,7 @@ proc createPanels {} {
          -components tcs.field.oiwfstarget.cosys
    EditPanelMgr tcsFieldOiwfsTargetTrackRatePanel \
          -name .tcsFieldOiwfsTargetTrackRatePanel -class TrackRatePanel \
-         -title "Oiwfs Target Differential Track Rate" \
+         -title "Oiwfs Target Differential Track Rates" \
          -components tcs.field.oiwfstarget.trackrate
    EditPanelMgr tcsFieldOiwfsTargetTrackRateCosysPanel \
          -name .tcsFieldOiwfsTargetTrackRateCosysPanel -class CosysPanel \
