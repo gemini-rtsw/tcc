@@ -4,7 +4,7 @@
 #  A SlewOptionsControl is a ComponentControl widget with checkbutton widgets 
 #  for each of the Slew CAD parameters.
 #
-#  D Terrett 28 February 2002
+#  D Terrett 22 April 2002
 #
 #  Copyright CCLRC
 #+
@@ -28,6 +28,7 @@ itcl::class SlewOptionsControl {
       variable pointing
       variable guiding
       variable guideOffset
+      variable instrOffset
    }
 }
 
@@ -97,11 +98,17 @@ itcl::body SlewOptionsControl::constructor args {
             -onvalue On -offvalue Off \
             -text [lindex [cs slew info guideOffset] 2]
    }
+   itk_component add instrOffset {
+      checkbutton $w.instrOffset -variable [itcl::scope instrOffset] \
+            -onvalue On -offvalue Off \
+            -text [lindex [cs slew info instrOffset] 2]
+   }
    pack $itk_component(chopThrow) $itk_component(sourceOffset) \
           $itk_component(sourceDifTr) $itk_component(mountOffset) \
           $itk_component(mountDifTr) $itk_component(filter1) \
           $itk_component(filter2) $itk_component(pointing) \
-          $itk_component(guiding) $itk_component(guideOffset) -pady 2 -anchor w
+          $itk_component(guiding) $itk_component(guideOffset) \
+          $itk_component(instrOffset) -pady 2 -anchor w
 
 # Set the object description.
    set description "slew options"
@@ -123,6 +130,7 @@ itcl::body SlewOptionsControl::load {name} {
    set pointing [$name cget -pointing]
    set guiding [$name cget -guiding]
    set guideOffset [$name cget -guideOffset]
+   set instrOffset [$name cget -instrOffset]
 }
 
 itcl::body SlewOptionsControl::save {name} {
@@ -131,5 +139,5 @@ itcl::body SlewOptionsControl::save {name} {
          -sourceDifTr $sourceDifTr -mountOffset $mountOffset \
          -mountDifTr $mountDifTr -filter1 $filter1 \
          -filter2 $filter2 -pointing $pointing \
-         -guiding $guiding -guideOffset $guideOffset
+         -guiding $guiding -guideOffset $guideOffset -instrOffset $instrOffset
 }

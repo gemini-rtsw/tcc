@@ -28,6 +28,8 @@
 #
 #          -guideOffset      Guide star offsets.
 #
+#          -instrOffset      Instrument (aka pointin origin) offsets.
+#
 #  Methods:
 #           apply comp Applies the slew options to the TCS by setting 
 #                      the values of the command parameters.
@@ -39,7 +41,7 @@
 #
 #           save node  Saves all the slew option values to the xml node.
 #
-#  D Terrett 21 March 2002
+#  D Terrett 22 April 2002
 #
 #  Copyright CCLRC
 #+
@@ -61,6 +63,7 @@ itcl::class SlewOptions {
       variable pointing {}
       variable guiding {}
       variable guideOffset {}
+      variable instrOffset {}
    }
 }
 
@@ -75,6 +78,7 @@ itcl::body SlewOptions::apply {comp} {
    cs slew set pointing [list $pointing]
    cs slew set guiding [list $guiding]
    cs slew set guideOffset [list $guideOffset]
+   cs slew set instrOffset [list $instrOffset]
    logger command slew
 }
 
@@ -89,6 +93,7 @@ itcl::body SlewOptions::init {} {
    set  pointing {}
    set  guiding {}
    set  guideOffset {}
+   set  instrOffset {}
 }
 
 itcl::body SlewOptions::preview {} {}
@@ -105,4 +110,5 @@ body SlewOptions::save {node} {
    param $node pointing $pointing
    param $node guiding $guiding
    param $node guideOffset $guideOffset
+   param $node instrOffset $instrOffset
 }
