@@ -19,7 +19,7 @@
 #
 #           Cancels an action.
 #
-#  D Terrett 11 September 2000
+#  D Terrett 13 September 2000
 #
 #  Copyright CLRC
 #+
@@ -130,17 +130,24 @@ itcl::body seq::PrincipalSystem::monitor {name status info} {
 itcl::body seq::PrincipalSystem::post {action} {
 
 # Post the apply with our monitor method as callback.
-   cs $Apply postCallback [itcl::code $this monitor] -save
+   if { [catch {cs $Apply postCallback [itcl::code $this monitor] -save} \
+         msg] } {
+      set errorcommand [$action cget -onerror]
+      if { ![string is space $errorcommand] } {
+         uplevel #0 $errorcommand [list $msg]
+      }
+   } else {
 
 # Save the name of the current action.
-   set CurrentAction $action
+      set CurrentAction $action
 
 # Start the timeout handler
-   set timeoutcommand [$CurrentAction cget -ontimeout]
-   if { ![string is space $timeoutcommand] } {
-      after [expr {[$action cget -timeout] * 1000}] [itcl::code $this timeout]
+      set timeoutcommand [$CurrentAction cget -ontimeout]
+      if { ![string is space $timeoutcommand] } {
+         after [expr {[$action cget -timeout] * 1000}] \
+               [itcl::code $this timeout]
+      }
    }
-
    return
 }
 
