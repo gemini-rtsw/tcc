@@ -273,6 +273,7 @@ static int Pertel( ClientData clientdata, Tcl_Interp *interp, int objc,
    }
 
 /* Update elements */
+   jstat = 0;
    slaPertel( jform, date0, date1, epoch0, orbi0 * DD2R, anode0 * DD2R, 
          perih0 * DD2R, aorq0, e0, am0 * DD2R, &epoch1, &orbi1, &anode1, 
          &perih1, &aorq1, &e1, &am1, &jstat );
