@@ -4,7 +4,7 @@
 #  Implements the interface to a wave-front sensor
 #
 #  Methods:
-#           start
+#           start frames
 #
 #           stop
 #
@@ -15,6 +15,8 @@
 #           -exposetime
 #
 #           -mode
+#
+#  If the number of frames is zero the mode is set but the WFS is not started.
 #
 #  Only PWFS1 and PWFS2 are fully implemented. Do not use mode=sky for the
 #  OIWFS.
@@ -162,7 +164,7 @@ itcl::body WaveFrontSensor::start {{frames -1}} {
    set current_quicklook $quicklook
 
 # If the sensor is stopped, then start it with the appropriate settings.
-   if { $stopped } {
+   if { $stopped && $frames != 0 } {
       cs ${name}Observe set noexp $frames
       cs ${name}Observe set int $exposetime
       if { $quicklook } {
