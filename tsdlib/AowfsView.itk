@@ -1,0 +1,130 @@
+#+
+#  AowfsView <- itk::Widget
+#
+#  Implements the AowfsView widget which displays the patrol field and
+#  position of the AO wave-front sensor.
+#
+#  Methods:
+#           update       Updates the display.
+#
+# D Terrett 15 January 2004
+#
+#  Copyright CCLRC
+#-
+
+itcl::class AowfsView {
+   inherit itk::Widget
+   constructor args {}
+   public {
+      method update {}
+   }
+   private {
+      method xy {x y}
+      variable arm
+      variable mirror
+      variable target
+      variable patf
+      variable scale 1.2
+   }
+}
+
+itk::usual AowfsView {
+   keep -background -cursor -highlightcolor -highlightthickness \
+         -insertbackground -insertborderwidth -insertwidth \
+         -insertontime -insertofftime -selectbackground \
+         -selectborderwidth -selectforeground
+}
+
+itcl::body AowfsView::constructor {args} {
+
+   if { [catch {sa pwfs2Guide info}] } {
+      epics sa pwfs2Guide
+   }
+   itk_component add canvas {
+      canvas $itk_interior.canvas -width 120 -height 120
+   }
+   pack $itk_component(canvas)
+   set c $itk_component(canvas)
+
+# Rectangular patrol field
+   set patf [$c create rectangle 0 0 0 0 -outline white -fill ""]
+
+# The probe "arm"
+   set arm [$c create rectangle 0 0 0 0]
+
+# Pickoff mirror
+   set mirror [$c create oval 0 0 0 0 -fill white]
+
+# Guide Target.
+   set target [$c create oval 0 0 0 0 -fill orange -outline ""]
+
+   eval itk_initialize $args
+}
+
+itcl::body AowfsView::update {} {
+
+# Transform coordinates to canvas.
+   foreach {x1 y1} [xy [sa tcssad get aoXmin] [sa tcssad get aoXmin]] {}
+   foreach {x2 y2} [xy [sa tcssad get aoXmax] [sa tcssad get aoXmax]] {}
+
+# Plot the patrol field.
+   $itk_component(canvas) coords $patf $x1 $y1 $x2 $y2
+
+# Re-position the pickoff mirror and arm.
+   foreach {x y} [xy [sadVal aossad wfsXPosition 0.0] \
+         [sadVal aossad wfsYPosition 0.0]] {}
+   $itk_component(canvas) coords $mirror \
+         [expr {$x - 7}] [expr {$y - 7}] \
+         [expr {$x + 7}] [expr {$y + 7}] 
+   $itk_component(canvas) coords $arm \
+         [expr {$x - 9}] [expr {$y - 9}] \
+         [expr {$x + 9}] [expr {$y + 9}] 
+
+# Set the colour according to the follow and in position state.
+   if { [isFollowing aossad followS] } {
+      if { [isInPosition aossad inPosition] } {
+         $itk_component(canvas) itemconfigure $arm -fill green
+      } else {
+         $itk_component(canvas) itemconfigure $arm -fill yellow
+      }
+      switch [sa tcssad get nodState] {
+         A {
+            if { [string equal [sa pwfs2Guide get nodachopa] On] ||
+                  [string equal [sa pwfs2Guide get nodachopb] On] } {
+               $itk_component(canvas) itemconfigure $arm -stipple ""
+            } else {
+               $itk_component(canvas) itemconfigure $arm -stipple gray50
+            }
+         }
+         B {
+            if { [string equal [sa pwfs2Guide get nodbchopa] On] ||
+                  [string equal [sa pwfs2Guide get nodbchopb] On] } {
+               $itk_component(canvas) itemconfigure $arm -stipple ""
+            } else {
+               $itk_component(canvas) itemconfigure $arm -stipple gray50
+            }
+         }
+      }
+   } else {
+      $itk_component(canvas) itemconfigure $arm -fill red -stipple ""
+   }
+
+# Update target position.
+   set x [sadVal tcssad pwfs2XDemand ""]
+   set y [sadVal tcssad pwfs2YDemand ""]
+   if { $x != "" && $y != "" } {
+      foreach {x y} [xy $x $y] {}
+      $itk_component(canvas) coords $target \
+            [expr {$x - 3}] [expr {$y - 3}] \
+            [expr {$x + 3}] [expr {$y + 3}] 
+   }
+}
+
+itcl::body AowfsView::xy {x y} {
+
+# Converts a focal plane x,y into canvas coordinates.
+
+   set xc [expr {$x * $scale + 60.0}]
+   set yc [expr {60.0 - $y * $scale}]
+   return [list $xc $yc]
+}

@@ -1,0 +1,242 @@
+#+
+#  OiwfsView <- itk::Widget
+#
+#  Implements the OiwfsView widget which displays the patrol field and
+#  position of an on-instrument wave-front sensor.
+#
+#  Methods:
+#           update       Updates the display.
+#
+# D Terrett 15 January 2004
+#
+#  Copyright CCLRC
+#-
+
+itcl::class OiwfsView {
+   inherit itk::Widget
+   constructor args {}
+   public {
+      method update {}
+   }
+   private {
+      method xy {x y}
+      method oi2tcs {x y}
+      method oi2xy {x y}
+      method setscale {args}
+      variable arm
+      variable mirror
+      variable target
+      variable patf
+      variable outlim
+      variable inlim
+      variable x0
+      variable y0
+      variable scale
+   }
+}
+
+itk::usual OiwfsView {
+   keep -background -cursor -highlightcolor -highlightthickness \
+         -insertbackground -insertborderwidth -insertwidth \
+         -insertontime -insertofftime -selectbackground \
+         -selectborderwidth -selectforeground
+}
+
+itcl::body OiwfsView::constructor {args} {
+
+   if { [catch {sa oiwfsGuide info}] } {
+      epics sa oiwfsGuide
+   }
+   itk_component add canvas {
+      canvas $itk_interior.canvas -width 120 -height 120
+   }
+   pack $itk_component(canvas)
+   set c $itk_component(canvas)
+
+# Rectangular patrol field
+   set patf [$c create polygon 0 0 0 0 0 0 0 0 -outline "" -fill ""]
+
+# Outer radial limit
+   set outlim [$c create oval 0 0 0 0 -outline "" -fill ""]
+
+# Inner radial limit
+   set inlim [$c create oval 0 0 0 0 -outline "" -fill ""]
+
+# The probe "arm"
+   set arm [$c create rectangle 0 0 0 0]
+
+# Pickoff mirror
+   set mirror [$c create oval 0 0 0 0 -fill white]
+
+# Guide Target.
+   set target [$c create oval 0 0 0 0 -fill orange -outline ""]
+
+   eval itk_initialize $args
+}
+
+itcl::body OiwfsView::update {} {
+
+   if { [sa tcssad get oiwfsLimitType] } {
+
+# Radial limits case.
+      set rmin [sa tcssad get oiwfsRmin]
+      set rmax [sa tcssad get oiwfsRmax]
+
+# Set scale and zero point.
+      set x0 0.0
+      set y0 0.0
+      set scale [expr {59.0/$rmax}]
+
+# Convert to corners on canvas.
+      foreach {x1 y1} [xy [expr { - $rmax }] [expr { - $rmax}]] {}
+      foreach {x2 y2} [xy $rmax $rmax] {}
+      $itk_component(canvas) coords $outlim $x1 $y1 $x2 $y2
+      foreach {x1 y1} [xy [expr { - $rmin }] [expr { - $rmin}]] {}
+      foreach {x2 y2} [xy $rmin $rmin] {}
+      $itk_component(canvas) coords $inlim $x1 $y1 $x2 $y2
+
+      $itk_component(canvas) itemconfigure $patf -outline ""
+      $itk_component(canvas) itemconfigure $outlim -outline white
+      $itk_component(canvas) itemconfigure $inlim -outline white
+
+   } else {
+
+# X/Y limits case. Transform the patrol field coordinates into TCS frame.
+      foreach {x1 y1} \
+            [oi2tcs [sa tcssad get oiwfsXmax] [sa tcssad get oiwfsYmax]] {}
+      foreach {x2 y2} \
+            [oi2tcs [sa tcssad get oiwfsXmax] [sa tcssad get oiwfsYmin]] {}
+      foreach {x3 y3} \
+            [oi2tcs [sa tcssad get oiwfsXmin] [sa tcssad get oiwfsYmin]] {}
+      foreach {x4 y4} \
+            [oi2tcs [sa tcssad get oiwfsXmin] [sa tcssad get oiwfsYmax]] {}
+
+# Determine zero points and scales for plotting on the canvas.
+      setscale $x1 $y1 $x2 $y2 $x3 $y3 $x4 $y4
+
+# Transform coordinates to canvas.
+      foreach {x1 y1} [xy $x1 $y1] {}
+      foreach {x2 y2} [xy $x2 $y2] {}
+      foreach {x3 y3} [xy $x3 $y3] {}
+      foreach {x4 y4} [xy $x4 $y4] {}
+
+# Plot the patrol field.
+      $itk_component(canvas) coords $patf $x1 $y1 $x2 $y2 $x3 $y3 $x4 $y4
+      $itk_component(canvas) itemconfigure $patf -outline white
+      $itk_component(canvas) itemconfigure $outlim -outline ""
+      $itk_component(canvas) itemconfigure $inlim -outline ""
+   }
+
+# Re-position the pickoff mirror and arm.
+   foreach {x y} [xy [sadVal agssad oiX 0.0] [sadVal agssad oiY 0.0]] {}
+   $itk_component(canvas) coords $mirror \
+         [expr {$x - 7}] [expr {$y - 7}] \
+         [expr {$x + 7}] [expr {$y + 7}] 
+   $itk_component(canvas) coords $arm \
+         [expr {$x - 9}] [expr {$y - 9}] \
+         [expr {$x + 9}] [expr {$y + 9}] 
+
+# Set the colour according to the follow and in position state.
+   if { [isFollowing agssad oiFollowS] } {
+      if { [isInPosition agssad oiInPosition] } {
+         $itk_component(canvas) itemconfigure $arm -fill green
+      } else {
+         $itk_component(canvas) itemconfigure $arm -fill yellow
+      }
+      switch [sa tcssad get nodState] {
+         A {
+            if { [string equal [sa oiwfsGuide get nodachopa] On] ||
+                  [string equal [sa oiwfsGuide get nodachopb] On] } {
+               $itk_component(canvas) itemconfigure $arm -stipple ""
+            } else {
+               $itk_component(canvas) itemconfigure $arm -stipple gray50
+            }
+         }
+         B {
+            if { [string equal [sa oiwfsGuide get nodbchopa] On] ||
+                  [string equal [sa oiwfsGuide get nodbchopb] On] } {
+               $itk_component(canvas) itemconfigure $arm -stipple ""
+            } else {
+               $itk_component(canvas) itemconfigure $arm -stipple gray50
+            }
+         }
+      }
+   } else {
+      $itk_component(canvas) itemconfigure $arm -fill red -stipple ""
+   }
+
+# Update target position.
+   set x [sadVal tcssad oiwfsXDemand ""]
+   set y [sadVal tcssad oiwfsYDemand ""]
+   if { $x != "" && $y != "" } {
+      foreach {x y} [xy $x $y] {}
+      $itk_component(canvas) coords $target \
+            [expr {$x - 3}] [expr {$y - 3}] \
+            [expr {$x + 3}] [expr {$y + 3}] 
+   }
+}
+
+itcl::body OiwfsView::xy {x y} {
+
+# Converts a focal plane x,y into canvas coordinates.
+
+   set xc [expr {($x - $x0) * $scale + 60.0}]
+   set yc [expr {60.0 - ($y - $y0) * $scale}]
+   return [list $xc $yc]
+}
+
+itcl::body OiwfsView::oi2tcs {x y} {
+
+# Converts an x,y in the OIWFS frame of reference to an x,y in the TCS frame.
+
+# Get the TCS to OIWFS conversion coefficients.
+   set coeffs [sa agssad get oiwfsCoeffs]
+   foreach {a b c d e f} $coeffs {}
+
+# Invert them to get the OIWFS to TCS coefficients.
+   set det [expr {$b * $f - $c * $e}]
+   if { $det != 0.0 } {
+      lappend coeffs [expr {($c * $d - $a * $f) / $det}]
+      lappend coeffs [expr { $f / $det}]
+      lappend coeffs [expr { - $c / $det}]
+      lappend coeffs [expr {($a * $e - $b * $d) / $det}]
+      lappend coeffs [expr { - $e / $det}]
+      lappend coeffs [expr { $b / $det}]
+   }
+
+# Transform the x,y
+   set tcsx [expr { [lindex $coeffs 0] + [lindex $coeffs 1] * $x + \
+         [lindex $coeffs 2] * $y} ]
+   set tcsy [expr { [lindex $coeffs 3] + [lindex $coeffs 4] * $x + \
+         [lindex $coeffs 5] * $y} ]
+
+   return [list $tcsx $tcsy]
+}
+
+itcl::body OiwfsView::oi2xy {x y} {
+   foreach {tcsx tcsy} [oi2tcs $x $y] {}
+   return [xy $tcsx $tcsy]
+}
+
+
+itcl::body OiwfsView::setscale {args} {
+
+# Compute zero points and scale for drawing on the canvas.
+   set xmin [lindex $args 0]
+   set ymin [lindex $args 1]
+   set xmax [lindex $args 0]
+   set ymax [lindex $args 1]
+   for {set i 2} { $i < 8 } {incr i} {
+      if {[lindex $args $i] < $xmin} {set xmin [lindex $args $i]}
+      if {[lindex $args $i] > $xmax} {set xmax [lindex $args $i]}
+      incr i
+      if {[lindex $args $i] < $ymin} {set ymin [lindex $args $i]}
+      if {[lindex $args $i] > $ymax} {set ymax [lindex $args $i]}
+   }
+   set x0 [expr {($xmin + $xmax)/2.0}]
+   set y0 [expr {($ymin + $ymax)/2.0}]
+   set xr [expr {$xmax - $xmin}]
+   set yr [expr {$ymax - $ymin}]
+   set r [expr {$xr > $yr ? $xr : $yr}]
+   set scale [expr {$r != 0.0 ? 100.0/$r : 1.0}]
+}
