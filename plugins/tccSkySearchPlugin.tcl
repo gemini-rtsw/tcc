@@ -1,7 +1,7 @@
 #+
 #  tccSkySearchPlugin.tcl
 #
-#  D Terrett 27 March 2001
+#  D Terrett 13 July 2001
 #
 #  Copyright CCLRC
 #-
@@ -32,10 +32,10 @@ proc SkySearch_plugin {this} {
          -command "TccSkyQuery::define_selected guideoiwfs"
    $w add_menuitem $gemmenu command "Result -> Science targets" \
          "Define the search result as science targets" \
-         -command "TccSkyQuery::define_contents Science"
+         -command "TccSkyQuery::define_contents science"
    $w add_menuitem $gemmenu command "Result -> WFS targets" \
          "Define the search result as wave front sensor targets" \
-         -command "TccSkyQuery::define_contents Wfs"
+         -command "TccSkyQuery::define_contents wfs"
 }
 
 namespace eval TccSkyQuery {
@@ -86,7 +86,7 @@ namespace eval TccSkyQuery {
       }
 
       foreach target $targets {
-         lappend args -objName [lindex $target $id]
+         set args [list -objName [lindex $target $id]]
          if { $ra != -1 && $dec != -1 } {
             set rav [lindex $target $ra]
             set decv [lindex $target $dec]
