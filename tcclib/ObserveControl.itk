@@ -7,7 +7,7 @@
 #  Methods:
 #           none
 #
-#  D Terrett  19 July 2001
+#  D Terrett  5 September 2001
 #
 #  Copyright CCLRC
 #+
@@ -30,10 +30,21 @@ itcl::body ObserveControl::constructor args {
 
    set w $itk_interior
 
+# Guiding control picture.
    itk_component add guideloop {
       GuideLoop $w.guideloop
    }
    pack $itk_component(guideloop)
+
+# Sky offset control.
+   itk_component add offframe {
+      frame $w.offframe -borderwidth 2 -relief sunken
+   }
+   itk_component add offset {
+      Sky $itk_component(offframe).offset
+   }
+   pack $itk_component(offset)
+   pack $itk_component(offframe) -fill x -expand yes -pady 5
 
 # Acquisition Camera/HRWFS controls.
    itk_component add acqcam {
@@ -43,7 +54,7 @@ itcl::body ObserveControl::constructor args {
    itk_component add buttons {
       frame $w.buttons
    }
-   pack $itk_component(acqcam) $itk_component(buttons) -side left
+   pack $itk_component(acqcam) $itk_component(buttons) -side left -pady 5
    set w $itk_component(buttons)
 
 # Selectbutton for configuring the A & G fold mirrors.

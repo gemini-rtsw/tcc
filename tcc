@@ -10,7 +10,7 @@ exec $HLPG_INSTALL_BASE/bin/solaris/ocswish "$0" "$@"
 #  the tcc uses. It is probably installation dependent and will need to be
 #  hacked to get it to work.
 #
-#  D Terrett 1 November 2000
+#  D Terrett 4 September 2001
 #
 #  Copyright CCLRC
 #-
@@ -41,6 +41,7 @@ package require Itk
 package require Iwidgets
 package require Ocspkg
 package require Tcclib
+package require Seq
 
 # Define the default directory for writing files.
 set tcclib::SaveFileDirectory /gemini/files
@@ -51,6 +52,7 @@ if { [info exists env(TCC_TCSNAME)] } {
    set ext .$env(TCC_TCSNAME)
 } else {
    set ext ""
+   set env(TCC_TCSNAME) tcs
 }
 appData add configPath $ROOT/ca_config$ext
 appData add configFile tcc.ca

@@ -7,7 +7,7 @@
 #  Arguments:
 #            Any command line options and values.
 #
-#  D Terrett  19 July 2001
+#  D Terrett  6 September 2001
 #
 #  Copyright CCLRC
 #-
@@ -42,6 +42,9 @@ proc tccMain args {
       }
    }
 
+# Create the TCS principal system.
+   seq::PrincipalSystem tcs tcsApply -debug 0
+
 # Create status acceptors for sad databases.
    epics sa tcssad
    epics sa ecssad
@@ -50,6 +53,11 @@ proc tccMain args {
    epics sa apply
    epics sa applyC
    epics sa errMessage
+
+# Create status senders for setting SIR records
+   global env
+   epics ss $env(TCC_TCSNAME):sad:programID
+   epics ss $env(TCC_TCSNAME):sad:sourceAObjectName
 
 # Create the configuration component lists and the namespaces for the
 # components.
