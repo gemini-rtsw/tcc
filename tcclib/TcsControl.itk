@@ -54,11 +54,8 @@ itcl::body TcsControl::constructor args {
    itk_component add row3 {
       frame $itk_interior.row3
    }
-   itk_component add row4 {
-      frame $itk_interior.row4
-   }
    pack $itk_component(row1) $itk_component(row2) $itk_component(row3) \
-         $itk_component(row4) -fill x -expand y
+        -fill x -expand y
 
 # The first row contains 2 frames.
    set w $itk_component(row1)
@@ -71,30 +68,32 @@ itcl::body TcsControl::constructor args {
    pack $itk_component(row1f1) $itk_component(row1f2) \
          -side left -fill both -expand y
 
-# The third frame in the first row is divided into 3 horizontally.
+# The third frame in the first row is divided into 2 horizontal and 2 vertical below.
    set w $itk_component(row1f2)
    itk_component add f3top {
-      frame $w.top -bd 2 -relief ridge
+      frame $w.top -bd 2 -relief sunken -padx 2 -pady 2
+   }
+   itk_component add f3top2 {
+      frame $w.top2 -bd 2 -relief sunken -padx 2 -pady 2
+   }
+   itk_component add f3top3 {
+      frame $w.top3 -bd 2 -padx 2 -pady 2 -relief ridge
    }
    itk_component add f3mid {
-      frame $w.mid -bd 2 -relief ridge
+      frame $w.mid -bd 2 -relief ridge -padx 2 -pady 2
    }
-   itk_component add f3bot {
-      frame $w.bot -bd 2 -relief ridge
-   }
-   pack $itk_component(f3top) $itk_component(f3mid) $itk_component(f3bot) \
-         -fill both -expand yes
 
-# The fourth row contains 2 frames.
-   set w $itk_component(row4)
-   itk_component add row4f1 {
-      frame $w.f1 -bd 2 -relief ridge
+   itk_component add f3bot {
+      frame $w.bot -bd 2 -relief ridge -padx 2 -pady 2
    }
-   itk_component add row4f2 {
-      frame $w.f2 -bd 2 -relief ridge
-   }
-   pack $itk_component(row4f1) $itk_component(row4f2) \
-         -side left -fill both -expand y
+
+   grid $itk_component(f3top) - -sticky news
+   grid $itk_component(f3top2) - -sticky news
+   grid $itk_component(f3top3) - -sticky news
+   grid $itk_component(f3mid) $itk_component(f3bot) -sticky news
+
+#   pack $itk_component(f3top) $itk_component(f3mid) $itk_component(f3bot) \
+#         -fill both -expand yes
 
 # Commands to enable/disable following in each subsystem 
    set w $itk_component(row1f1)
@@ -274,12 +273,34 @@ itcl::body TcsControl::constructor args {
       checkbutton $w.shutter -text [lindex [cs carousel info shutter] 2] \
             -variable [itcl::scope shutter] -onvalue On -offvalue Off
    }
-   pack $itk_component(carousel) -pady 4
+   pack $itk_component(carousel) -fill x
    pack $itk_component(domemode) \
          $itk_component(shuttermode) $itk_component(slit) \
-         -padx 4 -pady 5 -anchor w
+         -padx 3 -pady 2 
    pack $itk_component(dome) $itk_component(shutter) \
-         -side left -padx 4 -pady 5 -anchor w
+         -side left -padx 3 -pady 2 
+
+# Enclosure thermal control command.
+   set w $itk_component(f3top2)
+   itk_component add thermal {
+      ApplyButton $w.thermal -command encThermal \
+            -parcommand [itcl::code $this parget]
+   }
+   itk_component add mode {
+      iwidgets::optionmenu $w.mode \
+            -labeltext [lindex [cs encThermal info mode] 2] \
+   }
+   $itk_component(mode) insert end Passive Active Shutdown
+
+   pack $itk_component(thermal) -fill x -pady 2
+   pack $itk_component(mode) -pady 2
+
+# AWE temporary placement of Shutter Alarm
+   set w $itk_component(f3top3)
+   itk_component add alarm {
+      ShutterAlarm $w.alarm
+   }
+   pack $itk_component(alarm) -fill x -expand y
 
 # Close shutters command.
    set w $itk_component(f3mid)
@@ -290,7 +311,7 @@ itcl::body TcsControl::constructor args {
       ApplyButton $w.closegates -command ventgatesPark
    }
    pack $itk_component(closeshut) $itk_component(closegates) \
-         -fill both -expand yes -padx 10 -pady 5 -side left
+         -fill both -expand yes -side top
 
 # M2 coma and guide resets.
    set w $itk_component(f3bot)
@@ -301,7 +322,7 @@ itcl::body TcsControl::constructor args {
       ApplyButton $w.clearfocus -command clearGuideFocus
    }
    pack $itk_component(zerocoma) $itk_component(clearfocus) \
-         -fill both -expand yes -padx 10 -pady 3
+	-side top -fill both -expand yes
 
 # A & G mechanism parking and datuming
    set w $itk_component(row2)
@@ -450,57 +471,6 @@ itcl::body TcsControl::constructor args {
    }
    $itk_component(west) set $open
 
-# Enclosure thermal control command.
-   set w $itk_component(row4f1)
-   itk_component add thermal {
-      ApplyButton $w.thermal -command encThermal \
-            -parcommand [itcl::code $this parget]
-   }
-   itk_component add mode {
-      iwidgets::optionmenu $w.mode \
-            -labeltext [lindex [cs encThermal info mode] 2] \
-   }
-   $itk_component(mode) insert end Passive Active Shutdown
-
-# AWE temporary placement of Shutter Alarm
-   itk_component add alarm {
-      ShutterAlarm $w.alarm
-   }
-   pack $itk_component(thermal) $itk_component(mode)  $itk_component(alarm) -pady 4
-
-# Create weather command sender here because we can't use an apply button
-# because the weather data CAD must not be marked if the data source is
-# being set to server.
-   if { [catch {cs weather info}] } {
-      epics cs weather
-   }
-
-# Weather command.
-   set w $itk_component(row4f2)
-   itk_component add weather {
-      LiveButton $w.weather -command [itcl::code $this weather] \
-            -text [lindex [cs weather info] 1]
-   }
-   itk_component add source {
-      iwidgets::optionmenu $w.source \
-            -labeltext [lindex [cs weather info source] 2] \
-   }
-   $itk_component(source) insert end server local
-   itk_component add temp {
-      iwidgets::entryfield $w.temp \
-            -labeltext [lindex [cs weather info temp] 2] -width 8
-   }
-   itk_component add press {
-      iwidgets::entryfield $w.press \
-            -labeltext [lindex [cs weather info press] 2] -width 8
-   }
-   itk_component add humid {
-      iwidgets::entryfield $w.humid \
-            -labeltext [lindex [cs weather info humid] 2] -width 8
-   }
-   pack $itk_component(weather) $itk_component(source) -padx 4
-   pack $itk_component(temp) $itk_component(press) $itk_component(humid) \
-         -anchor e
 }
 
 itcl::body TcsControl::enable par {
