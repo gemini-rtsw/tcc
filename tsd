@@ -10,7 +10,7 @@ exec $HLPG_INSTALL_BASE/bin/solaris/ocswish "$0" "$@"
 #  the tsd uses. It is probably installation dependent and will need to be
 #  hacked to get it to work.
 #
-#  D Terrett 25 September 2000
+#  D Terrett 5 December 2000
 #
 #  Copyright CCLRC
 #-
@@ -34,6 +34,10 @@ load $ROOT/lib/solaris/tcctime.so
 load $ROOT/lib/solaris/slaext.so
 load $ROOT/tsdlib/solaris/tsdext.so
 
+# Define images.
+image create photo chile_flag -file $ROOT/lib/chile_flag-small.gif
+image create photo hawaii_flag -file $ROOT/lib/hawaii_flag-small.gif
+
 # Load all the packages required by the tsd.
 package require Itcl
 package require Itk
@@ -55,11 +59,6 @@ option readfile $ROOT/options userDefault
 
 # Set the display background.
 . configure -background wheat
-
-# Define timezone
-global TIMEZONE TZOFFSET
-set TIMEZONE HST
-set TZOFFSET -10
 
 # Start the tsd
 tsdMain $argv
