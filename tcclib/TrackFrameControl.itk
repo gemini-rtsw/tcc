@@ -11,7 +11,7 @@
 #
 #           updateobj name
 #
-#  D Terrett 16 February 2000
+#  D Terrett 26 June 2000
 #
 #  Copyright CCLRC
 #+
@@ -25,10 +25,6 @@ itcl::class TrackFrameControl {
 
    public method selectobj name
    public method updateobj name
-
-   private method setazel tel
-
-   private variable AzEl
 }
 
 itk::usual TrackFrameControl {
@@ -46,69 +42,41 @@ itcl::body TrackFrameControl::constructor args {
    pack $itk_component(trackframes) -fill x -expand y
    set w $itk_component(trackframes)
 
-   itk_component add mountAzEl {
-      checkbutton $w.mountazel -text Az/El -variable [scope AzEl(mount)] \
-            -command [code $this setazel mount]
-   }
    itk_component add mountCosys {
       SubComponentSelector $w.mount -labeltext "Mount" \
             -labelpos w -componentlist CosysList -component mountCosys
-   }
-   itk_component add sourceAAzEl {
-      checkbutton $w.sourceAazel -text Az/El -variable [scope AzEl(sourceA)] \
-            -command [code $this setazel sourceA]
    }
    itk_component add sourceACosys {
       SubComponentSelector $w.sourcea -labeltext "Source A" \
             -labelpos w -componentlist CosysList -component sourceACosys
    }
-   itk_component add sourceBAzEl {
-      checkbutton $w.sourceBazel -text Az/El -variable [scope AzEl(sourceB)] \
-            -command [code $this setazel sourceB]
-   }
    itk_component add sourceBCosys {
       SubComponentSelector $w.sourceb -labeltext "Source B" \
             -labelpos w -componentlist CosysList -component sourceBCosys
-   }
-   itk_component add sourceCAzEl {
-      checkbutton $w.sourceCazel -text Az/El -variable [scope AzEl(sourceC)] \
-            -command [code $this setazel sourceC]
    }
    itk_component add sourceCCosys {
       SubComponentSelector $w.sourcec -labeltext "Source C" \
             -labelpos w -componentlist CosysList -component sourceCCosys
    }
-   itk_component add pwfs1AzEl {
-      checkbutton $w.pwfs1azel -text Az/El -variable [scope AzEl(pwfs1)] \
-            -command [code $this setazel pwfs1]
-   }
    itk_component add pwfs1Cosys {
       SubComponentSelector $w.pwfs1 -labeltext "PWFS1" \
             -labelpos w -componentlist CosysList -component pwfs1Cosys
-   }
-   itk_component add pwfs2AzEl {
-      checkbutton $w.pwfs2azel -text Az/El -variable [scope AzEl(pwfs2)] \
-            -command [code $this setazel pwfs2]
    }
    itk_component add pwfs2Cosys {
       SubComponentSelector $w.pwfs2 -labeltext "PWFS2" \
             -labelpos w -componentlist CosysList -component pwfs2Cosys
    }
-   itk_component add oiwfsAzEl {
-      checkbutton $w.oiwfsazel -text Az/El -variable [scope AzEl(oiwfs)] \
-            -command [code $this setazel oiwfs]
-   }
    itk_component add oiwfsCosys {
       SubComponentSelector $w.oiwfs -labeltext "OIWFS" \
             -labelpos w -componentlist CosysList -component oiwfsCosys
    }
-   grid $itk_component(mountCosys) $itk_component(mountAzEl) -sticky e
-   grid $itk_component(sourceACosys) $itk_component(sourceAAzEl) -sticky e
-   grid $itk_component(sourceBCosys) $itk_component(sourceBAzEl) -sticky e
-   grid $itk_component(sourceCCosys) $itk_component(sourceCAzEl) -sticky e
-   grid $itk_component(pwfs1Cosys) $itk_component(pwfs1AzEl) -sticky e
-   grid $itk_component(pwfs2Cosys) $itk_component(pwfs2AzEl) -sticky e
-   grid $itk_component(oiwfsCosys) $itk_component(oiwfsAzEl) -sticky e
+   grid $itk_component(mountCosys) -sticky e
+   grid $itk_component(sourceACosys) -sticky e
+   grid $itk_component(sourceBCosys) -sticky e
+   grid $itk_component(sourceCCosys) -sticky e
+   grid $itk_component(pwfs1Cosys) -sticky e
+   grid $itk_component(pwfs2Cosys) -sticky e
+   grid $itk_component(oiwfsCosys) -sticky e
 
 # Create the trackframe object used by apply.
    set scratchobj [namespace which -command [TrackFrame #auto]]
@@ -124,13 +92,7 @@ itcl::body TrackFrameControl::selectobj name {
 
    if { $name != "" } {
       foreach tel {mount sourceA sourceB sourceC pwfs1 pwfs2 oiwfs} {
-         set frame [$name cget -${tel}Cosys]
-         $itk_component(${tel}Cosys) select $frame
-         if {$frame == ""} {
-            set AzEl($tel) 1
-         } else {
-            set AzEl($tel) 0
-         }
+         $itk_component(${tel}Cosys) select [$name cget -${tel}Cosys]
       }
    }
 }
@@ -139,20 +101,14 @@ itcl::body TrackFrameControl::updateobj name {
 #+
 # Updates the named trackframe object.
 #-
-   foreach tel {mount sourceA sourceB sourceC pwfs1 pwfs2 oiwfs} {
-      set ${tel}Cosys [$itk_component(${tel}Cosys) get]
-      if { $AzEl($tel) } {
-         set ${tel}Cosys ""
-      }
-   }
    $name configure \
-         -mountCosys $mountCosys \
-         -sourceACosys $sourceACosys \
-         -sourceBCosys $sourceBCosys \
-         -sourceCCosys $sourceCCosys \
-         -pwfs1Cosys $pwfs1Cosys \
-         -pwfs2Cosys $pwfs2Cosys \
-         -oiwfsCosys $oiwfsCosys \
+         -mountCosys [$itk_component(mountCosys) get] \
+         -sourceACosys [$itk_component(sourceACosys) get] \
+         -sourceBCosys [$itk_component(sourceBCosys) get] \
+         -sourceCCosys [$itk_component(sourceCCosys) get] \
+         -pwfs1Cosys [$itk_component(pwfs1Cosys) get] \
+         -pwfs2Cosys [$itk_component(pwfs2Cosys) get] \
+         -oiwfsCosys [$itk_component(oiwfsCosys) get]
 }
 
 itcl::configbody TrackFrameControl::shadow {
@@ -177,13 +133,4 @@ itcl::configbody TrackFrameControl::shadow {
    $itk_component(pwfs1Cosys) configure -shadow $itk_option(-shadow)
    $itk_component(pwfs2Cosys) configure -shadow $itk_option(-shadow)
    $itk_component(oiwfsCosys) configure -shadow $itk_option(-shadow)
-}
-
-itcl::body TrackFrameControl::setazel tel {
-#+
-# Clears the cosys selector when Az/El is selected.
-#-
-   if { $AzEl($tel) } {
-      $itk_component(${tel}Cosys) select ""
-   }
 }

@@ -13,7 +13,7 @@
 #           updateobj name  Stores the contents of the edit controls in the
 #                           Trackrate object "name".
 #
-#  D Terrett 5 June 2000
+#  D Terrett 26 June 2000
 #
 #  Copyright CCLRC
 #+
@@ -111,12 +111,17 @@ itcl::body TrackRateControl::selectobj name {
    if { $name != "" } {
       $itk_component(epoch) insert end [$name cget -epoch]
       set cosys [$name cget -cosys]
-      if { $cosys == "AZEL_TOPO" } {
+      if { [string equal $cosys AzEl] } {
          $itk_component(notebook) select Az/El
          $itk_component(az) insert end [$name cget -dtheta1]
          $itk_component(el) insert end [$name cget -dtheta2]
       } else {
          $itk_component(notebook) select RA/Dec
+         if { [string is space $cosys] } {
+            $itk_component(cosys) select FK5/J2000
+         } else {
+            $itk_component(cosys) select $cosys
+         }
          $itk_component(ra) insert end [$name cget -dtheta1]
          $itk_component(dec) insert end [$name cget -dtheta2]
       }
@@ -127,10 +132,10 @@ itcl::body TrackRateControl::updateobj name {
 #+
 # Updates the named trackrate object.
 #-
-   if { [lindex [$itk_component(notebook) pageconfigure \
-         [$itk_component(notebook) select select] -label] 4] == "Az/El" } {
+   if { [string equal [lindex [$itk_component(notebook) pageconfigure \
+         [$itk_component(notebook) select select] -label] 4] Az/El] } {
       $name configure \
-            -cosys AZEL_TOPO \
+            -cosys AzEl \
             -epoch [$itk_component(epoch) get] \
             -dtheta1 [$itk_component(az) get] \
             -dtheta2 [$itk_component(el) get] \

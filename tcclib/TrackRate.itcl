@@ -26,7 +26,7 @@
 #           save file  Writes the values of the options to the channel
 #                      identifier "file".
 #
-#  D Terrett 5 June 2000
+#  D Terrett 26 June 2000
 #
 #  Copyright CCLRC
 #+
@@ -62,9 +62,8 @@ itcl::body TrackRate::apply vt {
    set vt [string toupper [string range $vt 0 0]][string range $vt 1 end]
 
 # Set all the parameters.
-   if { $cosys == "" || $cosys == "AZEL_TOPO"} {
-      cs difTr${vt} set system AZEL_TOPO
-      cs difTr${vt} set equinox ""
+   if { $cosys == "" } {
+      CosysNames::FK5/J2000 apply difTr${vt}
    } else {
       CosysNames::$cosys apply difTr${vt}
    }

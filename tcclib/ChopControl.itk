@@ -15,7 +15,7 @@
 #           updateobj name  Stores the contents of the edit controls in the
 #                           Chop object "name".
 #
-#  D Terrett 5 June 2000
+#  D Terrett 26 June 2000
 #
 #  Copyright CCLRC
 #+
@@ -82,11 +82,11 @@ itcl::body ChopControl::constructor args {
    set w $itk_component(buttons)
    pack $itk_component(buttons) -fill x -expand yes
    itk_component add north {
-      radiobutton $w.north -text "North" -variable [scope refdir] \
+      radiobutton $w.north -text North -variable [scope refdir] \
             -value north -command [code $this setdir]
    }
    itk_component add vertical {
-      radiobutton $w.vertical -text "Up" -variable [scope refdir] \
+      radiobutton $w.vertical -text Up -variable [scope refdir] \
             -value vertical -command [code $this setdir]
    }
    pack $itk_component(north) -side left -padx 20
@@ -123,7 +123,7 @@ itcl::body ChopControl::constructor args {
    pack $itk_component(source) -anchor e -pady 4
 
 # Set initial state.
-   set refdir north
+   set refdir vertical
 
 # Create rotator object used by apply
    set scratchobj [namespace which -command [Chop #auto]]
@@ -158,12 +158,16 @@ itcl::body ChopControl::selectobj name {
       $itk_component(duty) insert end [$name cget -dutycycle]
       $itk_component(source) select [$name cget -source]
       set cosys [$name cget -cosys]
-      if { $cosys == "" } {
-         set refdir "vertical"
+      if { [string equal $cosys AzEl] } {
+         set refdir vertical
          $itk_component(cosys) select ""
       } else {
-         set refdir "north"
-         $itk_component(cosys) select $cosys
+         set refdir north
+         if { [string is space $cosys] } {
+            $itk_component(cosys) select FK5/J2000
+         } else {
+            $itk_component(cosys) select $cosys
+         }
       }
       setdir
    }
@@ -175,15 +179,15 @@ itcl::body ChopControl::updateobj name {
    $name configure -frequency [$itk_component(freq) get]
    $name configure -dutycycle [$itk_component(duty) get]
    $name configure -source [$itk_component(source) get]
-   if { $refdir == "north"} {
+   if { [string equal $refdir north] } {
       $name configure -cosys [$itk_component(cosys) get]
    } else {
-      $name configure -cosys ""
+      $name configure -cosys AzEl
    }
 }
 
 itcl::body ChopControl::setdir {} {
-   if { $refdir == "north"} {
+   if { [string equal $refdir north] } {
       $itk_component(cosys) configure -state normal
    } else {
       $itk_component(cosys) configure -state disabled

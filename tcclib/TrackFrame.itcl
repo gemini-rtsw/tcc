@@ -37,7 +37,7 @@
 #           subcomponents   Returns a list of the subcomponents of the
 #                           TrackFrame objects.
 #
-#  D Terrett 5 June 2000
+#  D Terrett 26 June 2000
 #
 #  Copyright CCLRC
 #+
@@ -94,13 +94,13 @@ itcl::body TrackFrame::apply args {
          trackPwfs1 trackPwfs2 trackOiwfs} \
          comp {mount sourceA sourceB sourceC pwfs1 pwfs2 oiwfs} {
       set cosys [set ${comp}Cosys]
-      if { $cosys == "" } {
-         cs $cs set system AZEL_TOPO
-         cs $cs set equinox ""
-         logger command $cs
+      if { [string is space $cosys] } {
+         cs $cs set system FK5
+         cs $cs set equinox J2000
       } else {
          CosysNames::$cosys apply $cs
       }
+      logger command $cs
    }
 }
 
