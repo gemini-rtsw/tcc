@@ -12,7 +12,7 @@
 #  Methods:
 #           select item      Selects "item" into the list manager.
 #
-#  D Terrett  13 April 2002
+#  D Terrett  17 May 2002
 #
 #  Copyright CCLRC
 #+
@@ -104,8 +104,11 @@ itcl::configbody SubComponentSelector::component {
       set comp $itk_option(-component)
 
 # Configure the -componentlist and -panel options of the selector.
-      $itk_component(selector) configure -componentlist $::Config($comp,list) 
+      $itk_component(selector) configure -componentlist $::Config($comp,list)
       $itk_component(edit) configure -panel $::Config($comp,panel)
+
+# Select the current value.
+      $itk_component(selector) select $::Config($comp,value)
 
 # Trace changes to the component value.
       trace variable ::Config($comp,value) w [itcl::code $this newname]
