@@ -1,6 +1,6 @@
 /*
 *   FILENAME
-*   tccLimits.h
+*   tccUtil.h
 *
 *   DESCRIPTION
 *   Routine definitions for tcc utility routines
