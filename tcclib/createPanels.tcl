@@ -6,7 +6,7 @@
 #  Arguments:
 #             none
 #
-#  D Terrett 22 November 1999
+#  D Terrett 15 February 2000
 #
 #  Copyright CCLRC
 #-
@@ -15,7 +15,7 @@ proc createPanels {} {
 
 # Create all the simple command panels.
    PanelMgr observePanel -name .observePanel -class ObservePanel \
-         -title "Acquisition Support"
+         -title "Acquisition & Guiding"
    PanelMgr skycatPanel -name .skycatPanel -class SkycatPanel \
          -title "SkyCat"
    PanelMgr tcsPanel -name .tcsPanel -class TcsPanel \
