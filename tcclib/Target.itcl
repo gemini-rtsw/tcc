@@ -49,11 +49,7 @@
 #  Procs:
 #           subcomponents Returns a list of the target classes subcomponents.
 #
-#  Notes:
-#        The grab method only supports the mount and source virtual
-#        telescopes.
-#
-#  D Terrett 1 November 2000
+#  D Terrett 28 November 2000
 #
 #  Copyright CCLRC
 #+
@@ -233,15 +229,18 @@ itcl::body Target::save file {
 
 body Target::grab vt {
 
-# Update the ast context.
-   ast update
+# Clear current state.
+   init
 
-# Select the pointing origin.
+# Get the target position.
    switch $vt {
-      sourceA {set po A}
-      sourceB {set po B}
-      sourceC {set po C}
-      mount {set po M}
+      sourceA {set target [sa tcssad get targetA]}
+      sourceB {set target [sa tcssad get targetB]}
+      sourceC {set target [sa tcssad get targetC]}
+      pwfs1 {set target [sa tcssad get targetPwfs1]}
+      pwfs2 {set target [sa tcssad get targetPwfs2]}
+      oiwfs {set target [sa tcssad get targetOiwfs]}
+      mount {set target [sa tcssad get targetMount]}
    }
 
 # Get the wavelength.
@@ -249,18 +248,28 @@ body Target::grab vt {
    set wavelength_value [expr [sadVal tcssad ${vt}Wavelength 5000.0] / 10000.0]
 
 # And frame.
-   if { $cosys == "" } {
-      set cosys FK5/J2000
+   set frame [sa tcssad get ${vt}TrackFrame]
+   if { [string is space $frame] } {
+      set frame FK5
    }
-   set frame [::CosysNames::$cosys cget -frame]
-   set equinox [::CosysNames::$cosys cget -equinox]
-
-# Get the target position.
-   set target [ast target $po A $wavelength_value $frame $equinox]
+   set eqx [string trimright [string trimright \
+         [sa tcssad get ${vt}TrackEq] 0] .]
+   if { [string is space $eqx] } {
+      set frame J2000
+   }
+   createCosys ${frame}/$eqx -frame $frame -equinox $eqx
+   set cosys ${frame}/$eqx
 
 # Store the RA/Dec.
    set type radec
-   set radec [lrange $target 0 1]
+   set ra [slaDr2tf 3 [lindex $target 0]]
+   set dec [slaDr2af 2 [lindex $target 1]]
+   set radec [list \
+         [format "%02d:%02d:%02d.%03d" [lindex $ra 1] [lindex $ra 2] \
+         [lindex $ra 3] [lindex $ra 4]] \
+         [format "%s%02d:%02d:%02d.%02d" [lindex $dec 0] [lindex $dec 1] \
+         [lindex $dec 2] [lindex $dec 3] [lindex $dec 4]]]
+
 }
 
 itcl::configbody Target::cosys {
