@@ -27,7 +27,7 @@
 #
 #           subselect component subcomponent
 #
-#  D Terrett  20 March 2001
+#  D Terrett  21 March 2001
 #
 #  Copyright CCLRC
 #+
@@ -123,6 +123,9 @@ itcl::body ComponentControl::constructor args {
 }
 
 itcl::body ComponentControl::destructor {} {
+
+# Inform our edit shadow that we are being destroyed.
+   $itk_option(-shadow) unmap
 
 # Delete the scratch object.
    delete object $scratchobj

@@ -50,7 +50,7 @@
 #                                  objects of all the subcomponents that have 
 #                                  values.
 #
-#  D Terrett 20 March 2000
+#  D Terrett 21 March 2000
 #
 #  Copyright CCLRC
 #+
@@ -64,6 +64,7 @@ itcl::class EditShadow {
       method store {name}
       method subselectfromcontrol {comp name}
       method subselectfromchild {comp name}
+      method unmap {} {set scratchobj ""}
       variable children ""
       variable component ""
       variable namespace ""
@@ -121,7 +122,7 @@ itcl::body EditShadow::map {} {
 itcl::body EditShadow::selectfromparent {name} {
 
 # Store the new object name.
-   if { [string equal $name ""] && ![string equal $scratchobj ""] } {
+   if { [string equal $name ""] } {
       set selection $scratchobj
    } else {
       set selection ${namespace}::$name
@@ -133,8 +134,10 @@ itcl::body EditShadow::selectfromparent {name} {
    }
 
 # Update the subselections array from the object just selected.
-   foreach el [array names subselections] {
-      set subselections($el) [$selection cget -$el]
+   if { ! [string equal $selection ""] } {
+      foreach el [array names subselections] {
+         set subselections($el) [$selection cget -$el]
+      }
    }
 
 # Call the selectfromparent method of all this objects subcomponents that
@@ -161,7 +164,7 @@ itcl::body EditShadow::store name {
    }
 
 # Store the new object name.
-   if { [string equal $name ""] && ![string equal $scratchobj ""] } {
+   if { [string equal $name ""] } {
       set selection $scratchobj
    } else {
       set selection ${namespace}::$name
@@ -188,7 +191,7 @@ itcl::body EditShadow::store name {
 itcl::body EditShadow::selectfromcontrol {name} {
 
 # Store the new object name.
-   if { [string equal $name ""] && ![string equal $scratchobj ""] } {
+   if { [string equal $name ""] } {
       set selection $scratchobj
    } else {
       set selection ${namespace}::$name
@@ -200,8 +203,10 @@ itcl::body EditShadow::selectfromcontrol {name} {
    }
 
 # Update the subselections array from the object just selected.
-   foreach el [array names subselections] {
-      set subselections($el) [$selection cget -$el]
+   if { ! [string equal $selection ""] } {
+      foreach el [array names subselections] {
+         set subselections($el) [$selection cget -$el]
+      }
    }
 
 # If this shadow has a parent, then call its subselectfromchild method.
