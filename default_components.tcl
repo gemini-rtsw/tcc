@@ -14,8 +14,8 @@ createCosys AzEl -frame AzEl -equinox ""
 createRotator tracking -cosys FK5/J2000 -ipa 180
 createRotator fixed -cosys AzEl -ipa 180
 
-createGuide "None" -pwfs1Active never -pwfs2Active never -oiwfsActive never \
-   -refcount 1
+createGuide scratch
+createGuide None -pwfs1Active never -pwfs2Active never -oiwfsActive never
 
 createSlewOptions All -refcount 1 \
    -chopThrow On \
@@ -29,7 +29,7 @@ createSlewOptions All -refcount 1 \
    -guiding On \
    -guideOffset On
 
-createSlewOptions "Normal" -refcount 1 \
+createSlewOptions Normal -refcount 1 \
    -chopThrow On \
    -sourceOffset On \
    -sourceDifTr On \
@@ -81,4 +81,3 @@ createConfig default -refcount 1 \
    -rotator tracking \
    -slewOptions Normal \
    -trackFrame FK5/J2000 \
-   -guide None
