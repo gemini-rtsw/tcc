@@ -4,7 +4,7 @@
 #  A SciTarget control is a TargetControl widget with widgets for
 #  the target position etc.
 #
-#  D Terrett 18 October 2000
+#  D Terrett 28 October 2000
 #
 #  Copyright CCLRC
 #+
@@ -18,7 +18,6 @@ itcl::class SciTargetControl {
    public method updateobj name
 
    private method copy createproc
-   private method grab
    private method orbtype
 
    private variable planet
@@ -146,12 +145,6 @@ itcl::body SciTargetControl::constructor args {
    pack forget  [$itk_component(storeapply) component lock]
    pack forget  [$itk_component(storeapply) component apply]
    set store  [$itk_component(storeapply) component store]
-
-# Create a grab button and pack it in its place.
-   itk_component add grab {
-      button [winfo parent $store].grab -text Grab -command [code $this grab]
-   }
-   pack $store $itk_component(grab) -side left -pady 4 -expand y
 
 # Create the scatch target object used by apply.
    set scratchobj [namespace which -command [SciTarget #auto]]
@@ -302,28 +295,6 @@ itcl::body SciTargetControl::orbtype {} {
          $itk_component(dailymot) configure -state disabled
       }
    }
-}
-
-body SciTargetControl::grab {} {
-
-# Get the name of the currently selected SciTarget object.
-   set name [$itk_component(selector) get]
-   if { $name == "" } {
-      set fullname $scratchobj
-   } else {
-      set fullname ::ScienceTargetNames::$name
-   }
-
-# Create the object if it doesn't already exist.
-   if { [llength [find objects $name]] == 0 } {
-      $itk_option(-shadow) store $name
-   }
-      
-# Grab the current position from the telescope.
-   $fullname grab $itk_option(-vt)
-
-# Reselect the object to display the new values
-   selectobj $fullname
 }
 
 itcl::body SciTargetControl::copy createproc {
