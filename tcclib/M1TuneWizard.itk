@@ -6,7 +6,7 @@
 #
 #  Methods:
 #
-#  D Terrett 20 June 2003
+#  D Terrett 23 June 2003
 #
 #  Copyright CCLRC
 #-
@@ -67,6 +67,9 @@ itcl::body M1TuneWizard::constructor {args} {
       frame $w.tune
    }
    set w $itk_component(tune)
+   itk_component add m1lab {
+      label $w.m1lab -text "M1 Model" -anchor w
+   }
    itk_component add meslab {
       label $w.meslab -text "WFS" -width 15
    }
@@ -136,7 +139,28 @@ itcl::body M1TuneWizard::constructor {args} {
    itk_component add z10tot {
       label $w.z10tot -relief sunken
    }
-   grid x $itk_component(meslab) $itk_component(lastlab) $itk_component(totlab)
+   itk_component add m2 {
+      frame $w.m2
+   }
+   set w $itk_component(m2)
+   itk_component add m2lab {
+      label $w.m2lab -text "M2 correction"
+   }
+   itk_component add z6lab {
+      label $w.z6lab -text "Z6 (x coma)"
+   }
+   itk_component add z7lab {
+      label $w.z7lab -text "Z7 (y coma)"
+   }
+   itk_component add z6mes {
+      label $w.z6mes -relief sunken -width 15
+   }
+   itk_component add z7mes {
+      label $w.z7mes -relief sunken -width 15
+   }
+
+   grid $itk_component(m1lab) $itk_component(meslab) \
+         $itk_component(lastlab) $itk_component(totlab) -sticky ew
    grid $itk_component(z4lab) $itk_component(z4mes) $itk_component(z4last) \
          $itk_component(z4tot) -sticky ew
    grid $itk_component(z5lab) $itk_component(z5mes) $itk_component(z5last) \
@@ -147,6 +171,11 @@ itcl::body M1TuneWizard::constructor {args} {
          $itk_component(z9tot) -sticky ew
    grid $itk_component(z10lab) $itk_component(z10mes) $itk_component(z10last) \
          $itk_component(z10tot) -sticky ew
+   grid $itk_component(m2) - - -
+
+   grid $itk_component(m2lab) -
+   grid $itk_component(z6lab) $itk_component(z6mes)
+   grid $itk_component(z7lab) $itk_component(z7mes)
 
 # Create the status acceptor for monitoring the tuning progress.
    if { [catch {sa m1model info}] } {
@@ -196,9 +225,9 @@ itcl::body M1TuneWizard::tune {} {
 # Exec the analysis program.
    set home [pwd]
    cd $dir
-   logger log "idl /home/ssa/idl/shell2hrwfsAO.bat"
+   logger log "/home/gemvx/bin/StartHrwfsAO"
    catch {unset ::env(IDL_STARTUP)}
-   set pid [exec idl /home/ssa/idl/shell2hrwfsAO.bat &]
+   set pid [exec /home/gemvx/bin/StartHrwfsAO &]
    cd $home
 
 # Start the M1 tuning.
@@ -212,7 +241,7 @@ itcl::body M1TuneWizard::step2 {} {
    set backproc [itcl::code $this backtostep1]
    set nextproc ""
    set finishproc [itcl::code $this stoptune]
-   set instructions "Press \"Finish\" when M1 is tuned"
+   set instructions "Press \"Finish\" when tuning is complete"
    set updateid [after 1000 [itcl::code $this displaymodel]]
 }
 
@@ -254,6 +283,10 @@ itcl::body M1TuneWizard::displaymodel {} {
          -text [format %.2f [sa m1model get averageZ4]]
    $itk_component(z5mes) configure \
          -text [format %.2f [sa m1model get averageZ5]]
+   $itk_component(z6mes) configure \
+         -text [format %.2f [sa m1model get averageZ6]]
+   $itk_component(z7mes) configure \
+         -text [format %.2f [sa m1model get averageZ7]]
    $itk_component(z8mes) configure \
          -text [format %.2f [sa m1model get averageZ8]]
    $itk_component(z9mes) configure \
