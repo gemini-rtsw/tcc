@@ -9,7 +9,7 @@
 #  Methods:
 #          none
 #
-#  D Terrett 7 June 2000
+#  D Terrett 8 June 2000
 #
 #  Copyright CCLRC
 #+
@@ -74,15 +74,19 @@ itcl::body TcsControl::constructor args {
    pack $itk_component(row1f2) $itk_component(row1f3) \
          -side left -fill both -expand y
 
-# The third frame in the first row is divided into 2 horizontally.
+# The third frame in the first row is divided into 3 horizontally.
    set w $itk_component(row1f3)
    itk_component add f3top {
       frame $w.top -bd 2 -relief ridge
    }
+   itk_component add f3mid {
+      frame $w.mid -bd 2 -relief ridge
+   }
    itk_component add f3bot {
       frame $w.bot -bd 2 -relief ridge
    }
-   pack $itk_component(f3top) $itk_component(f3bot) -fill both -expand yes
+   pack $itk_component(f3top) $itk_component(f3mid) $itk_component(f3bot) \
+         -fill both -expand yes
 
 # The fourth row contains 2 frames.
    set w $itk_component(row4)
@@ -261,7 +265,7 @@ itcl::body TcsControl::constructor args {
          -side left -padx 4 -pady 5 -anchor w
 
 # Close shutters command.
-   set w $itk_component(f3bot)
+   set w $itk_component(f3mid)
    itk_component add closeshut {
       ApplyButton $w.closeshut -command shutterPark
    }
@@ -270,6 +274,13 @@ itcl::body TcsControl::constructor args {
    }
    pack $itk_component(closeshut) $itk_component(closegates) \
          -fill both -expand yes -padx 10 -pady 5 -side left
+
+# Rotator center wrap command.
+   set w $itk_component(f3bot)
+   itk_component add cenwrap {
+      ApplyButton $w.cenwrap -command rotCentre
+   }
+   pack $itk_component(cenwrap) -fill both -expand yes -padx 10 -pady 10
 
 # A & G mechanism parking and datuming
    set w $itk_component(row2)
