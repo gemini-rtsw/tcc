@@ -5,7 +5,7 @@
 #  tcs configuration components and creates and configures the
 #  components.
 #
-#  D Terrett 11 April 2002
+#  D Terrett 17 April 2002
 #
 #  Copyright CCLRC
 #+
@@ -23,7 +23,7 @@ itcl::class TcsConfigFile {
 itcl::body TcsConfigFile::constructor {file parent} {
 
 # Create a document object from the XML file.
-   set doc [dom::DOMImplementation parse [read $file]]
+   set doc [dom::DOMImplementation parse [read $file] -parser expat]
 
 # Get the root node.
    set root [dom::document cget $doc -documentElement]
