@@ -47,6 +47,7 @@ static char rcsid[]="$Id:";
 int Tccext_Init( Tcl_Interp *interp)
 {
     if ( Tcl_InitStubs( interp, "8.0", 0 ) == NULL ) return TCL_ERROR;
+    if ( Tk_InitStubs( interp, "8.0", 0 ) == NULL ) return TCL_ERROR;
 
     Tcl_CreateObjCommand( interp, "ast", Tccext_AstCmd,
         (ClientData) NULL, (Tcl_CmdDeleteProc *) NULL);
