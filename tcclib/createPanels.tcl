@@ -36,7 +36,7 @@ proc createPanels {} {
 #         -title "Active Optics Control"
    PanelMgr previewPanel -name .previewPanel -class PreviewPanel \
          -title "Configuration Preview"
-   PanelMgr logPanel -name .logPanel -class tcclib::LogPanel \
+   PanelMgr logPanel -name .logPanel -class LogPanel \
          -title "Command Log"
    PanelMgr guideLoopPanel -name .guideLoopPanel \
          -class GuideLoopPanel -title "Guiding Loop Control"

@@ -34,6 +34,8 @@ slaext.so : $(SLAOBJ)
 
 tsdext.o : tccAst.h
 tccext.o : tccAst.h tccPreview.h autorepeat.h
+tccext.o : edit.xbm delete.xbm rotate.xbm arotate.xbm hflip.xbm vflip.xbm \
+            reset.xbm
 tccPreview.o : tccPreview.h tccConstants.h tccUtil.h tccDecode.h
 tccUtil.o : tccConstants.h tccUtil.h
 tccTime.o : tccConstants.h

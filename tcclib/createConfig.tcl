@@ -386,7 +386,7 @@ proc createConfig {} {
    foreach name [array names ::Config *,list] {
       if {  $::Config($name) != "" } {
          if { [find objects $::Config($name)] == "" } {
-            tcclib::ComponentList $::Config($name)
+            ComponentList $::Config($name)
          }
       }
    }

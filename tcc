@@ -10,7 +10,7 @@ exec $HLPG_INSTALL_BASE/bin/solaris/ocswish "$0" "$@"
 #  the tcc uses. It is probably installation dependent and will need to be
 #  hacked to get it to work.
 #
-#  D Terrett 13 March 2002
+#  D Terrett 8 May 2002
 #
 #  Copyright CCLRC
 #-
@@ -44,11 +44,10 @@ package require Itk
 package require Iwidgets
 package require Ocspkg
 package require dom
-package require Tcclib
 package require Seq
 
 # Define the default directory for writing files.
-set tcclib::SaveFileDirectory /gemini/files
+set SaveFileDirectory /gemini/files
 
 # Set the name of the epics service configuration file.
 if { [info exists env(TCC_TCSNAME)] } {

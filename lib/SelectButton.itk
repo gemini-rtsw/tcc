@@ -1,0 +1,119 @@
+#+
+#  SelectButton <- itk::Widget
+#
+#  Implements the SelectButton widget. A SelectButton is a row of LiveButtons
+#  that behave rather like radio buttons; when a button is pressed it is
+#  disabled and all the other buttons are enabled.
+#
+#  Options:
+#           -command       The command to be executed when one of the buttons
+#                          is pressed.
+#
+#           -labels        A list of labels for the buttons.
+#
+#           -offbackground The colour of the buttons other than the 
+#                          selected one.
+#
+#           -onbackground  The colour of the selected button.
+#
+#           -orient        The orientation of the buttons (horizontal or
+#                          vertical).
+#
+#  D Terrett 25 October 2000
+#
+#  Copyright CCLRC
+#+
+
+itcl::class SelectButton {
+   inherit itk::Widget
+   constructor args {}
+   itk_option define -command command Command {}
+   itk_option define -orient orient Orient horizontal
+   itk_option define -labels labels Labels {}
+   itk_option define -onbackground onBackground OnBackGround Green
+   itk_option define -offbackground offBackground OffBackGround White
+   itk_option define -activebackground activeBackground Foreground White
+   itk_option define -activeforeground activeForeground Background Black
+   itk_option define -highlightcolor highlightColor HighlightColor Black
+   itk_option define -highlightthickness highlightThickness HighlightThickness 2
+   public {
+      method add {label args}
+      method get {} {return $current}
+   }
+   private {
+      method selectioncommand {label}
+      variable n 0
+      variable current ""
+   }
+}
+
+itk::usual SelectButton {
+   keep -activebackground -activeforeground -background -cursor \
+         -highlightcolor -highlightthickness -onbackground -offbackground
+}
+
+itcl::body SelectButton::constructor args {
+
+   eval itk_initialize $args
+}
+
+itcl::body SelectButton::add {label args} {
+
+# determine which side to pack the buttons.
+   if { [string equal $itk_option(-orient) horizontal] } {
+      set side left
+   } else {
+      set side top
+   }
+
+# Create the new button.
+   itk_component add $n {
+      LiveButton $itk_interior.$n \
+            -text $label -command [code $this selectioncommand $label]
+   } {
+      usual
+      ignore -background
+   }
+   $itk_component($n) configure \
+      -command [code $this selectioncommand $itk_component($n)]
+   eval $itk_component($n) configure $args
+
+# Unpack the existing buttons.
+   set slaves [pack slaves $itk_interior]
+   if { [llength $slaves] } {
+      eval pack forget $slaves
+   }
+
+# Repack with the new one added.
+   eval pack $slaves $itk_component($n) -side $side -expand yes -fill both
+   incr n
+}
+
+itcl::body SelectButton::selectioncommand w {
+   foreach button [winfo children $itk_interior] {
+      $button configure -state normal -background $itk_option(-offbackground)
+   }
+   $w configure -state disabled -background $itk_option(-onbackground)
+
+   set current [$w cget -text]
+
+   if { ! [string equal $itk_option(-command) ""] } {
+      uplevel #0 $itk_option(-command) \"[$w cget -text]\"
+   }
+}
+
+itcl::configbody SelectButton::onbackground {
+   foreach button [winfo children $itk_interior] {
+      if { [string equal [$button cget -state] disabled] } {
+         $button configure -background $itk_option(-onbackground)
+      }
+   }
+}
+
+itcl::configbody SelectButton::offbackground {
+   foreach button [winfo children $itk_interior] {
+      if { [string equal [$button cget -state] normal] } {
+         $button configure -background $itk_option(-offbackground)
+      }
+   }
+}

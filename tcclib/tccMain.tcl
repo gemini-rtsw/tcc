@@ -139,7 +139,7 @@ proc tccMain args {
    ActiveOptics AO
 
 # Create the logger object.
-   tcclib::Logger logger apply applyC errMessage
+   Logger logger apply applyC errMessage
 
 # Create the CalParam object.
    CalParam calparam

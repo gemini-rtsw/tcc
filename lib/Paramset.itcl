@@ -1,0 +1,37 @@
+#+
+#  Paramset.itcl
+#
+#  Paramset is a base class for objects that can be saved as XML paramset
+#  and param elements. It provides methods for creating the XML nodes and
+#  setting the appropriate attributes.
+#
+#  D Terrett 8 April 2002
+#
+#  Copyright CCLRC
+#-
+
+itcl::class Paramset {
+   public {
+      method paramset {node {type ""}}
+      method param {$node name value}
+   }
+}
+
+itcl::body Paramset::paramset {node {type ""}} {
+   dom::document createTextNode $node "\n"
+   set newnode [dom::document createElement $node paramset]
+   dom::element setAttribute $newnode name [namespace tail $this]
+   if { $type != "" } {
+      dom::element setAttribute $newnode type $type
+   }
+   return $newnode
+}
+
+itcl::body Paramset::param {node name value} {
+   if { $value != "" } {
+      dom::document createTextNode $node "\n"
+      set parnode [dom::document createElement $node param]
+      dom::element setAttribute $parnode name $name
+      dom::element setAttribute $parnode value $value
+   }
+}

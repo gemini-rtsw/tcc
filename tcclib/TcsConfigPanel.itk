@@ -103,7 +103,7 @@ itcl::body TcsConfigPanel::import {} {
 
 # Save the current directory and cd to save file directory.
    set pwd [pwd]
-   catch {cd $tcclib::SaveFileDirectory}
+   catch {cd $::SaveFileDirectory}
 
 # Create a dialog box for selecting the file and center it.
    set dialog  $itk_interior.importdialog
@@ -172,9 +172,9 @@ itcl::body TcsConfigPanel::import {} {
 # Update save file directory.
          set dir [file dirname $filename]
          if { [string compare [file pathtype $dir] relative] == 0 } {
-            set tcclib::SaveFileDirectory [pwd]/$dir
+            set ::SaveFileDirectory [pwd]/$dir
          } else {
-            set tcclib::SaveFileDirectory $dir
+            set ::SaveFileDirectory $dir
          }
       }
    }
@@ -188,7 +188,7 @@ itcl::body TcsConfigPanel::export {} {
 
 # cd to save file directory.
    set pwd [pwd]
-   catch {cd $tcclib::SaveFileDirectory}
+   catch {cd $::SaveFileDirectory}
 
 # Create dialog.
    set dialog $itk_interior.exportdialog
@@ -267,9 +267,9 @@ itcl::body TcsConfigPanel::export {} {
 # Update save file directory.
                set dir [file dirname $filename]
                if { [string compare [file pathtype $dir] relative] == 0 } {
-                  set tcclib::SaveFileDirectory [pwd]/$dir
+                  set ::SaveFileDirectory [pwd]/$dir
                } else {
-                  set tcclib::SaveFileDirectory $dir
+                  set ::SaveFileDirectory $dir
                }
             }
          }

@@ -13,7 +13,7 @@ proc saveLayout {} {
 
 # Save the current directory and cd to save file directory.
    set pwd [pwd]
-   cd $tcclib::SaveFileDirectory
+   cd $::SaveFileDirectory
 
 # Create a dialog box for selecting the file and center it.
    set dialog [iwidgets::fileselectiondialog .fsd \
@@ -75,9 +75,9 @@ proc saveLayout {} {
 # Save the name of the save file directory.
          set dir [file dirname $filename]
          if { [string compare [file pathtype $dir] relative] == 0 } {
-            set tcclib::SaveFileDirectory [pwd]/$dir
+            set ::SaveFileDirectory [pwd]/$dir
          } else {
-            set tcclib::SaveFileDirectory $dir
+            set ::SaveFileDirectory $dir
          }
       }
    }

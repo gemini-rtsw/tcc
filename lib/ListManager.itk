@@ -1,0 +1,151 @@
+#+
+#  ListManager <- itk::Widget
+#
+#  Implements the ListManager class. A ListManager widget is a combobox with
+#  a drop-down list that is associated with a ComponentList object and has
+#  a method for selecting one of the elements in the list and returning the
+#  name of the currently selected item. 
+#
+#  Options:
+#          -componentlist  The name of the associated ComponentList object.
+#
+#          -returncommand  The action to perform when <Return> is detected 
+#                          in the combo box
+#
+#  Methods:
+#          select item     Selects the list entry "item".
+#
+#          get             Returns the name of the currently selected item.
+#
+#          insert string   Inserts a "string" into the entry widget
+#
+#  D Terrett  13 April 2002
+#
+#  Copyright CCLRC
+#-
+
+itcl::class ListManager {
+   inherit itk::Widget
+   constructor args {}
+   destructor {}
+   itk_option define -componentlist componentList ComponentList {}
+   itk_option define -width width Width 18
+   public {
+      method select {item}
+      method get {}
+      method insert {string}
+   }
+   private {
+      variable currentlist ""
+      variable selectorname
+   }
+}
+
+itk::usual ListManager {
+   keep -background -borderwidth -cursor -foreground -highlightcolor \
+         -highlightthickness -insertbackground -insertborderwidth \
+         -insertofftime -insertontime -insertwidth -labelfont -popupcursor \
+         -selectbackground -selectborderwidth -selectforeground \
+         -textbackground -textfont
+}
+
+itcl::body ListManager::constructor args {
+
+   itk_component add selector {
+      iwidgets::combobox $itk_interior.selector -completion 0
+   } {
+      usual
+      keep -editable -labelpos -labeltext -selectioncommand -state -width
+      rename -command -returncommand returnCommand Command
+      ignore -completion
+   }
+
+   pack $itk_component(selector) -fill both -expand y
+
+# Save the selector name.
+   set selectorname $itk_component(selector)
+
+   eval itk_initialize $args
+}
+
+itcl::body ListManager::destructor {} {
+#-
+# Removes the widget from the list of widgets managed by the list object.
+#-
+   if { ! [string equal $currentlist ""] } {
+      $currentlist removewidget $selectorname
+   }
+}
+
+itcl::configbody ListManager::componentlist {
+#-
+#  Adds the combobox widget to the list of widgets managed by the list.
+#-
+   if { ! [string equal $currentlist ""] } {
+      $currentlist removewidget $itk_component(selector)
+   }
+   set currentlist ""
+   if { ! [string equal $itk_option(-componentlist) ""] } {
+      $itk_option(-componentlist) addwidget $itk_component(selector)
+      set currentlist $itk_option(-componentlist)
+   }
+}
+
+itcl::body ListManager::select item {
+#-
+# Selects one of the items in the associated list.
+#-
+
+# Make the combobox editable.
+   set editable [$itk_component(selector) cget -editable]
+   if { $editable == 0 } {
+      $itk_component(selector) configure -editable 1
+   }
+
+# Clear the current selection.
+   $itk_component(selector) selection clear 0 end
+
+# Select the item according to its position in the list.
+   if { ! [string equal $itk_option(-componentlist) ""] } {
+      set i [$itk_option(-componentlist) index $item]
+      if { $i >= 0 } {
+         $itk_component(selector) selection set $i
+      }
+   }
+
+# Restore the editability.
+   if { $editable == 0 } {
+      $itk_component(selector) configure -editable 0
+   }
+}
+
+itcl::body ListManager::get {} {
+#-
+# Returns the currently selected item.
+#-
+   return [$itk_component(selector) get]
+}
+
+itcl::body ListManager::insert string {
+#-
+# Sets the combobox to the specified string as if it had been typed into
+# the box.
+#-
+
+# Make the combobox editable.
+   set editable [$itk_component(selector) cget -editable]
+   if { $editable == 0 } {
+      $itk_component(selector) configure -editable 1
+   }
+
+# Clear the current selection.
+   $itk_component(selector) selection clear 0 end
+
+# Insert the string.
+   $itk_component(selector) insert entry end $string
+
+# Restore the editability.
+   if { $editable == 0 } {
+      $itk_component(selector) configure -editable 0
+   }
+}
