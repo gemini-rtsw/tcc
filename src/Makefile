@@ -4,6 +4,8 @@ TCL_VERS = 8.4
 
 CC = gcc
 
+include ${HLPG_INSTALL_BASE}/conf/gemini_env
+
 CMNOBJ = tccDecode.o tccUtil.o tccAst.o
 TCCOBJ = tccext.o autorepeat.o plosc.o 
 TSDOBJ = tsdext.o tsdDomeView.o tsdWrapView.o tsdElView.o
