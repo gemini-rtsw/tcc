@@ -17,9 +17,9 @@ CFLAGS = -fPIC -Wall -G -DUSE_TCL_STUBS -DUSE_TK_STUBS \
          -I/gemini/epics3.13.4/timelib/timelib/include \
          -I/gemini/epics3.13.4/astlib/astlib/include
 
-LDFLAGS = -L/gemini/epics3.13.4/slalib/slalib/lib/solaris \
-          -L/gemini/epics3.13.4/timelib/timelib/lib/solaris \
-          -L/gemini/epics3.13.4/astlib/astlib/lib/solaris \
+LDFLAGS = -L/gemini/epics3.13.4/slalib/slalib/lib/${HOST_ARCH} \
+          -L/gemini/epics3.13.4/timelib/timelib/lib/${HOST_ARCH} \
+          -L/gemini/epics3.13.4/astlib/astlib/lib/${HOST_ARCH} \
           -L${HLPG_EXT_RUNTIME_BASE}/tcl$(TCL_VERS)/lib \
           -ltclstub$(TCL_VERS) -ltkstub$(TCL_VERS) -last -ltime -lsla -lposix4
 
@@ -57,11 +57,11 @@ clean:
 	-rm tccext.so tsdext.so tcctime.so slaext.so tcctelsim.so
 
 install: All
-	mkdir -p ../tcclib/solaris
-	cp tccext.so ../tcclib/solaris
-	cp tcctelsim.so ../tcclib/solaris
-	mkdir -p ../tsdlib/solaris
-	cp tsdext.so ../tsdlib/solaris
-	mkdir -p ../lib/solaris
-	cp tcctime.so ../lib/solaris
-	cp slaext.so ../lib/solaris
+	mkdir -p ../tcclib/${HOST_ARCH}
+	cp tccext.so ../tcclib/${HOST_ARCH}
+	cp tcctelsim.so ../tcclib/${HOST_ARCH}
+	mkdir -p ../tsdlib/${HOST_ARCH}
+	cp tsdext.so ../tsdlib/${HOST_ARCH}
+	mkdir -p ../lib/${HOST_ARCH}
+	cp tcctime.so ../lib/${HOST_ARCH}
+	cp slaext.so ../lib/${HOST_ARCH}
