@@ -6,7 +6,7 @@
 #  Arguments:
 #             none
 #
-#  D Terrett 9 July 2003
+#  D Terrett 16 January 2004
 #
 #  Copyright CCLRC
 #-
@@ -38,8 +38,6 @@ proc createPanels {} {
          -title "Configuration Preview"
    PanelMgr logPanel -name .logPanel -class LogPanel \
          -title "Command Log"
-   PanelMgr guideLoopPanel -name .guideLoopPanel \
-         -class GuideLoopPanel -title "Guiding Loop Control"
 #   PanelMgr aoPanel -name .aoPanel \
 #         -class AoPanel -title "Adaptive Optics Control"
    PanelMgr handsetPanel -name .handsetPanel \
