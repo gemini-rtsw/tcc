@@ -9,7 +9,7 @@
 #
 #       Updates the display from the SAD
 #
-#  D Terrett 31 May 1999
+#  D Terrett 2 June 1999
 #
 #  Copyright CCLRC
 #-
@@ -49,8 +49,11 @@ itcl::body GraphicDisplay::constructor args {
    itk_component add col3 {
       frame $itk_interior.col3
    }
+   itk_component add col4 {
+      frame $itk_interior.col4
+   }
    pack $itk_component(col1) $itk_component(col2) $itk_component(col3) \
-         -side left -fill both -expand y
+         $itk_component(col4) -side left -fill both -expand y
 
 # Put the dome view and the elevation view in the left column.
    set w $itk_component(col1)
@@ -76,6 +79,23 @@ itcl::body GraphicDisplay::constructor args {
    }
    pack $itk_component(opticsview) -expand y
 
+# Probe views in the last column.
+   set w $itk_component(col4)
+   itk_component add probe1 {
+      ProbeView $w.probe1 -probe p1
+   }
+   itk_component add p1label {
+      label $w.p1label -text "PWFS1"
+   }
+   itk_component add probe2 {
+      ProbeView $w.probe2 -probe p2
+   }
+   itk_component add p2label {
+      label $w.p2label -text "PWFS2"
+   }
+   pack $itk_component(p2label) $itk_component(probe2) \
+         $itk_component(p1label) $itk_component(probe1) -side bottom
+
    eval itk_initialize $args
 }
 
@@ -88,6 +108,8 @@ itcl::body GraphicDisplay::update {} {
    $itk_component(domeview) update
    $itk_component(elview) update
    $itk_component(wrapview) update
+   $itk_component(probe1) update
+   $itk_component(probe2) update
 
    set v [sa tcssad get domeVignette value]
    if { $v > 0.0 && $Vignette == 0 } {
