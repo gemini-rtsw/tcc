@@ -23,6 +23,7 @@ itcl::class GuideLoop {
       method m1mode {state}
       method mtmode {state}
       method m2mode {state}
+      method m2coma {state}
       method prmode {state}
       method wfsmode {wfs state}
       method recolour {args}
@@ -83,7 +84,7 @@ itcl::body GuideLoop::constructor args {
 
 # M1, M2 and Mount boxes.
    $w create rectangle 0 0 132 89 -fill white -tags "active m2 m2_bg"
-   $w create text 92 45 -text M2 -tags m2 -font $font
+   $w create text 32 65 -text M2 -tags m2 -font $font
    $w create rectangle 0 0 132 47 -fill white -tags "active m1 m1_bg"
    $w create text 92 25 -text "M1 FIG" -tags m1 -font $font
    $w create rectangle 0 0 132 89 -fill white -tags "active mount mount_bg"
@@ -107,11 +108,20 @@ itcl::body GuideLoop::constructor args {
       usual
       rename -offbackground -background background Background
    }
-   $w create window 32 45 -width 60 -window $itk_component(m2) -tags m2
+   $w create window 102 45 -width 60 -window $itk_component(m2) -tags m2
    $itk_component(m2) add P1 -pady 0
    $itk_component(m2) add P2 -pady 0
    $itk_component(m2) add OIWFS -pady 0
    $itk_component(m2) add OFF -pady 0
+   itk_component add m2coma {
+      SelectButton $w.m2coma -command [code $this m2coma] -orient vertical
+   } {
+      usual
+      rename -offbackground -background background Background
+   }
+   $w create window 32 24 -width 60 -window $itk_component(m2coma) -tags m2
+   $itk_component(m2coma) add COMA -pady 0
+   $itk_component(m2coma) add OFF -pady 0
 
 # Controls for Mount.
    itk_component add mt {
@@ -194,6 +204,9 @@ itcl::body GuideLoop::constructor args {
    }
    if { [catch {cs m2GuideConfig info}] } {
       epics cs m2GuideConfig
+   }
+   if { [catch {cs m2ComaCorr info}] } {
+      epics cs m2ComaCorr
    }
    if { [catch {cs wfsGuideMode info}] } {
       epics cs wfsGuideMode
@@ -528,6 +541,25 @@ body GuideLoop::prmode state {
             \"$msg\""
    }
    recolour
+}
+
+body GuideLoop::m2coma state {
+
+   switch $state {
+      OFF {
+         cs m2ComaCorr set state Off
+      }
+      COMA {
+         cs m2ComaCorr set state On
+      }
+   }
+   logger command m2ComaCorr
+
+   if { [catch {cs m2ComaCorr post} msg] } {
+      tk_messageBox -icon error -parent $itk_interior -message \
+            "Error posting m2ComaCorr command: TCS reports \
+            \"$msg\""
+   }
 }
 
 body GuideLoop::wfsmode {wfs state} {
