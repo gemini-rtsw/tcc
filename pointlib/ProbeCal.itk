@@ -3,7 +3,7 @@
 #
 # The interface of the probe calibration procedure.
 #
-# D Terrett 9 October 2000
+# D Terrett 23 June 2001
 #
 # Copyright CCLRC
 #+
@@ -20,8 +20,8 @@ itcl::class ProbeCal {
       method start {}
       method isinposition {p}
       method report {act msg}
-      method log {step p}
-      method follow {p}
+      method log {p}
+      method probesetup {p}
       method finish {}
       method manual {p}
       variable probe
@@ -31,6 +31,8 @@ itcl::class ProbeCal {
       variable action
       variable inposition1
       variable inposition2
+      variable xguide 150
+      variable yguide 150
    }
 }
 
@@ -91,122 +93,92 @@ itcl::body ProbeCal::constructor {args} {
 
 # Create all the actions needed to drive the calibration process.
    foreach p {1 2} {
-
-# Setting up M2 and parking the other probe arm.
-      set action($p,setup) [seq::Action #auto tcs]
-      $action($p,setup) set m2GuideConfig source PWFS${p}
-      switch $p {
-         1 {
-            $action($p,setup) set pwfs2Park
-            $action($p,setup) configure -waitvar [scope inposition2(value)] \
-                  -oktest [itcl::code $this isinposition 2] 
-         }
-         2 {
-            $action($p,setup) set pwfs1Park
-            $action($p,setup) configure -waitvar [scope inposition1(value)] \
-                  -oktest [itcl::code $this isinposition 2]
-         }
+      if { $p == 1 } {
+         set pg 2
+      } else {
+         set pg 1
       }
-      $action($p,setup) set pwfs1Guide nodachopa off
+
+# Setting up M2 and guiding.
+      set action($p,setup) [seq::Action #auto tcs]
+      $action($p,setup) set m2GuideConfig source PWFS${pg}
+      $action($p,setup) set pwfs1Guide nodachopa on
       $action($p,setup) set pwfs1Guide nodbchopa off
       $action($p,setup) set pwfs1Guide nodachopb off
       $action($p,setup) set pwfs1Guide nodbchopb off
-      $action($p,setup) set pwfs2Guide nodachopa off
+      $action($p,setup) set pwfs2Guide nodachopa on
       $action($p,setup) set pwfs2Guide nodbchopa off
       $action($p,setup) set pwfs2Guide nodachopb off
       $action($p,setup) set pwfs2Guide nodbchopb off
 
-# Centering the probe arm.
-      set action($p,centre) [seq::Action #auto tcs \
-            -waitvar [scope inposition${p}(value)] \
-            -oktest [itcl::code $this isinposition $p]]
-      $action($p,centre) set wfsGuideMode state off
-      $action($p,centre) set mountGuide mode off
-      $action($p,centre) set pwfs${p}StopObserve
-      $action($p,centre) set pwfs${p}Move x [calparam cget -pwfs${p}_center_x]
-      $action($p,centre) set pwfs${p}Move y [calparam cget -pwfs${p}_center_y]
-      $action($p,centre) set pwfs${p}Move z [calparam cget -pwfs${p}_center_z]
-      $action($p,centre) set pwfs${p}Guide nodachopa off
-      set xcenhs [calparam cget -pwfs${p}_hotspot_x]
-      set ycenhs [calparam cget -pwfs${p}_hotspot_y]
-      $action($p,centre) set poriginA x $xcenhs
-      $action($p,centre) set poriginA y $ycenhs
-      $action($p,centre) set poriginB x $xcenhs
-      $action($p,centre) set poriginB y $ycenhs
-      $action($p,centre) set poriginC x $xcenhs
-      $action($p,centre) set poriginC y $ycenhs
-
+# Setting up for guiding the telescope.
+      set action($p,guidesetup) [seq::Action #auto tcs \
+            -waitvar [scope inposition${pg}(value)] \
+            -oktest [itcl::code $this isinposition $pg]]
+      $action($p,guidesetup) set pwfs${p}StopObserve
+      $action($p,guidesetup) set pwfs${p}Park
+      $action($p,guidesetup) set wfsGuideMode state off
+      $action($p,guidesetup) set pwfs${p}StopObserve
+      $action($p,guidesetup) set p${pg}Follow followState on
+      $action($p,guidesetup) set poriginA x $xguide
+      $action($p,guidesetup) set poriginA y $yguide
+      $action($p,guidesetup) set poriginB x $xguide
+      $action($p,guidesetup) set poriginB y $yguide
+      $action($p,guidesetup) set poriginC x $xguide
+      $action($p,guidesetup) set poriginC y $yguide
 
 # Guiding the telescope.
       set action($p,guidetel) [seq::Action #auto tcs \
-            -waitvar [scope inposition${p}(value)] \
-            -oktest [itcl::code $this isinposition $p]]
+            -waitvar [scope inposition${pg}(value)] \
+            -oktest [itcl::code $this isinposition $pg]]
       $action($p,guidetel) set m2Guide state on
-      $action($p,guidetel) set pwfs${p}Observe noexp -1
+      $action($p,guidetel) set pwfs${pg}Observe noexp -1
       $action($p,guidetel) set mountGuide mode on
       $action($p,guidetel) set mountGuide source SCS
-      $action($p,guidetel) set clearOffset vt PWFS${p}
 
 # Set the arm following
-      set action($p,follow) [seq::Action #auto tcs \
+      set action($p,probesetup) [seq::Action #auto tcs \
             -waitvar [scope inposition${p}(value)] \
             -oktest [itcl::code $this isinposition $p]]
-      $action($p,follow) set mountGuide mode off
-      $action($p,follow) set m2Guide state off
-      $action($p,follow) set pwfs${p}StopObserve
-      $action($p,follow) set p${p}Follow followState on
-      $action($p,follow) set pwfs${p}Guide nodachopa on
-      $action($p,follow) set clearOffset index all
-
-# Start the WFS.
-      set action($p,observe) [seq::Action #auto tcs]
-      $action($p,observe) set pwfs${p}Observe noexp -1
+      $action($p,probesetup) set mountGuide mode off
+      $action($p,probesetup) set m2Guide state off
+      $action($p,probesetup) set pwfs${pg}StopObserve
+      $action($p,probesetup) set pwfs${pg}Park
+      $action($p,probesetup) set p${p}Follow followState on
+      $action($p,probesetup) set clearOffset vt PWFS${p}
+      $action($p,probesetup) set clearOffset index all
 
 # Guide the probe onto the star.
-      set action($p,guidewfs1) [seq::Action #auto tcs \
+      set action($p,guideprobe) [seq::Action #auto tcs \
             -waitvar [scope inposition${p}(value)] \
             -oktest [itcl::code $this isinposition $p]]
-      $action($p,guidewfs1) set wfsGuideMode state on
-      $action($p,guidewfs1) set wfsGuideMode probe PWFS${p}
+      $action($p,guideprobe) set pwfs${p}Observe noexp -1
+      $action($p,guideprobe) set wfsGuideMode state on
+      $action($p,guideprobe) set wfsGuideMode probe PWFS${p}
 
-# Flip the probe arm to its other orientation.
-#      set action($p,flip) [seq::Action #auto tcs \
-#            -waitvar [scope inposition${p}(value)] \
-#            -oktest [itcl::code $this isinposition $p]]
-#      $action($p,flip) set wfsGuideMode state off
-#      $action($p,flip) set pwfs${p}StopObserve
-#      $action($p,flip) set pwfs${p}Flip
-
-# Guide probe again.
-#      set action($p,guidewfs2) [seq::Action #auto tcs \
-#            -waitvar [scope inposition${p}(value)] \
-#            -oktest [itcl::code $this isinposition $p]]
-#      $action($p,guidewfs2) set pwfs${p}Observe noexp -1
-#      $action($p,guidewfs2) set wfsGuideMode state on
-
-# Finish
-      set action($p,finish) [seq::Action #auto tcs]
-      $action($p,finish) set wfsGuideMode state off
-      $action($p,finish) set pwfs${p}StopObserve
 
 # Chain the actions together.
       $action($p,setup) configure \
-            -onok [namespace code "$action($p,centre) start"]
-      $action($p,centre) configure \
+            -onok [namespace code "$action($p,guidesetup) start"]
+      $action($p,guidesetup) configure \
             -onok [namespace code "$action($p,guidetel) start"]
       $action($p,guidetel) configure \
-            -onok "after $guidetelwait [itcl::code $this follow $p]"
-      $action($p,follow) configure -onok [itcl::code $this manual $p]
-      $action($p,guidewfs1) configure \
-            -onok "after $guidewfswait [itcl::code $this log 2 $p]"
-#      $action($p,flip) configure \
-#            -onok [namespace code "$action($p,guidewfs2) start"]
-#      $action($p,guidewfs2) configure \
-#            -onok "after $guidewfswait [itcl::code $this log 2 $p]"
+            -onok "after $guidetelwait [itcl::code $this probesetup $p]"
+      $action($p,probesetup) configure -onok [itcl::code $this manual $p]
+      $action($p,guideprobe) configure \
+            -onok "after $guidewfswait [itcl::code $this log $p]"
 
 # Monitor the probe arm inPosition status.
       sa agssad link p${p}InPosition [scope inposition${p}]
    }
+
+# Cleanup action.
+   set action(cleanup) [seq::Action #auto tcs]
+   $action(cleanup) set pwfs1StopObserve
+   $action(cleanup) set pwfs2StopObserve
+   $action(cleanup) set pwfs1Park
+   $action(cleanup) set pwfs2Park
+   $action(cleanup) set wfsGuideMode state off
 
 # Configure all the -onerror options.
    foreach act [array names action] {
@@ -328,26 +300,26 @@ itcl::body ProbeCal::report {act msg} {
    }
 }
 
-itcl::body ProbeCal::follow {p} {
+itcl::body ProbeCal::probesetup {p} {
 
 # Get the next pointing origin in the list.
    set po [lindex $polist [incr poindex]]
 
 # Configure the follow action to go to the next position and start it.
    foreach {x y} $po {}
-   $action($p,follow) set poriginA x $x
-   $action($p,follow) set poriginA y $y
-   $action($p,follow) set poriginB x $x
-   $action($p,follow) set poriginB y $y
-   $action($p,follow) set poriginC x $x
-   $action($p,follow) set poriginC y $y
-   $action($p,follow) start
+   $action($p,probesetup) set poriginA x $x
+   $action($p,probesetup) set poriginA y $y
+   $action($p,probesetup) set poriginB x $x
+   $action($p,probesetup) set poriginB y $y
+   $action($p,probesetup) set poriginC x $x
+   $action($p,probesetup) set poriginC y $y
+   $action($p,probesetup) start
 
 # Update the window title to show how far we have got.
    wm title . "Point [expr {$poindex + 1}] of [llength $polist]"
 }
 
-itcl::body ProbeCal::log {step p} {
+itcl::body ProbeCal::log {p} {
 
 # Log the probe data.
    set po [lindex $polist $poindex]
@@ -358,18 +330,11 @@ itcl::body ProbeCal::log {step p} {
    flush $logfd
 
 # Start the next step.
-   switch $step {
-      1 {
-         $action($p,flip) start
-      }
-      2 {
-         if { $poindex >= [llength $polist] - 1 } {
-            $action($p,finish) start
-            finish
-         } else {
-            $action($p,centre) start
-         }
-      }
+   if { $poindex >= [llength $polist] - 1 } {
+      $action(cleanup) start
+      finish
+   } else {
+      $action($p,guidesetup) start
    }
 }
 
@@ -401,5 +366,5 @@ itcl::body ProbeCal::manual {p} {
       tk_messageBox -parent $itk_interior -type ok -icon question \
             -message "Press Ok when the star is visible on the WFS"
    }
-   $action($p,guidewfs1) start
+   $action($p,guideprobe) start
 }
