@@ -16,7 +16,7 @@
 #                           channel identifier "file" and then calls the
 #                           TcsConfig save method to add the objects data.
 #
-#  D Terrett 19 August 1999
+#  D Terrett 25 September 2000
 #
 #  Copyright CCLRC
 #+
@@ -34,9 +34,11 @@ itcl::class ConfigComponent {
 }
 
 itcl::body ConfigComponent::save file {
-   set objname [namespace tail $this]
+   set obj [namespace tail $this]
    set namespace [namespace qualifiers $this]
-   puts $file "catch {delete object \"${namespace}::$objname\"}"
-   puts $file "ConfigComponent \"${namespace}::$objname\"  $componentList \\"
+   puts $file \
+         "catch {ConfigComponent \"${namespace}::$obj\"  $componentList}"
+   puts $file "\"${namespace}::$obj\" init"
+   puts $file "\"${namespace}::$obj\" configure \\"
    TcsConfig::save $file
 }

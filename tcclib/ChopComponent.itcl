@@ -16,7 +16,7 @@
 #                           channel identifier "file" and then calls the
 #                           Chop save method to add the objects data.
 #
-#  D Terrett 22 May 2000
+#  D Terrett 25 September 2000
 #
 #  Copyright CCLRC
 #+
@@ -34,9 +34,11 @@ itcl::class ChopComponent {
 }
 
 itcl::body ChopComponent::save file {
-   set objname [namespace tail $this]
+   set obj [namespace tail $this]
    set namespace [namespace qualifiers $this]
-   puts $file "catch {delete object \"${namespace}::$objname\"}"
-   puts $file "ChopComponent \"${namespace}::$objname\"  $componentList \\"
+   puts $file \
+         "catch {ChopComponent \"${namespace}::$obj\"  $componentList}"
+   puts $file "\"${namespace}::$obj\" init"
+   puts $file "\"${namespace}::$obj\" configure \\"
    Chop::save $file
 }

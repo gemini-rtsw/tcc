@@ -16,7 +16,7 @@
 #                           channel identifier "file" and then calls the
 #                           Target save method to add the objects data.
 #
-#  D Terrett 22 February 2000
+#  D Terrett 25 September 2000
 #
 #  Copyright CCLRC
 #+
@@ -34,9 +34,11 @@ itcl::class WfsTargetComponent {
 }
 
 itcl::body WfsTargetComponent::save file {
-   set objname [namespace tail $this]
+   set obj [namespace tail $this]
    set namespace [namespace qualifiers $this]
-   puts $file "catch {delete object \"${namespace}::$objname\"}"
-   puts $file "WfsTargetComponent \"${namespace}::$objname\"  $componentList \\"
+   puts $file \
+         "catch {WfsTargetComponent \"${namespace}::$obj\"  $componentList}"
+   puts $file "\"${namespace}::$obj\" init"
+   puts $file "\"${namespace}::$obj\" configure \\"
    Target::save $file
 }

@@ -15,7 +15,7 @@
 #                           channel identifier "file" and then calls the
 #                           Guide save method to add the objects data.
 #
-#  D Terrett 19 August 1999
+#  D Terrett 25 September 2000
 #
 #  Copyright CCLRC
 #+
@@ -33,9 +33,11 @@ itcl::class GuideComponent {
 }
 
 itcl::body GuideComponent::save file {
-   set objname [namespace tail $this]
+   set obj [namespace tail $this]
    set namespace [namespace qualifiers $this]
-   puts $file "catch {delete object \"${namespace}::$objname\"}"
-   puts $file "GuideComponent \"${namespace}::$objname\"  $componentList \\"
+   puts $file \
+         "catch {GuideComponent \"${namespace}::$obj\"  $componentList}"
+   puts $file "\"${namespace}::$obj\" init"
+   puts $file "\"${namespace}::$obj\" configure \\"
    Guide::save $file
 }
