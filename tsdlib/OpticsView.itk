@@ -14,13 +14,14 @@
 #          -deployablebaffle  The postion of the deployable baffle (RETRACTED,
 #                             "POSITION 1", "POSITION 2" or EXTENDED).
 #
-#          -holecover         The position of the M1 central hole cover (open
-#                             or closed).
+#          -holecover         The position of the M1 central hole cover (OPENED,
+#                             "MIDDLE POSITION" or CLOSED).
 #
 #          -hrwfs             The position of the HRWFS pickoff mirror (IN or
 #                             OUT).
 #
-#          -m1cover           The position of the M1 cover (open or closed).
+#          -m1cover           The position of the M1 cover (OPENED,
+#                             "MIDDLE POSITION" or CLOSED).
 #
 #          -port1label        The label for ISS port 1.
 #
@@ -37,9 +38,11 @@
 #          -vignette          The fraction of vignetting by the enclosure.
 #
 #  Methods:
-#          none
+#          update             Redraws the active parts of the picture 
+#                             according to the state of the configuration
+#                             options.
 #
-#  D Terrett  9 February 2000
+#  D Terrett  11 February 2000
 #
 #  Copyright CCLRC
 #-
@@ -49,22 +52,22 @@ itcl::class OpticsView {
 
    constructor args {}
 
-   itk_option define -m1cover m1Cover M1Cover open redraw
-   itk_option define -holecover holeCover HoleCover open redraw
-   itk_option define -centralbaffle centralBaffle CentralBaffle "" redraw
-   itk_option define -deployablebaffle deployableBaffle DeployableBaffle 0 redraw
-   itk_option define -aofold aoFold AoFold out redraw
-   itk_option define -scfold scFold ScFold 0 redraw
-   itk_option define -hrwfs hrwfs Hrwfs in redraw
+   itk_option define -m1cover m1Cover M1Cover CLOSED 
+   itk_option define -holecover holeCover HoleCover CLOSED 
+   itk_option define -centralbaffle centralBaffle CentralBaffle "" 
+   itk_option define -deployablebaffle deployableBaffle DeployableBaffle 0 
+   itk_option define -aofold aoFold AoFold out 
+   itk_option define -scfold scFold ScFold 0 
+   itk_option define -hrwfs hrwfs Hrwfs in 
    itk_option define -aopresent aoPresent AoPresent 0 {}
-   itk_option define -vignette vignette Vignette 0 redraw
+   itk_option define -vignette vignette Vignette 0 
    itk_option define -port1label port1Label Label "Alignment Telescope" "relabel 1"
    itk_option define -port2label port2Label Label "cfwfs" "relabel 2"
-   itk_option define -port3label port3Label Label "Hokupaa" "relabel 3"
+   itk_option define -port3label port3Label Label "Hokupa'a" "relabel 3"
    itk_option define -port4label port4Label Label "A&G cabinet" "relabel 4"
    itk_option define -port5label port5Label Label "CurvWFS" "relabel 5"
 
-   private method redraw {}
+   public method update {}
    private method relabel port
 }
 
@@ -292,7 +295,7 @@ itcl::body OpticsView::constructor args {
    eval itk_initialize $args
 }
 
-itcl::body OpticsView::redraw {} {
+itcl::body OpticsView::update {} {
 
 # Set the visibiliy of elements of the drawing according to the state of
 # the configuration options.
@@ -301,21 +304,35 @@ itcl::body OpticsView::redraw {} {
    set SfNames {U3 U2 U5 U4 32 34 31 25 21 54 51 41}
 
 # Configure the M1 cover
-   if { $itk_option(-m1cover) == "closed" } {
-      $c itemconfigure M1coverCl -fill black
-      $c itemconfigure M1coverOp -fill ""
-   } else {
-      $c itemconfigure M1coverCl -fill ""
-      $c itemconfigure M1coverOp -fill black
+   switch $itk_option(-m1cover) {
+      "CLOSED" {
+         $c itemconfigure M1coverCl -fill black
+         $c itemconfigure M1coverOp -fill ""
+      }
+      "MIDDLE POSITION" {
+         $c itemconfigure M1coverCl -fill grey
+         $c itemconfigure M1coverOp -fill ""
+      }
+      default {
+         $c itemconfigure M1coverCl -fill ""
+         $c itemconfigure M1coverOp -fill black
+      }
    }
 
 # Configure central hole cover
-   if { $itk_option(-holecover) == "closed" } {
-      $c itemconfigure holeCoverCl -fill black
-      $c itemconfigure holeCoverOp -fill ""
-   } else {
-      $c itemconfigure holeCoverCl -fill ""
-      $c itemconfigure holeCoverOp -fill black
+   switch $itk_option(-holecover) {
+      "CLOSED" {
+         $c itemconfigure holeCoverCl -fill black
+         $c itemconfigure holeCoverOp -fill ""
+      }
+      "MIDDLE POSITION" {
+         $c itemconfigure holeCoverCl -fill grey
+         $c itemconfigure holeCoverOp -fill ""
+      }
+      default {
+         $c itemconfigure holeCoverCl -fill ""
+         $c itemconfigure holeCoverOp -fill black
+      }
    }
 
 # Configure the central baffle
@@ -386,9 +403,9 @@ itcl::body OpticsView::redraw {} {
    }
    $c itemconfigure SkyLight -fill $l
 
-   if { $itk_option(-m1cover) == "open" } {
+   if { $itk_option(-m1cover) == "OPENED" } {
       $c itemconfigure M1Light -fill $l
-      if { $itk_option(-holecover) == "open" } {
+      if { $itk_option(-holecover) == "OPENED" } {
          $c itemconfigure CHLight -fill $l
 
 # Deal with the AO fold mirror position
