@@ -67,19 +67,19 @@ itcl::body PointTest::constructor {args} {
          -labelpos nw] \
          -expand yes -fill both
    set f [$c.fopt childsite]
-   pack [checkbutton $f.slew -variable [scope Options(slew)] \
+   pack [checkbutton $f.slew -variable [itcl::scope Options(slew)] \
          -text "Slew when star is selected"] -anchor w -padx 5 -pady 3
-   pack [checkbutton $f.guide -variable [scope Options(guide)] \
+   pack [checkbutton $f.guide -variable [itcl::scope Options(guide)] \
          -command [itcl::code $this pointobsopts guide] \
          -text "Enable guiding before logging observation"] -anchor w \
          -padx 5 -pady 3
-   pack [checkbutton $f.log -variable [scope Options(log)] \
+   pack [checkbutton $f.log -variable [itcl::scope Options(log)] \
          -command [itcl::code $this pointobsopts log] \
          -text "Log observation at end of slew"] -anchor w -padx 5 -pady 3
-   pack [checkbutton $f.select -variable [scope Options(select)] \
+   pack [checkbutton $f.select -variable [itcl::scope Options(select)] \
          -command [itcl::code $this pointobsopts select] \
          -text "Select next star after logging"] -anchor w -padx 5 -pady 3
-   pack [checkbutton $f.zlpm -variable [scope Options(zlpm)] \
+   pack [checkbutton $f.zlpm -variable [itcl::scope Options(zlpm)] \
          -command [itcl::code $this pointobsopts zlpm] \
          -text "Zero local pointing model on slew"] -anchor w -padx 5 -pady 3
 
@@ -100,11 +100,13 @@ itcl::body PointTest::constructor {args} {
    pack [iwidgets::spinint $f.logrepeat \
       -labeltext "Number of times to log each star" -range {1 10} -width 2] \
       -side bottom -pady 3 -anchor w
-   [$f.logdelay component entry] configure -textvariable [scope LogDelay]
+   [$f.logdelay component entry] configure -textvariable [itcl::scope LogDelay]
    [$f.offloaddelay component entry] configure \
-         -textvariable [scope OffLoadDelay]
-   [$f.logrepeat component entry] configure -textvariable [scope LogRepeat]
-   [$f.guidedelay component entry] configure -textvariable [scope GuideDelay]
+         -textvariable [itcl::scope OffLoadDelay]
+   [$f.logrepeat component entry] configure \
+         -textvariable [itcl::scope LogRepeat]
+   [$f.guidedelay component entry] configure \
+         -textvariable [itcl::scope GuideDelay]
    trace variable LogDelay w [itcl::code $this setlogdelay]
    trace variable LogRepeat w [itcl::code $this setlogrepeat]
    trace variable GuideDelay w [itcl::code $this setguidedelay]
@@ -114,10 +116,10 @@ itcl::body PointTest::constructor {args} {
    set OffLoadDelay 1
    set LogRepeat 1
 
-   pack [radiobutton $f.p1 -text PWFS1 -variable [scope Options(wfs)] \
+   pack [radiobutton $f.p1 -text PWFS1 -variable [itcl::scope Options(wfs)] \
          -value PWFS1 \
          -command [itcl::code $this pointobsopts wfs]] \
-         [radiobutton $f.p2 -text PWFS2 -variable [scope Options(wfs)] \
+         [radiobutton $f.p2 -text PWFS2 -variable [itcl::scope Options(wfs)] \
          -value PWFS2 \
          -command [itcl::code $this pointobsopts wfs]] \
          -side left
