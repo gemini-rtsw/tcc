@@ -7,7 +7,7 @@
 #  Arguments:
 #            Any command line options and values.
 #
-#  D Terrett  27 September 2000
+#  D Terrett  3 October 2000
 #
 #  Copyright CCLRC
 #-
@@ -150,6 +150,9 @@ proc tccMain args {
 
 # Create the logger object.
    Logger logger apply applyC errMessage
+
+# Create the CalParam object.
+   CalParam calparam
 
 # Pack the toolbar.
    pack [TccToolbar .toolbar]

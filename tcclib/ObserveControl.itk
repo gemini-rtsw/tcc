@@ -7,7 +7,7 @@
 #  Methods:
 #           none
 #
-#  D Terrett  11 July 2000
+#  D Terrett  3 October 2000
 #
 #  Copyright CCLRC
 #+
@@ -19,7 +19,7 @@ itcl::class ObserveControl {
 
    private method setfold state
    private method setnod state
-   private method center par {return 0}
+   private method center {p par}
 }
 
 itk::usual ObserveControl {
@@ -113,8 +113,8 @@ itcl::body ObserveControl::constructor args {
       ApplyButton $w.p1unwrap -command pwfs1Unwrap -text Unwrap
    }
    itk_component add p1center {
-      ApplyButton $w.p1center -command pwfs1SetOrient -text Center \
-            -parcommand [code $this center]
+      ApplyButton $w.p1center -command pwfs1Move -text Center \
+            -parcommand [code $this center 1]
    }
    itk_component add p1park {
       ApplyButton $w.p1park -command pwfs1Park -text Park
@@ -141,8 +141,8 @@ itcl::body ObserveControl::constructor args {
       ApplyButton $w.p2park -command pwfs2Park -text Park
    }
    itk_component add p2center {
-      ApplyButton $w.p2center -command pwfs2SetOrient -text Center \
-            -parcommand [code $this center]
+      ApplyButton $w.p2center -command pwfs2Move -text Center \
+            -parcommand [code $this center 2]
    }
 
    grid $itk_component(handlab) $itk_component(foldlab) \
@@ -199,5 +199,19 @@ itcl::body ObserveControl::setnod state {
    logger command nod
    if { [catch {cs tcsApply post} msg] } {
       tk_messageBox -icon error -parent $itk_interior -message $msg
+   }
+}
+
+itcl::body ObserveControl::center {p par} {
+   switch $par {
+      x {
+         return [calparam cget -pwfs${p}_center_x]
+      }
+      y {
+         return [calparam cget -pwfs${p}_center_y]
+      }
+      z {
+         return [calparam cget -pwfs${p}_center_z]
+      }
    }
 }
