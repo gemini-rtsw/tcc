@@ -10,7 +10,7 @@
 #  Methods:
 #           none
 #
-#  D Terrett 7 June 2000
+#  D Terrett 18 June 2000
 #
 #  Copyright CCLRC
 #-
@@ -157,7 +157,7 @@ itcl::body TccToolbar::import {} {
 # Save the current directory and cd to save file directory.
    global SAVE_FILE_DIR
    set pwd [pwd]
-   cd $SAVE_FILE_DIR
+   catch {cd $SAVE_FILE_DIR}
 
 # Create a dialog box for selecting the file and center it.
    set dialog [iwidgets::fileselectiondialog .fsd \
@@ -205,7 +205,7 @@ itcl::body TccToolbar::export {} {
 # cd to save file directory.
    global SAVE_FILE_DIR
    set pwd [pwd]
-   cd $SAVE_FILE_DIR
+   catch {cd $SAVE_FILE_DIR}
 
 # Create dialog.
    set dialog [ExportDialog $itk_interior.exportDialog \
@@ -219,9 +219,21 @@ itcl::body TccToolbar::export {} {
       if { [catch {set file [open $filename {WRONLY CREAT TRUNC}]} msg]} {
          tk_messageBox -icon error -message $msg -parent $itk_interior
       } else {
-         upvar #0 [[$dialog component config] cget -variable] configsvar
-         if { $configsvar } {
-            save TcsConfigList TcsConfigNames $file
+         upvar #0 [[$dialog component trackframe] cget -variable] trackframevar
+         if { $trackframevar } {
+            save TrackFrameList TrackFrameNames $file
+         }
+         upvar #0 [[$dialog component wavelength] cget -variable] wavelvar
+         if { $wavelvar } {
+            save WavelengthList WavelengthNames $file
+         }
+         upvar #0 [[$dialog component pointorig] cget -variable] povar
+         if { $povar } {
+            save PointOrigList PointOrigNames $file
+         }
+         upvar #0 [[$dialog component trackrate] cget -variable] trvar
+         if { $trvar } {
+            save TrackRateList TrackRateNames $file
          }
          upvar #0 [[$dialog component sciencetarget] cget -variable] scitargvar
          if { $scitargvar } {
@@ -235,25 +247,13 @@ itcl::body TccToolbar::export {} {
          if { $rotvar } {
             save RotatorList RotatorNames $file
          }
-         upvar #0 [[$dialog component pointorig] cget -variable] povar
-         if { $povar } {
-            save PointOrigList PointOrigNames $file
-         }
          upvar #0 [[$dialog component chop] cget -variable] chopvar
          if { $chopvar } {
             save ChopList ChopNames $file
          }
-         upvar #0 [[$dialog component wavelength] cget -variable] wavelvar
-         if { $wavelvar } {
-            save WavelengthList WavelengthNames $file
-         }
          upvar #0 [[$dialog component slewoptions] cget -variable] slewvar
          if { $slewvar } {
             save SlewOptionsList SlewOptionsNames $file
-         }
-         upvar #0 [[$dialog component trackframe] cget -variable] trackframevar
-         if { $trackframevar } {
-            save TrackFrameList TrackFrameNames $file
          }
          upvar #0 [[$dialog component instrument] cget -variable] instrumentvar
          if { $instrumentvar } {
@@ -263,9 +263,9 @@ itcl::body TccToolbar::export {} {
          if { $guidevar } {
             save GuideList GuideNames $file
          }
-         upvar #0 [[$dialog component trackrate] cget -variable] trvar
-         if { $trvar } {
-            save TrackRateList TrackRateNames $file
+         upvar #0 [[$dialog component config] cget -variable] configsvar
+         if { $configsvar } {
+            save TcsConfigList TcsConfigNames $file
          }
          close $file
 
