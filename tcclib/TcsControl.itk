@@ -9,7 +9,7 @@
 #  Methods:
 #          none
 #
-#  D Terrett 17 December 2002
+#  D Terrett 27 January 2003
 #
 #  Copyright CCLRC
 #+
@@ -564,10 +564,12 @@ itcl::body TcsControl::weather {} {
 itcl::body TcsControl::shStep {sign} {
    set sh [$itk_component(slit) get]
    set sh [expr $sh $sign 0.5]
-   if { $sh > 16.999 } {
-      set sh 16.999
-   } elseif { $sh < 9.320 } {
-      set sh 9.320
+   set min [expr {[sa tcssad get minSlitHeight]/1000.0}]
+   set max 19.999
+   if { $sh > $max } {
+      set sh $max
+   } elseif { $sh < $min } {
+      set sh $min
    }
    $itk_component(slit) clear
    $itk_component(slit) insert end $sh
