@@ -4,7 +4,7 @@
 #  Implements the RotatorControl widget. A ComponentControl widget with
 #  a widgets for the instrument position angle, frame and equinox.
 #
-#  D Terrett 30 January 1999
+#  D Terrett 26 May 1999
 #
 #  Copyright CCLRC
 #+
@@ -13,6 +13,8 @@ itcl::class RotatorControl {
    inherit ComponentControl
 
    constructor args {}
+
+   itk_option define -shadow shadow Shadow {}
 
    public method selectobj name
    public method updateobj name
@@ -127,4 +129,10 @@ itcl::body RotatorControl::selectobj name {
          $itk_component(cosys) select $cosys
       }
    }
+}
+
+itcl::configbody RotatorControl::shadow {
+   $itk_component(cosys) configure -editcontrol \
+            $itk_option(-shadow)cosys
+   $itk_component(cosys) configure -shadow $itk_option(-shadow)
 }
