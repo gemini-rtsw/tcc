@@ -11,7 +11,7 @@
 #
 #  options
 #
-#  D Terrett 20 January 2004
+#  D Terrett 22 January 2004
 #
 #  Copyright CCLRC
 #-
@@ -55,7 +55,6 @@ itcl::body NumericDisplay::constructor args {
    set w $itk_component(objtime)
 
 # First row: TCS status and in position state
-# Status and health.
    itk_component add status {
       StatusField $w.status -entryborder 3 -entryrelief groove \
             -labeltext "TCS STATUS:" -labelpos w
@@ -85,7 +84,7 @@ itcl::body NumericDisplay::constructor args {
    grid configure $itk_component(objname) -sticky ew
    grid configure $itk_component(tarwavel) -sticky w
 
-# Target position, LST and airmass.
+# Target position, LST and airmass and zenith distance.
    itk_component add tarlab {
       label $w.tarlab -text TARGET:
    }
@@ -119,7 +118,7 @@ itcl::body NumericDisplay::constructor args {
          -sticky w
    grid columnconfigure $w 6 -weight 1
 
-# Offsets and UTC.
+# Offsets, hour angle and UTC.
    itk_component add offlab {
       label $w.offlab -text "OFFSET (arcsec):"
    }
@@ -170,7 +169,7 @@ itcl::body NumericDisplay::constructor args {
    grid configure $itk_component(hst) - -sticky w
    grid configure $itk_component(hflag) -padx {3 0}
 
-# Track rates and CST.
+# Track rates and Chilean local time.
    itk_component add ratelab {
       label $w.ratelab -text "TRACK RATE (arcsec/s):"
    }
@@ -185,17 +184,17 @@ itcl::body NumericDisplay::constructor args {
    itk_component add cflag {
       label $w.cflag -image chile_flag
    }
-   itk_component add cst {
-      StatusField $w.cst -labeltext CST: -labelmargin 5 -entryborder 3 \
+   itk_component add clt {
+      StatusField $w.clt -labelmargin 5 -entryborder 3 \
             -entryrelief groove
    }
-   [$itk_component(cst) component label] configure -width 4 -anchor e
+   [$itk_component(clt) component label] configure -width 4 -anchor e
    grid $itk_component(ratelab) $itk_component(rate1) $itk_component(rate2) \
-         $itk_component(cflag) $itk_component(cst) -sticky e -pady 2
-   grid configure $itk_component(cst) - -sticky w
+         $itk_component(cflag) $itk_component(clt) -sticky e -pady 2
+   grid configure $itk_component(clt) - -sticky w
    grid configure $itk_component(cflag) -padx {3 0}
 
-# Chop throw, HA.
+# Chop throw, IPA and seeing.
    itk_component add choplab {
       label $w.choplab -text "CHOP THROW (arcsec):"
    }
@@ -219,7 +218,7 @@ itcl::body NumericDisplay::constructor args {
    }
    set w $itk_component(seeing)
    itk_component add seelab {
-      label $w.seelab -text SEEING
+      label $w.seelab -text "SEEING (V)"
    }
    itk_component add seep2 {
       StatusField $w.seep2 -labeltext P2 -labelpos w -entryborder 3 \
@@ -643,7 +642,13 @@ itcl::body NumericDisplay::update {} {
 # Time.
    $itk_component(utc) configure -text [tccTime utc]
    $itk_component(hst) configure -text [tccTime localtime -10]
-   $itk_component(cst) configure -text [tccTime localtime -4]
+   if { $::CHILE_DAYLIGHT_SAVING } {
+      $itk_component(clt) configure -text [tccTime localtime -3] \
+            -labeltext CDT:
+   } else {
+      $itk_component(clt) configure -text [tccTime localtime -4] \
+            -labeltext CST:
+   }
    $itk_component(lst) configure -text [tccTime last]
 
 # Seeing

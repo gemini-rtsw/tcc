@@ -10,7 +10,7 @@ exec $HLPG_INSTALL_BASE/bin/ocssh "$0" "$@"
 #  the tsd uses. It is probably installation dependent and will need to be
 #  hacked to get it to work.
 #
-#  D Terrett 23 May 2003
+#  D Terrett 22 January 2004
 #
 #  Copyright CCLRC
 #-
@@ -45,6 +45,23 @@ load [file join $ROOT lib $::env(HOST_ARCH) slaext.so]
 # Define images.
 image create photo chile_flag -file [file join $ROOT lib chile_flag-small.gif]
 image create photo hawaii_flag -file [file join $ROOT lib hawaii_flag-small.gif]
+
+# Attempt to figure out whether Chile is currently using daylight saving time
+# by running the Starlink skycalc program. This is a bit dodgy so we protect
+# ourselves with catch.
+
+if { [catch {set almanac [exec \
+         /star/bin/skycalc < [file join $ROOT lib skycalc_input_file]]}]} {
+   puts "Unable to determine whether Chile is using daylight saving time \
+         - assuming not. Please install skycalc in /star/bin."
+   set ::CHILE_DAYLIGHT_SAVING 0
+} else {
+   if { [string first CDT $almanac] == -1 } {
+      set ::CHILE_DAYLIGHT_SAVING 0
+   } else {
+      set ::CHILE_DAYLIGHT_SAVING 1
+   }
+}
 
 # Set the name of the epics service configuration file.
 if { [info exists ::env(TCC_TCSNAME)] } {
