@@ -15,10 +15,6 @@ exec $HLPG_INSTALL_BASE/bin/solaris/ocswish "$0" "$@"
 #  Copyright CCLRC
 #-
 
-# Define the default directory for writing files.
-global SAVE_FILE_DIR
-set SAVE_FILE_DIR /gemini/files
-
 # Define the root directory for locating libraries and applications.
 global ROOT
 set ROOT [file dirname [info script]]
@@ -37,7 +33,6 @@ lappend auto_path $ROOT/tcclib
 # Load the time and tcc extensions to tcl.
 load $ROOT/lib/solaris/tcctime.so
 load $ROOT/lib/solaris/slaext.so
-load $ROOT/lib/solaris/bitmaps.so
 load $ROOT/tcclib/solaris/tccext.so
 
 # Load all the packages required by the tcc.
@@ -45,6 +40,10 @@ package require Itcl
 package require Itk
 package require Iwidgets
 package require Ocspkg
+package require Tcclib
+
+# Define the default directory for writing files.
+set tcclib::SaveFileDirectory /gemini/files
 
 # Set the name of the epics service configuration file.
 if { [info exists env(TCC_TCSNAME)] } {
