@@ -108,7 +108,7 @@ proc createPanels {} {
    EditPanelMgr tcsFieldAltairTargetTrackRatePanel \
          -name .tcsFieldAltairTargetTrackRatePanel -class TrackRatePanel \
          -title "ALTAIR Target Differential Track Rates" \
-         -components tcs.field.pwfs2target.trackrate
+         -components tcs.field.altairtarget.trackrate
    EditPanelMgr tcsFieldAltairTargetTrackRateCosysPanel \
          -name .tcsFieldAltairTargetTrackRateCosysPanel -class CosysPanel \
          -title "ALTAIR Target Differential Track Rate Coordinate System" \
