@@ -27,7 +27,7 @@
 #
 #        o  If the epics command sender doesn't exist it is created.
 #
-#  D Terrett 17 January 2001
+#  D Terrett 16 March 2001
 #
 #  Copyright CCLRC
 #+
@@ -85,6 +85,7 @@ itcl::configbody ApplyButton::text {
 
 itcl::body ApplyButton::apply {} {
 
+   set ok 1
    if { ! [string equal $itk_option(-confirm) ""] } {
 
 # Display the confirmation dialog.
@@ -95,27 +96,28 @@ itcl::body ApplyButton::apply {} {
          $itk_interior.confirm hide Help
       }
       $itk_interior.confirm center
-      if { [$itk_interior.confirm activate] == 0 } {
-         return
-      }
+      set ok [$itk_interior.confirm activate]
    }
 
 # Set the command parameters.
-   foreach par [lindex [cs $itk_option(-command) info] 3] {
-      if { [string equal $itk_option(-parcommand) ""] } {
-         cs $itk_option(-command) set $par mark
-      } else {
-         cs $itk_option(-command) set $par \"[$itk_option(-parcommand) $par]\"
+   if { $ok } {
+      foreach par [lindex [cs $itk_option(-command) info] 3] {
+         if { [string equal $itk_option(-parcommand) ""] } {
+            cs $itk_option(-command) set $par mark
+         } else {
+            cs $itk_option(-command) set $par \
+                  [list [$itk_option(-parcommand) $par]]
+         }
       }
-   }
 
 # Log the command and its parameters.
-   logger command $itk_option(-command)
+      logger command $itk_option(-command)
 
 # Post the command.
-   if { [catch {cs $itk_option(-command) post} msg] } {
-      tk_messageBox -icon error -parent $itk_interior -message \
-            "Error posting $itk_option(-command) command: TCS reports \
-            \"$msg\""
+      if { [catch {cs $itk_option(-command) post} msg] } {
+         tk_messageBox -icon error -parent $itk_interior -message \
+               "Error posting $itk_option(-command) command: TCS reports \
+               \"$msg\""
+      }
    }
 }
