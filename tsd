@@ -49,9 +49,15 @@ image create photo hawaii_flag -file [file join $ROOT lib hawaii_flag-small.gif]
 # Attempt to figure out whether Chile is currently using daylight saving time
 # by running the Starlink skycalc program. This is a bit dodgy so we protect
 # ourselves with catch.
+set plat [exec uname -s]
+if {$plat == "SunOS"} {
+    set dirname "bin"
+} else {
+    set dirname "bin.linux"
+}
 
 if { [catch {set almanac [exec \
-         /star/bin/skycalc < [file join $ROOT lib skycalc_input_file]]}]} {
+         /usr/astro/$dirname/skycalc < [file join $ROOT lib skycalc_input_file]]}]} {
    puts "Unable to determine whether Chile is using daylight saving time \
          - assuming not. Please install skycalc in /star/bin."
    set ::CHILE_DAYLIGHT_SAVING 0
