@@ -9,7 +9,7 @@
 #  Methods:
 #          none
 #
-#  D Terrett 27 January 2003
+#  D Terrett 29 July 2003
 #
 #  Copyright CCLRC
 #+
@@ -305,15 +305,14 @@ itcl::body TcsControl::constructor args {
       label $w.mechlab -text "A&G mechanisms:"
    }
    itk_component add agmech {
-      iwidgets::combobox $w.mech
+      iwidgets::optionmenu $w.mech
    }
-   $itk_component(agmech) insert list end "Science fold" "HRWFS pickoff arm" \
+   $itk_component(agmech) insert end "Science fold" "HRWFS pickoff arm" \
          "AO fold" \
          "PWFS1 arm" "PWFS1 filter" "PWFS1 field stop" "PWFS1 focus" \
          "PWFS2 arm" "PWFS2 filter" "PWFS2 field stop" "PWFS2 focus" \
          "OIWFS arm" "OIWFS filter" "OIWFS field stop" "OIWFS focus"
-   $itk_component(agmech) selection set "Science fold"
-   $itk_component(agmech) configure -editable 0
+   $itk_component(agmech) select "Science fold"
    itk_component add mechdatum {
       LiveButton $w.mechdatum -text Datum \
             -command [itcl::code $this agmech Datum]
