@@ -91,6 +91,12 @@ itcl::body InstrumentControl::save {name} {
 #+
 # Updates the named instrument object.
 #-
+
+# Only allow the instrument configuration to be saved if there is an
+# instrument name.
+   if { [$itk_component(name) get] == "" } {
+      error "Instrument name must be supplied"
+   } 
    $name configure -issPort [$itk_component(port) get] \
          -name [$itk_component(name) get] \
          -iaa [$itk_component(iaa) get] \
