@@ -6,7 +6,7 @@ proc pointUpdateMain {w} {
 #  Creates the user interface for the pointUpdate application and creates the
 #  command senders and status acceptors needed to drive the TCS.
 #
-#  D Terrett 12 November 1998
+#  D Terrett 28 May 1999
 #
 #  Copyright CCLRC
 #-
@@ -19,6 +19,9 @@ proc pointUpdateMain {w} {
 
 # Command for setting pointing model terms.
    epics cs pointParam
+
+# Command for zeroing the guiding offsets.
+   epics cs zeroGuide
 
 # tcs SAD database
    epics sa tcssad
@@ -37,11 +40,6 @@ proc pointUpdateMain {w} {
       menubutton file -text File -menu {
          options -tearoff false
          command exit -label Exit -command exit
-      }
-      menubutton options -text Options -menu {
-        options -tearoff 0
-        checkbutton ia -label "Include IA in fit" -variable _ia \
-              -command {.ptu configure -ia \$_ia}
       }
    }
    pack .mb -fill x -expand yes -anchor w
