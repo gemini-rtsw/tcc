@@ -10,7 +10,7 @@
 #  Methods:
 #           none
 #
-#  D Terrett  31 October 2000
+#  D Terrett  21 April 2001
 #
 #  Copyright CCLRC
 #+
@@ -89,6 +89,17 @@ itcl::body GuideLoop::constructor args {
    $w create rectangle 0 0 132 89 -fill white -tags "active mount mount_bg"
    $w create text 92 44 -text MOUNT -tags mount -font $font
 
+# Controls for M1.
+   itk_component add m1 {
+      SelectButton $w.m1 -command [code $this m1mode] -orient vertical
+   } {
+      usual
+      rename -offbackground -background background Background
+   }
+   $w create window 32 24 -width 60 -window $w.m1 -tags m1
+   $itk_component(m1) add ON -pady 0
+   $itk_component(m1) add OFF -pady 0
+
 # Controls for M2
    itk_component add m2 {
       SelectButton $w.m2 -command [code $this m2mode] -orient vertical
@@ -101,28 +112,6 @@ itcl::body GuideLoop::constructor args {
    $itk_component(m2) add P2 -pady 0
    $itk_component(m2) add OIWFS -pady 0
    $itk_component(m2) add OFF -pady 0
-
-# Controls for M1.
-   itk_component add m1Weight {
-      checkbutton $w.m1Weight -text Weighting -variable [scope m1Weight] \
-            -onvalue Errors -offvalue None
-   }
-   $w create window 170 10 -window $itk_component(m1Weight) -anchor nw -tags m1
-   itk_component add m1Frames {
-      iwidgets::entryfield $w.m1Frames -labeltext "frames" \
-            -width 5
-   }
-   $itk_component(m1Frames) insert end 60
-   $w create window 170 30 -window $itk_component(m1Frames) -anchor nw -tags m1
-   itk_component add m1 {
-      SelectButton $w.m1 -command [code $this m1mode] -orient vertical
-   } {
-      usual
-      rename -offbackground -background background Background
-   }
-   $w create window 32 24 -width 60 -window $w.m1 -tags m1
-   $itk_component(m1) add ON -pady 0
-   $itk_component(m1) add OFF -pady 0
 
 # Controls for Mount.
    itk_component add mt {
@@ -410,9 +399,6 @@ body GuideLoop::m1mode state {
 
    switch $state {
       ON {
-         cs m1GuideConfig set frames [$itk_component(m1Frames) get]
-         cs m1GuideConfig set weighting $m1Weight
-         logger command m1GuideConfig
          cs m1Guide set mode On
       }
       OFF {
