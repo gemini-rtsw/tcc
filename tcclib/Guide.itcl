@@ -18,6 +18,8 @@
 #
 #           -pwfs1Filter    The PWFS1 filter.
 #
+#           -pwfs1FldStop   The PWFS1 field stop
+#
 #           -pwfs1NodState  The nod states in which the probe follows
 #                           the star.
 #
@@ -27,6 +29,8 @@
 #                           active
 #
 #           -pwfs2Filter    The PWFS2 filter.
+#
+#           -pwfs2FldStop   The PWFS2 field stop
 #
 #           -pwfs2NodState  The nod states in which the probe follows
 #                           the star.
@@ -41,7 +45,7 @@
 #           save node       Saves the values of the options to the xml
 #                           node.
 #
-#  D Terrett 21 February 2003
+#  D Terrett 5 December 2003
 #
 #  copyright CCLRC
 #+
@@ -62,6 +66,8 @@ itcl::class Guide {
       variable oiwfsNodState AB
       variable pwfs1Filter ""
       variable pwfs2Filter ""
+      variable pwfs1FldStop ""
+      variable pwfs2FldStop ""
       variable pwfs1Wavel ""
       variable pwfs2Wavel ""
       variable oiwfsWavelength ""
@@ -84,6 +90,14 @@ itcl::body Guide::apply {comp} {
       cs pwfs2Filter set filter $pwfs2Filter
       logger command pwfs2Filter
    }
+   if { ! [string equal $pwfs1FldStop ""] } {
+      cs pwfs1FldStop set position $pwfs1FldStop
+      logger command pwfs1FldStop
+   }
+   if { ! [string equal $pwfs2FldStop ""] } {
+      cs pwfs2FldStop set position $pwfs2FldStop
+      logger command pwfs2FldStop
+   }
    if { ! [string equal $pwfs1Wavel ""] } {
       cs wavelPwfs1 set wavel $pwfs1Wavel
       logger command wavelPwfs1
@@ -103,10 +117,12 @@ itcl::body Guide::init {} {
    set oiwfsWavelength ""
    set pwfs1Active A
    set pwfs1Filter ""
+   set pwfs1FldStop ""
    set pwfs1NodState AB
    set pwfs1Wavel ""
    set pwfs2Active A
    set pwfs2Filter ""
+   set pwfs2FldStop ""
    set pwfs2NodState AB
    set pwfs2Wavel ""
 }
@@ -116,10 +132,12 @@ itcl::body Guide::save {node} {
    param $node pwfs1Active $pwfs1Active
    param $node pwfs1NodState $pwfs1NodState
    param $node pwfs1Filter $pwfs1Filter
+   param $node pwfs1FldStop $pwfs1FldStop
    param $node pwfs1Wavelength $pwfs1Wavel
    param $node pwfs2Active $pwfs2Active
    param $node pwfs2NodState $pwfs2NodState
    param $node pwfs2Filter $pwfs2Filter
+   param $node pwfs2FldStop $pwfs2FldStop
    param $node pwfs2Wavelength $pwfs1Wavel
    param $node oiwfsActive $oiwfsActive
    param $node oiwfsNodState $oiwfsNodState

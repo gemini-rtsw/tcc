@@ -6,7 +6,7 @@
 #
 #  Options:
 #
-#  D Terrett 13 May 2003
+#  D Terrett 5 December 2003
 #
 #  Copyright CCLRC
 #+
@@ -95,8 +95,13 @@ itcl::body GuideControl::constructor {args} {
             iwidgets::entryfield $w.${wfs}wavel -labeltext "Wavelength (um)" \
                   -width 8
          }
+         itk_component add ${wfs}fldstop {
+            iwidgets::optionmenu $w.${wfs}fldstop -labeltext "field stop"
+         }
+         $itk_component(${wfs}fldstop) insert end prism 1.0 6.4 3.2 1.6 \
+               open ""
          pack $itk_component(${wfs}filter) $itk_component(${wfs}wavel) \
-               -anchor w -padx 3 -pady 3
+               $itk_component(${wfs}fldstop) -anchor w -padx 3 -pady 3
       }
    }
 
@@ -135,6 +140,7 @@ itcl::body GuideControl::save {name} {
       } else {
          $name configure -${wfs}Filter [$itk_component(${wfs}filter) get] \
                -${wfs}Wavel [$itk_component(${wfs}wavel) get]
+         $name configure -${wfs}FldStop [$itk_component(${wfs}fldstop) get]
       }
    }
 }
@@ -164,6 +170,7 @@ itcl::body GuideControl::load {name} {
             $itk_component(${wfs}wavel) clear
             $itk_component(${wfs}wavel) insert end $wavel
          }
+         $itk_component(${wfs}fldstop) select [$name cget -${wfs}FldStop]
       } else {
          set ::Config($itk_option(-component).oiwfswavelength,value) \
                [$name cget -oiwfsWavelength]
@@ -176,6 +183,8 @@ itcl::body GuideControl::reset {} {
    $itk_component(pwfs2wavel) clear
    $itk_component(pwfs1filter) select ""
    $itk_component(pwfs2filter) select ""
+   $itk_component(pwfs1fldstop) select ""
+   $itk_component(pwfs2fldstop) select ""
 }
 
 itcl::configbody GuideControl::component {
