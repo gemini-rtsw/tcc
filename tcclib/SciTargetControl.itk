@@ -4,7 +4,7 @@
 #  A SciTarget control is a TargetControl widget with widgets for
 #  the target position etc.
 #
-#  D Terrett 6 June 2002
+#  D Terrett 7 June 2002
 #
 #  Copyright CCLRC
 #+
@@ -42,14 +42,15 @@ itcl::body SciTargetControl::constructor args {
       iwidgets::optionmenu $w.eltype -command [itcl::code $this orbtype]
    }
    $itk_component(eltype) insert end "Major planet (AsA format)" \
-         "Major planet (JPL format)" "Minor planet or comet (JPL format)" \
+         "Major planet (JPL Horizons format)" \
+         "Minor planet or comet (JPL Horizons format)" \
          "Minor planet (AsA format)" "Minor planet (MPC format)" \
          "Comet (AsA format)" "Comet (MPC format)" \
          Mercury Venus Mars Jupiter Saturn Uranus Neptune Pluto
 
 # Entry widgets for each element.
    itk_component add epochofel {
-      iwidgets::entryfield $w.epochofel -labeltext "Epoch of elements (TT MJD)"
+      iwidgets::entryfield $w.epochofel -labeltext "Epoch of elements (TT JD)"
    }
    itk_component add inclination {
       iwidgets::entryfield $w.inclination -labeltext \
@@ -59,8 +60,8 @@ itcl::body SciTargetControl::constructor args {
       iwidgets::entryfield $w.anode -labeltext \
             "Longitude of ascending node (deg)"
    }
-   itk_component add periorW {
-      iwidgets::entryfield $w.periorW -labeltext \
+   itk_component add peri {
+      iwidgets::entryfield $w.peri -labeltext \
             "Longitude of perihelion (deg)"
    }
    itk_component add aorq {
@@ -79,7 +80,7 @@ itcl::body SciTargetControl::constructor args {
    grid $itk_component(epochofel) -sticky e -pady 1
    grid $itk_component(inclination) -sticky e -pady 1
    grid $itk_component(anode) -sticky e -pady 1
-   grid $itk_component(periorW) -sticky e -pady 1
+   grid $itk_component(peri) -sticky e -pady 1
    grid $itk_component(aorq) -sticky e -pady 1
    grid $itk_component(e) -sticky e -pady 1
    grid $itk_component(lormorTP) -sticky e -pady 1
@@ -107,21 +108,24 @@ itcl::body SciTargetControl::reset {} {
    $this TargetControl::reset
 
 # Enable all entry fields.
+   set lormorTPstate [$itk_component(lormorTP) cget -state]
    $itk_component(lormorTP) configure -state normal
+   set nstate [$itk_component(n) cget -state]
    $itk_component(n) configure -state normal
 
 # Clear the entry fields.
    $itk_component(epochofel) clear
    $itk_component(inclination) clear
    $itk_component(anode) clear
-   $itk_component(periorW) clear
+   $itk_component(peri) clear
    $itk_component(aorq) clear
    $itk_component(e) clear
    $itk_component(lormorTP) clear
    $itk_component(n) clear
 
-# Restor the state of the controls
-   orbtype
+# Restore the state of the controls
+   $itk_component(lormorTP) configure -state $lormorTPstate
+   $itk_component(n) configure -state $nstate
 }
 
 itcl::body SciTargetControl::load {name} {
@@ -147,19 +151,19 @@ itcl::body SciTargetControl::load {name} {
                            [$name cget -inclination]
                      $itk_component(anode) insert end [$name cget -anode]
                      $itk_component(aorq) insert end [$name cget -a]
-                     $itk_component(periorW) insert end [$name cget -perihelion]
+                     $itk_component(peri) insert end [$name cget -perihelion]
                      $itk_component(e) insert end [$name cget -e]
                      $itk_component(lormorTP) insert end [$name cget -L]
                      $itk_component(n) insert end [$name cget -n]
                   }
                   JPL {
-                     $itk_component(eltype) select "Major planet (JPL format)"
+                     $itk_component(eltype) select "Major planet (JPL Horizons format)"
                      $itk_component(epochofel) insert end [$name cget -epoch]
                      $itk_component(inclination) insert end \
                            [$name cget -inclination]
                      $itk_component(anode) insert end [$name cget -anode]
                      $itk_component(aorq) insert end [$name cget -a]
-                     $itk_component(periorW) insert end [$name cget -W]
+                     $itk_component(peri) insert end [$name cget -perihelion]
                      $itk_component(e) insert end [$name cget -e]
                      $itk_component(lormorTP) insert end [$name cget -MA]
                      $itk_component(n) insert end [$name cget -n]
@@ -180,7 +184,7 @@ itcl::body SciTargetControl::load {name} {
                       [$name cget -inclination]
                 $itk_component(anode) insert end [$name cget -anode]
                 $itk_component(aorq) insert end [$name cget -a]
-                $itk_component(periorW) insert end [$name cget -perihelion]
+                $itk_component(peri) insert end [$name cget -perihelion]
                 $itk_component(e) insert end [$name cget -e]
                 $itk_component(lormorTP) insert end [$name cget -M]
              }
@@ -188,7 +192,7 @@ itcl::body SciTargetControl::load {name} {
                 switch $format {
                   JPL {
                      $itk_component(eltype) select \
-                           "Minor planet or comet (JPL format)"
+                           "Minor planet or comet (JPL Horizons format)"
                      $itk_component(lormorTP) insert end [$name cget -TP]
                   }
                   MPC {
@@ -204,7 +208,7 @@ itcl::body SciTargetControl::load {name} {
                      [$name cget -inclination]
                $itk_component(anode) insert end [$name cget -anode]
                $itk_component(aorq) insert end [$name cget -q]
-               $itk_component(periorW) insert end [$name cget -perihelion]
+               $itk_component(peri) insert end [$name cget -perihelion]
                $itk_component(e) insert end [$name cget -e]
             }
          }
@@ -245,12 +249,12 @@ itcl::body SciTargetControl::save {name} {
                      -inclination [$itk_component(inclination) get] \
                      -anode [$itk_component(anode) get] \
                      -e [$itk_component(e) get] \
-                     -perihelion [$itk_component(periorW) get] \
+                     -perihelion [$itk_component(peri) get] \
                      -a [$itk_component(aorq) get] \
                      -L [$itk_component(lormorTP) get] \
                      -n [$itk_component(n) get]
             }
-            "Major planet (JPL format)" {
+            "Major planet (JPL Horizons format)" {
                $name init
                $name configure \
                      -type conicTarget \
@@ -261,7 +265,7 @@ itcl::body SciTargetControl::save {name} {
                      -inclination [$itk_component(inclination) get] \
                      -anode [$itk_component(anode) get] \
                      -e [$itk_component(e) get] \
-                     -W [$itk_component(periorW) get] \
+                     -perihelion [$itk_component(peri) get] \
                      -a [$itk_component(aorq) get] \
                      -MA [$itk_component(lormorTP) get] \
                      -n [$itk_component(n) get]
@@ -277,7 +281,7 @@ itcl::body SciTargetControl::save {name} {
                      -inclination [$itk_component(inclination) get] \
                      -anode [$itk_component(anode) get] \
                      -e [$itk_component(e) get] \
-                     -perihelion [$itk_component(periorW) get] \
+                     -perihelion [$itk_component(peri) get] \
                      -a [$itk_component(aorq) get] \
                      -M [$itk_component(lormorTP) get]
             }
@@ -292,11 +296,11 @@ itcl::body SciTargetControl::save {name} {
                      -inclination [$itk_component(inclination) get] \
                      -anode [$itk_component(anode) get] \
                      -e [$itk_component(e) get] \
-                     -perihelion [$itk_component(periorW) get] \
+                     -perihelion [$itk_component(peri) get] \
                      -a [$itk_component(aorq) get] \
                      -M [$itk_component(lormorTP) get]
             }
-            "Minor planet or comet (JPL format)" {
+            "Minor planet or comet (JPL Horizons format)" {
                $name init
                $name configure \
                      -type conicTarget \
@@ -307,7 +311,7 @@ itcl::body SciTargetControl::save {name} {
                      -inclination [$itk_component(inclination) get] \
                      -anode [$itk_component(anode) get] \
                      -e [$itk_component(e) get] \
-                     -perihelion [$itk_component(periorW) get] \
+                     -perihelion [$itk_component(peri) get] \
                      -q [$itk_component(aorq) get] \
                      -TP [$itk_component(lormorTP) get]
             }
@@ -322,7 +326,7 @@ itcl::body SciTargetControl::save {name} {
                      -inclination [$itk_component(inclination) get] \
                      -anode [$itk_component(anode) get] \
                      -e [$itk_component(e) get] \
-                     -perihelion [$itk_component(periorW) get] \
+                     -perihelion [$itk_component(peri) get] \
                      -q [$itk_component(aorq) get] \
                      -TP [$itk_component(lormorTP) get]
             }
@@ -337,7 +341,7 @@ itcl::body SciTargetControl::save {name} {
                      -inclination [$itk_component(inclination) get] \
                      -anode [$itk_component(anode) get] \
                      -e [$itk_component(e) get] \
-                     -perihelion [$itk_component(periorW) get] \
+                     -perihelion [$itk_component(peri) get] \
                      -q [$itk_component(aorq) get] 
             }
          }
@@ -360,12 +364,12 @@ itcl::body SciTargetControl::orbtype {} {
       Pluto -
       "Major planet (AsA format)" { 
          $itk_component(epochofel) configure -labeltext \
-               "Epoch of elements (TT MJD)"
+               "Epoch of elements (TT JD)"
          $itk_component(inclination) configure -labeltext \
                "Orbital inclination (deg)"
          $itk_component(anode) configure -labeltext \
                "Longitude of ascending node (deg)"
-         $itk_component(periorW) configure -labeltext \
+         $itk_component(peri) configure -labeltext \
                "Longitude of perihelion (deg)"
          $itk_component(aorq) configure -labeltext \
                "Mean distance (AU)"
@@ -375,12 +379,12 @@ itcl::body SciTargetControl::orbtype {} {
          $itk_component(n) configure -state normal -labeltext \
                "Daily motion (deg)"
       }
-      "Major planet (JPL format)" {
+      "Major planet (JPL Horizons format)" {
          $itk_component(epochofel) configure -labeltext \
                "Epoch of elements (TT JD)"
          $itk_component(inclination) configure -labeltext IN
          $itk_component(anode) configure -labeltext OM
-         $itk_component(periorW) configure -labeltext W
+         $itk_component(peri) configure -labeltext W
          $itk_component(aorq) configure -labeltext A
          $itk_component(e) configure -labeltext EC
          $itk_component(lormorTP) configure -state normal -labeltext MA
@@ -388,12 +392,12 @@ itcl::body SciTargetControl::orbtype {} {
       }
       "Minor planet (AsA format)" {
          $itk_component(epochofel) configure -labeltext \
-               "Epoch of elements (TT MJD)"
+               "Epoch of elements (TT JD)"
          $itk_component(inclination) configure -labeltext \
                "Orbital inclination (deg)"
          $itk_component(anode) configure -labeltext \
                "Longitude of ascending node (deg)"
-         $itk_component(periorW) configure -labeltext \
+         $itk_component(peri) configure -labeltext \
                "Argument of perihelion (deg)"
          $itk_component(aorq) configure -labeltext "Mean distance (AU)"
          $itk_component(e) configure -labeltext "Eccentricity"
@@ -405,17 +409,17 @@ itcl::body SciTargetControl::orbtype {} {
          $itk_component(epochofel) configure -labeltext "Epoch JDT"
          $itk_component(inclination) configure -labeltext Incl
          $itk_component(anode) configure -labeltext Node
-         $itk_component(periorW) configure -labeltext Peri
+         $itk_component(peri) configure -labeltext Peri
          $itk_component(aorq) configure -labeltext a
          $itk_component(e) configure -labeltext e
          $itk_component(lormorTP) configure -state normal -labeltext M
          $itk_component(n) configure -state disabled
       }
-      "Minor planet or comet (JPL format)" {
+      "Minor planet or comet (JPL Horizons format)" {
          $itk_component(epochofel) configure -labeltext EPOCH
          $itk_component(inclination) configure -labeltext IN
          $itk_component(anode) configure -labeltext OM
-         $itk_component(periorW) configure -labeltext W
+         $itk_component(peri) configure -labeltext W
          $itk_component(aorq) configure -labeltext QR
          $itk_component(e) configure -labeltext EC
          $itk_component(lormorTP) configure -state normal -labeltext TP
@@ -423,12 +427,12 @@ itcl::body SciTargetControl::orbtype {} {
       }
       "Comet (AsA format)" {
          $itk_component(epochofel) configure -labeltext \
-               "Epoch of elements (TT MJD)"
+               "Epoch of elements (TT JD)"
          $itk_component(inclination) configure -labeltext \
                "Orbital inclination (deg)"
          $itk_component(anode) configure -labeltext \
                "Longitude of ascending node (deg)"
-         $itk_component(periorW) configure -labeltext \
+         $itk_component(peri) configure -labeltext \
                "Argument of perihelion (deg)"
          $itk_component(aorq) configure -labeltext "Perihelion distance (AU)"
          $itk_component(e) configure -labeltext "Eccentricity"
@@ -439,7 +443,7 @@ itcl::body SciTargetControl::orbtype {} {
          $itk_component(epochofel) configure -labeltext Epoch
          $itk_component(inclination) configure -labeltext Incl
          $itk_component(anode) configure -labeltext Node
-         $itk_component(periorW) configure -labeltext Peri
+         $itk_component(peri) configure -labeltext Peri
          $itk_component(aorq) configure -labeltext q
          $itk_component(e) configure -labeltext e
          $itk_component(lormorTP) configure -state normal -labeltext T
@@ -459,10 +463,18 @@ itcl::body SciTargetControl::orbtype {} {
       Pluto {
          set file [file join $::ROOT series96 [string tolower $eltype]]
          set elements [plosc $file]
+         $itk_component(epochofel) clear
+         $itk_component(inclination) clear
+         $itk_component(anode) clear
+         $itk_component(peri) clear
+         $itk_component(aorq) clear
+         $itk_component(e) clear
+         $itk_component(lormorTP) clear
+         $itk_component(n) clear
          $itk_component(epochofel) insert end [lindex $elements 0]
          $itk_component(inclination) insert end [lindex $elements 1]
          $itk_component(anode) insert end [lindex $elements 2]
-         $itk_component(periorW) insert end [lindex $elements 3]
+         $itk_component(peri) insert end [lindex $elements 3]
          $itk_component(aorq) insert end [lindex $elements 4]
          $itk_component(e) insert end [lindex $elements 5]
          $itk_component(lormorTP) insert end [lindex $elements 6]

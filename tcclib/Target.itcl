@@ -57,9 +57,9 @@
 #
 #              -anode         Longitude of ascending node.
 #
-#              -perihelion    Longitude of perihelion.
+#              -perihelion    Longitude or argument of perihelion.
 #
-#              -a             Argument of perihelion.
+#              -a             Mean distance.
 #
 #              -q             Perihelion distance.
 #
@@ -73,9 +73,7 @@
 #
 #              -n             Daily motion.
 #
-#              -MA
-#
-#              -W
+#              -MA            Mean anomoly.
 #
 #  Methods:
 #           apply comp    Applies the target definition to the TCS by 
@@ -92,7 +90,7 @@
 #           save node     Saves the values of the target options to the
 #                         xml node.
 #
-#  D Terrett 6 June 2002
+#  D Terrett 7 June 2002
 #
 #  Copyright CCLRC
 #+
@@ -134,7 +132,6 @@ itcl::class Target {
       variable TP {}
       variable n {}
       variable MA {}
-      variable W {}
       variable trackrate {}
       variable trackratens
    }
@@ -206,8 +203,8 @@ itcl::body Target::apply {comp} {
             switch $eltype {
                major {
                   if { [string equal $format JPL] } {
-                     set L [expr { $anode + $W + $MA }]
-                     set perihelion [expr { $anode + $W }]
+                     set L [expr { $anode + $perihelion + $MA }]
+                     set perihelion [expr { $anode + $perihelion }]
                   }
                   cs orbit set eltype 1
                   cs orbit set epoch [list $epoch]
@@ -287,7 +284,6 @@ itcl::body Target::init {} {
    set TP {}
    set n {}
    set MA {}
-   set W {}
    set brightness {}
 }
 
@@ -316,8 +312,8 @@ itcl::body Target::preview vt {
             switch $eltype {
                major {
                   if { [string equal $format JPL] } {
-                     set L [expr { $anode + $W + $MA }]
-                     set perihelion [expr { $anode + $W }]
+                     set L [expr { $anode + $perihelion + $MA }]
+                     set perihelion [expr { $anode + $perihelion }]
                   }
                   tccPreview set orbit 1 $epoch $inclination $anode \
                         $perihelion $a $e $L $n
@@ -387,7 +383,7 @@ itcl::body Target::save {node} {
                      param $node epoch $epoch
                      param $node inclination $inclination
                      param $node anode $anode
-                     param $node W $W
+                     param $node perihelion $perihelion
                      param $node a $a
                      param $node e $e
                      param $node MA $MA
