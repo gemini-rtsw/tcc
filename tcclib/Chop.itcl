@@ -27,7 +27,7 @@
 #          save node     Saves the values of the chop configuration
 #                        to the xml node
 #
-#  D Terrett 21 March 2002
+#  D Terrett 10 June 2003
 #
 #  Copyright CCLRC
 #+
@@ -52,20 +52,31 @@ itcl::class Chop {
 }
 
 itcl::body Chop::apply {comp} {
+
+# Set relative chop parameters.
    cs chopRelative set angle [list $angle]
+   cs chopRelative set throw [list $throw]
    if { [string equal $cosys ""] } {
       cs chopRelative set system FK5
       cs chopRelative set equinox J2000
+      logger command chopRelative
    } else {
       CosysNames::$cosys apply $comp.cosys
    }
-   cs chopRelative set throw [list $throw]
+
+# Set chop configuration parameters.
    cs chopConfig set type 2posn
    cs chopConfig set source [list $source]
    cs chopConfig set frequency [list $frequency]
    cs chopConfig set dutycycle [list $dutycycle]
-   logger command chopRelative
    logger command chopConfig
+
+# Set the source B wavelength to the same as source A.
+   set wavel [cs wavelSourceA get wavel]
+   if { ! ( [string equal $wavel "No Value"] || [string equal $wavel ""] ) } {
+      cs wavelSourceB set wavel $wavel
+      logger command wavelSourceB
+   }
 }
 
 itcl::body Chop::save {node} {
