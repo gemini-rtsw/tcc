@@ -1,7 +1,7 @@
 #+
 #  SkycatPanel <- itk::Toplevel
 #
-#  Implements the SkyyatPanel widget. Skycat is run as a separate application
+#  Implements the SkycatPanel widget. Skycat is run as a separate application
 #  but in order to communicate with it with "send" we need a window on the
 #  same screen. The Skycat panel is therefore just an empty top level window
 #  which is withdrawn from the display.
@@ -9,7 +9,7 @@
 #  The windows and panel options exist in order to be compatible with the
 #  other panel objects and have no function.
 #
-#  D Terrett 29 March 2000
+#  D Terrett 27 February 2003
 #
 #  Copyright CCLRC
 #+
@@ -41,9 +41,9 @@ itcl::body SkycatPanel::constructor args {
 # Bind a procedure to map events that maps skycat and withdraws the
 # "shadow" window.
 
-   bind $itk_interior <Map> "
+   bind [winfo toplevel $itk_interior] <Map> "
       [itcl::code $this map]
-      wm withdraw $itk_interior 
+      wm withdraw [winfo toplevel $itk_interior]
    "
 
    eval itk_initialize $args
@@ -60,23 +60,23 @@ itcl::body SkycatPanel::map {} {
          -with_grid true &
 
 # Wait for it to appear as a tcl interpreter.
-      for {set i 0} {$i < 10} {incr i} {
+      for {set i 0} {$i < 30} {incr i} {
          set interps [winfo interps -displayof $itk_interior]
          if { [lsearch -exact $interps tccSkycat] != -1 } {
             break
          }
          after 1000
       }
-      if { $i == 10 } {
+      if { $i == 30 } {
          tk_messageBox -icon error -parent $itk_interior \
-               -message "Skycat failed to start after 10 seconds"
+               -message "Skycat failed to start after 30 seconds"
          return
       }
 
 # Wait for skycat to accept the command that sets the name of the interperter
 # that skycat should talk to.
       for {set i 0} {$i < 20} {incr i} {
-         if { [send tccSkycat info commands tccSetTcc] != "" } {
+         if { ! [catch {send tccSkycat tccSetTcc \"[tk appname]\"} ] } {
             break
          }
          after 1000
@@ -86,11 +86,10 @@ itcl::body SkycatPanel::map {} {
             -message "Skycat failed to appear after 10 seconds"
          return
       }
-      send tccSkycat tccSetTcc \"[tk appname]\"
    } {
 
 # A skycat already exist so map it onto the screen.
-      send tccSkycat wm deiconify .skycat
-      send tccSkycat raise .skycat
+      send tccSkycat wm deiconify \[winfo children .\]
+      send tccSkycat raise \[winfo children .\]
    }
 }

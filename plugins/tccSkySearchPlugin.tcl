@@ -1,7 +1,7 @@
 #+
 #  tccSkySearchPlugin.tcl
 #
-#  D Terrett 24 May 2002
+#  D Terrett 28 April 2003
 #
 #  Copyright CCLRC
 #-
@@ -20,19 +20,22 @@ proc SkySearch_plugin {this} {
    set gemmenu [$w get_menu Gemini]
    $w add_menuitem $gemmenu command "Selection -> Science target" \
          "Define the selected entry as a science target" \
-         -command "TccSkyQuery::define_selected science"
+         -command "TccSkyQuery::define_selected sciencetarget"
    $w add_menuitem $gemmenu command "Selection -> PWFS1 target" \
          "Define the selected entry as the peripheral wave front sensor 1 target" \
-         -command "TccSkyQuery::define_selected pwfs1"
+         -command "TccSkyQuery::define_selected pwfs1target"
    $w add_menuitem $gemmenu command "Selection -> PWFS2 target" \
          "Define the selected entry as the peripheral wave front sensor 2 target" \
-         -command "TccSkyQuery::define_selected pwfs2"
+         -command "TccSkyQuery::define_selected pwfs2target"
    $w add_menuitem $gemmenu command "Selection -> OIWFS target" \
          "Define the selected entry as the on instrument wave front sensor target" \
-         -command "TccSkyQuery::define_selected oiwfs"
+         -command "TccSkyQuery::define_selected oiwfstarget"
+   $w add_menuitem $gemmenu command "Selection -> ALTAIR target" \
+         "Define the selected entry as the ALTAIR wave front sensor target" \
+         -command "TccSkyQuery::define_selected altairtarget"
    $w add_menuitem $gemmenu command "Result -> targets" \
          "Define the search result as targets" \
-         -command "TccSkyQuery::define_contents science"
+         -command "TccSkyQuery::define_contents"
 }
 
 namespace eval TccSkyQuery {
@@ -46,16 +49,16 @@ namespace eval TccSkyQuery {
       set toplevel $w
    }
 
-   proc define_selected type {
+   proc define_selected {type} {
       global toplevel
       set results [$toplevel component results]
       define_targets $type [$results get_selected]
    }
 
-   proc define_contents type {
+   proc define_contents {} {
       global toplevel
       set results [$toplevel component results]
-      define_targets $type [$results get_contents]
+      define_targets "" [$results get_contents]
    }
 
    proc define_targets {type targets} {
@@ -117,11 +120,11 @@ namespace eval TccSkyQuery {
 # Activate the appropriate editing panel and get the name of the scratch
 # target object associated with that edit control.
          set panelmgr [send $tcc_interp set ::Config(tcs.field,panel)]
-         send $tcc_interp $panelmgr map ${type}target
+         send $tcc_interp $panelmgr map $type
          set panel [send $tcc_interp $panelmgr cget -name]
 
-         send $tcc_interp $panel newtarget [list [lindex $target $id]] \
-               ${type}target $args
+         send $tcc_interp [list $panel newtarget [lindex $target $id] \
+               $type] $args
       }
    }
 

@@ -22,7 +22,7 @@
 #
 #    -poriginB      Source B pointing origin
 #    
-# D Terrett  31 January 2003
+# D Terrett  28 February 2003
 #
 # Copyright CLRC
 #+
@@ -107,16 +107,21 @@ itcl::body Preview::target {type args} {
                -theta1 [lindex $args 1] \
                -theta2 [lindex $args 2]
       }
-      conicSystem {
+      conicTarget {
          $telsim configure \
                -targetType $type \
-               -orbtype [lindex $args 0] \
+               -orbType [lindex $args 0] \
                -orbElements [lrange $args 1 end]
       }
    }
 }
 
 itcl::body Preview::slew {time} {
+
+# Check that a science target has been defined.
+   if { [string equal [$telsim cget -targetType] <undefined>] } {
+      error "Preview must have a science target defined"
+   }
 
 # Update telescope context in the TelescopeSim object.
    $telsim configure -delut [sa tcssad get delut value] \

@@ -41,7 +41,7 @@
 #
 #           save node  Saves all the slew option values to the xml node.
 #
-#  D Terrett 21 February 2003
+#  D Terrett 13 May 2003
 #
 #  Copyright CCLRC
 #+
@@ -80,6 +80,20 @@ itcl::body SlewOptions::apply {comp} {
    cs slew set guideOffset [list $guideOffset]
    cs slew set instrOffset [list $instrOffset]
    logger command slew
+
+# Clearing the instrument offsets through the slew command confuses the 
+# seqexec because it looks at the outputs of the offsetPoA1 CAD so we
+# set this offset explicitly as well.
+   if { $instrOffset } {
+      cs offsetPoA1 set x 0.0
+      cs offsetPoA1 set y 0.0
+      logger command offsetPoA1
+   }
+
+# Similarly for the target filter.
+   if { $filter1 } {
+      cs filter1 set shortCircuit Closed
+   }
 }
 
 itcl::body SlewOptions::init {} {

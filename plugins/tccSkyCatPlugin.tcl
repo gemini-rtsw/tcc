@@ -1,7 +1,7 @@
 #+
 #  tccSkyCatPlugin.tcl
 #
-#  D Terrett & C Mayer  10 April 2002
+#  D Terrett & C Mayer 28 April 2003
 #
 #  Copyright CCLRC
 #-
@@ -32,6 +32,9 @@ proc SkyCat_plugin {this} {
    $w add_menuitem $gemmenu command "Pick OIWFS Target" \
          "Pick an object and define it as the on instrument wave front sensor target" \
          -command "TccSkyCat::pick_target oiwfs"
+   $w add_menuitem $gemmenu command "Pick ALTAIR Target" \
+         "Pick an object and define it as the ALTAIR wave front sensor target" \
+         -command "TccSkyCat::pick_target altair"
    $w add_menuitem $gemmenu command "Set IPD" \
          "Set Instrument Principle Direction" \
          -command "TccSkyCat::pick_angle"
@@ -47,9 +50,12 @@ proc SkyCat_plugin {this} {
    $image configure -newimagecmd TccSkyCat::draw_field
 }
 
-proc tccDisplayField {ra dec equinox} {
+proc tccDisplayField {ra dec p1 p2 oi} {
 
-   TccSkyCat::display_image $ra $dec $equinox
+   namespace eval TccSkyCat [list set p1target $p1]
+   namespace eval TccSkyCat [list set p2target $p2]
+   namespace eval TccSkyCat [list set oitarget $oi]
+   TccSkyCat::display_image $ra $dec J2000
 }
 
 proc tccSetTcc interp {
@@ -121,24 +127,23 @@ namespace eval TccSkyCat {
             [expr $xc + $xs] [expr $yc + $ys] -outline $pwfs2Color -tags objects
 
 # Plot the wave front sensor positions
-      foreach wfs {pwfs1_target pwfs2_target} {
-         if {$wfs == "pwfs1_target"} {
+      foreach wfs {p1 p2} {
+         if {$wfs == "p1"} {
            set pwfsColor $pwfs1Color
            set toggle $togglePwfs1
+           set target $::TccSkyCat::p1target
          } else {
            set pwfsColor $pwfs2Color
            set toggle $togglePwfs2
+           set target $::TccSkyCat::p2target
          }
-         set target [send $tcc_interp tccPreview get $wfs]
          if { $target != "" } {
-            if { [catch {$rtdimage convert coords [lindex $target 0] \
-                   [lindex $target 1] {wcs J2000} x y canvas} ] } {
+            if { [catch {$rtdimage convert coords [lindex $target 2] \
+                   [lindex $target 3] {wcs J2000} x y canvas} ] } {
             } else {
    
 # Plot the two possible WFS arm positions.
-
                plotWfs $canvas $wfs $x $y $xc $yc $mm2Pixels $toggle
-   
             }
          }
       }
@@ -160,7 +165,7 @@ namespace eval TccSkyCat {
 # Create an unnamed target.
       send $tcc_interp $panel newtarget [list "" ${type}target \
             -c1 [lindex $result 2] -c2 [lindex $result 3] \
-            -system J[lindex $result 4]] -type hmsdegTarget
+            -system [lindex $result 4]] -type hmsdegTarget
    }
 
 # This procedure displays an image or replots the field if the image has
@@ -168,7 +173,9 @@ namespace eval TccSkyCat {
    proc display_image {ra dec equinox} {
       global rtdimage canvas
 
-      set centre [$rtdimage wcscenter -format 1]
+      if { [catch {set centre [$rtdimage wcscenter -format 1]} ] } {
+         set centre [list "" ""]
+      }
       set x [lindex $centre 0]
       set y [lindex $centre 1]
       if { $x != "" && $y != "" } {
@@ -258,7 +265,7 @@ namespace eval TccSkyCat {
       send $tcc_interp set ::Config(tcs.field.rotator,value) \
             [namespace tail $name]
       send $tcc_interp set ::Config(tcs.field.rotator,value) ""
-      send $tcc_interp delete object $name
+      send $tcc_interp itcl::delete object $name
   }
 
 # This procedure takes a  WFS object and draws its projected
@@ -291,7 +298,7 @@ namespace eval TccSkyCat {
 
 # Set up parameters for appropriate wfs
 
-      if {$wfs == "pwfs1_target"} {
+      if {$wfs == "p1"} {
         set pwfsScale $pwfs1Scale
         set pwfsColor $pwfs1Color
         set pwfsFplaneSep $pwfs1FplaneSep
@@ -505,7 +512,7 @@ namespace eval TccSkyCat {
       set x6 [expr $x3 - $dxl * $mm2Pix]
       set y6 [expr ($pwfsAwidth/2.0 - $dr) * $mm2Pix]
 
-      if {$wfs == "pwfs1_target"} {
+      if {$wfs == "p1"} {
         set theta [expr asin($dxl/$dr)/3.0] 
         set x4 [expr $x3 - $dr * sin($theta) * $mm2Pix]
         set y4 [expr $y3 + ($dr * (1.0 - cos($theta)) * $mm2Pix)]

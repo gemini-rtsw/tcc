@@ -326,8 +326,9 @@ static int ConfigureDV( Tcl_Interp *interp, Tk_Canvas canvas, Tk_Item *itemPtr,
    double vgpos;
    char savest[40];
 
-   if ( Tk_ConfigureWidget( interp, tkwin, configspecs, objc, (char**)objv, 
-      (char *) domeviewPtr, flags|TK_CONFIG_OBJS ) != TCL_OK ) {
+   if ( Tk_ConfigureWidget( interp, tkwin, configspecs, objc,
+          (const char**)objv, (char *) domeviewPtr, flags|TK_CONFIG_OBJS ) != 
+          TCL_OK ) {
       return TCL_ERROR;
    }
 
@@ -484,11 +485,10 @@ static void DisplayDV( Tk_Canvas canvas, Tk_Item *itemPtr, Display *display,
    Drawable drawable, int xunused, int yunused, int wunused, int hunused)
 {
    DomeViewItem *domeviewPtr = (DomeViewItem *) itemPtr;
-   Tk_Window tkwin = Tk_CanvasTkwin( canvas );
    short xc, yc, a1, a2;
    int x, y, r, rel, rgate, i;
    double t, xi, eta;
-   double domeazr, domeaz, amlimel;
+   double domeazr;
    unsigned int width, height;
    XPoint point[7], w[5], e[7];
    XPoint p;

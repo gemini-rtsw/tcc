@@ -21,6 +21,10 @@ static char rcsid[]="$Id:";
 #include <tk.h>
 #include "tccAst.h"
 
+void tsdDomeView();
+void tsdWrapView();
+void tsdElView();
+
 /* *INDENT-OFF* */
 /*+
  *   Function name:

@@ -1,6 +1,6 @@
 #!/bin/sh
 # the next line restarts using ocswish \
-exec $HLPG_INSTALL_BASE/bin/solaris/ocswish "$0" "$@"
+exec $HLPG_INSTALL_BASE/bin/ocswish "$0" "$@"
 
 #+
 #  tccSkycat
@@ -10,26 +10,21 @@ exec $HLPG_INSTALL_BASE/bin/solaris/ocswish "$0" "$@"
 #  libraries that the tcc skycat uses. It is probably installation dependent 
 #  and will need to be hacked to get it to work.
 #
-#  D Terrett 21 May 1998
+#  D Terrett 27 February 2003
 #
 #  Copyright CCLRC
 #-
 
 # The tcc library files live in subdirectores of the directory containing
 # this script.
-lappend auto_path /gemini/ocs/external/packages/skycat/lib
 lappend auto_path [file dirname [info script]]/lib
 lappend auto_path [file dirname [info script]]/skycat_plugin
 
-# define the location of the plugin.
-global env
-set env(SKYCAT_PLUGIN) \
+# define the location of the plugins.
+set ::env(SKYCAT_PLUGIN) \
    [file dirname [info script]]/plugins/tccSkyCatPlugin.tcl
-set env(SKYSEARCH_PLUGIN) \
+set ::env(SKYSEARCH_PLUGIN) \
    [file dirname [info script]]/plugins/tccSkySearchPlugin.tcl
-
-# Set location of the Skycat library.
-lappend auto_path $env(SKYCAT_LIBRARY)
 
 # Load all the packages required by skycat.
 package require Tclx
@@ -38,8 +33,5 @@ package require Itk
 package require BLT
 package require Skycat
 
-# Hide the main window.
-wm withdraw .
-
 # Start skycat.
-skycat::SkyCat .skycat -with_grid true
+skycat::SkyCat::startSkyCat

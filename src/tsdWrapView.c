@@ -267,8 +267,9 @@ static int ConfigureWV( Tcl_Interp *interp, Tk_Canvas canvas, Tk_Item *itemPtr,
    double az, el, ma, da, daoff, ha, dec, sdec, cdec;
    double s, c, r, r0, r1, a, a0, a1, delta;
 
-   if ( Tk_ConfigureWidget( interp, tkwin, configspecs, objc, (char**)objv, 
-      (char *) wrapviewPtr, flags|TK_CONFIG_OBJS ) != TCL_OK ) {
+   if ( Tk_ConfigureWidget( interp, tkwin, configspecs, objc,
+         (const char**)objv, (char *) wrapviewPtr, flags|TK_CONFIG_OBJS ) != 
+         TCL_OK ) {
       return TCL_ERROR;
    }
 
@@ -459,7 +460,6 @@ static void DisplayWV( Tk_Canvas canvas, Tk_Item *itemPtr, Display *display,
    Drawable drawable, int xunused, int yunused, int wunused, int hunused)
 {
    WrapViewItem *wrapviewPtr = (WrapViewItem *) itemPtr;
-   Tk_Window tkwin = Tk_CanvasTkwin( canvas );
    short xc, yc;
    int i;
 

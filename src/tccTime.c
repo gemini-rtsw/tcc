@@ -71,7 +71,9 @@ int TccTimeCmd( ClientData clientdata, Tcl_Interp *interp, int objc,
     Tcl_Obj *CONST objv[])
 {
     int ind;
-    char *options[] = {"localtime", "utc", "last", "init", "mjd", "set", NULL};
+    const char *options[] = {
+            "localtime", "utc", "last", "init", "mjd", "set", NULL
+    };
     double offset;
 
     if ( objc == 1 ) {
@@ -124,6 +126,7 @@ int TccTimeCmd( ClientData clientdata, Tcl_Interp *interp, int objc,
                 return TCL_ERROR;
             return TCL_OK;
     }
+    return TCL_OK;
 }
 
 int tccTimeInit( Tcl_Interp *interp)

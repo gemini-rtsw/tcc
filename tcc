@@ -1,6 +1,6 @@
 #!/bin/sh
 # the next line restarts using ocswish \
-exec $HLPG_INSTALL_BASE/bin/solaris/ocswish "$0" "$@"
+exec $HLPG_INSTALL_BASE/bin/ocswish "$0" "$@"
 
 #+
 #  tcc
@@ -24,9 +24,6 @@ if { [string compare [file pathtype $::ROOT] relative] == 0 } {
 # Define the location of the star catalogue files.
 set ::CATALOG_DIR $::ROOT/pointcats
 
-# Temporary location of DOM & expat packages.
-set auto_path [concat $::ROOT/../templibs/lib $auto_path]
-
 # The tcc library files live in the lib subdirectory.
 lappend auto_path $::ROOT/lib
 lappend auto_path $::ROOT/tcclib
@@ -42,6 +39,7 @@ package require Itk
 package require Iwidgets
 package require Ocspkg
 package require dom
+package require dom::libxml2
 package require Seq
 
 # Define the default directory for writing files.

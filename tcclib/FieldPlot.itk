@@ -1,0 +1,367 @@
+#+
+#  FieldPlot <- itk::widget
+#
+#  A widget that plots a map of the currently selected field.
+#
+#  D Terrett  14 April 2003
+#
+#  Copyright CCLRC
+#-
+
+itcl::class FieldPlot {
+   inherit itk::Widget
+   constructor {args} {}
+   destructor {}
+   private {
+      method drawstars {}
+      method drawwfs {wfs}
+      method plot {}
+      method redraw {}
+      method setscale {v}
+      method zoom {dir}
+      method grabwfs {wfs}
+      method dropwfs {wfs x y}
+      variable width
+      variable height
+      variable telsim
+      variable scale 0.5
+      variable afterid ""
+      variable namelist
+      variable xlist
+      variable ylist
+   }
+}
+
+itk::usual FieldPlot {
+}
+
+itcl::body FieldPlot::constructor {args} {
+
+   set width 420
+   set height 420
+
+# Canvas for the plot.
+   itk_component add canvas {
+      canvas $itk_interior.canvas -background darkblue -width $width \
+         -height $height -borderwidth 2 -relief sunken
+   } {
+      ignore -background
+   }
+   pack $itk_component(canvas)
+
+# Controls.
+   itk_component add zframe {
+      frame $itk_interior.zframe
+   }
+   set w $itk_component(zframe)
+   itk_component add zoom {
+      scale $w.zoom -from -2 -to 1 -orient horizontal \
+            -resolution 0.1 -command [itcl::code $this setscale] \
+            -showvalue 0 -sliderlength 10
+   }
+   itk_component add minus {
+      label $w.minus -text -
+   }
+   itk_component add plus {
+      label $w.plus -text +
+   }
+   itk_component add zlabel {
+      label $w.zlabel
+   }
+   pack $itk_component(zlabel) -side top
+   pack $itk_component(minus) $itk_component(zoom) $itk_component(plus) \
+      -side left
+   pack $itk_component(zframe) -side left
+
+# Create and configure a telescope simulation.
+   set telsim [TelescopeSim ::#auto]
+
+# Update telescope context in the TelescopeSim object.
+   $telsim configure -delut [sa tcssad get delut value] \
+         -elongm [sa tcssad get tlongm value] \
+         -latm [sa tcssad get tlatm value] \
+         -hm [sa tcssad get height value] \
+         -xpm [sa tcssad get xpm value] \
+         -ypm [sa tcssad get ypm value] \
+         -tlr [sa tcssad get tlr value] \
+         -focalLength [sa tcssad get focalLength value] \
+         -an 0.0 \
+         -aw 0.0 \
+         -pnpae 0.0 \
+         -ca [sa tcssad get collErrAz value] \
+         -ce [sa tcssad get collErrEl value] \
+         -temperature [sa tcssad get currentExternalTemp value] \
+         -pressure [sa tcssad get currentAirPressure value] \
+         -humidity [sa tcssad get currentRH value]
+
+   eval itk_initialize $args
+
+# Set plot scale (this will redraw the picture and start the period redraw).
+   $itk_component(zoom) set -0.2
+   setscale -0.2
+}
+
+itcl::body FieldPlot::destructor {} {
+
+# Kill the re-plot.
+   after cancel $afterid
+
+# Delete the simulation object
+   itcl::delete object $telsim
+}
+
+itcl::body FieldPlot::plot {} {
+
+# Kill off any pending plots.
+   after cancel $afterid
+
+# Redraw everything.
+   redraw
+
+# Plot again in one second.
+   set afterid [after 1000 [itcl::code $this plot]]
+}
+
+itcl::body FieldPlot::redraw {} {
+
+# Clear the canvas.
+   $itk_component(canvas) delete all
+
+# Approximate peripheral wave-front sensor patrol field.
+   set max [expr {320.0 * $scale}]
+   set min [expr { -1.0 * $max}]
+   $itk_component(canvas) create oval $min $min $max $max -outline red -fill ""
+
+
+# Check that there is a science target
+   if { ! [string equal "" $::Config(tcs.field.sciencetarget,value)] } {
+
+# Configure a telescope simulation target position.
+      set namespace $::Config(tcs.field.sciencetarget,namespace)
+      set name $::Config(tcs.field.sciencetarget,value)
+      set cosys [${namespace}::$name cget -cosys]
+      if { [string equal $cosys ""] } {
+         set system FK5
+         set equinox J2000
+      } else {
+         set system [CosysNames::$cosys cget -frame]
+         set equinox [CosysNames::$cosys cget -equinox]
+      }
+      $telsim configure \
+            -targetType [${namespace}::$name cget -type] \
+            -theta1 [${namespace}::$name cget -c1] \
+            -theta2 [${namespace}::$name cget -c2] \
+            -system $system \
+            -equinox $equinox \
+            -epoch [${namespace}::$name cget -epoch] \
+            -pm1 [${namespace}::$name cget -pm1] \
+            -pm2 [${namespace}::$name cget -pm2] \
+            -parallax [${namespace}::$name cget -parallax] \
+            -rv [${namespace}::$name cget -rv] \
+            -ipa [sadVal tcssad instrPA 0.0] \
+            -iaa [sadVal tcssad instrAA 0.0]
+
+# Slew the simulator.
+      $telsim slew 0.0 0.0
+
+# For each star in the field.
+      set namelist ""
+      set xlist ""
+      set ylist ""
+      set list $::Config(tcs.field.sciencetarget,list)
+      for { set i 0} { $i < [$list length] } {incr i} {
+         set star [$list get $i]
+
+# Get X/Y position of star.
+         if { ! [string is space $star] } {
+            set cosys [${namespace}::$star cget -cosys]
+            if { [string equal $cosys ""] } {
+               set system FK5
+               set equinox J2000
+            } else {
+               set system [CosysNames::$cosys cget -frame]
+               set equinox [CosysNames::$cosys cget -equinox]
+            }
+            $telsim configure \
+                  -targetType [${namespace}::$star cget -type] \
+                  -theta1 [${namespace}::$star cget -c1] \
+                  -theta2 [${namespace}::$star cget -c2] \
+                  -system $system \
+                  -equinox $equinox \
+                  -epoch [${namespace}::$star cget -epoch] \
+                  -pm1 [${namespace}::$star cget -pm1] \
+                  -pm2 [${namespace}::$star cget -pm2] \
+                  -parallax [${namespace}::$star cget -parallax] \
+                  -rv [${namespace}::$star cget -rv]
+            set xy [$telsim getxy]
+            lappend namelist $star
+            lappend xlist [lindex $xy 0]
+            lappend ylist [lindex $xy 1]
+         }
+      }
+
+# Plot the star positions.
+      drawstars
+   }
+
+# Centre everything.
+   $itk_component(canvas) move all [expr {$width / 2.0}] [expr {$height / 2.0}]
+}
+
+itcl::body FieldPlot::drawstars {} {
+
+# Plot the stars.
+   set i 0
+   foreach name $namelist x $xlist y $ylist {
+
+# Position in canvas coordinates.
+      set xp [expr { round($x * $scale) }]
+      set yp [expr { round($y * $scale) }]
+
+# All stars are marked with a cross.
+      $itk_component(canvas) create line [expr {$xp - 5}] $yp \
+            [expr {$xp + 6}] $yp -fill white -tags obj$i
+      $itk_component(canvas) create line $xp [expr {$yp - 5}] \
+            $xp [expr {$yp + 6}] -fill white -tags obj$i
+
+# Add a diagonal cross to the science target.
+      if { [string equal $name $::Config(tcs.field.sciencetarget,value)] } {
+         $itk_component(canvas) create line [expr {$xp - 4}] [expr {$yp - 4}] \
+               [expr {$xp + 5}] [expr {$yp + 5}] -fill white -tags obj$i
+         $itk_component(canvas) create line [expr {$xp - 4}] [expr {$yp + 4}] \
+               [expr {$xp + 5}] [expr {$yp - 5}] -fill white -tags obj$i
+      }
+
+# Add label.
+      if { $xp < 0.0 } {
+         $itk_component(canvas) create text [expr {$xp + 5}] $yp \
+               -anchor nw -text $name -fill "" -tags lab$i
+      } else {
+         $itk_component(canvas) create text [expr {$xp - 5}] $yp \
+               -anchor ne -text $name -fill "" -tags lab$i
+      }
+
+# Binding to make label appear as the pointer hovers over it.
+      $itk_component(canvas) bind obj$i <Enter> \
+            [list $itk_component(canvas) itemconfigure lab$i -fill white]
+
+# Label the WFS targets.
+      if { [string equal $name $::Config(tcs.field.pwfs1target,value)] } {
+         $itk_component(canvas) create text [expr {$xp + 5}] [expr {$yp - 5}] \
+               -anchor sw -text (PWFS1) -fill white
+      }
+      if { [string equal $name $::Config(tcs.field.pwfs2target,value)] } {
+         $itk_component(canvas) create text [expr {$xp - 5}] [expr {$yp - 5}] \
+               -anchor se -text (PWFS2) -fill white
+      }
+      if { [string equal $name $::Config(tcs.field.oiwfstarget,value)] } {
+         $itk_component(canvas) create text [expr {$xp + 5}] [expr {$yp + 5}] \
+               -anchor nw -text (OIWFS) -fill white
+      }
+      if { [string equal $name $::Config(tcs.field.altairtarget,value)] } {
+         $itk_component(canvas) create text [expr {$xp - 5}] [expr {$yp+ 5}] \
+               -anchor ne -text (ALTAIR) -fill white
+      }
+      incr i
+   }
+
+# Draw the Wavefront sensors themselves.
+   drawwfs pwfs1
+   drawwfs pwfs2
+   drawwfs oiwfs
+   $itk_component(canvas) lower wfs
+}
+
+itcl::body FieldPlot::drawwfs {wfs} {
+
+# Get the wfs position (defaulted to way outside the field).
+   switch $wfs {
+      pwfs1 {
+         set x [sadVal agssad p1X 10000.0]
+         set y [sadVal agssad p1Y 10000.0]
+      }
+      pwfs2 {
+         set x [sadVal agssad p2X 10000.0]
+         set y [sadVal agssad p2Y 10000.0]
+      }
+      oiwfs {
+         set x [sadVal agssad oiX 10000.0]
+         set y [sadVal agssad oiY 10000.0]
+      }
+   }
+   if { $x < 9999.0 && $y < 9999.0 } {
+      set x [expr { round($x * $scale) }]
+      set y [expr { round($y * $scale) }]
+      set tag [$itk_component(canvas) create rectangle \
+            [expr {$x - 5}] [expr {$y - 5}] [expr { $x + 6 }] [expr {$y + 6}] \
+            -outline yellow -fill blue -tags wfs]
+      if { $x < 0.0 } {
+         $itk_component(canvas) create text [expr {$x - 7}] $y \
+               -anchor se -text [string toupper $wfs] -fill yellow
+      } else {
+         $itk_component(canvas) create text [expr {$x + 7}] $y \
+               -anchor sw -text [string toupper $wfs] -fill yellow
+      }
+
+# Add binding for button down.
+      $itk_component(canvas) bind $tag <ButtonPress-1> \
+            [itcl::code $this grabwfs $wfs]
+   }
+}
+
+itcl::body FieldPlot::setscale {v} {
+
+# Set new plot scale.
+   set scale [expr { pow( 10.0, $v )}]
+
+# Compute new plot size in arc min and construct label.
+   set w [expr { $width / $scale / 1.611 }]
+   set h [expr { $height / $scale / 1.611 }]
+   if { $w < 60.0 || $h < 60.0 } {
+      $itk_component(zlabel) configure -text [format "%d x %d arc sec" \
+            [expr { int( round( $w ) )}] [expr { int( round( $h ) )}]]
+   } elseif { $w < 3600.0 || $h < 3600.0 } {
+      $itk_component(zlabel) configure -text [format "%.1f x %.1f arc min" \
+            [expr { $w / 60.0 }] [expr { $h / 60.0 }]]
+   } else {
+      $itk_component(zlabel) configure -text [format "%.1f x %.1f degrees" \
+            [expr { $w / 3600.0 }] [expr { $h / 3600.0 }]]
+   }
+
+# Re-draw the plot.
+   plot
+}
+
+itcl::body FieldPlot::grabwfs {wfs} {
+
+# Set button release binding on whole canvas.
+   bind $itk_component(canvas) <ButtonRelease-1> \
+      [itcl::code $this dropwfs $wfs %x %y]
+}
+
+itcl::body FieldPlot::dropwfs {wfs xhit yhit} {
+
+# Remove the button release binding.
+   bind $itk_component(canvas) <ButtonRelease-1> ""
+
+# Convert x/y to mm in focal plane.
+   set xhit [expr { ($xhit - ($width / 2.0)) / $scale}]
+   set yhit [expr { ($yhit - ($height / 2.0)) / $scale}]
+
+# Scan the list of star coordinates looking for the closest.
+   set nearest ""
+   set minsep 999999.9
+   foreach name $namelist x $xlist y $ylist {
+      set sep [expr { ($x - $xhit) * ($x - $xhit) + \
+            ($y - $yhit) * ($y - $yhit) }]
+      if { $sep < $minsep } {
+         set minsep $sep
+         set nearest $name
+      }
+   }
+
+# Set the new target.
+   if { ![string equal $nearest ""] } {
+      set ::Config(tcs.field.${wfs}target,value) $nearest
+   }
+}

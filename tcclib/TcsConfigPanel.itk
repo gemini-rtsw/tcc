@@ -8,7 +8,7 @@
 #  Methods:
 #          none
 #
-#  D Terrett 20 October 2002
+#  D Terrett 14 May 2003
 #
 #  Copyright CCLRC
 #+
@@ -23,6 +23,7 @@ itcl::class TcsConfigPanel {
    private {
       method createSubMenu {menuPathName comproot}
       method export {}
+      method getocsobs {}
       method import {}
       variable menuno 0
       method purge {list namespace}
@@ -45,10 +46,15 @@ itcl::body TcsConfigPanel::constructor args {
    }
 
 # Add the import and export commands to the File menu.
+   $itk_component(menubar) insert .file.exit command getocsobs \
+            -label "Import from OCS..." \
+            -command [list [itcl::code $this getocsobs]]
    $itk_component(menubar) insert .file.exit command import \
-            -label Import... -command [list [itcl::code $this import]]
+            -label "Import from file..." \
+            -command [list [itcl::code $this import]]
    $itk_component(menubar) insert .file.exit command export \
-            -label Export... -command [list [itcl::code $this export]]
+            -label "Export to file..." \
+            -command [list [itcl::code $this export]]
 
 # Add the edit menu to the menu bar.
    $itk_component(menubar) add menubutton edit -text Edit
@@ -143,6 +149,9 @@ itcl::body TcsConfigPanel::import {} {
       if { [lsearch -exact $complist "Field orientations"] >= 0 } {
          purge RotatorList RotatorNames
       }
+      if { [lsearch -exact $complist "ALTAIR configurations"] >= 0 } {
+         purge AltairList AltairNames
+      }
       if { [lsearch -exact $complist "Chop configurations"] >= 0 } {
          purge ChopList ChopNames
       }
@@ -231,6 +240,9 @@ itcl::body TcsConfigPanel::export {} {
       if { [lsearch -exact $complist "Chop configurations"] >= 0 } {
          save ChopList ChopNames $node
       }
+      if { [lsearch -exact $complist "ALTAIR configurations"] >= 0 } {
+         save AltairList AltairNames $node
+      }
       if { [lsearch -exact $complist "Slew options"] >= 0 } {
          save SlewOptionsList SlewOptionsNames $node
       }
@@ -307,4 +319,20 @@ itcl::body TcsConfigPanel::save {list namespace node} {
          ${namespace}::$name save $node
       }
    }
+}
+
+itcl::body TcsConfigPanel::getocsobs {} {
+
+# Create a dialog box for selecting the observation and center it.
+   set dialog  $itk_interior.obsdialog
+   if { [winfo exists $dialog] } {
+      $dialog refresh
+   } else {
+      set dialog [ObsDialog $dialog -modality none \
+            -master $itk_interior -session ocssession]
+      $dialog center
+   }
+
+# Activate the dialog
+   $dialog activate
 }

@@ -24,6 +24,8 @@
 #
 #           -programid      Gemini Program ID
 #
+#           -observationid  Gemini Observation ID
+#
 #           -wavelength     The observing wavelength
 #
 #  Methods:
@@ -48,7 +50,7 @@
 #
 #          plot azelplot Plots the field position on an azelplot.
 #
-#  D Terrett 21 February 2003
+#  D Terrett 14 March 2003
 #
 #  Copyright CCLRC
 #+
@@ -77,6 +79,7 @@ itcl::class Field {
       variable guide ""
       variable wavelength ""
       variable programid ""
+      variable observationid ""
       variable airmassLimit ""
       variable targetns
       variable targetlist
@@ -181,11 +184,12 @@ itcl::body Field::apply {comp} {
       logger command airmassLimit
    }
    if { ![string is space $programid] } {
-      global env
-      ss $env(TCC_TCSNAME):sad:programID set value [list $programid]
-      ss $env(TCC_TCSNAME):sad:programID post
+      ss $::env(TCC_TCSNAME):sad:programID set value [list $programid]
+      ss $::env(TCC_TCSNAME):sad:programID post
    }
-
+   if { ![string is space $observationid] } {
+      ocssession obsStart $observationid
+   }
 }
 
 itcl::body Field::init {} {
@@ -444,8 +448,8 @@ itcl::body Field::remove {type name} {
 }
 
 # The posAngle config body sets the rotator option, creating the rotator 
-# component  if there isn't one that matches the posAngle definition. The
-# frame is assumed to by FK5/J2000.
+# component if there isn't one that matches the posAngle definition. The
+# frame is assumed to be FK5/J2000.
 
 itcl::configbody Field::posAngle {
 

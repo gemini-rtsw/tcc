@@ -13,9 +13,9 @@
 #
 # Methods:
 #
-#   slew {time}    "Slews" the simulated telescope as if the time was <time> 
-#                  (MJD) or offset from the current time by <time> days (if
-#                  <time> starts with + or -.
+#   slew {time offset} "Slews" the simulated telescope as if the time was
+#                      <time> (MJD) offset by <offset> seconds. A time of zero
+#                      means "now".
 #
 # D Terrett  30 January 2003
 #
@@ -26,7 +26,7 @@ load $::ROOT/tcclib/solaris/tcctelsim.so
 
 itcl::class TelescopeSim {
    public {
-      method slew {t} @tccTelSimSlew
+      method slew {t offset} @tccTelSimSlew
       method getxy {} @tccTelSimGetXY
 
 # Telescope context

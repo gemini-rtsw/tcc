@@ -10,7 +10,8 @@
 
 itcl::class TcsConfigControl {
    inherit ComponentControl
-   constructor args {}
+   constructor {args} {}
+   destructor {}
    public {
       method load {name}
       method preview {}
@@ -18,6 +19,8 @@ itcl::class TcsConfigControl {
    }
    private {
       method apply {}
+      method newfield {n1 n2 op}
+      method sesidle {}
       method wrap {par}
       variable components {
          field pointOrig slewOptions chop altair trackFrame instrument
@@ -35,20 +38,25 @@ itk::usual TcsConfigControl {
          -selectborderwidth -textfont -title -component
 }
 
-itcl::body TcsConfigControl::constructor args {
+itcl::body TcsConfigControl::constructor {args} {
 
-# Divide the window into 3 vertically.
+# Divide the window into 4 vertically.
    itk_component add row1 {
       frame $itk_interior.row1 -relief ridge -bd 2
    }
    itk_component add row2 {
-      frame $itk_interior.row2 -relief ridge -bd 2
+      iwidgets::labeledframe $itk_interior.row2 -relief ridge \
+            -labeltext "Session Control" -labelpos nw
    }
    itk_component add row3 {
-      frame $itk_interior.row3
+      iwidgets::labeledframe $itk_interior.row3 -relief ridge \
+            -labeltext "Wrap Control" -labelpos nw
+   }
+   itk_component add row4 {
+      frame $itk_interior.row4
    }
    pack $itk_component(row1) $itk_component(row2) $itk_component(row3) \
-         -expand y -fill x
+         $itk_component(row4) -expand y -fill x
 
 # Configuration component selectors.
    set w $itk_component(row1)
@@ -120,11 +128,27 @@ itcl::body TcsConfigControl::constructor args {
          $itk_component(chop) $itk_component(altair) \
          $itk_component(slewOptions) $itk_component(instrument) -fill x -pady 1
 
-# Wrap control
-   set w $itk_component(row2)
-   itk_component add wraptitle {
-      label $w.wraptitle -text "Wrap Control: "
+# Session control
+   set w [$itk_component(row2) childsite]
+   itk_component add idle {
+      button $w.idle -text "Set Idle reason" \
+            -command [itcl::code $this sesidle]
    }
+   itk_component add obsidf {
+      frame $w.obsidf
+   }
+   set w $itk_component(obsidf)
+   itk_component add obsidlab {
+      label $w.obsidlab -text "Observation id:"
+   }
+   itk_component add obsid {
+      label $w.obsid -width 18 -relief sunken
+   }
+   pack $itk_component(obsidlab) $itk_component(obsid) -side left
+   pack $itk_component(obsidf) $itk_component(idle) -side left -pady 3 -padx 2
+
+# Wrap control
+   set w [$itk_component(row3) childsite]
    itk_component add azwrap {
       iwidgets::optionmenu $w.azwrap -labeltext Azimuth
    }
@@ -139,12 +163,15 @@ itcl::body TcsConfigControl::constructor args {
    }
 
    pack $itk_component(wrapapply) $itk_component(rotwrap) \
-      $itk_component(azwrap) $itk_component(wraptitle) -side right -pady 3
+      $itk_component(azwrap) -side right -pady 3 -padx 20
+
+# Trace changes in the selected field.
+   trace variable ::Config(tcs.field,value) w [itcl::code $this newfield]
 
 # Replace the apply button with Slew/Set and Preview buttons.
    destroy $itk_component(store) $itk_component(aframe)
 
-   set w $itk_component(row3)
+   set w $itk_component(row4)
    itk_component add setslew {
       LiveButton $w.setslew -text "Set/Slew" \
             -command [itcl::code $this apply] -width 8
@@ -159,12 +186,16 @@ itcl::body TcsConfigControl::constructor args {
             -command [itcl::code $this preview] -width 8
    }
    pack $itk_component(setslew) $itk_component(store) $itk_component(preview) \
-         -side left -expand y -pady 4 -in $itk_component(row3)
+         -side left -expand y -pady 4 -in $itk_component(row4)
 
 # Set the object description.
    set description configuration
 
    eval itk_initialize $args
+}
+
+itcl::body TcsConfigControl::destructor {} {
+   trace vdelete ::Config(tcs.field,value) w [itcl::code $this newfield]
 }
 
 itcl::body TcsConfigControl::apply {} {
@@ -250,5 +281,27 @@ itcl::body TcsConfigControl::wrap par {
             - {return -1}
          }
       }
+   }
+}
+
+itcl::body TcsConfigControl::newfield {n1 n2 op} {
+   set name $::Config(tcs.field,value)
+   if { $name == "" } {
+      $itk_component(obsid) configure -text ""
+   } else {
+      $itk_component(obsid) configure -text \
+            [$::Config(tcs.field,namespace)::$name cget -observationid]
+   }
+}
+
+itcl::body TcsConfigControl::sesidle {} {
+   set dialog  $itk_interior.reason
+   if { ! [winfo exists $dialog] } {
+      set dialog [IdleReasonDialog $dialog -modality application \
+            -master $itk_interior]
+      $dialog center
+   }
+   if { [$dialog activate] } {
+      ocssession idleReason [$dialog get reason] [$dialog get comment]
    }
 }

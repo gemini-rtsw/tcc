@@ -31,7 +31,7 @@
 #          save node    Saves the values of all the component options to
 #                       the xml node.
 #
-#  D Terrett 21 February 2003
+#  D Terrett 13 May 2003
 #
 #  Copyright CCLRC
 #+
@@ -65,7 +65,9 @@ itcl::class TcsConfig {
 
 itcl::body TcsConfig::apply {comp} {
 
-# Call the apply method of all the components that have a value.
+# Call the apply method of all the components that have a value. Note that
+# Altair comes after SlewOptions so that Slew options doesn't overwrite
+# the filter 1 setting.
    if { ! [string equal $field ""] } {
       ::FieldNames::$field apply $comp.field
    }
@@ -75,11 +77,11 @@ itcl::body TcsConfig::apply {comp} {
    if { ! [string equal $chop ""] } {
       ::ChopNames::$chop apply $comp.chop
    }
-   if { ! [string equal $altair ""] } {
-      ::AltairNames::$altair apply $comp.altair
-   }
    if { ! [string equal $slewOptions ""] } {
       ::SlewOptionsNames::$slewOptions apply $comp.slewoptions
+   }
+   if { ! [string equal $altair ""] } {
+      ::AltairNames::$altair apply $comp.altair
    }
    if { ! [string equal $trackFrame ""] } {
       ::TrackFrameNames::$trackFrame apply $comp.trackframe

@@ -19,7 +19,7 @@
 #           newtarget name type args  Creates a new target in the currently 
 #                                     selected field.
 #
-#  D Terrett 28 November 2002
+#  D Terrett 11 March 2003
 #
 #  Copyright CCLRC
 #+
@@ -196,7 +196,12 @@ itcl::body FieldControl::constructor args {
       StarSelectControl $w.starselect
    }
    pack $itk_component(starselect)
-   #set w [$itk_component(plots) add -label Field]
+   set w [$itk_component(plots) add -label Field]
+   itk_component add fieldplot {
+      FieldPlot $w.fieldplot
+   }
+   pack $itk_component(fieldplot)
+
    $itk_component(plots) select "All Sky"
    pack $itk_component(plots) -side left
 

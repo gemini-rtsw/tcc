@@ -10,7 +10,7 @@
 #           update          Updates the view with the current state of the
 #                           telescope.
 #
-#  D Terrett 18 November 2002
+#  D Terrett 13 March 2003
 #
 #  Copyright CCLRC
 #-
@@ -82,6 +82,9 @@ itcl::body GraphicDisplay::constructor args {
       frame $w.oiwfs -borderwidth 2 -relief ridge
    }
    set w $itk_component(oiwfs)
+   itk_component add oiname {
+      label $w.oiname
+   }
    itk_component add oilabel {
       label $w.oilabel -text "OIWFS"
    }
@@ -96,8 +99,9 @@ itcl::body GraphicDisplay::constructor args {
    itk_component add oiwavel {
       label $w.oiwavel
    }
-   pack $itk_component(oilabel) $itk_component(oix) $itk_component(oiy) \
-         $itk_component(oiwavel) -padx 5 -pady 5
+   pack $itk_component(oiname) $itk_component(oilabel) -padx 5
+   pack $itk_component(oix) $itk_component(oiy) $itk_component(oiwavel) \
+         -padx 5 -pady 3
    set w $itk_component(col4)
    itk_component add pwfs1 {
       frame $w.pwfs1 -borderwidth 2 -relief ridge
@@ -129,7 +133,7 @@ itcl::body GraphicDisplay::constructor args {
    }
    pack $itk_component(p2label) $itk_component(probe2) $itk_component(p2wavel)
    pack $itk_component(pwfs2) $itk_component(pwfs1) $itk_component(oiwfs) \
-         -side bottom -pady 10
+         -side bottom -pady 3
 
 # Configure the ISS port numbers and AO.
    $itk_component(opticsview) configure -portAnumber 1 
@@ -365,7 +369,8 @@ itcl::body GraphicDisplay::update {} {
       $itk_component(oiy) configure -status error
    }
 
-# Update the OIWFS position.
+# Update the OIWFS name position.
+   $itk_component(oiname) configure -text [sa agssad get oiwfsName]
    $itk_component(oix) configure -text [format %.2f [sadVal agssad oiX 0.0]]
    $itk_component(oiy) configure -text [format %.2f [sadVal agssad oiY 0.0]]
 

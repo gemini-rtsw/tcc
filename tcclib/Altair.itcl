@@ -27,7 +27,7 @@
 #          save node     Saves the values of the Altair configuration
 #                        to the xml node
 #
-#  D Terrett 21 February 2003
+#  D Terrett 15 May 2003
 #
 #  Copyright CCLRC
 #+
@@ -53,7 +53,7 @@ itcl::body Altair::apply {comp} {
 # guide start X/Y. If we are being called as part of an overall TCS
 # configuration then we must predict what these are going to be using the
 # Preview functions. If not, we use the current values from the telescope.
-   if { [string equal [uplevel 1 \$this info class] ::TcsConfigComponent] } {
+   if { [uplevel 1 \$this isa TcsConfig] } {
 
 # Call the configuration's preview method.
       set view [Preview ::#auto]
@@ -69,6 +69,14 @@ itcl::body Altair::apply {comp} {
       }
       set x [lindex $xy 0]
       set y [lindex $xy 1]
+
+# There is a zero point correcting that is currently applied by the TCS
+# so we have to make this adjustment here as well.
+      set x [expr { $x - [sa tcssad get aoXoffset] }]
+      set y [expr { $y - [sa tcssad get aoYoffset] }]
+
+# Delete the preview.
+      itcl::delete object $view
    } else {
       set rotpos [sa tcssad get demandRma]
       scan [sa tcssad get demandEl] "%d:%d:%f" d m s
@@ -78,12 +86,11 @@ itcl::body Altair::apply {comp} {
       set y [sa tcssad get aoDemandy]
    }
 
-# Delete the preview.
-   itcl::delete object $view
-
+# Deploy (or not) the ADC.
    cs aoDeployAdc set position $deployAdc
    logger command aoDeployAdc
 
+# Configure ADC.
    cs aoMoveAdc set rotpos [expr { $rotpos < 0.0 ? $rotpos + 360.0 : $rotpos }]
    cs aoMoveAdc set zd $zd
    cs aoMoveAdc set adjust $adjustAdc
@@ -92,11 +99,11 @@ itcl::body Altair::apply {comp} {
 # wavelength.
    set wavel [cs wavelSourceA get wavel]
    if { ! ( [string equal $wavel "No Value"] || [string equal $wavel ""] ) } {
-      puts "cs aoMoveAdc wavel [expr { $wavel * 1000.0 }]"
       cs aoMoveAdc wavel [expr { $wavel * 1000.0 }]
    }
    logger command aoMoveAdc
 
+# Prepare control matrix.
    cs aoPrepareCm set x $x
    cs aoPrepareCm set y $y
    cs aoPrepareCm set gsmag $gsmag
@@ -104,8 +111,16 @@ itcl::body Altair::apply {comp} {
    cs aoPrepareCm set windspeed $windspeed
    logger command aoPrepareCm
 
+# Flatten the mirror.
    cs aoFlatten dummy 1
    logger command aoFlatten
+
+# Set filter 1 to limit the speed of offsets.
+   cs filter1 set shortCircuit Open
+   cs filter1 set bandwidth 200
+   cs filter1 set grab 0.1
+   cs filter1 set maxv 2.0
+   logger command filter1
 }
 
 itcl::body Altair::save {node} {

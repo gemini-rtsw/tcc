@@ -228,16 +228,13 @@ static int ConfigureEV( Tcl_Interp *interp, Tk_Canvas canvas, Tk_Item *itemPtr,
 {
    ElViewItem *elviewPtr = (ElViewItem *) itemPtr;
    Tk_Window tkwin = Tk_CanvasTkwin( canvas );
-   Display *display = Tk_Display( tkwin );
-   GC newGC;
-   XGCValues gcvalues;
-   unsigned long mask;
    char savest[40];
    int i;
    double az, el, ha, dec, sdec, cdec;
 
-   if ( Tk_ConfigureWidget( interp, tkwin, configspecs, objc, (char**) objv, 
-      (char *)elviewPtr, flags|TK_CONFIG_OBJS) != TCL_OK ) {
+   if ( Tk_ConfigureWidget( interp, tkwin, configspecs, objc,
+         (const char**) objv, (char *)elviewPtr, flags|TK_CONFIG_OBJS) != 
+         TCL_OK ) {
       return TCL_ERROR;
    }
 
@@ -340,7 +337,6 @@ static void DisplayEV( Tk_Canvas canvas, Tk_Item *itemPtr, Display *display,
    Drawable drawable, int xunused, int yunused, int wunused, int hunused)
 {
    ElViewItem *elviewPtr = (ElViewItem *) itemPtr;
-   Tk_Window tkwin = Tk_CanvasTkwin( canvas );
    short xc, yc;
    int i;
 

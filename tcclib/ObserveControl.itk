@@ -7,7 +7,7 @@
 #  Methods:
 #           none
 #
-#  D Terrett  11 November 2002
+#  D Terrett  28 April 2003
 #
 #  Copyright CCLRC
 #+
@@ -16,7 +16,7 @@ itcl::class ObserveControl {
    inherit itk::Widget
    constructor args {}
    private {
-      method setfold {}
+      method setfold {path}
       method setnod {state}
       method center {p par}
    }
@@ -51,6 +51,11 @@ itcl::body ObserveControl::constructor args {
       AcqcamControl $w.acqcam
    }
 
+# Fold mirrors.
+   itk_component add mirrors {
+      frame $w.mirros  -bd 2 -relief ridge
+   }
+
 # Various chop/node and WFS probe controls.
    itk_component add buttons {
       frame $w.buttons -bd 2 -relief ridge
@@ -61,27 +66,48 @@ itcl::body ObserveControl::constructor args {
       AoControl $w.altair
    }
 
-   pack $itk_component(acqcam) $itk_component(buttons) $itk_component(altair) \
-         -side left -pady 10 -padx 5 -anchor s
-   set w $itk_component(buttons)
+   pack $itk_component(acqcam) $itk_component(mirrors) $itk_component(buttons) \
+         $itk_component(altair) -side left -pady 10 -padx 5 -anchor s
 
 # Button and option menu for configuring the A & G fold mirrors.
+   set w $itk_component(mirrors)
    itk_component add foldlab {
       label $w.foldlab -text "Light Path:"
    }
-   itk_component add foldsel {
-      iwidgets::optionmenu $w.foldsel -command [itcl::code $this setfold]
+   itk_component add si {
+      button $w.si -text "Sky>Instr" \
+            -command [itcl::code $this setfold "Sky>Instr"]
    }
-   $itk_component(foldsel) insert end \
-         "Sky>Instr" \
-         "Sky>AO->Inst" \
-         "GCAL>Instr" \
-         "Sky>AC/HR" \
-         "Sky>AO>AC/HR" \
-         "AO cal>Instr" \
-         "AO cal>AC/HR"
+   itk_component add sai {
+      button $w.sai -text "Sky>AO>Inst" \
+            -command [itcl::code $this setfold "Sky>AO>Inst"]
+   }
+   itk_component add gi {
+      button $w.gi -text "GCAL>Instr" \
+            -command [itcl::code $this setfold "GCAL>Instr"]
+   }
+   itk_component add sh {
+      button $w.sh -text "Sky>AC/HR" \
+            -command [itcl::code $this setfold "Sky>AC/HR"]
+   }
+   itk_component add sah {
+      button $w.sah -text "Sky>AO>AC/HR" \
+            -command [itcl::code $this setfold "Sky>AO>AC/HR"]
+   }
+   itk_component add agi {
+      button $w.agi -text "AO cal>Instr" \
+            -command [itcl::code $this setfold "AO cal>Instr"]
+   }
+   itk_component add agh {
+      button $w.agh -text "AO cal>AC/HR" \
+            -command [itcl::code $this setfold "AO cal>AC/HR"]
+   }
+   pack $itk_component(si) $itk_component(sai) $itk_component(gi) \
+         $itk_component(sh) $itk_component(sah) $itk_component(agi) \
+         $itk_component(agh) -expand y -fill x
 
 # Buttons for controlling chopping and M2 beam.
+   set w $itk_component(buttons)
    itk_component add choplab {
       label $w.choplab -text Chop/Nod
    }
@@ -161,7 +187,6 @@ itcl::body ObserveControl::constructor args {
 #            -parcommand [itcl::code $this center 2]
 #   }
 
-   grid $itk_component(foldlab) $itk_component(foldsel) - -sticky w -pady 5
    grid $itk_component(choplab) $itk_component(p1lab) \
          $itk_component(p2lab) -sticky ew -padx 5
    grid $itk_component(chop) $itk_component(p1follow) \
@@ -189,10 +214,10 @@ itcl::body ObserveControl::constructor args {
    eval itk_initialize $args
 }
 
-itcl::body ObserveControl::setfold {} {
-   switch [$itk_component(foldsel) get] {
+itcl::body ObserveControl::setfold {path} {
+   switch $path {
       "Sky>Instr" {iss configure -source SKY -sink INSTR -ao OUT}
-      "Sky>AO->Inst" {iss configure -source AO -sink INSTR -ao IN}
+      "Sky>AO>Inst" {iss configure -source AO -sink INSTR -ao IN}
       "GCAL>Instr" {iss configure -source CAL -sink INSTR}
       "Sky>AC/HR" {iss configure -source SKY -sink HRWFS -ao OUT}
       "Sky>AO>AC/HR" {iss configure -source AO -sink HRWFS -ao IN}

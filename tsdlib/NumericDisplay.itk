@@ -11,7 +11,7 @@
 #
 #  options
 #
-#  D Terrett 17 February 2003
+#  D Terrett 13 May 2003
 #
 #  Copyright CCLRC
 #-
@@ -109,12 +109,6 @@ itcl::body NumericDisplay::constructor args {
       StatusField $w.tepos2 -labelmargin 5 -width 11 -entryborder 3 \
             -entryrelief groove
    }
-   itk_component add palab {
-      label $w.palab -text "Pos Angle"
-   }
-   itk_component add pa {
-      label $w.pa -relief groove -width 8
-   }
 
    itk_component add tarlabel {
       label $w.tarlabel -text "TARGET:"
@@ -209,6 +203,14 @@ itcl::body NumericDisplay::constructor args {
    itk_component add instry {
       StatusField $w.instry -labelmargin 5 -width 6 -entryborder 3 \
             -entryrelief groove -anchor e -labeltext Y
+   }
+   itk_component add ipa {
+      StatusField $w.ipa -width 5 -entryborder 3 \
+            -entryrelief groove -anchor e -labeltext IPA
+   }
+   itk_component add iaa {
+      StatusField $w.iaa -width 5 -entryborder 3 \
+            -entryrelief groove -anchor e -labeltext IAA
    }
 
 # Time.
@@ -312,10 +314,8 @@ itcl::body NumericDisplay::constructor args {
          $itk_component(status) - - -sticky e -padx 3 -pady 2
    grid configure $itk_component(objname) -sticky w
    grid $itk_component(telposlabel) $itk_component(telpos1) \
-         $itk_component(telpos2) $itk_component(palab) \
-         $itk_component(pa) -sticky e -padx 3 -pady 2
+         $itk_component(telpos2) -sticky e -padx 3 -pady 2
    grid configure $itk_component(status) -rowspan 2
-   grid configure $itk_component(pa) -sticky w
    grid $itk_component(tarlabel) $itk_component(tar1) \
          $itk_component(tar2) $itk_component(tarsys) $itk_component(tarwavel) \
          $itk_component(nod) -sticky e -padx 3 -pady 2
@@ -330,10 +330,12 @@ itcl::body NumericDisplay::constructor args {
         x $itk_component(tt) - - -sticky e -padx 3 -pady 2
    grid configure $itk_component(tt) -sticky {}
    grid $itk_component(choplab) $itk_component(chop1) $itk_component(chop2) \
-         x $itk_component(focus) - - -sticky e -padx 3 -pady 2
+         $itk_component(ipa) $itk_component(focus) - - \
+         -sticky e -padx 3 -pady 2
    grid configure $itk_component(focus) -sticky {}
    grid $itk_component(instrlab) $itk_component(instrx) $itk_component(instry) \
-          x $itk_component(hazdam) - - -sticky e -padx 3 -pady 2
+          $itk_component(iaa) $itk_component(hazdam) - - \
+          -sticky e -padx 3 -pady 2
    grid configure $itk_component(instrx) $itk_component(instry) -sticky e
    grid $itk_component(mech) - - - $itk_component(time) - -
    grid configure $itk_component(mech) -sticky w
@@ -494,7 +496,8 @@ itcl::body NumericDisplay::update {} {
 # Telescope and dome position.
 #   $itk_component(telpos1) configure -text [sa tcssad get currentRA]
 #   $itk_component(telpos2) configure -text [sa tcssad get currentDec]
-   $itk_component(pa) configure -text [sa tcssad get instrPA]
+   $itk_component(ipa) configure -text [sa tcssad get instrPA]
+   $itk_component(iaa) configure -text [sa tcssad get instrAA]
    $itk_component(telaz) configure -text [sa tcssad get currentAz]
    $itk_component(azerr) configure -text [sa tcssad get azError]
    $itk_component(telel) configure -text [sa tcssad get currentEl]

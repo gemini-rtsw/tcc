@@ -8,7 +8,7 @@ static char rcsid[]="$Id:";
 *   tccTelSimSlew - Implements the TelescopeSim object slew method.
 *   tccTelSimGetXY - Implements the TelescopeSim object getxy method.
 *
-*   D L Terrett 25 February 2003
+*   D L Terrett 26 February 2003
 *
 *   Copyright CCLRC
 */
@@ -26,6 +26,8 @@ static char rcsid[]="$Id:";
 #include <timeLib.h>
 #include <astLib.h>
 #include "tccConstants.h"
+#include "tccDecode.h"
+#include "tccUtil.h"
 
 /* 0 deg C in deg K. */
 #define FREEZING 273.2
@@ -41,8 +43,7 @@ static int initParams( Tcl_Interp *interp, double utc, double aoprms[15],
       struct TELP *telp, double *xpmr, double *ypmr, double *elong, 
       double *lat );
 static int getTarget(  Tcl_Interp *interp, double elong, double lat,
-      double tt, double aoprms[15], struct TELP *telp, double *a, double *b, 
-      FRAMETYPE *system, struct EPOCH *equinox);
+      double tt, double aoprms[15], struct TELP *telp, double *a, double *b);
 static int getPo( Tcl_Interp *interp, double *pox, double *poy);
 static int getRotator( Tcl_Interp *interp, double *iaa, double *ipa,
       FRAMETYPE *system, struct EPOCH *equinox);
@@ -62,8 +63,7 @@ static int storeContext( Tcl_Interp *interp, double elong, double lat,
       struct WCS_CTX *ctx);
 static int getContext( Tcl_Interp *interp, double *elong, double *lat,
       struct WCS_CTX *ctx);
-static int setTarget( Tcl_Interp *interp, double a, double b, 
-      FRAMETYPE system, struct EPOCH equinox);
+static void formatTarget( double a, double b, char* result);
 
 /* Loadable extension initialisation routine. */
 int Tcctelsim_Init( Tcl_Interp *interp )
@@ -88,8 +88,8 @@ static int tccTelSimSlew( ClientData cdata, Tcl_Interp *interp, int objc,
    double elong, lat;
    double date, offset, rawt, utc, tt, tai;
    double a, b;
-   FRAMETYPE system;
-   struct EPOCH equinox, epoch;
+   struct EPOCH epoch;
+   struct EPOCH j2000 = { 2000.0, 'J' };
    struct PMPXRV pm;
    double iaa, ipa;
    FRAMETYPE rotsys;
@@ -103,6 +103,7 @@ static int tccTelSimSlew( ClientData cdata, Tcl_Interp *interp, int objc,
    double azlolim, azhilim, ellim, rotlolim, rothilim, zlim;
    double azttl1, azttl2, elttl, rotttl1, rotttl2, zttl;
    int visible;
+   char result[26];
 
 /* Get slew time and time offset from argument list. A time of zero or less
    means "now". */
@@ -131,8 +132,8 @@ static int tccTelSimSlew( ClientData cdata, Tcl_Interp *interp, int objc,
          != TCL_OK ) return TCL_ERROR;
 
 /* Get the target position at epoch of slew. */
-   if ( getTarget( interp, tt, elong, lat, aoprms, &telp, &a, &b, 
-         &system, &equinox) != TCL_OK ) return TCL_ERROR;
+   if ( getTarget( interp, tt, elong, lat, aoprms, &telp, &a, &b) != TCL_OK ) 
+         return TCL_ERROR;
 
 /* Get pointing origin. */
    if ( getPo( interp, &telp.pox, &telp.poy ) != TCL_OK ) return TCL_ERROR;
@@ -152,13 +153,16 @@ static int tccTelSimSlew( ClientData cdata, Tcl_Interp *interp, int objc,
    }
    if ( astSimctx_r( tai, elong, aoprms[0], aoprms[4], xpmr, ypmr, aoprms[5],
          aoprms[6], aoprms[7], aoprms[9], aoprms[8], telp, m2xy, a, b,
-         system, equinox, iaa, ipa, rotsys, roteqx, &ctx) != 0 ) {
+         FK5, j2000, iaa, ipa, rotsys, roteqx, &ctx) != 0 ) {
       Tcl_SetResult( interp, "unreachable position", TCL_VOLATILE);
       return TCL_ERROR;
    }
 
 /* Compute Apparent RA/Dec of telescope. */
-   if ( astCoco( a, b, pm, system, equinox, epoch,
+   pm.pm = 0;
+   epoch.year = slaEpj(tt);
+   epoch.type = 'J';
+   if ( astCoco( a, b, pm, FK5, j2000, epoch,
          APPT, roteqx, tt, aoprms, ctx.tel, &ra, &dec) != 0 ) {
       Tcl_SetResult( interp, "unreachable position", TCL_VOLATILE);
       return TCL_ERROR;
@@ -193,7 +197,9 @@ static int tccTelSimSlew( ClientData cdata, Tcl_Interp *interp, int objc,
     if ( storeContext( interp, lat, elong, &ctx ) != TCL_OK ) return TCL_ERROR;
 
 /* Store source position. */
-   if ( setTarget( interp, a, b, system, equinox) != TCL_OK ) return TCL_ERROR;
+   formatTarget( a, b, result);
+   if ( Tcl_SetVar2Ex( interp, "target", NULL, Tcl_NewStringObj( result, -1 ),
+         TCL_NAMESPACE_ONLY | TCL_LEAVE_ERR_MSG) == NULL) return TCL_ERROR;
 
 /* Set output variables. */
    if ( storeOutputs( interp, rawt, visible, az1, az2, el, rma1, rma2, ha, zd,
@@ -209,7 +215,6 @@ static int initParams( Tcl_Interp *interp, double utc, double aoprms[15],
 {
    Tcl_Obj *valobj;
    double elongm, latm, hm, tdc, pmb, rh, tlr, delut, wavel;
-   int y, m, d, status, i;
 
 /* Copy data from Itcl method variables. */
    if ((valobj = Tcl_GetVar2Ex( interp, "elongm", NULL, 
@@ -318,18 +323,19 @@ static int initParams( Tcl_Interp *interp, double utc, double aoprms[15],
 }
 
 static int getTarget(  Tcl_Interp *interp, double tt, double elong, double lat, 
-   double aoprms[15], struct TELP *telp, double *a, double *b, 
-   FRAMETYPE *system, struct EPOCH *equinox)
+   double aoprms[15], struct TELP *telp, double *a, double *b )
 {
-   char *targetTypes[] = { "hmsdegTarget", "degdegTarget", "conicTarget",
+   const char *targetTypes[] = { "hmsdegTarget", "degdegTarget", "conicTarget",
          NULL };
    Tcl_Obj *obj, *obj1, *obj2, **objv;
    int ind, nel, len, i;
    double theta1, theta2;
-   struct EPOCH epoch; 
+   FRAMETYPE system;
+   struct EPOCH epoch, equinox; 
+   struct EPOCH j2000 = { 2000.0, 'J' }; 
    struct PMPXRV pm;
    int jtype, jstat;
-   double t0, orbel[6], r;
+   double t0, orbel[7], r;
 
 /* Get the target type. */
    if ((obj = Tcl_GetVar2Ex( interp, "targetType", NULL, 
@@ -345,7 +351,7 @@ static int getTarget(  Tcl_Interp *interp, double tt, double elong, double lat,
 /* Coordinate system. */
          if ((obj = Tcl_GetVar2Ex( interp, "system", NULL, TCL_NAMESPACE_ONLY
                | TCL_LEAVE_ERR_MSG)) == NULL) return TCL_ERROR;
-         if ( tccDcFrame( interp, Tcl_GetStringFromObj( obj, NULL), system)
+         if ( tccDcFrame( interp, Tcl_GetStringFromObj( obj, NULL), &system)
                != TCL_OK ) return TCL_ERROR;
 
 /* RA & Dec. */
@@ -353,7 +359,7 @@ static int getTarget(  Tcl_Interp *interp, double tt, double elong, double lat,
                | TCL_LEAVE_ERR_MSG)) == NULL) return TCL_ERROR;
          if ((obj2 = Tcl_GetVar2Ex( interp, "theta2", NULL, TCL_NAMESPACE_ONLY
                | TCL_LEAVE_ERR_MSG)) == NULL) return TCL_ERROR;
-         if ( tccDcRadec( interp, *system,
+         if ( tccDcRadec( interp, system,
                Tcl_GetStringFromObj( obj1, NULL),
                Tcl_GetStringFromObj( obj2, NULL), &theta1, &theta2) != TCL_OK )
             return TCL_ERROR;
@@ -362,7 +368,7 @@ static int getTarget(  Tcl_Interp *interp, double tt, double elong, double lat,
          if ((obj = Tcl_GetVar2Ex( interp, "equinox", NULL, TCL_NAMESPACE_ONLY
                | TCL_LEAVE_ERR_MSG)) == NULL) return TCL_ERROR;
          if ( tccDcEpoch( interp, Tcl_GetStringFromObj( obj, NULL),
-               &equinox->type, &equinox->year ) != TCL_OK )
+               &equinox.type, &equinox.year ) != TCL_OK )
                return TCL_ERROR;
 
 /* Epoch */
@@ -377,12 +383,12 @@ static int getTarget(  Tcl_Interp *interp, double tt, double elong, double lat,
          if ( strlen( Tcl_GetStringFromObj( obj, NULL) ) ) {
             if ( Tcl_GetDoubleFromObj( interp, obj, &pm.pmRA )
                   != TCL_OK ) return TCL_ERROR;
-            if ((obj = Tcl_GetVar2Ex( interp, "pm1", NULL, TCL_NAMESPACE_ONLY
+            if ((obj = Tcl_GetVar2Ex( interp, "pm2", NULL, TCL_NAMESPACE_ONLY
                      | TCL_LEAVE_ERR_MSG)) == NULL) return TCL_ERROR;
             if ( Tcl_GetDoubleFromObj( interp, obj, &pm.pmDec )
                 != TCL_OK ) return TCL_ERROR;
             pm.pm = 1;
-            pm.pmRA *= AS2R;
+            pm.pmRA *= S2R;
             pm.pmDec *= AS2R;
          } else {
             pm.pm = 0;
@@ -408,9 +414,9 @@ static int getTarget(  Tcl_Interp *interp, double tt, double elong, double lat,
             pm.rv = 0.0;
          }
 
-/* To current epoch */
-         if ( astCoco( theta1, theta2, pm, *system, *equinox, epoch, *system, 
-               *equinox, tt, aoprms, *telp, a, b) > 0 ) {
+/* To current epoch J2000 */
+         if ( astCoco( theta1, theta2, pm, system, equinox, epoch, FK5, 
+               j2000, tt, aoprms, *telp, a, b) > 0 ) {
             Tcl_SetResult( interp, "unreachable position", TCL_VOLATILE);
             return TCL_ERROR;
          }
@@ -418,20 +424,27 @@ static int getTarget(  Tcl_Interp *interp, double tt, double elong, double lat,
 
 /* Decode degdeg target. */
       case 1:
-         *system = AZEL_TOPO;
+         system = AZEL_TOPO;
          if ((obj1 = Tcl_GetVar2Ex( interp, "theta1", NULL, TCL_NAMESPACE_ONLY
                | TCL_LEAVE_ERR_MSG)) == NULL) return TCL_ERROR;
          if ((obj2 = Tcl_GetVar2Ex( interp, "theta2", NULL, TCL_NAMESPACE_ONLY
                | TCL_LEAVE_ERR_MSG)) == NULL) return TCL_ERROR;
-         if ( tccDcRadec( interp, *system,
+         if ( tccDcRadec( interp, system,
                Tcl_GetStringFromObj( obj1, NULL),
                Tcl_GetStringFromObj( obj2, NULL), &theta1, &theta2) != TCL_OK )
             return TCL_ERROR;
+
+/* To current epoch J2000 */
+         if ( astCoco( theta1, theta2, pm, system, equinox, epoch, FK5, 
+               j2000, tt, aoprms, *telp, a, b) > 0 ) {
+            Tcl_SetResult( interp, "unreachable position", TCL_VOLATILE);
+            return TCL_ERROR;
+         }
          break;
       case 2:
 
 /* Decode orbital elements. */
-         if ((obj = Tcl_GetVar2Ex( interp, "orbtype", NULL, TCL_NAMESPACE_ONLY
+         if ((obj = Tcl_GetVar2Ex( interp, "orbType", NULL, TCL_NAMESPACE_ONLY
               | TCL_LEAVE_ERR_MSG)) == NULL) return TCL_ERROR;
          if ( Tcl_GetIntFromObj( interp, obj, &jtype ) !=
                TCL_OK ) return TCL_ERROR;
@@ -452,6 +465,9 @@ static int getTarget(  Tcl_Interp *interp, double tt, double elong, double lat,
                      TCL_VOLATILE );
                return TCL_ERROR;
          }
+         if ((obj = Tcl_GetVar2Ex( interp, "orbElements", NULL, 
+              TCL_NAMESPACE_ONLY | TCL_LEAVE_ERR_MSG)) == NULL) 
+              return TCL_ERROR;
          if ( Tcl_ListObjGetElements( interp, obj, &len, &objv ) != TCL_OK ) 
                return TCL_ERROR;
          if ( nel != len ) {
@@ -480,9 +496,6 @@ static int getTarget(  Tcl_Interp *interp, double tt, double elong, double lat,
 
 /* To J2000. */
          slaAmp( theta1, theta2, tt, 2000.0, a, b );
-         *system = FK5;
-         equinox->year = 2000.0;
-         equinox->type = 'J';
          break;
    }
 
@@ -937,9 +950,9 @@ static int tccTelSimGetXY( ClientData cdata, Tcl_Interp *interp,
    double elong, lat, tt;
    struct WCS_CTX ctx;
    double a, b, wavel, x, y;
-   FRAMETYPE system;
-   struct EPOCH equinox;
+   struct EPOCH j2000 = { 2000.0, 'J' };
    struct WCS wcs, iwcs;
+   char result[26];
 
    if ( objc != 1 ) {
       Tcl_WrongNumArgs( interp, 1, objv, "");
@@ -953,8 +966,8 @@ static int tccTelSimGetXY( ClientData cdata, Tcl_Interp *interp,
    timeThenD( ctx.time, TT, &tt );
 
 /* Get target position. */
-   if ( getTarget( interp, tt, elong, lat, ctx.aoprms, &ctx.tel, &a, &b, 
-         &system, &equinox) != TCL_OK ) return TCL_ERROR;
+   if ( getTarget( interp, tt, elong, lat, ctx.aoprms, &ctx.tel, &a, &b) 
+        != TCL_OK ) return TCL_ERROR;
 
 /* Get wavelength. */
    if ((valobj = Tcl_GetVar2Ex( interp, "wavelength", NULL, 
@@ -963,7 +976,7 @@ static int tccTelSimGetXY( ClientData cdata, Tcl_Interp *interp,
        return TCL_ERROR;
 
 /* Generate WCS transformation. */
-   if ( astCtx2tr( ctx, system, equinox, wavel, 0, &wcs, &ctx.time ) ) {
+   if ( astCtx2tr( ctx, FK5, j2000, wavel, 0, &wcs, &ctx.time ) ) {
       Tcl_SetResult( interp,
            "WCS transformation generation failed", TCL_VOLATILE);
       return TCL_ERROR;
@@ -985,6 +998,8 @@ static int tccTelSimGetXY( ClientData cdata, Tcl_Interp *interp,
    listobj = Tcl_NewListObj( 0, NULL);
    Tcl_ListObjAppendList( interp, listobj, Tcl_NewDoubleObj( x ));
    Tcl_ListObjAppendList( interp, listobj, Tcl_NewDoubleObj( y ));
+   formatTarget( a, b, result);
+   Tcl_ListObjAppendList( interp, listobj, Tcl_NewStringObj( result, -1 ));
    Tcl_SetObjResult( interp, listobj );
 
    return TCL_OK;
@@ -1088,41 +1103,15 @@ static int getContext( Tcl_Interp *interp, double *elong, double *lat,
    return TCL_OK;
 }
 
-static int setTarget( Tcl_Interp *interp, double a, double b, 
-      FRAMETYPE system, struct EPOCH equinox)
+static void formatTarget( double a, double b, char result[26])
 {
    int hmsf[4], dmsf[4];
    char sign1, sign2;
-   char result[60];
 
    slaDr2tf( 3, a, &sign1, hmsf);
    slaDr2af( 2, b, &sign2, dmsf);
-   switch ( system ) {
-      case FK4:
-         sprintf( result,
-               "%02d:%02d:%02d.%03d %c%02d:%02d:%02d.%02d FK4 %c%.2f",
-               hmsf[0], hmsf[1], hmsf[2], hmsf[3], sign2, dmsf[0], dmsf[1],
-               dmsf[2], dmsf[3], equinox.type, equinox.year);
-         break;
-      case FK5:
-         sprintf( result,
-               "%02d:%02d:%02d.%03d %c%02d:%02d:%02d.%02d FK5 %c%.2f",
-               hmsf[0], hmsf[1], hmsf[2], hmsf[3], sign2, dmsf[0], dmsf[1],
-               dmsf[2], dmsf[3], equinox.type, equinox.year);
-         break;
-      case APPT:
-         sprintf( result,
-               "%02d:%02d:%02d.%03d %c%02d:%02d:%02d.%02d Apparent",
-               hmsf[0], hmsf[1], hmsf[2], hmsf[3], sign2, dmsf[0], dmsf[1],
-               dmsf[2], dmsf[3]);
-         break;
-      case AZEL_TOPO:
-         sprintf( result,
-               "%.3f %.3f Topocentric Az/El", a/D2R, b/D2R);
-         break;
-   }
-   
-   if ( Tcl_SetVar2Ex( interp, "target", NULL, Tcl_NewStringObj( result, -1 ),
-         TCL_NAMESPACE_ONLY | TCL_LEAVE_ERR_MSG) == NULL) return TCL_ERROR;
-   return TCL_OK;
+   sprintf( result,
+        "%02d:%02d:%02d.%03d %c%02d:%02d:%02d.%02d",
+         hmsf[0], hmsf[1], hmsf[2], hmsf[3], sign2, dmsf[0], dmsf[1],
+         dmsf[2], dmsf[3]);
 }

@@ -15,7 +15,7 @@
 proc createConfig {} {
 
 # Build the global array that underlies the current TCS configuration.
-   set ::Config(tcs,value) default
+   set ::Config(tcs,value) ""
    set ::Config(tcs,anon) ::[TcsConfig #auto]
    set ::Config(tcs,class) TcsConfigComponent
    set ::Config(tcs,namespace) ::TcsConfigNames
@@ -345,7 +345,7 @@ proc createConfig {} {
    set ::Config(tcs.altair,subcomp) ""
    set ::Config(tcs.altair,label) "ALTAIR configuration"
 
-   set ::Config(tcs.slewoptions,value) ""
+   set ::Config(tcs.slewoptions,value) "Normal"
    set ::Config(tcs.slewoptions,anon) ::[SlewOptions #auto]
    set ::Config(tcs.slewoptions,class) SlewOptionsComponent
    set ::Config(tcs.slewoptions,namespace) ::SlewOptionsNames

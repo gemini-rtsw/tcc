@@ -1,5 +1,8 @@
 # This file is for Mauna Kea
 
+# The name of the OCS session soap server.
+set ocs_proxy http://scott:9000/axis/services
+
 # The x/y/z position that corresponds to the A&G PWFS1 probeSel center
 # command.
 

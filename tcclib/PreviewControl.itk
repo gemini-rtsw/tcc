@@ -10,7 +10,7 @@
 #           update      Causes the preview configuration to be calculated 
 #                       and displayed.
 #
-#  D Terrett 24 February 2003
+#  D Terrett 19 March 2003
 #
 #  Copyright CCLRC
 #+
@@ -25,7 +25,7 @@ itcl::class PreviewControl {
    private {
       method countdown {}
       method plot {}
-      variable target ""
+      variable view ""
    }
 }
 
@@ -287,6 +287,11 @@ itcl::body PreviewControl::destructor {} {
 
 # Cancel the coundown "after" procedure.
    after cancel [itcl::code $this countdown]
+
+# delete the preview object.
+   if { $view != "" } {
+      itcl::delete object $view
+   }
 }
 
 itcl::body PreviewControl::update {} {
@@ -301,7 +306,10 @@ itcl::body PreviewControl::update {} {
    $itk_component(rot1lim) configure -text "" -relief groove
    $itk_component(rot2lim) configure -text "" -relief groove
 
-# Create a preview object
+# Create or re-create the preview object
+   if { $view != "" } {
+      itcl::delete object $view
+   }
    set view [Preview ::#auto]
 
 # Load the preview with the current configuration.
@@ -336,12 +344,7 @@ itcl::body PreviewControl::update {} {
          set target [$view cget -target]
          set ra [lindex $target 0]
          set dec [lindex $target 1]
-         set frame [lindex $target 2]
-         set equinox [lindex $target 3]
-         if { [string equal $frame FK4] || [string equal $frame FK5] } {
-            set equinox [formatEpoch $frame $equinox]
-         }
-         $itk_component(radec) configure -text "$ra $dec $frame $equinox"
+         $itk_component(radec) configure -text "$ra $dec FK5 J2000"
 
 # Display the time of the preview.
          $itk_component(time) configure -text [$view cget -utc]
@@ -398,8 +401,8 @@ itcl::body PreviewControl::update {} {
          if { ! [string equal $pwfs1 ""] } {
             set x [lindex $pwfs1 0]
             set y [lindex $pwfs1 1]
-            $itk_component(pwfs1x) configure -text [format "%.2f" $x]
-            $itk_component(pwfs1y) configure -text [format "%.2f" $y]
+            $itk_component(pwfs1x) configure -text [format "%.1f" $x]
+            $itk_component(pwfs1y) configure -text [format "%.1f" $y]
             set r2 [expr $x * $x + $y * $y]
             $itk_component(pwfs1r) configure -text \
                   [format "%.2f" [expr {sqrt($r2) * 0.0268573967}]]
@@ -423,8 +426,8 @@ itcl::body PreviewControl::update {} {
          if { ! [string equal $pwfs2 ""] } {
             set x [lindex $pwfs2 0]
             set y [lindex $pwfs2 1]
-            $itk_component(pwfs2x) configure -text [format "%.2f" $x]
-            $itk_component(pwfs2y) configure -text [format "%.2f" $y]
+            $itk_component(pwfs2x) configure -text [format "%.1f" $x]
+            $itk_component(pwfs2y) configure -text [format "%.1f" $y]
             set r2 [expr $x * $x + $y * $y]
             $itk_component(pwfs2r) configure -text \
                   [format "%.2f" [expr {sqrt($r2) * 0.0268573967}]]
@@ -448,8 +451,8 @@ itcl::body PreviewControl::update {} {
          if { ! [string equal $oiwfs ""] } {
             set x [lindex $oiwfs 0]
             set y [lindex $oiwfs 1]
-            $itk_component(oiwfsx) configure -text [format "%.2f" $x]
-            $itk_component(oiwfsy) configure -text [format "%.2f" $y]
+            $itk_component(oiwfsx) configure -text [format "%.1f" $x]
+            $itk_component(oiwfsy) configure -text [format "%.1f" $y]
             set r2 [expr $x * $x + $y * $y]
             $itk_component(oiwfsr) configure -text \
                   [format "%.2f" [expr {sqrt($r2) * 0.0268573967}]]
@@ -556,9 +559,6 @@ itcl::body PreviewControl::update {} {
          }
       }
    }
-
-# delete the preview object.
-   itcl::delete object $view
 }
 
 itcl::body PreviewControl::countdown {} {
@@ -580,11 +580,13 @@ itcl::body PreviewControl::plot {} {
 # Map skycat
    skycatPanel map
 
+# Get the target coordinates.
+   set target [$view cget -target]
+
 # Plot the target position.
    if { [llength $target] > 0 } {
-#      send -displayof .skycatPanel tccSkycat tccDisplayField \
-#            [lindex $target 0] [lindex $target 1] [lindex $target 3]
-      send -displayof .skycatPanel tccSkycat tccDisplayField \
-            [lindex $target 0] [lindex $target 1] J2000
+      send -async -displayof .skycatPanel tccSkycat tccDisplayField \
+            [list [lindex $target 0] [lindex $target 1] \
+            [$view cget -p1xy] [$view cget -p2xy] [$view cget -oixy]]
    }
 }

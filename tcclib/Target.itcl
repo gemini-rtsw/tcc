@@ -88,7 +88,7 @@
 #           save node     Saves the values of the target options to the
 #                         xml node.
 #
-#  D Terrett 21 February 2003
+#  D Terrett 14 May 2003
 #
 #  Copyright CCLRC
 #+
@@ -163,12 +163,6 @@ itcl::body Target::apply {comp} {
    switch $type {
       hmsdegTarget {
          cs $vt set objName [list $objname]
-         if { [string equal $cosys ""] } {
-            cs $vt set system FK5
-            cs $vt set equinox J2000
-         } else {
-            CosysNames::$cosys apply $comp.cosys
-         }
          cs $vt set theta1 [list $c1]
          cs $vt set theta2 [list $c2]
          cs $vt set epoch [list $epoch]
@@ -179,7 +173,13 @@ itcl::body Target::apply {comp} {
          cs $vt set dtheta1 [list [lindex $pm 0]]
          cs $vt set dtheta2 [list [lindex $pm 1]]
          cs $vt set rv [list $rv]
-         logger command $vt
+         if { [string equal $cosys ""] } {
+            cs $vt set system FK5
+            cs $vt set equinox J2000
+            logger command $vt
+         } else {
+            CosysNames::$cosys apply $comp.cosys
+         }
       }
       degdegTarget {
          cs $vt set objName [list $objname]

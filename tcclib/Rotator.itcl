@@ -20,7 +20,7 @@
 #          save node     Saves the values of the rotator configuration
 #                        to the xml node.
 #
-#  D Terrett 21 February 2003
+#  D Terrett 14 May 2003
 #
 #  Copyright CCLRC
 #+
@@ -46,10 +46,10 @@ itcl::body Rotator::apply {comp} {
    if { [string equal $cosys ""] } {
       cs rotator set system FK5
       cs rotator set equinox J2000
+      logger command rotator
    } else {
       CosysNames::$cosys apply $comp.cosys
    }
-   logger command rotator
 }
 
 itcl::body Rotator::preview {view} {

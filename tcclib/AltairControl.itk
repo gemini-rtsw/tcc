@@ -9,7 +9,7 @@
 #           -component         The name of the component that this control
 #                              edits.
 #
-#  D Terrett 3 December 2002
+#  D Terrett 13 May 2003
 #
 #  Copyright CCLRC
 #+
@@ -24,8 +24,8 @@ itcl::class AltairControl {
       method save {name}
    }
    private {
-      variable deployAdc 1
-      variable adjustAdc 1
+      variable deployAdc IN
+      variable adjustAdc ON
    }
 }
 
@@ -66,14 +66,14 @@ itcl::body AltairControl::constructor args {
 # Deploy ADC.
    itk_component add deployAdc {
       checkbutton $w.deployAdc -text "Deploy ADC" \
-            -variable [itcl::scope deployAdc]
+            -variable [itcl::scope deployAdc] -onvalue IN -offvalue OUT
    }
    pack $itk_component(deployAdc) -pady 4
 
 # adjust ADC.
    itk_component add adjustAdc {
       checkbutton $w.adjustAdc -text "Adjust ADC" \
-            -variable [itcl::scope adjustAdc]
+            -variable [itcl::scope adjustAdc] -onvalue ON -offvalue OFF
    }
    pack $itk_component(adjustAdc) -pady 4
 
@@ -87,39 +87,25 @@ itcl::body AltairControl::reset {} {
    $itk_component(gsmag) clear
    $itk_component(seeing) clear
    $itk_component(windspeed) clear
-   set deployAdc 1
-   set adjustAdc 1
+   set deployAdc IN
+   set adjustAdc ON
 }
 
 itcl::body AltairControl::load {name} {
 
-# Copy the contents of the specified chop object into the edit
+# Copy the contents of the specified Altair object into the edit
 # controls.
    $itk_component(gsmag) insert end [$name cget -gsmag]
    $itk_component(seeing) insert end [$name cget -seeing]
    $itk_component(windspeed) insert end [$name cget -windspeed]
-   switch [string toupper [$name cget -deployAdc]] {
-      IN {
-         set deployAdc 1
-      }
-      OUT {
-         set deployAdc 0
-      }
-   }
-   switch [string toupper [$name cget -adjustAdc]] {
-      ON {
-         set adjustAdc 1
-      }
-      OFF {
-         set adjustAdc 0
-      }
-   }
+   set deployAdc [string toupper [$name cget -deployAdc]]
+   set adjustAdc [string toupper [$name cget -adjustAdc]]
 }
 
 itcl::body AltairControl::save {name} {
    $name configure -gsmag [$itk_component(gsmag) get]
    $name configure -seeing [$itk_component(seeing) get]
    $name configure -windspeed [$itk_component(windspeed) get]
-   $name configure -deployAdc [expr { $deployAdc ? "IN" : "OUT" }]
-   $name configure -adjustAdc [expr { $adjustAdc ? "ON" : "OFF" }]
+   $name configure -deployAdc $deployAdc
+   $name configure -adjustAdc $adjustAdc
 }

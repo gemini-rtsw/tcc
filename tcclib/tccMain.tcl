@@ -7,7 +7,7 @@
 #  Arguments:
 #            Any command line options and values.
 #
-#  D Terrett  29 January 2003
+#  D Terrett  9 May 2003
 #
 #  Copyright CCLRC
 #-
@@ -109,6 +109,7 @@ proc tccMain args {
    epics cs poriginC
    epics cs poriginM
    epics cs slew
+   epics cs offsetPoA1
    epics cs rotator
    epics cs wrap
    epics cs dtelFocus
@@ -136,9 +137,13 @@ proc tccMain args {
    epics cs aoFlatten
    epics cs aoPrepareCm
    epics cs aoMoveAdc
+   epics cs filter1
 
 # Set the timeout period for posting commands to the TCS.
    cs tcsApply setTimeout 3
+
+# Create the CalParam object.
+   CalParam calparam
 
 # Create the object the represents the configuration of the mirrors within
 # the instrument support structure.
@@ -150,12 +155,12 @@ proc tccMain args {
 # Create the object that controls the active optics.
    ActiveOptics AO
 
+# Create the ocs session object for the one and only session.
+   OcsSession ocssession sessionQueue
+
 # Create the logger objects.
    Logger logger tcs apply applyC errMessage
    Logger aclogger hrwfs hrwfs::apply hrwfs::applyC
-
-# Create the CalParam object.
-   CalParam calparam
 
 # Pack the toolbar.
    pack [TccToolbar .toolbar]

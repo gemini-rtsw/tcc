@@ -26,6 +26,7 @@ static char rcsid[]="$Id:";
 #include "tccConstants.h"
 #include "tccUtil.h"
 #include "tccAst.h"
+#include "tccDecode.h"
 
 static int update( Tcl_Interp * );
 static int target( Tcl_Interp *, int, Tcl_Obj *CONST [] );
@@ -49,7 +50,7 @@ int Tccext_AstCmd( ClientData clientdata, Tcl_Interp *interp, int objc,
     Tcl_Obj *CONST objv[])
 {
     int ind;
-    char* options[] = {"update", "target", "format", "instrument", NULL};
+    const char* options[] = {"update", "target", "format", "instrument", NULL};
 
     if ( objc < 2 ) {
         Tcl_WrongNumArgs( interp, 1, objv, "option ?arg ...?");
@@ -86,14 +87,17 @@ int Tccext_AstCmd( ClientData clientdata, Tcl_Interp *interp, int objc,
                 return TCL_ERROR;
             }
             return instrument( interp, objc, objv );
-    } 
+    }
+
+/* Never reached. */
+    return 0;
 }
 
 static int update( Tcl_Interp *interp )
 {
     double ctxa[AST_CTXA_SIZE];
     int i, nel;
-    char **listPtr;
+    const char **listPtr;
     Tcl_Obj *result;
 
 /* Get the ast context from the tcs SAD. */
@@ -132,9 +136,9 @@ static int update( Tcl_Interp *interp )
 static int target( Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[] )
 {
     struct PO po;
-    char* pos[] = { "M", "m", "A", "a", "B", "b", "C", "c"};
+    const char* pos[] = { "M", "m", "A", "a", "B", "b", "C", "c"};
     int chop, ind;
-    char* chops[] = { "A", "a", "B", "b", "C", "c"};
+    const char* chops[] = { "A", "a", "B", "b", "C", "c"};
     double x, y;
     double wavel;
     FRAMETYPE frame;
@@ -281,10 +285,9 @@ static int format( Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[] )
 static int instrument( Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[] )
 {
     struct PO po;
-    char* pos[] = { "M", "m", "A", "a", "B", "b", "C", "c"};
+    const char* pos[] = { "M", "m", "A", "a", "B", "b", "C", "c"};
     int ind;
     double x, y;
-    double wavel;
     char result[40];
 
 /* Focal plane X/Y. */

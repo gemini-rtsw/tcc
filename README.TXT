@@ -95,12 +95,13 @@ INSTALLATION
 To install the tcc, check the code out of cvs, cd to the top level tcc
 directory and then either:
 
-	make MK
+	make site=MK
 or
-	make CP
+	make site=CP
 
 according to which site you are at. This will generate the site-dependent
-files and then build and install the binary extensions.
+files, build and install the binary extensions and build the tcl library
+indexes.
 
 There are two site dependent files that may need to be edited; calparams.dat
 and options. These are generated from calparams.MK or calparams.CP and

@@ -10,7 +10,7 @@
 #  Methods:
 #           none
 #
-#  D Terrett  17 December 2002
+#  D Terrett  28 April 2003
 #
 #  Copyright CCLRC
 #+
@@ -23,9 +23,8 @@ itcl::class AoControl {
       method centre {}
       method correct {arg}
       method loop {state}
-      method onerror {msg}
       method aoenable {}
-      method preparecm {}
+      method preparecm {apply}
       variable dmh 0
    }
 }
@@ -88,7 +87,7 @@ itcl::body AoControl::constructor args {
 # Prepare control matrix
    itk_component add prepare {
       LiveButton $w.prepare -text "Prepare Mtx" \
-            -command [itcl::code $this preparecm]
+            -command [itcl::code $this preparecm 1]
    }
 
 # Correct.
@@ -127,7 +126,7 @@ itcl::body AoControl::constructor args {
 }
 
 itcl::body AoControl::centre {} {
-   preparecm
+   preparecm 0
    cs aoFlatten set dummy 1
    logger command aoFlatten
    cs aoCentreWfs set retain 0
@@ -220,15 +219,13 @@ itcl::body AoControl::aoenable {} {
    }
 }
 
-itcl::body AoControl::preparecm {} {
+itcl::body AoControl::preparecm {apply} {
    cs aoPrepareCm set x [sa tcssad get aoDemandx]
    cs aoPrepareCm set y [sa tcssad get aoDemandy]
    logger command aoPrepareCm
+   if { $apply } {
+      if { [catch {cs tcsApply post} msg] } {
+         tk_messageBox -icon error -parent $itk_interior -message $msg
+      }
+   }
 }
-
-itcl::body AoControl::onerror {msg} {
-   tk_messageBox -icon error -parent $itk_interior -message \
-         "Error posting commands: TCS reports \
-         \"$msg\""
-}
-

@@ -23,6 +23,8 @@ static char rcsid[]="$Id:";
 #include <slamac.h>
 #include <timeLib.h>
 
+#include "tccDecode.h"
+
 static int DafinCmd( ClientData clientdata, Tcl_Interp *interp, int objc,
     Tcl_Obj *CONST objv[]);
 static int Dr2afCmd( ClientData clientdata, Tcl_Interp *interp, int objc,

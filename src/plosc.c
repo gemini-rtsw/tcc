@@ -26,7 +26,7 @@ static char rcsid[]="$Id:";
 #include <astLib.h>
 #include "plosc.h"
 
-static plosc ( char *file, double date,
+static int plosc ( char *file, double date,
             double *orbinc, double *anode, double *perih,
             double *a, double *e, double *el, double *dm );
 
@@ -49,7 +49,7 @@ int ploscCmd( ClientData clientdata, Tcl_Interp *interp, int objc,
    Tcl_Obj *result, *reslist[8];
    int jstat;
    double date, rawt;
-   double epoch, orbinc, anode, perih, a, e, el, dm;
+   double orbinc, anode, perih, a, e, el, dm;
 
    if ( objc != 2 ) {
       Tcl_WrongNumArgs( interp, 1, objv, "file");

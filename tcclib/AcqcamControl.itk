@@ -9,7 +9,7 @@
 #  Methods:
 #           none
 #
-#  D Terrett  27 October 2002
+#  D Terrett  24 March 2003
 #
 #  Copyright CCLRC
 #+
@@ -40,14 +40,14 @@ itcl::body AcqcamControl::constructor {args} {
    }
    pack $itk_component(frame)
    set w $itk_component(frame)
+   itk_component add label {
+      label $w.label -text HRWFS/AC
+   }
    itk_component add control {
       frame $w.control
    }
    set w $itk_component(control)
 
-   itk_component add label {
-      label $w.label -text HRWFS/AC
-   }
    itk_component add start {
       LiveButton $w.start -text Start \
             -command [itcl::code $this start]
@@ -56,8 +56,7 @@ itcl::body AcqcamControl::constructor {args} {
       LiveButton $w.stop -text Stop \
             -command [itcl::code $this stop]
    }
-   pack $itk_component(label) $itk_component(start) $itk_component(stop) \
-         -padx 5 -pady 10
+   pack $itk_component(start) $itk_component(stop) -side left -expand y -pady 2
 
    set w [winfo parent $w]
    itk_component add setup {
@@ -72,13 +71,13 @@ itcl::body AcqcamControl::constructor {args} {
    $itk_component(lens) insert end AC HRWFS
 
    itk_component add nd {
-      iwidgets::optionmenu $w.nd -labeltext "ND filter" -labelpos w -width 100 \
+      iwidgets::optionmenu $w.nd -labeltext "ND filt" -labelpos w -width 100 \
             -command [itcl::code $this ndsel]
    }
    $itk_component(nd) insert end neutral filt02 filt04 filt06 filt08 open
 
    itk_component add col {
-      iwidgets::optionmenu $w.col -labeltext "Col filter" -labelpos w \
+      iwidgets::optionmenu $w.col -labeltext "Col filt" -labelpos w \
             -width 100 -command [itcl::code $this colsel]
    }
    $itk_component(col) insert end neutral  U-red1 B-blue V-green R-red2 \
@@ -92,14 +91,16 @@ itcl::body AcqcamControl::constructor {args} {
 
    itk_component add expose {
       iwidgets::combobox $w.expose -labeltext "Expose (s)" -labelpos w \
-         -width 10 -selectioncommand [itcl::code $this expose] -validate real
+         -width 7 -selectioncommand [itcl::code $this expose] -validate real
    }
    $itk_component(expose) insert list end 0.01 0.1 1.0 10.0
    $itk_component(expose) insert entry end 0.01
 
    pack $itk_component(lens) $itk_component(nd) $itk_component(col) \
-         $itk_component(window) $itk_component(expose) -anchor e -pady 2
-   pack $itk_component(control) $itk_component(setup) -side left
+         $itk_component(window) $itk_component(expose) -anchor e
+   pack $itk_component(label)
+   pack $itk_component(control) -expand yes -fill x
+   pack $itk_component(setup)
 
    eval itk_initialize $args
 }

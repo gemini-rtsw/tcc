@@ -15,7 +15,11 @@
 #
 #       o Target offset 1 is used to implement the offset.
 #
-#  D Terrett 6 September 2001
+#       o If the target filter short-circuit parameter is set to "open"
+#         before the offset is applied it is set to "closed " and then 
+#         restored to "open" when the offset is removed.
+#
+#  D Terrett  13 May 2003
 #
 #  Copyright CCLRC
 #-
@@ -34,6 +38,7 @@ itcl::class Sky {
       variable returnaction
       variable unfreezeaction
       variable InPosition
+      variable filter ""
    }
 }
 
@@ -52,6 +57,9 @@ itcl::body Sky::constructor {args} {
 # Create command senders and status acceptors.
    if { [catch {cs offsetSourceA1 info}] } {
       epics cs offsetSourceA1
+   }
+   if { [catch {cs filter1 info}] } {
+      epics cs filter1
    }
    if { [catch {sa pwfs1Guide info}] } {
       epics sa pwfs1Guide
@@ -125,6 +133,9 @@ itcl::body Sky::apply {} {
          lappend csparvals($p) [sa $p get $par]
       }
 
+# Save the filter state.
+      set filter [cs filter1 get shortCircuit]
+
 # Freeze the probe.
       foreach par $params {
          cs $p set $par Off
@@ -133,6 +144,10 @@ itcl::body Sky::apply {} {
    }
 
 # Offset the telescope.
+   if { [string equal -nocase Open $filter] } {
+      cs filter1 set shortCircuit Closed
+      logger command filter1
+   }
    cs offsetSourceA1 set type [list "tangent plane"]
    cs offsetSourceA1 set dtheta1 [list [$itk_component(ra) get]]
    cs offsetSourceA1 set dtheta2 [list [$itk_component(dec) get]]
@@ -184,6 +199,10 @@ itcl::body Sky::unfreeze {} {
          cs $p set $par $val
       }
       logger command $p
+   }
+   if { [string equal -nocase Open $filter] } {
+      cs filter1 set shortCircuit Open
+      logger command filter1
    }
    $unfreezeaction start
 }
