@@ -11,7 +11,7 @@
 #
 #  options
 #
-#  D Terrett 23 June 2001
+#  D Terrett 29 June 2001
 #
 #  Copyright CCLRC
 #-
@@ -76,7 +76,7 @@ itcl::body NumericDisplay::constructor args {
 
 # M2 tip/tilt & focus
    itk_component add ttf {
-      label $w.ttf -text "M2 tip/tilt & focus" -anchor center
+      label $w.ttf -text "M2 tip/tilt (on sky) & focus" -anchor center
    }
    itk_component add m2 {
        frame $w.m2
@@ -593,8 +593,10 @@ itcl::body NumericDisplay::update {} {
          -text [format %.2f [expr {[lindex $xy 1] / 0.62056151}]]
 
 # M2 tip/tilt/focus.
-   $itk_component(tip) configure -text [sa m2ssad get xtilt]
-   $itk_component(tilt) configure -text [sa m2ssad get ytilt]
+   set tip [expr { [sadVal m2ssad xtilt "0.0"] / 3.86956518 }]
+   set tilt [expr { [sadVal m2ssad ytilt "0.0"] / 3.86956518 }]
+   $itk_component(tip) configure -text $tip
+   $itk_component(tilt) configure -text $tilt
    $itk_component(focus) configure -text [sa m2ssad get focus]
 
 # Time.
