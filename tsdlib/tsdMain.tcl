@@ -5,7 +5,7 @@
 #  Arguments:
 #             Any command line options and values.
 #
-#  D Terrett 18 November 2002
+#  D Terrett 19 January 2004
 #
 #  Copyright CCLRC
 #-
@@ -49,8 +49,8 @@ proc tsdMain args {
    tcssad.UTC add updateDisplays
 
 # Pack the numeric and graphic displays.
-   pack [NumericDisplay .numericDisplay] -anchor w
-   pack [GraphicDisplay .graphicDisplay] -anchor w
+   pack [NumericDisplay .numericDisplay] -anchor w -fill x -expand y
+   pack [GraphicDisplay .graphicDisplay] -anchor w -fill x -expand y
 
 # Set the icon.
    wm iconname . TSD

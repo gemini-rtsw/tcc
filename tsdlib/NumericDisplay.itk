@@ -11,7 +11,7 @@
 #
 #  options
 #
-#  D Terrett 18 January 2004
+#  D Terrett 20 January 2004
 #
 #  Copyright CCLRC
 #-
@@ -30,6 +30,7 @@ itcl::class NumericDisplay {
       method noheartbeat {}
       method heartbeat {rec value}
       method chopping {}
+      method inposreason {}
       variable nohbid
       variable hbid
       variable chopdead 0
@@ -46,83 +47,47 @@ itk::usual NumericDisplay {
 
 itcl::body NumericDisplay::constructor args {
 
-# Frame for telescope RA/Dec, frame and tracking wavelength on one row
-# followed by the target position, airmass and hour angle on the next
-   itk_component add top {
-      frame $itk_interior.top
+# Frame for object & time display.
+   set w $itk_interior
+   itk_component add objtime {
+      frame $w.objtime
    }
-   grid $itk_component(top)
+   set w $itk_component(objtime)
 
-   set w $itk_component(top)
-
-# Current object.
-   itk_component add objlabel {
-      label $w.objlabel
-   }
-   itk_component add objname {
-      label $w.objname
-   }
-
+# First row: TCS status and in position state
 # Status and health.
    itk_component add status {
-      StatusField $w.status -labelmargin 2 -width 15 -entryborder 3 \
-            -labelpos n -entryrelief groove -labeltext "TCS STATUS"
+      StatusField $w.status -entryborder 3 -entryrelief groove \
+            -labeltext "TCS STATUS:" -labelpos w
    }
+   itk_component add inpos {
+      StatusField $w.inpos -entryborder 3 -entryrelief groove \
+            -labeltext "IN POSITION:" -labelpos w
+   }
+   grid $itk_component(status) - $itk_component(inpos) -sticky e -pady 2
+   grid configure $itk_component(status) $itk_component(inpos) -sticky ew
 
-# Nod and chop state.
-   itk_component add nodbeam {
-      frame $w.nodbeam 
+# Object name and wavelength.
+   itk_component add objlab {
+      label $w.objlab -text "OBJECT NAME:"
    }
-   set w $itk_component(nodbeam)
-   itk_component add nod {
-      label $w.nod -width 8 -anchor w
+   itk_component add objname {
+      label $w.objname -anchor w -borderwidth 3 -relief groove
    }
-   pack $itk_component(nod) -side left
+   itk_component add wavelab {
+      label $w.wavelab -text "WAVELENGTH:"
+   }
+   itk_component add tarwavel {
+      label $w.tarwavel -width 8 -borderwidth 3 -relief groove
+   }
+   grid $itk_component(objlab) $itk_component(objname) - \
+         $itk_component(wavelab) $itk_component(tarwavel) -sticky e -pady 2
+   grid configure $itk_component(objname) -sticky ew
+   grid configure $itk_component(tarwavel) -sticky w
 
-   set w $itk_component(top)
-   itk_component add chopping {
-      StatusField $w.chopping -width 14 -anchor w -labelmargin 2 \
-            -entryrelief groove
-   }
-
-# M2 tip/tilt & focus
-   itk_component add ttt {
-      label $w.ttf -text "M2 tip/tilt (arcsec on sky)" -anchor center
-   }
-   itk_component add tt {
-       frame $w.tt
-   }
-   set w $itk_component(tt)
-   itk_component add tip {
-       StatusField $w.tip -labelmargin 2 -width 5 -entryborder 3 \
-            -entryrelief groove -labeltext X:
-   }
-   itk_component add tilt {
-       StatusField $w.tilt -labelmargin 2 -width 5 -entryborder 3 \
-            -entryrelief groove -labeltext Y:
-   }
-   pack $itk_component(tip) $itk_component(tilt) -side left
-   set w [winfo parent $w]
-
-   itk_component add focus {
-       StatusField $w.focus -labelmargin 2 -width 5 -entryborder 3 \
-            -entryrelief groove -labeltext "Focus (um):"
-   }
-
-   itk_component add telposlabel {
-      label $w.telposlabel -text "TELESCOPE POSITION:"
-   }
-   itk_component add telpos1 {
-      StatusField $w.tepos1 -labelmargin 5 -width 11 -entryborder 3 \
-            -entryrelief groove
-   }
-   itk_component add telpos2 {
-      StatusField $w.tepos2 -labelmargin 5 -width 11 -entryborder 3 \
-            -entryrelief groove
-   }
-
-   itk_component add tarlabel {
-      label $w.tarlabel -text "TARGET:"
+# Target position, LST and airmass.
+   itk_component add tarlab {
+      label $w.tarlab -text TARGET:
    }
    itk_component add tar1 {
       StatusField $w.tar1 -labelmargin 5 -width 11 -entryborder 3 \
@@ -133,30 +98,28 @@ itcl::body NumericDisplay::constructor args {
       StatusField $w.tar2 -labelmargin 5 -width 11 -entryborder 3 \
             -entryrelief groove
    }
-   itk_component add tarsys {
-      label $w.tarsys -width 10
+   itk_component add lst {
+      StatusField $w.lst -labeltext LST: -labelmargin 5 -entryborder 3 \
+            -entryrelief groove
    }
-   itk_component add tarwavel {
-      label $w.tarwavel -width 8
-   }
-   itk_component add hazdam {
-      frame $w.hazdam
-   }
-   set w $itk_component(hazdam)
-   itk_component add ha {
-      StatusField $w.ha -labeltext HA: -labelmargin 5 -width 8 -entryborder 3 \
+   [$itk_component(lst) component label] configure -width 4 -anchor e
+   itk_component add am {
+      StatusField $w.am -labeltext AM: -labelmargin 5 -entryborder 3 \
             -entryrelief groove
    }
    itk_component add zd {
       StatusField $w.zd -labeltext ZD: -labelmargin 5 -entryborder 3 \
             -entryrelief groove
    }
-   itk_component add am {
-      StatusField $w.am -labeltext AM: -labelmargin 5 -entryborder 3 \
-            -entryrelief groove
-   }
-   pack $itk_component(ha) $itk_component(zd) $itk_component(am) -side left
-   set w [winfo parent $w]
+
+   grid $itk_component(tarlab) $itk_component(tar1) $itk_component(tar2) \
+         $itk_component(lst) $itk_component(am) $itk_component(zd) \
+         -sticky e -pady 2
+   grid configure $itk_component(lst) $itk_component(am) $itk_component(zd) \
+         -sticky w
+   grid columnconfigure $w 6 -weight 1
+
+# Offsets and UTC.
    itk_component add offlab {
       label $w.offlab -text "OFFSET (arcsec):"
    }
@@ -168,7 +131,21 @@ itcl::body NumericDisplay::constructor args {
       StatusField $w.off2 -labelmargin 5 -width 8 -entryborder 3 \
             -entryrelief groove -anchor e
    }
+   itk_component add ha {
+      StatusField $w.ha -labeltext HA: -labelmargin 5 -width 8 -entryborder 3 \
+            -entryrelief groove
+   }
+   [$itk_component(ha) component label] configure -width 4 -anchor e
+   itk_component add utc {
+      StatusField $w.utc -labeltext UTC: -labelmargin 5 -entryborder 3 \
+            -entryrelief groove
+   }
+   [$itk_component(utc) component label] configure -width 4 -anchor e
+   grid $itk_component(offlab) $itk_component(off1) $itk_component(off2) \
+         $itk_component(ha) $itk_component(utc) - -sticky e -pady 2
+   grid configure $itk_component(utc) -sticky w
 
+# Base position and HST.
    itk_component add baselab {
       label $w.baselab -text "BASE:"
    }
@@ -180,7 +157,20 @@ itcl::body NumericDisplay::constructor args {
       StatusField $w.base2 -labelmargin 5 -width 11 -entryborder 3 \
             -entryrelief groove
    }
+   itk_component add hflag {
+      label $w.hflag -image hawaii_flag
+   }
+   itk_component add hst {
+      StatusField $w.hst -labeltext HST: -labelmargin 5 -entryborder 3 \
+            -entryrelief groove
+   }
+   [$itk_component(hst) component label] configure -width 4 -anchor e
+   grid $itk_component(baselab) $itk_component(base1) $itk_component(base2) \
+         $itk_component(hflag) $itk_component(hst) -sticky e -pady 2
+   grid configure $itk_component(hst) - -sticky w
+   grid configure $itk_component(hflag) -padx {3 0}
 
+# Track rates and CST.
    itk_component add ratelab {
       label $w.ratelab -text "TRACK RATE (arcsec/s):"
    }
@@ -192,6 +182,20 @@ itcl::body NumericDisplay::constructor args {
       StatusField $w.rate2 -labelmargin 5 -width 11 -entryborder 3 \
             -entryrelief groove -anchor e
    }
+   itk_component add cflag {
+      label $w.cflag -image chile_flag
+   }
+   itk_component add cst {
+      StatusField $w.cst -labeltext CST: -labelmargin 5 -entryborder 3 \
+            -entryrelief groove
+   }
+   [$itk_component(cst) component label] configure -width 4 -anchor e
+   grid $itk_component(ratelab) $itk_component(rate1) $itk_component(rate2) \
+         $itk_component(cflag) $itk_component(cst) -sticky e -pady 2
+   grid configure $itk_component(cst) - -sticky w
+   grid configure $itk_component(cflag) -padx {3 0}
+
+# Chop throw, HA.
    itk_component add choplab {
       label $w.choplab -text "CHOP THROW (arcsec):"
    }
@@ -203,7 +207,40 @@ itcl::body NumericDisplay::constructor args {
       StatusField $w.chop2 -labelmargin 5 -width 8 -entryborder 3 \
             -entryrelief groove -anchor e
    }
+   itk_component add ipa {
+      StatusField $w.ipa -width 5 -entryborder 3 \
+            -entryrelief groove -anchor e -labeltext IPA:
+   }
+   [$itk_component(ipa) component label] configure -width 4 -anchor e
 
+# Seeing estimate from WFS.
+   itk_component add seeing {
+      frame $w.seeing -borderwidth 2 -relief ridge
+   }
+   set w $itk_component(seeing)
+   itk_component add seelab {
+      label $w.seelab -text SEEING
+   }
+   itk_component add seep2 {
+      StatusField $w.seep2 -labeltext P2 -labelpos w -entryborder 3 \
+            -entryrelief groove -width 5
+   }
+   [$itk_component(seep2) component label] configure -width 2 -anchor e
+   itk_component add seeoi {
+      StatusField $w.seeoi -labeltext OI -labelpos w -entryborder 3 \
+            -entryrelief groove -width 5
+   }
+   [$itk_component(seeoi) component label] configure -width 2 -anchor e
+   pack $itk_component(seelab)
+   pack $itk_component(seep2) $itk_component(seeoi) -side left
+   set w $itk_component(objtime)
+
+   grid $itk_component(choplab) $itk_component(chop1) $itk_component(chop2) \
+         $itk_component(ipa) $itk_component(seeing) - -sticky e -pady 2
+   grid configure $itk_component(ipa) -sticky w
+   grid configure $itk_component(seeing) -padx {10 0}
+
+# Instrument origin and AA.
    itk_component add instrlab {
       label $w.instrlab -text "INSTRUMENT (arcsec):"
    }
@@ -215,56 +252,31 @@ itcl::body NumericDisplay::constructor args {
       StatusField $w.instry -labelmargin 5 -width 6 -entryborder 3 \
             -entryrelief groove -anchor e -labeltext Y
    }
-   itk_component add ipa {
-      StatusField $w.ipa -width 5 -entryborder 3 \
-            -entryrelief groove -anchor e -labeltext IPA
-   }
    itk_component add iaa {
       StatusField $w.iaa -width 5 -entryborder 3 \
-            -entryrelief groove -anchor e -labeltext IAA
+            -entryrelief groove -anchor e -labeltext IAA:
    }
+   [$itk_component(iaa) component label] configure -width 4 -anchor e
+   grid $itk_component(instrlab) $itk_component(instrx) $itk_component(instry) \
+         $itk_component(iaa) -sticky e -pady 2
+   grid configure $itk_component(iaa) -sticky w
 
-# Time.
-   itk_component add time {
-      frame $w.time -bd 2 -relief ridge
-   }
-   set w $itk_component(time)
-   itk_component add utc {
-      StatusField $w.utc -labeltext UTC: -labelmargin 5 -entryborder 3 \
-            -entryrelief groove
-   }
-   [$itk_component(utc) component label] configure -width 4
-   itk_component add lst {
-      StatusField $w.lst -labeltext LST: -labelmargin 5 -entryborder 3 \
-            -entryrelief groove
-   }
-   [$itk_component(lst) component label] configure -width 4
-   itk_component add hflag {
-      label $w.hflag -image hawaii_flag
-   }
-   itk_component add hst {
-      StatusField $w.hst -labeltext HST: -labelmargin 5 -entryborder 3 \
-            -entryrelief groove
-   }
-   [$itk_component(hst) component label] configure -width 4
-   itk_component add cflag {
-      label $w.cflag -image chile_flag
-   }
-   itk_component add cst {
-      StatusField $w.cst -labeltext CST: -labelmargin 5 -entryborder 3 \
-            -entryrelief groove
-   }
-   [$itk_component(cst) component label] configure -width 4
-   grid x $itk_component(utc) -pady 2 -sticky w
-   grid x $itk_component(lst) -pady 2 -sticky w
-   grid $itk_component(hflag) $itk_component(hst) -pady 2 -sticky w
-   grid $itk_component(cflag) $itk_component(cst) -pady 2 -sticky w
+# Now that the grid is complete make adjustments to the row and column
+# spans.
+   grid configure $itk_component(seeing) -rowspan 2
+   grid configure $itk_component(inpos) -columnspan 7
+   grid configure $itk_component(tarwavel) -columnspan 2
 
-# Telescope and Dome positions.
-   set w $itk_component(top)
+# Frames for mechanism positions and M2.
+   set w $itk_interior
    itk_component add mech {
       frame $w.mech -bd 2 -relief ridge
    }
+   itk_component add m2frame {
+      frame $w.m2frame -borderwidth 2 -relief ridge
+   }
+
+# Telescope and Dome positions.
    set w $itk_component(mech)
    itk_component add mechlab {
       label $w.mechlab -text "Mechanical Positions"
@@ -281,7 +293,7 @@ itcl::body NumericDisplay::constructor args {
             -entryborder 3 -entryrelief groove 
    }
    itk_component add rot {
-      StatusField $w.rot -labeltext Rotator -labelmargin 5 -width 10 \
+      StatusField $w.rot -labeltext Rotator: -labelmargin 5 -width 10 \
             -entryborder 3 -entryrelief groove
    }
    itk_component add errlab {
@@ -320,37 +332,58 @@ itcl::body NumericDisplay::constructor args {
          $itk_component(topshut) $itk_component(botshut) -sticky w -pady 2
    grid configure $itk_component(domelab) -sticky e
 
-# Layout elements.
-   grid $itk_component(objlabel) $itk_component(objname) - - - \
-         $itk_component(status) - - -sticky e -padx 3 -pady 2
-   grid configure $itk_component(objname) -sticky w
-   grid $itk_component(telposlabel) $itk_component(telpos1) \
-         $itk_component(telpos2) -sticky e -padx 3 -pady 2
-   grid configure $itk_component(status) -rowspan 2
-   grid $itk_component(tarlabel) $itk_component(tar1) \
-         $itk_component(tar2) $itk_component(tarsys) $itk_component(tarwavel) \
-         $itk_component(nodbeam) -sticky e -padx 3 -pady 2
-   grid configure $itk_component(nodbeam) -sticky w
-   grid $itk_component(offlab) $itk_component(off1) $itk_component(off2) \
-         x x $itk_component(chopping) -sticky e -padx 3 -pady 2
-   grid configure $itk_component(chopping) -sticky w
-   grid $itk_component(baselab) $itk_component(base1) $itk_component(base2) \
-         x $itk_component(ttt) - - -sticky e -padx 3 -pady 2
-   grid configure $itk_component(ttt) -sticky ew
-   grid $itk_component(ratelab) $itk_component(rate1) $itk_component(rate2) \
-        x $itk_component(tt) - - -sticky e -padx 3 -pady 2
-   grid configure $itk_component(tt) -sticky {}
-   grid $itk_component(choplab) $itk_component(chop1) $itk_component(chop2) \
-         $itk_component(ipa) $itk_component(focus) - - \
-         -sticky e -padx 3 -pady 2
-   grid configure $itk_component(focus) -sticky {}
-   grid $itk_component(instrlab) $itk_component(instrx) $itk_component(instry) \
-          $itk_component(iaa) $itk_component(hazdam) - - \
-          -sticky e -padx 3 -pady 2
-   grid configure $itk_component(instrx) $itk_component(instry) -sticky e
-   grid $itk_component(mech) - - - $itk_component(time) - -
-   grid configure $itk_component(mech) -sticky w
-   grid configure $itk_component(time) -sticky e
+# M2 tip/tilt & focus
+   set w $itk_component(m2frame)
+   itk_component add m2lab {
+      label $w.m2lab -text M2
+   }
+   itk_component add ttlab {
+      label $w.ttlab -text TIP/TILT:
+   }
+   itk_component add tip {
+       StatusField $w.tip -labelmargin 2 -width 5 -entryborder 3 \
+            -entryrelief groove -labeltext X
+   }
+   itk_component add tilt {
+       StatusField $w.tilt -labelmargin 2 -width 5 -entryborder 3 \
+            -entryrelief groove -labeltext Y
+   }
+   itk_component add poslab {
+      label $w.poslab -text POSITION:
+   }
+   itk_component add xpos {
+       StatusField $w.xpos -labelmargin 2 -width 5 -entryborder 3 \
+            -entryrelief groove -labeltext X
+   }
+   itk_component add ypos {
+       StatusField $w.ypos -labelmargin 2 -width 5 -entryborder 3 \
+            -entryrelief groove -labeltext Y
+   }
+
+   itk_component add focus {
+       StatusField $w.focus -labelmargin 2 -width 5 -entryborder 3 \
+            -entryrelief groove -labeltext "Focus (um):"
+   }
+   grid $itk_component(m2lab) -pady 2
+   grid $itk_component(ttlab) $itk_component(tip) $itk_component(tilt) -pady 2
+   grid $itk_component(poslab) $itk_component(xpos) $itk_component(ypos) -pady 2
+   grid configure $itk_component(m2lab) -columnspan 3
+   grid $itk_component(focus) - -sticky e -pady 2
+
+# Nod and chop state.
+   itk_component add nod {
+      label $w.nod
+   }
+   itk_component add chopping {
+      StatusField $w.chopping -width 14 -anchor w -labelmargin 2 \
+            -entryrelief groove
+   }
+   grid $itk_component(nod) $itk_component(chopping) - -pady 2
+
+# Pack the top level frames.
+   pack $itk_component(objtime) -fill x -expand y
+   pack $itk_component(mech) $itk_component(m2frame) -side left -anchor n \
+         -padx 3 -pady 3 -expand y
 
 # Call newtarget whenever any of the tracking frame or wavelengths change.
    foreach vt {sourceA sourceB sourceC pwfs1 pwfs2 oiwfs mount} {
@@ -378,10 +411,10 @@ itcl::body NumericDisplay::constructor args {
 
 # Call inPosition whenever any of the inPosition or followS records change.
    foreach sa {mcssad mcssad mcssad crssad ecssad ecssad ecssad \
-         tcssad mcssad crssad tcssad tcssad} \
+         tcssad mcssad crssad tcssad tcssad tcssad agssad aossad} \
          par {inPosition inPositionAz inPositionEl inPosition \
          domeInPos topShtrInPos botShtrInPos inPosition followS followS \
-         autoMoveDome autoMoveShtrs} {
+         autoMoveDome autoMoveShtrs tcsInPos InPosition inPosition} {
          catch {RecordMonitor $sa.$par $sa $par}
          set hbid($par) [$sa.$par add [itcl::code $this inPosition]]
    }
@@ -414,10 +447,10 @@ itcl::body NumericDisplay::destructor {} {
       tcssad.${vt}ObjectName remove $hbid(${vt}ObjectName)
    }
    foreach sa {mcssad mcssad mcssad crssad ecssad ecssad ecssad \
-         tcssad mcssad crssad} \
+         tcssad mcssad crssad tcssad agssad aossad} \
          par {inPosition inPositionAz inPositionEl inPosition \
          domeInPos topShtrInPos botShtrInPos inPosition \
-         followS followS} {
+         followS followS tcsInPos inPosition inPosition} {
       $sa.$par remove $hbid($par)
    }
    tcssad.heartbeat remove $hbid(heartbeat)
@@ -428,22 +461,22 @@ itcl::body NumericDisplay::newtarget {record value} {
 # Updates the display when the tracking frame or wavelength changes.
    
 # Telescope position (in tracking frame of the mount).
-   set system [sa tcssad get mountTrackFrame]
-   set type ""
-   set year ""
-   scan [sa tcssad get mountTrackEq] "%c%d" type year
-   set type [format "%c" $type]
-   set wavel [sadVal tcssad mountWavelength ""]
-   if { $wavel != "" } {
-      set wavel "[expr {$wavel / 10000.0}] um"
-   }
-   if { $system == "AZEL_TOPO" } {
-      $itk_component(telpos1) configure -labeltext Az
-      $itk_component(telpos2) configure -labeltext El
-   } else {
-      $itk_component(telpos1) configure -labeltext RA
-      $itk_component(telpos2) configure -labeltext Dec
-   }
+#   set system [sa tcssad get mountTrackFrame]
+#   set type ""
+#   set year ""
+#   scan [sa tcssad get mountTrackEq] "%c%d" type year
+#   set type [format "%c" $type]
+#   set wavel [sadVal tcssad mountWavelength ""]
+#   if { $wavel != "" } {
+#      set wavel "[expr {$wavel / 10000.0}] um"
+#   }
+#   if { $system == "AZEL_TOPO" } {
+#      $itk_component(telpos1) configure -labeltext Az
+#      $itk_component(telpos2) configure -labeltext El
+#   } else {
+#      $itk_component(telpos1) configure -labeltext RA
+#      $itk_component(telpos2) configure -labeltext Dec
+#   }
 
 # Target position.
    set system [sa tcssad get sourceATrackFrame]
@@ -462,18 +495,18 @@ itcl::body NumericDisplay::newtarget {record value} {
       $itk_component(tar1) configure -labeltext RA
       $itk_component(tar2) configure -labeltext Dec
    }
-   switch $system {
-      FK4 -
-      FK5 {
-         $itk_component(tarsys) configure -text "$system/$type$year"
-      }
-      APPT {
-         $itk_component(tarsys) configure -text "Apparent"
-      }
-      default {
-         $itk_component(tarsys) configure -text ""
-      }
-   }
+#   switch $system {
+#      FK4 -
+#      FK5 {
+#         $itk_component(tarsys) configure -text "$system/$type$year"
+#      }
+#      APPT {
+#         $itk_component(tarsys) configure -text "Apparent"
+#      }
+#      default {
+#         $itk_component(tarsys) configure -text ""
+#      }
+#   }
    $itk_component(tarwavel) configure -text "$wavel"
 }
 
@@ -481,9 +514,6 @@ itcl::body NumericDisplay::newobject {record value} {
 
 # Updates the display when the source changes.
    
-# Set object label.
-   $itk_component(objlabel) configure -text "OBJECT:"
-
 # Object name
    $itk_component(objname) configure \
          -text [sa tcssad get sourceAObjectName]
@@ -570,24 +600,66 @@ itcl::body NumericDisplay::update {} {
    $itk_component(instry) configure \
          -text [format %.2f [expr {[lindex $xy 1] / 0.62056151}]]
 
-# M2 tip/tilt/focus.
-   set tip [expr { [sadVal m2ssad xtilt "0.0"] / 3.86956518 }]
-   set tilt [expr { [sadVal m2ssad ytilt "0.0"] / 3.86956518 }]
-   $itk_component(tip) configure -text [format %.2f $tip] -status ok
-   if { $tip > 8.0 || $tip < -8.0 } {
-      $itk_component(tip) configure -status error
+# M2 tip/tilt/focus/X/Y.
+   set tip [sa m2ssad get xtilt]
+   if { [string is double -strict $tip] } {
+      set tip [format %.2f [expr { $tip / 3.86956518 }]]
+      $itk_component(tip) configure -text [format %.2f $tip] -status ok
+      if { $tip > 8.0 || $tip < -8.0 } {
+         $itk_component(tip) configure -status error
+      }
+   } else {
+      $itk_component(tip) configure -text $tip -status error
    }
-   $itk_component(tilt) configure -text [format %.2f $tilt] -status ok
-   if { $tilt > 8.0 || $tilt < -8.0 } {
-      $itk_component(tilt) configure -status error
+   set tilt [sa m2ssad get ytilt]
+   if { [string is double -strict $tip] } {
+      set tilt [format %.2f [expr { $tilt / 3.86956518 }]]
+      $itk_component(tilt) configure -text [format %.2f $tilt] -status ok
+      if { $tilt > 8.0 || $tilt < -8.0 } {
+         $itk_component(tilt) configure -status error
+      }
+   } else {
+      $itk_component(tilt) configure -text $tilt -status error
    }
-   $itk_component(focus) configure -text [sa m2ssad get focus]
+   set xpos [sa tcssad get m2XPos]
+   if { [string is double -strict $xpos] } {
+      $itk_component(xpos) configure -text [format %.2f $xpos] -status ok
+   } else {
+      $itk_component(xpos) configure -text $xpos -status error
+   }
+   set ypos [sa tcssad get m2YPos]
+   if { [string is double -strict $ypos] } {
+      $itk_component(ypos) configure -text [format %.2f $ypos] -status ok
+   } else {
+      $itk_component(ypos) configure -text $ypos -status error
+   }
+   set focus [sa m2ssad get focus]
+   if { [string is double -strict $focus] } {
+      $itk_component(focus) configure -text [format %.2f $focus] -status ok
+   } else {
+      $itk_component(focus) configure -text $focus -status error
+   }
 
 # Time.
    $itk_component(utc) configure -text [tccTime utc]
    $itk_component(hst) configure -text [tccTime localtime -10]
    $itk_component(cst) configure -text [tccTime localtime -4]
    $itk_component(lst) configure -text [tccTime last]
+
+# Seeing
+   set seeing [sa agssad get p2seeing]
+   if { [string is double -strict $seeing] } {
+      $itk_component(seep2) configure -text [format %.2f $seeing] -status ok
+   } else {
+      $itk_component(seep2) configure -text $seeing -status error
+   }
+   set seeing [sa agssad get oiseeing]
+   if { [string is double -strict $seeing] } {
+      $itk_component(seeoi) configure -text [format %.2f $seeing] -status ok
+   } else {
+      $itk_component(seeoi) configure -text $seeing -status error
+   }
+   
 }
 
 itcl::body NumericDisplay::inPosition {rec value} {
@@ -604,14 +676,15 @@ itcl::body NumericDisplay::inPosition {rec value} {
       if { [isFollowing mcssad followS] } {
          if { [isInPosition tcssad inPosition] } {
             set status ok
+            $itk_component(inpos) configure -text ""
          } else {
             set status warning
+            $itk_component(inpos) configure -text [inposreason]
          }
       } else {
          set status error
       }
-      $itk_component(telpos1) configure -status $status
-      $itk_component(telpos2) configure -status $status
+      $itk_component(inpos) configure -status $status
    }
 
 # Telescope Az/El.
@@ -745,5 +818,27 @@ itcl::body NumericDisplay::chopping {} {
       set chopdead 0
       $itk_component(chopping) configure -text "Beam $beam" \
                -status ok
+   }
+}
+
+itcl::body NumericDisplay::inposreason {} {
+
+# Determines the reason for the TCS being out of position.
+   if { ! [sa tcssad get tcsInPos] } {
+      return [sa tcssad get outPosReason]
+   } elseif { [sa mcssad get inPositionAz] ne 1 } {
+      return "Azimuth axis not in position"
+   } elseif { [sa mcssad get inPositionEl] ne 1} {
+      return "Elevation axis not in position"
+   } elseif { [sa mcssad get inPosition] ne 1 } {
+      return "Mount not in position"
+   } elseif { [sa crssad get inPosition] ne 1 } {
+      return "Rotator not in position"
+   } elseif { [sa agssad get inPosition] ne 1 } {
+      return "A&G not in position"
+   } elseif { [sa aossad get inPosition] ne 1 } {
+      return "Adaptive Optics not in position"
+   } else {
+      return ""
    }
 }
