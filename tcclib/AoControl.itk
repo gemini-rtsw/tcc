@@ -160,7 +160,7 @@ itcl::body AoControl::correct {arg} {
 }
 
 itcl::body AoControl::loop {state} {
-
+puts "\nAoControl loop state $state"
    switch $state {
       ON {
 
@@ -188,6 +188,10 @@ itcl::body AoControl::loop {state} {
 
 # Change M2 settup to AOS.
          AO configure -aoguide On -p1guide "" -p2guide "" -oiguide ""
+
+# Re-enable guiding.
+         AO enable
+
       }
       OFF {
 
@@ -211,8 +215,6 @@ itcl::body AoControl::loop {state} {
       }
    }
 
-# Re-enable guiding.
-   AO enable
 }
 
 itcl::body AoControl::aoenable {} {
@@ -236,8 +238,12 @@ itcl::body AoControl::preparecm {apply} {
 
 itcl::body AoControl::reset {} {
 
-   $itk_component(aom2) configure -state normal
-   $itk_component(aom2) select Off
-   $itk_component(aom2) configure -state disabled
-
+   set state [$itk_component(aom2) cget -state]
+   if {$state == "normal"} {
+   	$itk_component(aom2) select Off
+   } else {
+   	$itk_component(aom2) configure -state normal
+   	$itk_component(aom2) select Off
+   	$itk_component(aom2) configure -state disabled
+   }
 }
