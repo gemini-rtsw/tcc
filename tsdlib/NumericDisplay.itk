@@ -11,7 +11,7 @@
 #
 #  options
 #
-#  D Terrett 10 April 2000
+#  D Terrett 3 May 2000
 #
 #  Copyright CCLRC
 #-
@@ -60,8 +60,8 @@ itcl::body NumericDisplay::constructor args {
 
 # Status and health.
    itk_component add status {
-      StatusField $w.status -labelmargin 5 -width 15 -entryborder 3 \
-            -entryrelief groove -labeltext "TCS STATUS"
+      StatusField $w.status -labelmargin 2 -width 15 -entryborder 3 \
+            -labelpos n -entryrelief groove -labeltext "TCS STATUS"
    }
 
    itk_component add telposlabel {
@@ -100,18 +100,24 @@ itcl::body NumericDisplay::constructor args {
    itk_component add tarwavel {
       label $w.tarwavel -width 8
    }
+   itk_component add hazdam {
+      frame $w.hazdam
+   }
+   set w $itk_component(hazdam)
    itk_component add ha {
-      StatusField $w.ha -labeltext HA -labelmargin 5 -width 6 -entryborder 3 \
+      StatusField $w.ha -labeltext HA: -labelmargin 5 -width 6 -entryborder 3 \
             -entryrelief groove
    }
    itk_component add zd {
-      StatusField $w.zd -labeltext ZD -labelmargin 5 -entryborder 3 \
+      StatusField $w.zd -labeltext ZD: -labelmargin 5 -entryborder 3 \
             -entryrelief groove
    }
    itk_component add am {
-      StatusField $w.am -labeltext AM -labelmargin 5 -entryborder 3 \
+      StatusField $w.am -labeltext AM: -labelmargin 5 -entryborder 3 \
             -entryrelief groove
    }
+   pack $itk_component(ha) $itk_component(zd) $itk_component(am) -side left
+   set w [winfo parent $w]
    itk_component add offlab {
       label $w.offlab -text "OFFSET (arcsec):"
    }
@@ -134,6 +140,18 @@ itcl::body NumericDisplay::constructor args {
    itk_component add base2 {
       StatusField $w.base2 -labelmargin 5 -width 11 -entryborder 3 \
             -entryrelief groove
+   }
+
+   itk_component add ratelab {
+      label $w.ratelab -text "TRACK RATE:"
+   }
+   itk_component add rate1 {
+      StatusField $w.rate1 -labelmargin 5 -width 8 -entryborder 3 \
+            -entryrelief groove -anchor e
+   }
+   itk_component add rate2 {
+      StatusField $w.rate2 -labelmargin 5 -width 8 -entryborder 3 \
+            -entryrelief groove -anchor e
    }
    itk_component add choplab {
       label $w.choplab -text "CHOP THROW (arcsec):"
@@ -180,9 +198,9 @@ itcl::body NumericDisplay::constructor args {
             -entryrelief groove
    }
    [$itk_component(lmt) component label] configure -width 4
-   grid $itk_component(utc) -pady 3 -sticky w
-   grid $itk_component(lst) -pady 3 -sticky w
-   grid $itk_component(lmt) -pady 3 -sticky w
+   grid $itk_component(utc) -pady 2 -sticky w
+   grid $itk_component(lst) -pady 2 -sticky w
+   grid $itk_component(lmt) -pady 2 -sticky w
 
 # Telescope and Dome positions.
    set w $itk_component(top)
@@ -235,37 +253,38 @@ itcl::body NumericDisplay::constructor args {
       StatusField $w.botshut -labeltext Bottom -labelmargin 5 -width 5 \
             -entryborder 3 -entryrelief groove 
    }
-   grid $itk_component(mechlab) - - - -pady 3
+   grid $itk_component(mechlab) - - - -pady 2
    grid $itk_component(tellab) $itk_component(telaz) $itk_component(telel) \
-         $itk_component(rot) -sticky e -pady 3
+         $itk_component(rot) -sticky e -pady 2
    grid  $itk_component(errlab) $itk_component(azerr) $itk_component(elerr) \
-         $itk_component(roterr) -sticky e -pady 3
+         $itk_component(roterr) -sticky e -pady 2
    grid $itk_component(domelab) $itk_component(domeaz) \
-         $itk_component(topshut) $itk_component(botshut) -sticky w -pady 3
+         $itk_component(topshut) $itk_component(botshut) -sticky w -pady 2
    grid configure $itk_component(domelab) -sticky e
 
 # Layout elements.
    grid $itk_component(objlabel) $itk_component(objname) - - - \
-         $itk_component(status) - - -sticky e -padx 3 -pady 3
+         $itk_component(status) - - -sticky e -padx 3 -pady 2
    grid configure $itk_component(objname) -sticky w
    grid $itk_component(telposlabel) $itk_component(telpos1) \
          $itk_component(telpos2) $itk_component(telpossys) \
-         $itk_component(telposwavel) -padx 3 -pady 3
+         $itk_component(telposwavel) -padx 3 -pady 2
+   grid configure $itk_component(status) -rowspan 2
    grid $itk_component(tarlabel) $itk_component(tar1) \
-         $itk_component(tar2) $itk_component(tarsys) \
-         $itk_component(tarwavel) $itk_component(ha) $itk_component(zd) \
-         $itk_component(am) \
-         -sticky e -padx 3 -pady 3
+         $itk_component(tar2) $itk_component(tarsys) $itk_component(tarwavel) \
+         -sticky e -padx 3 -pady 2
    grid $itk_component(offlab) $itk_component(off1) $itk_component(off2) \
-         -sticky e -padx 3 -pady 3
+         -sticky e -padx 3 -pady 2
    grid $itk_component(baselab) $itk_component(base1) $itk_component(base2) \
-         -sticky e -padx 3 -pady 3
+         -sticky e -padx 3 -pady 2
+   grid $itk_component(ratelab) $itk_component(rate1) $itk_component(rate2) \
+         -sticky e -padx 3 -pady 2
    grid $itk_component(choplab) $itk_component(chop1) $itk_component(chop2) \
-         -sticky e -padx 3 -pady 3
+         -sticky e -padx 3 -pady 2
    grid $itk_component(instrlab) $itk_component(instrx) $itk_component(instry) \
-         -sticky e -padx 3 -pady 3
+          x $itk_component(hazdam) - - -sticky e -padx 3 -pady 2
    grid configure $itk_component(instrx) $itk_component(instry) -sticky e
-   grid $itk_component(mech) - - - - $itk_component(time) - -
+   grid $itk_component(mech) - - - $itk_component(time) - -
    grid configure $itk_component(mech) -sticky w
    grid configure $itk_component(time) -sticky e
 
@@ -303,6 +322,7 @@ itcl::body NumericDisplay::constructor args {
 
 # Update the display.
    newobject
+   newtarget
 
    eval itk_initialize $args
 }
@@ -326,7 +346,6 @@ itcl::body NumericDisplay::destructor {} {
 }
 
 itcl::body NumericDisplay::newtarget args {
-
 # Updates the display when the tracking frame or wavelength changes.
    
 # Telescope position (in tracking frame of the mount).
@@ -426,7 +445,7 @@ itcl::body NumericDisplay::update {} {
    $itk_component(zd) configure -text [lindex $demand 3]
    $itk_component(am) configure -text [lindex $demand 4]
 
-# Offset and base
+# Offset and base and track rate
    set target [sa tcssad get targetA]
    set ra [slaDr2tf 3 [lindex $target 0]]
    $itk_component(base1) configure -text \
@@ -440,6 +459,8 @@ itcl::body NumericDisplay::update {} {
          [expr [lindex $target 2] * 206264.81 * cos( [lindex $target 1] )] ]
    $itk_component(off2) configure -text \
          [format "%10.2f" [expr [lindex $target 3] * 206264.81] ]
+   $itk_component(rate1) configure -text [sa tcssad get sourceADiffRA value]
+   $itk_component(rate2) configure -text [sa tcssad get sourceADiffDec value]
 
 # Chop throw.
    set targetb [sa tcssad get targetB]
