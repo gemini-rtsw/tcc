@@ -3,7 +3,7 @@
 #
 #  Implements the GuideHandsetControl widget.
 #
-#  D Terrett 17 March 1999
+#  D Terrett 28 May 1999
 #
 #  Copyright CCLRC
 #+
@@ -66,18 +66,16 @@ itcl::body GuideHandsetControl::constructor args {
    itk_component add bot {
       frame $itk_interior.bot
    }
-   pack $itk_component(bot) -expand yes
+   pack $itk_component(bot) -expand yes -fill x
    set w $itk_component(bot)
    itk_component add absorb {
-      ApplyButton $w.absorb -command absorbGuide \
-            -text "Absorb Guiding Corrections"
+      ApplyButton $w.absorb -command absorbGuide -text Absorb -width 8
    }
    itk_component add clear {
-      ApplyButton $w.clear -command zeroGuide \
-            -text "Clear Guiding Corrections"
+      ApplyButton $w.clear -command zeroGuide -text Clear -width 8
    }
-   pack $itk_component(absorb) $itk_component(clear) -fill x -expand y \
-         -side top -pady 4
+   pack $itk_component(absorb) $itk_component(clear) -expand y \
+         -pady 4 -side left
 
    eval itk_initialize $args
 }
