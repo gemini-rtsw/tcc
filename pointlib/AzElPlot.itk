@@ -4,7 +4,7 @@
 #  Implements the AzElPlot widget. A canvas with stars and the current
 #  telescope position plotted in Az/El.
 #
-#  D Terrett 22 July 2000
+#  D Terrett 24 July 2000
 #
 #  Copyright CCLRC
 #+
@@ -20,7 +20,7 @@ itcl::class AzElPlot {
    itk_option define -selectioncommand selectionCommand Command {}
    itk_option define -hitcommand hitCommand Command {}
    itk_option define -bias bias Bias 1
-   itk_option define -ellimit elLimit Limit 27.0
+   itk_option define -ellimit elLimit Limit 15.0
    itk_option define -azlolimit azloLimit Limit -160.0
    itk_option define -azhilimit azhiLimit Limit 340.0
 
@@ -73,7 +73,7 @@ itcl::body AzElPlot::constructor args {
    }
    pack $itk_component(canvas)
 
-# Circle at horizon limit
+# Circle at horizon. 
    set r [el2r [expr {15.0 * $D2R}]]
    $itk_component(canvas) create oval [expr {$Xc - $r}] [expr {$Yc - $r}] \
          [expr {$Xc + $r}] [expr {$Yc + $r}] -outline black \
@@ -93,6 +93,11 @@ itcl::body AzElPlot::constructor args {
       $itk_component(canvas) create oval [expr {$Xc - $r}] [expr {$Yc - $r}] \
             [expr {$Xc + $r}] [expr {$Yc + $r}] -outline black -tags sky
    }
+
+# circle at elevation limit. 
+   set r [el2r [expr {15.0 * $D2R}]]
+   $itk_component(canvas) create oval [expr {$Xc - $r}] [expr {$Yc - $r}] \
+          [expr {$Xc + $r}] [expr {$Yc + $r}] -tags {sky ellim}
 
 # Binding to display RA/Dec when mouse button 1 is pressed.
    $itk_component(canvas) bind sky <ButtonPress-1> \
@@ -142,17 +147,11 @@ itcl::body AzElPlot::add {tag ra dec} {
       $itk_component(canvas) create rectangle [expr $x+2] [expr $y+2] \
             [expr $x-2] [expr $y-2] -tags "S$tag stars" \
             -fill $itk_option(-normalcolor) -outline ""
-
-# If the star is below the elevation limit, mark it.
-      if { $StarsEl($tag) < $itk_option(-ellimit) * $D2R } {
-         mark $tag
-      }
    } else {
 
 # Star is below horizon.
       $itk_component(canvas) create rectangle -1 -1 -1 -1 -tags "S$tag stars" \
             -fill $itk_option(-normalcolor) -outline ""
-      mark $tag
    }
 
 # Create bindings to select (button 1) and unmark (button 3) stars.
@@ -318,9 +317,6 @@ itcl::body AzElPlot::replot {} {
       } else {
         $itk_component(canvas) coords S$tag -1 -1 -1 -1
       }
-      if { $StarsEl($tag) < $itk_option(-ellimit) * $D2R } {
-         mark $tag
-      }
 
       incr NextPlot
       if { $NextPlot == [array size StarsEl] } {
@@ -343,7 +339,8 @@ itcl::body AzElPlot::next mode {
       catorder {
          set tag [expr $CurrSelection + 1]
            while { [info exists StarsAz($tag)] } {
-              if { $StarsState($tag) == "" && $StarsEl($tag) > 0.3491 } {
+              if { $StarsState($tag) == "" && \
+                    $StarsEl($tag) > $itk_options(-ellimit) } {
                  return $tag
               }
               incr tag
@@ -470,3 +467,15 @@ itcl::body AzElPlot::displayradec {x y} {
       uplevel #0 $itk_option(-hitcommand) $ra $dec
    }
 }
+
+itcl::configbody AzElPlot::ellimit {
+   if { $itk_option(-ellimit) > 15.0 } {
+      set r [el2r [expr {$itk_option(-ellimit) * $D2R}]]
+      $itk_component(canvas) coords ellim [expr {$Xc - $r}] \
+            [expr {$Yc - $r}] [expr {$Xc + $r}] [expr {$Yc + $r}]
+      $itk_component(canvas) itemconfigure ellim -outline red
+   } else {
+      $itk_component(canvas) itemconfigure ellim -outline ""
+   }
+}
+
