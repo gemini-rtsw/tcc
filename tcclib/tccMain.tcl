@@ -59,8 +59,11 @@ proc tccMain args {
    epics sa applyC
    epics sa errMessage
 
-# AWE monitor Sutter Drive Currents
+# AWE monitor Shutter Drive Currents
    epics sa shutterDriveCurrents
+
+# AWE monitor Guide Counts
+   epics sa guidects
 
 # Create status senders for setting SIR records
    global env
