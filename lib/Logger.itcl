@@ -14,14 +14,14 @@
 #          command cs    Writes the values of the command sender cs's
 #                        parameters to the log window.
 #
-#  D Terrett 6 June 2000
+#  D Terrett 27 September 2000
 #
 #  Copyright CCLRC
 #+
 
 itcl::class Logger {
 
-   constructor {} {}
+   constructor {apply applyC errMessage} {}
 
    public method log message
    public method command cs
@@ -31,14 +31,22 @@ itcl::class Logger {
 
    private variable clid 0
    private variable applyMess {}
+   private variable Apply
+   private variable ApplyC
+   private variable ErrMessage
 }
 
-itcl::body Logger::constructor {} {
+itcl::body Logger::constructor {apply applyC errMessage} {
 
 # Set up monitors on the TCS epics records of interest.
-   sa applyC proc clid [code $this monitor]
-   sa apply proc mess [code $this monitor]
-   sa errMessage proc val [code $this monitor]
+   sa $applyC proc clid [code $this monitor]
+   sa $apply proc mess [code $this monitor]
+   sa $errMessage proc val [code $this monitor]
+
+# Save the record names.
+   set Apply $apply
+   set ApplyC $applyC
+   set ErrMessage $errMessage
 }
 
 itcl::body Logger::monitor {record status time value} {
@@ -50,24 +58,23 @@ itcl::body Logger::monitor {record status time value} {
    set text ""
 
 # Switch on the record name.
-   switch $record {
-      applyC.clid {
+   switch $record \
+         $ApplyC.clid {
 
 # If the client ID was incremented then a command was accepted by the TCS.
-         if { $value > $clid } {
-           set text "$utc: command accepted"
-           set clid $value
+            if { $value > $clid } {
+                 set text "$utc: command accepted"
+                 set clid $value
+            }
+         } \
+         $ErrMessage.val {
+            set text "$utc: $value"
+         } \
+         $Apply.mess {
+            if { ![string is space $value] } {
+               set text "$utc: rejected: $value"
+            }
          }
-      }
-      errMessage.val {
-         set text "$utc: $value"
-      }
-      apply.mess {
-         if { ![string is space $value] } {
-            set text "$utc: rejected: $value"
-         }
-      }
-   }
 
 # Send the text to the logger.
    if { ![string is space $text] } {
