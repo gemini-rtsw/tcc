@@ -4,7 +4,7 @@
 #  The main program for the Gemini control console. It creates the top level
 #  "toolbar" window.
 #
-#  D Terrett 13 November 1999
+#  D Terrett 15 November 1999
 #
 #  Copyright CCLRC
 #-
@@ -114,8 +114,7 @@ proc tccMain args {
    epics cs poriginM
    epics cs slew
    epics cs rotator
-   epics cs azwrap
-   epics cs rotwrap
+   epics cs wrap
    epics cs dtelFocus
    epics cs m2Baffle
    epics cs hrwfs
