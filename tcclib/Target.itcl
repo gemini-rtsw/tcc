@@ -88,13 +88,14 @@
 #           save node     Saves the values of the target options to the
 #                         xml node.
 #
-#  D Terrett 16 October 2003
+#  D Terrett 24 May 2003
 #
 #  Copyright CCLRC
 #+
 
 itcl::class Target {
    inherit Paramset
+   constructor {args} {}
    destructor {$this init}
    public {
       method apply {comp}
@@ -138,6 +139,19 @@ itcl::class Target {
       variable current_cosys {}
       variable current_trackrate {}
    }
+}
+
+itcl::body Target::constructor {args} {
+
+# Initialise the trackrate namespace from the target namespace.
+   set targetns [namespace qualifier $this]
+   set i [string last TargetName $targetns]
+   if { $i > 0 } {
+      set trackratens [string range $targetns 0 [incr i -1]]
+      append trackratens TrackRateNames
+   }
+
+   eval configure $args
 }
 
 itcl::body Target::apply {comp} {
