@@ -42,8 +42,11 @@ itcl::class FieldControl {
       method pageSelectCB {color}
       variable comp ""
       variable currentname ""
+      variable fieldObj ""
       variable curr_guide ""
       variable curr_sciencetarget ""
+      variable curr_ns ""
+      variable curr_objname ""
       variable curr_guidetarget ""
       variable curr_wl_name ""
       variable curr_wavelength ""
@@ -375,54 +378,68 @@ itcl::body FieldControl::reset {} {
 
 
 itcl::body FieldControl::swapguide {} {
-   # puts "Inside Swap Guide"
    if {$curr_guide == ""} {
 	set new_wavelength ""
+	set fieldObj ${::Config(tcs.field,namespace)}::${::Config(tcs.field,value)}
+	#puts "fieldObj: $fieldObj"
+
 	set curr_guide ${::Config(tcs.field.guide,value)}
    	set curr_sciencetarget ${::Config(tcs.field.sciencetarget,value)}
 	set curr_wl_name ${::Config(tcs.field.wavelength,value)}
+
+	#not using these because they are only up to date after a store
+	#set curr_guide [$fieldObj cget -guide]
+	#set curr_sciencetarget [$fieldObj cget -sciencetarget]
+	#set curr_wl_name [$fieldObj cget -wavelength]
+
 	if {![string equal $curr_wl_name ""]} {
 	   set curr_wavelength [::WavelengthNames::$curr_wl_name cget -wavel]
 	}
-	puts "got current wavelength name: $curr_wl_name , wl: $curr_wavelength"
-
+	#puts "got current wavelength name: $curr_wl_name , wl: $curr_wavelength"
+	# getting current guide wavelength (from Acquisition Camera)
+	# Create the status acceptor if it doesn't alread exist.
+	if { [catch {sa hrwfs::currStatus info}] } {
+	   epics sa hrwfs::currStatus
+	}
+	set guide_wl [sa hrwfs::currStatus get colfilt]
+	switch $guide_wl {
+	   "U-red1"  { set new_wavelength "Acq Cam U" }
+	   "B-blue"  { set new_wavelength "Acq Cam B" }
+	   "V-green" { set new_wavelength "Acq Cam V" }
+	   "R-red2"  { set new_wavelength "Acq Cam R" }
+	   "I-red3"  { set new_wavelength "Acq Cam I" }
+	   "neutral" { set new_wavelength "Acq Cam neutral" }
+	   default   { set new_wavelength "" }
+	}
 	switch $curr_guide {
 	   "P1 only" {
    		   set curr_guidetarget ${::Config(tcs.field.pwfs1target,value)}
 		   #set ::Config(tcs.field.pwfs1target,value) ""
 		   set lpath "Sky>AC/HR"
-		   set new_wavelength [::GuideNames::$curr_guide cget -pwfs1Wavel]
 	        }
-	   "P2 Michelle" -
+	   "P2 MIR" -
 	   "P2 only" {
    		   set curr_guidetarget ${::Config(tcs.field.pwfs2target,value)}
 		   #set ::Config(tcs.field.pwfs2target,value) ""
 		   set lpath "Sky>AC/HR"
-		   set new_wavelength [::GuideNames::$curr_guide cget -pwfs2Wavel]
 	        }
 	   "OIWFS only" {
    		   set curr_guidetarget ${::Config(tcs.field.oiwfstarget,value)}
 		   #set ::Config(tcs.field.oiwfstarget,value) ""
 		   set lpath "Sky>AC/HR"
-		   if {[winfo exists .tcsGuidePanel.frame.control.oiwfs.oiwfsfilter] } {
-		      set new_wavelength [.tcsGuidePanel.frame.control.oiwfs.oiwfsfilter get value]
-		   }
 	        }
-	   "ALTAIR-GUIDE" -
 	   "ALTAIR" {
    		   set curr_guidetarget ${::Config(tcs.field.altairtarget,value)}
 		   #set ::Config(tcs.field.altairtarget,value) ""
 		   set lpath "Sky>AO>AC/HR"
-		   set new_wavelength [::GuideNames::$curr_guide cget -pwfs2Wavel]
 	        }
 	    default {
 		   tk_messageBox -icon warning -parent $itk_interior \
-			-message "No guidestar set ... doing nothing"
+			-message "Invalid guide configuration ... doing nothing"
 		   # puts "No guidestar set ... do nothing"
 		   set curr_guide ""
 		   set curr_sciencetarget ""
 		   return
-		   set new_wavelength ""
 		}
 	}
 	if {$curr_guidetarget == ""} {
@@ -436,28 +453,26 @@ itcl::body FieldControl::swapguide {} {
 	   set new_wavelength ""
 	   return
 	}
-   	# puts "guide conficuration is: $curr_guide"
-   	# puts "Science target is $curr_sciencetarget"
-   	# puts "Guide target is $curr_guidetarget"
+   	 #puts "guide conficuration is: $curr_guide"
+   	 #puts "Science target is $curr_sciencetarget, curr_wl_name: $curr_wl_name"
+   	 #puts "Guide target is $curr_guidetarget"
 	
 	if {[string equal $new_wavelength ""]} {
 	   tk_messageBox -icon warning -parent $itk_interior \
-		-message "No guide wavelength found ... using 0.5"
-	   set new_wavelength 0.5
+		-message "No guide wavelength found ... using 0.5 (Acq Cam neutral)"
+	   set new_wavelength "Acq Cam neutral"
 	}
+	#puts "guide wl: $guide_wl using wl: $new_wavelength"
 
-	if {![string equal $curr_wl_name ""] } {
-	   ::WavelengthNames::${curr_wl_name} configure -wavel $new_wavelength
-	} else { puts "warning no wavelengths to swap"}
+	#set ::Config(tcs.field.wavelength,value) $new_wavelength
+	#set ::Config(tcs.field.guide,value) "No guiding"
+   	#set ::Config(tcs.field.sciencetarget,value) $curr_guidetarget
 
-	# set ::Config(tcs.field.wavelength,value) "Guide"
-	# .tcsFieldWavelengthPanel.frame.control.wframe.wavel 
-   	# puts "swapping ... "
-	set ::Config(tcs.field.guide,value) "No guiding"
-   	set ::Config(tcs.field.sciencetarget,value) $curr_guidetarget
-   	set ::Config(tcs.field.pwfs1target,value) ""
+	$fieldObj configure -guide "No guiding"
+	$fieldObj configure -sciencetarget $curr_guidetarget
+	$fieldObj configure -wavelength $new_wavelength
+
 	$itk_component(swapguide) configure -text "Revert Science/Guide Targets" -bg red
-	$this applycmd
 
 	# set Light Path Mode (for the A&G)
 	if [winfo exists .observePanel] {
@@ -465,42 +480,91 @@ itcl::body FieldControl::swapguide {} {
 	}
 
 	# Append _GUIDE to the object name.
-      	global env
-	# puts "tcc_tcsname: $env(TCC_TCSNAME)"
-	# puts "current name: [sa tcssad get sourceAObjectName]"
-	# puts "new name: [list [sa tcssad get sourceAObjectName]_GUIDE]"
-
-        ss $::env(TCC_TCSNAME):sad:sourceAObjectName set value \
-           [list [sa tcssad get sourceAObjectName]_GUIDE]
-      	ss $::env(TCC_TCSNAME):sad:sourceAObjectName post
-
+	# puts "current guide target: $curr_guidetarget"
+	set curr_ns ${::Config(tcs.field.sciencetarget,namespace)}
+	set curr_objname [${curr_ns}::$curr_guidetarget cget -objname]
+	#puts "objname: $curr_objname ns: $curr_ns"
+	#puts "changing name to [list ${curr_objname}_GUIDE]"
+	${curr_ns}::$curr_guidetarget configure -objname [list ${curr_objname}_GUIDE]
+	$this load $fieldObj
+	$this applycmd
    } else {
 	#puts "swapping back ..."
+	
 	switch $curr_guide {
 	   "P1 only" {
-   		   set ::Config(tcs.field.pwfs1target,value) $curr_guidetarget
+		   $fieldObj configure -pwfs1target $curr_guidetarget
+		   set lpath "Sky>Instr"
+	        }
+	   "P2 MIR" -
+	   "P2 only" {
+		   $fieldObj configure -pwfs2target $curr_guidetarget
+		   set lpath "Sky>Instr"
+	        }
+	   "OIWFS only" {
+		   $fieldObj configure -oiwfstarget $curr_guidetarget
+		   set lpath "Sky>Instr"
+	        }
+	   "ALTAIR" {
+		   $fieldObj configure -altairtarget $curr_guidetarget
+		   set lpath "Sky>AO>Inst"
+	        }
+	}
+	$fieldObj configure -guide $curr_guide
+	$fieldObj configure -sciencetarget $curr_sciencetarget
+	${curr_ns}::$curr_guidetarget configure -objname ${curr_objname}
+	$fieldObj configure -wavelength $curr_wl_name
+
+	# set Light Path Mode (for the A&G)
+	if [winfo exists .observePanel] {
+	    ::.observePanel.frame.control.mirrors.lpath select $lpath
+	}
+	
+	#clear temp storage
+	set curr_guide ""
+	set curr_sciencetarget ""
+	set curr_guidetarget ""
+	set curr_wl_name ""
+	set curr_wavelength ""
+	#set fieldObj ""
+	$itk_component(swapguide) configure -text "Swap Science/Guide Targets" -bg "white"
+	$this load $fieldObj
+	$this applycmd
+   }
+}
+
+
+itcl::body FieldControl::load {name} {
+
+# If the targets are currently swapped, swap back
+   if {($curr_guide != "") && ( ${name} != ${currentname} )} {
+
+	#puts "swapping back because loading new target ..."
+	
+	switch $curr_guide {
+	   "P1 only" {
+		   $fieldObj configure -pwfs1target $curr_guidetarget
 		   set lpath "Sky>Instr"
 	        }
 	   "P2 Michelle" -
 	   "P2 only" {
-   		   set ::Config(tcs.field.pwfs2target,value) $curr_guidetarget
+		   $fieldObj configure -pwfs2target $curr_guidetarget
 		   set lpath "Sky>Instr"
 	        }
 	   "OIWFS only" {
-   		   set ::Config(tcs.field.oiwfstarget,value) $curr_guidetarget
+		   $fieldObj configure -oiwfstarget $curr_guidetarget
 		   set lpath "Sky>Instr"
 	        }
 	   "ALTAIR-GUIDE" -
 	   "ALTAIR" {
-   		   set ::Config(tcs.field.altairtarget,value) $curr_guidetarget
+		   $fieldObj configure -altairtarget $curr_guidetarget
 		   set lpath "Sky>AO>Inst"
 	        }
 	}
-	set ::Config(tcs.field.guide,value) $curr_guide
-	set ::Config(tcs.field.sciencetarget,value) $curr_sciencetarget
-	if {![string equal $curr_wl_name ""]} {
-	   ::WavelengthNames::$curr_wl_name configure -wavel $curr_wavelength
-	} else { puts "warning no wavelengths to swap back" }
+	$fieldObj configure -guide $curr_guide
+	$fieldObj configure -sciencetarget $curr_sciencetarget
+	${curr_ns}::$curr_guidetarget configure -objname ${curr_objname}
+	$fieldObj configure -wavelength $curr_wl_name
 
 	# set Light Path Mode (for the A&G)
 	if [winfo exists .observePanel] {
@@ -514,12 +578,8 @@ itcl::body FieldControl::swapguide {} {
 	set curr_wl_name ""
 	set curr_wavelength ""
 	$itk_component(swapguide) configure -text "Swap Science/Guide Targets" -bg "white"
-	$this applycmd
-   }
-}
+    }
 
-
-itcl::body FieldControl::load {name} {
 
 # Copy the contents of the field object selected in the combobox into the 
 # edit controls.
@@ -542,10 +602,10 @@ itcl::body FieldControl::load {name} {
    set ::Config($comp.wavelength,value) [$name cget -wavelength]
    $itk_component(progid) insert end [$name cget -programid]
    $itk_component(airmass) insert end [$name cget -airmassLimit]
+
 }
 
 itcl::configbody FieldControl::component {
-
 # Remove any existing trace
    trace vdelete ::Config($comp,value) w [itcl::code $this newname]
    set comp ""
@@ -585,7 +645,6 @@ itcl::configbody FieldControl::component {
 }
 
 itcl::body FieldControl::sync {component name} {
-
    switch $component {
       tcs.field.sciencetarget {
          $itk_component(sciencecontrol) sync $name
@@ -606,7 +665,6 @@ itcl::body FieldControl::sync {component name} {
 }
 
 itcl::body FieldControl::newfieldval {n1 n2 op} {
-
 # Update the current name if the scratch object is selected. This is required
 # because load will not get called.
    if { $::Config($comp,value) == "" } {
@@ -615,7 +673,6 @@ itcl::body FieldControl::newfieldval {n1 n2 op} {
 }
 
 itcl::body FieldControl::newtarget {name type args} {
-
    if { $::Config(tcs.field,value) == "" } {
       set field $::Config(tcs.field,anon)
    } else {
