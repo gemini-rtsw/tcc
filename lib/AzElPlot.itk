@@ -4,7 +4,7 @@
 #  Implements the AzElPlot widget. A canvas with stars and the current
 #  telescope position plotted in Az/El.
 #
-#  D Terrett 18 March 2002
+#  D Terrett 17 January 2004
 #
 #  Copyright CCLRC
 #+
@@ -38,6 +38,7 @@ itcl::class AzElPlot {
       variable Clat
       variable Xc
       variable Yc
+      variable Size
       variable CatColours
       variable CurrSelection {}
       variable StarsRa
@@ -60,14 +61,18 @@ itk::usual AzElPlot {
 
 itcl::body AzElPlot::constructor {args} {
 
-   set w 420
-   set h 420
-   set Xc [expr $w / 2.0]
-   set Yc [expr $h / 2.0]
+   if { [string is double -strict [lindex $args 0]] } {
+      set Size [lindex $args 0]
+      set args [lreplace $args 0 0]
+   } else {
+      set Size 420
+   }
+   set Xc [expr $Size / 2.0]
+   set Yc [expr $Size / 2.0]
 
 # Canvas for the plot.
    itk_component add canvas {
-      canvas $itk_interior.canvas -width $w -height $h -borderwidth 2 \
+      canvas $itk_interior.canvas -width $Size -height $Size -borderwidth 2 \
          -relief sunken
    }
    pack $itk_component(canvas)
@@ -107,8 +112,8 @@ itcl::body AzElPlot::constructor {args} {
    $itk_component(canvas) create text 10 $Yc -text W -anchor c
 
 # Telescope position.
-   $itk_component(canvas) create oval [expr {$Xc - 7}] [expr {$Yc - 7}] \
-         [expr {$Xc + 7}] [expr {$Yc + 7}] -fill orange -outline "" -tags tel
+   $itk_component(canvas) create oval [expr {$Xc - 5}] [expr {$Yc - 5}] \
+         [expr {$Xc + 5}] [expr {$Yc + 5}] -fill orange -outline "" -tags tel
 
 # Store sin and cos of latitude.
    set lat [expr {[sa tcssad get tlatm value] * $D2R}]
@@ -170,7 +175,7 @@ itcl::body AzElPlot::el2r el {
 #  Converts an elevation (in radians) to a radius in pixels.
 #-
    set r [expr 1.5707963268 - $el]
-   return [expr 220.0 * sin($r) / sqrt( 1.0 + cos($r) )]
+   return [expr $Size / 2.0 * sin($r) / sqrt( 1.0 + cos($r) )]
 }
 
 itcl::body AzElPlot::r2el r {
@@ -295,8 +300,8 @@ itcl::body AzElPlot::replot {} {
    set r [el2r $TelEl]
    set x [expr $r * sin($TelAz) + $Xc]
    set y [expr -$r * cos($TelAz) + $Yc]
-   $itk_component(canvas) coords tel [expr $x + 7] [expr $y + 7] \
-         [expr $x - 7] [expr $y - 7]
+   $itk_component(canvas) coords tel [expr $x + 5] [expr $y + 5] \
+         [expr $x - 5] [expr $y - 5]
 
 # Each time recompute one star position.
    set tag [lindex [array names StarsEl] $NextPlot]
