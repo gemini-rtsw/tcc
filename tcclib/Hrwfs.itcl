@@ -1,0 +1,186 @@
+#+
+#  Hrwfs
+#
+#  A Hrwfs is a object for controlling the Acquisition camera/HRWFS
+#
+#  Methods:
+#           lenssel name        Set lens position.
+#
+#           ndsel name          Select neutral density filter.
+#
+#           colsel name         Select colour filter.
+#
+#           window size         Set detector window.
+#
+#           expose time         Set exposure time.
+#
+#           start nexpose       Start exposure.
+#
+#           stop                Stop exposure.
+#
+#           wait applyC timeout Wait for timeout seconds for the applyC record
+#                               to go to IDLE.
+#
+#  D Terrett  27 October 2002
+#
+#  Copyright CCLRC
+#+
+
+itcl::class Hrwfs {
+   constructor {} {}
+   public {
+      method colsel {name}
+      method expose {time}
+      method lenssel {name}
+      method ndsel {name}
+      method start {nexpose}
+      method stop {}
+      method wait {applyC timeout}
+      method window {size}
+   }
+   private {
+      common waitvar 0
+   }
+}
+
+itcl::body Hrwfs::constructor {} {
+
+# Create required command senders and status acceptors.
+   if { [catch {cs hrwfs::lensSel info}] } {
+      epics cs hrwfs::lensSel
+   }
+   if { [catch {cs hrwfs::ndfilterSel info}] } {
+      epics cs hrwfs::ndfilterSel
+   }
+   if { [catch {cs hrwfs::clfilterSel info}] } {
+      epics cs hrwfs::clfilterSel
+   }
+   if { [catch {cs hrwfs::detExposure info}] } {
+      epics cs hrwfs::detExposure
+   }
+   if { [catch {cs hrwfs::detFrameSize info}] } {
+      epics cs hrwfs::detFrameSize
+   }
+   if { [catch {cs hrwfs::setDhsInfo info}] } {
+      epics cs hrwfs::setDhsInfo
+   }
+   if { [catch {cs hrwfs::setObserve info}] } {
+      epics cs hrwfs::setObserve
+   }
+   if { [catch {cs hrwfs::observe info}] } {
+      epics cs hrwfs::observe
+   }
+   if { [catch {cs hrwfs::stop info}] } {
+      epics cs hrwfs::stop
+   }
+   if { [catch {sa hrwfs::applyC info}] } {
+      epics sa hrwfs::applyC
+   }
+   if { [catch {sa hrwfs::observeC info}] } {
+      epics sa hrwfs::observeC
+   }
+
+}
+
+itcl::body Hrwfs::lenssel {name} {
+   cs hrwfs::lensSel set name $name
+   aclogger command hrwfs::lensSel
+   cs hrwfs::apply post
+}
+
+itcl::body Hrwfs::ndsel {name} {
+   cs hrwfs::ndfilterSel set name $name
+   aclogger command hrwfs::ndfilterSel
+   cs hrwfs::apply post
+}
+
+itcl::body Hrwfs::colsel {name} {
+   cs hrwfs::clfilterSel set name $name
+   aclogger command hrwfs::clfilterSel
+   cs hrwfs::apply post
+}
+
+itcl::body Hrwfs::window {size} {
+   cs hrwfs::stop set dummy 1
+   aclogger command hrwfs::stop
+   cs hrwfs::apply postWait
+   after 1000
+   switch $size {
+      full {
+         cs hrwfs::detFrameSize set binning 0
+         cs hrwfs::detFrameSize set windowing 0
+      }
+      200x200 {
+         cs hrwfs::detFrameSize set binning 0
+         cs hrwfs::detFrameSize set windowing 1
+         cs hrwfs::detFrameSize set x [calparam cget -acqcam_x]
+         cs hrwfs::detFrameSize set y [calparam cget -acqcam_y]
+         cs hrwfs::detFrameSize set width 200
+         cs hrwfs::detFrameSize set height 200
+      }
+      100x100 {
+         cs hrwfs::detFrameSize set binning 0
+         cs hrwfs::detFrameSize set windowing 1
+         cs hrwfs::detFrameSize set x [calparam cget -acqcam_x]
+         cs hrwfs::detFrameSize set y [calparam cget -acqcam_y]
+         cs hrwfs::detFrameSize set width 100
+         cs hrwfs::detFrameSize set height 100
+      }
+   }
+   aclogger command hrwfs::detFrameSize
+   cs hrwfs::apply post
+}
+
+itcl::body Hrwfs::expose {time} {
+   cs hrwfs::stop set dummy 1
+   aclogger command hrwfs::stop
+   cs hrwfs::apply postWait
+   after 10
+   cs hrwfs::detExposure set exposure $time
+   aclogger command hrwfs::detExposure
+   cs hrwfs::apply post
+}
+
+itcl::body Hrwfs::stop {} {
+   cs hrwfs::stop set dummy 1
+   aclogger command hrwfs::stop
+   cs hrwfs::apply post
+}
+
+itcl::body Hrwfs::start {nframe} {
+   cs hrwfs::stop set dummy 1
+   aclogger command hrwfs::stop
+   cs hrwfs::apply postWait
+   after 10
+   cs hrwfs::detExposure set nframe $nframe
+   aclogger command hrwfs::detExposure
+   cs hrwfs::apply postWait
+   after 10
+   cs hrwfs::setDhsInfo stream hrwfsScience
+   cs hrwfs::setDhsInfo option 2
+   aclogger command hrwfs::setDhsInfo
+   cs hrwfs::apply postWait
+   after 10
+   cs hrwfs::setObserve output 1
+   cs hrwfs::setObserve dir .
+   cs hrwfs::setObserve file hrwfs.fits
+   cs hrwfs::setObserve simfile NONE
+   aclogger command hrwfs::setObserve
+   cs hrwfs::apply postWait
+   after 10
+   cs hrwfs::observe set label NONE
+   aclogger command hrwfs::observe
+   cs hrwfs::apply post
+}
+
+itcl::body Hrwfs::wait {applyC timeout} {
+   for { set i 0 } { $i < $timeout } { incr i } {
+      if { [string equal [sa hrwfs::$applyC get val] BUSY] } {
+         after 1000 "set [itcl::scope waitvar] 1"
+         vwait [itcl::scope waitvar]
+      } else {
+         return
+      }
+   }
+   error "HRWFS still busy after $timeout seconds"
+}

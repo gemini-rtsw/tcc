@@ -7,7 +7,7 @@
 #  Arguments:
 #            Any command line options and values.
 #
-#  D Terrett  18 October 2002
+#  D Terrett  27 October 2002
 #
 #  Copyright CCLRC
 #-
@@ -136,17 +136,14 @@ proc tccMain args {
    ISS iss
 
 # Create the object the controls the Acquisition Camera/HRWFS.
-   Acqcam acqcam
-
-# Create the ocs session object for the one and only session.
-   OcsSession ocssession sessionQueue
+   Hrwfs hrwfs
 
 # Create the object that controls the active optics.
    ActiveOptics AO
 
 # Create the logger objects.
    Logger logger tcs apply applyC errMessage
-   Logger aclogger hrwfs acqcam::apply acqcam::applyC
+   Logger aclogger hrwfs hrwfs::apply hrwfs::applyC
 
 # Create the CalParam object.
    CalParam calparam

@@ -1,49 +1,54 @@
 #+
-# acqcam.ca
+# hrwfs.ca
 #
 # Channel access configuration file for the Acquisition Camera package
 #
-# D Terrett 21 October 2001
+# D Terrett 27 October 2001
 #
 # Copyright CCLRC
 #-
 
-apply acqcam::apply hrwfs:apply hrwfs:applyC Primary Apply Record
+apply hrwfs::apply hrwfs:apply hrwfs:applyC Primary Apply Record
 
-status acqcam::apply Apply message
+status hrwfs::apply Acquisition Camera apply status
 {
-   mess       hrwfs:applyC.OMSS    0    Command completion message
+   mess       hrwfs:apply.MESS     0    Apply message
+   val        hrwfs:apply.VAL      0    Apply status
 }
 
-status acqcam::status Acquisition Camera status
+status hrwfs::applyC Acquisition Camera status
 {
-   applyC     hrwfs:applyC.VAL     0    Command status
-   message    hrwfs:applyC.OMSS    0    Command completion message
+  val hrwfs:applyC.VAL 0 Value
+  clid hrwfs:applyC.CLID 0 Client ID
+}
+
+status hrwfs::observeC Acquisition Camera observe status
+{
    observe    hrwfs:observeC.VAL   0    Observe status
 }
 
-command acqcam::lensSel acqcam::apply Set lens position
+command hrwfs::lensSel hrwfs::apply Set lens position
 {
    name       hrwfs:lensSel.A  Filter name
 }
 
-command acqcam::ndfilterSel acqcam::apply Set ND filter position
+command hrwfs::ndfilterSel hrwfs::apply Set ND filter position
 {
    name       hrwfs:ndfilterSel.A  Filter name
 }
 
-command acqcam::clfilterSel acqcam::apply Set ND filter position
+command hrwfs::clfilterSel hrwfs::apply Set ND filter position
 {
    name       hrwfs:clfilterSel.A  Filter name
 }
 
-command acqcam::detExposure acqcam::apply Set exposure parameters
+command hrwfs::detExposure hrwfs::apply Set exposure parameters
 {
    nframe     hrwfs:dc:detExposure.A  Number of frames
    exposure   hrwfs:dc:detExposure.B  Exposure interval
 }
 
-command acqcam::setObserve acqcam::apply Set observe parameters
+command hrwfs::setObserve hrwfs::apply Set observe parameters
 {
    output     hrwfs:dc:setObserve.A  Output
    dir        hrwfs:dc:setObserve.B  Directory
@@ -51,18 +56,18 @@ command acqcam::setObserve acqcam::apply Set observe parameters
    simfile    hrwfs:dc:setObserve.D  Simulation file name
 }
 
-command acqcam::setDhsInfo acqcam::apply Set exposure parameters
+command hrwfs::setDhsInfo hrwfs::apply Set exposure parameters
 {
    stream     hrwfs:dc:setDhsInfo.A  Quick look stream
    option     hrwfs:dc:setDhsInfo.B  DHS option
 }
 
-command acqcam::detObstype acqcam::apply Set observation type
+command hrwfs::detObstype hrwfs::apply Set observation type
 {
    type       hrwfs:dc:detObstype.A   Observation type
 }
 
-command acqcam::detFrameSize acqcam::apply Set frame size
+command hrwfs::detFrameSize hrwfs::apply Set frame size
 {
    binning    hrwfs:dc:detFrameSize.A Binning
    windowing  hrwfs:dc:detFrameSize.B Windowing
@@ -72,18 +77,18 @@ command acqcam::detFrameSize acqcam::apply Set frame size
    height     hrwfs:dc:detFrameSize.F Height
 }
 
-command acqcam::observe acqcam::apply Observe
+command hrwfs::observe hrwfs::apply Observe
 {
    label      hrwfs:observe.A        DHS data label
    dummy      hrwfs:observe.B
 }
 
-command acqcam::stop acqcam::apply Stop observation
+command hrwfs::stop hrwfs::apply Stop observation
 {
    dummy      hrwfs:stop.A
 }
 
-command acqcam::abort acqcam::apply Abort observation
+command hrwfs::abort hrwfs::apply Abort observation
 {
    dummy      hrwfs:abort.A
 }
