@@ -1,4 +1,4 @@
-
+#+
 #  GuideControl <- ComponentControl
 #
 #  A GuideControl is a ComponentControl widget with widgets for the target 
@@ -14,7 +14,7 @@
 #           updateobj name  Stores the contents of the edit controls in the
 #                           Guide object "name".
 #
-#  D Terrett 18 October 2000
+#  D Terrett 22 March 2001
 #
 #  Copyright CCLRC
 #+
@@ -26,6 +26,9 @@ itcl::class GuideControl {
    public {
       method selectobj {name}
       method updateobj {name}
+   }
+   private {
+      method setchop {wfs}
    }
 }
 
@@ -39,97 +42,43 @@ itcl::body GuideControl::constructor args {
 
 # Create 3 panels, one for each of the wave front sensors.
    set w $itk_interior
-   itk_component add pwfs1 {
-      frame $w.pwfs1 -bd 2 -relief sunken
-   }
-   itk_component add pwfs2 {
-      frame $w.pwfs2 -bd 2 -relief sunken
-   }
-   itk_component add oiwfs {
-      frame $w.oiwfs -bd 2 -relief sunken
+   foreach wfs {pwfs1 pwfs2 oiwfs} {
+      itk_component add $wfs {
+         frame $w.$wfs -bd 2 -relief sunken
+      }
    }
    pack $itk_component(pwfs1) $itk_component(pwfs2) $itk_component(oiwfs)
 
-# PWFS1 settings
-   set w $itk_component(pwfs1)
+   foreach wfs {pwfs1 pwfs2 oiwfs} {
+      set w $itk_component($wfs)
 
 # Target selector.
-   itk_component add pwfs1Target {
-      SubComponentSelector $w.target -labeltext "PWFS1 Target" \
-            -componentlist WfsTargetList -labelpos nw -component pwfs1Target
-   }
+      itk_component add ${wfs}Target {
+         SubComponentSelector $w.target \
+               -labeltext "[string toupper $wfs] Target" \
+               -componentlist WfsTargetList -labelpos nw \
+               -component ${wfs}Target
+      }
 
 # Chop state
-   itk_component add pwfs1chop {
-      iwidgets::optionmenu $w.chop -labeltext "Guide"
-   }
-   [$itk_component(pwfs1chop) component menuBtn] configure -anchor w
-   $itk_component(pwfs1chop) insert end "in chop A" "in chop B" \
-         "when chop matches nod" "when chop doesn't match nod" "never"
+      itk_component add ${wfs}chop {
+         iwidgets::optionmenu $w.chop -command [itcl::code $this setchop $wfs]
+      }
+      [$itk_component(${wfs}chop) component menuBtn] configure -anchor w
+      $itk_component(${wfs}chop) insert end "guide when in beam A" \
+            "guide when in beam B" "guide when chop matches nod" \
+            "guide when chop doesn't match nod" "no guiding with this WFS"
 
 # Nod setting
-   itk_component add pwfs1nod {
-      iwidgets::optionmenu $w.nod -labeltext "and in"
-   }
-   [$itk_component(pwfs1nod) component menuBtn] configure -anchor w
-   $itk_component(pwfs1nod) insert end \
-         "both nod states" "nod A only" "nod B only"
-   pack $itk_component(pwfs1Target) $itk_component(pwfs1chop) \
-         $itk_component(pwfs1nod) -padx 5 -pady 2
-
-# PWFS2 settings
-   set w $itk_component(pwfs2)
-
-# Target selector.
-   itk_component add pwfs2Target {
-      SubComponentSelector $w.target -labeltext "PWFS2 Target" \
-            -componentlist WfsTargetList -labelpos nw -component pwfs2Target
-   }
-
-# Chop state
-   itk_component add pwfs2chop {
-      iwidgets::optionmenu $w.chop -labeltext "Guide"
-   }
-   [$itk_component(pwfs2chop) component menuBtn] configure -anchor w
-   $itk_component(pwfs2chop) insert end "in chop A" "in chop B" \
-         "when chop matches nod" "when chop doesn't match nod" "never"
-
-# Nod setting
-   itk_component add pwfs2nod {
-      iwidgets::optionmenu $w.nod -labeltext "and in"
-   }
-   [$itk_component(pwfs2nod) component menuBtn] configure -anchor w
-   $itk_component(pwfs2nod) insert end \
-         "both nod states" "nod A only" "nod B only"
-   pack $itk_component(pwfs2Target) $itk_component(pwfs2chop) \
-         $itk_component(pwfs2nod) -padx 5 -pady 2
-
-# OIWFS settings
-   set w $itk_component(oiwfs)
-
-# Target selector.
-   itk_component add oiwfsTarget {
-      SubComponentSelector $w.target -labeltext "OIWFS Target" \
-            -componentlist WfsTargetList -labelpos nw -component oiwfsTarget
-   }
-
-# Chop state
-   itk_component add oiwfschop {
-      iwidgets::optionmenu $w.chop -labeltext "Guide"
-   }
-   [$itk_component(oiwfschop) component menuBtn] configure -anchor w
-   $itk_component(oiwfschop) insert end "in chop A" "in chop B" \
-         "when chop matches nod" "when chop doesn't match nod" "never"
-
-# Nod setting
-   itk_component add oiwfsnod {
-      iwidgets::optionmenu $w.nod -labeltext "and in"
-   }
-   [$itk_component(oiwfsnod) component menuBtn] configure -anchor w
-   $itk_component(oiwfsnod) insert end \
-         "both nod states" "nod A only" "nod B only"
-   pack $itk_component(oiwfsTarget) $itk_component(oiwfschop) \
-         $itk_component(oiwfsnod) -padx 5 -pady 2
+      itk_component add ${wfs}nod {
+         iwidgets::optionmenu $w.nod -labeltext "and in"
+      }
+      [$itk_component(${wfs}nod) component menuBtn] configure -anchor w
+      $itk_component(${wfs}nod) insert end \
+            "both nod states" "nod A only" "nod B only"
+      pack $itk_component(${wfs}Target) $itk_component(${wfs}chop) \
+            $itk_component(${wfs}nod) -padx 5 -pady 2 -anchor w
+}
 
 # Create guide object used by apply
    set scratchobj [namespace which -command [Guide #auto]]
@@ -145,50 +94,24 @@ itcl::body GuideControl::updateobj name {
 #+
 # Updates the named guide object.
 #-
-   switch [$itk_component(pwfs1nod) index [$itk_component(pwfs1nod) get]] {
-      0 {set nod AB}
-      1 {set nod A}
-      2 {set nod B}
+   foreach wfs {pwfs1 pwfs2 oiwfs} {
+      switch [$itk_component(${wfs}nod) index \
+            [$itk_component(${wfs}nod) get]] {
+         0 {set nod AB}
+         1 {set nod A}
+         2 {set nod B}
+      }
+      switch [$itk_component(${wfs}chop) index \
+            [$itk_component(${wfs}chop) get]] {
+         0 {set chop A}
+         1 {set chop B}
+         2 {set chop Nod}
+         3 {set chop antiNod}
+         4 {set chop never}
+      }
+      $name configure -${wfs}Target [$itk_component(${wfs}Target) get] \
+             -${wfs}Active $chop -${wfs}NodState $nod
    }
-   switch [$itk_component(pwfs1chop) index [$itk_component(pwfs1chop) get]] {
-      0 {set chop A}
-      1 {set chop B}
-      2 {set chop Nod}
-      3 {set chop antiNod}
-      4 {set chop never}
-   }
-   $name configure -pwfs1Target [$itk_component(pwfs1Target) get] \
-          -pwfs1Active $chop -pwfs1NodState $nod
-
-   switch [$itk_component(pwfs2nod) index [$itk_component(pwfs2nod) get]] {
-      0 {set nod AB}
-      1 {set nod A}
-      2 {set nod B}
-   }
-   switch [$itk_component(pwfs2chop) index [$itk_component(pwfs2chop) get]] {
-      0 {set chop A}
-      1 {set chop B}
-      2 {set chop Nod}
-      3 {set chop antiNod}
-      4 {set chop never}
-   }
-   $name configure -pwfs2Target [$itk_component(pwfs2Target) get] \
-          -pwfs2Active $chop -pwfs2NodState $nod
-
-   switch [$itk_component(oiwfsnod) index [$itk_component(oiwfsnod) get]] {
-      0 {set nod AB}
-      1 {set nod A}
-      2 {set nod B}
-   }
-   switch [$itk_component(oiwfschop) index [$itk_component(oiwfschop) get]] {
-      0 {set chop A}
-      1 {set chop B}
-      2 {set chop Nod}
-      3 {set chop antiNod}
-      4 {set chop never}
-   }
-   $name configure -oiwfsTarget [$itk_component(oiwfsTarget) get] \
-          -oiwfsActive $chop -oiwfsNodState $nod
 }
 
 itcl::body GuideControl::selectobj name {
@@ -196,53 +119,38 @@ itcl::body GuideControl::selectobj name {
 # Copy the contents of the guide object selected in the combobox
 # into the edit control.
    if { ! [string equal $name ""] } {
-      $itk_component(pwfs1Target) select [$name cget -pwfs1Target]
-      switch [$name cget -pwfs1Active] {
-         A {$itk_component(pwfs1chop) select 0}
-         B {$itk_component(pwfs1chop) select 1}
-         Nod {$itk_component(pwfs1chop) select 2}
-         antiNod {$itk_component(pwfs1chop) select 3}
-         default {$itk_component(pwfs1chop) select 4}
-      }
-      switch [$name cget -pwfs1NodState] {
-         AB {$itk_component(pwfs1nod) select 0}
-         A {$itk_component(pwfs1nod) select 1}
-         B {$itk_component(pwfs1nod) select 2}
-      }
-      $itk_component(pwfs2Target) select [$name cget -pwfs2Target]
-      switch [$name cget -pwfs2Active] {
-         A {$itk_component(pwfs2chop) select 0}
-         B {$itk_component(pwfs2chop) select 1}
-         Nod {$itk_component(pwfs2chop) select 2}
-         antiNod {$itk_component(pwfs2chop) select 3}
-         default {$itk_component(pwfs2chop) select 4}
-      }
-      switch [$name cget -pwfs2NodState] {
-         AB {$itk_component(pwfs2nod) select 0}
-         A {$itk_component(pwfs2nod) select 1}
-         B {$itk_component(pwfs2nod) select 2}
-      }
-      $itk_component(oiwfsTarget) select [$name cget -oiwfsTarget]
-      switch [$name cget -oiwfsActive] {
-         A {$itk_component(oiwfschop) select 0}
-         B {$itk_component(oiwfschop) select 1}
-         Nod {$itk_component(oiwfschop) select 2}
-         antiNod {$itk_component(oiwfschop) select 3}
-         default {$itk_component(oiwfschop) select 4}
-      }
-      switch [$name cget -oiwfsNodState] {
-         AB {$itk_component(oiwfsnod) select 0}
-         A {$itk_component(oiwfsnod) select 1}
-         B {$itk_component(oiwfsnod) select 2}
+      foreach wfs {pwfs1 pwfs2 oiwfs} {
+         $itk_component(${wfs}Target) configure -state normal
+         $itk_component(${wfs}Target) select [$name cget -${wfs}Target]
+         switch [$name cget -${wfs}Active] {
+            A {$itk_component(${wfs}chop) select 0}
+            B {$itk_component(${wfs}chop) select 1}
+            Nod {$itk_component(${wfs}chop) select 2}
+            antiNod {$itk_component(${wfs}chop) select 3}
+            default {$itk_component(${wfs}chop) select 4}
+         }
+         setchop $wfs
+         switch [$name cget -${wfs}NodState] {
+            AB {$itk_component(${wfs}nod) select 0}
+            A {$itk_component(${wfs}nod) select 1}
+            B {$itk_component(${wfs}nod) select 2}
+         }
       }
    }
 }
 
 itcl::configbody GuideControl::shadow {
-   $itk_component(pwfs1Target) configure -editcontrol \
-            $itk_option(-shadow)pwfs1Target -shadow $itk_option(-shadow)
-   $itk_component(pwfs2Target) configure -editcontrol \
-            $itk_option(-shadow)pwfs2Target -shadow $itk_option(-shadow)
-   $itk_component(oiwfsTarget) configure -editcontrol \
-            $itk_option(-shadow)oiwfsTarget -shadow $itk_option(-shadow)
+   foreach wfs {pwfs1 pwfs2 oiwfs} {
+      $itk_component(${wfs}Target) configure -editcontrol \
+               $itk_option(-shadow)${wfs}Target -shadow $itk_option(-shadow)
+   }
+}
+
+itcl::body GuideControl::setchop {wfs} {
+   if { [string equal [$itk_component(${wfs}chop) get] \
+         "no guiding with this WFS"] } {
+      $itk_component(${wfs}Target) configure -state disabled
+   } else {
+      $itk_component(${wfs}Target) configure -state normal
+   }
 }
