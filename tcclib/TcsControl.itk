@@ -9,7 +9,7 @@
 #  Methods:
 #          none
 #
-#  D Terrett 1 November 2002
+#  D Terrett 3 December 2002
 #
 #  Copyright CCLRC
 #+
@@ -29,6 +29,8 @@ itcl::class TcsControl {
       method m1unpark {par} {return UNPARK}
       method agmech {cmd}
       method mountdatum {par}
+      method altairfollow {}
+      method altairpark {}
       variable dome
       variable shutter
    }
@@ -58,24 +60,19 @@ itcl::body TcsControl::constructor args {
    pack $itk_component(row1) $itk_component(row2) $itk_component(row3) \
          $itk_component(row4) -fill x -expand y
 
-# The first row contains 3 frames.
+# The first row contains 2 frames.
    set w $itk_component(row1)
-#   itk_component add row1f1 {
-#      frame $w.f1 -bd 2 -relief ridge
-#   }
-   itk_component add row1f2 {
+   itk_component add row1f1 {
       frame $w.f2 -bd 2 -relief ridge
    }
-   itk_component add row1f3 {
+   itk_component add row1f2 {
       frame $w.f3
    }
-#   pack $itk_component(row1f1) $itk_component(row1f2) $itk_component(row1f3) \
-         -side left -fill both -expand y
-   pack $itk_component(row1f2) $itk_component(row1f3) \
+   pack $itk_component(row1f1) $itk_component(row1f2) \
          -side left -fill both -expand y
 
 # The third frame in the first row is divided into 3 horizontally.
-   set w $itk_component(row1f3)
+   set w $itk_component(row1f2)
    itk_component add f3top {
       frame $w.top -bd 2 -relief ridge
    }
@@ -99,30 +96,8 @@ itcl::body TcsControl::constructor args {
    pack $itk_component(row4f1) $itk_component(row4f2) \
          -side left -fill both -expand y
 
-# Park to Reboot buttons.
-#   set w $itk_component(row1f1)
-#   itk_component add park {
-#      ApplyButton $w.park -command park
-#   }
-#   itk_component add datum {
-#      ApplyButton $w.datum -command datum
-#   }
-#   itk_component add init {
-#      ApplyButton $w.init -command init
-#   }
-#   itk_component add test {
-#      ApplyButton $w.test -command test
-#   }
-#   itk_component add reboot {
-#      ApplyButton $w.reboot -command reboot -confirm \
-#            "This will reboot the TCS and all it's subsystems"
-#   }
-#   pack $itk_component(park) $itk_component(datum) $itk_component(init) \
-#         $itk_component(test) $itk_component(reboot) -padx 4 -pady 8 \
-#         -expand y -fill both 
-
 # Commands to enable/disable following in each subsystem 
-   set w $itk_component(row1f2)
+   set w $itk_component(row1f1)
    itk_component add mcs {
       OnOffButton $w.mcs -text MCS \
             -oncommand {mcFollow followState On} \
@@ -177,6 +152,14 @@ itcl::body TcsControl::constructor args {
             -offvalue {OFF Off} \
             -sadrecord {agssad oiFollowS}
    }
+   itk_component add altair {
+      OnOffButton $w.altair -text ALTAIR \
+            -onproc  [itcl::code $this altairfollow] \
+            -offproc {aoFollow followState Off } \
+            -onvalue {ON On} \
+            -offvalue {OFF Off} \
+            -sadrecord {aossad followS}
+   }
 
 # Commands for datuming, initing or unparking mechanisms.
    itk_component add mcsdatum {
@@ -205,6 +188,9 @@ itcl::body TcsControl::constructor args {
    itk_component add oidatum {
       ApplyButton $w.oidatum -command oiwfsDatum -text Datum
    }
+   itk_component add aodatum {
+      ApplyButton $w.aodatum -command aoDatum -text Datum
+   }
 
 # Commands for parking mechanisms.
    itk_component add mcspark {
@@ -232,6 +218,9 @@ itcl::body TcsControl::constructor args {
    itk_component add oipark {
       ApplyButton $w.oipark -command oiwfsPark -text Park
    }
+   itk_component add aopark {
+      LiveButton $w.aopark -command [itcl::code $this altairpark] -text Park
+   }
 
    grid $itk_component(mcs) $itk_component(mcsdatum) $itk_component(mcspark) \
          -sticky nsew -padx 5 -pady 3
@@ -248,6 +237,8 @@ itcl::body TcsControl::constructor args {
    grid $itk_component(p2) $itk_component(p2datum) $itk_component(p2park) \
          -sticky nsew -padx 5 -pady 3
    grid $itk_component(oiwfs) $itk_component(oidatum) $itk_component(oipark) \
+         -sticky ew -padx 5 -pady 3
+   grid $itk_component(altair) $itk_component(aodatum) $itk_component(aopark) \
          -sticky ew -padx 5 -pady 3
 
 # Carousel driving mode command.
@@ -408,6 +399,18 @@ itcl::body TcsControl::constructor args {
    }
    if { [catch {cs oiwfsFocusPark info}] } {
       epics cs oiwfsFocusPark
+   }
+   if { [catch {cs aoFollow info}] } {
+      epics cs aoFollow
+   }
+   if { [catch {cs aoExitShutter info}] } {
+      epics cs aoExitShutter
+   }
+   if { [catch {cs aoEntShutter info}] } {
+      epics cs aoEntShutter
+   }
+   if { [catch {cs aoPark info}] } {
+      epics cs aoPark
    }
    
 
@@ -597,12 +600,11 @@ itcl::body TcsControl::agmech cmd {
        "OIWFS focus"      {set cmd oiwfsFocus$cmd}
    }
    cs $cmd set dummy MARK
+   logger command $cmd
    if { [catch {cs tcsApply post} msg] } {
       tk_messageBox -icon error -parent $itk_interior -message \
             "Error posting A&G mechanism command: TCS reports \
             \"$msg\""
-   } else {
-      logger command $cmd
    }
 }
 
@@ -611,5 +613,31 @@ itcl::body TcsControl::mountdatum {par} {
       datumAxis {return BOTH}
       azDevice {return HEAD1}
       elDevice {return HEAD1}
+   }
+}
+
+itcl::body TcsControl::altairfollow {} {
+   cs aoFollow set followState On
+   cs aoEntShutter set state Open
+   cs aoExitShutter set state Open
+   logger command aoFollow
+   logger command aoEntShutter
+   logger command aoExitShutter
+   if { [catch {cs tcsApply post} msg] } {
+      tk_messageBox -icon error -parent $itk_interior -message \
+            "Error posting ALTAIR mechanism command: TCS reports \
+            \"$msg\""
+   }
+}
+
+itcl::body TcsControl::altairpark {} {
+   cs aoFollow set followState Off
+   cs aoPark set dummy 1
+   logger command aoFollow
+   logger command aoPark
+   if { [catch {cs tcsApply post} msg] } {
+      tk_messageBox -icon error -parent $itk_interior -message \
+            "Error posting ALTAIR mechanism command: TCS reports \
+            \"$msg\""
    }
 }
