@@ -10,7 +10,7 @@
 #           update          Updates the view with the current state of the
 #                           telescope.
 #
-#  D Terrett 17 July 2001
+#  D Terrett 13 August 2001
 #
 #  Copyright CCLRC
 #-
@@ -251,6 +251,14 @@ itcl::body GraphicDisplay::update {} {
       }
    }
 
+# Determine if there is light from GCAL.
+   set calunit [expr { [sa gcalsad get shutter value] == "OPEN" ||
+         [sa gcalsad get ArLampState value] == "ON" ||
+         [sa gcalsad get KrLampState value] == "ON" ||
+         [sa gcalsad get CuArLampState value] == "ON" ||
+         [sa gcalsad get ThArLampState value] == "ON" ||
+         [sa gcalsad get QHLampState value] == "ON" }]
+
 # Configure the light path.
    $itk_component(opticsview) configure \
          -deployablebaffle [sa m2ssad get deployBafflePos value] \
@@ -259,7 +267,7 @@ itcl::body GraphicDisplay::update {} {
          -hrwfs [sa agssad get hwName value] \
          -m1cover [sa gissad get m1cover value] \
          -holecover [sa gissad get m1inst value] \
-         -calunit [sa gcalsad get shutter value]
+         -calunit $calunit
    $itk_component(opticsview) update
 
 
