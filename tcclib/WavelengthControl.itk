@@ -12,6 +12,9 @@
 itcl::class WavelengthControl {
    inherit ComponentControl
    constructor args {}
+   private {
+      variable prevwl
+   }
    public {
       method load {name}
       method reset {}
@@ -40,6 +43,22 @@ itcl::body WavelengthControl::constructor args {
    }
    pack $itk_component(wavel) -padx 4 -pady 4
 
+# Central baffle
+   itk_component add central {
+      iwidgets::optionmenu $w.central -labeltext "M2 Central hole cover"
+   }
+   $itk_component(central) insert end "" open closed
+   $itk_component(central) select open
+   pack $itk_component(central) -anchor e -padx 3 -pady 3
+
+# Deployable baffle
+   itk_component add deploy {
+      iwidgets::optionmenu $w.deploy -labeltext "M2 Deployable baffle"
+   }
+   $itk_component(deploy) insert end "" "thermal IR" "near IR" visible \
+      extended
+   pack $itk_component(deploy) -anchor e -padx 3 -pady 3
+
 # Set the object description.
    set description wavelength
 
@@ -47,13 +66,37 @@ itcl::body WavelengthControl::constructor args {
 }
 
 itcl::body WavelengthControl::save {name} {
-   $name configure -wavel [$itk_component(wavel) get]
+   $name configure -wavel [$itk_component(wavel) get] \
+         -centralBaffle [$itk_component(central) get] \
+         -deployableBaffle [$itk_component(deploy) get]
+
 }
 
 itcl::body WavelengthControl::reset {} {
+   set prevwl [$itk_component(wavel) get]
    $itk_component(wavel) clear
+   $itk_component(central) select ""
+   $itk_component(deploy) select ""
 }
 
 itcl::body WavelengthControl::load {name} {
-   $itk_component(wavel) insert end [$name cget -wavel]
+
+   set wavelen [$name cget -wavel]
+   if {$wavelen != $prevwl} {
+      if {$wavelen < 1} {
+	$itk_component(central) select closed
+	$itk_component(deploy) select visible
+      } elseif {$wavelen > 3} {
+	$itk_component(central) select open
+	$itk_component(deploy) select "thermal IR"
+      } else {
+	$itk_component(central) select open
+	$itk_component(deploy) select "near IR"
+      }
+   } else {
+      $itk_component(central) select [$name cget -centralBaffle]
+      $itk_component(deploy) select [$name cget -deployableBaffle]
+   }
+	
+   $itk_component(wavel) insert end $wavelen
 }
