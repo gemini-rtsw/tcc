@@ -1,30 +1,10 @@
 #+
-#  SciTarget
+#  SciTarget <- Target
 #
 #  Implements the SciTarget class. A SciTarget object stores all
 #  the parameters needed to specify a science target.
 #
 #  Options:
-#           -objName       The object name
-#
-#           -type          The type of the coordinate (radec, azel, orbit or
-#                          planet).
-#
-#           The following options apply when -type is radec.
-#
-#              -cosys         The target coordinate system.
-#
-#              -epoch         The epoch of the position.
-#
-#              -parallax      The parallax.
-#
-#              -radec         Right ascension and declination.
-#
-#              -rv            Radial velocity.
-#
-#           The following options apply when -type is radec.
-#
-#              -azel          Azimuth and elevation.
 #
 #           The following options apply when -type is planet.
 #
@@ -69,12 +49,13 @@
 #  Procs;
 #           subcomponents Returns a list of the target classes subcomponents.
 #
-#  D Terrett 16 February 2000
+#  D Terrett 17 February 2000
 #
 #  Copyright CCLRC
 #+
 
 itcl::class SciTarget {
+   inherit Target
 
    constructor args {}
 
@@ -83,20 +64,6 @@ itcl::class SciTarget {
    public method apply vt {}
    public method preview vt {}
    public method save file
-
-   public variable type
-   public variable objName {}
-
-# Type "radec"
-   public variable radec {} {if {$radec != ""} {set type radec}}
-   public variable cosys {}
-   public variable epoch {}
-   public variable parallax 0
-   public variable pm {}
-   public variable rv 0
-
-# Type "azel"
-   public variable azel {} {if {$azel != ""} {set type azel}}
 
 # Type "planet"
    public variable planet {} {if {$planet != ""} {set type planet}}
@@ -114,14 +81,6 @@ itcl::class SciTarget {
    public variable meanlong {}
    public variable meananom {}
    public variable dailymot {}
-
-   public variable wavelength_name {}
-   public variable wavelength_value {} {
-      set wavelength_value [valWavelength $wavelength_value]
-   }
-   public variable trackrate {}
-
-   private common Wavelength ""
 }
 
 itcl::body SciTarget::subcomponents {} {
@@ -133,11 +92,6 @@ itcl::body SciTarget::subcomponents {} {
 }
 
 itcl::body SciTarget::constructor args {
-
-# Create the scratch wavelength object if it doesn't already exist.
-   if { [info commands $Wavelength] == "" } {
-      set Wavelength [Wavelength #auto]
-   }
    eval configure $args
 }
 
@@ -217,8 +171,8 @@ itcl::body SciTarget::apply vt {
       }
    } else {
       if { $wavelength_value != "" } {
-         $Wavelength configure -wavel $wavelength_value
-         $Wavelength apply $vt
+         Target::$Wavelength configure -wavel $wavelength_value
+         Target::$Wavelength apply $vt
       }
    }
    if { [info commands ::TrackRateNames::$trackrate] != "" } {
@@ -269,8 +223,8 @@ itcl::body SciTarget::preview vt {
       }
    } else {
       if { $wavelength_value != "" } {
-         $Wavelength configure -wavel $wavelength_value
-         $Wavelength preview $vt
+         Target::$Wavelength configure -wavel $wavelength_value
+         Target::$Wavelength preview $vt
       }
    }
    if { [info commands ::TrackRateNames::$trackrate] != "" } {
