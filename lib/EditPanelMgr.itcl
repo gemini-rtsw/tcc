@@ -17,7 +17,7 @@
 #  Methods:
 #           map             Overrides the map method of PanelMgr
 #
-#  D Terrett 27 March 2001
+#  D Terrett 28 March 2001
 #
 #  Copyright CCLRC
 #+
@@ -34,37 +34,10 @@ itcl::class EditPanelMgr {
    }
 }
 
-itcl::configbody EditPanelMgr::componentlist {
-   if { [winfo exists $name] } {
-      foreach c $componentlist {
-         $name configure -componentlist $c
-      }
-   }
-}
-
-itcl::configbody EditPanelMgr::namespace {
-   if { [winfo exists $name] } {
-      foreach n $namespace {
-         $name configure -namespace $n
-      }
-   }
-}
-
-itcl::configbody EditPanelMgr::vt {
-   if { [winfo exists $name] } {
-      foreach n $vt {
-         $name configure -vt $n
-      }
-   }
-}
-
 itcl::body EditPanelMgr::map {} {
    if { [$this PanelMgr::map] } {
-
-# Configure each of the control objects that the panel contains.
-      foreach control $controls l $componentlist n $namespace v $vt {
-         $name configure -componentlist $l -namespace $n -vt $v
-      }
+      $name configure -componentlist $componentlist -namespace $namespace \
+            -vt $vt
       return 1
    }
    return 0

@@ -4,17 +4,10 @@
 #  Implements the PointOrigPanel widget. A Panel widget with a 
 #  PointOrigControl widget packed into its interior.
 #
-#  Options:
-#          -componentlist - The -componentlist option of the pointing
-#                           origin control
-#
-#          -namespace -     The -namespace option of the pointing
-#                           origin control
-#
 #  Methods:
 #          none
 #
-#  D Terrett 27 March 2001
+#  D Terrett 28 March 2001
 #
 #  Copyright CCLRC
 #+
@@ -22,8 +15,6 @@
 itcl::class PointOrigPanel {
    inherit Panel
    constructor args {}
-   itk_option define -componentlist componentList ComponentList {}
-   itk_option define -namespace namespace Namespace {}
 }
 
 itk::usual PointOrigPanel {
@@ -42,12 +33,4 @@ itcl::body PointOrigPanel::constructor args {
    set itk_option(-windows) $itk_component(control)
 
    eval itk_initialize $args
-}
-
-itcl::configbody PointOrigPanel::componentlist {
-   $itk_component(control) configure -componentlist $itk_option(-componentlist)
-}
-
-itcl::configbody PointOrigPanel::namespace {
-   $itk_component(control) configure -namespace $itk_option(-namespace)
 }
