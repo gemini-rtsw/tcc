@@ -55,7 +55,7 @@
 #  Procs:
 #           subcomponents Returns a list of the target classes subcomponents.
 #
-#  D Terrett 26 June 2000
+#  D Terrett 15 March 2001
 #
 #  Copyright CCLRC
 #+
@@ -105,33 +105,33 @@ itcl::body SciTarget::apply vt {
          logger command planet
       }
       orbit {
-         cs orbit set objName \"$objName\"
-         cs orbit set eltype \"$eltype\"
-         cs orbit set epochofel \"$epochofel\"
-         cs orbit set inclination \"$inclination\"
-         cs orbit set longascnode \"$longascnode\"
+         cs orbit set objName [list $objName]
+         cs orbit set eltype [list $eltype]
+         cs orbit set epochofel [list $epochofel]
+         cs orbit set inclination [list $inclination]
+         cs orbit set longascnode [list $longascnode]
          if { $eltype == 1 } {
-            cs orbit set longofper \"$longofper\"
+            cs orbit set longofper [list $longofper]
          } else {
-            cs orbit set argofper \"$argofper\"
+            cs orbit set argofper [list $argofper]
          }
          if { $eltype == 3 } {
-            cs orbit set perdist \"$perdist\"
+            cs orbit set perdist [list $perdist]
          } else {
-            cs orbit set meandist \"$meandist\"
+            cs orbit set meandist [list $meandist]
          }
-         cs orbit set eccentricity \"$eccentricity\"
+         cs orbit set eccentricity [list $eccentricity]
          if { $eltype == 1 } {
-            cs orbit set meanlong \"$meanlong\"
+            cs orbit set meanlong [list $meanlong]
          } elseif { $eltype == 2 } {
-            cs orbit set meananom \"$meananom\"
+            cs orbit set meananom [list $meananom]
          } else {
-            cs orbit set meananom \"\"
+            cs orbit set meananom ""
          }
          if { $eltype == 1 } {
-            cs orbit set dailymot \"$dailymot\"
+            cs orbit set dailymot [list $dailymot]
          } else {
-            cs orbit set dailymot \"\"
+            cs orbit set dailymot ""
          }
          logger command orbit
       }
@@ -184,34 +184,34 @@ itcl::body SciTarget::preview vt {
 
 itcl::body SciTarget::save file {
    $this Target::save $file
-   puts $file "\"$this\" configure \\"
+   puts $file "[list $this] configure \\"
    switch $type {
       planet {
-         puts $file "   -planet \"$planet\""
+         puts $file "   -planet [list $planet]"
       }
       orbit {
-         puts $file "   -eltype \"$eltype\" \\"
-         puts $file "   -epochofel \"$epochofel\" \\"
-         puts $file "   -inclination \"$inclination\" \\"
-         puts $file "   -longascnode \"$longascnode\" \\"
+         puts $file "   -eltype [list $eltype] \\"
+         puts $file "   -epochofel [list $epochofel] \\"
+         puts $file "   -inclination [list $inclination] \\"
+         puts $file "   -longascnode [list $longascnode] \\"
          if { $eltype == 1 } {
-            puts $file "   -longofper \"$longofper\" \\"
+            puts $file "   -longofper [list $longofper] \\"
          } else {
-            puts $file "   -argofper \"$argofper\" \\"
+            puts $file "   -argofper [list $argofper] \\"
          }
-         puts $file "   -meandist \"$meandist\" \\"
-         puts $file "   -perdist \"$perdist\" \\"
-         puts $file "   -eccentricity \"$eccentricity\" \\"
-         puts $file "   -meanlong \"$meanlong\" \\"
+         puts $file "   -meandist [list $meandist] \\"
+         puts $file "   -perdist [list $perdist] \\"
+         puts $file "   -eccentricity [list $eccentricity] \\"
+         puts $file "   -meanlong [list $meanlong] \\"
          if { $eltype == 1 || $eltype == 2 } {
-            puts $file "   -meananom \"$meananom\" \\"
+            puts $file "   -meananom [list $meananom] \\"
          }
          if { $eltype == 1 } {
-            puts $file "   -dailymot \"$dailymot\" \\"
+            puts $file "   -dailymot [list $dailymot] \\"
          }
       }
    }
-   puts $file "   -airmassLimit \"$airmassLimit\""
+   puts $file "   -airmassLimit [list $airmassLimit]"
 }
 
 itcl::body SciTarget::grab vt {

@@ -16,7 +16,7 @@
 #                           channel identifier "file" and then calls the
 #                           Wavelength save method to add the objects data.
 #
-#  D Terrett 25 September 2000
+#  D Terrett 15 March 2001
 #
 #  Copyright CCLRC
 #+
@@ -37,8 +37,8 @@ itcl::body WavelengthComponent::save file {
    set obj [namespace tail $this]
    set namespace [namespace qualifiers $this]
    puts $file \
-         "catch {WavelengthComponent \"${namespace}::$obj\"  $componentList}"
-   puts $file "\"${namespace}::$obj\" init"
-   puts $file "\"${namespace}::$obj\" configure \\"
+         "catch {WavelengthComponent [list ${namespace}::$obj]  $componentList}"
+   puts $file "[list ${namespace}::$obj] init"
+   puts $file "[list ${namespace}::$obj] configure \\"
    Wavelength::save $file
 }

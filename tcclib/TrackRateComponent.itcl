@@ -16,7 +16,7 @@
 #                           channel identifier "file" and then calls the
 #                           TrackRate save method to add the objects data.
 #
-#  D Terrett 25 September 2000
+#  D Terrett 15 March 2001
 #
 #  Copyright CCLRC
 #+
@@ -37,8 +37,8 @@ itcl::body TrackRateComponent::save file {
    set obj [namespace tail $this]
    set namespace [namespace qualifiers $this]
    puts $file \
-         "catch {TrackRateComponent \"${namespace}::$obj\"  $componentList}"
-   puts $file "\"${namespace}::$obj\" init"
-   puts $file "\"${namespace}::$obj\" configure \\"
+         "catch {TrackRateComponent [list ${namespace}::$obj]  $componentList}"
+   puts $file "[list ${namespace}::$obj] init"
+   puts $file "[list ${namespace}::$obj] configure \\"
    TrackRate::save $file
 }

@@ -21,7 +21,7 @@
 #          save file     Writes the values of the pointing origin options
 #                        to the channel identifier "file".
 #
-#  D Terrett 5 June 2000
+#  D Terrett 15 March 2001
 #
 #  Copyright CCLRC
 #+
@@ -41,18 +41,18 @@ itcl::class PointOrig {
 itcl::body PointOrig::apply vt {
    switch $vt {
       sourceA {
-         cs poriginA set x \"$x\"
-         cs poriginA set y \"$y\"
+         cs poriginA set x [list $x]
+         cs poriginA set y [list $y]
          logger command poriginA
       }
       sourceB {
-         cs poriginB set x \"$x\"
-         cs poriginB set y \"$y\"
+         cs poriginB set x [list $x]
+         cs poriginB set y [list $y]
          logger command poriginB
       }
       sourceC {
-         cs poriginC set x \"$x\"
-         cs poriginC set y \"$y\"
+         cs poriginC set x [list $x]
+         cs poriginC set y [list $y]
          logger command poriginC
       }
       all {
@@ -73,6 +73,6 @@ itcl::body PointOrig::preview item {
 }
 
 itcl::body PointOrig::save file {
-   puts $file "   -x \"$x\" \\"
-   puts $file "   -y \"$y\""
+   puts $file "   -x [list $x] \\"
+   puts $file "   -y [list $y]"
 }

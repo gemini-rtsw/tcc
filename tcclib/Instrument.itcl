@@ -35,7 +35,7 @@
 #           subcomponents   Returns a list of the subcomponents of the
 #                           Instrument objects (an empty list).
 #
-#  D Terrett 5 February 2001
+#  D Terrett 15 March 2001
 #
 #  Copyright CCLRC
 #+
@@ -59,11 +59,11 @@ itcl::body Instrument::apply args {
 
 # Set iaa and focus.
    if { ![string is space $iaa] } {
-      cs rotator set iaa \"$iaa\"
+      cs rotator set iaa [list $iaa]
       logger command rotator
    }
    if { ![string is space $focusOffset] } {
-      cs dtelFocus set focusOffset \"$focusOffset\"
+      cs dtelFocus set focusOffset [list $focusOffset]
       logger command dtelFocus
    }
 
@@ -74,7 +74,7 @@ itcl::body Instrument::apply args {
    }
    switch $deployableBaffle {
       "thermal IR" {cs m2Baffle set deployBaffle Retracted}
-      "near IR" {cs m2Baffle set deployBaffle \"Near IR\"}
+      "near IR" {cs m2Baffle set deployBaffle [list "Near IR"]}
       visible {cs m2Baffle set deployBaffle Visible}
       maintenance {cs m2Baffle set deployBaffle Extended}
    }
@@ -111,9 +111,9 @@ itcl::body Instrument::preview {} {
 }
 
 itcl::body Instrument::save file {
-   puts $file "   -iaa \"$iaa\" \\"
-   puts $file "   -issFace \"$issFace\" \\"
-   puts $file "   -centralBaffle \"$centralBaffle\" \\"
-   puts $file "   -deployableBaffle \"$deployableBaffle\" \\"
-   puts $file "   -focusOffset \"$focusOffset\""
+   puts $file "   -iaa [list $iaa] \\"
+   puts $file "   -issFace [list $issFace] \\"
+   puts $file "   -centralBaffle [list $centralBaffle] \\"
+   puts $file "   -deployableBaffle [list $deployableBaffle] \\"
+   puts $file "   -focusOffset [list $focusOffset]"
 }

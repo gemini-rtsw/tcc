@@ -24,7 +24,7 @@
 #  Procs:
 #         subcomponents  Returns a list of the rotator classes subcomponents.
 #
-#  D Terrett 2 February 2001
+#  D Terrett 15 March 2001
 #
 #  Copyright CCLRC
 #+
@@ -52,7 +52,7 @@ itcl::body Rotator::subcomponents {} {
 }
 
 itcl::body Rotator::apply args {
-   cs rotator set ipa \"$ipa\"
+   cs rotator set ipa [list $ipa]
    if { [string equal $cosys ""] } {
       cs rotator set system FK5
       cs rotator set equinox J2000
@@ -79,8 +79,8 @@ itcl::body Rotator::preview {} {
 }
 
 itcl::body Rotator::save file {
-   puts $file "   -ipa \"$ipa\" \\"
-   puts $file "   -cosys \"$cosys\""
+   puts $file "   -ipa [list $ipa] \\"
+   puts $file "   -cosys [list $cosys]"
 }
 
 itcl::body Rotator::init {} {

@@ -26,7 +26,7 @@
 #           save file  Writes the values of the options to the channel
 #                      identifier "file".
 #
-#  D Terrett 26 June 2000
+#  D Terrett 15 March 2001
 #
 #  Copyright CCLRC
 #+
@@ -66,9 +66,9 @@ itcl::body TrackRate::apply vt {
    } else {
       CosysNames::$cosys apply difTr${vt}
    }
-   cs difTr${vt} set epoch \"$epoch\"
-   cs difTr${vt} set dtheta1 \"$dtheta1\"
-   cs difTr${vt} set dtheta2 \"$dtheta2\"
+   cs difTr${vt} set epoch [list $epoch]
+   cs difTr${vt} set dtheta1 [list $dtheta1]
+   cs difTr${vt} set dtheta2 [list $dtheta2]
    logger command difTr${vt}
 }
 
@@ -80,10 +80,10 @@ itcl::body TrackRate::init {} {
 }
 
 itcl::body TrackRate::save file {
-   puts $file "   -cosys \"$cosys\" \\"
-   puts $file "   -epoch \"$epoch\" \\"
-   puts $file "   -dtheta1 \"$dtheta1\" \\"
-   puts $file "   -dtheta2 \"$dtheta2\""
+   puts $file "   -cosys [list $cosys] \\"
+   puts $file "   -epoch [list $epoch] \\"
+   puts $file "   -dtheta1 [list $dtheta1] \\"
+   puts $file "   -dtheta2 [list $dtheta2]"
 }
 
 itcl::configbody TrackRate::cosys {

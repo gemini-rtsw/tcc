@@ -49,7 +49,7 @@
 #  Procs:
 #           subcomponents Returns a list of the target classes subcomponents.
 #
-#  D Terrett 13 March 2001
+#  D Terrett 15 March 2001
 #
 #  Copyright CCLRC
 #+
@@ -116,37 +116,37 @@ itcl::body Target::apply vt {
 
    switch $type {
       radec {
-         cs $vt set objName \"$objName\"
+         cs $vt set objName [list $objName]
          if { [string equal $cosys ""] } {
             cs $vt set system FK5
             cs $vt set equinox J2000
          } else {
             CosysNames::$cosys apply $vt
          }
-         cs $vt set theta1 \"[lindex $radec 0]\"
-         cs $vt set theta2 \"[lindex $radec 1]\"
-         cs $vt set epoch \"$epoch\"
-         cs $vt set parallax \"$parallax\"
+         cs $vt set theta1 [list [lindex $radec 0]]
+         cs $vt set theta2 [list [lindex $radec 1]]
+         cs $vt set epoch [list $epoch]
+         cs $vt set parallax [list $parallax]
          if { [string equal $pm ""] } {
-            cs $vt set dtheta1 \"\"
-            cs $vt set dtheta2 \"\"
+            cs $vt set dtheta1 ""
+            cs $vt set dtheta2 ""
          } else {
-            cs $vt set dtheta1 \"[lindex $pm 0]\"
-            cs $vt set dtheta2 \"[lindex $pm 1]\"
+            cs $vt set dtheta1 [list [lindex $pm 0]]
+            cs $vt set dtheta2 [list [lindex $pm 1]]
          }
-         cs $vt set rv \"$rv\"
+         cs $vt set rv [list $rv]
       }
       azel {
-         cs $vt set objName \"$objName\"
-         cs $vt set system \"AZEL_TOPO\"
-         cs $vt set equinox \"\"
-         cs $vt set theta1 \"[lindex $azel 0]\"
-         cs $vt set theta2 \"[lindex $azel 1]\"
-         cs $vt set epoch \"\"
-         cs $vt set parallax \"\"
-         cs $vt set dtheta1 \"\"
-         cs $vt set dtheta2 \"\"
-         cs $vt set rv \"\"
+         cs $vt set objName [list $objName]
+         cs $vt set system AZEL_TOPO
+         cs $vt set equinox ""
+         cs $vt set theta1 [list [lindex $azel 0]]
+         cs $vt set theta2 [list [lindex $azel 1]]
+         cs $vt set epoch ""
+         cs $vt set parallax ""
+         cs $vt set dtheta1 ""
+         cs $vt set dtheta2 ""
+         cs $vt set rv ""
       }
    }
    logger command $vt
@@ -214,17 +214,17 @@ itcl::body Target::preview vt {
 }
 
 itcl::body Target::save file {
-   puts $file "   -objName \"$objName\" \\"
-   puts $file "   -cosys \"$cosys\" \\"
-   puts $file "   -radec \"$radec\" \\"
-   puts $file "   -epoch \"$epoch\" \\"
-   puts $file "   -parallax \"$parallax\" \\"
-   puts $file "   -pm \"$pm\" \\"
-   puts $file "   -rv \"$rv\" \\"
-   puts $file "   -azel \"$azel\" \\"
-   puts $file "   -wavelength_name \"$wavelength_name\" \\"
-   puts $file "   -wavelength_value \"$wavelength_value\" \\"
-   puts $file "   -trackrate \"$trackrate\""
+   puts $file "   -objName [list $objName] \\"
+   puts $file "   -cosys [list $cosys] \\"
+   puts $file "   -radec [list $radec] \\"
+   puts $file "   -epoch [list $epoch] \\"
+   puts $file "   -parallax [list $parallax] \\"
+   puts $file "   -pm [list $pm] \\"
+   puts $file "   -rv [list $rv] \\"
+   puts $file "   -azel [list $azel] \\"
+   puts $file "   -wavelength_name [list $wavelength_name] \\"
+   puts $file "   -wavelength_value [list $wavelength_value] \\"
+   puts $file "   -trackrate [list $trackrate]"
 }
 
 body Target::grab vt {

@@ -15,7 +15,7 @@
 #                           channel identifier "file" and then calls the
 #                           Instrument save method to add the objects data.
 #
-#  D Terrett 25 September 2000
+#  D Terrett 15 March 2001
 #
 #  Copyright CCLRC
 #+
@@ -36,8 +36,8 @@ itcl::body InstrumentComponent::save file {
    set obj [namespace tail $this]
    set namespace [namespace qualifiers $this]
    puts $file \
-         "catch {InstrumentComponent \"${namespace}::$obj\"  $componentList}"
-   puts $file "\"${namespace}::$obj\" init"
-   puts $file "\"${namespace}::$obj\" configure \\"
+         "catch {InstrumentComponent [list ${namespace}::$obj]  $componentList}"
+   puts $file "[list ${namespace}::$obj] init"
+   puts $file "[list ${namespace}::$obj] configure \\"
    Instrument::save $file
 }

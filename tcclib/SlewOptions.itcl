@@ -40,7 +40,7 @@
 #           save file Writes all the slew option values to the channel
 #                     identifier "file".
 #
-#  D Terrett 1 December 2000
+#  D Terrett 15 March 2001
 #
 #  Copyright CCLRC
 #+
@@ -66,16 +66,16 @@ itcl::class SlewOptions {
 }
 
 itcl::body SlewOptions::apply args {
-   cs slew set chopThrow \"$chopThrow\"
-   cs slew set sourceOffset \"$sourceOffset\"
-   cs slew set sourceDifTr \"$sourceDifTr\"
-   cs slew set mountOffset \"$mountOffset\"
-   cs slew set mountDifTr \"$mountDifTr\"
-   cs slew set filter1 \"$filter1\"
-   cs slew set filter2 \"$filter2\"
-   cs slew set pointing \"$pointing\"
-   cs slew set guiding \"$guiding\"
-   cs slew set guideOffset \"$guideOffset\"
+   cs slew set chopThrow [list $chopThrow]
+   cs slew set sourceOffset [list $sourceOffset]
+   cs slew set sourceDifTr [list $sourceDifTr]
+   cs slew set mountOffset [list $mountOffset]
+   cs slew set mountDifTr [list $mountDifTr]
+   cs slew set filter1 [list $filter1]
+   cs slew set filter2 [list $filter2]
+   cs slew set pointing [list $pointing]
+   cs slew set guiding [list $guiding]
+   cs slew set guideOffset [list $guideOffset]
    logger command slew
 }
 
@@ -95,14 +95,14 @@ itcl::body SlewOptions::init {} {
 itcl::body SlewOptions::preview {} {}
 
 body SlewOptions::save file {
-   puts $file "   -chopThrow \"$chopThrow\" \\"
-   puts $file "   -sourceOffset \"$sourceOffset\" \\"
-   puts $file "   -sourceDifTr \"$sourceDifTr\" \\"
-   puts $file "   -mountOffset \"$mountOffset\" \\"
-   puts $file "   -mountDifTr \"$mountDifTr\" \\"
-   puts $file "   -filter1 \"$filter1\" \\"
-   puts $file "   -filter2 \"$filter2\" \\"
-   puts $file "   -pointing \"$pointing\" \\"
-   puts $file "   -guiding \"$guiding\""
-   puts $file "   -guideOffset \"$guideOffset\""
+   puts $file "   -chopThrow [list $chopThrow] \\"
+   puts $file "   -sourceOffset [list $sourceOffset] \\"
+   puts $file "   -sourceDifTr [list $sourceDifTr] \\"
+   puts $file "   -mountOffset [list $mountOffset] \\"
+   puts $file "   -mountDifTr [list $mountDifTr] \\"
+   puts $file "   -filter1 [list $filter1] \\"
+   puts $file "   -filter2 [list $filter2] \\"
+   puts $file "   -pointing [list $pointing] \\"
+   puts $file "   -guiding [list $guiding] \\"
+   puts $file "   -guideOffset [list $guideOffset]"
 }

@@ -8,7 +8,7 @@
 #     update    Updates the currently selected pointing origin with
 #                new values.
 #
-#  D Terrett  31 January 2001
+#  D Terrett  15 March 2001
 #
 #  Copyright CCLRC
 #+
@@ -143,7 +143,7 @@ itcl::body PoManager::selectcmd {po} {
 # absorb any offsets and send the X/Y to the TCS.
 
    if { [string equal $achop $po] } {
-      cs absorbPoOffset set vt "\"SOURCE A\""
+      cs absorbPoOffset set vt [list "SOURCE A"]
       cs absorbPoOffset set index all
       logger command absorbPoOffset
       if { [catch {cs tcsApply post} msg] } {
@@ -152,7 +152,7 @@ itcl::body PoManager::selectcmd {po} {
       }
    }
    if { [string equal $bchop $po] } {
-      cs absorbPoOffset set vt "\"SOURCE B\""
+      cs absorbPoOffset set vt [list "SOURCE B"]
       cs absorbPoOffset set index all
       logger command absorbPoOffset
       if { [catch {cs tcsApply post} msg] } {
