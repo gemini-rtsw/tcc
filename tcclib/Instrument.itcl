@@ -19,10 +19,7 @@
 #          -issPort           The ISS port on which the instrument is 
 #                             mounted.
 #
-#          -name              The name of the instrument (as known to the A&G).
-#
-#          -oiwfs             Whether the instrument has an OIWFS that needs
-#                             to be configured in the A&G sequencer
+#          -name              The name of the instrument (as know to the A&G).
 #
 #  Methods:
 #          apply comp  Applies the iaa to the TCS by setting the values of 
@@ -34,7 +31,7 @@
 #
 #          node        Saves the values of the options to the xml node. 
 #
-#  D Terrett 14 October 2003
+#  D Terrett 21 February 2003
 #
 #  Copyright CCLRC
 #+
@@ -52,7 +49,6 @@ itcl::class Instrument {
       variable deployableBaffle ""
       variable focusOffset ""
       variable name ""
-      variable oiwfs no
    }
 }
 
@@ -67,14 +63,6 @@ itcl::body Instrument::apply {comp} {
       cs dtelFocus set focusOffset [list $focusOffset]
       logger command dtelFocus
    }
-
-# Configure the A&G sequencer
-   if { $oiwfs } {
-     cs oiwfsSelect set oiwfs $name
-   } else {
-     cs oiwfsSelect set oiwfs NONE
-   }
-   logger command oiwfsSelect
 
 # Configure ISS object.
    switch $centralBaffle {
@@ -104,7 +92,6 @@ itcl::body Instrument::init {} {
    set deployableBaffle ""
    set focusOffset 0
    set name ""
-   set oiwfs no
 }
 
 itcl::body Instrument::preview {view} {
@@ -123,5 +110,4 @@ itcl::body Instrument::save {node} {
    param $node deployableBaffle $deployableBaffle
    param $node focusOffset $focusOffset
    param $node name $name
-   param $node oiwfs $oiwfs
 }
