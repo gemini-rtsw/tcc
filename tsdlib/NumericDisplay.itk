@@ -11,26 +11,27 @@
 #
 #  options
 #
-#  D Terrett 21 December 2000
+#  D Terrett 26 January 2001
 #
 #  Copyright CCLRC
 #-
 
 itcl::class NumericDisplay {
    inherit itk::Widget
-
    constructor args {}
    destructor {}
-
-   public method update
-
-   private method newtarget {record value}
-   private method newobject {record value}
-   private method inPosition {rec value}
-   private method noheartbeat
-   private method heartbeat {rec value}
-   private variable nohbid
-   private variable hbid
+   public {
+      method update {}
+   }
+   private {
+      method newtarget {record value}
+      method newobject {record value}
+      method inPosition {rec value}
+      method noheartbeat {}
+      method heartbeat {rec value}
+      variable nohbid
+      variable hbid
+   }
 }
 
 itk::usual NumericDisplay {
@@ -559,8 +560,8 @@ itcl::body NumericDisplay::update {} {
 
 # Time.
    $itk_component(utc) configure -text [tccTime utc]
-   $itk_component(hst) configure -text [tccTime localtime 10]
-   $itk_component(cst) configure -text [tccTime localtime 4]
+   $itk_component(hst) configure -text [tccTime localtime -10]
+   $itk_component(cst) configure -text [tccTime localtime -4]
    $itk_component(lst) configure -text [tccTime last]
 }
 
