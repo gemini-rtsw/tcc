@@ -10,7 +10,7 @@
 #           update      Causes the preview configuration to be calculated 
 #                       and displayed.
 #
-#  D Terrett 3 November 2002
+#  D Terrett 11 February 2003
 #
 #  Copyright CCLRC
 #+
@@ -300,20 +300,10 @@ itcl::body PreviewControl::update {} {
    $itk_component(rot1lim) configure -text "" -relief groove
    $itk_component(rot2lim) configure -text "" -relief groove
 
-# These limits should come from the sad...
-   set ellim [sa tcssad get ellimit]
-   set azlolim [sa tcssad get azlolimit]
-   set azhilim [sa tcssad get azhilimit]
-   set rotlolim [sa tcssad get rotlolimit]
-   set rothilim [sa tcssad get rothilimit]
-   set zlim [sa tcssad get zlimit]
-
-# Set the mechanism limits.
-   tccPreview set limits $azlolim $azhilim $ellim $rotlolim $rothilim $zlim
-
-   if { [catch {tccPreview end [expr [$itk_component(delta) get] * 60]} end] } {
+# "Slew" the preview.
+   if { [catch {tccPreview slew [expr [$itk_component(delta) get] * 60]} msg] } {
       tk_messageBox -icon error -parent $itk_interior -message \
-            "Error generating preview \"$end\""
+            "Error generating preview \"$msg\""
    } else {
 
 # Determine the current wrap states of the azimuth and rotator axes.
@@ -332,22 +322,25 @@ itcl::body PreviewControl::update {} {
          set rotwrap -1
       }
 
-# Display the source position
-      foreach {ra dec frame equinox} [tccPreview get source_target] {}
+# Display the source position.
+      set target [tccPreview cget -target]
+      set ra [lindex $target 0]
+      set dec [lindex $target 1]
+      set frame [lindex $target 2]
+      set equinox [lindex $target 3]
       if { [string equal $frame FK4] || [string equal $frame FK5] } {
          set equinox [formatEpoch $frame $equinox]
       }
       $itk_component(radec) configure -text "$ra $dec $frame $equinox"
 
 # Display the time of the preview.
-      $itk_component(time) configure -text [lindex $end 0]
+      $itk_component(time) configure -text [tccPreview cget -utc]
 
 # Display the preview values of the mechanisms.
-      set vis [lindex $end 1]
-      set mount [tccPreview get mount]
-      set az1 [lindex $mount 0]
-      set az2 [lindex $mount 1]
-      set el [lindex $mount 2]
+      set vis [tccPreview cget -visible]
+      set az1 [tccPreview cget -az1]
+      set az2 [tccPreview cget -az2]
+      set el [tccPreview cget -el]
       $itk_component(az1) configure -text $az1
       $itk_component(az2) configure -text $az2
       $itk_component(el) configure -text $el
@@ -360,11 +353,10 @@ itcl::body PreviewControl::update {} {
       } else {
         set azwrap 0
       }
-      set rma [tccPreview get rotator]
-      set rma1 [lindex $rma 0]
-      set rma2 [lindex $rma 1]
-      $itk_component(rma1) configure -text $rma1
-      $itk_component(rma2) configure -text $rma2
+      set rma1 [tccPreview cget -rma1]
+      set rma2 [tccPreview cget -rma2]
+      $itk_component(rma1) configure -text [format %.1f $rma1]
+      $itk_component(rma2) configure -text [format %.1f $rma2]
       if { [string compare $rma1 $rma2] } {
          if { $rotwrap == 1 } {
             $itk_component(rma2) configure -relief raised
@@ -374,14 +366,14 @@ itcl::body PreviewControl::update {} {
       } else {
         set rotwrap 0
       }
-      set source [tccPreview get source]
-      set ha [lindex $source 0]
-      set zd [lindex $source 1]
-      set am [lindex $source 2]
+      set ha [tccPreview cget -ha]
+      set zd [tccPreview cget -zd]
+      set am [tccPreview cget -am]
       $itk_component(ha) configure -text $ha
-      $itk_component(zd) configure -text $zd
-      $itk_component(am) configure -text $am
-      $itk_component(moond) configure -text [tccPreview get moondist]
+      $itk_component(zd) configure -text [format %.1f $zd]
+      $itk_component(am) configure -text [format %.2f $am]
+      $itk_component(moond) configure \
+            -text [format %.2f [tccPreview cget -moonSep]]
 
 # Set the alarm state of the widgets depend on the visibility.
       if { $vis } {
@@ -392,14 +384,12 @@ itcl::body PreviewControl::update {} {
          $itk_component(el) configure -state alarm
       }
    
-      set pwfs1 [tccPreview get pwfs1]
+      set pwfs1 [tccPreview cget -p1xy]
       if { ! [string equal $pwfs1 ""] } {
          set x [lindex $pwfs1 0]
          set y [lindex $pwfs1 1]
-         set x [format "%.2f" $x]
-         set y [format "%.2f" $y]
-         $itk_component(pwfs1x) configure -text $x
-         $itk_component(pwfs1y) configure -text $y
+         $itk_component(pwfs1x) configure -text [format "%.2f" $x]
+         $itk_component(pwfs1y) configure -text [format "%.2f" $y]
          set r2 [expr $x * $x + $y * $y]
          $itk_component(pwfs1r) configure -text \
                [format "%.2f" [expr {sqrt($r2) * 0.0268573967}]]
@@ -419,14 +409,12 @@ itcl::body PreviewControl::update {} {
          $itk_component(pwfs1y) configure -text "" -state normal
          $itk_component(pwfs1r) configure -text "" -state normal
       }
-      set pwfs2 [tccPreview get pwfs2]
+      set pwfs2 [tccPreview cget -p2xy]
       if { ! [string equal $pwfs2 ""] } {
          set x [lindex $pwfs2 0]
          set y [lindex $pwfs2 1]
-         set x [format "%.2f" [expr $x * 0.90235394114609]]
-         set y [format "%.2f" [expr $y * 0.90235394114609]]
-         $itk_component(pwfs2x) configure -text $x
-         $itk_component(pwfs2y) configure -text $y
+         $itk_component(pwfs2x) configure -text [format "%.2f" $x]
+         $itk_component(pwfs2y) configure -text [format "%.2f" $y]
          set r2 [expr $x * $x + $y * $y]
          $itk_component(pwfs2r) configure -text \
                [format "%.2f" [expr {sqrt($r2) * 0.0268573967}]]
@@ -446,12 +434,12 @@ itcl::body PreviewControl::update {} {
          $itk_component(pwfs2y) configure -text "" -state normal
          $itk_component(pwfs2r) configure -text "" -state normal
       }
-      set oiwfs [tccPreview get oiwfs]
+      set oiwfs [tccPreview cget -oixy]
       if { ! [string equal $oiwfs ""] } {
          set x [lindex $oiwfs 0]
          set y [lindex $oiwfs 1]
-         $itk_component(oiwfsx) configure -text $x
-         $itk_component(oiwfsy) configure -text $y
+         $itk_component(oiwfsx) configure -text [format "%.2f" $x]
+         $itk_component(oiwfsy) configure -text [format "%.2f" $y]
          set r2 [expr $x * $x + $y * $y]
          $itk_component(oiwfsr) configure -text \
                [format "%.2f" [expr {sqrt($r2) * 0.0268573967}]]
@@ -485,18 +473,17 @@ itcl::body PreviewControl::update {} {
          $itk_component(oiwfsy) configure -text "" -state normal
          $itk_component(oiwfsr) configure -text "" -state normal
       }
-      set limits [tccPreview get limits]
-      set az1time [lindex $limits 0]
-      set az2time [lindex $limits 1]
-      set eltime [lindex $limits 2]
-      set rot1time [lindex $limits 3]
-      set rot2time [lindex $limits 4]
+      set az1time [tccPreview cget -azttl1]
+      set az2time [tccPreview cget -azttl2]
+      set eltime [tccPreview cget -elttl]
+      set rot1time [tccPreview cget -rotttl1]
+      set rot2time [tccPreview cget -rotttl2]
 
 # Set message about time to elevation limit.
       if { $vis } {
          if { [string length $eltime] } {
-            set h [expr $eltime / 60]
-            set m [expr $eltime - $h * 60]
+            set h [expr {int($eltime / 60.0)}]
+            set m [expr {int($eltime) - $h * 60}]
             if { $h > 0 } {
                set message "Elevation limit in $h hr $m min"
             } else {
@@ -512,9 +499,9 @@ itcl::body PreviewControl::update {} {
          }
       } else {
          if { ! [string equal $eltime ""] } {
-            if { $eltime > 0 } {
+            if { $eltime >= 1.0 } {
                $itk_component(ellim) configure \
-                  -text "Source rises in $eltime minutes"
+                  -text "Source rises in [expr {int($eltime)}] minutes"
             } else {
                $itk_component(ellim) configure \
                   -text "Source rises in the next minute"
@@ -533,25 +520,25 @@ itcl::body PreviewControl::update {} {
       if { $vis } {
          if { [string equal $eltime ""] } {set eltime 99999.0}
          if { $az1time < $eltime } {
-            $itk_component(az1lim) configure -text $az1time
+            $itk_component(az1lim) configure -text [expr {int($az1time)}]
             if { $azwrap == -1 } {
                $itk_component(az1lim) configure -relief raised
             }
          }
          if { $az2time < $eltime } {
-            $itk_component(az2lim) configure -text $az2time
+            $itk_component(az2lim) configure -text [expr {int($az2time)}]
             if { $azwrap == 1 } {
                $itk_component(az2lim) configure -relief raised
             }
          }
          if { $rot1time < $eltime } {
-            $itk_component(rot1lim) configure -text $rot1time
+            $itk_component(rot1lim) configure -text [expr {int($rot1time)}]
             if { $rotwrap == -1 } {
                $itk_component(rot1lim) configure -relief raised
             }
          }
          if { $rot2time < $eltime } {
-            $itk_component(rot2lim) configure -text $rot2time
+            $itk_component(rot2lim) configure -text [expr {int($rot2time)}]
             if { $rotwrap == 1 } {
                $itk_component(rot2lim) configure -relief raised
             }

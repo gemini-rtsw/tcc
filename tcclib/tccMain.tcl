@@ -7,7 +7,7 @@
 #  Arguments:
 #            Any command line options and values.
 #
-#  D Terrett  16 December 2002
+#  D Terrett  29 January 2003
 #
 #  Copyright CCLRC
 #-
@@ -19,6 +19,9 @@ proc tccMain args {
 # need access to the TCS can't get created while we are waiting for a
 # connection.
    wm withdraw .
+
+# Initialise the time service.
+   timeInit
 
 # Create the epics service.
    service epics
@@ -202,10 +205,6 @@ proc tccMain args {
       }
    }
 
-# Select the tcs configuration called default by pretending that it was
-# selected by its non-existent parent.
-#   tcsconfig selectfromparent default
-
 # Wait to connect to the tcs.
    waitConnect
 
@@ -223,9 +222,6 @@ proc tccMain args {
    } else {
       wm title . [sa tcssad get name]
    }
-
-# Start the preview update process.
-   previewUpdate
 
 # It is now safe to display the main window.
    wm deiconify .

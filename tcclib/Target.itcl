@@ -88,7 +88,7 @@
 #           save node     Saves the values of the target options to the
 #                         xml node.
 #
-#  D Terrett 27 November 2002
+#  D Terrett 30 January 2003
 #
 #  Copyright CCLRC
 #+
@@ -324,21 +324,52 @@ itcl::body Target::preview vt {
    }
    switch $type {
       hmsdegTarget {
-         tccPreview set $vt $system $c1 $c2 $equinox $epoch
+         if { [catch {set pm [pmconvert $c1 $c2 $pm1 $pm2 $pmunits]} ] } {
+            error "Unable to convert proper motions to secs & arcsecs/year"
+         }
+         switch $vt {
+            sourceA {
+               tccPreview target $type $c1 $c2 $system $equinox $epoch \
+                     [lindex $pm 0] [lindex $pm 1] $parallax $rv
+            }
+            pwfs1 {
+               tccPreview configure -p1Target [list $type $c1 $c2 $system \
+                     $equinox $epoch [lindex $pm 0] [lindex $pm 1] \
+                     $parallax $rv]
+            }
+            pwfs2 {
+               tccPreview configure -p2Target [list $type $c1 $c2 $system \
+                     $equinox $epoch [lindex $pm 0] [lindex $pm 1] \
+                     $parallax $rv]
+            }
+            oiwfs {
+               tccPreview configure -oiTarget [list $type $c1 $c2 $system \
+                     $equinox $epoch [lindex $pm 0] [lindex $pm 1] \
+                     $parallax $rv]
+            }
+         }
       }
       degdegTarget {
-         tccPreview set $vt AZEL $c1 $c2
-      }
-      namedTarget {
-         if { [string equal $vt sourceA] } {
-            tccPreview set planet $planet
+         switch $vt {
+            sourceA {
+               tccPreview target $type AZEL $c1 $c2
+            }
+            pwfs1 {
+               tccPreview configure -p1Target [list $type AZEL $c1 $c2]
+            }
+            pwfs2 {
+               tccPreview configure -p2Target [list $type AZEL $c1 $c2]
+            }
+            oiwfs {
+               tccPreview configure -oiTarget [list $type AZEL $c1 $c2]
+            }
          }
       }
       conicTarget {
          if { [string equal $vt sourceA] } {
             switch $format {
                "AsA major planet" {
-                  tccPreview set orbit 1 $epochofel $orbinc $longascnode \
+                  tccPreview target $type 1 $epochofel $orbinc $longascnode \
                         $longofperi $meandist $eccentricity $meanlong $dailymot
                }
                "JPL major planet" {
@@ -354,7 +385,7 @@ itcl::body Target::preview vt {
                      error "expecting floating point number but got
                            \"$longascnode\""
                   }
-                  tccPreview set orbit 1 $epochofel $orbinc $longascnode \
+                  tccPreview target $type 1 $epochofel $orbinc $longascnode \
                         [expr { $longascnode + $argofperi }] $meandist \
                         $eccentricity  \
                         [expr { $longascnode + $argofperi + $meananom }] \
@@ -366,7 +397,7 @@ itcl::body Target::preview vt {
                         [slaPertel 2 $epochofel $epochofel $orbinc \
                               $longascnode $argofperi $meandist $eccentricity \
                               $meananom] {}
-                  tccPreview set orbit 2 $epoch1 $inclination1 $anode1 \
+                  tccPreview target $type 2 $epoch1 $inclination1 $anode1 \
                         $perihelion1 $a1 $e1 $M1
                }
                "AsA comet" -
@@ -376,7 +407,7 @@ itcl::body Target::preview vt {
                         [slaPertel 3 $epochofel $epochofperi $orbinc \
                               $longascnode $argofperi $peridist \
                               $eccentricity] {}
-                  tccPreview set orbit 3 $epoch1 $inclination1 $anode1 \
+                  tccPreview target $type 3 $epoch1 $inclination1 $anode1 \
                         $perihelion1 $q1 $e1
                }
             }

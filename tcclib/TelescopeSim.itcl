@@ -1,0 +1,140 @@
+#+
+# TelescopeSim
+#
+# A TelscopeSim object implements a "virtual" telescope that can be used
+# to answer questions such as "what would the telescope Az/El be if I slewed
+# to this object?", how long would it be before the elevation limit is 
+# reached?" etc.
+#
+# The simulation is configured through a multitude of public variables and
+# then "slewed" to the specified target; various derived quantities can
+# then be acccessed, again through public variables. The focal plane x/y
+# positions can also be computed for any target position.
+#
+# Methods:
+#
+#   slew {time}    "Slews" the simulated telescope as if the time was <time> 
+#                  (MJD) or offset from the current time by <time> days (if
+#                  <time> starts with + or -.
+#
+# D Terrett  30 January 2003
+#
+# Copyright CLRC
+#+
+
+load $::ROOT/tcclib/solaris/tcctelsim.so
+
+itcl::class TelescopeSim {
+   public {
+      method slew {t} @tccTelSimSlew
+      method getxy {} @tccTelSimGetXY
+
+# Telescope context
+#   Mean longitude (degrees, east+)
+      variable elongm
+#   Mean latitude (degrees).
+      variable latm
+#   Height above sea-level (metres)
+      variable hm
+#   Polar motions (arcsec)
+      variable xpm 0.0
+      variable ypm 0.0
+#   Temperature (deg C)
+      variable temperature 0.0
+#   Pressure (millibar)
+      variable pressure
+#   Relative humidity
+      variable humidity
+#   Tropospheric lapse rate
+      variable tlr 0.0065
+#   Focal length (mm)
+      variable focalLength
+#   Axis tilts, north and west (arcsec)
+      variable an 0.0
+      variable aw 0.0
+#   Axis non-perpendicularity (arcsec)
+      variable pnpae 0.0
+#   Collimation errors.
+      variable ca 0.0
+      variable ce 0.0
+#   UT1 - UTC (sec)
+      variable delut
+
+# Target position.
+#   Target type (hmsdegTarget, degdegTarget or conicTarget)
+      variable targetType
+      variable wavelength 0.5
+
+# hmsdegTarget or degdegTarget
+      variable theta1
+      variable theta2
+
+# hmsdegTarget
+      variable system FK5
+      variable equinox J2000
+      variable epoch
+      variable pm1
+      variable pm2
+      variable rv
+      variable parallax
+
+# conicTarget
+      variable orbType
+      variable orbElements
+
+# Pointing origin (mm)
+      variable pox 0.0
+      variable poy 0.0
+
+# Rotator configuration
+      variable iaa 0.0
+      variable ipa 0.0
+      variable rotSystem FK5
+      variable rotEquinox J2000
+
+# Mechanism limits (degrees)
+      variable ellim 15.0
+      variable azlolim -180.0
+      variable azhilim 360.0
+      variable rotlolim -270.0
+      variable rothilim 270.0
+      variable zlim 0.5
+
+# Results from slew.
+      variable utc
+      variable visible
+      variable target
+      variable az1
+      variable az2
+      variable el
+      variable rma1
+      variable rma2
+      variable ha
+      variable zd
+      variable am
+      variable moonSep
+      variable azttl1
+      variable azttl2
+      variable elttl
+      variable rotttl1
+      variable rotttl2
+      variable zttl
+   }
+   private {
+
+# True longitude and latitude.
+      variable elong 0.0
+      variable lat 0.0
+# Pre-flexure Az/El.
+      variable ab0 [list 0.0 0.0]
+# Telescope parameters.
+      variable telp [list 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0]
+# Apparent to observed parameters (15 doubles).
+      variable aoprms [list 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 \
+            0.0 0.0 0.0]
+# M2 tip/tilt.
+      variable m2xy [list 0.0 0.0 0.0 0.0 0.0 0.0]
+# Gemini raw time.
+      variable grt 0.0
+   }
+}
