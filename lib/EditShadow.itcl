@@ -16,7 +16,7 @@
 #
 #           -component      The component class that this EditShadow edits.
 #
-#           -index          The index of the edit window in the panel
+#           -control        The component name of the edit window in the panel
 #
 #           -panel          The name of the panel that contains the edit
 #                           window.
@@ -63,7 +63,7 @@
 #           storefromcontrol name  Calls store and then calls the childstored
 #                                  method of the parent
 #
-#  D Terrett 28 March 2001
+#  D Terrett 29 March 2001
 #
 #  Copyright CCLRC
 #+
@@ -83,7 +83,7 @@ itcl::class EditShadow {
       method unmap {} {set scratchobj ""}
       variable children ""
       variable component ""
-      variable index 0
+      variable control control
       variable namespace ""
       variable panel
       variable parent ""
@@ -132,7 +132,7 @@ itcl::body EditShadow::map {} {
 itcl::body EditShadow::prepare {} {
 
 # Store the name of the edit control window.
-   set window [lindex [$panel cget -windows] $index]
+   set window [[$panel cget -name] component $control]
 
 # Set the name of the shadow in the window.
    $window configure -shadow $this
