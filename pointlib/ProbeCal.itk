@@ -3,7 +3,7 @@
 #
 # The interface of the probe calibration procedure.
 #
-# D Terrett 27 June 2001
+# D Terrett 28 June 2001
 #
 # Copyright CCLRC
 #+
@@ -69,13 +69,20 @@ itcl::body ProbeCal::constructor {args} {
    itk_component add pattern {
       iwidgets::radiobox $w.pattern -labeltext "Pattern size"
    }
-   $itk_component(pattern) add normal -text Normal
+   $itk_component(pattern) add normal -text Normal -width 10
    $itk_component(pattern) add full -text Full
    $itk_component(pattern) select 1
 
    pack $itk_component(probe) $itk_component(mode) $itk_component(pattern) \
       -side left -anchor n -padx 5
    
+   set w $itk_interior
+   itk_component add message {
+      label $w.message -anchor center \
+            -text [format "Guiding instrument origin is %8.3f,%8.3f arcsec" \
+            [expr { $xguide / 0.62056151 }] [expr { $yguide / 0.62056151 }]]
+   }
+
    set w $itk_interior
    itk_component add buttons {
       frame $w.buttons -borderwidth 2 -relief sunken
@@ -90,8 +97,8 @@ itcl::body ProbeCal::constructor {args} {
    }
    pack $itk_component(start) $itk_component(stop) -padx 50 -pady 10 \
          -fill x -side left -expand y
-   pack $itk_component(options) $itk_component(buttons) -fill x \
-      -expand yes
+   pack $itk_component(options) $itk_component(message) \
+         $itk_component(buttons)  -fill x -expand yes
 
 # Create all the actions needed to drive the calibration process.
    foreach p {1 2} {
@@ -116,11 +123,11 @@ itcl::body ProbeCal::constructor {args} {
       $action($p,setup) set m2GuideConfig freq2 ""
       $action($p,setup) set m2GuideConfig beam A
       $action($p,setup) set m2GuideConfig source PWFS${pg}
-      $action($p,setup) set pwfs1Guide nodachopa on
+      $action($p,setup) set pwfs1Guide nodachopa off
       $action($p,setup) set pwfs1Guide nodbchopa off
       $action($p,setup) set pwfs1Guide nodachopb off
       $action($p,setup) set pwfs1Guide nodbchopb off
-      $action($p,setup) set pwfs2Guide nodachopa on
+      $action($p,setup) set pwfs2Guide nodachopa off
       $action($p,setup) set pwfs2Guide nodbchopa off
       $action($p,setup) set pwfs2Guide nodachopb off
       $action($p,setup) set pwfs2Guide nodbchopb off
@@ -148,6 +155,7 @@ itcl::body ProbeCal::constructor {args} {
       switch $p {
          1 {
             $action($p,guidesetup) set pwfs2Guide nodachopa on
+            $action($p,guidesetup) set pwfs1Guide nodachopa off
             $action($p,guidesetup) set pwfs1Park
             $action($p,guidesetup) configure \
                   -oktest [itcl::code $this isagidle] \
@@ -155,6 +163,7 @@ itcl::body ProbeCal::constructor {args} {
          }
          2 {
             $action($p,guidesetup) set p1Follow followState on
+            $action($p,guidesetup) set pwfs1Guide nodachopa on
             $action($p,guidesetup) set pwfs2Guide nodachopa off
             $action($p,guidesetup) configure \
                   -waitvar [scope inposition${pg}(value)] \
@@ -187,6 +196,7 @@ itcl::body ProbeCal::constructor {args} {
       switch $p {
          1 {
             $action($p,probesetup) set p1Follow followState on
+            $action($p,probesetup) set pwfs1Guide nodachopa on
             $action($p,probesetup) set pwfs2Guide nodachopa off
             $action($p,probesetup) configure \
                   -waitvar [scope inposition1(value)] \
@@ -194,6 +204,7 @@ itcl::body ProbeCal::constructor {args} {
          }
          2 {
             $action($p,probesetup) set pwfs2Guide nodachopa on
+            $action($p,probesetup) set pwfs1Guide nodachopa off
             $action($p,probesetup) set pwfs1Park
             $action($p,probesetup) configure \
                   -waitvar [scope inposition2(value)] \
@@ -293,53 +304,27 @@ itcl::body ProbeCal::start {} {
       set poindex -1
 
 # Initialise the pointing origin list.
-      switch [$itk_component(pattern) get] {
-         normal {
-            switch $probe {
-               1 {
-                  set xlist {  0   0 100 100 200}
-                  set ylist {100 200 100 200 100}
-               }
-               2 {
-                  set xlist {  0   0 100 100 200}
-                  set ylist {100 200 100 200 100}
-               }
-            }
-         }
-         full {
-            switch $probe {
-              1 {
-                  set xlist {  0   0   0   0   0 \
-                              50  50  50  50 \
-                             100 100 100 100 \
-                             150 150 150 150 \
-                             200 200 200}
-                  set ylist { 50 100 150 200 250 \
-                              50 100 150 200 \
-                              50 100 150 200 \
-                              50 100 150 200 \
-                              50 100 150}
-              }
-              2 {
-                  set xlist {  0   0   0   0   0 \
-                              50  50  50  50 \
-                             100 100 100 100 \
-                             150 150 150 150 \
-                             200 200 200}
-                  set ylist { 50 100 150 200 250 \
-                              50 100 150 200 \
-                              50 100 150 200 \
-                              50 100 150 200 \
-                              50 100 150}
-              }
-            }
-         }
+      set xlist {  0   0 100 100 200}
+      set ylist {100 200 100 200 100}
+      if { [string equal [$itk_component(pattern) get] full] } {
+         lappend xlist   0    0   0 \
+               50  50  50  50 \
+              100 100 \
+              150 150 150 150 \
+              200 200
+         lappend ylist  50 150 250 \
+               50 100 150 200 \
+               50 150 \
+               50 100 150 200 \
+               50 150
       }
       set polist {}
-      foreach x $xlist y $ylist {lappend polist "$x $y"}
-      foreach x $xlist y $ylist {lappend polist "$y -$x"}
-      foreach x $xlist y $ylist {lappend polist "-$x -$y"}
-      foreach x $xlist y $ylist {lappend polist "-$y $x"}
+      foreach x $xlist y $ylist {
+         lappend polist "$x $y"
+         lappend polist "$y -$x"
+         lappend polist "-$x -$y"
+         lappend polist "-$y $x"
+      }
 
 # Start the calibration process.
       $action($probe,setup) start
@@ -434,8 +419,8 @@ itcl::body ProbeCal::finish {} {
 }
 
 itcl::body ProbeCal::manual {p} {
-#   cs pwfs${p}Observe set noexp -1
-#   cs pwfs${p}Observe post
+   cs pwfs${p}Observe set noexp -1
+   cs pwfs${p}Observe post
    if { [string equal [$itk_component(mode) get] manual] } {
       tk_messageBox -parent $itk_interior -type ok -icon question \
             -message "Press Ok when the star is visible on the WFS"
