@@ -24,10 +24,10 @@ itcl::class AoControl {
       method correct {arg}
       method closeloop1 {}
       method closeloop2 {}
-      method isinposition {}
+      method centreWfsIsIdle {}
       method onerror {msg}
       variable centreaction
-      variable InPosition
+      variable centreWfsBusy
    }
 }
 
@@ -123,8 +123,8 @@ itcl::body AoControl::constructor args {
 # executed the rest of the close loop procedure.
    set centreaction [seq::Action #auto tcs \
          -onok [itcl::code $this closeloop2] \
-         -oktest [itcl::code $this isinposition] \
-         -waitvar [itcl::scope InPosition(value)] \
+         -oktest [itcl::code $this centreWfsIsIdle] \
+         -waitvar [itcl::scope centreWfsBusy(value)] \
          -onerror [itcl::code $this onerror]]
 
    eval itk_initialize $args
@@ -198,9 +198,9 @@ itcl::body AoControl::closeloop2 {} {
    AO enable
 }
 
-itcl::body AoControl::isinposition {} {
-   set val [sa tcssad get inPosition]
-   return [string equal $val TRUE]
+itcl::body AoControl::centreWfsIsIdle {} {
+   set val [sa aossad get centreWfsBusy]
+   return [string equal $val IDLE]
 }
 
 itcl::body AoControl::onerror {msg} {
