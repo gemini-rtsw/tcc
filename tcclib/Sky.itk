@@ -67,12 +67,12 @@ itcl::body Sky::constructor {args} {
    set returnaction [seq::Action #auto tcs \
       -onok [itcl::code $this unfreeze] \
       -oktest [itcl::code $this isinposition] \
-      -waitvar [scope InPosition(value)] \
+      -waitvar [itcl::scope InPosition(value)] \
       -onerror [itcl::code $this onerror]]
    set unfreezeaction [seq::Action #auto tcs \
       -onok "AO enable" \
       -oktest [itcl::code $this isinposition] \
-      -waitvar [scope InPosition(value)] \
+      -waitvar [itcl::scope InPosition(value)] \
       -onerror [itcl::code $this onerror]]
 
 # Construct widgets.
@@ -159,7 +159,7 @@ itcl::body Sky::clear {} {
    logger command offsetSourceA1
 
 # Link to the TCS in postion flag.
-   sa tcssad link inPosition [scope InPosition]
+   sa tcssad link inPosition [itcl::scope InPosition]
 
 # Start the return action.
    $returnaction start
