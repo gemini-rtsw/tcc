@@ -1,6 +1,6 @@
 All: tccext.so tsdext.so tcctime.so slaext.so
 
-TCL_VERS = 8.2
+TCL_VERS = 8.3
 
 CMNOBJ = tccDecode.o tccUtil.o tccAst.o
 TCCOBJ = tccext.o tccPreview.o autorepeat.o
