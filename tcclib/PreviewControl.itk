@@ -10,7 +10,7 @@
 #           update      Causes the preview configuration to be calculated 
 #                       and displayed.
 #
-#  D Terrett 7 February 2001
+#  D Terrett 18 February 2001
 #
 #  Copyright CCLRC
 #+
@@ -282,12 +282,12 @@ itcl::body PreviewControl::update {} {
    $itk_component(rot2lim) configure -text "" -relief groove
 
 # These limits should come from the sad...
-   set ellim 17.0
-   set azlolim -180.0
-   set azhilim 360.0
-   set rotlolim -270.0
-   set rothilim 270.0
-   set zlim 0.5
+   set ellim [sa tcssad get ellimit]
+   set azlolim [sa tcssad get azlolimit]
+   set azhilim [sa tcssad get azhilimit]
+   set rotlolim [sa tcssad get rotlolimit]
+   set rothilim [sa tcssad get rothilimit]
+   set zlim [sa tcssad get zlimit]
 
 # Set the mechanism limits.
    tccPreview set limits $azlolim $azhilim $ellim $rotlolim $rothilim $zlim
@@ -496,7 +496,7 @@ itcl::body PreviewControl::update {} {
       if { [string equal $rot1time ""] } {set rot1time 99999.0}
       if { [string equal $rot2time ""] } {set rot2time 99999.0}
       if { $vis } {
-         if { [string equal $eltime ""] } {set eltime -1.0}
+         if { [string equal $eltime ""] } {set eltime 99999.0}
          if { $az1time < $eltime } {
             $itk_component(az1lim) configure -text $az1time
             if { $azwrap == -1 } {
