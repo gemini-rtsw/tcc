@@ -37,6 +37,8 @@
 #           grab vt       Grabs the current tracking position of the
 #                         virtual telescope vt.
 #
+#           init          Returns the rotator object to its initial state.
+#
 #           preview item  Sets the preview target for "item".
 #
 #           save file     Writes the values of the target options to the
@@ -49,7 +51,7 @@
 #        The grab method only supports the mount and source virtual
 #        telescopes.
 #
-#  D Terrett 17 February 2000
+#  D Terrett 21 February 2000
 #
 #  Copyright CCLRC
 #+
@@ -57,11 +59,13 @@
 itcl::class Target {
 
    constructor args {}
+   destructor {$this init}
 
    public proc subcomponents {}
 
    public method apply vt
    public method grab vt
+   public method init
    public method preview vt
    public method save file
 
@@ -86,6 +90,10 @@ itcl::class Target {
    public variable trackrate {}
 
    protected common Wavelength ""
+
+   private variable current_cosys {}
+   private variable current_wavelength_name {}
+   private variable current_trackrate {}
 }
 
 itcl::body Target::subcomponents {} {
@@ -154,6 +162,22 @@ itcl::body Target::apply vt {
    if { [info commands ::TrackRateNames::$trackrate] != "" } {
       ::TrackRateNames::$trackrate apply $vt
    }
+}
+
+itcl::body Target::init {} {
+
+   set type {}
+   set objName {}
+   set radec {}
+   $this configure -cosys {}
+   set epoch {}
+   set parallax 0
+   set pm {}
+   set rv 0
+   set azel {}
+   $this configure -wavelength_name {}
+   set wavelength_value {}
+   $this configure -trackrate {}
 }
 
 itcl::body Target::preview vt {
@@ -234,4 +258,46 @@ body Target::grab vt {
 # Store the RA/Dec.
    set type radec
    set radec [lrange $target 0 1]
+}
+
+itcl::configbody Target::cosys {
+   if { $current_cosys != "" } {
+      CosysNames::$current_cosys refdec
+   }
+   set current_cosys ""
+   if { $cosys != "" } {
+      if { [catch {CosysNames::$cosys refinc}] } {
+         error "Coordinate frame \"$cosys\" does not exist"
+      } else {
+         set current_cosys $cosys
+      }
+   }
+}
+
+itcl::configbody Target::wavelength_name {
+   if { $current_wavelength_name != "" } {
+      WavelengthNames::$current_wavelength_name refdec
+   }
+   set current_wavelength_name ""
+   if { $wavelength_name != "" } {
+      if { [catch {WavelengthNames::$wavelength_name refinc}] } {
+         error "Wavelength \"$wavelength_name\" does not exist"
+      } else {
+         set current_wavelength_name $wavelength_name
+      }
+   }
+}
+
+itcl::configbody Target::trackrate {
+   if { $current_trackrate != "" } {
+      TrackRateNames::$current_trackrate refdec
+   }
+   set current_trackrate ""
+   if { $trackrate != "" } {
+      if { [catch {TrackRateNames::$trackrate refinc}] } {
+         error "Differential track rate \"$trackrate\" does not exist"
+      } else {
+         set current_trackrate $trackrate
+      }
+   }
 }

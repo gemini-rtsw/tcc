@@ -41,15 +41,17 @@
 #                         setting the values of the command parameters
 #                         for virtual telescope "vt".
 #
+#           init          Sets the science target to its initial state.
+#
 #           preview item  Sets the preview target for "item".
 #
 #           save file     Writes the values of the target options to the
 #                         channel identifier "file".
 #
-#  Procs;
+#  Procs:
 #           subcomponents Returns a list of the target classes subcomponents.
 #
-#  D Terrett 17 February 2000
+#  D Terrett 21 February 2000
 #
 #  Copyright CCLRC
 #+
@@ -62,6 +64,7 @@ itcl::class SciTarget {
    public proc subcomponents {}
 
    public method apply vt {}
+   public method init
    public method preview vt {}
    public method save file
 
@@ -178,6 +181,23 @@ itcl::body SciTarget::apply vt {
    if { [info commands ::TrackRateNames::$trackrate] != "" } {
       ::TrackRateNames::$trackrate apply $vt
    }
+}
+
+itcl::body SciTarget::init {} {
+   $this Target::init
+   set planet {}
+   set eltype {}
+   set epochofel {}
+   set inclination {}
+   set longascnode {}
+   set longofper {}
+   set argofper {}
+   set meandist {}
+   set perdist {}
+   set eccentricity {}
+   set meanlong {}
+   set meananom {}
+   set dailymot {}
 }
 
 itcl::body SciTarget::preview vt {

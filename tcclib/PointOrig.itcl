@@ -13,12 +13,15 @@
 #  Methods:
 #          apply vt      Applies the pointing origin to virtual telescope "vt".
 #
+#          init          Returns the pointing origin object to its initial 
+#                        state.
+#
 #          preview item  Sets "item" in the preview.
 #
 #          save file     Writes the values of the pointing origin options
 #                        to the channel identifier "file".
 #
-#  D Terrett 26 November 1999
+#  D Terrett 21 February 2000
 #
 #  Copyright CCLRC
 #+
@@ -28,6 +31,7 @@ itcl::class PointOrig {
    public proc subcomponents {} {return {}}
 
    public method apply vt
+   public method init
    public method preview item
    public method save file
 
@@ -56,6 +60,11 @@ itcl::body PointOrig::apply vt {
          $this apply sourceC
       }
    }
+}
+
+itcl::body PointOrig::init {} {
+   set x 0.0
+   set y 0.0
 }
 
 itcl::body PointOrig::preview item {

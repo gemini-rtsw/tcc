@@ -33,6 +33,8 @@
 #           apply cs        Sets the system and equinox paramters of the
 #                           command sender "cs".
 #
+#           init            Returns the guide object to its initial state.
+#
 #           preview         Sets the guide information in the preview.
 #
 #           save file       Writes the values of the options to the file
@@ -42,30 +44,42 @@
 #           subcomponents   Returns a list of the Guide components 
 #                           subcomponents.
 #
-#  D Terrett 24 March 1999
+#  D Terrett 21 February 2000
 #
 #  Copyright CCLRC
 #+
 
 itcl::class Guide {
+   constructor {} {}
+   destructor {$this init}
 
    public proc subcomponents {}
 
-   public variable oiwfsTarget ""
+   public variable oiwfsTarget "" {newTarget oiwfs $oiwfsTarget}
    public variable oiwfsChop A
    public variable oiwfsNod AB
-   public variable pwfs1Target ""
+   public variable pwfs1Target "" {newTarget pwfs1 $pwfs1Target}
    public variable pwfs1Chop A
    public variable pwfs1Nod AB
-   public variable pwfs2Target ""
+   public variable pwfs2Target "" {newTarget pwfs2 $pwfs2Target}
    public variable pwfs2Chop A
    public variable pwfs2Nod AB
 
    public method apply args
+   public method init
    public method preview
    public method save file
 
    private method setEnableFlags {wfs chop nod}
+   private method newTarget {wfs name}
+
+   private variable current_target
+}
+
+itcl::body Guide::constructor {} {
+   set current_target(oiwfs) ""
+   set current_target(pwfs1) ""
+   set current_target(pwfs2) ""
 }
 
 itcl::body Guide::subcomponents {} {
@@ -98,6 +112,18 @@ itcl::body Guide::apply args {
    } else {
       setEnableFlags oiwfs "" ""
    }
+}
+
+itcl::body Guide::init {} {
+   $this configure -oiwfsTarget ""
+   set oiwfsChop A
+   set oiwfsNod AB
+   $this configure -pwfs1Target ""
+   set pwfs1Chop A
+   set pwfs1Nod AB
+   $this configure -pwfs2Target ""
+   set pwfs2Chop A
+   set pwfs2Nod AB
 }
 
 itcl::body Guide::preview {} {
@@ -199,5 +225,19 @@ itcl::body Guide::setEnableFlags {wfs chop nod} {
       cs ${wfs}Guide set nodcchopc On
    } else {
       cs ${wfs}Guide set nodcchopc Off
+   }
+}
+
+itcl::body Guide::newTarget {wfs name} {
+   if { $current_target($wfs) != "" } {
+      WfsTargetNames::$current_target($wfs) refdec
+   }
+   set current_target($wfs) ""
+   if { $name != "" } {
+      if { [catch {WfsTargetNames::$name refinc}] } {
+         error "Guide target \"$name\" does not exist"
+      } else {
+         set current_target($wfs) $name
+      }
    }
 }

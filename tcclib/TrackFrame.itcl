@@ -25,6 +25,8 @@
 #                        setting the values of the TrackFrame command 
 #                        parameters. Any parameters are ignored.
 #
+#           init         Sets the track frame object to its initial state.
+#
 #           preview      The tracking frame does not effect the preview 
 #                        system so this method does nothing.
 #
@@ -35,26 +37,42 @@
 #           subcomponents   Returns a list of the subcomponents of the
 #                           TrackFrame objects.
 #
-#  D Terrett 19 August 1999
+#  D Terrett 21 February 2000
 #
 #  Copyright CCLRC
 #+
 
 itcl::class TrackFrame {
+   constructor {} {}
+   destructor {$this init}
 
    public proc subcomponents {}
 
    public method apply args
+   public method init
    public method preview {} {}
    public method save file
 
-   public variable mountCosys {}
-   public variable sourceACosys {}
-   public variable sourceBCosys {}
-   public variable sourceCCosys {}
-   public variable pwfs1Cosys {}
-   public variable pwfs2Cosys {}
-   public variable oiwfsCosys {}
+   public variable mountCosys {} {newCosys mount $mountCosys}
+   public variable sourceACosys {} {newCosys sourceA $sourceACosys}
+   public variable sourceBCosys {} {newCosys sourceB $sourceBCosys}
+   public variable sourceCCosys {} {newCosys sourceC $sourceCCosys}
+   public variable pwfs1Cosys {} {newCosys pwfs1 $pwfs1Cosys}
+   public variable pwfs2Cosys {} {newCosys pwfs2 $pwfs2Cosys}
+   public variable oiwfsCosys {} {newCosys oiwfs $oiwfsCosys}
+
+   private method newCosys {vt name}
+   private variable current_cosys
+}
+
+itcl::body TrackFrame::constructor {} {
+   set current_cosys(sourceA) ""
+   set current_cosys(sourceB) ""
+   set current_cosys(sourceC) ""
+   set current_cosys(mount) ""
+   set current_cosys(pwfs1) ""
+   set current_cosys(pwfs2) ""
+   set current_cosys(oiwfs) ""
 }
 
 itcl::body TrackFrame::subcomponents {} {
@@ -93,4 +111,28 @@ itcl::body TrackFrame::save file {
    puts $file "   -pwfs1Cosys \"$pwfs1Cosys\" \\"
    puts $file "   -pwfs2Cosys \"$pwfs2Cosys\" \\"
    puts $file "   -oiwfsCosys \"$oiwfsCosys\""
+}
+
+itcl::body TrackFrame::init {} {
+   $this configure -sourceACosys ""
+   $this configure -sourceBCosys ""
+   $this configure -sourceCCosys ""
+   $this configure -mountCosys ""
+   $this configure -pwfs1Cosys ""
+   $this configure -pwfs2Cosys ""
+   $this configure -oiwfsCosys ""
+}
+
+itcl::body TrackFrame::newCosys {vt name} {
+   if { $current_cosys($vt) != "" } {
+      CosysNames::$current_cosys($vt) refdec
+   }
+   set current_cosys($vt) ""
+   if { $name != "" } {
+      if { [catch {CosysNames::$name refinc}] } {
+         error "Coordinate system \"$name\" does not exist"
+      } else {
+         set current_cosys($vt) $name
+      }
+   }
 }

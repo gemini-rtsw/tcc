@@ -12,9 +12,6 @@
 #                           defined.
 #
 #  Methods:
-#           scratchobj      Returns the name of the scratch object used by 
-#                           the control.
-#
 #           select name     Selects the component "name".
 #
 #           store name      Stores the widget contents in a new or existing 
@@ -25,7 +22,7 @@
 #  Notes:
 #        o <useful stuff>
 #
-#  D Terrett 3 November 1998
+#  D Terrett  21 February 2000
 #
 #  Copyright CCLRC
 #+
@@ -39,7 +36,6 @@ itcl::class ComponentControl {
    itk_option define -component component Component {}
    itk_option define -namespace namespace Namespace {}
 
-   public method scratchobj {} {return $scratchobj}
    public method select name
    public method store name
    public method subselect {component name}
@@ -204,6 +200,10 @@ itcl::body ComponentControl::apply args {
          error "TCS reports \"$msg\""
       }
    }
+
+# Return the scratch object to its initial state so that it doesn't prevent
+# the deletion of any of its sumbcomponents.
+   $scratchobj init
 }
 
 itcl::body ComponentControl::delselected {} {
@@ -212,7 +212,10 @@ itcl::body ComponentControl::delselected {} {
 #-
    set name [$itk_component(selector) get]
    if { [string length $name] } {
-      delete object $itk_option(-namespace)::$name
+      if { [catch {delete object $itk_option(-namespace)::$name} msg] } {
+         tk_messageBox -icon error -message $msg \
+               -parent $itk_interior -title "Component delete error"
+      }
    }
 }
 

@@ -27,6 +27,8 @@
 #                      the command parameters. Any method arguments are 
 #                      ignored.
 #
+#          init        Returns the instrument object to its initial state.
+#
 #          preview     Sets the preview instrument configuration.
 #
 #          save        Writes the values of the options to the channel 
@@ -36,7 +38,7 @@
 #           subcomponents   Returns a list of the subcomponents of the
 #                           Instrument objects (an empty list).
 #
-#  D Terrett 4 February 2000
+#  D Terrett 21 February 2000
 #
 #  Copyright CCLRC
 #+
@@ -46,6 +48,7 @@ itcl::class Instrument {
    public proc subcomponents {} {return {}}
 
    public method apply args
+   public method init
    public method preview
    public method save file
 
@@ -83,6 +86,15 @@ itcl::body Instrument::apply args {
 
 # Update ISS with new configuration.
    iss update
+}
+
+itcl::body Instrument::init {} {
+   set iaa 0
+   set issFace "port 1"
+   set centralBaffle closed
+   set deployableBaffle optical
+   set focusOffset 0
+   set airmassLimit ""
 }
 
 itcl::body Instrument::preview {} {

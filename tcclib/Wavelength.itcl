@@ -12,6 +12,8 @@
 #                      values of the command parameters for virtual
 #                      telescope "vt".
 #
+#          init          Returns the wavelength object to its initial state.
+#
 #          preview vt  Sets the preview wavelength for the virtual
 #                      telescope "vt".
 #
@@ -22,7 +24,7 @@
 #           subcomponents   Returns a list of the subcomponents of the
 #                           Wavelength objects (an empty list).
 #
-#  D Terrett 7 September 1998
+#  D Terrett 21 February 2000
 #
 #  Copyright CCLRC
 #+
@@ -32,6 +34,7 @@ itcl::class Wavelength {
    public proc subcomponents {} {return {}}
 
    public method apply vt
+   public method init
    public method preview vt
    public method save file
 
@@ -41,6 +44,10 @@ itcl::class Wavelength {
 itcl::body Wavelength::apply vt {
    set vt [string toupper [string range $vt 0 0]][string range $vt 1 end]
    cs wavel${vt} set wavel $wavel
+}
+
+itcl::body Wavelength::init {} {
+   set wavel {}
 }
 
 itcl::body Wavelength::preview vt {

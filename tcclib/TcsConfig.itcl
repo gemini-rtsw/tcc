@@ -24,17 +24,20 @@
 #  Methods:
 #          apply        Applies all the active components to the TCS.
 #
+#          init         Sets the tcs config object to its initial state.
+#
 #          preview      Sets all the active components in the preview.
 #
 #          save file    Writes the values of all the component options to
 #                       the channel identifier "file".
 #
-#  D Terrett 26 November 1999
+#  D Terrett 21 February 2000
 #
 #  Copyright CCLRC
 #+
 
 itcl::class TcsConfig {
+   destructor {$this init}
 
    public proc subcomponents {}
 
@@ -47,8 +50,17 @@ itcl::class TcsConfig {
    public variable instrument ""
 
    public method apply args
+   public method init
    public method preview
    public method save file
+
+   private variable current_scienceTarget ""
+   private variable current_guide ""
+   private variable current_rotator ""
+   private variable current_pointOrig ""
+   private variable current_slewOptions ""
+   private variable current_trackFrame ""
+   private variable current_instrument ""
 }
 
 itcl::body TcsConfig::subcomponents {} {
@@ -89,6 +101,16 @@ itcl::body TcsConfig::apply args {
    }
 }
 
+itcl::body TcsConfig::init {} {
+   $this configure -scienceTarget ""
+   $this configure -guide ""
+   $this configure -rotator ""
+   $this configure -pointOrig ""
+   $this configure -slewOptions ""
+   $this configure -trackFrame ""
+   $this configure -instrument ""
+}
+
 itcl::body TcsConfig::preview {} {
 
 # Call the preview method of all the components that have a value.
@@ -123,4 +145,102 @@ itcl::body TcsConfig::save file {
    puts $file "   -slewOptions \"$slewOptions\" \\"
    puts $file "   -trackFrame \"$trackFrame\" \\"
    puts $file "   -instrument \"$instrument\""
+}
+
+itcl::configbody TcsConfig::scienceTarget {
+   if { $current_scienceTarget != "" } {
+      ScienceTargetNames::$current_scienceTarget refdec
+   }
+   set current_scienceTarget ""
+   if { $scienceTarget != "" } {
+      if { [catch {ScienceTargetNames::$scienceTarget refinc}] } {
+         error "Science target \"$scienceTarget\" does not exist"
+      } else {
+         set current_scienceTarget $scienceTarget
+      }
+   }
+}
+
+itcl::configbody TcsConfig::guide {
+   if { $current_guide != "" } {
+      GuideNames::$current_guide refdec
+   }
+   set current_guide ""
+   if { $guide != "" } {
+      if { [catch {GuideNames::$guide refinc}] } {
+         error "Guide configuration \"$guide\" does not exist"
+      } else {
+         set current_guide $guide
+      }
+   }
+}
+
+itcl::configbody TcsConfig::rotator {
+   if { $current_rotator != "" } {
+      RotatorNames::$current_rotator refdec
+   }
+   set current_rotator ""
+   if { $rotator != "" } {
+      if { [catch {RotatorNames::$rotator refinc}] } {
+         error "Field orientation \"$rotator\" does not exist"
+      } else {
+         set current_rotator $rotator
+      }
+   }
+}
+
+itcl::configbody TcsConfig::pointOrig {
+   if { $current_pointOrig != "" } {
+      PointOrigNames::$current_pointOrig refdec
+   }
+   set current_pointOrig ""
+   if { $pointOrig != "" } {
+      if { [catch {PointOrigNames::$pointOrig refinc}] } {
+         error "Pointing origin \"$pointOrig\" does not exist"
+      } else {
+         set current_pointOrig $pointOrig
+      }
+   }
+}
+
+itcl::configbody TcsConfig::slewOptions {
+   if { $current_slewOptions != "" } {
+      SlewOptionsNames::$current_slewOptions refdec
+   }
+   set current_slewOptions ""
+   if { $slewOptions != "" } {
+      if { [catch {SlewOptionsNames::$slewOptions refinc}] } {
+         error "Slew options \"$slewOptions\" does not exist"
+      } else {
+         set current_slewOptions $slewOptions
+      }
+   }
+}
+
+itcl::configbody TcsConfig::trackFrame {
+   if { $current_trackFrame != "" } {
+      TrackFrameNames::$current_trackFrame refdec
+   }
+   set current_trackFrame ""
+   if { $trackFrame != "" } {
+      if { [catch {TrackFrameNames::$trackFrame refinc}] } {
+         error "tracking Frames \"$trackFrame\" does not exist"
+      } else {
+         set current_trackFrame $trackFrame
+      }
+   }
+}
+
+itcl::configbody TcsConfig::instrument {
+   if { $current_instrument != "" } {
+      InstrumentNames::$current_instrument refdec
+   }
+   set current_instrument ""
+   if { $instrument != "" } {
+      if { [catch {InstrumentNames::$instrument refinc}] } {
+         error "Instrument \"$instrument\" does not exist"
+      } else {
+         set current_instrument $instrument
+      }
+   }
 }

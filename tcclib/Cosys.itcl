@@ -12,6 +12,8 @@
 #           apply cs        Sets the system and equinox paramters of the
 #                           command sender "cs".
 #
+#           init            Returns the cosys object to its initial state.
+#
 #           save file       Writes the values of the options to the file
 #                           descriptor "file".
 #
@@ -19,7 +21,7 @@
 #           subcomponents   Returns a list of the subcomponents of the 
 #                           Cosys objects (an empty list).
 #
-#  D Terrett 22 September 1998
+#  D Terrett 21 February 2000
 #
 #  Copyright CCLRC
 #+
@@ -29,6 +31,7 @@ itcl::class Cosys {
    public proc subcomponents {} {return {}}
 
    public method apply cs
+   public method init
    public method save file
 
    public variable frame {}
@@ -38,6 +41,11 @@ itcl::class Cosys {
 itcl::body Cosys::apply cs {
    cs $cs set system \"$frame\"
    cs $cs set equinox \"$equinox\"
+}
+
+itcl::body Cosys::init {} {
+   set system ""
+   set equinox ""
 }
 
 itcl::body Cosys::save file {

@@ -18,22 +18,27 @@
 #                      the values of the command parameters for the virtual
 #                      telescope "vt".
 #
+#           init       Sets the track rate object to its initial state.
+#
 #           preview vt The preview system does not support differential track 
 #                      rates so this method does nothing.
 #
 #           save file  Writes the values of the options to the channel
 #                      identifier "file".
 #
-#  D Terrett 7 October 1998
+#  D Terrett 21 February 2000
 #
 #  Copyright CCLRC
 #+
 
 itcl::class TrackRate {
+ 
+   destructor {$this init}
 
    public proc subcomponents {}
 
    public method apply vt
+   public method init
    public method preview vt {}
    public method save file
 
@@ -41,6 +46,8 @@ itcl::class TrackRate {
    public variable epoch {}
    public variable dtheta1 {}
    public variable dtheta2 {}
+
+   private variable current_cosys {}
 }
 
 itcl::body TrackRate::subcomponents {} {
@@ -66,9 +73,30 @@ itcl::body TrackRate::apply vt {
    cs difTr${vt} set dtheta2 \"$dtheta2\"
 }
 
+itcl::body TrackRate::init {} {
+   set epoch {}
+   set dtheta1 {}
+   set dtheta2 {}
+   $this configure -cosys {}
+}
+
 itcl::body TrackRate::save file {
    puts $file "   -cosys \"$cosys\" \\"
    puts $file "   -epoch \"$epoch\" \\"
    puts $file "   -dtheta1 \"$dtheta1\" \\"
    puts $file "   -dtheta2 \"$dtheta2\""
+}
+
+itcl::configbody TrackRate::cosys {
+   if { $current_cosys != "" } {
+      CosysNames::$current_cosys refdec
+   }
+   set current_cosys ""
+   if { $cosys != "" } {
+      if { [catch {CosysNames::$cosys refinc}] } {
+         error "Coordinate frame \"$cosys\" does not exist"
+      } else {
+         set current_cosys $cosys
+      }
+   }
 }
