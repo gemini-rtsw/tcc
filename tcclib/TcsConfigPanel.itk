@@ -38,6 +38,9 @@ itk::usual TcsConfigPanel {
 
 itcl::body TcsConfigPanel::constructor args {
 
+   setWidgetColors $itk_interior \
+         $itk_option(-background) $itk_option(-foreground)
+
 # Create the config control.
    itk_component add control {
       TcsConfigControl $itk_interior.control
@@ -68,7 +71,7 @@ itcl::body TcsConfigPanel::constructor args {
 
 # Add a command for each panel object.
    foreach panel [list observePanel crsPanel logPanel previewPanel ecsPanel \
-         handsetPanel mcsPanel skycatPanel tcsPanel] {
+         handsetPanel m1sPanel mcsPanel skycatPanel tcsPanel] {
       $itk_component(menubar) add command .windows.$panel \
          -command "$panel map" -label [$panel cget -title]
    }
@@ -82,9 +85,6 @@ itcl::body TcsConfigPanel::constructor args {
          -label "Pointing test application"
    $itk_component(menubar) add command .tools.m1tune \
          -command [itcl::code $this m1tune] -label "Tune M1 with the HRWFS"
-
-   setWidgetColors "$itk_component(menubar) $itk_component(control)" \
-         $itk_option(-background) $itk_option(-foreground)
 
    pack $itk_component(control) -fill both -expand y
 

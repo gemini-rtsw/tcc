@@ -36,6 +36,9 @@ itk::usual HandsetPanel {
 
 itcl::body HandsetPanel::constructor args {
 
+   setWidgetColors $itk_interior \
+         $itk_option(-background) $itk_option(-foreground)
+
 # Notebook for the handset controls.
    itk_component add handsets {
       iwidgets::tabnotebook $itk_interior.targets -height 610 -width 450 \
@@ -44,18 +47,18 @@ itcl::body HandsetPanel::constructor args {
       ignore -background -tabbackground
    }
 
-   setWidgetColors "$itk_component(menubar) $itk_component(handsets)" \
-         $itk_option(-background) $itk_option(-foreground)
-
-# Fix up the backround of the tabs.
+# Fix up the backround of the tabs which is not set with a standard option.
    $itk_component(handsets) configure -backdrop $itk_option(-background)
+   [$itk_component(handsets) component tabset] \
+         configure -background $itk_option(-background)
 
 # Target handset
    set w [$itk_component(handsets)  add -label "Targets" \
          -background "#add8e6" -tabbackground  "#add8e6" \
          -command [itcl::code $this pageSelectCB #add8e6]]
+   setWidgetColors $w #add8e6 black
    itk_component add targets {
-      TargetHandsetControl $w.targets -background "#add8e6"
+      TargetHandsetControl $w.targets
    }
    pack $itk_component(targets)
 
@@ -63,20 +66,17 @@ itcl::body HandsetPanel::constructor args {
    set w [$itk_component(handsets) add -label "Pointing" -background "#ffdae9" \
          -tabbackground "#ffdab9" \
          -command [itcl::code $this pageSelectCB #ffdae9]]
+   setWidgetColors $w #ffdae9 black
    itk_component add guiding {
       GuideHandsetControl $w.guiding -background "#ffdae9"
    }
    pack $itk_component(guiding)
    
-# fix the 'radiobox buttons are not red' problem
-# not sure why this happens in the first place
-   [[$itk_component(guiding) component handset ] component orient] configure \
-         -selectcolor #b03060
-
 # Pointing origin handset
    set w [$itk_component(handsets) add -label "Instrument Origins" \
          -background "#fffacd" -tabbackground "#fffacd" \
          -command [itcl::code $this pageSelectCB #fffacd]]
+   setWidgetColors $w #fffacd black
    itk_component add po {
       PoHandsetControl $w.po -background "#fffacd"
    }

@@ -25,14 +25,20 @@ itk::usual GuidePanel {
 }
 
 itcl::body GuidePanel::constructor args {
+
+   setWidgetColors $itk_interior \
+         $itk_option(-background) $itk_option(-foreground)
+
+
+   setWidgetColors $itk_interior \
+         $itk_option(-background) $itk_option(-foreground)
+
    itk_component add control {
       GuideControl $itk_interior.control
    } {
       usual
       rename -component -components components Components
    }
-   setWidgetColors "$itk_component(menubar) $itk_component(control)" \
-         $itk_option(-background) $itk_option(-foreground)
 
    pack $itk_component(control) -fill both -expand y
 

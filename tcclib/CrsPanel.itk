@@ -31,11 +31,12 @@ itcl::body CrsPanel::constructor args {
    set toplevel [winfo toplevel $itk_interior]
    wm withdraw $toplevel
 
+   setWidgetColors $itk_interior \
+         $itk_option(-background) $itk_option(-foreground)
+
    itk_component add control {
       CrsControl $itk_interior.control
    }
-   setWidgetColors "$itk_component(menubar) $itk_component(control)" \
-         $itk_option(-background) $itk_option(-foreground)
 
    pack $itk_component(control) -fill both -expand y
 

@@ -31,6 +31,9 @@ itcl::body PointUpdatePanel::constructor args {
    set toplevel [winfo toplevel $itk_interior]
    wm withdraw $toplevel
 
+   setWidgetColors $itk_interior \
+         $itk_option(-background) $itk_option(-foreground)
+
    itk_component add control {
       PointUpdateControl $itk_interior.control
    }
@@ -39,9 +42,6 @@ itcl::body PointUpdatePanel::constructor args {
    $itk_component(menubar) insert .file.move command purge \
          -command "$itk_component(control) purge" -label Purge
    $itk_component(menubar) insert .file.move separator separator
-
-   setWidgetColors "$itk_component(menubar) $itk_component(control)" \
-         $itk_option(-background) $itk_option(-foreground)
 
    pack $itk_component(control) -fill both -expand y
 

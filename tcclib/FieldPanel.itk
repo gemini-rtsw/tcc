@@ -35,6 +35,9 @@ itk::usual FieldPanel {
 
 itcl::body FieldPanel::constructor args {
 
+   setWidgetColors $itk_interior \
+         $itk_option(-background) $itk_option(-foreground)
+
 # Field control.
    itk_component add control {
       FieldControl $itk_interior.field -menubar $itk_component(menubar)
@@ -55,10 +58,6 @@ itcl::body FieldPanel::constructor args {
    $itk_component(menubar) insert .file.move cascade unload \
          -label "Unload catalog"
    $itk_component(menubar) insert .file.move separator separator
-
-   setWidgetColors [list $itk_component(menubar) \
-         $itk_component(control)] $itk_option(-background) \
-         $itk_option(-foreground)
 
    eval itk_initialize $args
 }
