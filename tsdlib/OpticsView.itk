@@ -59,16 +59,7 @@
 #                             according to the state of the configuration
 #                             options.
 #
-#  Notes:
-#         The ISS structures on Gemini North and Gemini South are rotated
-#         by 180 deg with respect to each other so that on Gemini North
-#         GCAL is on port 4 and the AO beam enters through port 2 but on
-#         Gemini South, GCAL is on 2 and the AO on 4. This code therefore
-#         labels the ports A,B,C,D and E where B is the AO port and D is
-#         GCAL. It is left to the caller to map the port number onto the
-#         correct port.
-#
-#  D Terrett  7 September 2001
+#  D Terrett  30 Novemeber 2001
 #
 #  Copyright CCLRC
 #-
@@ -261,11 +252,11 @@ itcl::body OpticsView::constructor args {
    $c create line -20 27 20 27 -tags {ScFold ScFoldCBbck scFoldBCbck}
 
    eval $c create line [$c coords ScFoldCB] -width 2 \
-         -tags [list {ScFold ScFoldED scFoldDE}]
+         -tags [list {ScFold ScFoldED ScFoldDE}]
    eval $c create line [$c coords ScFoldCBbck] \
          -tags [list {ScFold ScFoldEDbck ScFoldDEbck}]
-   $c scale ScFold54 0 30 1 -1
-   $c scale ScFold54bck 0 30 1 -1
+   $c scale ScFoldED 0 30 1 -1
+   $c scale ScFoldEDbck 0 30 1 -1
 
    $c create line -1 10 -1 50 -width 2 -tags {ScFold ScFoldBE ScFoldEB}
    $c create line -3 10 -3 50 -tags {ScFold ScFoldBEbck ScFoldEBbck}
@@ -462,7 +453,7 @@ itcl::body OpticsView::update {} {
       set scfoldpos $itk_option(-scfold)
       if { $itk_option(-scfold) == "UNKNOWN" } {
          $c itemconfigure ScFoldUnknown -bitmap question
-      } else {
+      } elseif { $itk_option(-scfold) != "MOVING" } {
          $c itemconfigure ScFold$itk_option(-scfold) -fill white
          $c itemconfigure ScFold$itk_option(-scfold)bck -fill black
       }
