@@ -3,7 +3,7 @@
 #
 # Channel access configuration file for the Acquisition Camera package
 #
-# D Terrett 2 July 2001
+# D Terrett 21 October 2001
 #
 # Copyright CCLRC
 #-
@@ -39,8 +39,22 @@ command acqcam::clfilterSel acqcam::apply Set ND filter position
 
 command acqcam::detExposure acqcam::apply Set exposure parameters
 {
-   nframe     hrwfs:dc:detObserve.A  Number of frames
-   exposure   hrwfs:dc:detObserve.B  Exposure interval
+   nframe     hrwfs:dc:detExposure.A  Number of frames
+   exposure   hrwfs:dc:detExposure.B  Exposure interval
+}
+
+command acqcam::setObserve acqcam::apply Set observe parameters
+{
+   output     hrwfs:dc:setObserve.A  Output
+   dir        hrwfs:dc:setObserve.B  Directory
+   file       hrwfs:dc:setObserve.C  File name
+   simfile    hrwfs:dc:setObserve.D  Simulation file name
+}
+
+command acqcam::setDhsInfo acqcam::apply Set exposure parameters
+{
+   stream     hrwfs:dc:setDhsInfo.A  Quick look stream
+   option     hrwfs:dc:setDhsInfo.B  DHS option
 }
 
 command acqcam::detObstype acqcam::apply Set observation type
@@ -52,10 +66,10 @@ command acqcam::detFrameSize acqcam::apply Set frame size
 {
    binning    hrwfs:dc:detFrameSize.A Binning
    windowing  hrwfs:dc:detFrameSize.B WIndowing
-   x1         hrwfs:dc:detFrameSize.C Low x window address
-   x2         hrwfs:dc:detFrameSize.D High x window address
-   y1         hrwfs:dc:detFrameSize.E Low y window address
-   y2         hrwfs:dc:detFrameSize.F High y window address
+   x          hrwfs:dc:detFrameSize.C X center
+   y          hrwfs:dc:detFrameSize.D Y center
+   width      hrwfs:dc:detFrameSize.E Width
+   height     hrwfs:dc:detFrameSize.F Height
 }
 
 command acqcam::observe acqcam::apply Observe

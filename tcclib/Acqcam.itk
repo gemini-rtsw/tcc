@@ -9,7 +9,7 @@
 #  Methods:
 #           none
 #
-#  D Terrett  7 September 2001
+#  D Terrett  21 October 2001
 #
 #  Copyright CCLRC
 #+
@@ -111,6 +111,12 @@ itcl::body Acqcam::constructor {args} {
    if { [catch {cs acqcam::detFrameSize info}] } {
       epics cs acqcam::detFrameSize
    }
+   if { [catch {cs acqcam::setDhsInfo info}] } {
+      epics cs acqcam::setDhsInfo
+   }
+   if { [catch {cs acqcam::setObserve info}] } {
+      epics cs acqcam::setObserve
+   }
    if { [catch {cs acqcam::observe info}] } {
       epics cs acqcam::observe
    }
@@ -178,6 +184,12 @@ itcl::body Acqcam::start {} {
    cs acqcam::apply postWait
    cs acqcam::detExposure set nframe -1
    cs acqcam::detExposure set exposure [$itk_component(expose) get]
+   cs acqcam::setDhsInfo stream hrwfsScience
+   cs acqcam::setDhsInfo option 2
+   cs acqcam::setObserve output 1
+   cs acqcam::setObserve dir .
+   cs acqcam::setObserve file hrwfs.fits
+   cs acqcam::setObserve simfile NONE
    cs acqcam::apply postWait
    cs acqcam::observe set dummy 1
    cs acqcam::apply post
