@@ -11,7 +11,7 @@
 #
 #  options
 #
-#  D Terrett 30 November 2001
+#  D Terrett 24 October 2002
 #
 #  Copyright CCLRC
 #-
@@ -95,7 +95,7 @@ itcl::body NumericDisplay::constructor args {
 
    itk_component add focus {
        StatusField $w.focus -labelmargin 2 -width 5 -entryborder 3 \
-            -entryrelief groove -labeltext "Focus (mu):"
+            -entryrelief groove -labeltext "Focus (um):"
    }
 
    itk_component add telposlabel {
@@ -421,7 +421,7 @@ itcl::body NumericDisplay::newtarget {record value} {
    set type [format "%c" $type]
    set wavel [sadVal tcssad mountWavelength ""]
    if { $wavel != "" } {
-      set wavel "[expr {$wavel / 10000.0}] mu"
+      set wavel "[expr {$wavel / 10000.0}] um"
    }
    if { $system == "AZEL_TOPO" } {
       $itk_component(telpos1) configure -labeltext Az
@@ -452,7 +452,7 @@ itcl::body NumericDisplay::newtarget {record value} {
    set type [format "%c" $type]
    set wavel [sadVal tcssad sourceAWavelength ""]
    if { $wavel != "" } {
-      set wavel "[expr {$wavel / 10000.0}] mu"
+      set wavel "[expr {$wavel / 10000.0}] um"
    }
    if { $system == "AZEL_TOPO" } {
       $itk_component(tar1) configure -labeltext Az
