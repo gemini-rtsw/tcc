@@ -9,7 +9,7 @@
 #  Methods:
 #           none
 #
-#  D Terrett  2 July 2001
+#  D Terrett  19 July 2001
 #
 #  Copyright CCLRC
 #+
@@ -82,13 +82,14 @@ itcl::body Acqcam::constructor {args} {
       iwidgets::optionmenu $w.window -labeltext Window -labelpos w -width 100 \
             -command [itcl::code $this window]
    }
-   $itk_component(window) insert end full 100x100
+   $itk_component(window) insert end full 200x200 100x100 
 
    itk_component add expose {
-      iwidgets::optionmenu $w.expose -labeltext "Expose (s)" -labelpos w \
-         -width 100 -command [itcl::code $this expose]
+      iwidgets::combobox $w.expose -labeltext "Expose (s)" -labelpos w \
+         -width 10 -command [itcl::code $this expose] -validate real
    }
-   $itk_component(expose) insert end 0.005 0.01 0.05 0.1 1.0
+   $itk_component(expose) insert list end 0.01 0.1 1.0 10.0
+   $itk_component(expose) insert entry end 0.01
 
    pack $itk_component(nd) $itk_component(col) $itk_component(window) \
          $itk_component(expose) -anchor e
@@ -141,6 +142,13 @@ itcl::body Acqcam::window {} {
    switch [$itk_component(window) get] {
       full {
          cs acqcam::detFrameSize set windowing 0
+      }
+      200x200 {
+         cs acqcam::detFrameSize set windowing 1
+         cs acqcam::detFrameSize set x [calparam cget -acqcam_x]
+         cs acqcam::detFrameSize set y [calparam cget -acqcam_y]
+         cs acqcam::detFrameSize set width 200
+         cs acqcam::detFrameSize set height 200
       }
       100x100 {
          cs acqcam::detFrameSize set windowing 1
