@@ -6,7 +6,7 @@
 #
 #  Methods:
 #
-#  D Terrett 1 November 2002
+#  D Terrett 13 November 2002
 #
 #  Copyright CCLRC
 #-
@@ -104,7 +104,8 @@ itcl::body M1TuneWizard::tune {} {
    cd $home
 
 # Start the M1 tuning.
-   AO configure -comacorr 1 -m1figure HRWFS -m1filename ${dir}/AO.dat
+   AO configure -comacorr 1 -m1figure 1 -m1source HRWFS \
+         -m1filename ${dir}/AO.dat
    AO enable
 }
 
@@ -116,7 +117,7 @@ itcl::body M1TuneWizard::step2 {} {
 }
 
 itcl::body M1TuneWizard::stoptune {} {
-   AO configure -m1figure none -comacorr 0
+   AO configure -m1figure 0 -comacorr 0
    AO enable
    exec kill -9 $pid
 }
