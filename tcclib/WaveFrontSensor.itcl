@@ -100,7 +100,7 @@ itcl::body WaveFrontSensor::start {{frames -1}} {
    set stopped [expr {[sa guideConfig get ${prefix}state value] ne "Yes"}]
 
 # Set up controller.
-   set frames [setup]
+   set frames [setup $frames]
 
 # Save the new mode and exposure time and quicklook.
    set current_mode $mode
@@ -137,7 +137,7 @@ itcl::body WaveFrontSensor::stop {} {
    }
 }
 
-itcl::body WaveFrontSensor::setup {{frames -1}} {
+itcl::body WaveFrontSensor::setup {frames} {
 
 # Set the sky name
    set filename [expr { int(1.0/$exposetime)}]Hz.fits
