@@ -7,7 +7,7 @@ proc probeCalMain {w} {
 #  creates the tcs principal system  and status acceptors needed to drive 
 #  the TCS.
 #
-#  D Terrett 30 September 2000
+#  D Terrett 4 October 2000
 #
 #  Copyright CCLRC
 #-
@@ -21,7 +21,7 @@ proc probeCalMain {w} {
    epics sa crssad
 
 # TCS principal system object.
-   seq::PrincipalSystem tcs tcsApply -debug 1
+   seq::PrincipalSystem tcs tcsApply
 
 # Calibration parameter object
    CalParam calparam
