@@ -21,7 +21,7 @@
 #         tcc application is destroyed while the pointer is in the window
 #         the keyboard will be left with autorepeat disabled.
 #
-#  D Terrett 16 January 2001
+#  D Terrett 30 January 2001
 #
 #  Copyright CCLRC
 #-
@@ -114,7 +114,7 @@ itcl::body Handset::constructor {args} {
       iwidgets::radiobox $w.orient -labeltext "Align with"
    }
    $itk_component(orient) add tracking -text RA/Dec
-   $itk_component(orient) add xy -text TV
+   $itk_component(orient) add xy -text "Acquision Cam"
    $itk_component(orient) add cace -text Az/El
    $itk_component(orient) add instr -text Instrument
    $itk_component(orient) add pwfs1 -text PWFS1
@@ -166,10 +166,29 @@ itcl::body Handset::constructor {args} {
 
 # Fill in the table of angles
    foreach frame {tracking xy cace instr pwfs1 pwfs2} {
-      set angles($frame,u) 0.0
-      set angles($frame,r) 90.0
-      set angles($frame,d) 180.0
-      set angles($frame,l) 270.0
+      switch $frame {
+	 cace -
+	 instr -
+	 tracking {
+            set angles($frame,u) 0.0
+            set angles($frame,r) 90.0
+            set angles($frame,d) 180.0
+            set angles($frame,l) 270.0
+	 }
+	 pwfs1 {
+            set angles($frame,l) 0.0
+            set angles($frame,d) 90.0
+            set angles($frame,r) 180.0
+            set angles($frame,u) 270.0
+         }
+	 pwfs2 -
+	 xy {
+            set angles($frame,r) 0.0
+            set angles($frame,u) 90.0
+            set angles($frame,l) 180.0
+            set angles($frame,d) 270.0
+         }
+      }
    }
 
 # Create bindings on the top-level window for the arrow keys (this assumes
@@ -252,12 +271,12 @@ itcl::body Handset::push {dir} {
          pwfs1 {
             cs $cs set angle [expr {$angles($frame,$dir) + \
                   [sa agssad get p1TableAngle] + \
-                  [sa agssad get p1TableAngle]}]
+                  [sa agssad get p1ArmAngle]}]
          }
          pwfs2 {
             cs $cs set angle [expr {$angles($frame,$dir) + \
                   [sa agssad get p2TableAngle] + \
-                  [sa agssad get p2TableAngle]}]
+                  [sa agssad get p2ArmAngle]}]
          }
          default {
             cs $cs set angle $angles($frame,$dir)
@@ -296,8 +315,27 @@ itcl::body Handset::reset {} {
 
 # Set all the button angles to their defaults.
    set frame [$itk_component(orient) get]
-   set angles($frame,u) 0.0
-   set angles($frame,r) 90.0
-   set angles($frame,d) 180.0
-   set angles($frame,l) 270.0
+   switch $frame {
+      cace -
+      instr -
+      tracking {
+         set angles($frame,u) 0.0
+         set angles($frame,r) 90.0
+         set angles($frame,d) 180.0
+         set angles($frame,l) 270.0
+      }
+      pwfs1  {
+         set angles($frame,l) 0.0
+         set angles($frame,d) 90.0
+         set angles($frame,r) 180.0
+         set angles($frame,u) 270.0
+      }
+      pwfs2 -
+      xy {
+         set angles($frame,r) 0.0
+         set angles($frame,u) 90.0
+         set angles($frame,l) 180.0
+         set angles($frame,d) 270.0
+      }
+   }
 }
