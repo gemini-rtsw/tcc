@@ -2,7 +2,8 @@
 #  SlewOptions <- Paramset
 #
 #  Implements the SlewOptions class. A SlewOptions object stores all the 
-#  flags of the Slew CAD command.
+#  flags of the Slew CAD command plus options for reseting and disabling
+#  the active-optics configuration.
 #
 #  Options:
 #          All the following options specify whether the corresponding
@@ -30,6 +31,10 @@
 #
 #          -instrOffset      Instrument (aka pointin origin) offsets.
 #
+#          -resetao          Reset the ao configuration
+#
+#          -disableao        Disable the ao configuration
+#
 #  Methods:
 #           apply comp Applies the slew options to the TCS by setting 
 #                      the values of the command parameters.
@@ -41,7 +46,7 @@
 #
 #           save node  Saves all the slew option values to the xml node.
 #
-#  D Terrett 13 May 2003
+#  D Terrett 16 January 2004
 #
 #  Copyright CCLRC
 #+
@@ -64,10 +69,25 @@ itcl::class SlewOptions {
       variable guiding {}
       variable guideOffset {}
       variable instrOffset {}
+      variable resetao 0
+      variable disableao 0
    }
 }
 
 itcl::body SlewOptions::apply {comp} {
+
+# Disable AO first (if requested) so that the telescope doesn't move before
+# the guiding has completely turned off.
+   if { $resetao } {
+
+# Map the guide loop control window.
+      observePanel create
+      .observePanel reset
+      after 500
+   } elseif { $disableao } {
+      AO disable
+      after 500
+   }
    cs slew set chopThrow [list $chopThrow]
    cs slew set sourceOffset [list $sourceOffset]
    cs slew set sourceDifTr [list $sourceDifTr]
@@ -97,17 +117,19 @@ itcl::body SlewOptions::apply {comp} {
 }
 
 itcl::body SlewOptions::init {} {
-   set  chopThrow {}
-   set  sourceOffset {}
-   set  sourceDifTr {}
-   set  mountOffset {}
-   set  mountDifTr {}
-   set  filter1 {}
-   set  filter2 {}
-   set  pointing {}
-   set  guiding {}
-   set  guideOffset {}
-   set  instrOffset {}
+   set chopThrow {}
+   set sourceOffset {}
+   set sourceDifTr {}
+   set mountOffset {}
+   set mountDifTr {}
+   set filter1 {}
+   set filter2 {}
+   set pointing {}
+   set guiding {}
+   set guideOffset {}
+   set instrOffset {}
+   set resetao 0
+   set disableao 0
 }
 
 itcl::body SlewOptions::preview {view} {}
@@ -125,4 +147,6 @@ itcl::body SlewOptions::save {node} {
    param $node guiding $guiding
    param $node guideOffset $guideOffset
    param $node instrOffset $instrOffset
+   param $node resetao $resetao
+   param $node disableao $disableao
 }
