@@ -15,7 +15,7 @@
 #           updateobj name  Stores the contents of the edit controls in the
 #                           Target object "name".
 #
-#  D Terrett 28 November 2000
+#  D Terrett 13 March 2001
 #
 #  Copyright CCLRC
 #+
@@ -203,10 +203,10 @@ itcl::body TargetControl::constructor args {
    pack $itk_component(trackrate) -side left -anchor n -padx 5 -pady 5
 
 # Control for setting the effective wavelength.
-   itk_component add wavelength {
+   itk_component add wavelength_name {
        WavelengthSelector $w.wavelength
    }
-   pack $itk_component(wavelength) -side left -padx 5 -pady 1
+   pack $itk_component(wavelength_name) -side left -padx 5 -pady 1
 
 # Select the RA/Dec page.
   $itk_component(notebook) select RA/Dec
@@ -275,10 +275,10 @@ itcl::body TargetControl::selectobj name {
          }
       }
       set wavel [$name cget -wavelength_name]
-      $itk_component(wavelength) select $wavel
+      $itk_component(wavelength_name) select $wavel
       if { [string equal $wavel ""] } {
          set wavel [$name cget -wavelength_value]
-         $itk_component(wavelength) value $wavel
+         $itk_component(wavelength_name) value $wavel
       }
       $itk_component(trackrate) select [$name cget -trackrate]
    }
@@ -312,22 +312,23 @@ itcl::body TargetControl::updateobj name {
       }
    }
 
-   set wavel [$itk_component(wavelength) get name]
+   set wavel [$itk_component(wavelength_name) get name]
    $name configure -wavelength_name $wavel
    if { [string equal $wavel ""] } {
-      $name configure -wavelength_value [$itk_component(wavelength) get value]
+      $name configure \
+            -wavelength_value [$itk_component(wavelength_name) get value]
    }
 }
 
 itcl::configbody TargetControl::shadow {
    $itk_component(cosys) configure -editcontrol \
             $itk_option(-shadow)cosys
-   $itk_component(wavelength) configure -editcontrol \
+   $itk_component(wavelength_name) configure -editcontrol \
             $itk_option(-shadow)wavelength
    $itk_component(trackrate) configure -editcontrol \
             $itk_option(-shadow)trackrate
    $itk_component(cosys) configure -shadow $itk_option(-shadow)
-   $itk_component(wavelength) configure -shadow $itk_option(-shadow)
+   $itk_component(wavelength_name) configure -shadow $itk_option(-shadow)
    $itk_component(trackrate) configure -shadow $itk_option(-shadow)
 }
 
