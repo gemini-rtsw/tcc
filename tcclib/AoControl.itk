@@ -84,18 +84,18 @@ itcl::body AoControl::constructor args {
       OnOffButton $w.entshut -text "Entr shutter" \
             -oncommand {aoEntShutter state Open} \
             -offcommand {aoEntShutter state Close} \
-            -onvalue {ON On} \
-            -offvalue {OFF Off} \
-            -sadrecord {aossad followS}
+            -onvalue 1 \
+            -offvalue 0 \
+            -sadrecord {aossad entShutterOpen}
    }
 
    itk_component add exshut {
       OnOffButton $w.exshut -text "Exit shutter" \
             -oncommand {aoExitShutter state Open} \
             -offcommand {aoExitShutter state Close} \
-            -onvalue {ON On} \
-            -offvalue {OFF Off} \
-            -sadrecord {aossad followS}
+            -onvalue 1 \
+            -offvalue 0 \
+            -sadrecord {aossad exitShutterOpen}
    }
 
    grid $itk_component(label) -padx 5 -sticky ew
