@@ -30,7 +30,7 @@
 #
 #           save object     Save the contents of the controls in the object.
 #
-#  D Terrett  8 May 2002
+#  D Terrett  18 June 2003
 #
 #  Copyright CCLRC
 #+
@@ -254,8 +254,13 @@ itcl::body ComponentControl::select {} {
 #  Called when a name is selected in the ListManager.
 #-
 
+# Check that the selected item is in the list.
+   set value [$itk_component(selector) get]
+   if { [[$itk_component(selector) cget -componentlist] index $value] >= 0 } {
+
 # Update the global config array.
-   set ::Config($comp,value) [$itk_component(selector) get]
+      set ::Config($comp,value) $value
+   }
 }
 
 itcl::body ComponentControl::returncmd {} {
