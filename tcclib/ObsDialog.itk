@@ -11,7 +11,7 @@
 #  Methods:
 #           get   returns the id of the selected observation.
 #
-#  D Terrett 7 March 2003
+#  D Terrett 10 July 2003
 #
 #  Copyright CCLRC
 #-
@@ -26,7 +26,9 @@ itcl::class ObsDialog {
    private {
       method apply {}
       method select {}
+      method view {}
       variable obslist {}
+      variable view ""
    }
 }
 
@@ -40,7 +42,7 @@ itk::usual ObsDialog {
 
 option add *ObsDialog.borderWidth 2 widgetDefault
 option add *ObsDialog.height 380 widgetDefault
-option add *ObsDialog.width 350 widgetDefault
+option add *ObsDialog.width 450 widgetDefault
 option add *ObsDialog.master "." widgetDefault
 option add *ObsDialog.title "Observation Import Dialog" widgetDefault
 
@@ -81,9 +83,10 @@ itcl::body ObsDialog::constructor {args} {
 
 # Configure buttons.
    buttonconfigure Help -text Update -command [itcl::code $this refresh]
-   buttonconfigure Apply -command [itcl::code $this apply]
+   buttonconfigure Apply -text Import -command [itcl::code $this apply]
    buttonconfigure OK \
           -command "[itcl::code $this apply]; [itcl::code $this deactivate]"
+   add View -text "View XML" -command [itcl::code $this view]
    pack $itk_component(label) -anchor w
    pack $itk_component(obslist) -fill both -expand yes -pady 5
    pack $itk_component(progid) -fill x -pady 5
@@ -98,7 +101,6 @@ itcl::body ObsDialog::select {} {
       $itk_component(progid) insert end [$itk_component(obslist) get $ind]
    }
 }
-
 
 itcl::body ObsDialog::apply {} {
 
@@ -131,5 +133,43 @@ itcl::body ObsDialog::apply {} {
 itcl::body ObsDialog::refresh {} {
    if { ! [string equal $itk_option(-session) ""] } {
       set obslist [$itk_option(-session) listObs]
+   }
+}
+
+itcl::body ObsDialog::view {} {
+
+# Get the observation id.
+   set obsid [$itk_component(progid) get]
+   if { [string is space $obsid] } {
+      set ind [$itk_component(obslist) curselection]
+      if { ! [string equal $ind ""] } {
+         set obsid [$itk_component(obslist) get $ind]
+      }
+   }
+
+   if { ! [string is space $obsid] } {
+
+# Fetch the XML field description.
+      if { [catch {set xml [ocssession getField $obsid] } msg] } {
+         tk_messageBox -icon error -message $msg
+      } else {
+
+# Create the widget to display the XML.
+         if { ! [winfo exists $itk_interior.view] } {
+            set top [toplevel $itk_interior.view]
+            wm title $top "XML source"
+            set view [iwidgets::scrolledtext $top.text -width 500 \
+                  -height 300 -wrap none]
+            pack $view -fill both -expand yes
+         } else {
+            $view configure -state normal
+            $view clear
+            wm deiconify [winfo toplevel $view]
+         }
+
+# Display the XML in a list box.
+         $view insert end $xml
+         $view configure -state disabled
+      }
    }
 }
