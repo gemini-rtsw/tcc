@@ -44,7 +44,7 @@
 #           subcomponents   Returns a list of the Guide components 
 #                           subcomponents.
 #
-#  D Terrett 6 June 2000
+#  D Terrett 26 September 2000
 #
 #  Copyright CCLRC
 #+
@@ -72,6 +72,7 @@ itcl::class Guide {
 
    private method setEnableFlags {wfs chop nod}
    private method newTarget {wfs name}
+   private method park {wfs}
 
    private variable current_target
 }
@@ -94,19 +95,21 @@ itcl::body Guide::apply args {
 
 # Call the apply method of all the targets that have a value and set the
 # enable flags.
-   if { $pwfs1Target != "" } {
+   if { ![string is space $pwfs1Target] } {
       ::WfsTargetNames::$pwfs1Target apply pwfs1
       setEnableFlags pwfs1 $pwfs1Chop $pwfs1Nod
    } else {
       setEnableFlags pwfs1 "" ""
+      park pwfs1
    }
-   if { $pwfs2Target != "" } {
+   if { ![string is space $pwfs2Target] } {
       ::WfsTargetNames::$pwfs2Target apply pwfs2
       setEnableFlags pwfs2 $pwfs2Chop $pwfs2Nod
    } else {
       setEnableFlags pwfs2 "" ""
+      park pwfs2
    }
-   if { $oiwfsTarget != "" } {
+   if { ![string is space $oiwfsTarget] } {
       ::WfsTargetNames::$oiwfsTarget apply oiwfs
       setEnableFlags oiwfs $oiwfsChop $oiwfsNod
    } else {
@@ -234,11 +237,24 @@ itcl::body Guide::newTarget {wfs name} {
       WfsTargetNames::$current_target($wfs) refdec
    }
    set current_target($wfs) ""
-   if { $name != "" } {
+   if { ![string is space $name] } {
       if { [catch {WfsTargetNames::$name refinc}] } {
          error "Guide target \"$name\" does not exist"
       } else {
          set current_target($wfs) $name
+      }
+   }
+}
+
+itcl::body Guide::park {wfs} {
+   switch $wfs {
+      pwfs1 {
+         cs pwfs1Park set dummy value 1
+         logger command pwfs1Park
+      }
+      pwfs2 {
+         cs pwfs2Park set dummy value 1
+         logger command pwfs2Park
       }
    }
 }
