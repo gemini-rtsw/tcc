@@ -81,8 +81,8 @@ itcl::body M1TuneWizard::tune {} {
          $utc end-2]
    set dir /usr/astro/data/${dir}/wfs
 
-   hrwfs output FILE $dir hrwfs.fits
-   hrwfs start -1
+   ##hrwfs output FILE $dir hrwfs.fits
+   ##hrwfs start -1
 
 # Copy the appropriate sky image.
    set filt [$itk_component(ndfilt) get]
@@ -126,8 +126,9 @@ itcl::body M1TuneWizard::test {} {
 # Set exposure time.
    hrwfs expose [$itk_component(expose) get]
 
-# Set ND filter.
+# Set filters.
    hrwfs ndsel [$itk_component(ndfilt) get]
+   hrwfs colsel R-red2
 
 # Insert lens
    hrwfs lenssel HRWFS
