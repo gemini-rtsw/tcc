@@ -7,7 +7,7 @@
 #  Options:
 #           none
 #
-#  D Terrett 2 July 2001
+#  D Terrett 17 July 2001
 #
 #  Copyright CCLRC
 #+
@@ -39,10 +39,16 @@ itcl::body InstrumentControl::constructor args {
 
 # ISS port
    itk_component add port {
-      iwidgets::optionmenu $w.port -labeltext ISS
+      iwidgets::optionmenu $w.port -labeltext "ISS port"
    }
-   $itk_component(port) insert end "port 1" "port 2" "port 3" "port 4" "port 5"
+   $itk_component(port) insert end AC 1 2 3 4 5
    pack $itk_component(port) -anchor e
+
+# Entryfield for instrument name.
+   itk_component add name {
+      iwidgets::entryfield $w.name -labeltext Name -width 12
+   }
+   pack $itk_component(name) -anchor e
 
 # Entryfield for the angle.
    itk_component add iaa {
@@ -87,7 +93,8 @@ itcl::body InstrumentControl::save {name} {
 #+
 # Updates the named instrument object.
 #-
-   $name configure -issFace [$itk_component(port) get]
+   $name configure -issPort [$itk_component(port) get]
+   $name configure -name [$itk_component(name) get]
    $name configure -iaa [$itk_component(iaa) get]
    $name configure -focusOffset [$itk_component(focus) get]
    $name configure -centralBaffle [$itk_component(central) get]
@@ -95,6 +102,7 @@ itcl::body InstrumentControl::save {name} {
 }
 
 itcl::body InstrumentControl::reset {} {
+   $itk_component(name) clear
    $itk_component(iaa) clear
    $itk_component(focus) clear
 }
@@ -104,7 +112,8 @@ itcl::body InstrumentControl::load {name} {
 # Copies the contents of the Instrument object selected in the combobox
 # into the edit control.
 #-
-   $itk_component(port) select [$name cget -issFace]
+   $itk_component(port) select [$name cget -issPort]
+   $itk_component(name) insert end [$name cget -name]
    $itk_component(iaa) insert end [$name cget -iaa]
    $itk_component(focus) insert end [$name cget -focusOffset]
    $itk_component(central) select [$name cget -centralBaffle]

@@ -17,12 +17,14 @@
 #          -port   The ISS port on which the currently active instrument
 #                  is mounted (1-5). Port 1 is the upward looking port.
 #
+#          -instrument  The name of the instrument as known to the A&G.
+#
 #  Methods:
 #          update  Moves the science fold mirror, AO pickoff mirror and
 #                  HRWFS mirrors into the correct position to realise the
 #                  settings ofthe -mode, -ao and -port options.
 #
-#  D Terrett 5 February 2001
+#  D Terrett 17 July 2001
 #
 #  Copyright CCLRC
 #+
@@ -33,6 +35,7 @@ itcl::class ISS {
       variable mode SKY position
       variable ao OUT position
       variable port 1 position
+      variable instrument "" position
    }
    private {
       method position {}
@@ -48,57 +51,82 @@ itcl::body ISS::position {} {
    set hrfold ""
    set aofold ""
 
-# The position of the AO fold depends only on the AO configuration
-   set aofold $ao
+# The pseudo port AC is a special case where the Acquisition Camera is
+# being treaded as a instrument.
+   if { [string equal $port AC] } {
 
-# If the mode is TV then the HRWFS fold must be IN and the science fold 
-# either retracted (no AO) or set to reflect port 2 (which is where the AO 
-# unit is attached) to port 1 (the upward looking port).
-   if { [string compare $mode "TV"] == 0 } {
+# The HRWFS fold is always in.
       set hwfold IN
-      if { [string compare $ao "IN"] == 0 } {
-         set scfold 8
-      } else {
-         set scfold "OUT"
-      }
-   } elseif { [string compare $mode "SKY"] == 0 } {
+      switch $mode {
+         TV {
 
-# If the active ISS port is the upward looking one then the HRWFS fold must
-# be either OUT (no AO) or set to reflect port 2 to the port 1.
-      if { $port == 1 } {
-         set hwfold OUT
-         if { [string compare $ao "IN"] == 0 } {
-            set scfold 8
-         } else {
+# Park the science fold and AO fold.
             set scfold OUT
+            set aofold OUT
          }
-      } else {
+         SKY {
+ 
+# Park the science fold and set the AO fold according to whether ao is on 
+# or off.
+            set scfold OUT
+            if { [string equal $ao IN] } {
+               set aofold IN
+            } else {
+               set aofold OUT
+            }
+         }
+         CAL {
 
-# Otherwise the the HRWFS fold can be left where it is and the science fold
-# position just depends on whether the AO is in or out.
-         if { [string compare $ao "IN"] == 0 } {
-            switch $port {
-               3 {set scfold 4}
-               4 {set scfold OUT}
-               5 {set scfold 7}
-            }
-         } else {
-            switch $port {
-               2 {set scfold 1}
-               3 {set scfold 0}
-               4 {set scfold 4}
-               5 {set scfold 2}
-            }
+# Position the science fold.
+            set scfold cal2ac
          }
       }
    } else {
+      switch $mode {
 
-# Remaning mode is CAL.
-      switch $port {
-         1 {set scfold 11}
-         2 {set scfold OUT}
-         3 {set scfold 5}
-         5 {set scfold 9}
+# If the mode is TV then the HRWFS fold must be IN and the science fold
+# and AO fold out.
+         TV {
+            set hwfold IN
+            set scfold OUT
+            set aofold OUT
+         }
+         SKY {
+   
+# If the active ISS port is the upward looking one then the HRWFS fold must
+# be OUT and the Science fold positioned according to the instrument name
+# and port.
+            if { $port == 1 } {
+               set hwfold OUT
+               if { [string equal $ao IN] } {
+                  set aofold IN
+                  set scfold ao2${instrument}${port}
+               } else {
+                  set aofold OUT
+                  set scfold OUT
+               }
+            } else {
+   
+# Otherwise the the HRWFS fold can be left where it is and the science fold
+# position just depends on whether the AO is in or out.
+               if { [string equal $ao IN] } {
+                  set aofold IN
+                  set scfold ao2${instrument}${port}
+               } else {
+                  set aofold OUT
+                  set scfold ${instrument}${port}
+               }
+            }
+         }
+         CAL {
+
+# For the calibration source we just need to set the science fold position
+# and if the port is port 1 remove the HRWFS fold.
+            if { $port == 1 } {
+               set hwfold OUT
+            }
+            set scfold cal2${instrument}${port}
+         }
       }
    }
 }
@@ -108,10 +136,10 @@ itcl::body ISS::update {} {
       cs hrwfs set hwfold value $hwfold
       logger command hrwfs
    }
-#   if { ! [string equal $aofold ""] } {
-#      cs aoFold set aofold value $aofold
-#      logger command aoFold
-#   }
+   if { ! [string equal $aofold ""] } {
+      cs aoFold set aofold value $aofold
+      logger command aoFold
+   }
    if { ! [string equal $scfold ""] } {
       if { [string equal $scfold "OUT"] } {
          cs scienceFoldPark set dummy value MARK

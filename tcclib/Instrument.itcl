@@ -16,8 +16,10 @@
 #
 #          -iaa               The instrument alignment angle.
 #
-#          -issFace           The ISS face on which the instrument is 
+#          -issPort           The ISS port on which the instrument is 
 #                             mounted.
+#
+#          -name              The name of the instrument (as know to the A&G).
 #
 #  Methods:
 #          apply args  Applies the iaa to the TCS by setting the values of 
@@ -35,7 +37,7 @@
 #           subcomponents   Returns a list of the subcomponents of the
 #                           Instrument objects (an empty list).
 #
-#  D Terrett 2 July 2001
+#  D Terrett 17 July 2001
 #
 #  Copyright CCLRC
 #+
@@ -48,10 +50,11 @@ itcl::class Instrument {
       method preview {}
       method save {file}
       variable iaa ""
-      variable issFace "port 1"
+      variable issPort 1
       variable centralBaffle open
       variable deployableBaffle ""
       variable focusOffset ""
+      variable name ""
    }
 }
 
@@ -82,13 +85,7 @@ itcl::body Instrument::apply args {
          [string is space $deployableBaffle] ) } {
       logger command m2Baffle
    }
-   switch $issFace {
-      "port 1" {iss configure -port 1}
-      "port 2" {iss configure -port 2}
-      "port 3" {iss configure -port 3}
-      "port 4" {iss configure -port 4}
-      "port 5" {iss configure -port 5}
-   }
+   iss configure -port $issPort -instrument $name
 
 # Update ISS with new configuration.
    iss update
@@ -96,10 +93,11 @@ itcl::body Instrument::apply args {
 
 itcl::body Instrument::init {} {
    set iaa 0
-   set issFace "port 1"
+   set issFace 1
    set centralBaffle ""
    set deployableBaffle ""
    set focusOffset 0
+   set name ""
 }
 
 itcl::body Instrument::preview {} {
@@ -112,8 +110,9 @@ itcl::body Instrument::preview {} {
 
 itcl::body Instrument::save file {
    puts $file "   -iaa [list $iaa] \\"
-   puts $file "   -issFace [list $issFace] \\"
+   puts $file "   -issPort [list $issPort] \\"
    puts $file "   -centralBaffle [list $centralBaffle] \\"
    puts $file "   -deployableBaffle [list $deployableBaffle] \\"
-   puts $file "   -focusOffset [list $focusOffset]"
+   puts $file "   -focusOffset [list $focusOffset] \\"
+   puts $file "   -name [list $name]"
 }
