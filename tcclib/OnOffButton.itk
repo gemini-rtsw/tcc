@@ -28,7 +28,8 @@
 #                          state.
 #
 #  Methods:
-#          none
+#          
+#           select label   Selects the specified button.
 #
 #  D Terrett 26 June 2003
 #
@@ -46,6 +47,9 @@ itcl::class OnOffButton {
    itk_option define -offproc offProc Proc {}
    itk_option define -offvalue offValue Value {} checkstate
    itk_option define -sadrecord sadrecord SadRecord {} checkstate
+   public {
+      method select {label}
+   }
    private {
       method pressed {}
       method monitor {record value}
@@ -187,4 +191,18 @@ itcl::body OnOffButton::monitor {record value} {
       $itk_component(button) configure -background yellow \
             -activebackground yellow
    }
+}
+
+itcl::body OnOffButton::select {label} {
+
+   if {$label == "Off"} {
+      if {$state} {
+	   $itk_component(button) invoke
+         } 
+   } else {
+      if {!$state} {
+	   $itk_component(button) invoke
+      }
+  }
+
 }
