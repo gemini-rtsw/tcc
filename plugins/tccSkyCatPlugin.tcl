@@ -1,7 +1,7 @@
 #+
 #  tccSkyCatPlugin.tcl
 #
-#  D Terrett & C Mayer  11 February 2000
+#  D Terrett & C Mayer  27 March 2001
 #
 #  Copyright CCLRC
 #-
@@ -164,7 +164,7 @@ namespace eval TccSkyCat {
             -cosys \"FK5/[lindex $result 4]\"
 
 # Clear the current target and load the contents of the scratch object
-      send $tcc_interp tcsconfig${type}Target select \"\"
+      send $tcc_interp tcsconfig${type}Target selectfromcontrol \"\"
       send $tcc_interp $control selectobj $name
    }
 
@@ -260,7 +260,7 @@ namespace eval TccSkyCat {
             -cosys FK5/J2000
 
 # Select it.
-      send $tcc_interp tcsconfigrotator select \"\"
+      send $tcc_interp tcsconfigrotator selectfromcontrol \"\"
       send $tcc_interp $control selectobj $name
    }
 

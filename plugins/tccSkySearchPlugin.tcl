@@ -1,7 +1,7 @@
 #+
 #  tccSkySearchPlugin.tcl
 #
-#  D Terrett 30 October 1998
+#  D Terrett 27 March 2001
 #
 #  Copyright CCLRC
 #-
@@ -128,7 +128,7 @@ namespace eval TccSkyQuery {
       if { [llength $targets] == 1 } {
          send $tcc_interp tcsconfig${type}Target map
          send $tcc_interp tcsconfig${type}Target \
-               select \"[lindex [lindex $targets 0] $id]\"
+               selectfromcontrol \"[lindex [lindex $targets 0] $id]\"
       }
    }
 
