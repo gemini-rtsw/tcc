@@ -14,7 +14,7 @@
 #  Methods:
 #           invoke      Invokes the action of pressing the button.
 #
-#  D Terrett  9 September 1998
+#  D Terrett  20 March 2001
 #
 #  Copyright CCLRC
 #-
@@ -53,10 +53,21 @@ itcl::body StoreButton::constructor args {
 
 itcl::body StoreButton::command {} {
    set name [$itk_option(-combobox) get]
-   if { [string equal $name ""] } {
-      tk_messageBox -icon error -parent $itk_interior -message \
-            "Cannot store without a name to store to."
-   } else {
+   if { [string is space $name] } {
+      iwidgets::promptdialog $itk_interior.pd -modality application \
+            -labeltext "Store as?"
+      $itk_interior.pd hide Apply
+      $itk_interior.pd center
+      if { [$itk_interior.pd activate] } {
+         set name [$itk_interior.pd get]
+         if { [string is space $name] } {
+            tk_messageBox -icon error -parent $itk_interior -message \
+                  "Cannot store without a name to store to."
+         }
+      }
+      destroy $itk_interior.pd
+   }
+   if { ![string equal $name ""] } {
       $itk_option(-shadow) store $name
    }
 }
