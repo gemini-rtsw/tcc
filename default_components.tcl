@@ -8,7 +8,8 @@ createPointingOrigin "Rotator axis" -x 0.0 -y 0.0 -refcount 1
 createCosys FK5/J2000 -frame FK5 -equinox J2000 -refcount 1
 createCosys FK4/B1950 -frame FK4 -equinox B1950
 createCosys FK4/B1900 -frame FK4 -equinox B1900
-createCosys AzEl -frame AZEL_TOPO -equinox ""
+createCosys Apparent -frame Apparent -equinox ""
+createCosys AzEl -frame AzEl -equinox ""
 
 createRotator tracking -cosys FK5/J2000 -ipa 180
 createRotator fixed -cosys AzEl -ipa 180
