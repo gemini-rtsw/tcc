@@ -7,7 +7,7 @@
 #  Arguments:
 #            Any command line options and values.
 #
-#  D Terrett  16 July 2001
+#  D Terrett  19 July 2001
 #
 #  Copyright CCLRC
 #-
@@ -199,6 +199,10 @@ proc tccMain args {
          }
       }
    }
+
+# Select the tcs configuration called default by pretending that it was
+# selected by its non-existent parent.
+   tcsconfig selectfromparent default
 
 # Wait to connect to the tcs.
    waitConnect
