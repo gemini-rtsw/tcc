@@ -7,6 +7,13 @@
 #  Options:
 #          -wavel      The wavelength.
 #
+#          -centralBaffle     The position of the M2 central baffle ("open"
+#                             "closed" or "").
+#
+#          -deployableBaffle  The position of the M2 deployable baffle
+#                             ("thermal IR", "near IR", "visible",
+#                             "extended" or "").
+#
 #  Methods:
 #          apply comp  Applies the wavelength to the TCS by setting the 
 #                      values of the command parameters for the virtual
@@ -32,6 +39,8 @@ itcl::class Wavelength {
       method preview {view comp}
       method save {node}
       variable wavel {} {set wavel [valWavelength $wavel]}
+      variable centralBaffle open
+      variable deployableBaffle ""
    }
 }
 
@@ -40,6 +49,20 @@ itcl::body Wavelength::apply {comp} {
       tcs.field.wavelength {
          cs wavelSourceA set wavel $wavel
          logger command wavelSourceA
+	 switch $centralBaffle {
+            closed {cs m2Baffle set centralBaffle Closed}
+            open {cs m2Baffle set centralBaffle Open}
+         }
+         switch $deployableBaffle {
+            "thermal IR" {cs m2Baffle set deployBaffle Retracted}
+            "near IR" {cs m2Baffle set deployBaffle [list "Near IR"]}
+            visible {cs m2Baffle set deployBaffle Visible}
+            extended {cs m2Baffle set deployBaffle Extended}
+         }
+         if { !( [string is space $centralBaffle] && \
+               [string is space $deployableBaffle] ) } {
+            logger command m2Baffle
+         }
       }
       tcs.field.guide.oiwfswavelength {
          cs wavelOiwfs set wavel $wavel
@@ -50,6 +73,8 @@ itcl::body Wavelength::apply {comp} {
 
 itcl::body Wavelength::init {} {
    set wavel {}
+   set centralBaffle ""
+   set deployableBaffle ""
 }
 
 itcl::body Wavelength::preview {view comp} {
@@ -68,4 +93,6 @@ itcl::body Wavelength::preview {view comp} {
 itcl::body Wavelength::save {node} {
    set node [paramset $node wavelength]
    param $node wavel $wavel
+   param $node centralBaffle $centralBaffle
+   param $node deployableBaffle $deployableBaffle
 }
