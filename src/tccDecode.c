@@ -1,4 +1,4 @@
-static char rcsid[] = "$Id: tccDecode.c,v 1.5 2002-06-06 13:09:59 dlt Exp $";
+static char rcsid[] = "$Id: tccDecode.c,v 1.6 2005-01-20 00:03:25 dlt Exp $";
 /* *INDENT-OFF* */
 /*
 *   FILENAME
@@ -17,6 +17,9 @@ static char rcsid[] = "$Id: tccDecode.c,v 1.5 2002-06-06 13:09:59 dlt Exp $";
 */
 /*
  * $Log: not supported by cvs2svn $
+ * Revision 1.5  2002/06/06 13:09:59  dlt
+ * Implement new orbit formats and Chapront & Francou planet ephemeris
+ *
  * Revision 1.4  2001/02/05 19:33:27  dlt
  * Eliminate use of AppendResult
  *
@@ -115,8 +118,8 @@ static char rcsid[] = "$Id: tccDecode.c,v 1.5 2002-06-06 13:09:59 dlt Exp $";
 /* Maximum dAz/dt */
 #define MAXDE 10000.0
 
-int tccDcDt(Tcl_Interp *interp, FRAMETYPE frame, char *string1, char *string2,
-            double *dr, double *dd)
+int tccDcDt(Tcl_Interp *interp, FRAMETYPE frame, const char *string1, 
+        const char *string2, double *dr, double *dd)
 {
     int n, j, m;
     double f, vm1, vm2, d1, d2;
@@ -167,7 +170,7 @@ int tccDcDt(Tcl_Interp *interp, FRAMETYPE frame, char *string1, char *string2,
 /* Decode the RA/Az rate. */
     m = 1;
     d1 = 0.0;
-    slaDfltin(string1, &m, &d1, &j);
+    slaDfltin((char *)string1, &m, &d1, &j);
     if (j < 2) {
         if (fabs(d1) > vm1) {
             Tcl_SetResult( interp, px1, TCL_VOLATILE);
@@ -181,7 +184,7 @@ int tccDcDt(Tcl_Interp *interp, FRAMETYPE frame, char *string1, char *string2,
 /* Decode the Dec/El rate. */
     n = 1;
     d2 = 0.0;
-    slaDfltin(string2, &n, &d2, &j);
+    slaDfltin((char*)string2, &n, &d2, &j);
     if (j < 2) {
         if (fabs(d2) > vm2) {
             Tcl_SetResult( interp, px2, TCL_VOLATILE);
@@ -250,7 +253,8 @@ int tccDcDt(Tcl_Interp *interp, FRAMETYPE frame, char *string1, char *string2,
 #define MINEP 1850.0
 #define MAXEP 2100.0
 
-int tccDcEpoch(Tcl_Interp *interp, char *string, char *type, double *epoch)
+int tccDcEpoch(Tcl_Interp *interp, const char *string, char *type, 
+        double *epoch)
 {
     int n, j1, j2, j;
     char k;
@@ -264,7 +268,7 @@ int tccDcEpoch(Tcl_Interp *interp, char *string, char *type, double *epoch)
     }
 /* Decode the epoch. */
     n = 1;
-    slaDbjin(string, &n, &e, &j1, &j2);
+    slaDbjin((char*)string, &n, &e, &j1, &j2);
     if (!j1) {
         if (e >= MINEP && e <= MAXEP) {
             slaKbj(j2, e, &k, &j);
@@ -336,7 +340,7 @@ int tccDcEpoch(Tcl_Interp *interp, char *string, char *type, double *epoch)
 
 
 
-int tccDcFrame(Tcl_Interp *interp, char *string, FRAMETYPE * frame)
+int tccDcFrame(Tcl_Interp *interp, const char *string, FRAMETYPE * frame)
 {
     int n, ls;
     char suc[LSUC];
@@ -409,8 +413,7 @@ int tccDcFrame(Tcl_Interp *interp, char *string, FRAMETYPE * frame)
 
 
 
-char *
- tccDcLc(char *in, int lout, char *out)
+char* tccDcLc(const char *in, int lout, char *out)
 {
     int i, c;
 
@@ -443,7 +446,7 @@ char *
 /* *INDENT-ON* */
 
 
-int tccDcLen(char *string)
+int tccDcLen(const char *string)
 {
     int l, i, c;
 
@@ -529,8 +532,8 @@ int tccDcLen(char *string)
 
 
 
-int tccDcRadec(Tcl_Interp *interp, FRAMETYPE frame, char *string1, char *string2,
-               double *r, double *d)
+int tccDcRadec(Tcl_Interp *interp, FRAMETYPE frame, const char *string1, 
+               const char *string2, double *r, double *d)
 {
     char lstr1[LSUC], lstr2[LSUC];
     int n, i, j, m;
@@ -739,7 +742,7 @@ int tccDcRadec(Tcl_Interp *interp, FRAMETYPE frame, char *string1, char *string2
 #define MINT0 10000.0
 #define MAXT0 24100000.0
 
-int tccDcT0(Tcl_Interp *interp, char *string, double *t0)
+int tccDcT0(Tcl_Interp *interp, const char *string, double *t0)
 {
     int n, i, j, k;
     long iy, imo, id, ih, im, test;
@@ -754,7 +757,7 @@ int tccDcT0(Tcl_Interp *interp, char *string, double *t0)
 /* Decode up to seven +ve doubles. */
     i = 1;
     for (n = 0; n < 7; n++) {
-        slaDfltin(string, &i, &d, &j);
+        slaDfltin((char*)string, &i, &d, &j);
         if (j == 1) {
             break;
         } else if (j) {
@@ -775,7 +778,7 @@ int tccDcT0(Tcl_Interp *interp, char *string, double *t0)
            need to examine the fist number. */
         k = 1;
         test = 0.0;
-        slaIntin(string, &k, &test, &j);
+        slaIntin((char*)string, &k, &test, &j);
         if (j)
             n = 0;
 
@@ -783,13 +786,13 @@ int tccDcT0(Tcl_Interp *interp, char *string, double *t0)
 
            /* Handle date */
            i = 1;
-           slaIntin(string, &i, &iy, &j);
+           slaIntin((char*)string, &i, &iy, &j);
            if (j)
                n = 0;
-           slaIntin(string, &i, &imo, &j);
+           slaIntin((char*)string, &i, &imo, &j);
            if (j)
                n = 0;
-           slaDfltin(string, &i, &df, &j);
+           slaDfltin((char*)string, &i, &df, &j);
            if (j)
                n = 0;
            slaCaldj((int) iy, (int) imo, (int) floor( df ), &d, &j);
@@ -801,13 +804,13 @@ int tccDcT0(Tcl_Interp *interp, char *string, double *t0)
 
            /* Handle time of day. */
            i = 1;
-           slaIntin(string, &i, &ih, &j);
+           slaIntin((char*)string, &i, &ih, &j);
            if (j)
                n = 0;
-           slaIntin(string, &i, &im, &j);
+           slaIntin((char*)string, &i, &im, &j);
            if (j)
                n = 0;
-           slaDfltin(string, &i, &d, &j);
+           slaDfltin((char*)string, &i, &d, &j);
            if (j)
                n = 0;
            slaDtf2d((int) ih, (int) im, s, &d, &j);
@@ -820,25 +823,25 @@ int tccDcT0(Tcl_Interp *interp, char *string, double *t0)
         /* Handle full date and time case. */
         d = 0.0;
         i = 1;
-        slaIntin(string, &i, &iy, &j);
+        slaIntin((char*)string, &i, &iy, &j);
         if (j)
             n = 0;
-        slaIntin(string, &i, &imo, &j);
+        slaIntin((char*)string, &i, &imo, &j);
         if (j)
             n = 0;
-        slaIntin(string, &i, &id, &j);
+        slaIntin((char*)string, &i, &id, &j);
         if (j)
             n = 0;
         slaCaldj((int) iy, (int) imo, (int) id, &d, &j);
         if (j)
             n = 0;
-        slaIntin(string, &i, &ih, &j);
+        slaIntin((char*)string, &i, &ih, &j);
         if (j)
             n = 0;
-        slaIntin(string, &i, &im, &j);
+        slaIntin((char*)string, &i, &im, &j);
         if (j)
             n = 0;
-        slaDfltin(string, &i, &s, &j);
+        slaDfltin((char*)string, &i, &s, &j);
         if (j)
             n = 0;
         slaDtf2d((int) ih, (int) im, s, &t, &j);
@@ -895,7 +898,7 @@ int tccDcT0(Tcl_Interp *interp, char *string, double *t0)
 
 
 
-char *tccDcUc(char *in, int lout, char *out)
+char *tccDcUc(const char *in, int lout, char *out)
 {
     int i, c;
 
@@ -941,7 +944,7 @@ char *tccDcUc(char *in, int lout, char *out)
 */
 /* *INDENT-ON* */
 
-int tccDcPlanet(Tcl_Interp *interp, char *string, int *planet)
+int tccDcPlanet(Tcl_Interp *interp, const char *string, int *planet)
 {
     int n, ls;
     char suc[LSUC];

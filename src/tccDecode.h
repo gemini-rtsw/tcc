@@ -9,6 +9,9 @@
 /* *INDENT-OFF* */
 /*
  * $Log: not supported by cvs2svn $
+ * Revision 1.2  2000/02/18 02:29:19  dlt
+ * New routine for decoding planet names
+ *
  * Revision 1.1.1.1  1999/05/27 04:53:39  dlt
  * Initial load of Gemini telescope consoles
  *
@@ -31,16 +34,18 @@
 #include "astLib.h"
 
 /* Function prototypes */
-int tccDcDt ( Tcl_Interp*, FRAMETYPE, char*, char*, double*, double*);
-int tccDcEpoch ( Tcl_Interp*, char*, char*, double*);
-int tccDcFrame ( Tcl_Interp*, char*, FRAMETYPE*);
-int tccDcLen ( char* );
-int tccDcPmra ( Tcl_Interp*, char*, double*);
-int tccDcPmdec ( Tcl_Interp*, char*, double*);
-int tccDcRadec ( Tcl_Interp*, FRAMETYPE, char*, char*, double*, double*);
-int tccDcT0 ( Tcl_Interp*, char*, double*);
-char* tccDcUc ( char*, int, char* );
-char* tccDcLc ( char*, int, char* );
-int tccDcPlanet( Tcl_Interp*, char*, int* );
+int tccDcDt ( Tcl_Interp*, FRAMETYPE, const char*, const char*, 
+        double*, double*);
+int tccDcEpoch ( Tcl_Interp*, const char*, char*, double*);
+int tccDcFrame ( Tcl_Interp*, const char*, FRAMETYPE*);
+int tccDcLen ( const char* );
+int tccDcPmra ( Tcl_Interp*, const char*, double*);
+int tccDcPmdec ( Tcl_Interp*, const char*, double*);
+int tccDcRadec ( Tcl_Interp*, FRAMETYPE, const char*, const char*, 
+        double*, double*);
+int tccDcT0 ( Tcl_Interp*, const char*, double*);
+char* tccDcUc ( const char*, int, char* );
+char* tccDcLc ( const char*, int, char* );
+int tccDcPlanet( Tcl_Interp*, const char*, int* );
 
 #endif

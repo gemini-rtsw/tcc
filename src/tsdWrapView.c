@@ -216,7 +216,7 @@ static int CreateWV( Tcl_Interp *interp, Tk_Canvas canvas, Tk_Item *itemPtr,
 /* Get latitude */
    if ( Tcl_Eval( interp, "sa tcssad get tlatm value" ) != TCL_OK ) 
        return TCL_ERROR;
-   if ( Tcl_GetDouble( interp, interp->result, &phi ) != TCL_OK )
+   if ( Tcl_GetDouble( interp, Tcl_GetStringResult(interp), &phi ) != TCL_OK )
        return TCL_ERROR;
    wrapviewPtr->sphi = sin( phi * D2R );
    wrapviewPtr->cphi = cos( phi * D2R );
@@ -304,29 +304,30 @@ static int ConfigureWV( Tcl_Interp *interp, Tk_Canvas canvas, Tk_Item *itemPtr,
 
 /* Get data from the TCS */
    if ( Tcl_Eval( interp, "sa tcssad get demandAz value" ) == TCL_OK ) {
-      strcpy( savest, interp->result);
+      strcpy( savest, Tcl_GetStringResult(interp));
       if ( Tcl_Eval( interp, "sa tcssad get demandEl value" ) == TCL_OK )
-          tccDcRadec( interp, AZEL_MNT, savest, interp->result, 
+          tccDcRadec( interp, AZEL_MNT, savest, Tcl_GetStringResult(interp), 
              &wrapviewPtr->az, &wrapviewPtr->el ); 
    }
    if ( Tcl_Eval( interp, "sa tcssad get mountTrackFrame value" ) == TCL_OK ) 
-      tccDcFrame( interp, interp->result, &wrapviewPtr->frame);
+      tccDcFrame( interp, Tcl_GetStringResult(interp), &wrapviewPtr->frame);
    if ( wrapviewPtr->rotator ) {
       if ( Tcl_Eval( interp, "sa tcssad get demandRma value" ) == TCL_OK ) 
-         if ( Tcl_GetDouble( interp, interp->result, &wrapviewPtr->ma ) 
-            == TCL_OK ) wrapviewPtr->ma *= D2R;
+         if ( Tcl_GetDouble( interp, Tcl_GetStringResult(interp),
+            &wrapviewPtr->ma ) == TCL_OK ) wrapviewPtr->ma *= D2R;
       if ( Tcl_Eval( interp, "sa crssad get currentRma value" ) == TCL_OK ) 
-         if ( Tcl_GetDouble( interp, interp->result, &wrapviewPtr->mech ) 
-            == TCL_OK ) wrapviewPtr->mech *= D2R;
+         if ( Tcl_GetDouble( interp, Tcl_GetStringResult(interp), 
+            &wrapviewPtr->mech ) == TCL_OK ) wrapviewPtr->mech *= D2R;
       if ( wrapviewPtr->frame != AZEL_TOPO ) {
          if ( Tcl_Eval( interp, "sa tcssad get rotTrackFrame value" ) ==
-            TCL_OK ) tccDcFrame( interp, interp->result, &wrapviewPtr->frame);
+            TCL_OK ) tccDcFrame( interp, Tcl_GetStringResult(interp), 
+            &wrapviewPtr->frame);
       }
    } else {
       if ( Tcl_Eval( interp, "sa tcssad get currentAz value" ) == TCL_OK ) {
-         strcpy( savest, interp->result);
+         strcpy( savest, Tcl_GetStringResult(interp));
          if ( Tcl_Eval( interp, "sa tcssad get currentEl value" ) == TCL_OK )
-            tccDcRadec( interp, AZEL_MNT, savest, interp->result, 
+            tccDcRadec( interp, AZEL_MNT, savest, Tcl_GetStringResult(interp), 
                &wrapviewPtr->mech, &wrapviewPtr->mel );
       }
    }

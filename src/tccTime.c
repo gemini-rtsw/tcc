@@ -139,35 +139,35 @@ int tccTimeInit( Tcl_Interp *interp)
 
     if ( Tcl_Eval( interp, "sa tcssad get tlongm value" ) != TCL_OK )
         return TCL_ERROR;
-    if ( Tcl_GetDouble( interp, interp->result, &longm) != TCL_OK )
+    if ( Tcl_GetDouble( interp, Tcl_GetStringResult(interp), &longm) != TCL_OK )
         return TCL_ERROR;
     if ( Tcl_Eval( interp, "sa tcssad get tlatm value" ) != TCL_OK )
         return TCL_ERROR;
-    if ( Tcl_GetDouble( interp, interp->result, &latm) != TCL_OK )
+    if ( Tcl_GetDouble( interp, Tcl_GetStringResult(interp), &latm) != TCL_OK )
         return TCL_ERROR;
     if ( Tcl_Eval( interp, "sa tcssad get height value" ) != TCL_OK )
         return TCL_ERROR;
-    if ( Tcl_GetDouble( interp, interp->result, &hm) != TCL_OK )
+    if ( Tcl_GetDouble( interp, Tcl_GetStringResult(interp), &hm) != TCL_OK )
         return TCL_ERROR;
     if ( Tcl_Eval( interp, "sa tcssad get djmls value" ) != TCL_OK )
         return TCL_ERROR;
-    if ( Tcl_GetDouble( interp, interp->result, &djmls) != TCL_OK )
+    if ( Tcl_GetDouble( interp, Tcl_GetStringResult(interp), &djmls) != TCL_OK )
         return TCL_ERROR;
     if ( Tcl_Eval( interp, "sa tcssad get delat value" ) != TCL_OK )
         return TCL_ERROR;
-    if ( Tcl_GetDouble( interp, interp->result, &delat) != TCL_OK )
+    if ( Tcl_GetDouble( interp, Tcl_GetStringResult(interp), &delat) != TCL_OK )
         return TCL_ERROR;
     if ( Tcl_Eval( interp, "sa tcssad get delut value" ) != TCL_OK )
         return TCL_ERROR;
-    if ( Tcl_GetDouble( interp, interp->result, &delut) != TCL_OK )
+    if ( Tcl_GetDouble( interp, Tcl_GetStringResult(interp), &delut) != TCL_OK )
         return TCL_ERROR;
     if ( Tcl_Eval( interp, "sa tcssad get xpm value" ) != TCL_OK )
         return TCL_ERROR;
-    if ( Tcl_GetDouble( interp, interp->result, &xpm) != TCL_OK )
+    if ( Tcl_GetDouble( interp, Tcl_GetStringResult(interp), &xpm) != TCL_OK )
         return TCL_ERROR;
     if ( Tcl_Eval( interp, "sa tcssad get ypm value" ) != TCL_OK )
         return TCL_ERROR;
-    if ( Tcl_GetDouble( interp, interp->result, &ypm) != TCL_OK )
+    if ( Tcl_GetDouble( interp, Tcl_GetStringResult(interp), &ypm) != TCL_OK )
         return TCL_ERROR;
 
 /* Get an approximate TAI (i.e. UTC as supplied by the TCL clock command). */

@@ -203,7 +203,7 @@ static int CreateEV( Tcl_Interp *interp, Tk_Canvas canvas, Tk_Item *itemPtr,
 /* Get latitude */
    if ( Tcl_Eval( interp, "sa tcssad get tlatm value" ) != TCL_OK ) 
        return TCL_ERROR;
-   if ( Tcl_GetDouble( interp, interp->result, &phi ) != TCL_OK )
+   if ( Tcl_GetDouble( interp, Tcl_GetStringResult(interp), &phi ) != TCL_OK )
        return TCL_ERROR;
    elviewPtr->sphi = sin( phi * D2R );
    elviewPtr->cphi = cos( phi * D2R );
@@ -240,20 +240,20 @@ static int ConfigureEV( Tcl_Interp *interp, Tk_Canvas canvas, Tk_Item *itemPtr,
 
 /* Get data from the TCS */
    if ( Tcl_Eval( interp, "sa tcssad get demandAz value" ) == TCL_OK ) {
-       strcpy( savest, interp->result);
+       strcpy( savest, Tcl_GetStringResult(interp));
        if ( Tcl_Eval( interp, "sa tcssad get demandEl value" ) == TCL_OK )
-           tccDcRadec( interp, AZEL_MNT, savest, interp->result, 
+           tccDcRadec( interp, AZEL_MNT, savest, Tcl_GetStringResult(interp), 
               &elviewPtr->az, &elviewPtr->el);
    }
    if ( Tcl_Eval( interp, "sa tcssad get mountTrackFrame value" ) == TCL_OK ) 
-      tccDcFrame( interp, interp->result, &elviewPtr->frame);
+      tccDcFrame( interp, Tcl_GetStringResult(interp), &elviewPtr->frame);
    if ( Tcl_Eval( interp, "sa tcssad get airMassLimitEl value" ) == TCL_OK ) 
-       if ( Tcl_GetDouble( interp, interp->result, &elviewPtr->amlimel ) 
-           == TCL_OK ) elviewPtr->amlimel *= D2R;
+       if ( Tcl_GetDouble( interp, Tcl_GetStringResult(interp), 
+           &elviewPtr->amlimel ) == TCL_OK ) elviewPtr->amlimel *= D2R;
    if ( Tcl_Eval( interp, "sa tcssad get currentAz value" ) == TCL_OK ) {
-       strcpy( savest, interp->result);
+       strcpy( savest, Tcl_GetStringResult(interp));
        if ( Tcl_Eval( interp, "sa tcssad get currentEl value" ) == TCL_OK )
-           tccDcRadec( interp, AZEL_MNT, savest, interp->result, 
+           tccDcRadec( interp, AZEL_MNT, savest, Tcl_GetStringResult(interp), 
                &elviewPtr->maz, &elviewPtr->mel );
    }
 

@@ -272,19 +272,19 @@ static int CreateDV( Tcl_Interp *interp, Tk_Canvas canvas, Tk_Item *itemPtr,
    timeNowD( UTC, &date );
    if ( Tcl_Eval( interp, "sa tcssad get delut value" ) != TCL_OK ) 
        return TCL_ERROR;
-   if ( Tcl_GetDouble( interp, interp->result, &dut ) != TCL_OK )
+   if ( Tcl_GetDouble( interp, Tcl_GetStringResult(interp), &dut ) != TCL_OK )
        return TCL_ERROR;
    if ( Tcl_Eval( interp, "sa tcssad get tlongm value" ) != TCL_OK ) 
        return TCL_ERROR;
-   if ( Tcl_GetDouble( interp, interp->result, &elongm ) != TCL_OK )
-       return TCL_ERROR;
+   if ( Tcl_GetDouble( interp, Tcl_GetStringResult(interp), &elongm ) != 
+       TCL_OK ) return TCL_ERROR;
    if ( Tcl_Eval( interp, "sa tcssad get tlatm value" ) != TCL_OK ) 
        return TCL_ERROR;
-   if ( Tcl_GetDouble( interp, interp->result, &elatm ) != TCL_OK )
+   if ( Tcl_GetDouble( interp, Tcl_GetStringResult(interp), &elatm ) != TCL_OK )
        return TCL_ERROR;
    if ( Tcl_Eval( interp, "sa tcssad get height value" ) != TCL_OK ) 
        return TCL_ERROR;
-   if ( Tcl_GetDouble( interp, interp->result, &hm ) != TCL_OK )
+   if ( Tcl_GetDouble( interp, Tcl_GetStringResult(interp), &hm ) != TCL_OK )
        return TCL_ERROR;
    slaAoppa( date, dut, elongm * D2R, elatm * D2R, hm, 0.0, 0.0, 275.0, 605.0, 
       0.8, 0.5, 0.0065, domeviewPtr->aoprms );
@@ -336,7 +336,7 @@ static int ConfigureDV( Tcl_Interp *interp, Tk_Canvas canvas, Tk_Item *itemPtr,
    be allocated. */
    vgpos = 0.0;
    if ( Tcl_Eval( interp, "sa ecssad get eastVentGatePos value" ) == TCL_OK )
-       Tcl_GetDouble( interp, interp->result, &vgpos );
+       Tcl_GetDouble( interp, Tcl_GetStringResult(interp), &vgpos );
    if ( vgpos > 100.0 ) vgpos = 100.0;
    mask = GCForeground | GCLineWidth;
    gcvalues.foreground = domeviewPtr->blackColor->pixel;
@@ -353,7 +353,7 @@ static int ConfigureDV( Tcl_Interp *interp, Tk_Canvas canvas, Tk_Item *itemPtr,
    }
    vgpos = 0.0;
    if ( Tcl_Eval( interp, "sa ecssad get westVentGatePos value" ) == TCL_OK )
-       Tcl_GetDouble( interp, interp->result, &vgpos );
+       Tcl_GetDouble( interp, Tcl_GetStringResult(interp), &vgpos );
    if ( vgpos > 100.0 ) vgpos = 100.0;
    if ( fabs( domeviewPtr->wvgPos - vgpos ) > 0.05 ) {
       if ( domeviewPtr->wvgGC != None ) {
@@ -368,34 +368,39 @@ static int ConfigureDV( Tcl_Interp *interp, Tk_Canvas canvas, Tk_Item *itemPtr,
    }
 
    if ( Tcl_Eval( interp, "sa tcssad get airMassLimitEl value" ) == TCL_OK )
-       Tcl_GetDouble( interp, interp->result, &domeviewPtr->amLimEl );
+       Tcl_GetDouble( interp, Tcl_GetStringResult(interp), 
+           &domeviewPtr->amLimEl );
    if ( Tcl_Eval( interp, "sa ecssad get topShtrPos value" ) == TCL_OK ) 
-       Tcl_GetDouble( interp, interp->result, &domeviewPtr->topShutEl );
+       Tcl_GetDouble( interp, Tcl_GetStringResult(interp), 
+           &domeviewPtr->topShutEl );
    if ( Tcl_Eval( interp, "sa ecssad get botShtrPos value" ) == TCL_OK ) 
-       Tcl_GetDouble( interp, interp->result, &domeviewPtr->botShutEl );
+       Tcl_GetDouble( interp, Tcl_GetStringResult(interp), 
+           &domeviewPtr->botShutEl );
 
    if ( Tcl_Eval( interp, "sa ecssad get domePos value" ) == TCL_OK ) 
-       Tcl_GetDouble( interp, interp->result, &domeviewPtr->domeaz );
+       Tcl_GetDouble( interp, Tcl_GetStringResult(interp), 
+           &domeviewPtr->domeaz );
 
    if ( Tcl_Eval( interp, "sa tcssad get currentAz value" ) == TCL_OK ) {
-       strcpy( savest, interp->result);
+       strcpy( savest, Tcl_GetStringResult(interp));
        if ( Tcl_Eval( interp, "sa tcssad get currentEl value" ) == TCL_OK ) 
-           tccDcRadec( interp, AZEL_MNT, savest, interp->result, 
+           tccDcRadec( interp, AZEL_MNT, savest, Tcl_GetStringResult(interp), 
                &domeviewPtr->telAz, &domeviewPtr->telEl );
    }
 
    if ( Tcl_Eval( interp, "sa tcssad get mountTrackFrame value" ) == TCL_OK ) 
-       tccDcFrame( interp, interp->result, &domeviewPtr->system ); 
+       tccDcFrame( interp, Tcl_GetStringResult(interp), &domeviewPtr->system ); 
    if ( domeviewPtr->system != AZEL_TOPO ) {
       if ( Tcl_Eval( interp, "sa tcssad get mountTrackEq value" ) == TCL_OK ) 
-          tccDcEpoch( interp, interp->result, &domeviewPtr->equinox.type, 
-              &domeviewPtr->equinox.year );
+          tccDcEpoch( interp, Tcl_GetStringResult(interp), 
+               &domeviewPtr->equinox.type, &domeviewPtr->equinox.year );
    }
    if ( Tcl_Eval( interp, "sa tcssad get demandRA value" ) == TCL_OK ) {
-       strcpy( savest, interp->result);
+       strcpy( savest, Tcl_GetStringResult(interp));
        if ( Tcl_Eval( interp, "sa tcssad get demandDec value" ) == TCL_OK ) 
-           tccDcRadec( interp, domeviewPtr->system, savest, interp->result, 
-               &domeviewPtr->ra, &domeviewPtr->dec );
+           tccDcRadec( interp, domeviewPtr->system, savest, 
+               Tcl_GetStringResult(interp), &domeviewPtr->ra, 
+               &domeviewPtr->dec );
    }
    return TCL_OK;
 }

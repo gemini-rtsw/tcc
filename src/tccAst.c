@@ -28,6 +28,9 @@ static char rcsid[]="$Id:";
 #include "tccAst.h"
 #include "tccDecode.h"
 
+/* Redefine AST_CTXA_SIZE because of bug in TCS V5-4 */
+#define AST_CTXA_SIZE 39
+
 static int update( Tcl_Interp * );
 static int target( Tcl_Interp *, int, Tcl_Obj *CONST [] );
 static int instrument( Tcl_Interp *, int, Tcl_Obj *CONST [] );
@@ -105,7 +108,8 @@ static int update( Tcl_Interp *interp )
         return TCL_ERROR;
 
 /* Decode the result. */
-    if ( Tcl_SplitList( interp, interp->result, &nel, &listPtr) != TCL_OK )
+    if ( Tcl_SplitList( interp, Tcl_GetStringResult(interp), &nel, &listPtr) !=
+            TCL_OK )
         return TCL_ERROR;
     if ( nel != AST_CTXA_SIZE ) {
         Tcl_Free( (char *) listPtr );
