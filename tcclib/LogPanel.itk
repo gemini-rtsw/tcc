@@ -10,7 +10,7 @@
 #  Methods:
 #          none
 #
-#  D Terrett 31 August 1998
+#  D Terrett 20 April 2000
 #
 #  Copyright CCLRC
 #+
@@ -19,6 +19,9 @@ itcl::class LogPanel {
    inherit Panel
 
    constructor args {}
+
+   private method closefile
+   private method openfile
 }
 
 itk::usual LogPanel {
@@ -26,11 +29,19 @@ itk::usual LogPanel {
 }
 
 itcl::body LogPanel::constructor args {
+
+# Create logger control.
    itk_component add control {
       LogControl $itk_interior.control
    }
-
    pack $itk_component(control) -fill both -expand y
+
+# Add Open and Close to the panel's file menu.
+   $itk_component(menubar) insert file.exit command open \
+         -label "Open log file..." -command [code $this openfile]
+   $itk_component(menubar) insert file.exit command close \
+         -label "Close log file" -state disabled \
+         -command [code $this closefile]
 
 # Make this panel resizable.
    wm resizable [winfo toplevel $itk_interior] 1 1
@@ -38,4 +49,47 @@ itcl::body LogPanel::constructor args {
    set itk_option(-windows) $itk_component(control)
 
    eval itk_initialize $args
+}
+
+itcl::body LogPanel::closefile {} {
+   $itk_component(control) closefile
+   $itk_component(menubar) menuconfigure file.open -state normal
+   $itk_component(menubar) menuconfigure file.close -state disabled
+}
+
+itcl::body LogPanel::openfile {} {
+
+# cd to save file directory.
+   global SAVE_FILE_DIR
+   set pwd [pwd]
+   cd $SAVE_FILE_DIR
+
+# Create dialog.
+   set dialog [iwidgets::fileselectiondialog $itk_interior.dialog \
+         -title "Open log file Dialog" -modality application \
+         -master $itk_interior]
+
+   $dialog center
+   if { [$dialog activate] } {
+
+# Open log file.
+      set filename [$dialog get]
+      $itk_component(control) openfile $filename
+
+# reconfigure menu.
+      $itk_component(menubar) menuconfigure file.open -state disabled
+      $itk_component(menubar) menuconfigure file.close -state normal
+
+# Update save file directory.
+      set dir [file dirname $filename]
+      if { [string compare [file pathtype $dir] relative] == 0 } {
+         set SAVE_FILE_DIR [pwd]/$dir
+      } else {
+         set SAVE_FILE_DIR $dir
+      }
+   }
+   destroy $dialog
+
+# Restore default directory
+   cd $pwd
 }
