@@ -7,7 +7,7 @@
 #  Arguments:
 #            Any command line options and values.
 #
-#  D Terrett  5 December 2003
+#  D Terrett  16 December 2004
 #
 #  Copyright CCLRC
 #-
@@ -157,6 +157,11 @@ proc tccMain args {
 
 # Create the object that controls the active optics.
    ActiveOptics AO
+
+# Create the objects that control the wave-front sensors
+   WaveFrontSensor Pwfs1 pwfs1
+   WaveFrontSensor Pwfs2 pwfs2
+   WaveFrontSensor Oiwfs oiwfs
 
 # Create the ocs session object for the one and only session.
    OcsSession ocssession sessionQueue
