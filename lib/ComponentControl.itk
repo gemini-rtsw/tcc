@@ -30,7 +30,7 @@
 #
 #           save object     Save the contents of the controls in the object.
 #
-#  D Terrett  18 June 2003
+#  D Terrett  18 August 2003
 #
 #  Copyright CCLRC
 #+
@@ -65,6 +65,18 @@ itcl::class ComponentControl {
    }
 }
 
+# Create bitmap for the delete button.
+image create bitmap images::delete -data {
+   #define delete_width 18
+   #define delete_height 18
+   static unsigned char delete_bits[] = {
+      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x18, 0x60, 0x00,
+      0x38, 0x70, 0x00, 0x70, 0x38, 0x00, 0xe0, 0x1c, 0x00, 0xc0, 0x0f, 0x00,
+      0x80, 0x07, 0x00, 0x80, 0x07, 0x00, 0xc0, 0x0f, 0x00, 0xe0, 0x1c, 0x00,
+      0x70, 0x38, 0x00, 0x38, 0x70, 0x00, 0x18, 0x60, 0x00, 0x00, 0x00, 0x00,
+      0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+}
+
 itk::usual ComponentControl {
    keep -activebackground -activeforeground -background -borderwidth \
          -cursor -disabledforeground -font -foreground -highlightcolor \
@@ -92,7 +104,8 @@ itcl::body ComponentControl::constructor args {
    pack $itk_component(label) -fill x -expand yes
 
    itk_component add delete {
-      button $w.delete -bitmap delete -command [itcl::code $this delselected]
+      button $w.delete -image images::delete \
+            -command [itcl::code $this delselected]
    }
    itk_component add selector {
       ListManager $w.selector \

@@ -12,7 +12,7 @@
 #  Methods:
 #           select item      Selects "item" into the list manager.
 #
-#  D Terrett  17 May 2002
+#  D Terrett  18 August 2003
 #
 #  Copyright CCLRC
 #+
@@ -31,6 +31,18 @@ itcl::class SubComponentSelector {
       method newname {n1 n2 op}
       variable comp ""
    }
+}
+
+# Create the bitmap for the edit button.
+image create bitmap images::edit -data {
+   #define edit_width 30
+   #define edit_height 15
+   static unsigned char edit_bits[] = {
+      0x00, 0x00, 0x00, 0x00, 0x00, 0x38, 0x00, 0x00, 0x00, 0x70, 0x00, 0x00,
+      0x00, 0xe0, 0x00, 0x00, 0x00, 0xc0, 0x01, 0x00, 0x00, 0x80, 0x03, 0x00,
+      0xfc, 0xff, 0x07, 0x00, 0xfc, 0xff, 0x07, 0x00, 0x00, 0x80, 0x03, 0x00,
+      0x00, 0xc0, 0x01, 0x00, 0x00, 0xe0, 0x00, 0x00, 0x00, 0x70, 0x98, 0x19,
+      0x00, 0x38, 0x98, 0x19, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 }
 
 itk::usual SubComponentSelector {
@@ -54,7 +66,7 @@ itcl::body SubComponentSelector::constructor args {
       keep -labeltext -labelpos -componentlist -state -width
    }
    itk_component add edit {
-      EditButton $w.edit -bitmap "edit" \
+      EditButton $w.edit -image images::edit \
             -selector $itk_component(selector)
    } {
       usual

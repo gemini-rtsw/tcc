@@ -1,4 +1,4 @@
-All: tccext.so tsdext.so tcctime.so slaext.so tcctelsim.so
+All: tcccmn.so tccext.so tsdext.so tcctime.so slaext.so tcctelsim.so
 
 TCL_VERS = 8.4
 
@@ -23,25 +23,29 @@ LDFLAGS = -L/gemini/epics3.13.4/slalib/slalib/lib/${HOST_ARCH} \
           -L${HLPG_EXT_RUNTIME_BASE}/tcl$(TCL_VERS)/lib \
           -ltclstub$(TCL_VERS) -ltkstub$(TCL_VERS) -last -ltime -lsla -lposix4
 
-tccext.so : $(TCCOBJ) $(CMNOBJ)
-	ld -G -z text -o $@ $(TCCOBJ) $(CMNOBJ) $(LDFLAGS) 
+tcccmn.so : $(CMNOBJ)
+	ld -G -z text -o $@ $(CMNOBJ) $(LDFLAGS) 
 
-tsdext.so : $(TSDOBJ) $(CMNOBJ)
-	ld -G -z text -o $@ $(TSDOBJ) $(CMNOBJ) $(LDFLAGS) 
+tccext.so : $(TCCOBJ) 
+	ld -G -z text -o $@ $(TCCOBJ) $(LDFLAGS) tcccmn.so \
+              -R `pwd`/../lib/solaris
+
+tsdext.so : $(TSDOBJ)
+	ld -G -z text -o $@ $(TSDOBJ) $(CMNOBJ) $(LDFLAGS) tcccmn.so \
+              -R `pwd`/../lib/solaris
 
 tcctime.so : $(TIMEOBJ)
 	ld -G -z text -o $@ $(TIMEOBJ) $(LDFLAGS) 
 
 slaext.so : $(SLAOBJ)
-	ld -G -z text -o $@ $(SLAOBJ) $(LDFLAGS) 
+	ld -G -z text -o $@ $(SLAOBJ) $(LDFLAGS) tcccmn.so \
+              -R `pwd`/../lib/solaris
 
 tcctelsim.so : $(TELSIMOBJ)
 	ld -G -z text -o $@ $(TELSIMOBJ) $(LDFLAGS)
 
 tsdext.o : tccAst.h
 tccext.o : tccAst.h autorepeat.h plosc.h
-tccext.o : edit.xbm delete.xbm rotate.xbm arotate.xbm hflip.xbm vflip.xbm \
-            reset.xbm
 tccUtil.o : tccConstants.h tccUtil.h
 tccTime.o : tccConstants.h
 tccAst.o : tccConstants.h tccUtil.h tccAst.h tccDecode.h
@@ -52,9 +56,10 @@ tsdElview.o : tccConstants.h tccDecode.h tccUtil.h
 plosc.o : plosc.h
 tccTelSim.o : tccConstants.h tccDecode.h tccUtil.h
 
+
 clean:
 	-rm $(TCCOBJ) $(TSDOBJ) $(CMNOBJ) $(SLAOBJ) $(TELSIMOBJ) $(TIMEOBJ)
-	-rm tccext.so tsdext.so tcctime.so slaext.so tcctelsim.so
+	-rm tcccmn.so tccext.so tsdext.so tcctime.so slaext.so tcctelsim.so
 
 install: All
 	mkdir -p ../tcclib/${HOST_ARCH}
@@ -65,3 +70,4 @@ install: All
 	mkdir -p ../lib/${HOST_ARCH}
 	cp tcctime.so ../lib/${HOST_ARCH}
 	cp slaext.so ../lib/${HOST_ARCH}
+	cp tcccmn.so ../lib/${HOST_ARCH}
