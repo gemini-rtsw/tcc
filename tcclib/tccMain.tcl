@@ -224,7 +224,7 @@ proc tccMain args {
 
 # Set the title for the windows.
    global env
-   if { [info exists env(TCC_TCSNAME)] } {
+   if { $env(TCC_TCSNAME) != "tcs" } {
       wm title . "Simulated Gemini TCS ($env(TCC_TCSNAME))"
    } else {
       wm title . [sa tcssad get name]
