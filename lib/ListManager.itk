@@ -19,7 +19,7 @@
 #
 #          insert string   Inserts a "string" into the entry widget
 #
-#  D Terrett  30 January 2001
+#  D Terrett  14 March 2001
 #
 #  Copyright CCLRC
 #-
@@ -29,7 +29,6 @@ itcl::class ListManager {
    constructor args {}
    destructor {}
    itk_option define -componentlist componentList ComponentList {}
-   itk_option define -returncommand returnCommand Command break
    public {
       method select {item}
       method get {}
@@ -52,6 +51,7 @@ itcl::body ListManager::constructor args {
    } {
       usual
       keep -editable -labelpos -labeltext -selectioncommand -state
+      rename -command -returncommand returnCommand Command
    }
 
    pack $itk_component(selector) -fill both -expand y
@@ -136,9 +136,4 @@ itcl::body ListManager::insert string {
    if { $editable == 0 } {
       $itk_component(selector) configure -editable 0
    }
-}
-
-itcl::configbody ListManager::returncommand {
-   bind [$itk_component(selector) component entry] <Return> \
-         $itk_option(-returncommand)
 }
