@@ -5,7 +5,7 @@
 #  Arguments:
 #             Any command line options and values.
 #
-#  D Terrett 1 December 2000
+#  D Terrett 26 January 2001
 #
 #  Copyright CCLRC
 #-
@@ -37,7 +37,7 @@ proc tsdMain args {
    if { [info exists env(TCC_TCSNAME)] } {
       set title "Simulated Gemini TCS ($env(TCC_TCSNAME))"
    } else {
-      set title "Gemini North"
+      wm title . [sa tcssad get name]
    }
 
 # Link updating the panels to the UTC sad record.
@@ -48,8 +48,7 @@ proc tsdMain args {
    pack [NumericDisplay .numericDisplay] -anchor w
    pack [GraphicDisplay .graphicDisplay] -anchor w
 
-# Set the title, icon etc.
-   wm title . [sa tcssad get name]
+# Set the icon.
    wm iconname . TSD
 
 # It is now safe to display the main window.
