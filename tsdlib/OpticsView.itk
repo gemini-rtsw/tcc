@@ -23,6 +23,9 @@
 #          -m1cover           The position of the M1 cover (OPENED,
 #                             "MIDDLE POSITION" or CLOSED).
 #
+#          -m2sstate          The follow/in position state of the m2
+#                             system (OFF FOLLOWING or INPOSITION).
+#
 #          -port1label        The label for ISS port 1.
 #
 #          -port2label        The label for ISS port 2.
@@ -42,7 +45,7 @@
 #                             according to the state of the configuration
 #                             options.
 #
-#  D Terrett  11 February 2000
+#  D Terrett  18 February 2000
 #
 #  Copyright CCLRC
 #-
@@ -59,6 +62,7 @@ itcl::class OpticsView {
    itk_option define -aofold aoFold AoFold out 
    itk_option define -scfold scFold ScFold 0 
    itk_option define -hrwfs hrwfs Hrwfs in 
+   itk_option define -m2sstate m2sState M2sState OFF
    itk_option define -aopresent aoPresent AoPresent 0 {}
    itk_option define -vignette vignette Vignette 0 
    itk_option define -port1label port1Label Label "Alignment Telescope" "relabel 1"
@@ -75,7 +79,7 @@ itk::usual OpticsView {
    keep -aofold -aopresent -background -centralbaffle -cursor \
       -deployablebaffle -highlightcolor -highlightthickness -holecover \
       -hrwfs -insertbackground -insertborderwidth -insertwidth \
-      -insertontime -insertofftime -m1cover -port1label -port2label \
+      -insertontime -insertofftime -m1cover -m2sstate -port1label -port2label \
       -port3label -port5label -scfold -selectbackground \
       -selectborderwidth -selectforeground
 }
@@ -134,7 +138,7 @@ itcl::body OpticsView::constructor args {
 # M2 fixed stuff
    $c create line -9 400 -9 405 -fill black -width 2
    $c create line 9 400 9 410 -fill black -width 2
-   $c create rectangle -14 400 14 381 -outline black
+   $c create rectangle -14 400 14 381 -outline black -tags m2s
 
 # Iss ports (shading of ao and cal unit ports removed for the moment).
 #   $c create oval 35 70 65 40 -outline black -tags aoport -fill gray \
@@ -361,6 +365,19 @@ itcl::body OpticsView::update {} {
       $c itemconfigure deployableBaffle3 -fill black
    }
 
+# Set the M2 support colour.
+   switch $itk_option(-m2sstate) {
+      OFF {
+         $c itemconfigure m2s -fill red
+      }
+      FOLLOWING {
+         $c itemconfigure m2s -fill yellow
+      }
+      INPOSITION {
+         $c itemconfigure m2s -fill green
+      }
+   }
+
 # Configure the AO fold mirror
    if { $itk_option(-aofold) == "IN" } {
       $c itemconfigure AoFold -fill white
@@ -397,7 +414,7 @@ itcl::body OpticsView::update {} {
 # Configure the light path
    $c itemconfigure Light -fill ""
    if { $itk_option(-vignette) == 0 } {
-      set l yellow
+      set l white
    } else {
       set l grey
    }

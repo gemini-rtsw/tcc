@@ -10,7 +10,7 @@
 #           update          Updates the view with the current state of the
 #                           telescope.
 #
-#  D Terrett 10 February 2000
+#  D Terrett 18 February 2000
 #
 #  Copyright CCLRC
 #-
@@ -31,7 +31,8 @@ itk::usual GraphicDisplay {
         -insertbackground -insertborderwidth -insertwidth -insertontime \
         -insertofftime -selectbackground -selectborderwidth -selectforeground
    keep -aofold -aopresent -centralbaffle -deployablebaffle -holecover -hrwfs \
-        -m1cover -port1label -port2label -port3label -port5label -scfold 
+        -m1cover -m2sstate -port1label -port2label -port3label -port5label \
+        -scfold 
 }
 
 itcl::body GraphicDisplay::constructor args {
@@ -115,6 +116,18 @@ itcl::body GraphicDisplay::update {} {
    } elseif { $v == 0 && $Vignette == 1 } {
       $itk_component(opticsview) configure -vignette 0
       set Vignette 0
+   }
+   set m2sfollow [isFollowing m2ssad followS]
+   set m2sinpos [isInPosition m2ssad inPosition]
+
+   if { $m2sfollow } {
+      if { $m2sinpos } {
+         $itk_component(opticsview) configure -m2sstate INPOSITION
+      } else {
+         $itk_component(opticsview) configure -m2sstate FOLLOWING
+      }
+   } else {
+      $itk_component(opticsview) configure -m2sstate OFF
    }
    $itk_component(opticsview) configure \
          -deployablebaffle [sa m2ssad get deployBafflePos value] \
