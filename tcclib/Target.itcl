@@ -64,6 +64,7 @@ itcl::class Target {
    public proc subcomponents {}
 
    public method apply vt
+   public method copy createproc
    public method grab vt
    public method init
    public method preview vt
@@ -299,4 +300,19 @@ itcl::configbody Target::trackrate {
          set current_trackrate $trackrate
       }
    }
+}
+
+itcl::body Target::copy createproc {
+   $createproc [namespace tail $this] \
+      -objName $objName \
+      -cosys $cosys \
+      -radec $radec \
+      -epoch $epoch \
+      -parallax $parallax \
+      -pm $pm \
+      -rv $rv \
+      -azel $azel \
+      -wavelength_name $wavelength_name \
+      -wavelength_value $wavelength_value \
+      -trackrate $trackrate
 }

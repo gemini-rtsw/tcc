@@ -2,7 +2,8 @@
 #  TargetControl <- ComponentControl
 #
 #  A Target control is a ComponentControl widget with widgets for
-#  the target position etc.
+#  the target position etc. It is intended to be inherited by widgets
+#  for specific target types (science & wfs).
 #
 #  Options:
 #           -shadow         The name of the control's edit shadow.
@@ -17,7 +18,7 @@
 #           updateobj name  Stores the contents of the edit controls in the
 #                           Target object "name".
 #
-#  D Terrett 24 November 1999
+#  D Terrett 22 February 2000
 #
 #  Copyright CCLRC
 #+
@@ -47,6 +48,16 @@ itcl::body TargetControl::constructor args {
    }
    pack $itk_component(frame) -fill x -expand y
    set w $itk_component(frame)
+
+# Frame to highlight the position entry window.
+   itk_component add highlight {
+      frame $w.highlight
+   } {
+      usual
+      ignore -background
+   }
+   pack $itk_component(highlight) -fill x -expand y
+   set w $itk_component(highlight)
 
 # Create tabnotebook for the target position.
    itk_component add notebook {
@@ -193,12 +204,19 @@ itcl::body TargetControl::constructor args {
 # Select the RA/Dec page.
   $itk_component(notebook) select RA/Dec
 
-# Create the scatch target object used by apply.
-   set scratchobj [namespace which -command [Target #auto]]
-
-# Define the object class
-   set objclass TargetComponent
-   set description target
+# Add a menu button to the frame containing the selector.
+   set w [winfo parent $itk_component(selector)]
+   itk_component add copy {
+      menubutton $w.copy -text "Copy to..." -relief raised
+   }
+   pack $itk_component(copy) -side right -pady 4 -padx 4
+   itk_component add copymenu {
+      menu $itk_component(copy).menu -tearoff 0
+   } {
+      usual
+      ignore -tearoff
+   }
+   $itk_component(copy) configure -menu $itk_component(copymenu)
 
    eval itk_initialize $args
 }
