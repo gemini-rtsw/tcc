@@ -402,6 +402,7 @@ itcl::body FieldControl::swapguide {} {
 	   epics sa hrwfs::currStatus
 	}
 	set guide_wl [sa hrwfs::currStatus get colfilt]
+	#puts "swapguide got guide wl: $guide_wl"
 	switch $guide_wl {
 	   "U-red1"  { set new_wavelength "Acq Cam U" }
 	   "B-blue"  { set new_wavelength "Acq Cam B" }
@@ -468,6 +469,7 @@ itcl::body FieldControl::swapguide {} {
 	#set ::Config(tcs.field.guide,value) "No guiding"
    	#set ::Config(tcs.field.sciencetarget,value) $curr_guidetarget
 
+   	::WavelengthNames::$new_wavelength configure -set_baffles 0
 	$fieldObj configure -guide "No guiding"
 	$fieldObj configure -sciencetarget $curr_guidetarget
 	$fieldObj configure -wavelength $new_wavelength
@@ -488,6 +490,7 @@ itcl::body FieldControl::swapguide {} {
 	${curr_ns}::$curr_guidetarget configure -objname [list ${curr_objname}_GUIDE]
 	$this load $fieldObj
 	$this applycmd
+   	::WavelengthNames::$new_wavelength configure -set_baffles 1
    } else {
 	#puts "swapping back ..."
 	
