@@ -47,13 +47,13 @@ itcl::body TrackRateControl::constructor args {
       iwidgets::entryfield $w.t0 \
             -labeltext [lindex [cs difTrSourceA info t0] 2]
    }
-   pack $itk_component(t0)
+   pack $itk_component(t0) -anchor e -padx 4 -pady 4
 
 # Tabbed notebook for rate.
    itk_component add notebook {
-      iwidgets::tabnotebook $w.notebook
+      iwidgets::tabnotebook $w.notebook -width 180 -height 140
    }
-   pack $itk_component(notebook) -expand yes -fill both
+   pack $itk_component(notebook) -expand yes -fill both -padx 4 -pady 4
 
 # Page for RA/Dec rates
    set w [$itk_component(notebook) add -label "RA/Dec"]
@@ -63,7 +63,7 @@ itcl::body TrackRateControl::constructor args {
       SubComponentSelector $w.cosys -labeltext "Coordinate system" \
             -labelpos nw -selectioncommand [itcl::code $this checkcosys]
    }
-   pack $itk_component(cosys) -anchor e
+   pack $itk_component(cosys) -anchor e -padx 4 -pady 4
 
 # Track rates.
    itk_component add ra {
@@ -72,7 +72,7 @@ itcl::body TrackRateControl::constructor args {
    itk_component add dec {
       iwidgets::entryfield $w.dec -width 12 -labeltext "Dec (arcsec/s)"
    }
-   pack $itk_component(ra) $itk_component(dec) -anchor w
+   pack $itk_component(ra) $itk_component(dec) -anchor e -pady 4 -padx 4
 
 # Page for Az/El/Dec rates
    set w [$itk_component(notebook) add -label "Az/El"]
@@ -84,7 +84,7 @@ itcl::body TrackRateControl::constructor args {
    itk_component add el {
       iwidgets::entryfield $w.el -width 12 -labeltext "El (arcsec/s)"
    }
-   pack $itk_component(az) $itk_component(el) -anchor w
+   pack $itk_component(az) $itk_component(el) -padx 8 -pady 4
 
 # Select the RA/Dec page.
   $itk_component(notebook) select RA/Dec
