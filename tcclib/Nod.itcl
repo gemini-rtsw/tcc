@@ -1,0 +1,81 @@
+#+
+#  Nod
+#
+#  A Nod object implements a sequence of operations to nod the telescope
+#
+#  The steps are are follows:
+#
+#     1. Disable guiding.
+#
+#     2. Nod.
+#
+#     5. Re-enable guiding (if it was enabled at the start).
+#
+#  D Terrett 17 January 2004
+#
+#  Copyright CCLRC
+#-
+
+itcl::class Nod {
+   constructor {} {}
+   destructor {}
+   public {
+      method state {s} {}
+   }
+   private {
+      method reenable {}
+      method move {}
+      method isinposition {}
+      variable guideenabled
+      variable disableaction
+      variable nodaction
+      variable InPosition
+   }
+}
+
+itcl::body Nod::constructor {} {
+
+# Create action for disabling guiding.
+   set disableaction [seq::Action #auto tcs \
+      -onstart "AO disable" \
+      -onok [itcl::code $this move]]
+
+# Create action for nodding the probe
+   set nodaction [seq::Action #auto tcs \
+      -waitvar [itcl::scope InPosition(value)] \
+      -onok [itcl::code $this reenable] \
+      -oktest [itcl::code $this isinposition]]
+   $nodaction connect nod
+}
+
+itcl::body Nod::destructor {} {
+   itcl::delete object $nodaction
+}
+
+itcl::body Nod::state {s} {
+
+# Record the current state of guiding
+   set guideenabled [AO cget -enabled]
+
+# Set the nod state in the nod action.
+   $nodaction set nod nod $s
+
+# Disable guiding.
+   $disableaction start
+}
+
+itcl::body Nod::move {} {
+   sa tcssad link inPosition [itcl::scope InPosition]
+   $nodaction start
+}
+
+itcl::body Nod::isinposition {} {
+   set val [sa tcssad get inPosition]
+   return [string equal $val TRUE]
+}
+
+itcl::body Nod::reenable {} {
+   if { $guideenabled } {
+      AO enable
+   }
+}
