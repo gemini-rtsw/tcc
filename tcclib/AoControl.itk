@@ -19,6 +19,9 @@ itcl::class AoControl {
    inherit itk::Widget
    constructor {args} {}
    destructor {}
+   public {
+      method reset {}
+   }
    private {
       method centre {}
       method correct {arg}
@@ -81,6 +84,7 @@ itcl::body AoControl::constructor args {
             -offvalue Off \
             -sadrecord {guideConfig aostate}
    }
+
    pack $itk_component(dmh) $itk_component(aom2) -side right
    set w $itk_component(frame)
 
@@ -228,4 +232,12 @@ itcl::body AoControl::preparecm {apply} {
          tk_messageBox -icon error -parent $itk_interior -message $msg
       }
    }
+}
+
+itcl::body AoControl::reset {} {
+
+   $itk_component(aom2) configure -state normal
+   $itk_component(aom2) select Off
+   $itk_component(aom2) configure -state disabled
+
 }
