@@ -1,7 +1,7 @@
 #+
 #  tccSkyCatPlugin.tcl
 #
-#  D Terrett & C Mayer  27 March 2001
+#  D Terrett & C Mayer  13 July 2001
 #
 #  Copyright CCLRC
 #-
@@ -155,7 +155,7 @@ namespace eval TccSkyCat {
 # target object associated with that edit control.
       send $tcc_interp tcsconfig${type}Target map
       set control [send $tcc_interp tcsconfig${type}Target cget -window]
-      set name [send $tcc_interp $control scratchobj]
+      set name [send $tcc_interp $control getscratch]
 
 # Update the definition of the scratch object.
       send $tcc_interp $name configure \
@@ -165,7 +165,8 @@ namespace eval TccSkyCat {
 
 # Clear the current target and load the contents of the scratch object
       send $tcc_interp tcsconfig${type}Target selectfromcontrol \"\"
-      send $tcc_interp $control selectobj $name
+      send $tcc_interp $control reset
+      send $tcc_interp $control load [list $name]
    }
 
 # This procedure displays an image or replots the field if the image has
@@ -252,7 +253,7 @@ namespace eval TccSkyCat {
       global tcc_interp
       send $tcc_interp tcsconfigrotator map
       set control [send $tcc_interp tcsconfigrotator cget -window]
-      set name [send $tcc_interp $control scratchobj]
+      set name [send $tcc_interp $control getscratch]
 
 # Update the definition of the scratch object.
       send $tcc_interp $name configure \
@@ -261,7 +262,8 @@ namespace eval TccSkyCat {
 
 # Select it.
       send $tcc_interp tcsconfigrotator selectfromcontrol \"\"
-      send $tcc_interp $control selectobj $name
+      send $tcc_interp $control reset
+      send $tcc_interp $control load [list $name]
    }
 
 # This procedure takes a  WFS object and draws its projected
