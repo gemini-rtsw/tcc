@@ -69,7 +69,7 @@ itcl::class Field {
       method subconfigure {type name args}
       method subinit {type name}
       method subcget {type name option}
-      method plot {azelplot}
+      method plot {azelplot} {puts "plotting $this on $azelplot"}
       variable sciencetarget ""
       variable pwfs1target ""
       variable pwfs2target ""
@@ -400,7 +400,7 @@ itcl::body Field::subconfigure {type name args} {
          eval [list ${trackratens}::$name] configure $args
       }
       default {
-         error "\"$type"\ is not a valid field component"
+         error "\"$type\" is not a valid field component"
       }
    }
 }
@@ -414,7 +414,7 @@ itcl::body Field::subinit {type name} {
          ${trackratens}::$name init
       }
       default {
-         error "\"$type"\ is not a valid field component"
+         error "\"$type\" is not a valid field component"
       }
    }
 }
@@ -428,7 +428,7 @@ itcl::body Field::subcget {type name option} {
          return [${trackratens}::$name cget $option]
       }
       default {
-         error "\"$type"\ is not a valid field component"
+         error "\"$type\" is not a valid field component"
       }
    }
 }
@@ -442,7 +442,7 @@ itcl::body Field::remove {type name} {
          itcl::delete object ${trackratens}::$name
       }
       default {
-         error "\"$type"\ is not a valid field component"
+         error "\"$type\" is not a valid field component"
       }
    }
 }
