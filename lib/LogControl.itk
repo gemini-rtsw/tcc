@@ -48,17 +48,17 @@ itcl::body LogControl::constructor args {
    itk_component add title {
       label $itk_interior.title -text "No log file open"
    }
-   pack $itk_component(title)
    itk_component add display {
       iwidgets::scrolledtext $itk_interior.display -state disabled \
             -hscrollmode none
    }
-   pack $itk_component(display) -fill both -expand y
    itk_component add comment {
       iwidgets::entryfield $itk_interior.comment -labeltext Comment: \
             -command [code $this comment]
    }
-   pack $itk_component(comment) -fill x -padx 3 -pady 3
+   pack $itk_component(title)
+   pack $itk_component(comment) -fill x -padx 3 -pady 3 -side bottom
+   pack $itk_component(display) -fill both -expand y
    eval itk_initialize $args
 }
 
