@@ -29,6 +29,7 @@ itcl::class FieldPlot {
       variable namelist
       variable xlist
       variable ylist
+      variable errorReported 0
    }
 }
 
@@ -115,11 +116,18 @@ itcl::body FieldPlot::plot {} {
 # Kill off any pending plots.
    after cancel $afterid
 
+# Redraw everything.
+   if { [catch redraw msg] } {
+      if { ! $errorReported } {
+         tk_messageBox -icon error -message "Error plotting field: $msg"
+         set errorReported 1
+      }
+   } else {
+      set errorReported 0
+   }
+
 # Plot again in one second.
    set afterid [after 1000 [itcl::code $this plot]]
-
-# Redraw everything.
-   redraw
 }
 
 itcl::body FieldPlot::redraw {} {
