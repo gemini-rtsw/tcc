@@ -11,7 +11,7 @@
 #
 #  options
 #
-#  D Terrett 10 July 2000
+#  D Terrett 11 July 2000
 #
 #  Copyright CCLRC
 #-
@@ -64,8 +64,13 @@ itcl::body NumericDisplay::constructor args {
       StatusField $w.status -labelmargin 2 -width 15 -entryborder 3 \
             -labelpos n -entryrelief groove -labeltext "TCS STATUS"
    }
+
+# Nod and chop state.
    itk_component add nod {
-      label $w.nod -width 8
+      label $w.nod -width 8 -anchor w
+   }
+   itk_component add chopping {
+      label $w.chopping -width 14 -anchor w
    }
 
    itk_component add telposlabel {
@@ -277,8 +282,10 @@ itcl::body NumericDisplay::constructor args {
    grid $itk_component(tarlabel) $itk_component(tar1) \
          $itk_component(tar2) $itk_component(tarsys) $itk_component(tarwavel) \
          $itk_component(nod) -sticky e -padx 3 -pady 2
+   grid configure $itk_component(nod) -sticky w
    grid $itk_component(offlab) $itk_component(off1) $itk_component(off2) \
-         -sticky e -padx 3 -pady 2
+         x x $itk_component(chopping) -sticky e -padx 3 -pady 2
+   grid configure $itk_component(chopping) -sticky w
    grid $itk_component(baselab) $itk_component(base1) $itk_component(base2) \
          -sticky e -padx 3 -pady 2
    grid $itk_component(ratelab) $itk_component(rate1) $itk_component(rate2) \
@@ -479,6 +486,14 @@ itcl::body NumericDisplay::update {} {
 # Nod state
    set nod [sa tcssad get nodState]
    $itk_component(nod) configure -text "Nod $nod"
+
+# Chopping
+   set chopping [sa m2ssad get chopping]
+   if { [string equal $chopping YES] } {
+      $itk_component(chopping) configure -text "Chopping"
+   } else {
+      $itk_component(chopping) configure -text "Not Chopping"
+   }
 
 # Target info for the current target and chop throw
    switch $nod {
