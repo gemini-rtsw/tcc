@@ -1,0 +1,115 @@
+#+
+#  ProbeView.itk
+#
+#  Implements the ProbeView widget which displays the rotary table and
+#  probe arm angle of a peripheral wave front sensor.
+#
+#  methods
+#
+#    update
+#
+#      updates the display
+#
+# D Terrett 3 June 1999
+#
+#  Copyright CCLRC
+#-
+
+itcl::class ProbeView {
+   inherit itk::Widget
+
+   constructor args {}
+
+   public method update
+
+   itk_option define -probe probe Probe 1
+
+   private method pivot angle
+   private method xy {x y}
+   private variable armtag
+   private variable p1wfs
+   private variable p2wfs
+}
+
+itk::usual ProbeView {
+   keep -background -cursor
+   keep -highlightcolor -highlightthickness
+   keep -insertbackground -insertborderwidth -insertwidth
+   keep -insertontime -insertofftime
+   keep -selectbackground -selectborderwidth -selectforeground
+   keep -highlightcolor -highlightthickness
+}
+
+itcl::body ProbeView::constructor args {
+
+   itk_component add canvas {
+      canvas $itk_interior.canvas -width 120 -height 120
+   }
+   pack $itk_component(canvas)
+   set c $itk_component(canvas)
+
+# Probe arm.
+   set armtag [$c create line 0 0 0 0 -width 5]
+
+# Guide Target.
+   set p1wfs [$c create polygon 0 0 0 0 0 0 0 0 -fill orange]
+   set p2wfs [$c create polygon 0 0 0 0 0 0 0 0 -fill orange]
+
+   eval itk_initialize $args
+}
+
+itcl::configbody ProbeView::probe {
+
+# Generate a spiral polyline to represent the cable wrap.
+   for { set a -220 } { $a < 220 } { incr a 10 } {
+      eval lappend spiral [pivot $a]
+   }
+   set id [eval $itk_component(canvas) create line $spiral -width 5 -fill gray]
+   $itk_component(canvas) lower $id $armtag
+
+# Label X & Y.
+   eval $itk_component(canvas) create text [xy 490 0] -text +X -anchor c
+   eval $itk_component(canvas) create text [xy -490 0] -text -X -anchor c
+   eval $itk_component(canvas) create text [xy 0 490] -text +Y -anchor c
+   eval $itk_component(canvas) create text [xy 0 -490] -text -Y -anchor c
+}
+
+itcl::body ProbeView::pivot a {
+   switch $itk_option(-probe) {
+      p1 {
+         set a1 [expr - $a + 0.0]
+      }
+      p2 {
+         set a1 [expr $a + 250.0]
+      }
+   }
+   set r [expr 40.0  + $a / 50.0 ]
+   set x [expr 60.0 - sin( $a1 / 57.296 ) * $r ]
+   set y [expr 60.0 + cos( $a1 / 57.296 ) * $r ]
+   return [list $x $y]
+}
+
+itcl::body ProbeView::xy {x y} {
+   return [list [expr 60.0 - $y / 10.0] [expr 60.0 - $x / 10.0]]
+}
+
+itcl::body ProbeView::update {} {
+
+# Update the coordinates of the arm according to the x/y of the wfs and 
+# the angle of the pivot.
+   set a [sa agssad get $itk_option(-probe)TableAngle value]
+   set x [sa agssad get $itk_option(-probe)X value]
+   set y [sa agssad get $itk_option(-probe)Y value]
+   eval $itk_component(canvas) coords $armtag [pivot $a] [xy $x $y]
+
+# Set the colour according to the follow and in position state.
+   if { [sa agssad get $itk_option(-probe)FollowS value] == "ON" } {
+      if { [sa agssad get $itk_option(-probe)InPosition value] } {
+         $itk_component(canvas) itemconfigure $armtag -fill green
+      } else {
+         $itk_component(canvas) itemconfigure $armtag -fill yellow
+      }
+   } else {
+      $itk_component(canvas) itemconfigure $armtag -fill red
+   }
+}
