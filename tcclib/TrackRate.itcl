@@ -25,7 +25,7 @@
 #
 #           save node  Saves the values of the options to the xml node.
 #
-#  D Terrett 21 February 2003
+#  D Terrett 11 August 2003
 #
 #  Copyright CCLRC
 #+
@@ -70,15 +70,14 @@ itcl::body TrackRate::apply {comp} {
    }
 
 # Set all the parameters.
+   cs $cs set t0 [list $t0]
+   cs $cs set dtheta1 [list $c1Rate]
+   cs $cs set dtheta2 [list $c2Rate]
    if { [string equal $cosys ""] } {
       CosysNames::FK5/J2000 apply $comp.cosys
    } else {
       CosysNames::$cosys apply $comp.cosys
    }
-   cs $cs set t0 [list $t0]
-   cs $cs set dtheta1 [list $c2Rate]
-   cs $cs set dtheta1 [list $c2Rate]
-   logger command $cs
 }
 
 itcl::body TrackRate::init {} {
