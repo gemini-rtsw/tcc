@@ -31,6 +31,7 @@ itcl::class ChopControl {
    public method updateobj name
 
    private variable refdir
+   private method checkcosys
    private method setdir
 }
 
@@ -96,7 +97,8 @@ itcl::body ChopControl::constructor args {
 # Control for selecting a coordinate frame.
    itk_component add cosys {
       SubComponentSelector $w.cosys -labeltext "Coordinate system" \
-            -labelpos nw -componentlist CosysList -component cosys
+            -labelpos nw -componentlist CosysList -component cosys \
+            -selectioncommand [code $this checkcosys]
    }
    pack $itk_component(cosys) -anchor w
 
@@ -191,5 +193,13 @@ itcl::body ChopControl::setdir {} {
       $itk_component(cosys) configure -state normal
    } else {
       $itk_component(cosys) configure -state disabled
+   }
+}
+
+itcl::body ChopControl::checkcosys {} {
+   set cosys [$itk_component(cosys) get]
+   set frame [CosysNames::$cosys cget -frame]
+   if { [string equal $frame AZEL_TOPO] } {
+      $itk_component(cosys) select ""
    }
 }

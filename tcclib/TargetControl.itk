@@ -29,6 +29,8 @@ itcl::class TargetControl {
 
    public method selectobj name
    public method updateobj name
+
+   private method checkcosys {}
 }
 
 itk::usual TargetControl {
@@ -104,7 +106,8 @@ itcl::body TargetControl::constructor args {
 #  Coordinate frame.
    itk_component add cosys {
       SubComponentSelector $w.cosys -labeltext "Coordinate system" \
-            -labelpos nw -componentlist CosysList -component cosys
+            -labelpos nw -componentlist CosysList -component cosys \
+            -selectioncommand [code $this checkcosys]
    }
    pack $itk_component(epoch) $itk_component(cosys) -side left -anchor n \
       -padx 3
@@ -318,4 +321,12 @@ itcl::configbody TargetControl::shadow {
    $itk_component(cosys) configure -shadow $itk_option(-shadow)
    $itk_component(wavelength) configure -shadow $itk_option(-shadow)
    $itk_component(trackrate) configure -shadow $itk_option(-shadow)
+}
+
+itcl::body TargetControl::checkcosys {} {
+   set cosys [$itk_component(cosys) get]
+   set frame [CosysNames::$cosys cget -frame]
+   if { [string equal $frame AZEL_TOPO] } {
+      $itk_component(cosys) select ""
+   }
 }

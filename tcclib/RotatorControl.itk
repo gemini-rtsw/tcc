@@ -29,6 +29,7 @@ itcl::class RotatorControl {
    public method selectobj name
    public method updateobj name
 
+   private method checkcosys
    private variable refdir
    private method setdir
 }
@@ -88,7 +89,8 @@ itcl::body RotatorControl::constructor args {
 # Control for selecting a coordinate frame.
    itk_component add cosys {
       SubComponentSelector $w.cosys -labeltext "Coordinate system" \
-            -labelpos nw -componentlist CosysList -component cosys
+            -labelpos nw -componentlist CosysList -component cosys \
+            -selectioncommand [code $this checkcosys]
    }
    pack $itk_component(cosys) -anchor w
    set w [winfo parent $w]
@@ -150,5 +152,13 @@ itcl::body RotatorControl::setdir {} {
       $itk_component(cosys) configure -state normal
    } else {
       $itk_component(cosys) configure -state disabled
+   }
+}
+
+itcl::body RotatorControl::checkcosys {} {
+   set cosys [$itk_component(cosys) get]
+   set frame [CosysNames::$cosys cget -frame]
+   if { [string equal $frame AZEL_TOPO] } {
+      $itk_component(cosys) select ""
    }
 }

@@ -27,6 +27,8 @@ itcl::class TrackRateControl {
 
    public method selectobj name
    public method updateobj name
+
+   private method checkcosys {}
 }
 
 itk::usual TrackRateControl {
@@ -62,7 +64,8 @@ itcl::body TrackRateControl::constructor args {
 # Control for selecting a coordinate frame.
    itk_component add cosys {
       SubComponentSelector $w.cosys -labeltext "Coordinate system" \
-            -labelpos nw -componentlist CosysList -component cosys
+            -labelpos nw -componentlist CosysList -component cosys \
+            -selectioncommand [code $this checkcosys]
    }
    pack $itk_component(cosys) -anchor e
 
@@ -152,4 +155,12 @@ itcl::configbody TrackRateControl::shadow {
    $itk_component(cosys) configure -editcontrol \
             $itk_option(-shadow)cosys
    $itk_component(cosys) configure -shadow $itk_option(-shadow)
+}
+
+itcl::body TrackRateControl::checkcosys {} {
+   set cosys [$itk_component(cosys) get]
+   set frame [CosysNames::$cosys cget -frame]
+   if { [string equal $frame AZEL_TOPO] } {
+      $itk_component(cosys) select ""
+   }
 }
