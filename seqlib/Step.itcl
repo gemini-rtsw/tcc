@@ -190,18 +190,18 @@ itcl::body Step::start {{step ""}} {
 
 # If no start step has been specified then start the next step (if there)
 # is one.
-   if { ![string length $step] } {
+   if { [string equal $step ""] } {
       set step $NextStep
    }
 
 # If there is a step in progress then replace the next step otherwise
 # start the new step.
-   if { [string length $CurrentStep] } {
-      set NextStep $step
-   } else {
-      if { [string length $step] } {
+   if { [string equal $CurrentStep ""] } {
+      if { ! [string equal $step ""] } {
          $step begin
       }
+   } else {
+      set NextStep $step
    }
 }
 

@@ -116,9 +116,9 @@ itcl::body PattEdit::constructor {args} {
 
 itcl::body PattEdit::new {} {
    set p [$itk_component(p) get]
-   if { ![string length $p] } {set p 0.0}
+   if { [string is space $p] } {set p 0.0}
    set q [$itk_component(q) get]
-   if { ![string length $q] } {set q 0.0}
+   if { [string is space $q] } {set q 0.0}
    set point [format "%6.2f %6.2f" $p $q]
 
    $itk_component(list) insert end $point
