@@ -4,7 +4,7 @@
 #  Implements the AzElPlot widget. A canvas with stars and the current
 #  telescope position plotted in Az/El.
 #
-#  D Terrett 10 July 2000
+#  D Terrett 19 July 2000
 #
 #  Copyright CCLRC
 #+
@@ -19,6 +19,7 @@ itcl::class AzElPlot {
    itk_option define -normalcolor normalcolor Color white
    itk_option define -selectioncommand selectionCommand Command {}
    itk_option define -hitcommand hitCommand Command {}
+   itk_option define -bias bias Bias 1
 
    public method add {tag ra dec}
    public method remove tag
@@ -347,7 +348,8 @@ itcl::body AzElPlot::next mode {
             if { $StarsState($tag) == "" && $StarsEl($tag) > 0.3491 } {
 
 # Distance to this star in elevation.
-               set eldist [expr abs( $StarsEl($tag) - $TelEl)]
+               set eldist [expr abs( $StarsEl($tag) - $TelEl) / \
+                     $itk_option(-bias)]
                set azdist [expr abs( $StarsAz($tag) - $TelAz)]
 
 # If the azimuth is less than zero we need to check whether it is closer
