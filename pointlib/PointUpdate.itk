@@ -3,7 +3,7 @@
 #
 #  Implements the pointUpdate widget.
 #
-#  D Terrett 10 May 1999
+#  D Terrett 27 May 1999
 #
 #  Copyright CCLRC
 #-
@@ -19,6 +19,7 @@ itcl::class PointUpdate {
    private method take2 {mon status info}
    private method fit args
    private method commit
+   private method setia
 }
 
 itk::usual PointUpdate {
@@ -97,21 +98,30 @@ itcl::body PointUpdate::constructor args {
          $itk_component(sceval) $itk_component(sr) $itk_component(srval) \
          -pady 3
 
-# Buttons for "taking" a star and updating the pointing model.
    itk_component add buttons {
       frame $itk_interior.buttons
    }
+
+# Buttons for "taking" a star and updating the pointing model.
    pack $itk_component(buttons) -fill x -expand yes
    itk_component add take {
-      button $itk_component(buttons).take -text Take -width 10 \
+      button $itk_component(buttons).take -text Take \
             -command [code $this take1]
    }
    itk_component add update {
-      button $itk_component(buttons).update -text "Update Model" -width 10 \
+      button $itk_component(buttons).update -text "Update Model" \
             -command [code $this commit]
    }
-   pack $itk_component(take) $itk_component(update) -side left -expand yes  \
-         -pady 5
+
+# Checkbutton for including IA in the fit.
+   itk_component add iainfit {
+      checkbutton $itk_component(buttons).iainfit -text "Include IA in fit" \
+            -variable $itk_interior._ia \
+            -command [code $this setia]
+   }
+
+   pack $itk_component(take) $itk_component(update) $itk_component(iainfit) \
+         -side left -expand yes -pady 5
 
    eval itk_initialize $args
 }
@@ -168,9 +178,6 @@ itcl::body PointUpdate::fit args {
    $itk_component(srval) configure -text [lindex $result 5]
 
 # Rewrite the SelectGrid contents.
-#   foreach ptweak [info objects -class Ptweak] {
-#      eval $itk_component(obs) replace $ptweak [$ptweak display]
-#   }
    foreach ptweak [itcl::find objects -class Ptweak] {
       eval $itk_component(obs) replace $ptweak [$ptweak display]
    }
@@ -189,4 +196,10 @@ itcl::configbody PointUpdate::ia {
 
 # If the include IA flag is changed we need to re-compute the fit.
    fit
+}
+
+itcl::body PointUpdate::setia {} {
+
+   upvar #0 [$itk_component(iainfit) cget -variable] infit
+   $this configure -ia $infit
 }
