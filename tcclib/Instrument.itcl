@@ -6,11 +6,11 @@
 #
 #  Options:
 #          -centralBaffle     The position of the M2 central baffle ("open"
-#                             or "closed").
+#                             "closed" or "").
 #
 #          -deployableBaffle  The position of the M2 deployable baffle
-#                             ("thermal IR", "near IR", "optical" or
-#                             "maintenance").
+#                             ("thermal IR", "near IR", "optical",
+#                             "maintenance" or "").
 #
 #          -focusOffset       The focus offset to apply.
 #
@@ -35,7 +35,7 @@
 #           subcomponents   Returns a list of the subcomponents of the
 #                           Instrument objects (an empty list).
 #
-#  D Terrett 6 June 2000
+#  D Terrett 27 September 2000
 #
 #  Copyright CCLRC
 #+
@@ -49,20 +49,24 @@ itcl::class Instrument {
    public method preview
    public method save file
 
-   public variable iaa 0
+   public variable iaa ""
    public variable issFace "port 1"
-   public variable centralBaffle closed
-   public variable deployableBaffle optical
-   public variable focusOffset 0
+   public variable centralBaffle ""
+   public variable deployableBaffle ""
+   public variable focusOffset ""
 }
 
 itcl::body Instrument::apply args {
 
 # Set iaa and focus.
-   cs rotator set iaa \"$iaa\"
-   logger command rotator
-   cs dtelFocus set focusOffset \"$focusOffset\"
-   logger command dtelFocus
+   if { ![string is space $iaa] } {
+      cs rotator set iaa \"$iaa\"
+      logger command rotator
+   }
+   if { ![string is space $focusOffset] } {
+      cs dtelFocus set focusOffset \"$focusOffset\"
+      logger command dtelFocus
+   }
 
 # Configure ISS object.
    switch $centralBaffle {
@@ -75,7 +79,10 @@ itcl::body Instrument::apply args {
       optical {cs m2Baffle set deployBaffle POS2}
       maintenance {cs m2Baffle set deployBaffle EXTENDED}
    }
-   logger command m2Baffle
+   if { !( [string is space $centralBaffle] && \
+         [string is space $deployableBaffle] ) } {
+      logger command m2Baffle
+   }
    switch $issFace {
       "port 1" {iss configure -port 1}
       "port 3" {iss configure -port 3}
@@ -89,8 +96,8 @@ itcl::body Instrument::apply args {
 itcl::body Instrument::init {} {
    set iaa 0
    set issFace "port 1"
-   set centralBaffle closed
-   set deployableBaffle optical
+   set centralBaffle ""
+   set deployableBaffle ""
    set focusOffset 0
 }
 
