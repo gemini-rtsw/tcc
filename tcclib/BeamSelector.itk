@@ -1,0 +1,148 @@
+#+
+#  BeamSelector <- itk::Widget
+#
+#  Implements the BeamSelector class. A BeamSelector is a pair of push 
+#  buttons that select the M2 beam. The behave much like a pair of
+#  SelectButtons but are a bit more complex because they have to monitor
+#  ChopState and are disabled when chopping is on.
+#
+#  Options:
+#          none
+#
+#  Methods:
+#          none
+#
+#  D Terrett 12 June 2000
+#
+#  Copyright CCLRC
+#-
+
+itcl::class BeamSelector {
+   inherit itk::Widget
+
+   constructor args {}
+   destructor {}
+
+   private method pressed beam
+   private method monitor {record value}
+   private method checkstate
+
+   private variable state 0
+   private variable chopmonid
+   private variable beammonid
+}
+
+itk::usual BeamSelector {
+   keep -activeforeground -cursor -disabledforeground \
+         -foreground -font -highlightcolor -highlightthickness -width
+}
+
+itcl::body BeamSelector::constructor args {
+
+   itk_component add beama {
+      button $itk_interior.beama -command [code $this pressed A] -text "Beam A"
+   } {
+      usual
+      keep -state -width
+      ignore -activebackground
+      ignore -background
+   }
+   itk_component add beamb {
+      button $itk_interior.beamb -command [code $this pressed B] -text "Beam B"
+   } {
+      usual
+      keep -state -width
+      ignore -activebackground
+      ignore -background
+   }
+   pack $itk_component(beama) $itk_component(beamb) -fill both -expand y
+
+# Create the command sender for the m2beam command if it doesn't already exist.
+   if { [catch {cs m2beam info}] } {
+      epics cs m2beam
+   }
+
+# Create the monitor for the chopState and chopBeam if they don't already 
+# exist.
+   if { [llength [find objects ::tcssad.chopState]] == 0 } {
+      RecordMonitor ::tcssad.chopState tcssad chopState
+   }
+   if { [llength [find objects ::tcssad.chopBeam]] == 0 } {
+      RecordMonitor ::tcssad.chopBeam tcssad chopBeam
+   }
+
+# Monitor the records.
+   set chopmonid [tcssad.chopState add [code $this monitor]]
+   set beammonid [tcssad.chopBeam add [code $this monitor]]
+
+# Call the monitor routine to update the state.
+   monitor tcssad.chopState [sa tcssad get chopState]
+   monitor tcssad.chopBeam [sa tcssad get chopBeam]
+
+   eval itk_initialize $args
+}
+
+itcl::body BeamSelector::destructor {} {
+
+# Remove the monitors.
+   tcssad.chopState remove $chopmonid
+   tcssad.chopBeam remove $beammonid
+}
+
+itcl::body BeamSelector::pressed beam {
+
+# Set the command sender parameter appropriate for the desired state.
+   cs m2beam set m2Beam $beam
+
+# Log and post the command.
+   logger command m2beam
+   if { [catch {cs tcsApply post} msg] } {
+      tk_messageBox -icon error -parent $itk_interior -message $msg
+   }
+
+# If the mechanism wasn't already in the desired state then set the button 
+# background to indicate that a state change is in progress.
+   if { ![string equal $state $beam] } {
+      $itk_component(beama) configure -background yellow \
+            -activebackground yellow
+      $itk_component(beamb) configure -background yellow \
+            -activebackground yellow
+   }
+}
+
+itcl::body BeamSelector::monitor {record value} {
+
+# Determine the state of the mechanism and set the colour and button states.
+   switch $record {
+      tcssad.chopState {
+         if { [string equal $value YES] } {
+            set state Chop
+         } else {
+            set state [sa tcssad get chopBeam]
+         }
+      }
+      tcssad.chopBeam {
+         if { [string equal [sa tcssad get chopState] NO] } {
+            set state $value
+         }
+      }
+   }
+   if { [string equal $state Chop] } {
+      $itk_component(beama) configure -state disabled -background grey
+      $itk_component(beamb) configure -state disabled -background grey
+   } else {
+      $itk_component(beama) configure -state normal
+      $itk_component(beamb) configure -state normal
+      if { [string equal $state A] } {
+         $itk_component(beama) configure -background green \
+               -activebackground green
+         $itk_component(beamb) configure -background red \
+               -activebackground red
+      } else {
+         $itk_component(beama) configure -background red \
+               -activebackground red
+         $itk_component(beamb) configure -background green \
+               -activebackground green
+      }
+   }
+}

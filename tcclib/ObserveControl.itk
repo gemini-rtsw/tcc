@@ -7,7 +7,7 @@
 #  Methods:
 #           none
 #
-#  D Terrett  8 June 2000
+#  D Terrett  12 June 2000
 #
 #  Copyright CCLRC
 #+
@@ -17,7 +17,6 @@ itcl::class ObserveControl {
 
    constructor args {}
 
-   private method setchop state
    private method setfold state
    private method setnod state
    private method center par {return 0}
@@ -79,27 +78,14 @@ itcl::body ObserveControl::constructor args {
    itk_component add choplab {
       label $w.choplab -text Chop/Nod
    }
+   itk_component add beam {
+      BeamSelector $w.beam
+   }
    itk_component add chop {
       OnOffButton $w.chop -text Chop -oncommand {chop chop On} \
             -offcommand {chop chop off} -sadrecord {tcssad chopState} \
             -onvalue YES -offvalue NO
    }
-   itk_component add beam {
-      SelectButton $w.beam -command [code $this setchop] -orient vertical
-   } {
-      usual
-      rename -offbackground -background background Background
-   }
-   $itk_component(beam) add "Beam A"
-   $itk_component(beam) add "Beam B"
-#   itk_component add nod {
-#      SelectButton $w.nod -command [code $this setnod] -orient vertical
-#   } {
-#      usual
-#      rename -offbackground -background background Background
-#   }
-#   $itk_component(nod) add "Nod A"
-#   $itk_component(nod) add "Nod B"
    itk_component add noda {
       StateButton $w.noda -text "Nod A" -setcommand {nod nod A} \
             -sadrecord {tcssad nodState} -setvalue A
@@ -174,7 +160,6 @@ itcl::body ObserveControl::constructor args {
          -sticky ew -padx 5
    grid configure $itk_component(fold) -rowspan 3
    grid configure $itk_component(beam) -rowspan 2
-#   grid configure $itk_component(nod) -rowspan 2
 
 # Create command senders.
    if { [catch {cs chop info}] } {
@@ -197,26 +182,6 @@ itcl::body ObserveControl::setfold state {
       Sky->AC/WFS {iss configure -mode TV}
    }
    iss update
-   if { [catch {cs tcsApply post} msg] } {
-      tk_messageBox -icon error -parent $itk_interior -message $msg
-   }
-}
-
-itcl::body ObserveControl::setchop state {
-   switch $state {
-      Chop {
-         cs chop set chop value On
-         logger command chop
-       }
-      "Beam A" {
-         cs m2beam set m2Beam value A
-         logger command m2beam
-       }
-      "Beam B" {
-         cs m2beam set m2Beam value B
-         logger command m2beam
-       }
-   }
    if { [catch {cs tcsApply post} msg] } {
       tk_messageBox -icon error -parent $itk_interior -message $msg
    }
