@@ -8,7 +8,7 @@
 #  Methods:
 #          none
 #
-#  D Terrett 27 April 2001
+#  D Terrett 16 July 2001
 #
 #  Copyright CCLRC
 #+
@@ -24,6 +24,7 @@ itcl::class TcsConfigPanel {
       method export {}
       method import {}
       variable menuno 0
+      method purge {list namespace}
       method save {list namespace file}
    }
 }
@@ -105,7 +106,7 @@ itcl::body TcsConfigPanel::import {} {
 # Create a dialog box for selecting the file and center it.
    set dialog  $itk_interior.importdialog
    if { ! [winfo exists $dialog] } {
-      set dialog [iwidgets::fileselectiondialog $dialog \
+      set dialog [ImportDialog $dialog \
             -modality application -title "Import File Selection Dialog" \
             -master $itk_interior]
       $dialog center
@@ -113,6 +114,48 @@ itcl::body TcsConfigPanel::import {} {
 
 # Activate the dialog
    if { [$dialog activate] } {
+
+# Delete components of the selected type.
+      set complist [[$dialog component select] getrhs]
+      if { [lsearch -exact $complist "Coordinate frames"] >= 0 } {
+         purge CosysList CosysNames
+      }
+      if { [lsearch -exact $complist "Tracking frames"] >= 0 } {
+         purge TrackFrameList TrackFrameNames
+      }
+      if { [lsearch -exact $complist "Wavelengths"] >= 0 } {
+         purge WavelengthList WavelengthNames
+      }
+      if { [lsearch -exact $complist "Instrument origins"] >= 0 } {
+         purge PointOrigList PointOrigNames
+      }
+      if { [lsearch -exact $complist "Differential track rates"] >= 0 } {
+         purge TrackRateList TrackRateNames
+      }
+      if { [lsearch -exact $complist "Science targets"] >= 0 } {
+         purge ScienceTargetList ScienceTargetNames
+      }
+      if { [lsearch -exact $complist "Wave front sensor targets"] >= 0 } {
+         purge WfsTargetList WfsTargetNames
+      }
+      if { [lsearch -exact $complist "Field orientations"] >= 0 } {
+         purge RotatorList RotatorNames
+      }
+      if { [lsearch -exact $complist "Chop configurations"] >= 0 } {
+         purge ChopList ChopNames
+      }
+      if { [lsearch -exact $complist "Slew options"] >= 0 } {
+         purge SlewOptionsList SlewOptionsNames
+      }
+      if { [lsearch -exact $complist "Instrument configurations"] >= 0 } {
+         purge InstrumentList InstrumentNames
+      }
+      if { [lsearch -exact $complist "Guide configurations"] >= 0 } {
+         purge GuideList GuideNames
+      }
+      if { [lsearch -exact $complist Configurations] >= 0 } {
+         purge TcsConfigList TcsConfigNames
+      }
 
 # Open the file.
       set filename [$dialog get]
@@ -224,6 +267,16 @@ itcl::body TcsConfigPanel::export {} {
 
 # Restore default directory
    cd $pwd
+}
+
+itcl::body TcsConfigPanel::purge {list namespace} {
+   set n [$list length]
+   for { set i 0 } { $i < $n } { incr i } {
+      set name [$list get $i]
+      if { $name != "" } {
+         catch {itcl::delete object ${namespace}::$name}
+      }
+   }
 }
 
 itcl::body TcsConfigPanel::save {list namespace file} {
