@@ -11,7 +11,7 @@
 #
 #  options
 #
-#  D Terrett 15 November 1999
+#  D Terrett 16 November 1999
 #
 #  Copyright CCLRC
 #-
@@ -199,6 +199,18 @@ itcl::body NumericDisplay::constructor args {
       StatusField $w.rot -labeltext Rotator -labelmargin 5 -width 10 \
             -entryborder 3 -entryrelief groove
    }
+   itk_component add errlab {
+      label $w.errlab -text Errors:
+   }
+   itk_component add azerr {
+      StatusField $w.azerr -width 13 -entryborder 3 -entryrelief groove 
+   }
+   itk_component add elerr {
+      StatusField $w.elerr -width 13 -entryborder 3 -entryrelief groove 
+   }
+   itk_component add roterr {
+      StatusField $w.roterr -width 10 -entryborder 3 -entryrelief groove
+   }
    itk_component add domelab {
       label $w.domelab -text Dome:
    }
@@ -217,6 +229,8 @@ itcl::body NumericDisplay::constructor args {
    grid $itk_component(mechlab) - - - -pady 3
    grid $itk_component(tellab) $itk_component(telaz) $itk_component(telel) \
          $itk_component(rot) -sticky e -pady 3
+   grid  $itk_component(errlab) $itk_component(azerr) $itk_component(elerr) \
+         $itk_component(roterr) -sticky e -pady 3
    grid $itk_component(domelab) $itk_component(domeaz) \
          $itk_component(topshut) $itk_component(botshut) -sticky w -pady 3
    grid configure $itk_component(domelab) -sticky e
@@ -379,8 +393,11 @@ itcl::body NumericDisplay::update {} {
 #   $itk_component(telpos1) configure -text [sa tcssad get currentRA]
 #   $itk_component(telpos2) configure -text [sa tcssad get currentDec]
    $itk_component(telaz) configure -text [sa tcssad get currentAz]
+   $itk_component(azerr) configure -text [sa tcssad get azError]
    $itk_component(telel) configure -text [sa tcssad get currentEl]
+   $itk_component(elerr) configure -text [sa tcssad get elError]
    $itk_component(rot) configure -text [sa crssad get currentRma]
+   $itk_component(roterr) configure -text [sa tcssad get rmaError]
    $itk_component(domeaz) configure -text [sa ecssad get domePos]
    $itk_component(topshut) configure -text [sa ecssad get topShtrPos]
    $itk_component(botshut) configure -text [sa ecssad get botShtrPos]
@@ -474,7 +491,9 @@ itcl::body NumericDisplay::inPosition {rec status info value} {
             set elstat error
          }
          $itk_component(telaz) configure -status $azstat
+         $itk_component(azerr) configure -status $azstat
          $itk_component(telel) configure -status $elstat
+         $itk_component(elerr) configure -status $elstat
       }
       crssad {
 
@@ -489,6 +508,7 @@ itcl::body NumericDisplay::inPosition {rec status info value} {
             set status error
          }
          $itk_component(rot) configure -status $status
+         $itk_component(roterr) configure -status $status
       }
       ecssad {
 
