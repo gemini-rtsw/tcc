@@ -6,7 +6,7 @@
 #  Arguments:
 #             none
 #
-#  D Terrett 11 November 2002
+#  D Terrett 9 July 2003
 #
 #  Copyright CCLRC
 #-
@@ -26,8 +26,8 @@ proc createPanels {} {
          -title "Cass Rotator Control"
    PanelMgr ecsPanel -name .ecsPanel -class EcsPanel \
          -title "Enclosure Control"
-#   PanelMgr m1sPanel -name .m1sPanel -class M1sPanel \
-#         -title "Primary Mirror Control"
+   PanelMgr m1sPanel -name .m1sPanel -class M1sPanel \
+         -title "Primary Mirror Control"
 #   PanelMgr m2sPanel -name .m2sPanel -class M2sPanel \
 #         -title "Secondary Mirror Control"
 #   PanelMgr agsPanel -name .agsPanel -class AgsPanel \

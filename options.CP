@@ -15,6 +15,7 @@
 *mcsPanel*background:		PeachPuff1
 *crsPanel*background:		PeachPuff1
 *tcsPanel*background:		PeachPuff1
+*m1sPanel*background:		PeachPuff1
 
 # Background for the configuration editing panels.
 *CosysPanel*background:		LightGray
