@@ -22,7 +22,7 @@
 #                  HRWFS mirrors into the correct position to realise the
 #                  settings ofthe -mode, -ao and -port options.
 #
-#  D Terrett 25 September 2000
+#  D Terrett 5 February 2001
 #
 #  Copyright CCLRC
 #+
@@ -64,7 +64,7 @@ itcl::body ISS::position {} {
    } elseif { [string compare $mode "SKY"] == 0 } {
 
 # If the active ISS port is the upward looking one then the HRWFS fold must
-# be OUT.
+# be either OUT (no AO) or set to reflect port 2 to the port 1.
       if { $port == 1 } {
          set hwfold OUT
          if { [string compare $ao "IN"] == 0 } {
@@ -79,11 +79,14 @@ itcl::body ISS::position {} {
          if { [string compare $ao "IN"] == 0 } {
             switch $port {
                3 {set scfold 4}
+               4 {set scfold OUT}
                5 {set scfold 7}
             }
          } else {
             switch $port {
+               2 {set scfold 1}
                3 {set scfold 0}
+               4 {set scfold 4}
                5 {set scfold 2}
             }
          }
@@ -93,6 +96,7 @@ itcl::body ISS::position {} {
 # Remaning mode is CAL.
       switch $port {
          1 {set scfold 11}
+         2 {set scfold OUT}
          3 {set scfold 5}
          5 {set scfold 9}
       }
