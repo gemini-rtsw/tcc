@@ -1,17 +1,20 @@
 #+
 #  TcsConfigFile
 #
-#  A TcsConfigFile object parses a file containing XML descriptions of
+#  A TcsConfigFile object parses an XML description of
 #  tcs configuration components and creates and configures the
 #  components.
 #
-#  D Terrett 17 May 2002
+#  D Terrett 8 October 2002
 #
 #  Copyright CCLRC
 #+
 
 itcl::class TcsConfigFile {
-   constructor {file parent} {}
+   constructor {xml parent} {}
+   public {
+      variable topname ""
+   }
    private {
       method createComponent {type node}
       method createTarget {node}
@@ -23,10 +26,10 @@ itcl::class TcsConfigFile {
    }
 }
 
-itcl::body TcsConfigFile::constructor {file parent} {
+itcl::body TcsConfigFile::constructor {xml parent} {
 
-# Create a document object from the XML file.
-   set doc [dom::DOMImplementation parse [read $file] -parser expat \
+# Create a document object from the XML.
+   set doc [dom::DOMImplementation parse $xml -parser expat \
          -progresscommand update -chunksize 100]
 
 # Get the root node.
@@ -34,6 +37,7 @@ itcl::body TcsConfigFile::constructor {file parent} {
 
 # Save the parent window for error report dialogs.
    set w $parent
+
 
 # Initialise lists of nodes that represent configuration components.
    set nodelist(chop) ""
@@ -53,6 +57,16 @@ itcl::body TcsConfigFile::constructor {file parent} {
 
 # Start with the root node.
    foreach node [dom::node children $root] {
+      if { $topname == "" } {
+
+# Set the name option to the name attribute of the first paramset element
+# in the document.
+         if { [string equal [dom::node cget $node -nodeType] element] } {
+            if { [string equal [dom::node cget $node -nodeName] paramset] } {
+               set topname [dom::element getAttribute $node name]
+            }
+         }
+      }
       findcomp $node
    }
 
@@ -202,7 +216,7 @@ itcl::body TcsConfigFile::createTarget {node} {
 # The node must have a name and a type attribute.
    set name [dom::element getAttribute $node name]
    if { $name== "" } {
-      return [report "target with no name" $node]
+      return [report "target with no name"]
    }
 
 # Targets only exist in field so we have to search for the enclosing field
@@ -436,6 +450,10 @@ itcl::body TcsConfigFile::findcomp {node} {
             }
             cosys {
                lappend nodelist(cosys) $node
+            }
+            targetEnv {
+               dom::element setAttribute $node type field
+               lappend nodelist(field) $node
             }
             field {
                lappend nodelist(field) $node
