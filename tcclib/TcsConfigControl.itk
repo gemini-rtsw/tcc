@@ -188,9 +188,6 @@ itcl::body TcsConfigControl::constructor args {
    pack $itk_component(apply) $itk_component(store) $itk_component(preview) \
          -side left -expand y -pady 4
 
-# Create the config object used by apply.
-   set scratchobj [namespace which -command [TcsConfig #auto]]
-
 # Set the object class
    set objclass ConfigComponent
    set description configuration
@@ -202,6 +199,9 @@ itcl::body TcsConfigControl::constructor args {
    after idle $itk_component(selector) select default
 
    eval itk_initialize $args
+
+# Create the config object used by apply.
+   set scratchobj [namespace which -command [TcsConfig #auto]]
 }
 
 itcl::body TcsConfigControl::apply {} {
