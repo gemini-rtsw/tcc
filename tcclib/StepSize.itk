@@ -4,7 +4,7 @@
 # Implements the StepSize widget. A row of buttons that select a
 # handset step size.
 #
-# D Terrett 20 January 1999
+# D Terrett 28 May 1999
 #
 # Copyright CCLRC
 #-
@@ -19,7 +19,8 @@ itcl::class StepSize {
 
    private method push
 
-   private common Custom
+   private common Custom1
+   private common Custom2
 }
 
 itk::usual StepSize {
@@ -34,7 +35,7 @@ itk::usual StepSize {
 itcl::body StepSize::constructor args {
 
 # Create row of buttons.
-   set lablist {0.1 0.2 0.5 1.0 2.0 5.0 10.0 1.0}
+   set lablist {0.1 0.2 0.5 1.0 2.0 5.0 0 0}
    itk_component add buttons {
       frame $itk_interior.buttons
    }
@@ -58,17 +59,25 @@ itcl::body StepSize::constructor args {
    }
    pack $itk_component(label) -side left -fill x -expand yes
 
-# Entry widget for setting the custom step size.
-   itk_component add custom {
-      iwidgets::entryfield $itk_interior.custom -width 4 \
-            -textvariable [scope Custom($this)] -validate real
+# Entry widget for setting the custom step sizes.
+   itk_component add custom1 {
+      iwidgets::entryfield $itk_interior.custom1 -width 4 \
+            -textvariable [scope Custom1($this)] -validate real
    }
-   $itk_component(step7) configure -textvariable [scope Custom($this)]
-   set Custom($this) 1.0
-   pack $itk_component(custom)
+   $itk_component(step6) configure -textvariable [scope Custom1($this)]
+   set Custom1($this) 10
+   itk_component add custom2 {
+      iwidgets::entryfield $itk_interior.custom2 -width 4 \
+            -textvariable [scope Custom2($this)] -validate real
+   }
+   $itk_component(step7) configure -textvariable [scope Custom2($this)]
+   set Custom2($this) 20
+   pack $itk_component(custom1) $itk_component(custom2) -side left
 
 # Bind <Return> in the entry widget to "pushing" the custom button.
-   bind [$itk_component(custom) component entry] <Return> \
+   bind [$itk_component(custom1) component entry] <Return> \
+         [code $this push $itk_component(step6)]
+   bind [$itk_component(custom2) component entry] <Return> \
          [code $this push $itk_component(step7)]
 
    eval itk_initialize $args
