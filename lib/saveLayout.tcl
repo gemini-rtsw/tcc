@@ -42,13 +42,13 @@ proc saveLayout {} {
 
 # Write the panel's screen option.
             set screen [$panelmgr cget -screen]
-            if { $screen != "" } {
+            if { ! [string is space $screen] } {
                puts $file "$panelmgr configure -screen $screen"
             }
 
 # Write the window size part of the geometry.
             set geom [$panelmgr cget -geometry]
-            if { $geom != "" } {
+            if { ! [string is space $geom] } {
                if { [regexp {\+.*} $geom pos] } {
                   puts $file "$panelmgr configure -geometry $pos"
                }
@@ -78,7 +78,7 @@ proc saveLayout {} {
 
 # Do the same for the EditShadows (if such a class exists - only the tcc
 # uses EditShadows).
-         if { [itcl::find classes EditShadow] != "" } {
+         if { [llength [itcl::find classes EditShadow]] } {
             foreach editshadow [itcl::find objects -class EditShadow] {
                set panelmgr [$editshadow cget -panel]
                if { [$panelmgr cget -create] } {

@@ -53,10 +53,10 @@ itcl::body StoreButton::constructor args {
 
 itcl::body StoreButton::command {} {
    set name [$itk_option(-combobox) get]
-   if { $name != "" } {
-      $itk_option(-shadow) store $name
-   } else {
+   if { [string equal $name ""] } {
       tk_messageBox -icon error -parent $itk_interior -message \
             "Cannot store without a name to store to."
+   } else {
+      $itk_option(-shadow) store $name
    }
 }

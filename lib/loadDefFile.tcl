@@ -34,7 +34,7 @@ proc loadDefFile chanid {
          }
       }
    }
-   if { [llength $command] != 0 } {
+   if { ! [string equal $command ""] } {
       tk_messageBox -title "tcc error" -icon error -type ok -message \
             "Incomplete command in component definition file: \"$command\""
    }

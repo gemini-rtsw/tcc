@@ -203,7 +203,7 @@ itcl::body AzElPlot::select tag {
 
 # Set the current selection back to its correct state.
    if { $CurrSelection != "" } {
-      if { $StarsState($CurrSelection) == "mark" } {
+      if { [string equal $StarsState($CurrSelection) mark] } {
          $itk_component(canvas) itemconfigure S$CurrSelection \
                -fill $itk_option(-markcolor)
       } else {
@@ -212,11 +212,11 @@ itcl::body AzElPlot::select tag {
       }
    }
    set CurrSelection $tag
-   if { $tag != "" } {
+   if { ! [string equal $tag ""] } {
       $itk_component(canvas) itemconfigure S$tag \
             -fill $itk_option(-selectcolor)
       set StarsState($tag) mark
-      if { $itk_option(-selectioncommand) != "" } {
+      if { ! [string equal $itk_option(-selectioncommand) ""] } {
          uplevel #0 $itk_option(-selectioncommand) $tag
       }
    }
@@ -234,7 +234,7 @@ itcl::body AzElPlot::unmark tag {
 #+
 # Unmarks the star $tag or all stars.
 #-
-   if { $tag == "" } {
+   if { [string equal $tag ""] } {
       foreach t [array names StarsState] {
          $itk_component(canvas) itemconfigure S$t \
                -fill $itk_option(-normalcolor)
@@ -244,7 +244,7 @@ itcl::body AzElPlot::unmark tag {
    } else {
       $itk_component(canvas) itemconfigure S$tag -fill $itk_option(-normalcolor)
       set StarsState($tag) ""
-      if { $tag == $CurrSelection} {
+      if { [string equal $tag $CurrSelection]} {
          set CurrSelection ""
       }
    }
@@ -261,21 +261,21 @@ itcl::body AzElPlot::replot {} {
 
 # Get and decode the current current telescope azimuth.
    set az [split [sa tcssad get currentAz value] :]
-   if { [string index $az 0] == "-" } {
+   if { [string equal [string index $az 0] -] } {
       set neg 1
       set az [string trimleft $az -]
-   } elseif { [string index $az 0] == "+" } {
+   } elseif { [string equal [string index $az 0] +] } {
       set neg 0
       set az [string trimleft $az +]
    } else {
       set neg 0
    }
    set azh [string trimleft [lindex $az 0] 0]
-   if { [string trim $azh] == "" } {set azh 0}
+   if { [string equal [string trim $azh] ""] } {set azh 0}
    set azm [string trimleft [lindex $az 1] 0]
-   if { [string trim $azm] == "" } {set azm 0}
+   if { [string equal [string trim $azm] ""] } {set azm 0}
    set azs [string trimleft [lindex $az 2] 0]
-   if { [string trim $azs] == "" } {set azs 0}
+   if { [string equal [string trim $azs] ""] } {set azs 0}
    set TelAz [expr (($azh * 60.0 + $azm) * 60.0 + $azs) / 206264.8]
    if { $neg } {
       set TelAz [expr -$TelAz]
@@ -284,11 +284,11 @@ itcl::body AzElPlot::replot {} {
 # Get and decode the current current telescope elevation.
    set el [split [sa tcssad get currentEl value] :]
    set elh [string trimleft [lindex $el 0] 0]
-   if { [string trim $elh] == "" } {set elh 0}
+   if { [string equal [string trim $elh] ""] } {set elh 0}
    set elm [string trimleft [lindex $el 1] 0]
-   if { [string trim $elm] == "" } {set elm 0}
+   if { [string equal [string trim $elm] ""] } {set elm 0}
    set els [string trimleft [lindex $el 2] 0]
-   if { [string trim $els] == "" } {set els 0}
+   if { [string equal [string trim $els] ""] } {set els 0}
    set TelEl [expr (($elh * 60.0 + $elm) * 60.0 + $els) / 206264.8]
    if { $TelEl < 15.0 } {
       set telEl 15.0
@@ -338,7 +338,7 @@ itcl::body AzElPlot::next mode {
       catorder {
          set tag [expr $CurrSelection + 1]
            while { [info exists StarsAz($tag)] } {
-              if { $StarsState($tag) == "" && \
+              if { [string equal $StarsState($tag) ""] && \
                     $StarsEl($tag) > $itk_options(-ellimit) } {
                  return $tag
               }
@@ -354,7 +354,7 @@ itcl::body AzElPlot::next mode {
          while { [info exists StarsAz($tag)] } {
 
 # Ignore stars below the elevation limit.
-            if { $StarsState($tag) == "" && $StarsEl($tag) > \
+            if { [string equal $StarsState($tag) ""] && $StarsEl($tag) > \
                    $itk_option(-ellimit) * $D2R } {
 
 # Distance to this star in elevation.
@@ -381,7 +381,7 @@ itcl::body AzElPlot::next mode {
                set slewdist [expr {$eldist > $azdist ? $eldist : $azdist}]
 
 # First star is always the best choice found so far.
-               if { $besttag == "" } {
+               if { [string equal $besttag ""] } {
                   set besttag $tag
                   set bestaz $azdist
                   set bestel $eldist
@@ -411,7 +411,7 @@ itcl::body AzElPlot::remove tag {
 #+
 # Removes a star (or all the stars from the list).
 #-
-   if { $tag == "" } {
+   if { [string equal $tag ""] } {
       foreach t [array names StarsState] {
          unset StarsState($t)
          unset StarsAz($t)
@@ -432,8 +432,8 @@ itcl::body AzElPlot::remove tag {
       unset StarsRa($tag)
       unset StarsDec($tag)
       $itk_component(canvas) delete S$tag
-      if { $tag == $CurrSelection } {
-         set CurrSelection {}
+      if { [string equal $tag $CurrSelection] } {
+         set CurrSelection ""
       }
    } 
 }
@@ -462,7 +462,7 @@ itcl::body AzElPlot::displayradec {x y} {
    set ra [expr fmod($St - atan2($y,$x),6.283185307)]
    set dec [expr atan2($z,$r)]
 
-   if { $itk_option(-hitcommand) != "" } {
+   if { ! [string equal $itk_option(-hitcommand) ""] } {
       uplevel #0 $itk_option(-hitcommand) $ra $dec
    }
 }

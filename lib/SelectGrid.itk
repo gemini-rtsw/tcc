@@ -192,7 +192,7 @@ itcl::body SelectGrid::select row {
    }
 
 # Invoke the -selectcommand option.
-   if { [string length $itk_option(-selectcommand)] } {
+   if { ! [string equal $itk_option(-selectcommand) ""] } {
       uplevel #0 $itk_option(-selectcommand) $tags($row) $states($row)
    }
 }

@@ -53,7 +53,7 @@ itcl::class ComponentList {
 itcl::body ComponentList::add {component position} {
 
 # Add the new component to the list.
-   if { $position == "end" || $position > [llength $list] } {
+   if { [string equal $position "end"] || $position > [llength $list] } {
       lappend list $component
    } else {
       set list [lreplace $list $position -1 $component]

@@ -63,7 +63,7 @@ itcl::body LogControl::constructor args {
 }
 
 itcl::body LogControl::destructor {} {
-   if { $chanid != "" } {
+   if { ! [string equal $chanid ""] } {
       catch {close $chanid}
    }
 }
@@ -88,14 +88,14 @@ itcl::body LogControl::add text {
    $itk_component(display) configure -state disabled
 
 # Write the text to the log file.
-   if { $chanid != "" } {
+   if { ! [string equal $chanid ""] } {
       puts $chanid $text
       flush $chanid
    }
 }
 
 itcl::body LogControl::closefile {} {
-   if { $chanid != "" } {
+   if { ! [string equal $chanid ""] } {
       catch {close $chanid}
       set chanid ""
       set filespec ""

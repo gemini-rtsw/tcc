@@ -71,21 +71,21 @@ itcl::configbody ApplyButton::command {
    }
 
 # Configure the -text option of the LiveButton.
-   if { [string length $itk_option(-text)] == 0 } {
+   if { [string equal $itk_option(-text) ""] } {
       $itk_component(lbutton) configure \
             -text [lindex [cs $itk_option(-command) info] 1]
    }
 }
 
 itcl::configbody ApplyButton::text {
-   if { [string length $itk_option(-text)] } {
+   if { ! [string equal $itk_option(-text) ""] } {
       $itk_component(lbutton) configure -text $itk_option(-text)
    }
 }
 
 itcl::body ApplyButton::apply {} {
 
-   if { [string length $itk_option(-confirm)] } {
+   if { ! [string equal $itk_option(-confirm) ""] } {
 
 # Display the confirmation dialog.
       if { ! [winfo exists $itk_interior.confirm] } {
@@ -102,7 +102,7 @@ itcl::body ApplyButton::apply {} {
 
 # Set the command parameters.
    foreach par [lindex [cs $itk_option(-command) info] 3] {
-      if { [string length $itk_option(-parcommand)] == 0 } {
+      if { [string equal $itk_option(-parcommand) ""] } {
          cs $itk_option(-command) set $par mark
       } else {
          cs $itk_option(-command) set $par \"[$itk_option(-parcommand) $par]\"

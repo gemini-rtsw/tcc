@@ -90,7 +90,7 @@ itcl::body PanelMgr::map {} {
 
 # If the screen name isn't blank then save the toplevel command and re-define
 # it to add the -screen option.
-      if { $screen != "" } {
+      if { ! [string equal $screen ""] } {
          rename ::toplevel ::realToplevel
          proc ::toplevel args "
             eval realToplevel \$args -screen $screen
@@ -114,7 +114,7 @@ itcl::body PanelMgr::map {} {
       }
 
 # Position the window if a position was specified.
-      if { $geometry != "" } {
+      if { ! [string is space $geometry] } {
          wm geometry $name $geometry
       }
 
@@ -147,7 +147,7 @@ itcl::configbody PanelMgr::screen {
       set oldscreen [winfo screen [winfo toplevel $name]]
 
 # Determine which screen we are being moved to.
-      if { $screen == "" } {
+      if { [string is space $screen] } {
          set newscreen [winfo screen .]
       } else {
          set newscreen $screen
@@ -155,7 +155,7 @@ itcl::configbody PanelMgr::screen {
 
 # If the old and new screens are different then destroy the window and
 # call the map method to r-create it on the new screen.
-      if { $newscreen != $oldscreen } {
+      if { ! [string equal $newscreen $oldscreen] } {
           destroy $name
           $this map
       }

@@ -21,9 +21,9 @@ proc sadVal {sad rec default} {
    set val [string trim [sa $sad get $rec]]
 
 # Test the value in an expression.
-   if { [catch {expr 0 + $val}] } {
-      return $default
-   } else {
+   if { [string is double $val] } {
       return $val
+   } else {
+      return $default
    }
 }

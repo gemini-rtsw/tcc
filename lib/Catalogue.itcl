@@ -76,7 +76,7 @@ itcl::body Catalogue::load {} {
                 -initialdir $CATALOG_DIR \
                 -filetypes $types -title "Open star catalog"]
 
-   if { $catname != {} } {
+   if { ! [string equal $catname ""] } {
 
 # Open the catalogue.
       set chan [open $catname RDONLY]
@@ -97,7 +97,8 @@ itcl::body Catalogue::load {} {
          set line [string trim $line]
 
 # Comment lines start with !.
-         if { [string length $line] != 0 && [string range $line 0 0] != "!" } {
+         if { [string length $line] != 0 && \
+              ! [string equal [string range $line 0 0] !] } {
 
 # Add the line to the catalogue and load the line into the list widget.
             lappend Catalog $line
@@ -151,7 +152,7 @@ itcl::body Catalogue::decodeStar {index} {
 #  Decodes an entry in the star catalogue
 
    set rec [lindex $Catalog $index]
-   if { $rec != "" } {
+   if { ! [string equal $rec ""] } {
       switch $CatForm {
          tpoint {
             scan $rec "%s %s %s %s %s %s %s %s %s %s" \

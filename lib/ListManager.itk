@@ -19,7 +19,7 @@
 #
 #          insert string   Inserts a "string" into the entry widget
 #
-#  D Terrett  20 April 2000
+#  D Terrett  30 January 2001
 #
 #  Copyright CCLRC
 #-
@@ -64,7 +64,7 @@ itcl::body ListManager::destructor {} {
 # Removes the widget from the list of widgets managed by the list object.
 #-
    set list $itk_option(-componentlist)
-   if { $list != "" } {
+   if { ! [string equal $list ""] } {
       $list removewidget $itk_component(selector)
    }
 }
@@ -73,7 +73,7 @@ itcl::configbody ListManager::componentlist {
 #-
 #  Adds the combobox widget to the list of widgets managed by the list.
 #-
-   if { $itk_option(-componentlist) != "" } {
+   if { ! [string equal $itk_option(-componentlist) ""] } {
       $itk_option(-componentlist) addwidget $itk_component(selector)
    }
 }
@@ -93,13 +93,12 @@ itcl::body ListManager::select item {
    $itk_component(selector) selection clear 0 end
 
 # Select the item according to its position in the list.
-   if { $itk_option(-componentlist) != "" } {
-      set i [$itk_option(-componentlist) index $item]
-      if { $i >= 0 } {
-         $itk_component(selector) selection set $i
-      }
-   } else {
+   if { [string equal $itk_option(-componentlist) ""] } {
       error "componentlist not defined"
+   }
+   set i [$itk_option(-componentlist) index $item]
+   if { $i >= 0 } {
+      $itk_component(selector) selection set $i
    }
 
 # Restore the editability.

@@ -125,7 +125,7 @@ itcl::body EditShadow::store name {
 
 # Call the store method of the edit shadow of the components that have values.
    foreach el [array names subselections] {
-      if { [string length $subselections($el)] } {
+      if { ! [string equal $subselections($el) ""] } {
          $this$el store $subselections($el)
       }
    }

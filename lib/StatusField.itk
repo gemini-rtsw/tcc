@@ -63,7 +63,7 @@ itcl::configbody StatusField::status {
          $itk_component(status) configure -background red
       }
       none {
-         if { $itk_option(-background) != "" } {
+         if { ! [string equal $itk_option(-background) ""] } {
             $itk_component(status) configure \
                   -background $itk_option(-background)
          }
@@ -75,7 +75,7 @@ itcl::configbody StatusField::status {
 }
 
 itcl::configbody StatusField::background {
-   if { $itk_option(-status) == "none" } {
+   if { [string equal $itk_option(-status) "none"] } {
       $itk_component(status) configure -background $itk_option(-background)
    }
 }

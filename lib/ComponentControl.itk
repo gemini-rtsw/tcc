@@ -138,24 +138,24 @@ itcl::body ComponentControl::select name {
 
 # Set the selector to "name" and load its contents into the edit controls.
    $itk_component(selector) select $name
-   if { [string length $name] } {
-      $this selectobj $itk_option(-namespace)::$name
-   } else {
+   if { [string equal $name ""] } {
       $this selectobj ""
+   } else {
+      $this selectobj $itk_option(-namespace)::$name
    }
 }
 
 itcl::body ComponentControl::store name {
 
 # Determine the full name of the object to be updated.
-   if { [string length $name] } {
-      set fullname ::$itk_option(-namespace)::$name
-   } else {
+   if { [string equal $name ""] } {
       set fullname $scratchobj
+   } else {
+      set fullname ::$itk_option(-namespace)::$name
    }
 
 # If the object doesn't exist.
-   if { [info commands $fullname] == "" } {
+   if { [string equal [info commands $fullname] ""] } {
 
 # Create it.
       $objclass $fullname $itk_option(-componentlist)
@@ -175,20 +175,20 @@ itcl::body ComponentControl::store name {
 
 # Update the existing object with data from the widget.
       if { [catch {$this updateobj $fullname} msg] } {
-         if { [string length $name] } {
+         if { [string equal $name ""] } {
             tk_messageBox -icon error -parent $itk_interior -message \
-                  "Error updating $description \"$name\": $msg"
+                  "Error updating $description: $msg"
             return 0
          } else {
             tk_messageBox -icon error -parent $itk_interior -message \
-                  "Error updating $description: $msg"
+                  "Error updating $description \"$name\": $msg"
             return 0
          }
       }
    } 
 
 # Select the new object in the shadow.
-   if { [string length $name] } {
+   if { ! [string equal $name ""] } {
       $itk_option(-shadow) select $name
    }
    return 1
@@ -223,7 +223,7 @@ itcl::body ComponentControl::delselected {} {
 # Deletes the currently selected component object.
 #-
    set name [$itk_component(selector) get]
-   if { [string length $name] } {
+   if { ! [string equal $name ""] } {
       if { [catch {delete object $itk_option(-namespace)::$name} msg] } {
          tk_messageBox -icon error -message $msg \
                -parent $itk_interior -title "Component delete error"
