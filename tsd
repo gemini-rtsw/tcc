@@ -10,7 +10,7 @@ exec $GEMINI_BASE/ocs/bin/solaris/ocswish8 "$0" "$@"
 #  the tsd uses. It is probably installation dependent and will need to be
 #  hacked to get it to work.
 #
-#  D Terrett 26 April 1999
+#  D Terrett 17 September 1999
 #
 #  Copyright CCLRC
 #-
@@ -18,6 +18,10 @@ exec $GEMINI_BASE/ocs/bin/solaris/ocswish8 "$0" "$@"
 # Define the root directory for locating libraries and extensions.
 global ROOT
 set ROOT [file dirname [info script]]
+if { [string compare [file pathtype $ROOT] relative] == 0 } {
+   set ROOT [pwd]/$ROOT
+}
+
 
 # The tsd library files live in the lib subdirectory of the directory 
 # containing this script.

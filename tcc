@@ -10,14 +10,21 @@ exec $GEMINI_BASE/ocs/bin/solaris/ocswish8 "$0" "$@"
 #  the tcc uses. It is probably installation dependent and will need to be
 #  hacked to get it to work.
 #
-#  D Terrett 26 April 1999
+#  D Terrett 17 September 1999
 #
 #  Copyright CCLRC
 #-
 
+# Define the default directory for writing files.
+global SAVE_FILE_DIR
+set SAVE_FILE_DIR /gemini/files
+
 # Define the root directory for locating libraries and applications.
 global ROOT
 set ROOT [file dirname [info script]]
+if { [string compare [file pathtype $ROOT] relative] == 0 } {
+   set ROOT [pwd]/$ROOT
+}
 
 # The tcc library files live in the lib subdirectory.
 lappend auto_path $ROOT/lib

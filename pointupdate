@@ -5,7 +5,7 @@ exec $GEMINI_BASE/ocs/bin/solaris/ocswish8 "$0" "$@"
 #+
 #  pointupdate
 #
-#  D Terrett 8 January 1999
+#  D Terrett 17 September 1999
 #
 #  Copyright CCLRC
 #-
@@ -14,6 +14,9 @@ set tcl_precision 14
 # Define the root directory for locating libraries.
 global ROOT
 set ROOT [file dirname [info script]]
+if { [string compare [file pathtype $ROOT] relative] == 0 } {
+   set ROOT [pwd]/$ROOT
+}
 lappend auto_path $ROOT/lib
 
 # The pointupdate application procedures live in the pointlib subdirectory.
