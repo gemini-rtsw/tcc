@@ -4,7 +4,7 @@
 #  A SciTarget control is a TargetControl widget with widgets for
 #  the target position etc.
 #
-#  D Terrett 28 October 2000
+#  D Terrett 14 March 2001
 #
 #  Copyright CCLRC
 #+
@@ -19,6 +19,7 @@ itcl::class SciTargetControl {
    private {
       method copy {createproc}
       method orbtype {}
+      method selplanet {}
       variable planet
    }
 }
@@ -39,34 +40,40 @@ itcl::body SciTargetControl::constructor args {
 
 # Radiobuttons for selecting a planet.
    itk_component add moon {
-      radiobutton $w.moon -text Moon -variable [scope planet] -value moon
+      radiobutton $w.moon -text Moon -variable [scope planet] -value moon \
+            -command [itcl::code $this selplanet]
    }
    itk_component add mercury {
       radiobutton $w.mercury -text Mercury -variable [scope planet] \
-            -value mercury
+            -value mercury -command [itcl::code $this selplanet]
    }
    itk_component add venus {
-      radiobutton $w.venus -text Venus -variable [scope planet] -value venus
+      radiobutton $w.venus -text Venus -variable [scope planet] -value venus \
+            -command [itcl::code $this selplanet]
    }
    itk_component add mars {
-      radiobutton $w.mars -text Mars -variable [scope planet] -value mars
+      radiobutton $w.mars -text Mars -variable [scope planet] -value mars \
+            -command [itcl::code $this selplanet]
    }
    itk_component add jupiter {
       radiobutton $w.jupiter -text Jupiter -variable [scope planet] \
-            -value jupiter
+            -value jupiter -command [itcl::code $this selplanet]
    }
    itk_component add saturn {
-      radiobutton $w.saturn -text Saturn -variable [scope planet] -value saturn
+      radiobutton $w.saturn -text Saturn -variable [scope planet] \
+            -value saturn -command [itcl::code $this selplanet]
    }
    itk_component add uranus {
-      radiobutton $w.uranus -text Uranus -variable [scope planet] -value uranus
+      radiobutton $w.uranus -text Uranus -variable [scope planet] \
+            -value uranus  -command [itcl::code $this selplanet]
    }
    itk_component add neptune {
       radiobutton $w.neptune -text Neptune -variable [scope planet] \
-            -value neptune
+            -value neptune -command [itcl::code $this selplanet]
    }
    itk_component add pluto {
-      radiobutton $w.pluto -text Pluto -variable [scope planet] -value pluto
+      radiobutton $w.pluto -text Pluto -variable [scope planet] -value pluto \
+            -command [itcl::code $this selplanet]
    }
    grid $itk_component(moon) $itk_component(mars) $itk_component(uranus) \
          -padx 10 -pady 10 -sticky w
@@ -306,4 +313,13 @@ itcl::body SciTargetControl::copy createproc {
       store $name
       ScienceTargetNames::$name copy $createproc
    }
+}
+
+itcl::body SciTargetControl::selplanet {} {
+
+# Create the Science target object.
+   createScienceTarget $planet -planet $planet -objName $planet
+
+# Select it in the list manager.
+   $itk_component(selector) select $planet
 }
