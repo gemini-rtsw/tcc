@@ -20,7 +20,7 @@
 #  Methods:
 #          none
 #
-#  D Terrett 12 June 2000
+#  D Terrett 10 June 2003
 #
 #  Copyright CCLRC
 #-
@@ -38,6 +38,7 @@ itcl::class StateButton {
       method checkstate {}
       variable state 0
       variable monid
+      variable recmon ""
    }
 }
 
@@ -63,10 +64,9 @@ itcl::body StateButton::constructor args {
 
 itcl::body StateButton::destructor {} {
 
-# If the sad record has been set then remove the monitor.
-   if { [llength $itk_option(-sadrecord)] } {
-      [lindex $itk_option(-sadrecord) 0].[lindex $itk_option(-sadrecord) 1] \
-         remove $monid
+# If a monitor exists remove it.
+   if { $recmon ne "" } {
+      $recmon remove $monid
    }
 }
 
@@ -109,19 +109,26 @@ itcl::configbody StateButton::setcommand {
 itcl::body StateButton::checkstate {} {
    if { [llength $itk_option(-sadrecord)] } {
 
-# Extract the staus acceptor and record names.
+# Extract the status acceptor and record names.
       foreach {sa rec} $itk_option(-sadrecord) {}
+
+# Remove any existing monitor.
+      if { $recmon ne "" } {
+         $recmon remove $monid
+      }
 
 # Create the record monitor for this item if it doesn't already exist.
       if { [llength [itcl::find objects ::$sa.$rec]] == 0 } {
-         RecordMonitor ::$sa.$rec $sa $rec
+         set recmon [RecordMonitor ::$sa.$rec $sa $rec]
+      } else {
+         set recmon ::$sa.$rec
       }
 
 # Monitor the record.
-      set monid [$sa.$rec add [itcl::code $this monitor]]
+      set monid [$recmon add [itcl::code $this monitor]]
 
 # Call the monitor routine to update the state.
-      monitor $sa.$rec [sa $sa get $rec]
+      monitor $recmon [sa $sa get $rec]
    }
 }
 
