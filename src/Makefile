@@ -9,9 +9,9 @@ SLAOBJ = slaext.o
 CC = /opt/SUNWspro/bin/cc 
 CFLAGS = -K pic -Xc -G \
          -I/gemini/ocs/external/include \
-         -I$(HOME)/gemini/slalib/rel/include \
-         -I$(HOME)/gemini/timelib/rel/include \
-         -I$(HOME)/gemini/astlib/rel/include
+         -I/gemini/slalib/include \
+         -I/gemini/timelib/include \
+         -I/gemini/astlib/include
 
 #CC = gcc
 #CFLAGS =  -fPIC -G \
@@ -20,9 +20,9 @@ CFLAGS = -K pic -Xc -G \
 #         -I$(HOME)/gemini/timelib/rel/include \
 #         -I$(HOME)/gemini/astlib/rel/include
 
-LDFLAGS = -L$(HOME)/gemini/slalib/rel/lib/solaris \
-          -L$(HOME)/gemini/timelib/rel/lib/solaris \
-          -L$(HOME)/gemini/astlib/rel/lib/solaris \
+LDFLAGS = -L/gemini/slalib/lib/solaris \
+          -L/gemini/timelib/lib/solaris \
+          -L/gemini/astlib/lib/solaris \
           -last -ltime -lsla -lposix4
 
 tccext.so : $(TCCOBJ) $(CMNOBJ)
