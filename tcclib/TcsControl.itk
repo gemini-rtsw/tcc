@@ -3,7 +3,7 @@
 #
 #  Implements the TcsControl widget.
 #
-#  D Terrett 2 November 1998
+#  D Terrett 12 November 1999
 #
 #  Copyright CCLRC
 #+
@@ -268,7 +268,8 @@ itcl::body TcsControl::constructor args {
    }
 
 # Create weather command sender here because we can't use an apply button
-# because the commands have to be issued in the right order.
+# because the weather data CAD must not be marked if the data source is
+# being set to server.
    if [catch {cs weather info}] {
       epics cs weather
    }
@@ -278,7 +279,7 @@ itcl::body TcsControl::constructor args {
    itk_component add weather {
       LiveButton $w.weather -command [code $this weather] \
             -text [lindex [cs weather info] 1] \
-            -logmessage "Enclosure thermal control"
+            -logmessage "Weather"
    }
    itk_component add source {
       iwidgets::optionmenu $w.source \
@@ -343,9 +344,8 @@ itcl::body TcsControl::parget par {
 
 itcl::body TcsControl::weather {} {
 #+
-# Sets parameters and posts the weather command. The command has to be posted
-# twice when the data source is being set to "local" because the source has
-# to be "local" before the TCS will accept the temperature etc. 
+# Sets parameters and posts the weather command. The weather data is only
+# set if the source is "local".
 #-
    set source [$itk_component(source) get]
    if { [string compare $source "server"] } {
@@ -354,20 +354,15 @@ itcl::body TcsControl::weather {} {
      set s 0
    }
    cs weather set source $s
-   if [catch {cs weather post} msg] {
-      tk_messageBox -icon error -parent $itk_interior -message \
-            "Error posting weather command: TCS reports \
-            \"$msg\""
-   }
    if { $source == "local" } {
       cs weather set temp [$itk_component(temp) get]
       cs weather set press [$itk_component(press) get]
       cs weather set humid [$itk_component(humid) get]
-      if [catch {cs weather post} msg] {
-         tk_messageBox -icon error -parent $itk_interior -message \
-               "Error posting weather command: TCS reports \
-               \"$msg\""
-      }
+   }
+   if [catch {cs weather post} msg] {
+      tk_messageBox -icon error -parent $itk_interior -message \
+            "Error posting weather command: TCS reports \
+            \"$msg\""
    }
 }
 
