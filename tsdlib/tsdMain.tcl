@@ -5,7 +5,7 @@
 #  Arguments:
 #             Any command line options and values.
 #
-#  D Terrett 7 July 2000
+#  D Terrett 1 December 2000
 #
 #  Copyright CCLRC
 #-
@@ -49,7 +49,7 @@ proc tsdMain args {
    pack [GraphicDisplay .graphicDisplay] -anchor w
 
 # Set the title, icon etc.
-   wm title . "Gemini North"
+   wm title . [sa tcssad get name]
    wm iconname . TSD
 
 # It is now safe to display the main window.

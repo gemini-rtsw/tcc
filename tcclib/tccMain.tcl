@@ -7,7 +7,7 @@
 #  Arguments:
 #            Any command line options and values.
 #
-#  D Terrett  3 October 2000
+#  D Terrett  1 December 2000
 #
 #  Copyright CCLRC
 #-
@@ -158,7 +158,7 @@ proc tccMain args {
    pack [TccToolbar .toolbar]
 
 # Set the title, icon etc.
-   wm title . "Gemini North"
+   wm title . [sa tcssad get name]
    wm iconname . TCC
 
 # Load default components.
