@@ -5,5 +5,5 @@ clean:
 
 tclIndex : *.*tcl
 	@for f in $?; do echo "modified: $$f"; done
-	@echo "package require Itcl;auto_mkindex . *.*tcl;exit" | /gemini/ocs/ocs/bin/solaris/ocswish
+	@echo "package require Itcl;auto_mkindex . *.*tcl;exit" | ${HLPG_INSTALL_BASE}/bin/solaris/ocswish
 	@echo "build done: tclIndex"
