@@ -35,12 +35,16 @@ itcl::class FieldControl {
       method save {name}
       method sync {component name}
       method newtarget {name type args}
+      method swapguide {}
    }
    private {
       method newfieldval {n1 n2 op}
       method pageSelectCB {color}
       variable comp ""
       variable currentname ""
+      variable curr_guide ""
+      variable curr_sciencetarget ""
+      variable curr_guidetarget ""
    }
 }
 
@@ -231,16 +235,24 @@ itcl::body FieldControl::constructor args {
 
 # Airmass limit and program ID.
    set w $itk_component(data)
+   frame $w.sf
    itk_component add progid {
-      iwidgets::entryfield $w.progid -labeltext "Program ID" -width 15
+      iwidgets::entryfield $w.sf.progid -labeltext "Program ID" -width 15
    }
    itk_component add airmass {
-      iwidgets::entryfield $w.airmass -labeltext "Airmass limit" -width 8
+      iwidgets::entryfield $w.sf.airmass -labeltext "Airmass limit" -width 8
    }
    pack $itk_component(airmass) $itk_component(progid) -side left \
          -padx 5 -pady 10 -expand yes
 
    $itk_component(targets) select Science
+
+# Swapguide button
+   itk_component add swapguide {
+	button $w.swapguide -text "Swap Science/Guide Targets" -command "$this swapguide"
+   }
+   pack $itk_component(swapguide) $w.sf -side top -pady 3
+
    pack $itk_component(data) -side left -padx 3 -pady 3 -expand yes -fill y
 
 # Set the current field name to the scratch field.
@@ -255,6 +267,7 @@ itcl::body FieldControl::constructor args {
    after idle pack propagate $itk_component(tarframe) 0
 
    eval itk_initialize $args
+   $itk_component(swapguide) configure -text "Swap Science/Guide Targets" -bg "white"
 }
 
 itcl::body FieldControl::destructor {} {
@@ -350,6 +363,82 @@ itcl::body FieldControl::reset {} {
    set ::Config(tcs.field.oiwfstarget,value) ""
    set ::Config(tcs.field.altairtarget,value) ""
 }
+
+
+itcl::body FieldControl::swapguide {} {
+   puts "Inside Swap Guide"
+   if {$curr_guide == ""} {
+	set curr_guide ${::Config(tcs.field.guide,value)}
+   	set curr_sciencetarget ${::Config(tcs.field.sciencetarget,value)}
+	switch $curr_guide {
+	   "P1 only" {
+   		   set curr_guidetarget ${::Config(tcs.field.pwfs1target,value)}
+		   #set ::Config(tcs.field.pwfs1target,value) ""
+	        }
+	   "P2 only" {
+   		   set curr_guidetarget ${::Config(tcs.field.pwfs2target,value)}
+		   #set ::Config(tcs.field.pwfs2target,value) ""
+	        }
+	   "OIWFS only" {
+   		   set curr_guidetarget ${::Config(tcs.field.oiwfstarget,value)}
+		   #set ::Config(tcs.field.oiwfstarget,value) ""
+	        }
+	   "ALTAIR-GUIDE" -
+	   "ALTAIR" {
+   		   set curr_guidetarget ${::Config(tcs.field.altairtarget,value)}
+		   #set ::Config(tcs.field.altairtarget,value) ""
+	        }
+	    default {
+		   puts "No guidestar set ... do nothing"
+		   set curr_guide ""
+		   set curr_sciencetarget ""
+		   return
+		}
+	}
+	if {$curr_guidetarget == ""} {
+	   puts "No guidestar set ... do nothing"
+	   set curr_guide ""
+	   set curr_sciencetarget ""
+	   return
+	}
+   	puts "guide conficuration is: $curr_guide"
+   	puts "Science target is $curr_sciencetarget"
+   	puts "Guide target is $curr_guidetarget"
+   	puts "swapping ... "
+	set ::Config(tcs.field.guide,value) "No guiding"
+   	set ::Config(tcs.field.sciencetarget,value) $curr_guidetarget
+   	set ::Config(tcs.field.pwfs1target,value) ""
+	$itk_component(swapguide) configure -text "Revert Science/Guide Targets" -bg red
+	$this applycmd
+   } else {
+	puts "swapping back ..."
+	switch $curr_guide {
+	   "P1 only" {
+   		   set ::Config(tcs.field.pwfs1target,value) $curr_guidetarget
+	        }
+	   "P2 only" {
+   		   set ::Config(tcs.field.pwfs2target,value) $curr_guidetarget
+	        }
+	   "OIWFS only" {
+   		   set ::Config(tcs.field.oiwfstarget,value) $curr_guidetarget
+	        }
+	   "ALTAIR" {
+   		   set ::Config(tcs.field.altairtarget,value) $curr_guidetarget
+	        }
+	}
+	set ::Config(tcs.field.guide,value) $curr_guide
+	set ::Config(tcs.field.sciencetarget,value) $curr_sciencetarget
+	#clear temp storage
+	set curr_guide ""
+	set curr_sciencetarget ""
+	set curr_guidetarget ""
+	$itk_component(swapguide) configure -text "Swap Science/Guide Targets" -bg "white"
+	$this applycmd
+   }
+}
+
+
+
 
 itcl::body FieldControl::load {name} {
 
