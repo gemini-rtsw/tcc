@@ -10,7 +10,7 @@
 #  Methods:
 #           none
 #
-#  D Terrett  14 February 2000
+#  D Terrett  8 June 2000
 #
 #  Copyright CCLRC
 #+
@@ -47,13 +47,13 @@ itcl::body CrsControl::constructor args {
    }
    set w $itk_component(movef)
    itk_component add move {
-      ApplyButton $w.move -command rotmove \
+      ApplyButton $w.move -command rotMove \
             -parcommand [code $this getParVal]
    }
    pack $itk_component(move) -padx 4 -pady 8
 
    itk_component add rma {
-      iwidgets::entryfield $w.rma -labeltext [lindex [cs rotmove info rma] 2] \
+      iwidgets::entryfield $w.rma -labeltext [lindex [cs rotMove info rma] 2] \
            -width 10 -labelpos nw
    }
    pack $itk_component(rma) -fill x -expand y -padx 4 -pady 4 -anchor n
@@ -67,22 +67,25 @@ itcl::body CrsControl::constructor args {
    }
    set w $itk_component(conff)
    itk_component add rotconfig {
-      ApplyButton $w.rotconfig -command rotconfig
+      ApplyButton $w.rotconfig -command rotConfig
    }
    pack $itk_component(rotconfig) 
    itk_component add algorithm {
       iwidgets::optionmenu $w.algorithm \
-            -labeltext [lindex [cs rotconfig info algorithm] 2]
+            -labeltext [lindex [cs rotConfig info algorithm] 2]
    }
    $itk_component(algorithm) insert end FDE FULL N N&M
    itk_component add headid {
       iwidgets::optionmenu $w.headid \
-            -labeltext [lindex [cs rotconfig info headid] 2]
+            -labeltext [lindex [cs rotConfig info headid] 2]
    }
    $itk_component(headid) insert end 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15
    pack $itk_component(rotconfig) $itk_component(algorithm) \
          $itk_component(headid) -padx 4 -pady 4
-   pack $itk_component(conff) -side left -fill y -expand y
+
+#  The rotConfigure command is not currently implemented in the CRS so
+#  don't pack the control.
+#   pack $itk_component(conff) -side left -fill y -expand y
 
 # Tolerance control.
    set w $itk_component(f1)
@@ -114,19 +117,27 @@ itcl::body CrsControl::constructor args {
          $itk_component(velError) -sticky ew
    pack $itk_component(tolf) -side left -fill y -expand y
 
-# Park, Stop and Datum buttons.
+# CentreWrap, Park, Stop and Datum buttons.
    set w $itk_component(f2)
+   itk_component add cenwrap {
+      ApplyButton $w.cenwrap -command rotCentre
+   }
    itk_component add rotpark {
-      ApplyButton $w.rotpark -command rotpark
+      ApplyButton $w.rotpark -command rotPark
    }
    itk_component add rotdatum {
-      ApplyButton $w.rotdatum -command rotdatum
+      ApplyButton $w.rotdatum -command rotDatum
    }
    itk_component add rotstop {
-      ApplyButton $w.rotstop -command rotstop
+      ApplyButton $w.rotstop -command rotStop
    }
-   pack $itk_component(rotdatum) $itk_component(rotpark) \
-         $itk_component(rotstop) -side left -padx 4 -pady 4 -fill x -expand y
+#   pack $itk_component(cenwrap) $itk_component(rotdatum) \
+#         $itk_component(rotpark) $itk_component(rotstop) \
+#         -padx 4 -pady 4 -fill x -expand y
+   grid $itk_component(cenwrap) $itk_component(rotpark) -sticky ew \
+         -padx 4 -pady 5
+   grid $itk_component(rotdatum) $itk_component(rotstop) -sticky ew \
+         -padx 4 -pady 5
    eval itk_initialize $args
 }
 

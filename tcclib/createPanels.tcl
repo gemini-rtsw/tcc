@@ -6,7 +6,7 @@
 #  Arguments:
 #             none
 #
-#  D Terrett 15 February 2000
+#  D Terrett 7 June 2000
 #
 #  Copyright CCLRC
 #-
@@ -22,8 +22,8 @@ proc createPanels {} {
          -title "System Control"
    PanelMgr mcsPanel -name .mcsPanel -class McsPanel \
          -title "Mount Control"
-#   PanelMgr crsPanel -name .crsPanel -class CrsPanel \
-#         -title "Cass Rotator Control"
+   PanelMgr crsPanel -name .crsPanel -class CrsPanel \
+         -title "Cass Rotator Control"
    PanelMgr ecsPanel -name .ecsPanel -class EcsPanel \
          -title "Enclosure Control"
 #   PanelMgr m1sPanel -name .m1sPanel -class M1sPanel \
