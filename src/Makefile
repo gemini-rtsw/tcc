@@ -8,7 +8,7 @@ TSDOBJ = tsdext.o tsdDomeView.o tsdWrapView.o tsdElView.o
 TIMEOBJ = tccTime.o
 SLAOBJ = slaext.o
 
-CFLAGS = -K pic -Xc -G -DUSE_TCL_STUBS -DUSE_TK_STUBS -DUSE_OLD_CANVAS \
+CFLAGS = -K pic -Xc -G -DUSE_TCL_STUBS -DUSE_TK_STUBS \
          -I${HLPG_INSTALL_BASE}/../hlpgruntime/tcl$(TCL_VERS)/include \
          -I/gemini/slalib/include \
          -I/gemini/timelib/include \
