@@ -7,7 +7,7 @@ static char rcsid[]="$Id:";
 *   FUNCTION NAME(S)
 *   astCmd - Implements the ast tcl command.
 *
-*   D L Terrett 25 August 1998
+*   D L Terrett 6 June 1999
 *
 *   Copyright CCLRC
 */
@@ -31,6 +31,7 @@ static char rcsid[]="$Id:";
 
 static int update( Tcl_Interp * );
 static int target( Tcl_Interp *, int, char *[] );
+static int instrument( Tcl_Interp *, int, char *[] );
 static int format( Tcl_Interp *, int, char *[] );
 
 /* *INDENT-OFF* */
@@ -83,6 +84,16 @@ int Tccext_AstCmd( ClientData clientdata, Tcl_Interp *interp, int argc,
             return TCL_ERROR;
         }
         return format( interp, argc, argv );
+    } 
+
+    else if ( strcmp( argv[1], "instrument" ) == 0 ) {
+        if ( argc != 3 ) {
+            Tcl_AppendResult( interp,
+                  "wrong # args: should be \"ast instrument origin\"",
+               (char *) NULL);
+            return TCL_ERROR;
+        }
+        return instrument( interp, argc, argv );
     } 
 
     else {
@@ -279,5 +290,34 @@ static int format( Tcl_Interp *interp, int argc, char *argv[] )
                 dmsf[2], dmsf[3], equinox.type, equinox.year);
         }
     }
+    return TCL_OK;
+}
+
+static int instrument( Tcl_Interp *interp, int argc, char *argv[] )
+{
+    struct PO po;
+    double x, y;
+    double wavel;
+
+/* Focal plane X/Y. */
+    astGetpo ( &po );
+    switch ( *argv[2] ) {
+        case 'M':
+        case 'm': x = po.mx; y = po.my; break;
+        case 'A':
+        case 'a': x = po.ax; y = po.ay; break;
+        case 'B':
+        case 'b': x = po.bx; y = po.by; break;
+        case 'C':
+        case 'c': x = po.cx; y = po.cy; break;
+        default:
+            Tcl_AppendResult( interp, "\"", argv[2], 
+               "\" is not a valid pointing origin", (char *) NULL );
+            return TCL_ERROR;
+    }
+
+/* Format the result */
+    sprintf( interp->result, "%4.2f %4.2f", x, y);
+
     return TCL_OK;
 }
