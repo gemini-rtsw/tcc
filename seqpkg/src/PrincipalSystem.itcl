@@ -1,0 +1,144 @@
+#+
+#  PrincipalSystem.itcl
+#
+#  Implements the PrincipalSystem class.
+#
+#  seq::PrincipalSystem
+#
+#     Parameters:
+#
+#        apply   The name of the principle system's apply record.
+#
+#        sa      The status acceptor with the in position attribute
+#
+#        inpos   The in position attribute
+#
+#        okval   The value of the inposition attribute that indicates that
+#                it OK to proceed.
+#
+#     Methods:
+#
+#        post action
+#
+#           Posts an action.
+#
+#        cancel action
+#
+#           Cancels an action.
+#
+#  D Terrett 17 July 2000
+#
+#  Copyright CLRC
+#+
+
+itcl::class seq::PrincipalSystem {
+   constructor {apply sa inpos okval} {}
+   destructor {}
+   public method post {action}
+   public method cancel {action}
+
+   private method monitor {name status info}
+   private variable Apply
+   private variable CurrentAction
+   private variable Sa
+   private variable InPos
+   private variable InPosRec
+   private variable OkVal
+}
+
+itcl::body seq::PrincipalSystem::constructor {apply sa inpos okval} {
+
+# Save the name of the apply
+   set Apply $apply
+
+# Create the status acceptor for the in position record.
+   if { [catch {sa $sa info}] } {
+      epics sa $sa
+   }
+
+# Link a variable to the in position value.
+   sa $sa link $inpos [scope InPos]
+
+# Save the names of the status acceptor and record and the ok value.
+   set Sa $sa
+   set InPosRec $inpos
+   set OkVal $okval
+}
+
+itcl::body seq::PrincipalSystem::destructor {} {
+
+# Release the command monitor.
+   cm $Apply release
+
+# Unlink the in position variable.
+   sa $Sa unlink $inPosRec [scope InPos]
+}
+
+itcl::body seq::PrincipalSystem::monitor {name status info} {
+
+# Ignore busy status messages.
+   if { ![string equal $status busy] } {
+
+# If there is a current action then if it has the appropriate option set,
+# execute that option.
+      if { [string length $CurrentAction] } {
+
+         if { [string equal $status idle] } {
+
+# Get the command associated with sucessful completion of the current command.
+            set command [$CurrentAction cget -onok]
+
+# Clear the current action so that we don't get reinvoked by a BUSY/IDLE
+# transition while waiting for the in position record to be set.
+            set curact $CurrentAction
+            set CurrentAction ""
+
+# Give the system time to set its in position record. This is a fudge until
+# the TCS subsystem set their ApplyC records properly.
+            after 2000
+
+# Wait for the in position record to have the ok value.
+            while { ![string equal [sa tcssad get inPosition] $OkVal] } {
+               vwait [scope InPos(value)]
+            }
+
+# Cancel the actions timeout handler.
+            $curact  canceltimeout
+
+# Evaluate the OK command.
+            if { [string length $command] } {
+               uplevel #0 $command
+            }
+         } else {
+
+# Handle error completion.
+            $CurrentAction canceltimeout
+            set command [$CurrentAction cget -onerror]
+            if { [string equal $status error] } {
+               set message [sa $Apply get mess value]
+            } else {
+               set message "Command timed out"
+            }
+            set CurrentAction ""
+            uplevel #0 $command $info \"$message\"
+         }
+      }
+   }
+}
+
+itcl::body seq::PrincipalSystem::post {action} {
+
+# Post the apply with our monitor method as callback.
+   cs $Apply postCallback [itcl::code $this monitor] -save
+
+# Save the name of the current action.
+   set CurrentAction $action
+
+   return
+}
+
+itcl::body seq::PrincipalSystem::cancel {action} {
+   if { [string equal $action $CurrentAction] } {
+      set $CurrentAction ""
+   }
+}

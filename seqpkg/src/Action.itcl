@@ -1,0 +1,114 @@
+#+
+#  Action.itcl
+#
+#  Implements the seq::Action class.
+#
+#  seq::Action
+#
+#     Parameters:
+#
+#        psys   The principle system object associated with the system
+#               that implements the command.
+#
+#     Methods:
+#
+#        set {cs par val}
+#
+#           Sets a parameter value for a command sender.
+#
+#        start
+#
+#           Starts the execution of the action.
+#
+#        canceltimeout
+#
+#           Cancels the timeout handling of an in progress action.
+#
+#     Options:
+#
+#           -onok
+#
+#              The tcl script to execute when the action completes succesfully.
+#
+#           -onerror
+#
+#              The tcl script to execute when the action completes 
+#              unsuccesfully.
+#
+#           -ontimeout
+#
+#              The tcl script to execute if the action has not completed
+#              within the timeout period.
+#
+#           -timeout
+#
+#              The timeout period in seconds.
+#
+#
+#  D Terrett 9 July 2000
+#
+#  Copyright CCLRC
+#+
+
+itcl::class seq::Action {
+   constructor {psys args} {}
+   public method set {cs par val}
+   public method start {}
+   public method canceltimeout {} {after cancel [code $this timedout]}
+   public variable onok {}
+   public variable onerror {}
+   public variable ontimeout {}
+   public variable timeout 60
+
+   private method timedout {}
+   private variable Psys
+   private variable ParList {}
+}
+
+itcl::body seq::Action::constructor {psys args} {
+
+# Save the name of the principal system.
+   ::set Psys $psys
+
+   eval configure $args
+}
+
+itcl::body seq::Action::set {cs par val} {
+
+# Make sure that the command sender exists and that it has the specified
+# parameter.
+   if { [catch {cs $cs info}] } {
+      epics cs $cs
+   }
+   if { [catch {cs $cs info $par}] } {
+      error "Command sender $cs does not have a parameter called $par"
+   }
+
+# Add the parameter settings to the list.
+   lappend ParList $cs $par $val
+
+   return
+}
+
+itcl::body seq::Action::start {} {
+
+# Set the command parameters.
+   foreach {cs par val} $ParList {
+      cs $cs set $par value \"$val\"
+   }
+
+# Post the command to the principal system.
+   $Psys post $this
+
+# Start the timeout timer.
+   if { ![string is space $ontimeout] } {
+      after [expr $timeout * 1000] [code $this timedout]
+   }
+
+   return
+}
+
+itcl::body seq::Action::timedout {} {
+   $Psys cancel $this
+   uplevel #0 $ontimeout
+}
