@@ -7,7 +7,7 @@
 #  Arguments:
 #            Any command line options and values.
 #
-#  D Terrett  13 July 2001
+#  D Terrett  16 July 2001
 #
 #  Copyright CCLRC
 #-
@@ -147,6 +147,9 @@ proc tccMain args {
 # Create the object the represents the configuration of the mirrors within
 # the instrument support structure.
    ISS iss
+
+# Create the object that controls the active optics.
+   ActiveOptics AO
 
 # Create the logger object.
    tcclib::Logger logger apply applyC errMessage

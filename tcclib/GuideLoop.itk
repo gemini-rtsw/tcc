@@ -10,7 +10,7 @@
 #  Methods:
 #           none
 #
-#  D Terrett  28 June 2001
+#  D Terrett  16 July 2001
 #
 #  Copyright CCLRC
 #+
@@ -20,14 +20,14 @@ itcl::class GuideLoop {
    constructor args {}
    destructor {}
    private {
-      method m1mode {state}
-      method mtmode {state}
-      method m2mode {state}
-      method m2coma {state}
-      method prmode {state}
-      method wfsmode {wfs state}
       method recolour {args}
-      variable m1Weight
+      method comacorr {val}
+      method m1mode {val}
+      method m2mode {val}
+      method mtmode {val}
+      method probemode {val}
+      method wfsmode {wfs val}
+      method wfsexpose {wfs}
    }
 }
 
@@ -48,8 +48,8 @@ itcl::body GuideLoop::constructor args {
 # WFS boxes
    foreach sys {pwfs1 pwfs2 oiwfs} {
       itk_component add $sys {
-         SelectButton $w.$sys -command [code $this wfsmode $sys] \
-               -orient vertical
+         tcclib::SelectButton $w.$sys -orient vertical \
+            -command [itcl::code $this wfsmode $sys]
       } {
          usual
          rename -offbackground -background background Background
@@ -66,11 +66,12 @@ itcl::body GuideLoop::constructor args {
 # WFS controls.
       itk_component add ${sys}_ex {
          iwidgets::combobox $w.${sys}_ex -arrowrelief flat -width 5 \
-               -validate real -labeltext "exp(s)"
+               -validate real -labeltext "exp(s)" \
+               -selectioncommand [itcl::code $this wfsexpose $sys]
       }
       $w create window 60 80 -window $w.${sys}_ex -tag $sys
       $w.${sys}_ex insert list end 1.0 0.5 0.1 0.05 0.01 0.005
-      $w.${sys}_ex insert entry end 0.01
+      $w.${sys}_ex insert entry end [AO cget -${sys}Expose]
       [$w.${sys}_ex component list] configure -hscrollmode none \
             -vscrollmode none
    }
@@ -92,7 +93,8 @@ itcl::body GuideLoop::constructor args {
 
 # Controls for M1.
    itk_component add m1 {
-      SelectButton $w.m1 -command [code $this m1mode] -orient vertical
+      tcclib::SelectButton $w.m1 -orient vertical \
+            -command [itcl::code $this m1mode]
    } {
       usual
       rename -offbackground -background background Background
@@ -103,7 +105,8 @@ itcl::body GuideLoop::constructor args {
 
 # Controls for M2
    itk_component add m2 {
-      SelectButton $w.m2 -command [code $this m2mode] -orient vertical
+      tcclib::SelectButton $w.m2 -orient vertical \
+            -command [itcl::code $this m2mode]
    } {
       usual
       rename -offbackground -background background Background
@@ -114,7 +117,8 @@ itcl::body GuideLoop::constructor args {
    $itk_component(m2) add OIWFS -pady 0
    $itk_component(m2) add OFF -pady 0
    itk_component add m2coma {
-      SelectButton $w.m2coma -command [code $this m2coma] -orient vertical
+      tcclib::SelectButton $w.m2coma -orient vertical \
+            -command [itcl::code $this comacorr]
    } {
       usual
       rename -offbackground -background background Background
@@ -125,7 +129,8 @@ itcl::body GuideLoop::constructor args {
 
 # Controls for Mount.
    itk_component add mt {
-      SelectButton $w.mt -command [code $this mtmode] -orient vertical
+      tcclib::SelectButton $w.mt -orient vertical \
+            -command [itcl::code $this mtmode]
    } {
       usual
       rename -offbackground -background background Background
@@ -142,7 +147,8 @@ itcl::body GuideLoop::constructor args {
 
 # Controls for probes.
    itk_component add pr {
-      SelectButton $w.pr -command [code $this prmode] -orient vertical
+      tcclib::SelectButton $w.pr -orient vertical \
+            -command [itcl::code $this probemode]
    } {
       usual
       rename -offbackground -background background Background
@@ -189,46 +195,15 @@ itcl::body GuideLoop::constructor args {
    $w create line 252  40  20  40  20 400 251 400 -width 3 -fill white \
          -tags {active m2_mt} -arrow last -arrowshape {20 20 7}
 
-# Create the command senders required by this screen.
-   if { [catch {cs m1Guide info}] } {
-      epics cs m1Guide
+# ENABLE/DISABLE buttons.
+   itk_component add on {
+      tcclib::LiveButton $w.on -text ENABLE -command {AO enable}
    }
-   if { [catch {cs m1GuideConfig info}] } {
-      epics cs m1GuideConfig
+   itk_component add off {
+      tcclib::LiveButton $w.off -text DISABLE -command {AO disable}
    }
-   if { [catch {cs mountGuide info}] } {
-      epics cs mountGuide
-   }
-   if { [catch {cs m2Guide info}] } {
-      epics cs m2Guide
-   }
-   if { [catch {cs m2GuideConfig info}] } {
-      epics cs m2GuideConfig
-   }
-   if { [catch {cs m2GuideMode info}] } {
-      epics cs m2GuideMode
-   }
-   if { [catch {cs wfsGuideMode info}] } {
-      epics cs wfsGuideMode
-   }
-   if { [catch {cs pwfs1Observe info}] } {
-      epics cs pwfs1Observe
-   }
-   if { [catch {cs pwfs1StopObserve info}] } {
-      epics cs pwfs1StopObserve
-   }
-   if { [catch {cs pwfs2Observe info}] } {
-      epics cs pwfs2Observe
-   }
-   if { [catch {cs pwfs2StopObserve info}] } {
-      epics cs pwfs2StopObserve
-   }
-   if { [catch {cs oiwfsObserve info}] } {
-      epics cs oiwfsObserve
-   }
-   if { [catch {cs oiwfsStopObserve info}] } {
-      epics cs oiwfsStopObserve
-   }
+   $w create window 450 420 -window $itk_component(on)
+   $w create window 550 420 -window $itk_component(off)
 
 # Create status acceptor for guide state
    if { [catch {sa guideConfig info}] } {
@@ -408,184 +383,92 @@ body GuideLoop::recolour args {
    }
 }
 
-body GuideLoop::m1mode state {
-
-   switch $state {
-      ON {
-         cs m1Guide set mode On
+itcl::body GuideLoop::comacorr {val} {
+   switch $val {
+      COMA {
+         AO configure -comacorr 1
       }
       OFF {
-         cs m1Guide set mode Off
+         AO configure -comacorr 0
       }
-   }
-   logger command m1Guide
-
-   if { [catch {cs tcsApply post} msg] } {
-      tk_messageBox -icon error -parent $itk_interior -message \
-            "Error posting m1Guide command: TCS reports \
-            \"$msg\""
    }
 }
 
-body GuideLoop::mtmode state {
-
-   switch $state {
+itcl::body GuideLoop::m2mode {val} {
+   switch $val {
+      P1 {
+         AO configure -scssource PWFS1
+      }
+      P2 {
+         AO configure -scssource PWFS2
+      }
+      OIWFS {
+         AO configure -scssource OIWFS
+      }
       OFF {
-          cs mountGuide set mode Off
+         AO configure -scssource none
+      }
+   }
+}
+
+itcl::body GuideLoop::m1mode {val} {
+   switch $val {
+      ON {
+         AO configure -m1figure 1
+      }
+      OFF {
+         AO configure -m1figure 0
+      }
+   }
+}
+
+itcl::body GuideLoop::mtmode {val} {
+   switch $val {
+      P1 {
+         AO configure -mountguide PWFS1
+      }
+      P2 {
+         AO configure -mountguide PWFS2
       }
       M2 {
-          cs mountGuide set mode On
-          cs mountGuide set source SCS 
+         AO configure -mountguide SCS
       }
+      OFF {
+         AO configure -mountguide none
+      }
+   }
+}
+
+itcl::body GuideLoop::probemode {val} {
+   switch $val {
       P1 {
-          cs mountGuide set mode On
-          cs mountGuide set source AG 
-          cs mountGuide set p1weight 1.0
-          cs mountGuide set p2weight 0.0
+         AO configure -probeguide PWFS1
       }
       P2 {
-          cs mountGuide set mode On
-          cs mountGuide set source AG 
-          cs mountGuide set p1weight 0.0
-          cs mountGuide set p2weight 1.0
+         AO configure -probeguide PWFS2
       }
-   }
-   logger command mountGuide
-
-   if { [catch {cs mountGuide post} msg] } {
-      tk_messageBox -icon error -parent $itk_interior -message \
-            "Error posting mountGuide command: TCS reports \
-            \"$msg\""
-   }
-   recolour
-}
-
-body GuideLoop::m2mode state {
-
-# Turn guiding off.
-   cs m2Guide set state Off
-   logger command m2Guide
-   if { [catch {cs m2Guide post} msg] } {
-      tk_messageBox -icon error -parent $itk_interior -message \
-            "Error posting m2Guide command: TCS reports \
-            \"$msg\""
-   }
-
-   if { ![string equal OFF $state] } {
-
-# Set up M2 guide parameters.
-      cs m2GuideConfig set samplefreq 200
-      cs m2GuideConfig set filter raw
-      cs m2GuideConfig set freq1 ""
-      cs m2GuideConfig set freq2 ""
-      cs m2GuideConfig set beam A
-      cs m2GuideConfig set reset On
-      switch $state {
-         P1 {
-            cs m2GuideConfig set source PWFS1
-         }
-         P2 {
-            cs m2GuideConfig set source PWFS2
-         }
-         OIWFS {
-            cs m2GuideConfig set source OIWFS
-         }
-      }
-      logger command m2GuideConfig
-      if { [catch {cs m2GuideConfig post} msg] } {
-         tk_messageBox -icon error -parent $itk_interior -message \
-               "Error posting m2GuideConfig command: TCS reports \
-               \"$msg\""
-      }
-
-      cs m2GuideConfig set reset Off
-      logger command m2GuideConfig
-      if { [catch {cs m2GuideConfig post} msg] } {
-         tk_messageBox -icon error -parent $itk_interior -message \
-               "Error posting m2GuideConfig command: TCS reports \
-               \"$msg\""
-      }
-
-# Turn guiding on.
-      cs m2Guide set state On
-      logger command m2Guide
-      if { [catch {cs m2Guide post} msg] } {
-         tk_messageBox -icon error -parent $itk_interior -message \
-               "Error posting m2Guide command: TCS reports \
-               \"$msg\""
-      }
-   }
-   recolour
-}
-
-body GuideLoop::prmode state {
-
-   switch $state {
       OFF {
-         cs wfsGuideMode set state Off
+         AO configure -probeguide none
       }
-      P1 {
-         cs wfsGuideMode set state On
-         cs wfsGuideMode set probe PWFS1
-      }
-      P2 {
-         cs wfsGuideMode set state On
-         cs wfsGuideMode set probe PWFS2
-      }
-   }
-   logger command wfsGuideMode
-
-   if { [catch {cs wfsGuideMode post} msg] } {
-      tk_messageBox -icon error -parent $itk_interior -message \
-            "Error posting wfsGuideMode command: TCS reports \
-            \"$msg\""
-   }
-   recolour
-}
-
-body GuideLoop::m2coma state {
-
-   switch $state {
-      OFF {
-         cs m2GuideMode set coma Off
-      }
-      COMA {
-         cs m2GuideMode set coma On
-      }
-   }
-   logger command m2GuideMode
-
-   if { [catch {cs m2GuideMode post} msg] } {
-      tk_messageBox -icon error -parent $itk_interior -message \
-            "Error posting m2GuideMode command: TCS reports \
-            \"$msg\""
    }
 }
 
-body GuideLoop::wfsmode {wfs state} {
-
-   switch $state {
-      ON -
+itcl::body GuideLoop::wfsmode {wfs val} {
+   switch $val {
+      ON {
+         AO configure -${wfs}Active 1
+         AO configure -${wfs}Quicklook 0
+      }
       Q/L {
-         cs ${wfs}Observe set noexp -1
-         cs ${wfs}Observe set int [$itk_component(${wfs}_ex) get]
-         if { [string equal $state Q/L] } {
-            cs ${wfs}Observe set outopt DHS
-            cs ${wfs}Observe set output QL
-         } else {
-            cs ${wfs}Observe set outopt NONE
-            cs ${wfs}Observe set output ""
-         }
-         logger command ${wfs}Observe
+         AO configure -${wfs}Active 1
+         AO configure -${wfs}Quicklook 1
       }
       OFF {
-         cs ${wfs}StopObserve set dummy MARK
-         logger command ${wfs}StopObserve
+         AO configure -${wfs}Active 0
       }
    }
+}
 
-   if { [catch {cs ${wfs}Observe post} msg] } {
-      tk_messageBox -icon error -parent $itk_interior -message \
-            "Error posting ${wfs} command: TCS reports \"$msg\""
-   }
+itcl::body GuideLoop::wfsexpose {wfs} {
+   AO configure -${wfs}Expose [$itk_component(${wfs}_ex) get]
 }
