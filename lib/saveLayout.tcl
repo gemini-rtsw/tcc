@@ -5,7 +5,7 @@
 #     saveLayout  - saves the current panel layout to a file selected with
 #                   a dialog box.
 #
-#  D Terrett 19 July 2001
+#  D Terrett 8 May 2002
 #
 #  Copyright CCLRC
 #-
@@ -31,7 +31,7 @@ proc saveLayout {} {
       } else {
 
 # Save the layout parameters for every panel object that exists.
-         foreach panelmgr [itcl::find objects -isa tcclib::PanelMgr] {
+         foreach panelmgr [itcl::find objects -isa PanelMgr] {
 
 # Update the panel manager's geometry 
             $panelmgr updategeometry
@@ -54,10 +54,7 @@ proc saveLayout {} {
             set state [$panelmgr cget -state]
             puts $file "$panelmgr configure -state $state"
 
-         }
-
 # Write a map command for the panels which have create set to 1.
-         foreach panelmgr [itcl::find objects -class tcclib::PanelMgr] {
             if { [$panelmgr cget -create] } {
                puts $file "$panelmgr configure -create 1"
                puts $file "$panelmgr map"
@@ -70,44 +67,6 @@ proc saveLayout {} {
                   }
                }
             }
-         }
-
-# Do the same for all the edit panels except that the edit shadow's map
-# method is called instead of the panel directly.
-         foreach editshadow [itcl::find objects -class tcclib::EditShadow] {
-            set panelmgr [$editshadow cget -panel]
-            if { [$panelmgr cget -create] } {
-               puts $file "$panelmgr configure -create 1"
-               puts $file "$editshadow map"
-               switch state {
-                  iconified {
-                     puts $file "$panelmgr iconify"
-                  }
-                  withdrawn {
-                     puts $file "$panelmgr withdraw"
-                  }
-               }
-            }
-         }
-
-# Do the same for the EditShadows (if such a class exists - only the tcc
-# uses EditShadows).
-         if { [llength [itcl::find classes EditShadow]] } {
-            foreach editshadow [itcl::find objects -class EditShadow] {
-               set panelmgr [$editshadow cget -panel]
-               if { [$panelmgr cget -create] } {
-                  puts $file "$panelmgr configure -create 1"
-                  puts $file "$editshadow map"
-                  switch state {
-                     iconified {
-                        puts $file "$panelmgr iconify"
-                     }
-                     withdrawn {
-                        puts $file "$panelmgr withdraw"
-                     }
-                  }
-               }
-           }
          }
 
 # Close the file.
