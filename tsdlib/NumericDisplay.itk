@@ -11,7 +11,7 @@
 #
 #  options
 #
-#  D Terrett 10 November 1999
+#  D Terrett 15 November 1999
 #
 #  Copyright CCLRC
 #-
@@ -29,6 +29,9 @@ itcl::class NumericDisplay {
    private method newtarget args
    private method newobject args
    private method inPosition {rec status info value}
+   private method noheartbeat
+   private method heartbeat {rec status info value}
+   private variable nohbid
 }
 
 itk::usual NumericDisplay {
@@ -56,6 +59,12 @@ itcl::body NumericDisplay::constructor args {
    }
    itk_component add objname {
       label $w.objname
+   }
+
+# Status and health.
+   itk_component add status {
+      StatusField $w.status -labelmargin 5 -width 15 -entryborder 3 \
+            -entryrelief groove -labeltext "TCS STATUS"
    }
 
    itk_component add telposlabel {
@@ -214,7 +223,7 @@ itcl::body NumericDisplay::constructor args {
 
 # Layout elements.
    grid $itk_component(objlabel) $itk_component(objname) - - - \
-         -sticky e -padx 3 -pady 3
+         $itk_component(status) - - -sticky e -padx 3 -pady 3
    grid configure $itk_component(objname) -sticky w
    grid $itk_component(telposlabel) $itk_component(telpos1) \
          $itk_component(telpos2) $itk_component(telpossys) \
@@ -255,6 +264,13 @@ itcl::body NumericDisplay::constructor args {
       sa $sa proc $par [code $this inPosition]
    }
 
+# Execute the noheartbeat method in 5 seconds time (the heartbeat monitor
+# routine will cancel it if the heartbeat is running.
+   set nohbid [after 5000 [code $this noheartbeat]]
+
+# Monitor the heartbeat sad record.
+   sa tcssad proc heartbeat [code $this heartbeat]
+
 # Trigger checks on the subsystem states
    inPosition mcssad.xxxx {} {} {}
    inPosition crssad.xxxx {} {} {}
@@ -277,6 +293,8 @@ itcl::body NumericDisplay::destructor {} {
          followS followS} {
       sa $sa unproc $par [code $this inPosition]
    }
+   sa tcssad unproc heartbeat [code $this heartbeat]
+   after cancel $nohbid
 }
 
 itcl::body NumericDisplay::newtarget args {
@@ -500,4 +518,38 @@ itcl::body NumericDisplay::inPosition {rec status info value} {
 itcl::configbody NumericDisplay::vt {
    newobject
    newtarget
+}
+
+itcl::body NumericDisplay::noheartbeat {} {
+
+# No heartbeat seen for 5 seconds so write a message to the status
+# field and set it to the "error" colour.
+   $itk_component(status) configure -text "NO HEARTBEAT" -status error
+}
+
+itcl::body NumericDisplay::heartbeat {rec status info value} {
+
+# Cancel the pending noheartbeat call.
+   after cancel $nohbid
+   
+# Get the state and health.
+   set state [sa tcssad get state]
+   set health [sa tcssad get health]
+
+# Update the status widget.
+   $itk_component(status) configure -text ${state}/${health}
+
+# Set the widget status.
+   if { [string compare $health BAD] == 0 } {
+      $itk_component(status) configure -status error
+   } elseif { [string compare $health WARNING] == 0 } {
+      $itk_component(status) configure -status warning
+   } elseif { [string compare $state RUNNING] != 0 } {
+      $itk_component(status) configure -status warning
+   } else {
+      $itk_component(status) configure -status ok
+   }
+
+# Schedule the noheartbeat method again.
+   set nohbid [after 5000 [code $this noheartbeat]]
 }
