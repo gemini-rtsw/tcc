@@ -14,13 +14,10 @@
 #  Options:
 #          -command      A command to be executed when the button is pressed.
 #
-#          -logcommand - The command to send to the logger when the command 
-#                        is executed.
-#
 #  Methods:
 #          none
 #
-#  D Terrett 5 June 2000
+#  D Terrett 6 June 2000
 #
 #  Copyright CCLRC
 #-
@@ -31,7 +28,6 @@ itcl::class LiveButton {
    constructor args {}
 
    itk_option define -command command Command {}
-   itk_option define -logcommand logcommand LogCommand {}
 
    private method command
 }
@@ -59,8 +55,5 @@ itcl::body LiveButton::constructor args {
 itcl::body LiveButton::command {} {
    if { $itk_option(-command) != "" } {
       catch {uplevel #0 $itk_option(-command)}
-      foreach cs $itk_option(-logcommand) {
-         logger command $cs
-      }
    }
 }

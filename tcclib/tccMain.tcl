@@ -7,7 +7,7 @@
 #  Arguments:
 #            Any command line options and values.
 #
-#  D Terrett  31 May 2000
+#  D Terrett  6 June 2000
 #
 #  Copyright CCLRC
 #-
@@ -134,6 +134,7 @@ proc tccMain args {
    epics cs poHandset
    epics cs poHandConfig
    epics cs orbit
+   epics cs planet
    epics cs chopRelative
    epics cs chopConfig
    epics cs pointParam

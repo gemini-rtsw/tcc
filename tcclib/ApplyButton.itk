@@ -27,7 +27,7 @@
 #
 #        o  If the epics command sender doesn't exist it is created.
 #
-#  D Terrett 5 June 2000
+#  D Terrett 6 June 2000
 #
 #  Copyright CCLRC
 #+
@@ -68,12 +68,11 @@ itcl::configbody ApplyButton::command {
       epics cs $itk_option(-command)
    }
 
-# Configure the -text and -logcommand options of the LiveButton.
+# Configure the -text option of the LiveButton.
    if { [string length $itk_option(-text)] == 0 } {
       $itk_component(lbutton) configure \
             -text [lindex [cs $itk_option(-command) info] 1]
    }
-   $itk_component(lbutton) configure -logcommand $itk_option(-command)
 }
 
 itcl::configbody ApplyButton::text {
@@ -107,7 +106,14 @@ itcl::body ApplyButton::apply {} {
          cs $itk_option(-command) set $par \"[$itk_option(-parcommand) $par]\"
       }
    }
-   if [catch {cs $itk_option(-command) post} msg] {
-      error "Error posting $itk_option(-command) command: TCS reports \"$msg\""
+
+# Log the command and its parameters.
+   logger command $itk_option(-command)
+
+# Post the command.
+   if { [catch {cs $itk_option(-command) post} msg] } {
+      tk_messageBox -icon error -parent $itk_interior -message \
+            "Error posting $itk_option(-command) command: TCS reports \
+            \"$msg\""
    }
 }

@@ -7,7 +7,7 @@
 #  Methods:
 #           none
 #
-#  D Terrett  5 June 2000
+#  D Terrett  6 June 2000
 #
 #  Copyright CCLRC
 #+
@@ -196,14 +196,15 @@ itcl::body ObserveControl::setchop state {
    switch $state {
       Chop {
          cs chop set chop value On
+         logger command chop
        }
       "Beam A" {
-         cs chop set chop value Off
          cs m2beam set m2Beam value A
+         logger command m2beam
        }
       "Beam B" {
-         cs chop set chop value Off
          cs m2beam set m2Beam value B
+         logger command m2beam
        }
    }
    if [catch {cs tcsApply post} msg] {
@@ -220,6 +221,7 @@ itcl::body ObserveControl::setnod state {
          cs nod set nod value B
        }
    }
+   logger command nod
    if [catch {cs tcsApply post} msg] {
       tk_messageBox -icon error -parent $itk_interior -message $msg
    }

@@ -3,7 +3,7 @@
 #
 #  Implements the TcsConfigControl widget.
 #
-#  D Terrett 5 June 2000
+#  D Terrett 6 June 2000
 #
 #  Copyright CCLRC
 #+
@@ -235,8 +235,9 @@ itcl::body TcsConfigControl::apply {} {
       }
 
 # Post the command (any command sender will do).
-      if [catch {cs tcsApply post} msg] {
-         error "TCS reports \"$msg\""
+      if { [catch {cs tcsApply post} msg] } {
+         tk_messageBox -icon error -parent $itk_interior -message \
+               "Error posting configuration: TCS reports \"$msg\""
       }
    }
 }

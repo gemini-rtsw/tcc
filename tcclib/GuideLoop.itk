@@ -10,7 +10,7 @@
 #  Methods:
 #           none
 #
-#  D Terrett  26 May 2000
+#  D Terrett  6 June 2000
 #
 #  Copyright CCLRC
 #+
@@ -182,15 +182,34 @@ itcl::body GuideLoop::constructor args {
          -tags {active m2_mt} -arrow last -arrowshape {20 20 7}
 
 # Create the command senders required by this screen.
-   if [catch {cs m1Guide info}] {
+   if { [catch {cs m1Guide info}] } {
       epics cs m1Guide
+   }
+   if { [catch {cs m1GuideConfig info}] } {
+      epics cs m1GuideConfig
+   }
+   if { [catch {cs mountGuide info}] } {
       epics cs mountGuide
+   }
+   if { [catch {cs m2Guide info}] } {
       epics cs m2Guide
+   }
+   if { [catch {cs pwfs1Observe info}] } {
       epics cs pwfs1Observe
+   }
+   if { [catch {cs pwfs1StopObserve info}] } {
       epics cs pwfs1StopObserve
+   }
+   if { [catch {cs pwfs2Observe info}] } {
       epics cs pwfs2Observe
+   }
+   if { [catch {cs pwfs2StopObserve info}] } {
       epics cs pwfs2StopObserve
+   }
+   if { [catch {cs oiwfsObserve info}] } {
       epics cs oiwfsObserve
+   }
+   if { [catch {cs oiwfsStopObserve info}] } {
       epics cs oiwfsStopObserve
    }
 
@@ -339,11 +358,17 @@ body GuideLoop::recolour args {
 
 body GuideLoop::m1mode state {
 
-   cs m1Guide set mode [expr {$state ? "On" : "Off"}]
-   cs m1Guide set frames [$itk_component(m1Frames) get]
-   cs m1Guide set weighting $m1Weight
+   if { $state } {
+      cs m1GuideConfig set frames [$itk_component(m1Frames) get]
+      cs m1GuideConfig set weighting $m1Weight
+      logger command m1GuideConfig
+      cs m1Guide set mode On
+   } else {
+      cs m1Guide set mode Off
+   }
+   logger command m1Guide
 
-   if [catch {cs m1Guide post} msg] {
+   if [catch {cs tcsApply post} msg] {
       tk_messageBox -icon error -parent $itk_interior -message \
             "Error posting m1Guide command: TCS reports \
             \"$msg\""
@@ -361,6 +386,7 @@ body GuideLoop::mtmode state {
    set p1 [$itk_component(mtWeight) get]
    cs mountGuide set p1weight $p1
    cs mountGuide set p2weight [expr {1 - $p1}]
+   logger command mountGuide
 
    if [catch {cs mountGuide post} msg] {
       tk_messageBox -icon error -parent $itk_interior -message \
@@ -372,6 +398,7 @@ body GuideLoop::mtmode state {
 body GuideLoop::m2mode state {
 
    cs m2Guide set state [expr {$state ? "On" : "Off"}]
+   logger command m2Guide
 
    if [catch {cs m2Guide post} msg] {
       tk_messageBox -icon error -parent $itk_interior -message \
@@ -384,12 +411,14 @@ body GuideLoop::wfsstart {wfs ql} {
 
    cs ${wfs}Observe set noexp -1
    cs ${wfs}Observe set int [$itk_component(${wfs}_ex) get]
-   cs ${wfs}Observe set output QL
    if { $ql } {
       cs ${wfs}Observe set outopt DHS
+      cs ${wfs}Observe set output QL
    } else {
       cs ${wfs}Observe set outopt None
+      cs ${wfs}Observe set output ""
    }
+   logger command ${wfs}Observe
 
    if [catch {cs ${wfs}Observe post} msg] {
       tk_messageBox -icon error -parent $itk_interior -message \
@@ -401,6 +430,7 @@ body GuideLoop::wfsstart {wfs ql} {
 body GuideLoop::wfsstop wfs {
 
    cs ${wfs}StopObserve set dummy MARK
+   logger command ${wfs}StopObserve
 
    if [catch {cs ${wfs}StopObserve post} msg] {
       tk_messageBox -icon error -parent $itk_interior -message \

@@ -10,7 +10,7 @@
 #  Methods:
 #           none
 #
-#  D Terrett 26 May 2000
+#  D Terrett 6 June 2000
 #
 #  Copyright CCLRC
 #+
@@ -109,6 +109,7 @@ itcl::body PoHandsetControl::constructor args {
 
 itcl::body PoHandsetControl::offset dir {
    cs poHandset set direction $dir
+   logger command poHandset
    if [catch {cs tcsApply post} msg] {
       tk_messageBox -icon error -parent $itk_interior -message \
             "Error adjusting instrument origin: TCS reports \"$msg\""
@@ -117,6 +118,7 @@ itcl::body PoHandsetControl::offset dir {
 
 itcl::body PoHandsetControl::newstep size {
    cs poHandConfig set step $size
+   logger command poHandConfig
    if [catch {cs tcsApply post} msg] {
       tk_messageBox -icon error -parent $itk_interior -message \
             "Error setting step size: TCS reports \"$msg\""
@@ -150,6 +152,7 @@ itcl::body PoHandsetControl::setvt {} {
       Source { cs poHandConfig set tel Source }
       All { cs poHandConfig set tel All }
    }
+   logger command poHandConfig
    if [catch {cs tcsApply post} msg] {
       tk_messageBox -icon error -parent $itk_interior -message \
             "Error setting virtual telescope: TCS reports \"$msg\""
