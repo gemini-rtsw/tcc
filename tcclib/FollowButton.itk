@@ -16,7 +16,7 @@
 #  Methods:
 #          none
 #
-#  D Terrett 6 June 2000
+#  D Terrett 7 June 2000
 #
 #  Copyright CCLRC
 #-
@@ -79,14 +79,14 @@ itcl::body FollowButton::command {} {
 }
 
 itcl::configbody FollowButton::command {
-   if [catch {cs $itk_option(-command) info}] {
+   if { [catch {cs $itk_option(-command) info}] } {
       epics cs $itk_option(-command)
    }
 }
 
 itcl::configbody FollowButton::sadrecord {
    if { [llength $itk_option(-sadrecord)] } {
-      if [catch {sa $itk_option(-sadrecord) info}] {
+      if { [catch {sa $itk_option(-sadrecord) info}] } {
          epics sa [lindex $itk_option(-sadrecord) 0]
       }
       sa [lindex $itk_option(-sadrecord) 0] proc \

@@ -10,7 +10,7 @@
 #  Methods:
 #           none
 #
-#  D Terrett  6 June 2000
+#  D Terrett  7 June 2000
 #
 #  Copyright CCLRC
 #+
@@ -214,7 +214,7 @@ itcl::body GuideLoop::constructor args {
    }
 
 # Create status acceptor for guide state
-   if [catch {sa guideConfig info}] {
+   if { [catch {sa guideConfig info}] } {
       epics sa guideConfig
    }
 
@@ -368,7 +368,7 @@ body GuideLoop::m1mode state {
    }
    logger command m1Guide
 
-   if [catch {cs tcsApply post} msg] {
+   if { [catch {cs tcsApply post} msg] } {
       tk_messageBox -icon error -parent $itk_interior -message \
             "Error posting m1Guide command: TCS reports \
             \"$msg\""
@@ -388,7 +388,7 @@ body GuideLoop::mtmode state {
    cs mountGuide set p2weight [expr {1 - $p1}]
    logger command mountGuide
 
-   if [catch {cs mountGuide post} msg] {
+   if { [catch {cs mountGuide post} msg] } {
       tk_messageBox -icon error -parent $itk_interior -message \
             "Error posting mountGuide command: TCS reports \
             \"$msg\""
@@ -400,7 +400,7 @@ body GuideLoop::m2mode state {
    cs m2Guide set state [expr {$state ? "On" : "Off"}]
    logger command m2Guide
 
-   if [catch {cs m2Guide post} msg] {
+   if { [catch {cs m2Guide post} msg] } {
       tk_messageBox -icon error -parent $itk_interior -message \
             "Error posting m2GuideCOntrol command: TCS reports \
             \"$msg\""
@@ -420,7 +420,7 @@ body GuideLoop::wfsstart {wfs ql} {
    }
    logger command ${wfs}Observe
 
-   if [catch {cs ${wfs}Observe post} msg] {
+   if { [catch {cs ${wfs}Observe post} msg] } {
       tk_messageBox -icon error -parent $itk_interior -message \
             "Error posting ${wfs}Observe command: TCS reports \
             \"$msg\""
@@ -432,7 +432,7 @@ body GuideLoop::wfsstop wfs {
    cs ${wfs}StopObserve set dummy MARK
    logger command ${wfs}StopObserve
 
-   if [catch {cs ${wfs}StopObserve post} msg] {
+   if { [catch {cs ${wfs}StopObserve post} msg] } {
       tk_messageBox -icon error -parent $itk_interior -message \
             "Error posting ${wfs}StopObserve command: TCS reports \
             \"$msg\""

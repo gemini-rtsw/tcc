@@ -9,7 +9,7 @@
 #  Methods:
 #           none
 #
-#  D Terrett 6 June 2000
+#  D Terrett 7 June 2000
 #
 #  Copyright CCLRC
 #+
@@ -135,12 +135,12 @@ itcl::body GuideHandsetControl::constructor args {
 itcl::body GuideHandsetControl::offset dir {
    cs guideHandset set direction $dir
    logger command guideHandset
-#   if [catch {cs tcsApply post} msg] {
+#   if { [catch {cs tcsApply post} msg] } {
 #      tk_messageBox -icon error -parent $itk_interior -message \
 #            "Error adjusting pointing: TCS reports \"$msg\""
 #   }
    catch {cs tcsApply post}
-#   if [catch {cs tcsApply post} msg] {
+#   if { [catch {cs tcsApply post} msg] } {
 #      tk_messageBox -icon error -parent $itk_interior -message \
 #            "Error adjusting pointing: TCS reports \"$msg\""
 #   }
@@ -150,7 +150,7 @@ itcl::body GuideHandsetControl::newstep size {
    cs guideHandConfig set step $size
    logger command guideHandConfig
    catch {cs tcsApply post}
-#   if [catch {cs tcsApply post} msg] {
+#   if { [catch {cs tcsApply post} msg] } {
 #      tk_messageBox -icon error -parent $itk_interior -message \
 #            "Error setting step size: TCS reports \"$msg\""
 #   }
@@ -173,13 +173,13 @@ itcl::body GuideHandsetControl::zerolocal {} {
    cs pointParam set level Local
    cs pointParam set value 0
    logger command pointParam
-   if [catch {cs tcsApply post} msg] {
+   if { [catch {cs tcsApply post} msg] } {
       tk_messageBox -icon error -parent $itk_interior -message \
             "Error setting local pointing model: TCS reports \"$msg\""
    }
    cs pointParam set name CE
    logger command pointParam
-   if [catch {cs tcsApply post} msg] {
+   if { [catch {cs tcsApply post} msg] } {
       tk_messageBox -icon error -parent $itk_interior -message \
             "Error setting local pointing model: TCS reports \"$msg\""
    }

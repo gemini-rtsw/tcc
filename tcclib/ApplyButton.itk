@@ -27,7 +27,7 @@
 #
 #        o  If the epics command sender doesn't exist it is created.
 #
-#  D Terrett 6 June 2000
+#  D Terrett 7 June 2000
 #
 #  Copyright CCLRC
 #+
@@ -64,7 +64,7 @@ itcl::body ApplyButton::constructor args {
 itcl::configbody ApplyButton::command {
 
 # Create the sender for this command if it doesn't already exist.
-   if [catch {cs $itk_option(-command) info}] {
+   if { [catch {cs $itk_option(-command) info}] } {
       epics cs $itk_option(-command)
    }
 

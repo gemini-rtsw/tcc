@@ -11,7 +11,7 @@
 #  Methods:
 #           none
 #
-#  D Terrett 6 June 2000
+#  D Terrett 7 June 2000
 #
 #  Copyright CCLRC
 #+
@@ -145,7 +145,7 @@ itcl::body OffsetHandsetControl::constructor args {
 itcl::body OffsetHandsetControl::offset dir {
    cs tarHandset set direction $dir
    logger command tarHandset
-   if [catch {cs tcsApply post} msg] {
+   if { [catch {cs tcsApply post} msg] } {
       tk_messageBox -icon error -parent $itk_interior -message \
             "Error adjusting offset: TCS reports \"$msg\""
    }
@@ -154,7 +154,7 @@ itcl::body OffsetHandsetControl::offset dir {
 itcl::body OffsetHandsetControl::newstep size {
    cs tarHandConfig set step $size
    logger command tarHandConfig
-   if [catch {cs tcsApply post} msg] {
+   if { [catch {cs tcsApply post} msg] } {
       tk_messageBox -icon error -parent $itk_interior -message \
             "Error setting step size: TCS reports \"$msg\""
    }
@@ -192,7 +192,7 @@ itcl::body OffsetHandsetControl::setvt {} {
       Source { cs tarHandConfig set tel Source }
    }
    logger command tarHandConfig
-   if [catch {cs tcsApply post} msg] {
+   if { [catch {cs tcsApply post} msg] } {
       tk_messageBox -icon error -parent $itk_interior -message \
             "Error setting virtual telescope: TCS reports \"$msg\""
    }
@@ -204,7 +204,7 @@ itcl::body OffsetHandsetControl::settang {} {
       0 { cs tarHandConfig set inctype "\"RADEC\"" }
    }
    logger command tarHandConfig
-   if [catch {cs tcsApply post} msg] {
+   if { [catch {cs tcsApply post} msg] } {
       tk_messageBox -icon error -parent $itk_interior -message \
             "Error setting increment type: TCS reports \"$msg\""
    }
