@@ -10,7 +10,7 @@ SLAOBJ = slaext.o
 
 CC = /opt/SUNWspro/bin/cc 
 CFLAGS = -K pic -Xc -G -DUSE_TCL_STUBS -DUSE_TK_STUBS \
-         -I/gemini/packages/tcl$(TCL_VERS)/include \
+         -I${HLPG_INSTALL_BASE}/../packages/tcl$(TCL_VERS)/include \
          -I/gemini/slalib/include \
          -I/gemini/timelib/include \
          -I/gemini/astlib/include
@@ -25,7 +25,7 @@ CFLAGS = -K pic -Xc -G -DUSE_TCL_STUBS -DUSE_TK_STUBS \
 LDFLAGS = -L/gemini/slalib/lib/solaris \
           -L/gemini/timelib/lib/solaris \
           -L/gemini/astlib/lib/solaris \
-          -L/gemini/packages/tcl$(TCL_VERS)/lib \
+          -L${HLPG_INSTALL_BASE}/../packages/tcl$(TCL_VERS)/lib \
           -ltclstub$(TCL_VERS) -ltkstub$(TCL_VERS) -last -ltime -lsla -lposix4
 
 tccext.so : $(TCCOBJ) $(CMNOBJ)

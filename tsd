@@ -10,14 +10,11 @@ exec $HLPG_INSTALL_BASE/bin/solaris/ocswish "$0" "$@"
 #  the tsd uses. It is probably installation dependent and will need to be
 #  hacked to get it to work.
 #
-#  D Terrett 17 September 1999
+#  D Terrett 7 July 2000
 #
 #  Copyright CCLRC
 #-
 
-# Define the default directory for writing files.
-global SAVE_FILE_DIR
-set SAVE_FILE_DIR /gemini/files
 
 # Define the root directory for locating libraries and extensions.
 global ROOT
@@ -57,10 +54,13 @@ appData add configFile tsd.ca
 # Load options database.
 option readfile $ROOT/options userDefault
 
+# Set the display background.
+. configure -background wheat
+
 # Define timezone
 global TIMEZONE TZOFFSET
 set TIMEZONE HST
 set TZOFFSET -10
 
-# Start the tsd (eval is used to expand $argv into a list of arguments).
-eval tsdMain $argv
+# Start the tsd
+tsdMain $argv

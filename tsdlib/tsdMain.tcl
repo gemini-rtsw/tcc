@@ -5,7 +5,7 @@
 #  Arguments:
 #             Any command line options and values.
 #
-#  D Terrett 9 June 2000
+#  D Terrett 7 July 2000
 #
 #  Copyright CCLRC
 #-
@@ -19,21 +19,6 @@ proc tsdMain args {
 
 # Create the epics service.
    service epics
-
-# Process command line arguments.
-   global ROOT
-   set layout $ROOT/default_layout.tsd
-   foreach {opt val} $args {
-      switch -- $opt {
-         -layout {
-            set layout $val
-         }
-         default {
-            tk_messageBox -icon warning -message \
-                  "Unknown command line option \"$opt\" being ignored."
-         }
-      }
-   }
 
 # Create status acceptors needed.
    epics sa tcssad
@@ -55,30 +40,17 @@ proc tsdMain args {
       set title "Gemini North"
    }
 
-# Create all the panel objects.
-   PanelMgr graphicPanel -name .graphicPanel -class GraphicPanel \
-         -title $title
-   PanelMgr numericPanel -name .numericPanel -class NumericPanel \
-         -title $title
-   PanelMgr rcPanel -name .rcPanel -class RcPanel -title "Display configure"
-
 # Link updating the panels to the UTC sad record.
    RecordMonitor tcssad.UTC tcssad UTC
    tcssad.UTC add updateDisplays
 
-# Pack the toolbar.
-   pack [TsdToolbar .toolbar]
+# Pack the numeric and graphic displays.
+   pack [NumericDisplay .numericDisplay] -anchor w
+   pack [GraphicDisplay .graphicDisplay] -anchor w
 
 # Set the title, icon etc.
    wm title . "Gemini North"
    wm iconname . TSD
-
-# Load the layout definition.
-   if { $layout != "" } {
-      if [catch {source $layout} msg] {
-         puts "Error processing layout \"$msg\""
-      }
-   }
 
 # It is now safe to display the main window.
    wm deiconify .
