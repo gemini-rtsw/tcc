@@ -4,7 +4,7 @@
 #  Implements the AzElPlot widget. A canvas with stars and the current
 #  telescope position plotted in Az/El.
 #
-#  D Terrett 27 January 1999
+#  D Terrett 30 May 1999
 #
 #  Copyright CCLRC
 #+
@@ -25,7 +25,7 @@ itcl::class AzElPlot {
    public method select tag
    public method mark tag
    public method unmark tag
-   public method next args
+   public method next mode
 
    private method el2r el
    private method r2el r
@@ -317,72 +317,76 @@ itcl::body AzElPlot::replot {} {
    after 1000 [code $this replot]
 }
 
-itcl::body AzElPlot::next args {
+itcl::body AzElPlot::next mode {
 #+
 #  Returns the tag of the "next" unmarked star (or nothing if there are none
 #  left.
 #-
 
-# No arguments means just get the next in the list.
-   if { [llength $args] == 0 } {
-      set tag [expr $CurrSelection + 1]
-      while { [info exists StarsAz($tag)] } {
-         if { $StarsState($tag) == "" && $StarsEl($tag) > 0.2617993878 } {
-            return $tag
-         }
-         incr tag
+# Get the next in the list.
+   switch $mode {
+      catorder {
+         set tag [expr $CurrSelection + 1]
+           while { [info exists StarsAz($tag)] } {
+              if { $StarsState($tag) == "" && $StarsEl($tag) > 0.2617993878 } {
+                 return $tag
+              }
+              incr tag
+           }
+           return ""
       }
-      return ""
-   } else {
-
+      minslew {
+      
 # Selection is based on time to slew in one or both axes.
-      set tag 0
-      set besttag ""
-      while { [info exists StarsAz($tag)] } {
+         set tag 0
+         set besttag ""
+         while { [info exists StarsAz($tag)] } {
 
 # Ignore stars below the horizon.
-         if { $StarsState($tag) == "" && $StarsEl($tag) > 0.2617993878 } {
+            if { $StarsState($tag) == "" && $StarsEl($tag) > 0.2617993878 } {
 
 # Distance to this star in elevation.
-            set eldist [expr abs( $StarsEl($tag) - $TelEl)]
-            set azdist [expr abs( $StarsAz($tag) - $TelAz)]
+               set eldist [expr abs( $StarsEl($tag) - $TelEl)]
+               set azdist [expr abs( $StarsAz($tag) - $TelAz)]
 
 # If the azimuth is less than zero we need to check whether it is closer
 # in the other wrap state.
-            if { $StarsAz($tag) < 0.0 } {
-               set azdist2 [expr abs( ($StarsAz($tag) + 6.2831853072) - $TelAz)]
-               set azdist [expr $azdist2 < $azdist ? $azdist2 : $azdist]
-            }
+               if { $StarsAz($tag) < 0.0 } {
+                  set azdist2 [expr abs( ($StarsAz($tag) + 6.2831853072) - \
+                        $TelAz)]
+                  set azdist [expr $azdist2 < $azdist ? $azdist2 : $azdist]
+               }
 
 # Distance we have to slew to each this star.
-            set slewdist [expr $eldist > $azdist ? $eldist : $azdist]
+               set slewdist [expr $eldist > $azdist ? $eldist : $azdist]
 
 # First star is always the best choice found so far.
-            if { $besttag == "" } {
-               set besttag $tag
-               set bestaz $azdist
-               set bestel $eldist
-               set bestslew $slewdist
-            } else {
-               switch [lindex $args 0] {
-                  minslew {
+               if { $besttag == "" } {
+                  set besttag $tag
+                  set bestaz $azdist
+                  set bestel $eldist
+                  set bestslew $slewdist
+               } else {
+                  switch $mode {
+                     minslew {
 
 # Replace the best choice with the current star it is closer than the best
 # found so far.
-                    if { $slewdist < $bestslew } {
-                       set bestslew $slewdist
-                       set besttag $tag
-                    }
+                        if { $slewdist < $bestslew } {
+                           set bestslew $slewdist
+                           set besttag $tag
+                        }
+                     }
                   }
                }
             }
+            incr tag
          }
-         incr tag
+         return $besttag
       }
-      return $besttag
    }
 }
-
+      
 itcl::body AzElPlot::remove tag {
 #+
 # Removes a star (or all the stars from the list).

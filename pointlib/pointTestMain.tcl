@@ -6,7 +6,7 @@ proc pointTestMain {w} {
 #  Creates the user interface for the pointTest application and creates the
 #  command senders and status acceptors needed to drive the TCS.
 #
-#  D Terrett 1 February 1999
+#  D Terrett 30 May 1999
 #
 #  Copyright CCLRC
 #-
@@ -43,35 +43,46 @@ proc pointTestMain {w} {
    $Menus(file) add command -label Exit -underline 1
    set w [winfo parent $w]
 
-   pack [set w [menubutton $w.options -text Options -underline 0]] -side left
-   set Menus(options) [menu $w.menu -tearoff 0]
-   $w configure -menu $Menus(options)
-   $Menus(options) add checkbutton -label "Slew when star is selected" \
-                   -underline 0
-   $Menus(options) add checkbutton -label "Log observation at end of slew" \
-                   -underline 0
-   $Menus(options) add checkbutton -label "Select next star after logging" \
-                   -underline 1
-   $Menus(options) add checkbutton -label "Skip star on error" \
-                   -underline 1
-   $Menus(options) add checkbutton -label "Zero local pointing model on slew" \
-                   -underline 1
-   $Menus(options) add separator
-   set Menus(catform) [menu $Menus(options).catform -tearoff 0]
-   $Menus(options) add cascade -menu $Menus(catform) \
-                   -label "Catalog format"
-   $Menus(catform) add radiobutton -label "tpoint"
-   set Menus(nextstyle) [menu $Menus(options).nextstyle -tearoff 0]
-   $Menus(options) add cascade -menu $Menus(nextstyle) \
-                   -label "Star selection mode"
-   $Menus(nextstyle) add radiobutton -label "Shortest slew"
-   $Menus(nextstyle) add radiobutton -label "Next in catalog"
-
-   set w [winfo parent $w]
    pack [set w [menubutton $w.view -text View -underline 0]] -side left
    set Menus(view) [menu $w.menu -tearoff 0]
    $w configure -menu $Menus(view)
+   $Menus(view) add command -label "Options..." -underline 0
    $Menus(view) add command -label "Catalog" -underline 0
+
+# Options dialog
+   set Dialogs(options) [iwidgets::dialog $w.options]
+   $Dialogs(options) hide "Apply"
+   $Dialogs(options) hide "Cancel"
+   $Dialogs(options) hide "Help"
+   $Dialogs(options) buttonconfigure "OK" -text "Dismiss"
+   set c [$Dialogs(options) childsite]
+   pack [frame $c.f -relief sunken -bd 2] -expand yes -fill both
+   pack [checkbutton $c.f.slew -variable Options(slew) \
+         -text "Slew when star is selected"] -anchor w
+   pack [checkbutton $c.f.log -variable Options(log) \
+         -text "Log observation at end of slew"] -anchor w
+   pack [checkbutton $c.f.select -variable Options(select) \
+         -text "Select next star after logging"] -anchor w
+   pack [checkbutton $c.f.skip -variable Options(skip) \
+         -text "Skip star on error"] -anchor w
+   pack [checkbutton $c.f.zlpm -variable Options(zlpm) \
+         -text "Zero local pointing model on slew"] -anchor w
+   pack [iwidgets::radiobox $c.nextstyle -labeltext "Star selection mode" \
+         -command "set NextStyle \[$c.nextstyle get\]"] -expand yes -fill both
+   $c.nextstyle add minslew -text "Shortest slew"
+   $c.nextstyle add catorder -text "Next in catalog"
+   $c.nextstyle select minslew
+   
+   pack [iwidgets::radiobox $c.catform -labeltext "Catalog format" \
+         -command "set CatForm \[$c.catform get\]"] -expand yes -fill both
+   $c.catform add tpoint -text "tpoint"
+   $c.catform select tpoint
+
+# Unpack the catalog format radio box because only one format is currently
+# supported.
+   pack forget $c.catform
+   
+   wm resizable $Dialogs(options) 0 0
 
    set w [string trimright [winfo parent $w] .]
    set w [string trimright [winfo parent $w] .]
@@ -153,18 +164,8 @@ proc pointTestMain {w} {
    $Menus(file) entryconfigure "Load*" -command loadCatalog
    $Menus(file) entryconfigure "Exit" -command pointTestExit
 
-   $Menus(options) entryconfigure "Slew*" -variable Options(slew)
-   $Menus(options) entryconfigure "Log*" -variable Options(log)
-   $Menus(options) entryconfigure "Select*" -variable Options(select)
-   $Menus(options) entryconfigure "Skip*" -variable Options(skip)
-   $Menus(options) entryconfigure "Zero*" -variable Options(zlpm)
-
-   $Menus(catform) entryconfigure "tpoint" -variable CatForm
-   $Menus(nextstyle) entryconfigure "Shortest slew" -variable NextStyle \
-         -value minslew
-   $Menus(nextstyle) entryconfigure "Next in catalog" -variable NextStyle \
-         -value ""
-
+   $Menus(view) entryconfigure "Options..." \
+         -command "$Dialogs(options) activate"
    $Menus(view) entryconfigure "Catalog" -command createListView
 
 # - Entry widgets
