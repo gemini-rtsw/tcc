@@ -7,7 +7,7 @@
 #  Arguments:
 #            Any command line options and values.
 #
-#  D Terrett  3 May 2002
+#  D Terrett  18 October 2002
 #
 #  Copyright CCLRC
 #-
@@ -111,6 +111,7 @@ proc tccMain args {
    epics cs m2Baffle
    epics cs hrwfs
    epics cs hrwfsPark
+   epics cs aoFoldPark
    epics cs aoFold
    epics cs scienceFold
    epics cs scienceFoldPark

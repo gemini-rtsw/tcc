@@ -8,9 +8,9 @@
 #  moves the mirrors to the desired positions.
 #
 #  Options:
-#          -mode   The current mode of operation (SKY - the instrument can
-#                  see the sky, TV - the aquisition TV/HRWFS can see the
-#                  sky or CAL - the instrument can see the calibration unit.
+#          -source The source of the light beam. SKY, AO, or GCAL.
+#
+#          -sink   The destination of the light beam. INSTR or HRWFS
 #
 #          -ao     The state of the AO fold mirror (IN or OUT).
 #
@@ -24,110 +24,81 @@
 #                  HRWFS mirrors into the correct position to realise the
 #                  settings ofthe -mode, -ao and -port options.
 #
-#  D Terrett 3 May 2002
+#  D Terrett 18 October 2002
 #
 #  Copyright CCLRC
 #+
 
 itcl::class ISS {
    public {
-      method update {}
       proc gpolwait {}
-      variable mode SKY position
+      proc p2wait {}
+      method update {}
+      variable source SKY position
+      variable sink SKY position
       variable ao OUT position
       variable port 1 position
       variable instrument "" position
    }
    private {
       method position {}
-      common waitid ""
+      method poshrwfs {}
+      method posaofold {}
+      common aowaitid ""
+      common hrwaitid ""
       variable scfold ""
       variable hwfold ""
-      variable aofold ""
    }
 }
 
 itcl::body ISS::position {} {
 
-# Assume that we won't need to move the HRWFS or AO fold.
+# Assume that we don't care about the position of the HWRFS fold.
    set hwfold ""
-   set aofold ""
 
 # The pseudo port AC is a special case where the Acquisition Camera is
-# being treaded as a instrument.
-   if { [string equal $port AC] } {
-
-# The HRWFS fold is always in.
+# being treaded as a instrument so the HRWFS fold must be in.
+   if { [string equal $port AC] || [string equal $sink HRWFS] } {
+      set hr 1
       set hwfold IN
-      switch $mode {
-         TV {
+   } else {
 
-# Park the science fold and AO fold.
-            set scfold OUT
-            set aofold OUT
-         }
-         SKY {
+# If the instrument is on port 1 the HRWFS fold must be out.
+      set hr 0
+      if { $port == 1 } {
+         set upward 1
+         set hrwfs OUT
+      }
+   }
+   switch $source {
+      SKY {
  
-# Park the science fold and set the AO fold according to whether ao is on 
-# or off.
+# If the instrument is on port 1 or is the HRWFS then the science fold must
+# be out of the beam.
+         if { $hr || $port == 1 } {
             set scfold OUT
-            if { [string equal $ao IN] } {
-               set aofold IN
-            } else {
-               set aofold OUT
-            }
-         }
-         CAL {
+         } else {
 
-# Position the science fold.
-            set scfold gcal2ac
+# Set the science fold according to the instrument and port names.
+            set scfold ${instrument}${port}
          }
       }
-   } else {
-      switch $mode {
+      CAL {
 
-# If the mode is TV then the HRWFS fold must be IN and the science fold
-# and AO fold out.
-         TV {
-            set hwfold IN
-            set scfold OUT
-            set aofold OUT
-         }
-         SKY {
-   
-# If the active ISS port is the upward looking one then the HRWFS fold must
-# be OUT and the Science fold positioned according to the instrument name
-# and port.
-            if { $port == 1 } {
-               set hwfold OUT
-               if { [string equal $ao IN] } {
-                  set aofold IN
-                  set scfold ao2${instrument}${port}
-               } else {
-                  set aofold OUT
-                  set scfold OUT
-               }
-            } else {
-   
-# Otherwise the the HRWFS fold can be left where it is and the science fold
-# position just depends on whether the AO is in or out.
-               if { [string equal $ao IN] } {
-                  set aofold IN
-                  set scfold ao2${instrument}${port}
-               } else {
-                  set aofold OUT
-                  set scfold ${instrument}${port}
-               }
-            }
-         }
-         CAL {
-
-# For the calibration source we just need to set the science fold position
-# and if the port is port 1 remove the HRWFS fold.
-            if { $port == 1 } {
-               set hwfold OUT
-            }
+# Position the science fold.
+         if { $hr } {
+            set scfold gcal2ac
+         } else {
             set scfold gcal2${instrument}${port}
+         }
+      }
+      AO {
+
+# Position the science fold.
+         if { $hr } {
+            set scfold ao2ac
+         } else {
+            set scfold ao2${instrument}${port}
          }
       }
    }
@@ -135,38 +106,17 @@ itcl::body ISS::position {} {
 
 itcl::body ISS::update {} {
 
-# Kill off any pending attempt to deploy the HRWFS pickoff mirror.
-   after cancel $waitid
-
-# Position HRWFS pickoff mirror. Before moving it into the beam we must
-# check that GPOL is parked.
-   switch $hwfold {
-      IN {
-         if { [sa gpolsad get upperParkSwitch] == "OPEN" ||
-               [sa gpolsad get middleParkSwitch] == "OPEN" ||
-               [sa gpolsad get lowerParkSwitch] == "OPEN" } {
-
-# Park GPOL. This takes a long time and we can't move the HRWFS mirror
-# until it is ready.
-            cs gpolPark set dummy value MARK
-            logger command gpolPark
-
-# Start a background task that polls GPOL until it is parked.
-            set waitid [after 1000 ISS::gpolwait]
-         } else {
-            cs hrwfs set hwfold value $hwfold
-            logger command hrwfs
-         }
-      }
-      OUT {
-         cs hrwfsPark set dummy value MARK
-         logger command hrwfsPark
-      }
+# Position hrwfs pickoff mirror.
+   if { ! [string equal $hwfold ""] } {
+      poshrwfs
    }
-#   if { ! [string equal $aofold ""] } {
-#      cs aoFold set aofold value $aofold
-#      logger command aoFold
-#   }
+
+# Position AO fold mirror.
+   if { ! [string equal $ao ""] } {
+      posaofold
+   }
+
+# Position science fold.
    if { ! [string equal $scfold ""] } {
       if { [string equal $scfold "OUT"] } {
          cs scienceFoldPark set dummy value MARK
@@ -178,14 +128,102 @@ itcl::body ISS::update {} {
    }
 }
 
+itcl::body ISS::poshrwfs {} {
+
+# Kill off any pending attempt to deploy the HRWFS pickoff mirror.
+   after cancel $hrwaitid
+
+# Position HRWFS pickoff mirror. Because of the way the mechanism works
+# we avoid sending it a command if it is already in the correct position.
+# Before moving it into the beam we must check that GPOL is parked.
+   switch $hwfold {
+      IN {
+         if { [sa agssad get hwName] != "IN" } {
+            if { [sa gpolsad get upperParkSwitch] == "OPEN" ||
+                  [sa gpolsad get middleParkSwitch] == "OPEN" ||
+                  [sa gpolsad get lowerParkSwitch] == "OPEN" } {
+
+# Park GPOL. This takes a long time and we can't move the HRWFS mirror
+# until it is ready.
+               cs gpolPark set dummy value MARK
+               logger command gpolPark
+
+# Start a background task that polls GPOL until it is parked.
+               set hrwaitid [after 1000 ISS::gpolwait]
+            } else {
+               cs hrwfs set hwfold value IN
+               logger command hrwfs
+            }
+         }
+      }
+      OUT {
+         if { [sa agssad get hwName] != "PARK" } {
+            cs hrwfsPark set dummy value MARK
+            logger command hrwfsPark
+         }
+      }
+   }
+}
+
+itcl::body ISS::posaofold {} {
+
+# Kill off any pending attempt to deploy the AO fold mirror.
+   after cancel $aowaitid
+
+# Position AO fold mirror. Because of the way the mechanism works
+# we avoid sending it a command if it is already in the correct position.
+# Before moving it into the beam we must check that P2 is parked.
+   switch $ao {
+      IN {
+         if { [sa agssad get aoName] != "IN" } {
+            if { [sa agssad get p2Parked] != "PARKED" } {
+
+# Park P2. This takes a long time and we can't move the AO mirror
+# until it is ready.
+               cs pwfs2Park set dummy value MARK
+               logger command pwfs2Park
+
+# Start a background task that polls P2 until it is parked.
+               set aowaitid [after 1000 ISS::p2wait]
+            } else {
+               cs aoFold set aofold value IN
+               logger command aoFold
+            }
+         }
+      }
+      OUT {
+         if { [sa agssad get aoName] != "PARK" } {
+            cs aoFoldPark set dummy value MARK
+            logger command aoFoldPark
+         }
+      }
+   }
+}
+
+itcl::body ISS::p2wait {} {
+   if { [sa agssad get p2Parked] != "PARKED" } {
+
+# Not ready yet so try again later.
+     set aowaitid [after 1000 ISS::p2wait]
+   } else {
+
+# P2 is parked so we can put the AO fold in.
+      cs aoFold set aofold value IN
+      logger command aoFold
+      if { [catch {cs hrwfs post} msg] } {
+         tk_messageBox -icon error -message \
+               "Error posting commands: TCS reports \"$msg\""
+      }
+   }
+}
+
 itcl::body ISS::gpolwait {} {
-puts gpolwait
    if { [sa gpolsad get upperParkSwitch] == "OPEN" ||
         [sa gpolsad get middleParkSwitch] == "OPEN" ||
         [sa gpolsad get lowerParkSwitch] == "OPEN" } {
 
 # Not ready yet so try again later.
-     set waitid [after 1000 ISS::gpolwait]
+     set hrwaitid [after 1000 ISS::gpolwait]
    } else {
 
 # GPOL is parked so we can put the HRWFS fold in.
