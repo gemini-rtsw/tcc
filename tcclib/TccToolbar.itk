@@ -10,7 +10,7 @@
 #  Methods:
 #           none
 #
-#  D Terrett 18 June 2000
+#  D Terrett 25 September 2000
 #
 #  Copyright CCLRC
 #-
@@ -216,65 +216,74 @@ itcl::body TccToolbar::export {} {
 
    if { [$dialog activate] } {
       set filename [$dialog get]
-      if { [catch {set file [open $filename {WRONLY CREAT TRUNC}]} msg]} {
-         tk_messageBox -icon error -message $msg -parent $itk_interior
+      if { [file exists $filename] } {
+         set ans [tk_messageBox -icon warning -parent $itk_interior \
+             -type yesno -message \
+             "file \"$filename\" already exist. Do you want to overwrite it?"] 
       } else {
-         upvar #0 [[$dialog component trackframe] cget -variable] trackframevar
-         if { $trackframevar } {
-            save TrackFrameList TrackFrameNames $file
-         }
-         upvar #0 [[$dialog component wavelength] cget -variable] wavelvar
-         if { $wavelvar } {
-            save WavelengthList WavelengthNames $file
-         }
-         upvar #0 [[$dialog component pointorig] cget -variable] povar
-         if { $povar } {
-            save PointOrigList PointOrigNames $file
-         }
-         upvar #0 [[$dialog component trackrate] cget -variable] trvar
-         if { $trvar } {
-            save TrackRateList TrackRateNames $file
-         }
-         upvar #0 [[$dialog component sciencetarget] cget -variable] scitargvar
-         if { $scitargvar } {
-            save ScienceTargetList ScienceTargetNames $file
-         }
-         upvar #0 [[$dialog component wfstarget] cget -variable] wfstargvar
-         if { $wfstargvar } {
-            save WfsTargetList WfsTargetNames $file
-         }
-         upvar #0 [[$dialog component rotator] cget -variable] rotvar
-         if { $rotvar } {
-            save RotatorList RotatorNames $file
-         }
-         upvar #0 [[$dialog component chop] cget -variable] chopvar
-         if { $chopvar } {
-            save ChopList ChopNames $file
-         }
-         upvar #0 [[$dialog component slewoptions] cget -variable] slewvar
-         if { $slewvar } {
-            save SlewOptionsList SlewOptionsNames $file
-         }
-         upvar #0 [[$dialog component instrument] cget -variable] instrumentvar
-         if { $instrumentvar } {
-            save InstrumentList InstrumentNames $file
-         }
-         upvar #0 [[$dialog component guide] cget -variable] guidevar
-         if { $guidevar } {
-            save GuideList GuideNames $file
-         }
-         upvar #0 [[$dialog component config] cget -variable] configsvar
-         if { $configsvar } {
-            save TcsConfigList TcsConfigNames $file
-         }
-         close $file
+         set ans yes
+      }
+      if {[string equal $ans yes]} {
+         if { [catch {set file [open $filename {WRONLY CREAT TRUNC}]} msg]} {
+            tk_messageBox -icon error -message $msg -parent $itk_interior
+         } else {
+            upvar #0 [[$dialog component trackframe] cget -variable] trackframevar
+            if { $trackframevar } {
+               save TrackFrameList TrackFrameNames $file
+            }
+            upvar #0 [[$dialog component wavelength] cget -variable] wavelvar
+            if { $wavelvar } {
+               save WavelengthList WavelengthNames $file
+            }
+            upvar #0 [[$dialog component pointorig] cget -variable] povar
+            if { $povar } {
+               save PointOrigList PointOrigNames $file
+            }
+            upvar #0 [[$dialog component trackrate] cget -variable] trvar
+            if { $trvar } {
+               save TrackRateList TrackRateNames $file
+            }
+            upvar #0 [[$dialog component sciencetarget] cget -variable] scitargvar
+            if { $scitargvar } {
+               save ScienceTargetList ScienceTargetNames $file
+            }
+            upvar #0 [[$dialog component wfstarget] cget -variable] wfstargvar
+            if { $wfstargvar } {
+               save WfsTargetList WfsTargetNames $file
+            }
+            upvar #0 [[$dialog component rotator] cget -variable] rotvar
+            if { $rotvar } {
+               save RotatorList RotatorNames $file
+            }
+            upvar #0 [[$dialog component chop] cget -variable] chopvar
+            if { $chopvar } {
+               save ChopList ChopNames $file
+            }
+            upvar #0 [[$dialog component slewoptions] cget -variable] slewvar
+            if { $slewvar } {
+               save SlewOptionsList SlewOptionsNames $file
+            }
+            upvar #0 [[$dialog component instrument] cget -variable] instrumentvar
+            if { $instrumentvar } {
+               save InstrumentList InstrumentNames $file
+            }
+            upvar #0 [[$dialog component guide] cget -variable] guidevar
+            if { $guidevar } {
+               save GuideList GuideNames $file
+            }
+            upvar #0 [[$dialog component config] cget -variable] configsvar
+            if { $configsvar } {
+               save TcsConfigList TcsConfigNames $file
+            }
+            close $file
 
 # Update save file directory.
-         set dir [file dirname $filename]
-         if { [string compare [file pathtype $dir] relative] == 0 } {
-            set SAVE_FILE_DIR [pwd]/$dir
-         } else {
-            set SAVE_FILE_DIR $dir
+            set dir [file dirname $filename]
+            if { [string compare [file pathtype $dir] relative] == 0 } {
+               set SAVE_FILE_DIR [pwd]/$dir
+            } else {
+               set SAVE_FILE_DIR $dir
+            }
          }
       }
    }
