@@ -11,7 +11,7 @@
 #
 #  options
 #
-#  D Terrett 26 January 2001
+#  D Terrett 22 April 2001
 #
 #  Copyright CCLRC
 #-
@@ -176,7 +176,7 @@ itcl::body NumericDisplay::constructor args {
    }
 
    itk_component add instrlab {
-      label $w.instrlab -text "INSTRUMENT:"
+      label $w.instrlab -text "INSTRUMENT (arcsec):"
    }
    itk_component add instrx {
       StatusField $w.instrx -labelmargin 5 -width 6 -entryborder 3 \
@@ -555,8 +555,10 @@ itcl::body NumericDisplay::update {} {
          [lindex $target 1] - [lindex $target 3]) * 206264.81] ]
 
    set xy [ast instrument A]
-   $itk_component(instrx) configure -text [lindex $xy 0]
-   $itk_component(instry) configure -text [lindex $xy 1]
+   $itk_component(instrx) configure \
+         -text [format %.2f [expr {[lindex $xy 0] / 0.62056151}]]
+   $itk_component(instry) configure \
+         -text [format %.2f [expr {[lindex $xy 1] / 0.62056151}]]
 
 # Time.
    $itk_component(utc) configure -text [tccTime utc]
