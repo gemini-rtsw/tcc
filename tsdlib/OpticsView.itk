@@ -11,6 +11,8 @@
 #          -centralbaffle     The position of the central baffle (OPEN or
 #                             CLOSED).
 #
+#          -calunit           Calibration unit on (boolean)
+#
 #          -deployablebaffle  The postion of the deployable baffle (RETRACTED,
 #                             "NEAR IR", VISIBLE or EXTENDED).
 #
@@ -45,7 +47,7 @@
 #                             according to the state of the configuration
 #                             options.
 #
-#  D Terrett  5 February 2001
+#  D Terrett  2 April 2001
 #
 #  Copyright CCLRC
 #-
@@ -75,6 +77,7 @@ itcl::class OpticsView {
    itk_option define -scfoldpos5 scfoldPos5 ScfoldPos ""
    itk_option define -scfoldpos9 scfoldPos9 ScfoldPos ""
    itk_option define -scfoldpos11 scfoldPos11 ScfoldPos ""
+   itk_option define -calunit calUnit CalUnit OFF
    public {
       method update {}
    }
@@ -90,7 +93,8 @@ itk::usual OpticsView {
       -insertontime -insertofftime -m1cover -m2sstate -port1label -port2label \
       -port3label -port4label -port5label -scfold -selectbackground \
       -selectborderwidth -selectforeground -scfoldpos0 -scfoldpos1 \
-      -scfoldpos2 -scfoldpos4 -scfoldpos5 -scfoldpos9 -scfoldpos11
+      -scfoldpos2 -scfoldpos4 -scfoldpos5 -scfoldpos9 -scfoldpos11 \
+      -calunit
 }
 
 itcl::body OpticsView::constructor args {
@@ -163,7 +167,6 @@ itcl::body OpticsView::constructor args {
    $c create text 0 -120 -anchor n -tags port1label
    $c create text 40 95 -anchor w -tags port2label
    $c create text -40 95 -anchor e -tags port3label
-   $c create text -40 -35 -anchor e -tags port4label
    $c create text 40 -35 -anchor w -tags port5label
 
 # A&G outline
@@ -483,6 +486,28 @@ itcl::body OpticsView::update {} {
 
 # Configure the emerging beam
          $c itemconfigure IssLight${outport} -fill $l
+
+# Configure light from the calibration unit.
+         if { [string equal $itk_option(-calunit) ON] } {
+            $c itemconfigure IssLight4 -fill $l
+            switch $scfoldpos {
+               U4 {
+                  $c itemconfigure AoLight -fill $l
+               }
+               34 {
+                  $c itemconfigure IssLight3 -fill $l
+               }
+               54 {
+                  $c itemconfigure IssLight5 -fill $l
+               }
+               41 {
+                  $c itemconfigure IssLight1 -fill $l
+               }
+               "" {
+                  $c itemconfigure IssLight2 -fill $l
+               }
+            }
+         }
 
 # Configure the beam from the HRWFS to the upward looking ISS face or HRWFS
          if { $outport == "1" } {
