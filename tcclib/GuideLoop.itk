@@ -321,7 +321,8 @@ itcl::body GuideLoop::recolour args {
       } else {
          $w itemconfigure pwfs1_m1 -fill yellow
       }
-      if { [AO state m2] && [AO source m2 PWFS1] } {
+      if { [AO state m2] && ([AO source m2 PWFS1 A] || \
+            [AO source m2 PWFS1 B]) } {
          $w itemconfigure pwfs1_m2 -fill green
       } else {
          $w itemconfigure pwfs1_m2 -fill yellow
@@ -352,7 +353,8 @@ itcl::body GuideLoop::recolour args {
       } else {
          $w itemconfigure pwfs2_m1 -fill yellow
       }
-      if { [AO state m2] && [AO source m2 PWFS2] } {
+      if { [AO state m2] && ([AO source m2 PWFS2 A] || \
+            [AO source m2 PWFS2 B]) } {
          $w itemconfigure pwfs2_m2 -fill green
       } else {
          $w itemconfigure pwfs2_m2 -fill yellow
@@ -378,7 +380,8 @@ itcl::body GuideLoop::recolour args {
       } else {
          $w itemconfigure oiwfs_m1 -fill yellow
       }
-      if { [AO state m2] && [AO source m2 OIWFS] } {
+      if { [AO state m2] && ([AO source m2 OIWFS A] || \
+            [AO source m2 OIWFS B]) } {
          $w itemconfigure oiwfs_m2 -fill green
       } else {
          $w itemconfigure oiwfs_m2 -fill yellow
@@ -393,7 +396,8 @@ itcl::body GuideLoop::recolour args {
       } else {
          $w itemconfigure gaos_m1 -fill yellow
       }
-      if { [AO state m2] && [AO source m2 GAOS] } {
+      if { [AO state m2] && ([AO source m2 GAOS A] || \
+            [AO source m2 GAOS B]) } {
          $w itemconfigure gaos_m2 -fill green
       } else {
          $w itemconfigure gaos_m2 -fill yellow
@@ -414,10 +418,14 @@ itcl::body GuideLoop::recolour args {
 
 # M2
    if { [AO state m2] } {
-      if { ( [AO source m2 PWFS1]  && [AO state pwfs1] ) ||
-            ( [AO source m2 PWFS2] && [AO state pwfs2] ) ||
-            ( [AO source m2 OIWFS] && [AO state oiwfs] ) ||
-            ( [AO source m2 GAOS] && [AO state gaos] ) } {
+      if { (( [AO source m2 PWFS1 A] || [AO source m2 PWFS1 B] ) && \
+            [AO state pwfs1] ) || \
+            (( [AO source m2 PWFS2 A] || [AO source m2 PWFS2 B] ) && \
+            [AO state pwfs2] ) || \
+            (( [AO source m2 OIWFS A] || [AO source m2 OIWFS B] ) && \
+            [AO state oiwfs] ) || \
+            (( [AO source m2 GAOS A] || [AO source m2 GAOS B] ) && \
+            [AO state gaos] ) } {
          $w itemconfigure m2_bg -fill green
          if { [AO source mount M2] && [AO state mount] } {
             $w itemconfigure m2_mt -fill green
