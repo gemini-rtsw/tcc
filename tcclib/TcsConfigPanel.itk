@@ -8,7 +8,7 @@
 #  Methods:
 #          none
 #
-#  D Terrett 29 March 2001
+#  D Terrett 21 April 2001
 #
 #  Copyright CCLRC
 #+
@@ -21,7 +21,10 @@ itcl::class TcsConfigPanel {
    }
    private {
       method createSubMenu {menuPathName comproot class}
+      method export {}
+      method import {}
       variable menuno 0
+      method save {list namespace file}
    }
 }
 
@@ -35,6 +38,13 @@ itcl::body TcsConfigPanel::constructor args {
    itk_component add control {
       TcsConfigControl $itk_interior.control -componentlist TcsConfigList
    }
+
+
+# Add the import and export commands to the File menu.
+   $itk_component(menubar) insert .file.exit command import \
+            -label Import... -command \"[code $this import]\"
+   $itk_component(menubar) insert .file.exit command export \
+            -label Export... -command \"[code $this export]\"
 
 # Add the edit menu to the menu bar.
    $itk_component(menubar) add menubutton edit -text Edit
@@ -85,6 +95,147 @@ body TcsConfigPanel::createSubMenu {menuPathName comproot class} {
          createSubMenu ${menuPathName}.${menuno}x $comproot[lindex $subcomp 0] \
                [lindex $subcomp 1]
          incr menuno
+      }
+   }
+}
+
+itcl::body TcsConfigPanel::import {} {
+
+# Save the current directory and cd to save file directory.
+   global SAVE_FILE_DIR
+   set pwd [pwd]
+   catch {cd $SAVE_FILE_DIR}
+
+# Create a dialog box for selecting the file and center it.
+   set dialog  $itk_interior.importdialog
+   if { ! [winfo exists $dialog] } {
+      set dialog [iwidgets::fileselectiondialog $dialog \
+            -modality application -title "Import File Selection Dialog"]
+      $dialog center
+   }
+
+# Activate the dialog
+   if { [$dialog activate] } {
+
+# Open the file.
+      set filename [$dialog get]
+      if { [catch {set file [open $filename RDONLY]} msg] } {
+         tk_messageBox -icon error -message $msg
+      } else {
+         loadDefFile $file
+         close $file
+
+# Update save file directory.
+         set dir [file dirname $filename]
+         if { [string compare [file pathtype $dir] relative] == 0 } {
+            set SAVE_FILE_DIR [pwd]/$dir
+         } else {
+            set SAVE_FILE_DIR $dir
+         }
+      }
+   }
+   $dialog deactivate
+
+# Restore default directory
+   cd $pwd
+}
+
+itcl::body TcsConfigPanel::export {} {
+
+# cd to save file directory.
+   global SAVE_FILE_DIR
+   set pwd [pwd]
+   catch {cd $SAVE_FILE_DIR}
+
+# Create dialog.
+   set dialog $itk_interior.exportdialog
+   if { ! [winfo exists $dialog] } {
+      set dialog [ExportDialog $dialog -master $itk_interior \
+            -title "Export Definitions Dialog" -modality application]
+      $dialog center
+   }
+
+   if { [$dialog activate] } {
+      set filename [$dialog get]
+      if { [file exists $filename] } {
+         set ans [tk_messageBox -icon warning -parent $itk_interior \
+             -type yesno -message \
+             "file \"$filename\" already exist. Do you want to overwrite it?"] 
+      } else {
+         set ans yes
+      }
+      if {[string equal $ans yes]} {
+         if { [catch {set file [open $filename {WRONLY CREAT TRUNC}]} msg]} {
+            tk_messageBox -icon error -message $msg -parent $itk_interior
+         } else {
+            set complist [[$dialog component select] getrhs]
+            if { [lsearch -exact $complist "Coordinate frames"] >= 0 } {
+               save CosysList CosysNames $file
+            }
+            if { [lsearch -exact $complist "Tracking frames"] >= 0 } {
+               save TrackFrameList TrackFrameNames $file
+            }
+            if { [lsearch -exact $complist "Wavelengths"] >= 0 } {
+               save WavelengthList WavelengthNames $file
+            }
+            if { [lsearch -exact $complist "Instrument origins"] >= 0 } {
+               save PointOrigList PointOrigNames $file
+            }
+            if { [lsearch -exact $complist "Differential track rates"] >= 0 } {
+               save TrackRateList TrackRateNames $file
+            }
+            if { [lsearch -exact $complist "Science targets"] >= 0 } {
+               save ScienceTargetList ScienceTargetNames $file
+            }
+            if { [lsearch -exact $complist "Wave front sensor targets"] >= 0 } {
+               save WfsTargetList WfsTargetNames $file
+            }
+            if { [lsearch -exact $complist "Field orientations"] >= 0 } {
+               save RotatorList RotatorNames $file
+            }
+            if { [lsearch -exact $complist "Chop configurations"] >= 0 } {
+               save ChopList ChopNames $file
+            }
+            if { [lsearch -exact $complist "Slew options"] >= 0 } {
+               save SlewOptionsList SlewOptionsNames $file
+            }
+            if { [lsearch -exact $complist "Instrument configurations"] >= 0 } {
+               save InstrumentList InstrumentNames $file
+            }
+            if { [lsearch -exact $complist "Guide configurations"] >= 0 } {
+               save GuideList GuideNames $file
+            }
+            if { [lsearch -exact $complist Configurations] >= 0 } {
+               save TcsConfigList TcsConfigNames $file
+            }
+            if { [llength $complist] == 0 } {
+               tk_messageBox -icon error -parent $itk_interior \
+                     -message "No components exported"
+            }
+            close $file
+
+# Update save file directory.
+            set dir [file dirname $filename]
+            if { [string compare [file pathtype $dir] relative] == 0 } {
+               set SAVE_FILE_DIR [pwd]/$dir
+            } else {
+               set SAVE_FILE_DIR $dir
+            }
+         }
+      }
+   }
+   $dialog deactivate
+
+# Restore default directory
+   cd $pwd
+}
+
+itcl::body TcsConfigPanel::save {list namespace file} {
+   set n [$list length]
+   for { set i 0 } { $i < $n } { incr i } {
+      set name [$list get $i]
+      if { $name != "" } {
+         ${namespace}::$name save $file
       }
    }
 }
