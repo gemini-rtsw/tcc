@@ -53,6 +53,9 @@ itcl::body ActiveOptics::constructor {args} {
    if { [catch {cs m2GuideConfig info}] } {
       epics cs m2GuideConfig
    }
+   if { [catch {cs m2GuideReset info}] } {
+      epics cs m2GuideReset
+   }
    if { [catch {cs m2GuideMode info}] } {
       epics cs m2GuideMode
    }
@@ -150,30 +153,22 @@ itcl::body ActiveOptics::enable {} {
             tk_messageBox -icon error -message \
                   "Error posting m2Guide command: TCS reports \
                   \"$msg\""
+            return
          }
 
 # Reset M2 if required.
          if { $needreset } {
-            cs m2GuideConfig set reset On
-
-# These parameters are ignored but need to be set to valid values.
-            cs m2GuideConfig set samplefreq 200
-            cs m2GuideConfig set filter raw
-            cs m2GuideConfig set freq1 ""
-            cs m2GuideConfig set freq2 ""
-            cs m2GuideConfig set beam A
-            cs m2GuideConfig set source PWFS1
-            logger command m2GuideConfig
-            if { [catch {cs m2GuideConfig post} msg] } {
+            cs m2GuideReset set dummy 1
+            logger command m2GuideReset
+            if { [catch {cs m2GuideReset post} msg] } {
                tk_messageBox -icon error -message \
-                     "Error posting m2GuideConfig command: TCS reports \
+                     "Error posting m2GuideReset command: TCS reports \
                      \"$msg\""
+               return
             }
          }
 
 # Add the desired guide sources.
-# N.B. at the moment only once source is actually useable as the M2 code
-# to blend multiple sources isn't debugged.
          foreach source {PWFS1 PWFS2 GAOS OIWFS} \
                   beam [list $m2p1guide $m2p2guide $m2aoguide $m2oiguide] {
             if {$source eq "GAOS" } {
@@ -187,6 +182,7 @@ itcl::body ActiveOptics::enable {} {
                  tk_messageBox -icon error -message \
                      "Error posting oiwfsSelect command: TCS reports \
                      \"$msg\""
+                  return
                }
             }
             if { $beam ne "" } {
@@ -206,6 +202,7 @@ itcl::body ActiveOptics::enable {} {
                   tk_messageBox -icon error -message \
                         "Error posting m2GuideConfig command: TCS reports \
                         \"$msg\""
+                  return
                }
             }
          }
