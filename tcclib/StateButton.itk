@@ -8,6 +8,9 @@
 #  until the mechanism has changed state.
 #
 #  Options:
+#
+#          -command        The command to execute when the button is pushed
+#
 #          -setcommand     The command sender, parameter and value that sets
 #                          the mechanism state.
 #
@@ -29,6 +32,7 @@ itcl::class StateButton {
    inherit itk::Widget
    constructor args {}
    destructor {}
+   itk_option define -command command Command {}
    itk_option define -setcommand setCommand Command {}
    itk_option define -setvalue setValue Value {} checkstate
    itk_option define -sadrecord sadrecord SadRecord {} checkstate
@@ -56,6 +60,7 @@ itcl::body StateButton::constructor args {
       keep -state -text -width
       ignore -activebackground
       ignore -background
+      ignore -command
    }
    pack $itk_component(button) -fill both -expand y
 
@@ -82,15 +87,21 @@ itcl::body StateButton::pressed {} {
          logger command $cs
          if { [catch {cs tcsApply post} msg] } {
             tk_messageBox -icon error -parent $itk_interior -message $msg
+            return
          }
+      }
+   }
+
+# Execute the command if the -command option is set.
+   if { [llength $itk_option(-command)] } {
+      uplevel #0 $itk_option(-command)
+   }
 
 # If the mechanism wasn't already in the desired state then set the button 
 # background to indicate that a state change is in progress.
-         if { !$state } {
-            $itk_component(button) configure -background yellow \
-                  -activebackground yellow
-         }
-      }
+   if { !$state } {
+      $itk_component(button) configure -background yellow \
+            -activebackground yellow
    }
 }
 
