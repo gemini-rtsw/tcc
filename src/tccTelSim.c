@@ -8,7 +8,7 @@ static char rcsid[]="$Id:";
 *   tccTelSimSlew - Implements the TelescopeSim object slew method.
 *   tccTelSimGetXY - Implements the TelescopeSim object getxy method.
 *
-*   D L Terrett 21 February 2003
+*   D L Terrett 25 February 2003
 *
 *   Copyright CCLRC
 */
@@ -391,14 +391,22 @@ static int getTarget(  Tcl_Interp *interp, double tt, double elong, double lat,
 /* Parallax */
          if ((obj = Tcl_GetVar2Ex( interp, "parallax", NULL, TCL_NAMESPACE_ONLY
               | TCL_LEAVE_ERR_MSG)) == NULL) return TCL_ERROR;
-         if ( Tcl_GetDoubleFromObj( interp, obj, &pm.px ) !=
-               TCL_OK ) return TCL_ERROR;
+         if ( strlen( Tcl_GetStringFromObj( obj, NULL) ) ) {
+            if ( Tcl_GetDoubleFromObj( interp, obj, &pm.px ) !=
+                  TCL_OK ) return TCL_ERROR;
+         } else {
+            pm.px = 0.0;
+         }
 
 /* Radial velocity */
          if ((obj = Tcl_GetVar2Ex( interp, "rv", NULL, TCL_NAMESPACE_ONLY
               | TCL_LEAVE_ERR_MSG)) == NULL) return TCL_ERROR;
-         if ( Tcl_GetDoubleFromObj( interp, obj, &pm.rv ) !=
-               TCL_OK ) return TCL_ERROR;
+         if ( strlen( Tcl_GetStringFromObj( obj, NULL) ) ) {
+            if ( Tcl_GetDoubleFromObj( interp, obj, &pm.rv ) !=
+                  TCL_OK ) return TCL_ERROR;
+         } else {
+            pm.rv = 0.0;
+         }
 
 /* To current epoch */
          if ( astCoco( theta1, theta2, pm, *system, *equinox, epoch, *system, 
