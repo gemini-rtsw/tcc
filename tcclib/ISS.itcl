@@ -106,13 +106,6 @@ itcl::body ISS::position {} {
 
 itcl::body ISS::update {} {
 
-# ensure that an instrument has been configured
-   if { [string is space $instrument] } {
-      tk_messageBox -icon warning -parent .observePanel \
-	   -message "No Instrument configured!"
-      return 1
-   }
-
 # Position hrwfs pickoff mirror.
    if { ! [string equal $hwfold ""] } {
       poshrwfs
@@ -133,7 +126,6 @@ itcl::body ISS::update {} {
          logger command scienceFold
       }
    }
-   return 0
 }
 
 itcl::body ISS::poshrwfs {} {
