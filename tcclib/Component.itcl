@@ -1,12 +1,19 @@
 #+
-#  Component.itcl
+#  Component
 #
-#  Implements the Component class, a virtual base class for all the
-#  specific configuration component classes. It provides the functionality
+#  The Component class is a virtual base class for all the specific 
+#  configuration component classes. It provides the functionality
 #  of adding itself to a componentList object when it is created and 
 #  removing itself when it is deleted.
 #
-#  D Terrett 15 April 1998
+#  Options:
+#          none
+#
+#  Methods:
+#          Component list   Creates the Component object adds it to the
+#                           list object "list".
+#
+#  D Terrett 25 November 1999
 #
 #  Copyright CCLRC
 #+
@@ -20,12 +27,14 @@ itcl::class Component {
 }
 
 itcl::body Component::constructor list {
-   set i [expr [string last :: $this] + 2]
-   $list add [string range $this $i end] end
+#   set i [expr [string last :: $this] + 2]
+#   $list add [string range $this $i end] end
+   $list add [namespace tail $this] end
    set componentList $list
 }
 
 itcl::body Component::destructor {} {
-   set i [expr [string last :: $this] + 2]
-   $componentList remove [string range $this $i end]
+#   set i [expr [string last :: $this] + 2]
+#   $componentList remove [string range $this $i end]
+   $componentList remove [namespace tail $this]
 }

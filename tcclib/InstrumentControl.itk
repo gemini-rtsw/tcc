@@ -1,10 +1,20 @@
 #+
-#  InstrumentControl.itk
+#  InstrumentControl <- ComponentControl
 #
-#  Implements the InstrumentControl widget. A ComponentControl widget with
+#  An InstrumentControl is a ComponentControl widget with
 #  entry widgets for the IAA, baffle positions and ISS ports.
 #
-#  D Terrett 3 November 1998
+#  Options:
+#           none
+#
+#  Methods:
+#           selectobj name  Copies the contents of the Instrument object "name"
+#                           into the edit controls.
+#
+#           updateobj name  Stores the contents of the edit controls in the
+#                           Instrument object "name".
+#
+#  D Terrett 24 November 1999
 #
 #  Copyright CCLRC
 #+
@@ -19,13 +29,9 @@ itcl::class InstrumentControl {
 }
 
 itk::usual InstrumentControl {
-   keep -activebackground -activeforeground -disabledforeground
-   keep -background -borderwidth -cursor -foreground -highlightcolor
-   keep -highlightthickness -insertbackground -insertborderwidth
-   keep -insertofftime -insertontime -insertwidth -labelfont -popupcursor
-   keep -selectbackground -selectborderwidth -selectforeground
-   keep -textbackground -textfont -font
-   keep -vt -title
+   keep -borderwidth -cursor -font -insertborderwidth -insertofftime \
+         -insertontime -insertwidth -labelfont -popupcursor \
+         -selectborderwidth -textfont -vt -title
 }
 
 itcl::body InstrumentControl::constructor args {

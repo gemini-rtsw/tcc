@@ -1,12 +1,15 @@
 #+
-#  TcsControl.itk
+#  TcsControl <- itk::Widget
 #
 #  Implements the TcsControl widget.
 #
-#  D Terrett 12 November 1999
+#  Options:
+#          none
 #
-#  23/01/00 (CJM) Replace single follow command and check buttons with a 
-#                 command for each subsystem and apply buttons
+#  Methods:
+#          none
+#
+#  D Terrett 4 February 2000
 #
 #  Copyright CCLRC
 #+
@@ -24,18 +27,14 @@ itcl::class TcsControl {
    private method shStep
    private method shutterMode
    private method closeDome
+   private variable dome
+   private variable shutter
 }
 
 itk::usual TcsControl {
-   keep -cursor -foreground -font -background
-   keep -activebackground -activeforeground -disabledforeground
-   keep -highlightcolor -highlightthickness
-   keep -activeborderwidth -borderwidth 
-   keep -labelfont -popupcursor
-   keep -insertborderwidth  -insertofftime -insertontime -insertwidth
-   keep -textbackground -textfont 
-   keep -troughcolor -insertbackground -selectcolor
-   keep -selectbackground -selectborderwidth -selectforeground
+    keep -cursor -font -highlightthickness -activeborderwidth -borderwidth \
+          -labelfont -popupcursor -insertborderwidth -insertofftime \
+          -insertontime -insertwidth -selectborderwidth -textfont 
 }
 
 itcl::body TcsControl::constructor args {
@@ -270,12 +269,12 @@ itcl::body TcsControl::constructor args {
    $itk_component(slit) insert end 9.320
    itk_component add dome {
       checkbutton $w.dome -text [lindex [cs carousel info dome] 2] \
-            -variable $w._dome -onvalue On -offvalue Off
+            -variable [scope dome] -onvalue On -offvalue Off
    }
    $itk_component(dome) invoke
    itk_component add shutter {
       checkbutton $w.shutter -text [lindex [cs carousel info shutter] 2] \
-            -variable $w._shutter -onvalue On -offvalue Off
+            -variable [scope shutter] -onvalue On -offvalue Off
    }
    $itk_component(shutter) invoke
    pack $itk_component(carousel) -pady 4
@@ -385,10 +384,11 @@ itcl::body TcsControl::carousel par {
 # Sets carousel command parameters.
 #-
    switch $par {
-      dome -
+      dome {
+         return $dome
+      }
       shutter {
-         upvar #0 [$itk_component($par) cget -variable] var
-         return $var
+         return $shutter
       }
       slit {
          set sh [$itk_component(slit) get]

@@ -1,10 +1,20 @@
 #+
-#  TargetPanel.itk
+#  TargetPanel <- Panel
 #
 #  Implements the TargetPanel widget. A Panel widget with a 
 #  TargetControl widget packed into its interior.
 #
-#  D Terrett 26 April 1999
+#  Options:
+#           -componentlist - The -componentlist option of the Cosys control
+#  
+#           -namespace -     The -namespace option of the Cosys control
+#
+#           -component -     
+#  
+#  Methods:
+#           none
+#
+#  D Terrett 24 November 1999
 #
 #  Copyright CCLRC
 #+
@@ -26,14 +36,6 @@ itk::usual TargetPanel {
 itcl::body TargetPanel::constructor args {
    itk_component add control {
       TargetControl $itk_interior.control
-   } {
-      usual
-      ignore -activeforeground
-      ignore -insertbackground
-      ignore -selectforeground
-      ignore -highlightcolor
-      ignore -activebackground
-      ignore -textbackground
    }
    setWidgetColors "$itk_component(menubar) $itk_component(control)" \
          $itk_option(-background) $itk_option(-foreground)

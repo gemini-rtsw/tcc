@@ -1,9 +1,23 @@
 #+
-#  SelectButton.itk
+#  SelectButton <- iwidgets::Labeledwidget
 #
 #  Implements the SelectButton widget. A SelectButton is a row of LiveButtons
 #  that behave rather like radio buttons; when a button is pressed it is
 #  disabled and all the other buttons are enabled.
+#
+#  Options:
+#           -command       The command to be executed when one of the buttons
+#                          is pressed.
+#
+#           -labels        A list of labels for the buttons.
+#
+#           -offbackground The colour of the buttons other than the 
+#                          selected one.
+#
+#           -onbackground  The colour of the selected button.
+#
+#           -orient        The orientation of the buttons (horizontal or
+#                          vertical).
 #
 #  D Terrett 24 August 1998
 #
@@ -33,10 +47,8 @@ itcl::class SelectButton {
 }
 
 itk::usual SelectButton {
-   keep -background -cursor -foreground
-   keep -activebackground -activeforeground
-   keep -highlightcolor -highlightthickness
-   keep -onbackground -offbackground
+   keep -activebackground -activeforeground -background -cursor -foreground \
+         -highlightcolor -highlightthickness -onbackground -offbackground
 }
 
 itcl::body SelectButton::constructor args {

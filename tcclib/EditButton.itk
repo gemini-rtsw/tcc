@@ -1,8 +1,14 @@
 #+
-#  EditButton.itk
+#  EditButton <- PanelButton
 #
-#  Implements the EditButton widget: a button that pops up one of the
-#  tcc editing windows.
+#  An EditButton is a PanelButton that maps up one of the tcc editing windows.
+#
+#  Options:
+#           -selector       The name of the associated component selector 
+#                           widget.
+#
+#  Methods:
+#           map             Inherited from PanelButton
 #
 #  D Terrett  5 August 1998
 #
@@ -14,15 +20,15 @@ itcl::class EditButton {
 
    constructor args {}
 
-   protected method map {}
-
    itk_option define -selector selector Selector ""
+
+   protected method map {}
 }
 
 itk::usual EditButton {
-   keep -background -cursor -foreground -font
-   keep -activebackground -activeforeground -disabledforeground
-   keep -highlightcolor -highlightthickness
+   keep -activebackground -activeforeground -background -cursor \
+         -disabledforeground -font -foreground -highlightcolor \
+         -highlightthickness
 }
 
 itcl::body EditButton::constructor args {
@@ -30,9 +36,15 @@ itcl::body EditButton::constructor args {
 }
 
 itcl::body EditButton::map {} {
+
+# Map the panel
    $this PanelButton::map
+
+# Get the current value of the associated selector.
    set selection [$itk_option(-selector) get]
-   if { $selection != "" } {
+
+# Set the selection in the panel we have just mapped.
+   if { [string length $selection] } {
       [$itk_option(-panel) cget -window] select $selection
    }
 }

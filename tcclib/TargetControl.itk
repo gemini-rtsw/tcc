@@ -1,9 +1,23 @@
 #+
-#  TargetControl.itk
+#  TargetControl <- ComponentControl
 #
-#  Implements the TargetControl widget.
+#  A Target control is a ComponentControl widget with widgets for
+#  the target position etc.
 #
-#  D Terrett 23 November 1999
+#  Options:
+#           -shadow         The name of the control's edit shadow.
+#
+#           -vt             The virtual telescope that the coordinate system 
+#                           applies to.
+#
+#  Methods:
+#           selectobj name  Copies the contents of the Target object "name"
+#                           into the edit controls.
+#
+#           updateobj name  Stores the contents of the edit controls in the
+#                           Target object "name".
+#
+#  D Terrett 24 November 1999
 #
 #  Copyright CCLRC
 #+
@@ -11,23 +25,19 @@
 itcl::class TargetControl {
    inherit ComponentControl
 
-   itk_option define -shadow shadow Shadow {}
-   itk_option define -vt vt Vt {}
-
    constructor args {}
+
+   itk_option define -shadow shadow Shadow ""
+   itk_option define -vt vt Vt ""
 
    public method selectobj name
    public method updateobj name
 }
 
 itk::usual TargetControl {
-   keep -activebackground -activeforeground -disabledforeground
-   keep -background -borderwidth -cursor -foreground -highlightcolor
-   keep -highlightthickness -insertbackground -insertborderwidth
-   keep -insertofftime -insertontime -insertwidth -labelfont -popupcursor
-   keep -selectbackground -selectborderwidth -selectforeground
-   keep -textbackground -textfont -font
-   keep -vt -title
+   keep -borderwidth -cursor -font -highlightthickness -insertborderwidth \
+         -insertofftime -insertontime -insertwidth -labelfont -popupcursor \
+         -selectborderwidth -textfont -title -vt
 }
 
 itcl::body TargetControl::constructor args {

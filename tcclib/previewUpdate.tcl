@@ -1,8 +1,11 @@
 #+
-#  previewUpdate.tcl
+#  previewUpdate
 #
 #  Calls the tccPreview update command with data gathered from the tcs sad.
 #  and then re-schedules itself after 10 minutes.
+#
+#  Arguments:
+#             none
 #
 #  D Terrett 2 September 1998
 #

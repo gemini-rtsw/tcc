@@ -1,21 +1,43 @@
 #+
-# SelectGrid.itk
+#  SelectGrid <- itk:widget
 #
-# Implements the SelectGrid widget. A widget with simlar properties to 
-# a listbox but with the rows divided in to columns. Row are selected
-# and deselected by clicking mouse button 1 in any of the entries in
-# the row. Only the "multiple" selection style is implemented.
+#  Implements the SelectGrid widget. A widget with similar properties to 
+#  a listbox but with the rows divided in to columns. Row are selected
+#  and deselected by clicking mouse button 1 in any of the entries in
+#  the row. Only the "multiple" selection style is implemented.
 #
-# The number of columns is set by the number of column headers specified
-# by the -columnhead option.
+#  The number of columns is set by the number of column headers specified
+#  by the -columnhead option.
 #
-# There are methods to add a new row (at the bottom only) and delete all the
-# rows. The -selectcommand option specifies a command that is executed
-# whenever a row is selected or deselected.
+#  There are methods to add a new row (at the bottom only) and delete all the
+#  rows. The -selectcommand option specifies a command that is executed
+#  whenever a row is selected or deselected.
 #
-# D Terrett 27 May 1999
+#  Rows are identified by a tag specified when the row is created.
 #
-# Copyright CCLRC
+#  Options:
+#           -columnhead     A list of headings for the columns.
+#
+#           -disablecolor   The colour used to indicate disabled rows.
+#
+#           -selectcommand  A command to be executed when a row is selected.
+#
+#  Methods:
+#           add tag args    Adds a new row to the bottom of the grid with
+#                           tag "tag". The remaining arguments are the
+#                           values for the row.
+#
+#           clear           Deletes all rows from the grid.
+#
+#           replace tag args
+#                           Replaces the contents of row tagged with "tag"
+#                           with the remaining arguments.
+#
+#           selected        Returns a list of the tags associated with the 
+#                           selected rows.
+#  D Terrett 27 May 1999
+#
+#  Copyright CCLRC
 #-
 
 itcl::class SelectGrid {
@@ -23,25 +45,25 @@ itcl::class SelectGrid {
 
    constructor args {}
 
+   itk_option define -columnhead columnHead Label ""
+   itk_option define -disablecolor disableColor Color LightGrey
+   itk_option define -selectcommand selectCommand Command ""
+
    public method add {tag args}
    public method clear
    public method selected
    public method replace {tag args}
 
-   itk_option define -columnhead columnHead Label {}
-   itk_option define -selectcommand selectCommand Command {}
-   itk_option define -disablecolor disableColor Color LightGrey
-
    private method select row
 
    private variable rows
-   private variable tags
    private variable states
+   private variable tags
 }
 
 itk::usual SelectGrid {
-   keep -background -cursor -foreground -font
-   keep -highlightcolor -highlightthickness
+   keep -background -cursor -foreground -font -highlightcolor \
+         -highlightthickness
 }
 
 itcl::body SelectGrid::constructor args {
@@ -67,10 +89,10 @@ itcl::body SelectGrid::constructor args {
 
 itcl::configbody SelectGrid::columnhead {
 
-# If the list is emply do nothing.
+# If the list is empty do nothing.
    if { [llength $itk_option(-columnhead)] != 0 } {
 
-# Destroy the existing headinf labels.
+# Destroy the existing heading labels.
       foreach slave [grid slaves $itk_component(frame) -row 0] {
          destroy $slave
       }
@@ -131,6 +153,29 @@ itcl::body SelectGrid::clear {} {
    }
 }
 
+itcl::body SelectGrid::replace {tag args} {
+
+# Get the row number associated with this tag.
+   set row $rows($tag)
+
+# Replace the text of each label in the row.
+   set n 0
+   foreach text $args {
+      $itk_component(l${row}${n}) configure -text $text
+      incr n
+   }
+}
+
+itcl::body SelectGrid::selected {} {
+   set result ""
+   foreach element [array names states] {
+      if { $states($element) } {
+         lappend result $tags($element)
+      }
+   }
+   return $result
+}
+
 itcl::body SelectGrid::select row {
 
 # Toggle the state of the row.
@@ -148,30 +193,7 @@ itcl::body SelectGrid::select row {
    }
 
 # Invoke the -selectcommand option.
-   if { $itk_option(-selectcommand) != "" } {
+   if { [string length $itk_option(-selectcommand)] } {
       uplevel #0 $itk_option(-selectcommand) $tags($row) $states($row)
-   }
-}
-
-itcl::body SelectGrid::selected {} {
-   set result ""
-   foreach element [array names states] {
-      if { $states($element) } {
-         lappend result $tags($element)
-      }
-   }
-   return $result
-}
-
-itcl::body SelectGrid::replace {tag args} {
-
-# Get the row number associated with this tag.
-   set row $rows($tag)
-
-# Replace the text of each label in the row.
-   set n 0
-   foreach text $args {
-      $itk_component(l${row}${n}) configure -text $text
-      incr n
    }
 }

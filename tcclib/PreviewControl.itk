@@ -1,16 +1,16 @@
 #+
-#  PreviewControl.itk
+#  PreviewControl <- itk::Widget
 #
-#  Implements the PreviewControl widget.
+#  An PreviewControl widget displays the results of a preview.
+#
+#  Options:
+#           none
 #
 #  Methods:
+#           update      Causes the preview configuration to be calculated 
+#                       and displayed.
 #
-#    update
-#
-#       Causes the preview configuration to be calculated and displayed
-#       in the control.
-#
-#  D Terrett 31 May 1999
+#  D Terrett 24 November 1999
 #
 #  Copyright CCLRC
 #+
@@ -28,6 +28,8 @@ itcl::class PreviewControl {
 }
 
 itk::usual PreviewControl {
+    keep -background -cursor -foreground -font -highlightcolor \
+          -highlightthickness
 }
 
 itcl::body PreviewControl::constructor args {
@@ -239,10 +241,10 @@ itcl::body PreviewControl::constructor args {
 
    set w $itk_component(bot)
    itk_component add plot {
-      button $w.plot -text "Plot" -command [code $this plot]
+      button $w.plot -text Plot -command [code $this plot]
    }
    itk_component add update {
-      button $w.update -text "Update" -command {
+      button $w.update -text Update -command {
          tcsconfig map
          [tcsconfig cget -window] preview
       }
@@ -453,7 +455,7 @@ itcl::body PreviewControl::update {} {
 
 # Set message about time to elevation limit.
       if { $vis } {
-         if { $eltime != "" } {
+         if { [string length $eltime] } {
             set h [expr $eltime / 60]
             set m [expr $eltime - $h * 60]
             if { $h > 0 } {

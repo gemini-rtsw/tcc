@@ -1,10 +1,21 @@
 #+
-#  PointOrigControl.itk
+#  PointOrigControl <- ComponentControl
 #
-#  Implements the PointOrigControl widget. A ComponentControl widget with
-#  entryfield widgets for X and Y.
+#  A PointOrigControl is a ComponentControl widget with entryfield widgets for 
+#  X and Y.
 #
-#  D Terrett 3 November 1998
+#  Options:
+#           -vt             The virtual telescope that the pointing origin 
+#                           applies to.
+#
+#  Methods:
+#           selectobj name  Copies the contents of the PointOrig object "name"
+#                           into the edit controls.
+#
+#           updateobj name  Stores the contents of the edit controls in the
+#                           PointOrig object "name".
+#
+#  D Terrett 24 November 1999
 #
 #  Copyright CCLRC
 #+
@@ -21,13 +32,9 @@ itcl::class PointOrigControl {
 }
 
 itk::usual PointOrigControl {
-   keep -activebackground -activeforeground -disabledforeground
-   keep -background -borderwidth -cursor -foreground -highlightcolor
-   keep -highlightthickness -insertbackground -insertborderwidth
-   keep -insertofftime -insertontime -insertwidth -labelfont -popupcursor
-   keep -selectbackground -selectborderwidth -selectforeground
-   keep -textbackground -textfont -font
-   keep -vt -title
+   keep -borderwidth -cursor -font -highlightthickness -insertborderwidth \
+         -insertofftime -insertontime -insertwidth -labelfont -popupcursor \
+         -selectborderwidth -textfont -title -vt
 }
 
 itcl::body PointOrigControl::constructor args {
@@ -60,18 +67,15 @@ itcl::body PointOrigControl::constructor args {
    eval itk_initialize $args
 }
 
-itcl::body PointOrigControl::updateobj name {
-#+
-# Updates the named pointing origin object.
-#-
-   $name configure -x [$itk_component(x) get] -y [$itk_component(y) get]
+itcl::configbody PointOrigControl::vt {
+   $itk_component(storeapply) configure \
+         -logmessage "$itk_option(-vt) pointing origin"
 }
 
 itcl::body PointOrigControl::selectobj name {
-#+
-# Copies the contents of the PointOrig object selected in the combobox
+#
+# Copy the contents of the PointOrig object selected in the combobox
 # into the edit controls.
-#-
    $itk_component(x) clear
    $itk_component(y) clear
    if { $name != "" } {
@@ -80,7 +84,8 @@ itcl::body PointOrigControl::selectobj name {
    }
 }
 
-itcl::configbody PointOrigControl::vt {
-   $itk_component(storeapply) configure \
-         -logmessage "$itk_option(-vt) pointing origin"
+itcl::body PointOrigControl::updateobj name {
+
+# Update the named pointing origin object.
+   $name configure -x [$itk_component(x) get] -y [$itk_component(y) get]
 }

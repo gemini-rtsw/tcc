@@ -1,9 +1,23 @@
 #+
-#  SciTargetControl.itk
+#  SciTargetControl <- ComponentControl
 #
-#  Implements the SciTargetControl widget.
+#  A SciTarget control is a ComponentControl widget with widgets for
+#  the target position etc.
 #
-#  D Terrett 23 November 1999
+#  Options:
+#           -shadow         The name of the control's edit shadow.
+#
+#           -vt             The virtual telescope that the coordinate system 
+#                           applies to.
+#
+#  Methods:
+#           selectobj name  Copies the contents of the SciTarget object "name"
+#                           into the edit controls.
+#
+#           updateobj name  Stores the contents of the edit controls in the
+#                           SciTarget object "name".
+#
+#  D Terrett 24 November 1999
 #
 #  Copyright CCLRC
 #+
@@ -11,24 +25,23 @@
 itcl::class SciTargetControl {
    inherit ComponentControl
 
-   itk_option define -shadow shadow Shadow {}
-   itk_option define -vt vt Vt {}
+   itk_option define -shadow shadow Shadow ""
+   itk_option define -vt vt Vt ""
 
    constructor args {}
 
    public method selectobj name
    public method updateobj name
+
    private method orbtype
+
+   private variable planet
 }
 
 itk::usual SciTargetControl {
-   keep -activebackground -activeforeground -disabledforeground
-   keep -background -borderwidth -cursor -foreground -highlightcolor
-   keep -highlightthickness -insertbackground -insertborderwidth
-   keep -insertofftime -insertontime -insertwidth -labelfont -popupcursor
-   keep -selectbackground -selectborderwidth -selectforeground
-   keep -textbackground -textfont -font
-   keep -vt -title
+   keep -borderwidth -cursor -font -highlightthickness -insertborderwidth \
+         -insertofftime -insertontime -insertwidth -labelfont -popupcursor \
+         -selectborderwidth -textfont -title -vt
 }
 
 itcl::body SciTargetControl::constructor args {
@@ -182,37 +195,39 @@ itcl::body SciTargetControl::constructor args {
 
 # Radiobuttons for selecting a planet.
    itk_component add moon {
-      radiobutton $w.moon -text Moon -variable $w._planet -value moon
+      radiobutton $w.moon -text Moon -variable [scope planet] -value moon
    }
    itk_component add mercury {
-      radiobutton $w.mercury -text Mercury -variable $w._planet -value mercury
+      radiobutton $w.mercury -text Mercury -variable [scope planet] \
+            -value mercury
    }
    itk_component add venus {
-      radiobutton $w.venus -text Venus -variable $w._planet -value venus
+      radiobutton $w.venus -text Venus -variable [scope planet] -value venus
    }
    itk_component add mars {
-      radiobutton $w.mars -text Mars -variable $w._planet -value mars
+      radiobutton $w.mars -text Mars -variable [scope planet] -value mars
    }
    itk_component add jupiter {
-      radiobutton $w.jupiter -text Jupiter -variable $w._planet -value jupiter
+      radiobutton $w.jupiter -text Jupiter -variable [scope planet] \
+            -value jupiter
    }
    itk_component add saturn {
-      radiobutton $w.saturn -text Saturn -variable $w._planet -value saturn
+      radiobutton $w.saturn -text Saturn -variable [scope planet] -value saturn
    }
    itk_component add uranus {
-      radiobutton $w.uranus -text Uranus -variable $w._planet -value uranus
+      radiobutton $w.uranus -text Uranus -variable [scope planet] -value uranus
    }
    itk_component add neptune {
-      radiobutton $w.neptune -text Neptune -variable $w._planet -value neptune
+      radiobutton $w.neptune -text Neptune -variable [scope planet] \
+            -value neptune
    }
    itk_component add pluto {
-      radiobutton $w.pluto -text Pluto -variable $w._planet -value pluto
+      radiobutton $w.pluto -text Pluto -variable [scope planet] -value pluto
    }
    grid $itk_component(moon) $itk_component(mars) $itk_component(uranus) \
          -padx 10 -pady 10 -sticky w
    grid $itk_component(mercury) $itk_component(jupiter) \
-         $itk_component(neptune) \
-         -padx 10 -pady 10 -sticky w
+         $itk_component(neptune) -padx 10 -pady 10 -sticky w
    grid $itk_component(venus) $itk_component(saturn) $itk_component(pluto) \
          -padx 10 -pady 10 -sticky w
 
@@ -344,8 +359,7 @@ itcl::body SciTargetControl::selectobj name {
          }
          planet {
             $itk_component(notebook) select Planets
-            upvar #0 [$itk_component(moon) cget -variable] body
-            set body [$name cget -planet]
+            set planet [$name cget -planet]
          }
          orbit {
             $itk_component(notebook) select Orbits
@@ -386,6 +400,11 @@ itcl::body SciTargetControl::selectobj name {
    }
 }
 
+itcl::configbody SciTargetControl::vt {
+   $itk_component(storeapply) configure \
+         -logmessage "$itk_option(-vt) target"
+}
+
 itcl::body SciTargetControl::updateobj name {
 #+
 # Updates a target object with the values currently entered in the
@@ -414,10 +433,9 @@ itcl::body SciTargetControl::updateobj name {
                [$itk_component(el) get]] \
       }
       Planets {
-         upvar #0 [$itk_component(moon) cget -variable] body
          $name configure \
                -objName [$itk_component(selector) get] \
-               -planet $body
+               -planet $planet
       }
       Orbits {
          set eltype [expr {[$itk_component(eltype) index \
@@ -478,11 +496,6 @@ itcl::configbody SciTargetControl::shadow {
    $itk_component(cosys) configure -shadow $itk_option(-shadow)
    $itk_component(wavelength) configure -shadow $itk_option(-shadow)
    $itk_component(trackrate) configure -shadow $itk_option(-shadow)
-}
-
-itcl::configbody SciTargetControl::vt {
-   $itk_component(storeapply) configure \
-         -logmessage "$itk_option(-vt) target"
 }
 
 itcl::body SciTargetControl::orbtype {} {

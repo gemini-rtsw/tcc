@@ -1,15 +1,46 @@
 #+
-#  Guide.itcl
+#  Guide
 #
-#  Implements the Guide class. A guide component contains the names of
-#  the targes for the 3 wave front sensors and which chop and nod states
-#  they should be active in.
+#  A guide component contains the names of the targes for the 3 wavefront 
+#  sensors and which chop and nod states they should be active in.
+#
+#  Options:
+#           -oiwfsTarget    The target for the on-instrument wavefront sensor.
+#
+#           -oiwfsChop      The chop state for the on-instrument wavefront 
+#                           sensor.
+#
+#           -oiwfsNod       The nod state for the on-instrument wavefront 
+#                           sensor.
+#
+#           -pwfs1Target    The target for peripheral wavefront sensor 1.
+#
+#           -pwfs1Chop      The chop state for the peripheral wavefront 
+#                           sensor 1.
+#
+#           -pwfs1Nod       The nod state for the peripheral wavefront 
+#                           sensor 1.
+#
+#           -pwfs2Target    The target for peripheral wavefront sensor 2.
+#
+#           -pwfs2Chop      The chop state for the peripheral wavefront 
+#                           sensor 2.
+#
+#           -pwfs2Nod       The nod state for the peripheral wavefront 
+#                           sensor 2.
 #
 #  Methods:
+#           apply cs        Sets the system and equinox paramters of the
+#                           command sender "cs".
 #
-#     apply
+#           preview         Sets the guide information in the preview.
 #
-#        Applies the guide configuration to the telescope.
+#           save file       Writes the values of the options to the file
+#                           descriptor "file".
+#
+#  Procs:
+#           subcomponents   Returns a list of the Guide components 
+#                           subcomponents.
 #
 #  D Terrett 24 March 1999
 #
@@ -20,15 +51,15 @@ itcl::class Guide {
 
    public proc subcomponents {}
 
+   public variable oiwfsTarget ""
+   public variable oiwfsChop A
+   public variable oiwfsNod AB
    public variable pwfs1Target ""
    public variable pwfs1Chop A
    public variable pwfs1Nod AB
    public variable pwfs2Target ""
    public variable pwfs2Chop A
    public variable pwfs2Nod AB
-   public variable oiwfsTarget ""
-   public variable oiwfsChop A
-   public variable oiwfsNod AB
 
    public method apply args
    public method preview
@@ -49,24 +80,48 @@ itcl::body Guide::apply args {
 
 # Call the apply method of all the targets that have a value and set the
 # enable flags.
-   if { [info commands ::WfsTargetNames::$pwfs1Target] != "" } {
+   if { [string length [info commands ::WfsTargetNames::$pwfs1Target]] } {
       ::WfsTargetNames::$pwfs1Target apply pwfs1
       setEnableFlags pwfs1 $pwfs1Chop $pwfs1Nod
    } else {
       setEnableFlags pwfs1 "" ""
    }
-   if { [info commands ::WfsTargetNames::$pwfs2Target] != "" } {
+   if { [string length [info commands ::WfsTargetNames::$pwfs2Target]] } {
       ::WfsTargetNames::$pwfs2Target apply pwfs2
       setEnableFlags pwfs2 $pwfs2Chop $pwfs2Nod
    } else {
       setEnableFlags pwfs2 "" ""
    }
-   if { [info commands ::WfsTargetNames::$oiwfsTarget] != "" } {
+   if { [string length [info commands ::WfsTargetNames::$oiwfsTarget]] } {
       ::WfsTargetNames::$oiwfsTarget apply oiwfs
       setEnableFlags oiwfs $oiwfsChop $oiwfsNod
    } else {
       setEnableFlags oiwfs "" ""
    }
+}
+
+itcl::body Guide::preview {} {
+   if { [string length [info commands ::WfsTargetNames::$pwfs1Target]] } {
+      ::WfsTargetNames::$pwfs1Target preview pwfs1
+   }
+   if { [string length [info commands ::WfsTargetNames::$pwfs2Target]] } {
+      ::WfsTargetNames::$pwfs2Target preview pwfs2
+   }
+   if { [string length [info commands ::WfsTargetNames::$oiwfsTarget]] } {
+      ::WfsTargetNames::$oiwfsTarget preview oiwfs
+   }
+}
+
+itcl::body Guide::save file {
+   puts $file "   -pwfs1Target \"$pwfs1Target\" \\"
+   puts $file "   -pwfs1Chop $pwfs1Chop \\"
+   puts $file "   -pwfs1Nod $pwfs1Nod \\"
+   puts $file "   -pwfs2Target \"$pwfs2Target\" \\"
+   puts $file "   -pwfs2Chop $pwfs2Chop \\"
+   puts $file "   -pwfs2Nod $pwfs2Nod \\"
+   puts $file "   -oiwfsTarget \"$oiwfsTarget\" \\"
+   puts $file "   -oiwfsChop $oiwfsChop \\"
+   puts $file "   -oiwfsNod $oiwfsNod"
 }
 
 itcl::body Guide::setEnableFlags {wfs chop nod} {
@@ -145,28 +200,4 @@ itcl::body Guide::setEnableFlags {wfs chop nod} {
    } else {
       cs ${wfs}Guide set nodcchopc Off
    }
-}
-
-itcl::body Guide::preview {} {
-   if { [info commands ::WfsTargetNames::$pwfs1Target] != "" } {
-      ::WfsTargetNames::$pwfs1Target preview pwfs1
-   }
-   if { [info commands ::WfsTargetNames::$pwfs2Target] != "" } {
-      ::WfsTargetNames::$pwfs2Target preview pwfs2
-   }
-   if { [info commands ::WfsTargetNames::$oiwfsTarget] != "" } {
-      ::WfsTargetNames::$oiwfsTarget preview oiwfs
-   }
-}
-
-itcl::body Guide::save file {
-   puts $file "   -pwfs1Target \"$pwfs1Target\" \\"
-   puts $file "   -pwfs1Chop $pwfs1Chop \\"
-   puts $file "   -pwfs1Nod $pwfs1Nod \\"
-   puts $file "   -pwfs2Target \"$pwfs2Target\" \\"
-   puts $file "   -pwfs2Chop $pwfs2Chop \\"
-   puts $file "   -pwfs2Nod $pwfs2Nod \\"
-   puts $file "   -oiwfsTarget \"$oiwfsTarget\" \\"
-   puts $file "   -oiwfsChop $oiwfsChop \\"
-   puts $file "   -oiwfsNod $oiwfsNod"
 }

@@ -1,8 +1,60 @@
 #+
-# HandPaddleButtons.itk
+# HandPaddleButtons <- itk::Widget
 #
 # Implements the HandPaddleButton widget. A set of four buttons marked with
 # arrows that can be rotated and a "compass rose" that shows the orientation.
+#
+# Options:
+#         -angle              The angle of rotation of the handset in radians.
+#
+#         -bottomshadowcolor  The colour of the buttons bottom shadow.
+#
+#         -buttonbackground   The background colour for the buttons.
+#
+#         -buttonforeground   The foreground colour for the buttons.
+#
+#         -downcommand        The command executed when the bottom button is
+#                             pressed.
+#
+#         -downlabel          The text labeling the point of the compass rose
+#                             that corresponds to the down button.
+#
+#         -leftcommand        The command executed when the bottom button is
+#                             pressed.
+#
+#         -leftlabel          The text labeling the point of the compass rose
+#                             that corresponds to the left button.
+#
+#         -rightcommand       The command executed when the bottom button is
+#                             pressed.
+#
+#         -rightlabel         The text labeling the point of the compass rose
+#                             that corresponds to the right button.
+#
+#         -topshadowcolor     The colour of the buttons bottom shadow.
+#
+#         -upcommand          The command executed when the bottom button is
+#                             pressed.
+#
+#         -uplabel            The text labeling the point of the compass rose
+#                             that corresponds to the up button.
+#
+# Methods:
+#         none
+#
+# Notes:
+#       o up, down etc refer to the orientation of the buttons when the 
+#         rotation angle is zero.
+#
+#       o Arrow keypress events in the widgets top level window are bound to
+#         the four -command options. This means that it is only possible
+#         to have one HandPaddleButtons widget in a window and have the
+#         arrow keys behave sensibly.
+#
+#       o When the mouse pointer is inside the widget's top level window
+#         keyboard autorepeat is turned off to avoid "flywheeling". If the
+#         tcc application is destroyed while the pointer is in the window
+#         the keyboard will be left with autorepeat disabled.
 #
 # D Terrett 21 January 1999
 #
@@ -14,16 +66,6 @@ itcl::class HandPaddleButtons {
    inherit itk::Widget
 
    constructor args {}
-
-   private method press button
-   private method release button
-   private method leave button
-   private method enter button
-   private method sink button
-   private method raise button
-   private method invoke button
-   private method rotate {cy cy coords angle}
-   private method flip
 
    itk_option define -angle angle Angle 0
    itk_option define -leftcommand leftCommand Command ""
@@ -48,18 +90,28 @@ itcl::class HandPaddleButtons {
    itk_option define -buttonforeground buttonForeground Foreground  gray50
    itk_option define -buttonbackground buttonBackground Background gray
 
-   variable pressed ""
-   variable focusbutton ""
-   variable buttonCoords
-   variable topShadowCoords
-   variable bottomShadowCoords
-   variable arrowCoords
-   variable compass1Coords
-   variable compass2Coords
-   variable leftCoords
-   variable rightCoords
-   variable upCoords
-   variable downCoords
+   private method press button
+   private method release button
+   private method leave button
+   private method enter button
+   private method sink button
+   private method raise button
+   private method invoke button
+   private method rotate {cy cy coords angle}
+   private method flip
+
+   private variable pressed ""
+   private variable focusbutton ""
+   private variable buttonCoords
+   private variable topShadowCoords
+   private variable bottomShadowCoords
+   private variable arrowCoords
+   private variable compass1Coords
+   private variable compass2Coords
+   private variable leftCoords
+   private variable rightCoords
+   private variable upCoords
+   private variable downCoords
 }
 
 itk::usual HandPaddleButtons {

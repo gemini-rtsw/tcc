@@ -1,9 +1,19 @@
 #+
-#  GuideLoopControl.itk
+#  GuideLoopControl <- itk::Widget
 #
-#  Implements the McsControl widget.
+#  A GuideLoopControl is a diagram of the various guiding loops with control
+#  for setting them up and enabling them
 #
-#  D Terrett  23 November 1999
+#  Options:
+#           none
+#
+#  Methods:
+#           none
+#
+#  Notes:
+#        o This widget is incomplete
+#
+#  D Terrett  24 November 1999
 #
 #  Copyright CCLRC
 #+
@@ -26,11 +36,11 @@ itcl::class GuideLoopControl {
    private variable m2_sw 0
    private variable mt 0
    private variable mt_sw 0
+   private variable m1Weight
 }
 
 itk::usual GuideLoopControl {
-   keep -background -cursor -highlightcolor -foreground
-   keep -insertbackground -selectbackground -selectforeground
+   keep -cursor
 }
 
 itcl::body GuideLoopControl::constructor args {
@@ -82,7 +92,7 @@ itcl::body GuideLoopControl::constructor args {
 
 # Controls for M1.
    itk_component add m1Weight {
-      checkbutton $w.m1Weight -text Weighting -variable ${w}_m1Weight \
+      checkbutton $w.m1Weight -text Weighting -variable m1Weight \
             -onvalue Errors -offvalue None
    }
    $w create window 1 64 -window $itk_component(m1Weight) -anchor nw -tags m1
@@ -295,8 +305,7 @@ body GuideLoopControl::m1mode state {
 
    cs m1Guide set mode [expr {$state ? "On" : "Off"}]
    cs m1Guide set update [$itk_component(m1Update) get]
-   upvar #0 [$itk_component(m1Weight) cget -variable] weight
-   cs m1Guide set weighting $weight
+   cs m1Guide set weighting $m1Weight
 
    if [catch {cs m1Guide post} msg] {
       tk_messageBox -icon error -parent $itk_interior -message \

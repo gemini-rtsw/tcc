@@ -1,10 +1,16 @@
 #+
-#  ExportDialog.itk
+#  EditDialog <- iwidgets::FileSelectionDialog
 #
-#  Implements the ExportDialog widget which is a file selection dialog with 
+#  AnExportDialog widget is a file selection dialog with 
 #  checkbuttons for selecting which components are saved.
 #
-#  D Terrett 21 September 1999
+#  Options:
+#           none
+#
+#  Methods:
+#           none
+#
+#  D Terrett 24 November 1999
 #
 #  Copyright CCLRC
 #-
@@ -16,30 +22,24 @@ itcl::class ExportDialog {
 }
 
 itk::usual ExportDialog {
+   keep -activebackground -activerelief -background -borderwidth -cursor \
+         -elementborderwidth -foreground -highlightcolor -highlightthickness \
+         -insertbackground -insertborderwidth -insertofftime -insertontime \
+         -insertwidth -jump -labelfont -modality -selectbackground \
+         -selectborderwidth -textbackground -textfont 
 }
 
 option add *ExportDialog.borderWidth 2 widgetDefault
-
-option add *ExportDialog.title "File Selection Dialog" widgetDefault
-
-option add *ExportDialog.width 500 widgetDefault
 option add *ExportDialog.height 600 widgetDefault
-
 option add *ExportDialog.master "." widgetDefault
+option add *ExportDialog.width 500 widgetDefault
+option add *ExportDialog.title "File Selection Dialog" widgetDefault
 
 itcl::body ExportDialog::constructor args {
 
-#   pack propagate $itk_component(hull) yes
-
-# Add check buttons to select which components to export.
-#   itk_component add frame {
-#      frame $itk_component(dschildsite).frame
-#   }
-#   pack $itk_component(frame)
-#   grid $itk_component(frame)
-#   set w $itk_component(frame)
    set w $itk_interior
 
+# Add check buttons to select which components to export.
    itk_component add config {
       checkbutton $w.config -text Configurations -variable $w._config
    }

@@ -1,5 +1,5 @@
 #+
-#  ISS.itcl
+#  ISS
 #
 #  Implements the ISS class. An ISS object (of which only one is expected to
 #  exist) maps the observing mode (Sky, Calibration or TV) and AO
@@ -7,7 +7,22 @@
 #  mirrors in the instrument support structure. The "update" method actually
 #  moves the mirrors to the desired positions.
 #
-#  D Terrett 17 November 1998
+#  Options:
+#          -mode   The current mode of operation (SKY - the instrument can
+#                  see the sky, TV - the aquisition TV/HRWFS can see the
+#                  sky or CAL - the instrument can see the calibration unit.
+#
+#          -ao     The state of the AO fold mirror (IN or OUT).
+#
+#          -port   The ISS port on which the currently active instrument
+#                  is mounted (1-5). Port 1 is the upward looking port.
+#
+#  Methods:
+#          update  Moves the science fold mirror, AO pickoff mirror and
+#                  HRWFS mirrors into the correct position to realise the
+#                  settings ofthe -mode, -ao and -port options.
+#
+#  D Terrett 5 February 2000
 #
 #  Copyright CCLRC
 #+
@@ -39,20 +54,20 @@ itcl::body ISS::position {} {
 # If the mode is TV then the HRWFS fold must be IN and the science fold 
 # either retracted (no AO) or set to reflect port 2 (which is where the AO 
 # unit is attached) to port 1 (the upward looking port).
-   if { $mode == "TV" } {
+   if { [string compare $mode "TV"] == 0 } {
       set hwfold IN
-      if { $ao == "IN" } {
+      if { [string compare $ao "IN"] == 0 } {
          set scfold 8
       } else {
          set scfold "OUT"
       }
-   } elseif { $mode == "SKY" } {
+   } elseif { [string compare $mode "SKY"] == 0 } {
 
 # If the active ISS port is the upward looking one then the HRWFS fold must
 # be OUT.
       if { $port == 1 } {
          set hwfold OUT
-         if { $ao == "IN" } {
+         if { [string compare $ao "IN"] == 0 } {
             set scfold 8
          } else {
             set scfold OUT
@@ -61,7 +76,7 @@ itcl::body ISS::position {} {
 
 # Otherwise the the HRWFS fold can be left where it is and the science fold
 # position just depends on whether the AO is in or out.
-         if { $ao == "IN" } {
+         if { [string compare $ao "IN"] == 0 } {
             switch $port {
                3 {set scfold 4}
                5 {set scfold 7}

@@ -1,8 +1,24 @@
 #+
-#  createEditPanels.tcl
+#  createEditPanels
 #
-#  Creates and EditPanel and then calls itself to create the edit panels
-#  for any subcompents.
+#  Creates an EditPanel and its shadow and then calls itself to create 
+#  the edit panels for any subcomponents.
+#
+#  Arguments:
+#            parent     The parent widget for the edit panel.
+#
+#            component  The name of the configuration component that the edit
+#                       panel will edit.
+#
+#            class      The class of the component.
+#
+#            namespace  The namespace in which the components are created.
+#
+#            list       The component list to which the component belongs.
+#
+#            title      The title for the edit panel.
+#
+#            vt         The virtual telescope argument for the component.
 #
 #  D Terrett 9 September 1998
 #
@@ -35,6 +51,6 @@ proc createEditPanels {parent component class namespace list title vt} {
          "$title [lindex $subcomp 4]" $subvt
    }
 
-# Configure the EditShadows children.
+# Configure the EditShadows -children option.
    ${parent}${component} configure -children $children
 }

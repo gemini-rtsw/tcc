@@ -1,19 +1,26 @@
 #+
-#  Wavelength.itcl
+#  Wavelength
 #
 #  Implements the Wavelength class. A Wavelength object stores an effective 
 #  wavelength.
 #
+#  Options:
+#          -wavel      The wavelength.
+#
 #  Methods:
+#          apply vt    Applies the wavelength to the TCS by setting the 
+#                      values of the command parameters for virtual
+#                      telescope "vt".
 #
-#     apply <virtual telescope>
+#          preview vt  Sets the preview wavelength for the virtual
+#                      telescope "vt".
 #
-#         Applies the wavelength definition to the TCS by setting the values
-#         of the command parameters.
+#          save        Writes the values of the options to the channel
+#                      identifier "file".
 #
-#     preview <virtual telescope>
-#
-#         Set the preview wavelength for the specified virtual telescope.
+#  Procs:
+#           subcomponents   Returns a list of the subcomponents of the
+#                           Wavelength objects (an empty list).
 #
 #  D Terrett 7 September 1998
 #
@@ -21,7 +28,6 @@
 #+
 
 itcl::class Wavelength {
-
 
    public proc subcomponents {} {return {}}
 

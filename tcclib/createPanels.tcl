@@ -1,7 +1,10 @@
 #+
-#  createPanels.tcl
+#  createPanels
 #
 #  Creates all the panel objects that make up the tcc application.
+#
+#  Arguments:
+#             none
 #
 #  D Terrett 22 November 1999
 #

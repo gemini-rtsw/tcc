@@ -1,10 +1,20 @@
 #+
-#  GuidePanel.itk
+#  GuidePanel <- Panel
 #
 #  Implements the GuidePanel widget. A Panel widget with a 
 #  GuideControl widget packed into its interior.
 #
-#  D Terrett 26 April 1999
+#  Options:
+#           -componentlist - The -componentlist option of the Cosys control
+#
+#           -namespace -     The -namespace option of the Cosys control
+#
+#           -component -
+#
+#  Methods:
+#          none
+#
+#  D Terrett 24 Novemeber 1999
 #
 #  Copyright CCLRC
 #+
@@ -26,14 +36,6 @@ itk::usual GuidePanel {
 itcl::body GuidePanel::constructor args {
    itk_component add control {
       GuideControl $itk_interior.control
-   } {
-      usual
-      ignore -activeforeground
-      ignore -insertbackground
-      ignore -selectforeground
-      ignore -highlightcolor
-      ignore -activebackground
-      ignore -textbackground
    }
    setWidgetColors "$itk_component(menubar) $itk_component(control)" \
          $itk_option(-background) $itk_option(-foreground)

@@ -1,11 +1,22 @@
 #+
-#  StoreApply.itk
+#  StoreApply <- itk::widget
 #
 #  Implements the StoreApply widget. A Store button and an Apply button
 #  tastefully packed into a frame with an option for specifying which
 #  Control widget they are part of.
 #
-#  D Terrett 17 November 1998
+#  Options:
+#           -control
+#
+#           -logmessage    The message sent to the logger when the apply
+#                          button is pressed.
+#
+#           -vt
+#
+#  Methods:
+#           none
+#
+#  D Terrett 24 November 1999
 #
 #  Copyright CCLRC
 #+
@@ -21,13 +32,14 @@ itcl::class StoreApply {
 
    private method apply
    private method lock
+
+   private variable lockstate
 }
 
 itk::usual StoreApply {
-   keep -background -cursor -foreground -font
-   keep -activebackground -activeforeground -disabledforeground
-   keep -highlightcolor -highlightthickness
-   keep -vt
+   keep -activeforeground -activebackground -background -cursor \
+         -disabledforeground -font -foreground -highlightcolor \
+         -highlightthickness -vt
 }
 
 itcl::body StoreApply::constructor args {
@@ -37,11 +49,9 @@ itcl::body StoreApply::constructor args {
    }
    set w $itk_component(aframe)
    itk_component add lock {
-      checkbutton $w.lock -command [code $this lock] 
+      checkbutton $w.lock -command [code $this lock] -variable [scope lockstate]
    }
-   $itk_component(lock) configure -variable $itk_component(lock)_
-   upvar #0 [$itk_component(lock) cget -variable] state
-   set state 0
+   set lockstate 0
    itk_component add apply {
       LiveButton $w.apply -text Apply -width 6 -command [code $this apply] \
             -state disabled
@@ -51,8 +61,7 @@ itcl::body StoreApply::constructor args {
       StoreButton $itk_interior.store -text Store -width 6
    } {
       usual
-      keep -combobox
-      keep -shadow
+      keep -combobox -shadow
    }
    pack $itk_component(aframe) $itk_component(store) -side left -pady 4 \
          -expand y
@@ -77,8 +86,7 @@ itcl::body StoreApply::apply {} {
 }
 
 itcl::body StoreApply::lock {} {
-   upvar #0 [$itk_component(lock) cget -variable] state
-   if { $state } {
+   if { $lockstate } {
       $itk_component(apply) configure -state normal 
    } else {
       $itk_component(apply) configure -state disabled

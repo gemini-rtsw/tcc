@@ -1,9 +1,18 @@
 #+
-#  StoreButton.itk
+#  StoreButton <- itk::Widget
 #
 #  Implements the StoreButton class. A StoreButton is a push button that
 #  reads the contents of a combobox and only calls its command procedure
 #  the string is not empty.
+#
+#  Options:
+#           -combobox   The combobox widget that the button is associated
+#                       with.
+#
+#           -shadow     The name of the component shadow.
+#
+#  Methods:
+#           invoke      Invokes the action of pressing the button.
 #
 #  D Terrett  9 September 1998
 #
@@ -15,8 +24,7 @@ itcl::class StoreButton {
 
    constructor args {}
 
-   public method invoke
-
+   public method invoke {} {$itk_component(button) invoke}
    private method command
 
    itk_option define -shadow shadow Shadow {}
@@ -24,9 +32,9 @@ itcl::class StoreButton {
 }
 
 itk::usual StoreButton {
-   keep -background -cursor -foreground -font
-   keep -activebackground -activeforeground -disabledforeground
-   keep -highlightcolor -highlightthickness
+   keep -activebackground -activeforeground -background -cursor \
+         -disabledforeground -foreground -font -highlightcolor \
+         -highlightthickness
 }
 
 itcl::body StoreButton::constructor args {
@@ -35,8 +43,7 @@ itcl::body StoreButton::constructor args {
       button $itk_interior.button -command [code $this command]
    } {
       usual
-      keep -text
-      keep -width
+      keep -text -width
    }
    pack $itk_component(button) -fill both -expand y
 
@@ -51,8 +58,4 @@ itcl::body StoreButton::command {} {
       tk_messageBox -icon error -parent $itk_interior -message \
             "Cannot store without a name to store to."
    }
-}
-
-itcl::body StoreButton::invoke {} {
-   $itk_component(button) invoke
 }

@@ -1,10 +1,21 @@
 #+
-#  WavelengthControl.itk
+#  WavelengthControl <- ComponentControl
 #
 #  Implements the WavelengthControl widget. A ComponentControl widget with
 #  an entryfield widget for the wavelength.
 #
-#  D Terrett 3 November 1998
+#  Options:
+#           -vt             The virtual telescope that the wavelength
+#                           applies to.
+#
+#  Methods:
+#           selectobj name  Copies the contents of the Wavelength object "name"
+#                           into the edit controls.
+#
+#           updateobj name  Stores the contents of the edit controls in the
+#                           Wavelength object "name".
+#
+#  D Terrett 24 November 1999
 #
 #  Copyright CCLRC
 #+
@@ -21,13 +32,9 @@ itcl::class WavelengthControl {
 }
 
 itk::usual WavelengthControl {
-   keep -activebackground -activeforeground -disabledforeground
-   keep -background -borderwidth -cursor -foreground -highlightcolor
-   keep -highlightthickness -insertbackground -insertborderwidth
-   keep -insertofftime -insertontime -insertwidth -labelfont -popupcursor
-   keep -selectbackground -selectborderwidth -selectforeground
-   keep -textbackground -textfont -font
-   keep -vt -title
+   keep -borderwidth -cursor -font -highlightthickness -insertborderwidth\
+         -insertofftime -insertontime -insertwidth -labelfont -popupcursor \
+         -selectborderwidth -textfont -title -vt
 }
 
 itcl::body WavelengthControl::constructor args {

@@ -1,10 +1,13 @@
 #+
-#  tccMain.tcl
+#  tccMain
 #
 #  The main program for the Gemini control console. It creates the top level
 #  "toolbar" window.
 #
 #  D Terrett 29 November 1999
+#
+#  Arguments:
+#            Any command line options and values.
 #
 #  Copyright CCLRC
 #-

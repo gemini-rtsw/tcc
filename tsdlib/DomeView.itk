@@ -1,11 +1,14 @@
 #+
-#  DomeView.itk
+#  DomeView <- itk:Widget 
 #
-#  methods
+#  Plots a view of the dome on a canvas.
 #
-#    update
+#  Options:
+#           none
 #
-#       Updates the display.
+#  Methods:
+#           update          Updates the view with the current state of the
+#                           telescope.
 #
 #  D Terrett 13 August 1998
 #
@@ -21,11 +24,9 @@ itcl::class DomeView {
 }
 
 itk::usual DomeView {
-   keep -background -cursor
-   keep -insertbackground -insertborderwidth -insertwidth
-   keep -insertontime -insertofftime
-   keep -selectbackground -selectborderwidth -selectforeground
-   keep -highlightcolor -highlightthickness
+   keep -background -cursor -highlightcolor -highlightthickness \
+         -insertbackground -insertborderwidth -insertwidth -insertontime \
+         -insertofftime -selectbackground -selectborderwidth -selectforeground
 }
 
 itcl::body DomeView::constructor args {
@@ -42,8 +43,5 @@ itcl::body DomeView::constructor args {
 }
 
 itcl::body DomeView::update {} {
-#+
-#  Updates the display.
-#-
    $itk_component(domeview) itemconfigure domeview -display 1
 }

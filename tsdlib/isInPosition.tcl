@@ -1,8 +1,13 @@
 #+
-#  isInPosition.tcl
+#  isInPosition
 #
 #  Tests the value of a subsystem in position record to determine if the
 #  mechanism is in position or not.
+#
+#  Arguments:
+#            sad     The status acceptor containing the in position record.
+#
+#            rec     The name of the in position record.
 #
 #  D Terrett 10 November 1999
 #

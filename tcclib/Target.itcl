@@ -1,19 +1,46 @@
 #+
-#  Target.itcl
+#  Target
 #
 #  Implements the Target class. A Target object stores all
 #  the parameters needed to specify a target.
 #
+#  Options:
+#           -objName       The object name
+#
+#           -type          The type of the coordinate (radec, or azel).
+#
+#           -wavelength_name
+#
+#           -wavelength_value
+#
+#           The following options apply when -type is radec.
+#
+#              -cosys         The target coordinate system.
+#
+#              -epoch         The epoch of the position.
+#
+#              -parallax      The parallax.
+#
+#              -radec         Right ascension and declination.
+#
+#              -rv            Radial velocity.
+#
+#           The following options apply when -type is radec.
+#
+#              -azel          Azimuth and elevation.
+#
 #  Methods:
+#           apply vt      Applies the target definition to the TCS by 
+#                         setting the values of the command parameters
+#                         for virtual telescope "vt".
 #
-#     apply <virtual telescope>
+#           preview item  Sets the preview target for "item".
 #
-#         Applies the target definition to the TCS by setting the values
-#         of the command parameters.
+#           save file     Writes the values of the target options to the
+#                         channel identifier "file".
 #
-#     preview <item>
-#
-#         Calls tccPreview to set the data in the named virtual telescope.
+#  Procs:
+#           subcomponents Returns a list of the target classes subcomponents.
 #
 #  D Terrett 13 November 1999
 #

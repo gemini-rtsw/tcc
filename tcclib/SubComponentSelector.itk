@@ -1,15 +1,18 @@
 #+
-#  SubComponentSelector.itk
+#  SubComponentSelector <- itk::Widget
 #
 #  Implements the SubComponentSelector widget.
 #
 #  Options:
+#           -component       The name of the subcomponent.
 #
-#     Methods
+#           -editcontrol
 #
-#        select <item>
+#           -shadow          The name of the component shadow.
 #
-#           sets the item in the ListManager widget.
+#
+#  Methods:
+#           select item      Selects "item" into the list manager.
 #
 #  D Terrett  9 September 1998
 #
@@ -68,7 +71,7 @@ itcl::body SubComponentSelector::constructor args {
 }
 
 itcl::configbody SubComponentSelector::editcontrol {
-#+
+#-
 # Sets the name of the control panel popped up by the edit button.
 #-
    $itk_component(edit) configure -panel $itk_option(-editcontrol)
@@ -83,8 +86,8 @@ itcl::body SubComponentSelector::get {} {
 }
 
 itcl::body SubComponentSelector::selectioncommand {} {
-#+
-#  Updates the EditShadow with the new subcompent object name.
+#-
+#  Updates the EditShadow with the new subcomponent object name.
 #-
    set name [$itk_component(selector) get]
    $itk_option(-shadow) subselect $itk_option(-component) $name

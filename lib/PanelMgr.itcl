@@ -1,67 +1,50 @@
 #+
-#  PanelMgr.itcl
+#  PanelMgr
 #
-#  Implements the PanelMgr class. A PanelMgr object encapsulates the 
-#  information needed to create a panel window and map it onto the screen 
-#  specified by the layout manager. The panel window is created by calling 
-#  the panel object's  map method.
-#
-#  Destroying the PanelMgr object does not destroy the panel window - PanelMgr
-#  objects are not intended to be destroyed.
-#
-#  Methods:
-#
-#     map
-#
-#        Creates the panel window or maps it into the screen if it already
-#        exists.
-#
-#     withdraw
-#
-#        Withdraws the window if it exists.
-#
-#     iconify
-#
-#        Iconifies the window if it exists.
-#
-#     updategeometry
-#
-#       Updates the -geometry option from the panel window (if it exists).
+#  A PanelMgr object stores the information needed to create a panel window 
+#  and map it onto a screen. The panel window itself is created by calling 
+#  the panel object's map method.
 #
 #  Options:
+#           -class          The class of the real panel window.
 #
-#     name
+#           -create         Specifies whether the window should be created as
+#                           the system is started up.
 #
-#        The name to be used for the real panel window.
+#           -geometry       Specifies the window's geometry when it is
+#                           created.
 #
-#     class
+#           -name           The name of the real panel window.
 #
-#        The class of the real panel window.
+#           -screen         The screen on which the window should be created. 
+#                           If this option is changed after the window has 
+#                           been created, it is destroyed and recreated.
 #
-#     title
+#           -state          The state of the window (iconized, withdrawn etc.)
 #
-#        The window title.
+#           -title          The window title.
 #
-#     screen
+#           -windows        A list of the control windows that this panel 
+#                           contains.
 #
-#        The screen on which the window should be create. If this option
-#        is changed after the window has been created, it is destroyed
-#        and recreated.
+#  Methods:
+#           iconify         Iconifies the panel window if it exists.
 #
-#     geometry
+#           map             Creates the panel window or maps it into the 
+#                           screen if it already exists.
 #
-#        The window's geometry. This option is not updated if the window
-#        is moved using the window manager.
+#           updategeometry  Updates the -geometry and -state options from the 
+#                           panel window if it exists.
 #
-#     windows
+#           withdraw        Withdraws the panel window from the screen if 
+#                           it exists.
 #
-#        A list of the control windows that this panel contains.
+#  Notes:
+#        o The -geometry option is not automatically updated if the window
+#          is moved using the window manager.
 #
-#     create
-#
-#        Whether the window should be created as the system is started up.
-#        This option is only used to decide whether to write a "map" call
-#        into the layout initialisation file.
+#        o  Destroying the PanelMgr object does not destroy the panel window -
+#           PanelMgr objects are not intended to be destroyed.
 #
 #  D Terrett 25 November 1998
 #
@@ -74,26 +57,23 @@ itcl::class PanelMgr {
       eval configure $args
    }
 
-   public method map
-   public method withdraw
-   public method iconify
-   public method updategeometry
-
-   public variable name ""
    public variable class ""
+   public variable create 0 
+   public variable geometry ""
+   public variable name ""
+   public variable screen ""
+   public variable state normal
    public variable title ""
    public variable windows ""
-   public variable screen ""
-   public variable geometry ""
-   public variable state normal
-   public variable create 0 
+
+   public method iconify
+   public method map
+   public method updategeometry
+   public method withdraw
 }
 
 itcl::body PanelMgr::map {} {
 #-
-# Maps a panel onto the screen. If it doesn't exist it is created on the
-# screen specified by the -screen option.
-#
 # Putting an itk toplevel widget on another screen involves a horrible
 # hack. The widget doesn't have a -screen option and it isn't possible to
 # add one because the options are configured after the window has been
@@ -141,32 +121,13 @@ itcl::body PanelMgr::map {} {
          wm geometry $name $geometry
       }
 
-# Configure the title and parent PanelMgr object name of the window.
+# Configure the -title and -parent options of the panel object.
       $name configure -title $title -panelmgr $this
 
-# Store the names of the windows that the panel contains.
+# Store the names of the windows that this panel contains.
       set windows [$name cget -windows]
 
       return 1
-   }
-}
-
-itcl::body PanelMgr::withdraw {} {
-   if [winfo exists $name] {
-      wm withdraw $name
-   }
-}
-
-itcl::body PanelMgr::iconify {} {
-   if [winfo exists $name] {
-      wm iconify $name
-   }
-}
-
-itcl::body PanelMgr::updategeometry {} {
-   if [winfo exists $name] {
-      set geometry [wm geometry $name]
-      set state [wm state $name]
    }
 }
 
@@ -184,15 +145,41 @@ itcl::configbody PanelMgr::geometry {
 
 itcl::configbody PanelMgr::screen {
    if [winfo exists $name] {
+
+# See which screen we are on now.
       set oldscreen [winfo screen [winfo toplevel $name]]
+
+# Determine which screen we are being moved to.
       if { $screen == "" } {
          set newscreen [winfo screen .]
       } else {
          set newscreen $screen
       }
+
+# If the old and new screens are different then destroy the window and
+# call the map method to r-create it on the new screen.
       if { $newscreen != $oldscreen } {
           destroy $name
           $this map
       }
+   }
+}
+
+itcl::body PanelMgr::iconify {} {
+   if [winfo exists $name] {
+      wm iconify $name
+   }
+}
+
+itcl::body PanelMgr::updategeometry {} {
+   if [winfo exists $name] {
+      set geometry [wm geometry $name]
+      set state [wm state $name]
+   }
+}
+
+itcl::body PanelMgr::withdraw {} {
+   if [winfo exists $name] {
+      wm withdraw $name
    }
 }

@@ -1,8 +1,11 @@
 #+
-#  updateDisplays.tcl
+#  updateDisplays
 #
 #  updateDisplays updates any of the displays in the tsd application that
 #  exist.
+#
+#  Arguments:
+#            All arguments are ignored.
 #
 #  D Terrett 28 August 1998
 #

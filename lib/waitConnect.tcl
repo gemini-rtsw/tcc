@@ -1,8 +1,13 @@
 #+
 #  waitConnect.tcl
 #
-#  Waits for a connection to the TCS to be established by repeated attempting
-#  to initialise the time system.
+#  Procedures:
+#     waitConnect - waits for a connection to the TCS to be established by 
+#                   attempting to initialise the time system at 1 second 
+#                   intervals.
+#
+#  Globals:
+#     TZOFFSET - Time offset between local time and UTC in hours.
 #
 #  D Terrett 4 September 1998
 #

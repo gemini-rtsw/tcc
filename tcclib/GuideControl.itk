@@ -1,11 +1,20 @@
 #+
-#  GuideControl.itk
+#  GuideControl <- ComponentControl
 #
-#  Implements the GuideControl widget. A ComponentControl widget with
-#  a widgets for the target name and chop and node states for each of the
-#  wave front sensors.
+#  A GuideControl is a ComponentControl widget with widgets for the target 
+#  name and chop and node states for each of the wavefront sensors.
 #
-#  D Terrett 3 November 1998
+#  Options:
+#           -shadow         The names of this control's shadow.
+#
+#  Methods:
+#           selectobj name  Copies the contents of the Guide object "name"
+#                           into the edit controls.
+#
+#           updateobj name  Stores the contents of the edit controls in the
+#                           Guide object "name".
+#
+#  D Terrett 24 November 1998
 #
 #  Copyright CCLRC
 #+
@@ -22,13 +31,9 @@ itcl::class GuideControl {
 }
 
 itk::usual GuideControl {
-   keep -activebackground -activeforeground -disabledforeground
-   keep -background -borderwidth -cursor -foreground -highlightcolor
-   keep -highlightthickness -insertbackground -insertborderwidth
-   keep -insertofftime -insertontime -insertwidth -labelfont -popupcursor
-   keep -selectbackground -selectborderwidth -selectforeground
-   keep -textbackground -textfont -font
-   keep -vt -title
+   keep -borderwidth -cursor -font -highlightthickness -insertborderwidth \
+         -insertofftime -insertontime -insertwidth -labelfont -popupcursor \
+         -selectborderwidth -textfont -title -vt
 }
 
 itcl::body GuideControl::constructor args {
@@ -161,10 +166,9 @@ itcl::body GuideControl::updateobj name {
 }
 
 itcl::body GuideControl::selectobj name {
-#+
-# Copies the contents of the guide object selected in the combobox
+
+# Copy the contents of the guide object selected in the combobox
 # into the edit control.
-#-
    if { $name != "" } {
       $itk_component(pwfs1Target) select [$name cget -pwfs1Target]
       $itk_component(pwfs1chop) select [$name cget -pwfs1Chop]

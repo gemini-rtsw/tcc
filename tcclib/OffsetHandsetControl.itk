@@ -1,9 +1,17 @@
 #+
-#  OffsetHandsetControl.itk
+#  OffsetHandsetControl <- itk::Widget
 #
-#  Implements the OffsetHandsetControl widget.
+#  A OffsetHandsetControl implements a software handset for adjusting
+#  target positions.
 #
-#  D Terrett 21 January 1999
+#
+#  Options:
+#           none
+#
+#  Methods:
+#           none
+#
+#  D Terrett 24 November 1999
 #
 #  Copyright CCLRC
 #+
@@ -20,16 +28,13 @@ itcl::class OffsetHandsetControl {
    private method settang
    private method getOffset
 
-   private common Tangent
+   private variable tangent
 }
 
 itk::usual OffsetHandsetControl {
-   keep -background -borderwidth -cursor -foreground 
-   keep -highlightcolor  -highlightthickness -insertbackground 
-   keep -insertborderwidth  -insertofftime -insertontime -insertwidth 
-   keep -labelfont  -selectbackground -selectborderwidth -selectforeground  
-   keep -textbackground -textfont
-   keep -font
+   keep -borderwidth -cursor -font -highlightthickness -insertborderwidth \
+         -insertofftime -insertontime -insertwidth -labelfont \
+         -selectborderwidth -textbackground -textfont
 }
 
 itcl::body OffsetHandsetControl::constructor args {
@@ -80,13 +85,11 @@ itcl::body OffsetHandsetControl::constructor args {
 
 # Check button for selecting tangent plane
    itk_component add tang {
-      checkbutton $w.tang -text "Tangent Plane" -variable Tangent($this) \
+      checkbutton $w.tang -text "Tangent Plane" -variable [scope tangent] \
             -command [code $this settang]
    }
    pack $itk_component(tang)
-   set var [$itk_component(tang) cget -variable]
-   upvar #0 $var tang
-   set tang 1
+   set tangent 1
    settang
 
 # Slider for adjusting the angle of the buttons.
@@ -193,9 +196,7 @@ itcl::body OffsetHandsetControl::setvt {} {
 }
 
 itcl::body OffsetHandsetControl::settang {} {
-   set var [$itk_component(tang) cget -variable]
-   upvar #0 $var tang
-   switch $tang {
+   switch $tangent {
       1 { cs tarHandConfig set inctype "\"TANGENT PLANE\"" }
       0 { cs tarHandConfig set inctype "\"RADEC\"" }
    }
@@ -227,9 +228,7 @@ itcl::body OffsetHandsetControl::getOffset par {
          }
       }
       type {
-         set var [$itk_component(tang) cget -variable]
-         upvar #0 $var tang
-         switch $tang {
+         switch $tangent {
             1 { return "TANGENT PLANE" }
             0 { return "RADEC" }
          }

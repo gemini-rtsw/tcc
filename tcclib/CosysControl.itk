@@ -1,10 +1,21 @@
 #+
-#  CosysControl.itk
+#  CosysControl <- ComponentControl
 #
-#  Implements the CosysControl widget. A ComponentControl widget with
-#  an optionmenu for the system and an entryfield widget for the equinox.
+#  A Cosys control is a ComponentControl widget with an optionmenu for the 
+#  frame and an entryfield widget for the equinox.
 #
-#  D Terrett 3 November 1998
+#  Options:
+#           -vt             The virtual telescope that the coordinate system 
+#                           applies to.
+#
+#  Methods:
+#           selectobj name  Copies the contents of the Cosys object "name"
+#                           into the edit controls.
+#
+#           updateobj name  Stores the contents of the edit controls in the
+#                           Cosys object "name".
+#
+#  D Terrett 24 November 1999
 #
 #  Copyright CCLRC
 #+
@@ -21,13 +32,9 @@ itcl::class CosysControl {
 }
 
 itk::usual CosysControl {
-   keep -activebackground -activeforeground -disabledforeground
-   keep -background -borderwidth -cursor -foreground -highlightcolor
-   keep -highlightthickness -insertbackground -insertborderwidth
-   keep -insertofftime -insertontime -insertwidth -labelfont -popupcursor
-   keep -selectbackground -selectborderwidth -selectforeground
-   keep -textbackground -textfont -font
-   keep -vt -title
+   keep -borderwidth -cursor -font -highlightthickness -insertborderwidth \
+         -insertofftime -insertontime -insertwidth -labelfont -popupcursor \
+         -selectborderwidth -textfont -title -vt
 }
 
 itcl::body CosysControl::constructor args {
@@ -53,7 +60,7 @@ itcl::body CosysControl::constructor args {
    }
    pack $itk_component(frame) $itk_component(equinox) -padx 4 -pady 4
 
-# Create the cosys object used by apply.
+# Create the scrathc cosys object used by apply.
    set scratchobj [namespace which -command [Cosys #auto]]
 
 # Set the object class.
@@ -63,19 +70,17 @@ itcl::body CosysControl::constructor args {
    eval itk_initialize $args
 }
 
-itcl::body CosysControl::updateobj name {
-#+
-# Updates the named cosys object.
-#-
-   $name configure -frame [$itk_component(frame) get] \
-         -equinox [$itk_component(equinox) get]
+itcl::configbody CosysControl::vt {
+
+# Configure the StoreApply widget with a suitable log message.
+   $itk_component(storeapply) configure \
+         -logmessage "$itk_option(-vt) coordinate system"
 }
 
 itcl::body CosysControl::selectobj name {
-#+
-# Copies the contents of the Cosys object selected in the combobox
+
+# Copy the contents of the Cosys object selected in the combobox
 # into the edit controls.
-#-
    $itk_component(equinox) clear
 
    if { $name != "" } {
@@ -84,7 +89,9 @@ itcl::body CosysControl::selectobj name {
    }
 }
 
-itcl::configbody CosysControl::vt {
-   $itk_component(storeapply) configure \
-         -logmessage "$itk_option(-vt) coordinate system"
+itcl::body CosysControl::updateobj name {
+
+# Load the control with data from the named cosys object.
+   $name configure -frame [$itk_component(frame) get] \
+         -equinox [$itk_component(equinox) get]
 }

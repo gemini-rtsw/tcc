@@ -1,8 +1,13 @@
 #+
-#  isFollowing.tcl
+#  isFollowing
 #
 #  Tests the value of a subsystem followS record to determine if the
-#  subsystem is following or not
+#  subsystem is following or not.
+#
+#  Arguments:
+#             sad   The status acceptor containing the followS record.
+#
+#             rec   The name of the followS record.
 #
 #  D Terrett 10 November 1999
 #

@@ -1,9 +1,16 @@
 #+
-#  EcsControl.itk
+#  EcsControl <- itk::Widget
 #
-#  Implements the EcsControl widget.
+#  An EcsControl widget contains various widget for controlling the 
+#  enclosure control system.
 #
-#  D Terrett  12 November 1999
+#  Options:
+#           none
+#
+#  Methods:
+#           none
+#
+#  D Terrett  24 November 1999
 #
 #  Copyright CCLRC
 #+
@@ -13,18 +20,13 @@ itcl::class EcsControl {
 
    constructor args {}
 
-   private method getParVal par
+   private method getParVal par {return [$itk_component($par) get]}
 }
 
 itk::usual EcsControl {
-   keep -cursor -foreground -font -background
-   keep -activebackground -activeforeground -disabledforeground
-   keep -highlightcolor -highlightthickness
-   keep -activeborderwidth -borderwidth
-   keep -labelfont -popupcursor
-   keep -insertborderwidth  -insertofftime -insertontime -insertwidth
-   keep -textbackground -textfont -insertbackground
-   keep -selectbackground -selectborderwidth -selectforeground
+   keep -activeborderwidth -borderwidth -cursor -font -highlightthickness \
+         -insertborderwidth -insertofftime -insertontime -insertwidth \
+         -labelfont -popupcursor -textfont -selectborderwidth
 }
 
 itcl::body EcsControl::constructor args {
@@ -156,8 +158,4 @@ itcl::body EcsControl::constructor args {
    $itk_component(mode) insert end Passive Active Shutdown
    pack $itk_component(thermal) $itk_component(mode) -pady 4
    eval itk_initialize $args
-}
-
-itcl::body EcsControl::getParVal par {
-   return [$itk_component($par) get]
 }

@@ -1,6 +1,9 @@
-#  tsdMain.tcl
+#  tsdMain
 #
 #  The main routine of the Gemini telescope status display application.
+#
+#  Arguments:
+#             Any command line options and values.
 #
 #  D Terrett 10 November 1999
 #

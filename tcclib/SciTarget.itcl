@@ -1,19 +1,71 @@
 #+
-#  SciTarget.itcl
+#  SciTarget
 #
 #  Implements the SciTarget class. A SciTarget object stores all
 #  the parameters needed to specify a science target.
 #
+#  Options:
+#           -objName       The object name
+#
+#           -type          The type of the coordinate (radec, azel, orbit or
+#                          planet).
+#
+#           The following options apply when -type is radec.
+#
+#              -cosys         The target coordinate system.
+#
+#              -epoch         The epoch of the position.
+#
+#              -parallax      The parallax.
+#
+#              -radec         Right ascension and declination.
+#
+#              -rv            Radial velocity.
+#
+#           The following options apply when -type is radec.
+#
+#              -azel          Azimuth and elevation.
+#
+#           The following options apply when -type is planet.
+#
+#              -planet        The planet name.
+#
+#           The following options apply when -type is orbit.
+#
+#              -epochofel     Epoch of elements.
+#
+#              -inclination   Inclination.
+#
+#              -longascnode   Longitude of ascending node.
+#
+#              -longofper     Longitude of perihelion.
+#
+#              -argofper      Argument of perihelion.
+#
+#              -meandist      Mean distance.
+#
+#              -perdist       Perihelion distance.
+#
+#              -eccentricity  Eccentricity.
+#
+#              -meanlong      Mean longitude.
+#
+#              -meananom      Mean anomoly.
+#
+#              -dailymot      Daily motion.
+#
 #  Methods:
+#           apply vt      Applies the target definition to the TCS by 
+#                         setting the values of the command parameters
+#                         for virtual telescope "vt".
 #
-#     apply <virtual telescope>
+#           preview item  Sets the preview target for "item".
 #
-#         Applies the target definition to the TCS by setting the values
-#         of the command parameters.
+#           save file     Writes the values of the target options to the
+#                         channel identifier "file".
 #
-#     preview <item>
-#
-#         Calls tccPreview to set the data in the named virtual telescope.
+#  Procs;
+#           subcomponents Returns a list of the target classes subcomponents.
 #
 #  D Terrett 15 November 1999
 #

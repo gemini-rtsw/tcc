@@ -1,9 +1,16 @@
 #+
-#  McsControl.itk
+#  McsControl <- itk::Widget
 #
-#  Implements the McsControl widget.
+#  An McsControl widget contains various widget for controlling the 
+#  mount control system.
 #
-#  D Terrett  17 November 1998
+#  Options:
+#           none
+#
+#  Methods:
+#           none
+#
+#  D Terrett  24 November 1999
 #
 #  Copyright CCLRC
 #+
@@ -14,17 +21,15 @@ itcl::class McsControl {
    constructor args {}
 
    private method getParVal par
+
+   private variable azBrakes
+   private variable elBrakes
 }
 
 itk::usual McsControl {
-   keep -cursor -foreground -font -background
-   keep -activebackground -activeforeground -disabledforeground
-   keep -highlightcolor -highlightthickness
-   keep -activeborderwidth -borderwidth
-   keep -labelfont -popupcursor
-   keep -insertborderwidth  -insertofftime -insertontime -insertwidth
-   keep -textbackground -textfont -insertbackground
-   keep -selectbackground -selectborderwidth -selectforeground
+   keep -cursor -font -highlightthickness -activeborderwidth -borderwidth \
+         -labelfont -popupcursor -insertborderwidth -insertofftime \
+         -insertontime -insertwidth -textfont -selectborderwidth
 }
 
 itcl::body McsControl::constructor args {
@@ -124,14 +129,14 @@ itcl::body McsControl::constructor args {
    set w $itk_component(row2f1)
    itk_component add azBrakes {
        checkbutton $w.azBrakes -onvalue Yes -offvalue No \
+            -variable [scope azBrakes] \
             -text [lindex [cs telstop info azBrakes] 2] 
    }
-   $itk_component(azBrakes) configure -variable _$itk_component(azBrakes)
    itk_component add elBrakes {
        checkbutton $w.elBrakes -onvalue Yes -offvalue No \
+            -variable [scope elBrakes] \
             -text [lindex [cs telstop info elBrakes] 2]
    }
-   $itk_component(elBrakes) configure -variable _$itk_component(elBrakes)
    pack $itk_component(telpark) $itk_component(stop) -side top -fill x \
          -expand y -padx 4 -pady 4
    pack $itk_component(azBrakes) $itk_component(elBrakes) \
@@ -257,10 +262,11 @@ itcl::body McsControl::constructor args {
 
 itcl::body McsControl::getParVal par {
    switch $par {
-      azBrakes -
+      azBrakes {
+         return $azBrakes
+      }
       elBrakes {
-         upvar #0 [$itk_component($par) cget -variable] value
-         return $value
+         return $elBrakes
       }
       default {
          return [$itk_component($par) get]

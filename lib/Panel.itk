@@ -1,12 +1,21 @@
 #+
-#  Panel.itk
+#  Panel <- itk:TopLevel
 #
-#  Implements the Panel widget. A Toplevel widget with the addition
-#  of a file menu with Move, Hide and Exit entries and an option that list
-#  the window names of the controls that the panel contains and the name of
-#  the PanelMgr that created this Panel.
+#  A Panel widget is a toplevel widget with the addition of a file menu with
+#  Move, Hide and Exit entries. It has options that list the window names 
+#  of the controls that the panel contains and the name of the PanelMgr that 
+#  created this Panel.
 #
-#  D Terrett 16 November 1998
+#  Options:
+#           -panelmgr       The name of the panel manager object managing
+#                           this panel.
+#
+#           -windows        A list of the windows contained by the panel
+#
+#  Methods:
+#           none
+#
+#  D Terrett 23 November 1999
 #
 #  Copyright CCLRC
 #+
@@ -16,12 +25,12 @@ itcl::class Panel {
 
    constructor args {}
 
-   itk_option define -windows windows Windows {}
-   itk_option define -panelmgr panelMgr PanelMgr {}
+   itk_option define -panelmgr panelMgr PanelMgr ""
+   itk_option define -windows windows Windows ""
 
-   private method move
-   private method hide
    private method exit
+   private method hide
+   private method move
 }
 
 itk::usual Panel {
@@ -39,10 +48,7 @@ itcl::body Panel::constructor args {
             command exit -label Exit -command \"[code $this exit]\"
          }
       }
-   } {
    }
-# The empty options clause is because the Menubar class has no "usual" code.
-# A bug in itcl2.2 ?
 
 # Frame.
    itk_component add frame {
@@ -52,6 +58,7 @@ itcl::body Panel::constructor args {
    pack $itk_component(menubar) -fill x -expand y
    pack $itk_component(frame) -fill both -expand y
 
+# Make the window not resizable.
    wm resizable $itk_interior 0 0
 
    set itk_interior $itk_component(frame)
@@ -59,35 +66,33 @@ itcl::body Panel::constructor args {
    eval itk_initialize $args
 }
 
+itcl::body Panel::exit {} {
+   destroy [winfo toplevel $itk_interior]
+}
+
+itcl::body Panel::hide {} {
+   wm withdraw [winfo toplevel $itk_interior]
+}
+
 itcl::body Panel::move {} {
-#+
-# Called by the move menu entry. Creates a dialog box for a new screen and
-# position to be entered.
-#-
+
+# Create the dialog box.
    set dialog [MoveDialog $itk_interior.moveDialog \
          -title "Window Position Dialog" -modality application \
          -master $itk_interior -panelmgr $itk_option(-panelmgr)]
+
+# Set the colours.
+   setWidgetColors $dialog $itk_option(-background) $itk_option(-foreground)
+
+# Hide the help and apply buttons.
    $dialog hide Help
    $dialog hide Apply
+
+# Center and activate the dialog.
    $dialog center
    $dialog activate
 
 # If the screen was changed the dialog will have been deleted when the
-# parent panel was deleted.
+# parent panel was deleted so destroy the dialog with care.
    catch {destroy $dialog}
-}
-
-itcl::body Panel::hide {} {
-#+
-# Called by the hide menu entry. Hides the window by withdrawing it from
-# the screen.
-#-
-   wm withdraw [winfo toplevel $itk_interior]
-}
-
-itcl::body Panel::exit {} {
-#+
-# Called by the exit menu entry. Destroys the window.
-#-
-   destroy [winfo toplevel $itk_interior]
 }

@@ -1,10 +1,20 @@
 #+
-#  SlewOptionsControl.itk
+#  SlewOptionsControl <- ComponentControl
 #
-#  Implements the SlewOptionsControl widget. A ComponentControl widget with
-#  checkbutton widgets for each of the Slew CAD parameters.
+#  A SlewOptionsControl is a ComponentControl widget with checkbutton widgets 
+#  for each of the Slew CAD parameters.
 #
-#  D Terrett 3 November 1998
+#  Options:
+#           none
+#
+#  Methods:
+#           selectobj name  Copies the contents of the SlewOptions object "name"
+#                           into the edit controls.
+#
+#           updateobj name  Stores the contents of the edit controls in the
+#                           SlewOptions object "name".
+#
+#  D Terrett 24 November 1999
 #
 #  Copyright CCLRC
 #+
@@ -16,16 +26,22 @@ itcl::class SlewOptionsControl {
 
    public method selectobj name
    public method updateobj name
+
+   private variable chopThrow
+   private variable sourceOffset
+   private variable sourceDifTr
+   private variable mountOffset
+   private variable mountDifTr
+   private variable filter1
+   private variable filter2
+   private variable pointing
+   private variable guiding
 }
 
 itk::usual SlewOptionsControl {
-   keep -activebackground -activeforeground -disabledforeground
-   keep -background -borderwidth -cursor -foreground -highlightcolor
-   keep -highlightthickness -insertbackground -insertborderwidth
-   keep -insertofftime -insertontime -insertwidth -labelfont -popupcursor
-   keep -selectbackground -selectborderwidth -selectforeground
-   keep -textbackground -textfont -font
-   keep -vt -title
+   keep -borderwidth -cursor -font -highlightthickness -insertborderwidth \
+         -insertofftime -insertontime -insertwidth -labelfont -popupcursor \
+         -selectborderwidth -textfont -title -vt
 }
 
 itcl::body SlewOptionsControl::constructor args {
@@ -39,47 +55,47 @@ itcl::body SlewOptionsControl::constructor args {
 # Checkbuttons for the options.
    set w $itk_component(options)
    itk_component add chopThrow {
-      checkbutton $w.chopThrow -variable $w._chopThrow \
+      checkbutton $w.chopThrow -variable [scope chopThrow] \
             -onvalue On -offvalue Off \
             -text [lindex [cs slew info chopThrow] 2]
    }
    itk_component add sourceOffset {
-      checkbutton $w.sourceOffset -variable $w._sourceOffset \
+      checkbutton $w.sourceOffset -variable [scope sourceOffset] \
             -onvalue On -offvalue Off \
             -text [lindex [cs slew info sourceOffset] 2]
    }
    itk_component add sourceDifTr {
-      checkbutton $w.sourceDifTr -variable $w._sourceDifTr \
+      checkbutton $w.sourceDifTr -variable [scope sourceDifTr] \
             -onvalue On -offvalue Off \
             -text [lindex [cs slew info sourceDifTr] 2]
    }
    itk_component add mountOffset {
-      checkbutton $w.mountOffset -variable $w._mountOffset \
+      checkbutton $w.mountOffset -variable [scope mountOffset] \
             -onvalue On -offvalue Off \
             -text [lindex [cs slew info mountOffset] 2]
    }
    itk_component add mountDifTr {
-      checkbutton $w.mountDifTr -variable $w._mountDifTr \
+      checkbutton $w.mountDifTr -variable [scope mountDifTr] \
             -onvalue On -offvalue Off \
             -text [lindex [cs slew info mountDifTr] 2]
    }
    itk_component add filter1 {
-      checkbutton $w.filter1 -variable $w._filter1 \
+      checkbutton $w.filter1 -variable [scope filter1] \
             -onvalue On -offvalue Off \
             -text [lindex [cs slew info filter1] 2]
    }
    itk_component add filter2 {
-      checkbutton $w.filter2 -variable $w._filter2 \
+      checkbutton $w.filter2 -variable [scope filter2] \
             -onvalue On -offvalue Off \
             -text [lindex [cs slew info filter2] 2]
    }
    itk_component add pointing {
-      checkbutton $w.pointing -variable $w._pointing \
+      checkbutton $w.pointing -variable [scope pointing] \
             -onvalue On -offvalue Off \
             -text [lindex [cs slew info pointing] 2]
    }
    itk_component add guiding {
-      checkbutton $w.guiding -variable $w._guiding \
+      checkbutton $w.guiding -variable [scope guiding] \
             -onvalue On -offvalue Off \
             -text [lindex [cs slew info guiding] 2]
    }
@@ -102,44 +118,11 @@ itcl::body SlewOptionsControl::constructor args {
    eval itk_initialize $args
 }
 
-itcl::body SlewOptionsControl::updateobj name {
-#+
-# Updates the named slew options object.
-#-
-   upvar #0 [$itk_component(chopThrow) cget -variable] chopThrow
-   upvar #0 [$itk_component(sourceOffset) cget -variable] sourceOffset
-   upvar #0 [$itk_component(sourceDifTr) cget -variable] sourceDifTr
-   upvar #0 [$itk_component(mountOffset) cget -variable] mountOffset
-   upvar #0 [$itk_component(mountDifTr) cget -variable] mountDifTr
-   upvar #0 [$itk_component(filter1) cget -variable] filter1
-   upvar #0 [$itk_component(filter2) cget -variable] filter2
-   upvar #0 [$itk_component(pointing) cget -variable] pointing
-   upvar #0 [$itk_component(guiding) cget -variable] guiding
-
-   $name configure \
-         -chopThrow $chopThrow -sourceOffset $sourceOffset \
-         -sourceDifTr $sourceDifTr -mountOffset $mountOffset \
-         -mountDifTr $mountDifTr -filter1 $filter1 \
-         -filter2 $filter2 -pointing $pointing \
-         -guiding $guiding
-}
-
 itcl::body SlewOptionsControl::selectobj name {
-#+
-# Copies the contents of the SlewOptions object selected in the combobox
-# into the checkbuttons.
-#-
-   if { $name != "" } {
-      upvar #0 [$itk_component(chopThrow) cget -variable] chopThrow
-      upvar #0 [$itk_component(sourceOffset) cget -variable] sourceOffset
-      upvar #0 [$itk_component(sourceDifTr) cget -variable] sourceDifTr
-      upvar #0 [$itk_component(mountOffset) cget -variable] mountOffset
-      upvar #0 [$itk_component(mountDifTr) cget -variable] mountDifTr
-      upvar #0 [$itk_component(filter1) cget -variable] filter1
-      upvar #0 [$itk_component(filter2) cget -variable] filter2
-      upvar #0 [$itk_component(pointing) cget -variable] pointing
-      upvar #0 [$itk_component(guiding) cget -variable] guiding
 
+# Copy the contents of the SlewOptions object selected in the combobox
+# into the checkbuttons.
+   if { $name != "" } {
       set chopThrow [$name cget -chopThrow]
       set sourceOffset [$name cget -sourceOffset]
       set sourceDifTr [$name cget -sourceDifTr]
@@ -150,4 +133,15 @@ itcl::body SlewOptionsControl::selectobj name {
       set pointing [$name cget -pointing]
       set guiding [$name cget -guiding]
    }
+}
+
+itcl::body SlewOptionsControl::updateobj name {
+
+# Update the named slew options object.
+   $name configure \
+         -chopThrow $chopThrow -sourceOffset $sourceOffset \
+         -sourceDifTr $sourceDifTr -mountOffset $mountOffset \
+         -mountDifTr $mountDifTr -filter1 $filter1 \
+         -filter2 $filter2 -pointing $pointing \
+         -guiding $guiding
 }
