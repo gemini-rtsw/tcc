@@ -16,7 +16,7 @@
 #
 #           -mode
 #
-#  D Terrett  16 January 2004
+#  D Terrett  17 January 2004
 #
 #  Copyright CLRC
 #-
@@ -33,6 +33,7 @@ itcl::class WaveFrontSensor {
    private {
       variable prefix
       variable name
+      variable dirname
       variable sky
       variable current_mode ""
       variable current_exposetime 0
@@ -42,19 +43,22 @@ itcl::class WaveFrontSensor {
 
 itcl::body WaveFrontSensor::constructor {wfs args} {
  
-# Store the prefix name
+# Store the full name
    set name $wfs
 
-# Set the full name
+# Set the prefix and directory name.
    switch $name {
       pwfs1 {
          set prefix p1
+         set dirname p1wfs
       }
       pwfs2 {
          set prefix p2
+         set dirname p2wfs
       }
       oiwfs {
          set prefix oi
+         set dirname oiwfs
       }
    }
 
@@ -85,7 +89,7 @@ itcl::body WaveFrontSensor::start {{frames -1}} {
 
 # Set the sky name
    set filename [expr { int(1.0/$exposetime)}]Hz.fits
-   set sky [file join /gemini/files/wfs $name $filename]
+   set sky [file join /gemini/files/wfs $dirname $filename]
 
 # If the mode or exposure time or output destination has been changed then
 # stop the sensor mode.
