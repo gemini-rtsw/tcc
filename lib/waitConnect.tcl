@@ -6,26 +6,16 @@
 #                   attempting to initialise the time system at 1 second 
 #                   intervals.
 #
-#  Globals:
-#     TZOFFSET - Time offset between local time and UTC in hours.
-#
-#  D Terrett 4 September 1998
+#  D Terrett 5 December 2000
 #
 #  Copyright CCLRC
 #-
 
 proc waitConnect {} {
 
-   global TZOFFSET
-   if { [info exists TZOFFSET] } {
-      set offset $TZOFFSET
-   } else {
-      set offset 0
-   }
-
    puts -nonewline "Waiting for connection to tcs..."
    flush stdout
-   while { [catch {tccTime init $offset}] } {
+   while { [catch {tccTime init}] } {
       after 1000
    }
    puts " connected."

@@ -16,7 +16,7 @@ proc previewUpdate {} {
 
 # Initialise the time library
    set interval 600000
-   if { [catch {tccTime init 0}] } {
+   if { [catch {tccTime init}] } {
       set interval 1000
    } else {
       set data(delut) [sa tcssad get delut value]
