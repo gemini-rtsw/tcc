@@ -40,7 +40,7 @@
 #
 #          -pcsstate          The state of the PCS (OFF MOVING or OK)..
 #
-#          -scfold            The name of the current science fold position
+#          -scfold            The current science fold position.
 #
 #          -vignette          The fraction of vignetting by the enclosure.
 #
@@ -49,7 +49,7 @@
 #                             according to the state of the configuration
 #                             options.
 #
-#  D Terrett  21 April 2001
+#  D Terrett  22 April 2001
 #
 #  Copyright CCLRC
 #-
@@ -73,13 +73,6 @@ itcl::class OpticsView {
    itk_option define -port4label port4Label Label "" "relabel 4"
    itk_option define -port5label port5Label Label "" "relabel 5"
    itk_option define -pcsstate pcsState PcsState OFF
-   itk_option define -scfoldpos0 scfoldPos0 ScfoldPos ""
-   itk_option define -scfoldpos1 scfoldPos1 ScfoldPos ""
-   itk_option define -scfoldpos2 scfoldPos2 ScfoldPos ""
-   itk_option define -scfoldpos4 scfoldPos4 ScfoldPos ""
-   itk_option define -scfoldpos5 scfoldPos5 ScfoldPos ""
-   itk_option define -scfoldpos9 scfoldPos9 ScfoldPos ""
-   itk_option define -scfoldpos11 scfoldPos11 ScfoldPos ""
    itk_option define -calunit calUnit CalUnit OFF
    public {
       method update {}
@@ -95,9 +88,7 @@ itk::usual OpticsView {
       -hrwfs -insertbackground -insertborderwidth -insertwidth \
       -insertontime -insertofftime -m1cover -m2sstate -port1label -port2label \
       -port3label -port4label -port5label -scfold -selectbackground \
-      -selectborderwidth -selectforeground -scfoldpos0 -scfoldpos1 \
-      -scfoldpos2 -scfoldpos4 -scfoldpos5 -scfoldpos9 -scfoldpos11 \
-      -calunit -pcsstate
+      -selectborderwidth -selectforeground -calunit -pcsstate
 }
 
 itcl::body OpticsView::constructor args {
@@ -243,55 +234,71 @@ itcl::body OpticsView::constructor args {
    $c create line -11 72 7 53 -tags AoFoldBck
 
 # Science fold in various positions
-   $c create line -20 29 20 29 -width 2 -tags {ScFold ScFold32}
-   $c create line -20 27 20 27 -tags {ScFold ScFold32bck}
+   $c create line -20 29 20 29 -width 2 -tags {ScFold ScFold32 ScFold23}
+   $c create line -20 27 20 27 -tags {ScFold ScFold32bck scFold23bck}
 
-   eval $c create line [$c coords ScFold32] -width 2 -tags {{ScFold ScFold54}}
-   eval $c create line [$c coords ScFold32bck] -tags {{ScFold ScFold54bck}}
+   eval $c create line [$c coords ScFold32] -width 2 \
+         -tags [list {ScFold ScFold54 scFold45}]
+   eval $c create line [$c coords ScFold32bck] \
+         -tags [list {ScFold ScFold54bck ScFold45bck}]
    $c scale ScFold54 0 30 1 -1
    $c scale ScFold54bck 0 30 1 -1
 
-   $c create line -1 10 -1 50 -width 2 -tags {ScFold ScFold25}
-   $c create line -3 10 -3 50 -tags {ScFold ScFold25bck}
+   $c create line -1 10 -1 50 -width 2 -tags {ScFold ScFold25 ScFold52}
+   $c create line -3 10 -3 50 -tags {ScFold ScFold25bck ScFold52bck}
 
-   eval $c create line [$c coords ScFold25] -width 2 -tags {{ScFold ScFold34}}
-   eval $c create line [$c coords ScFold25bck] -tags {{ScFold ScFold34bck}}
+   eval $c create line [$c coords ScFold25] -width 2 \
+         -tags [list {ScFold ScFold34 ScFold43}]
+   eval $c create line [$c coords ScFold25bck] \
+         -tags [list {ScFold ScFold34bck scFold43bck}]
    $c scale ScFold34 0 30 -1 1
    $c scale ScFold34bck 0 30 -1 1
 
-   $c create line -10 13 10 47 -width 2 -tags {ScFold ScFoldU4}
-   $c create line -9 11 11 45 -tags {ScFold ScFoldU4bck}
+   $c create line -10 13 10 47 -width 2 -tags {ScFold ScFold04 ScFold40}
+   $c create line -9 11 11 45 -tags {ScFold ScFold04bck ScFold40bck}
 
-   eval $c create line [$c coords ScFoldU4] -width 2 -tags {{ScFold ScFoldU5}}
-   eval $c create line [$c coords ScFoldU4bck] -tags {{ScFold ScFoldU5bck}}
-   $c scale ScFoldU5 0 30 -1 1
-   $c scale ScFoldU5bck 0 30 -1 1
+   eval $c create line [$c coords ScFold04] -width 2 \
+         -tags [list {ScFold ScFold05 ScFold50}]
+   eval $c create line [$c coords ScFold04bck] \
+         -tags [list {ScFold ScFold05bck ScFold50}]
+   $c scale ScFold05 0 30 -1 1
+   $c scale ScFold05bck 0 30 -1 1
 
-   eval $c create line [$c coords ScFoldU4] -width 2 -tags {{ScFold ScFold31}}
-   eval $c create line [$c coords ScFoldU4bck] -tags {{ScFold ScFold31bck}}
+   eval $c create line [$c coords ScFold04] -width 2 \
+         -tags [list {ScFold ScFold31 ScFold13}]
+   eval $c create line [$c coords ScFold04bck] \
+         -tags [list {ScFold ScFold31bck ScFold13bck}]
    $c scale ScFold31 0 30 1 -1
    $c scale ScFold31bck 0 30 1 -1
 
-   eval $c create line [$c coords ScFold31] -width 2 -tags {{ScFold ScFold21}}
-   eval $c create line [$c coords ScFold31bck] -tags {{ScFold ScFold21bck}}
+   eval $c create line [$c coords ScFold31] -width 2 \
+         -tags [list {ScFold ScFold21 ScFold12}]
+   eval $c create line [$c coords ScFold31bck] \
+         -tags [list {ScFold ScFold21bck ScFold12bck}]
    $c scale ScFold21 0 30 -1 1
    $c scale ScFold21bck 0 30 -1 1
 
-   $c create line -17 20 17 40 -width 2 -tags {ScFold ScFoldU3}
-   $c create line -15 19 19 39 -tags {ScFold ScFoldU3bck}
+   $c create line -17 20 17 40 -width 2 -tags {ScFold ScFold03 ScFold30}
+   $c create line -15 19 19 39 -tags {ScFold ScFold03bck ScFold30bck}
 
-   eval $c create line [$c coords ScFoldU3] -width 2 -tags {{ScFold ScFoldU2}}
-   eval $c create line [$c coords ScFoldU3bck] -tags {{ScFold ScFoldU2bck}}
-   $c scale ScFoldU2 0 30 -1 1
-   $c scale ScFoldU2bck 0 30 -1 1
+   eval $c create line [$c coords ScFold03] -width 2 \
+         -tags [list {ScFold ScFold02 ScFold20bck}]
+   eval $c create line [$c coords ScFold03bck] \
+         -tags [list {ScFold ScFold02bck ScFold20}]
+   $c scale ScFold02 0 30 -1 1
+   $c scale ScFold02bck 0 30 -1 1
 
-   eval $c create line [$c coords ScFoldU3] -width 2 -tags {{ScFold ScFold41}}
-   eval $c create line [$c coords ScFoldU3bck] -tags {{ScFold ScFold41bck}}
+   eval $c create line [$c coords ScFold03] -width 2 \
+         -tags [list {ScFold ScFold41 ScFold14}]
+   eval $c create line [$c coords ScFold03bck] \
+         -tags [list {ScFold ScFold41bck ScFold14bck}]
    $c scale ScFold41 0 30 1 -1
    $c scale ScFold41bck 0 30 1 -1
 
-   eval $c create line [$c coords ScFold41] -width 2 -tags {{ScFold ScFold51}}
-   eval $c create line [$c coords ScFold41bck] -tags {{ScFold ScFold51bck}}
+   eval $c create line [$c coords ScFold41] -width 2 \
+         -tags [list {ScFold ScFold51 ScFold15}]
+   eval $c create line [$c coords ScFold41bck] \
+         -tags [list {ScFold ScFold51bck ScFold15bck}]
    $c scale ScFold51 0 30 -1 1
    $c scale ScFold51bck 0 30 -1 1
 
@@ -329,7 +336,6 @@ itcl::body OpticsView::update {} {
 # the configuration options.
 
    set c $itk_component(canvas)
-   set SfNames {U3 U2 U5 U4 32 34 31 25 21 54 51 41}
 
 # Configure the M1 cover
    switch $itk_option(-m1cover) {
@@ -469,7 +475,7 @@ itcl::body OpticsView::update {} {
 # Deal with the AO fold mirror position
          if { $itk_option(-aofold) != "IN" } {
             $c itemconfigure NotAoLight -fill $l
-            set inport U
+            set inport 0
          } else {
             if { $itk_option(-aopresent) == 1 } {
                $c itemconfigure AoLight -fill $l
@@ -485,19 +491,23 @@ itcl::body OpticsView::update {} {
             set outport ""
          } else {
             if { $scfoldpos == "" } {
-               if { $inport == "U" } {
+               if { $inport == "0" } {
                   set outport 1
                } else {
                   set outport 4
                }
-            } elseif { $scfoldpos == "UNKNOWN" } {
+            } elseif { $scfoldpos == "UNKNOWN"  || $scfoldpos == "MOVING" } {
                   set outport ""
             } else {
                if { $inport == [string index $scfoldpos 0] } {
                   set outport [string index $scfoldpos 1]
+               } elseif { $inport == [string index $scfoldpos 1] } {
+                  set outport [string index $scfoldpos 0]
                } else {
                   if { $inport == [string index $scfoldpos 1] } {
                      set outport [string index $scfoldpos 0]
+                  } elseif { $inport == [string index $scfoldpos 0] } {
+                     set outport [string index $scfoldpos 1]
                   } else {
                      set outport ""
                   }
@@ -512,15 +522,19 @@ itcl::body OpticsView::update {} {
          if { [string equal $itk_option(-calunit) ON] } {
             $c itemconfigure IssLight4 -fill $l
             switch $scfoldpos {
-               U4 {
+               40 -
+               04 {
                   $c itemconfigure AoLight -fill $l
                }
+               43 -
                34 {
                   $c itemconfigure IssLight3 -fill $l
                }
+               45 -
                54 {
                   $c itemconfigure IssLight5 -fill $l
                }
+               14 -
                41 {
                   $c itemconfigure IssLight1 -fill $l
                }
@@ -564,17 +578,4 @@ itcl::configbody OpticsView::port2label {
    if { $itk_option(-aopresent) == 0 } {
       relabel 2
    }
-}
-
-itcl::configbody OpticsView::scfold {
-   switch $itk_option(-scfold) \
-         0 - $itk_option(-scfoldpos0) {set itk_option(-scfold) U3} \
-         1 - $itk_option(-scfoldpos1) {set itk_option(-scfold) U2} \
-         2 - $itk_option(-scfoldpos2) {set itk_option(-scfold) U5} \
-         4 - $itk_option(-scfoldpos4) {set itk_option(-scfold) U4} \
-         5 - $itk_option(-scfoldpos5) {set itk_option(-scfold) 34} \
-         9 - $itk_option(-scfoldpos9) {set itk_option(-scfold) 54} \
-         11 - $itk_option(-scfoldpos11) {set itk_option(-scfold) 41} \
-         PARK {set itk_option(-scfold) PARK} \
-         default {set itk_option(-scfold) UNKNOWN}
 }

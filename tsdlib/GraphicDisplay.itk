@@ -23,6 +23,7 @@ itcl::class GraphicDisplay {
    }
    private {
       variable Vignette 0
+      variable flash 0
    }
 }
 
@@ -137,7 +138,7 @@ itcl::body GraphicDisplay::update {} {
 # Determine the state of M1.
    if { [string equal [sa pcssad get apssMsg] "APSS inflated"] && \
          [string equal [sa pcssad get aosMsg] "aO sub-system is ON"] && \
-         [string equal [sa pcssad get pssInPos] TRUE] && \
+         [string equal [sa pcssad get pssInPosn] TRUE] && \
          [string equal [sa pcssad get pssOn] ON] } {
       if { [sa pcssad get aoMoving] < 10.0 } {
          $itk_component(opticsview) configure -pcsstate OK
@@ -148,11 +149,97 @@ itcl::body GraphicDisplay::update {} {
       $itk_component(opticsview) configure -pcsstate OFF
    }
 
+# Configure the science fold position.
+   set sfmoving 0
+   set lin [sadVal agssad sfLin 1000.0]
+   if { $lin == 1000.0 } {
+      $itk_component(opticsview) configure -scfold UNKNOWN
+   } elseif { $lin < -300.0 } {
+      $itk_component(opticsview) configure -scfold PARK
+   } else {
+      if { $lin < -1.0 } {
+         set sfmoving 1
+      }
+      set tilt [sadVal agssad sfTilt 0.0]
+      set rot [sadVal agssad sfRot 0.0]
+      if { $tilt < 20.0 && $tilt > -20.0 } {
+         if { $rot > 90.0 } {
+            set sfpos 45
+            if { $rot < 140.0 || $rot > 130.0 } {
+               set sfmoving 1
+            }
+         } elseif { $rot > 0.0 } {
+            set sfpos 34
+            if { $rot < 40.0 || $rot > 50.0 } {
+               set sfmoving 1
+            }
+         } elseif { $rot > -90.0 } {
+            set sfpos 32
+            if { $rot < -50.0 || $rot > -40.0 } {
+               set sfmoving 1
+            }
+         } else {
+            set sfpos 25
+            if { $rot < -140.0 || $rot > -130.0 } {
+               set sfmoving 1
+            }
+         }
+      } else {
+         if { $tilt > 20.0 } {
+            set sfpos 0
+            if { $tilt > 47.5 || $tilt < 42.5 } {
+               set sfmoving 1
+            }
+         } else {
+            set sfpos 1
+            if { $tilt < -47.5 || $tilt > -42.5 } {
+               set sfmoving 1
+            }
+         }
+         if { $rot > 135.0 } {
+            append sfpos 5
+            if { $rot < 175.0 || $rot > 185.0 } {
+               set sfmoving 1
+            }
+         } elseif { $rot > 45.0 } {
+            append sfpos 4
+            if { $rot < 85.0 || $rot > 95.0 } {
+               set sfmoving 1
+            }
+         } elseif { $rot > -45.0 } {
+            append sfpos 3
+            if { $rot < -5.0 || $rot > 5.0 } {
+               set sfmoving 1
+            }
+         } elseif { $rot > -135.0 } {
+            append sfpos 2
+            if { $rot < -95.0 || $rot > -85.0 } {
+               set sfmoving 1
+            }
+         } else {
+            append sfpos 5
+            if { $rot < -185.0 || $rot > -175.0 } {
+               set sfmoving 1
+            }
+         }
+      }
+      if { $sfmoving } {
+         if { $flash } {
+            $itk_component(opticsview) configure -scfold MOVING
+            set flash 0
+         } else {
+            $itk_component(opticsview) configure -scfold $sfpos
+            set flash 1
+         }
+      } else {
+         $itk_component(opticsview) configure -scfold $sfpos
+      }
+   }
+
 # Configure the light path.
    $itk_component(opticsview) configure \
          -deployablebaffle [sa m2ssad get deployBafflePos value] \
          -centralbaffle [sa m2ssad get centralBafflePos value] \
-         -scfold [sa agssad get sfName value] \
          -aofold [sa agssad get aoName value] \
          -hrwfs [sa agssad get hwName value] \
          -m1cover [sa gissad get m1cover value] \

@@ -7,22 +7,6 @@
 *graphicDisplay.port4Label:     GCAL
 *graphicDisplay.port5Label:	NIRI
 
-# Names of Science fold positions used by A & G.
-#   sky to port 3
-*graphicDisplay.scfoldPos0:	Hokupaa
-#   sky to port 2
-*graphicDisplay.scfoldPos1:	cfwfs
-#   sky to port 5
-*graphicDisplay.scfoldPos2:	CurvWFS
-#   sky to port 4
-*grapicsDisplay.scfoldPos4:
-#   cal unit to port 3
-*grapicsDisplay.scfoldPos5:
-#   cal unit to port 5
-*grapicsDisplay.scfoldPos9:
-#   cal unit to port 1
-*grapicsDisplay.scfoldPos11:	GcaltoAC
-
 # Foreground for all windows.
 *foreground:				Black
 

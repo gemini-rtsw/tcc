@@ -7,22 +7,6 @@
 *graphicDisplay.port4Label:     A&G cabinet
 *graphicDisplay.port5Label:     cfwfs
 
-# Names of Science fold positions used by A & G.
-#   sky to port 3
-*graphicDisplay.scfoldpos0:	port3
-#   sky to port 2
-*graphicDisplay.scfoldpos1:	port2
-#   sky to port 5
-*graphicDisplay.scfoldpos2:	port5
-#   sky to port 4
-*grapicsDisplay.scfoldpos4:	port4
-#   cal unit to port 3
-*grapicsDisplay.scfoldpos5:
-#   cal unit to port 5
-*grapicsDisplay.scfoldpos9:
-#   cal unit to port 1
-*grapicsDisplay.scfoldpos11:
-
 # Foreground for all windows.
 *foreground:				Black
 
