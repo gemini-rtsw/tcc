@@ -3,7 +3,7 @@
 #
 #  Implements the TcsConfigControl widget.
 #
-#  D Terrett 27 April 1999
+#  D Terrett 15 November 1999
 #
 #  Copyright CCLRC
 #+
@@ -20,6 +20,7 @@ itcl::class TcsConfigControl {
    public method updateobj name
 
    private method apply
+   private method wrap par
 
    private variable components {
       scienceTarget guide pointOrig slewOptions rotator trackFrame instrument
@@ -138,16 +139,26 @@ itcl::body TcsConfigControl::constructor args {
          $itk_component(instrument) \
          -fill x -pady 1
 
-# Wrap control check buttons
+# Wrap control
    set w $itk_component(row2)
+   itk_component add wraptitle {
+      label $w.wraptitle -text "Wrap Control: "
+   }
    itk_component add azwrap {
-      checkbutton $w.azwrap -text "Unwrap Azimuth" -variable $w._azwrap
+      iwidgets::optionmenu $w.azwrap -labeltext Azimuth
    }
+   $itk_component(azwrap) insert end + "" -
    itk_component add rotwrap {
-      checkbutton $w.rotwrap -text "Unwrap Rotator" -variable $w._rotwrap
+      iwidgets::optionmenu $w.rotwrap -labeltext Rotator
    }
-   pack $itk_component(azwrap) $itk_component(rotwrap) -side left -pady 10 \
-         -expand y
+   $itk_component(rotwrap) insert end + "" -
+   itk_component add wrapapply {
+      ApplyButton $w.wrapapply -command wrap -text Apply \
+            -parcommand [code $this wrap]
+   }
+
+   pack $itk_component(wrapapply) $itk_component(rotwrap) \
+      $itk_component(azwrap) $itk_component(wraptitle) -side right -pady 3
 
 # Replace the apply and store buttons with Slew/Set, Store and Preview buttons.
    pack forget $itk_component(storeapply)
@@ -203,33 +214,17 @@ itcl::body TcsConfigControl::apply {} {
 # Apply the temporary config.
       $scratchobj apply
 
-# Process the unwrap azimuth checkbutton.
-      upvar #0 [$itk_component(azwrap) cget -variable] unwrapaz
-      if { $unwrapaz } {
-         set az [sa tcssad get demandAz value]
-         set az [lindex [split $az " :"] 0]
-         if { $az > 90.0 } {
-            cs azwrap set flag -1
-         } else {
-            cs azwrap set flag 1
-         }
+# Process the wrap controls
+      switch -- [$itk_component(azwrap) get] {
+         + {cs wrap set azimuth 1}
+         "" {cs wrap set azimuth 0}
+         - {cs wrap set azimuth -1}
       }
-
-# Process the unwrap rotator checkbutton.
-      upvar #0 [$itk_component(rotwrap) cget -variable] unwraprot
-      if { $unwraprot } {
-         set rma [sa tcssad get demandRma value]
-         set rma [lindex [split $rma " :"] 0]
-         if { $rma > 0.0 } {
-            cs rotwrap set flag -1
-         } else {
-            cs rotwrap set flag 1
-         }
+      switch -- [$itk_component(rotwrap) get] {
+         + {cs wrap set rotator 1}
+         "" {cs wrap set rotator 0}
+         - {cs wrap set rotator -1}
       }
-
-# Clear the unwrap checkbuttons.
-      set unwrapaz 0
-      set unwraprot 0
 
 # Post the command (any command sender will do).
       if [catch {cs tcsApply post} msg] {
@@ -300,4 +295,23 @@ itcl::configbody TcsConfigControl::shadow {
    $itk_component(slewOptions) configure -shadow $itk_option(-shadow)
    $itk_component(trackFrame) configure -shadow $itk_option(-shadow)
    $itk_component(instrument) configure -shadow $itk_option(-shadow)
+}
+
+itcl::body TcsConfigControl::wrap par {
+   switch $par {
+      azimuth {
+         switch -- [$itk_component(azwrap) get] {
+            + {return 1}
+            "" {return 0}
+            - {return -1}
+         }
+      }
+      rotator {
+         switch -- [$itk_component(rotwrap) get] {
+            + {return 1}
+            "" {return 0}
+            - {return -1}
+         }
+      }
+   }
 }
