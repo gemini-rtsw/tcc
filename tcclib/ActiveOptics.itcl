@@ -4,7 +4,7 @@
 # An ActiveOptics object controls the state of the active optics (M2 tip/tilt,
 # coma correction, M1 figure). 
 #
-# D Terrett  27 October 2002
+# D Terrett  13 November 2002
 #
 # Copyright CLRC
 #+
@@ -16,9 +16,10 @@ itcl::class ActiveOptics {
       method disable {}
       method state {component}
       method source {component src}
-      variable scssource none
+      variable scssource ""
       variable comacorr 0
-      variable m1figure none
+      variable m1figure 0
+      variable m1source ""
       variable m1filename ""
       variable probeguide none
       variable mountguide none
@@ -88,7 +89,7 @@ itcl::body ActiveOptics::enable {} {
 # Set parameters according to the current state...
 
 # M2 tip/tilt is on and we want it off.
-   if { $scssource == "none" } {
+   if { [llength $scssource] == 0 } {
       if { [state m2] } {
 
 # Turn guiding off.
@@ -98,20 +99,21 @@ itcl::body ActiveOptics::enable {} {
    } else { 
 
 # See if the current M2 source matches what we want.
-      set needchange 0
-      foreach source {PWFS1 PWFS2 OIWFS} {
-         if { $scssource == $source } {
-            if { ! [source m2 $source] } {
-               set needchange 1
+      set needreset 0
+      set addlist [list]
+      foreach source {PWFS1 PWFS2 OIWFS GAOS} {
+         if { [lsearch $scssource $source] == -1 } {
+            if { [source m2 $source] } {
+               set needreset 1
             }
          } else {
-            if { [source m2 $source] } {
-               set needchange 1
+            if { ! [source m2 $source] } {
+               lappend addlist $source
             }
          }
       }
    
-      if { $needchange } {
+      if { $needreset || [llength $addlist] != 0 } {
 
 # We need to change the setup of M2. Turn it off first.
          cs m2Guide set state Off
@@ -122,36 +124,52 @@ itcl::body ActiveOptics::enable {} {
                   \"$msg\""
          }
 
-# Now set the source we want.
-         cs m2GuideConfig set samplefreq 200
-         cs m2GuideConfig set filter raw
-         cs m2GuideConfig set freq1 ""
-         cs m2GuideConfig set freq2 ""
-         cs m2GuideConfig set beam A
-         cs m2GuideConfig set reset On
-         cs m2GuideConfig set source $scssource
-         logger command m2GuideConfig
-         if { [catch {cs m2GuideConfig post} msg] } {
-            tk_messageBox -icon error -message \
-                  "Error posting m2GuideConfig command: TCS reports \
-                  \"$msg\""
-         }
+# Reset M2 if required.
+         if { $needreset } {
+            cs m2GuideConfig set reset On
+
+# These parameters are ignored but need to be set to valid values.
+            cs m2GuideConfig set samplefreq 200
+            cs m2GuideConfig set filter raw
+            cs m2GuideConfig set freq1 ""
+            cs m2GuideConfig set freq2 ""
+            cs m2GuideConfig set beam A
+            cs m2GuideConfig set source PWFS1
+            logger command m2GuideConfig
+            if { [catch {cs m2GuideConfig post} msg] } {
+               tk_messageBox -icon error -message \
+                     "Error posting m2GuideConfig command: TCS reports \
+                     \"$msg\""
+            }
 
 # This delay is needed to allow M2 to action the reset before the command
 # is resent with reset = off. Maybe this won't be needed when the M2 BUSY/IDLE
 # is connected.
-         after 1000
-         cs m2GuideConfig set reset Off
-         logger command m2GuideConfig
-         if { [catch {cs m2GuideConfig post} msg] } {
-            tk_messageBox -icon error -message \
-                  "Error posting m2GuideConfig command: TCS reports \
-                  \"$msg\""
+            after 1000
+         }
+
+# Add the desired guide sources.
+         foreach source $scssource {
+            cs m2GuideConfig set reset Off
+            cs m2GuideConfig set samplefreq 200
+            cs m2GuideConfig set filter raw
+            cs m2GuideConfig set freq1 ""
+            cs m2GuideConfig set freq2 ""
+            cs m2GuideConfig set beam A
+            cs m2GuideConfig set source $source
+            logger command m2GuideConfig
+            if { [catch {cs m2GuideConfig post} msg] } {
+               tk_messageBox -icon error -message \
+                     "Error posting m2GuideConfig command: TCS reports \
+                     \"$msg\""
+            }
+            after 10
          }
 
 # Turn guiding on.
          cs m2Guide set state On
          logger command m2Guide
+
       } elseif { ! [state m2] } {
 
 # Just need to turn it on if it is off.
@@ -196,11 +214,11 @@ itcl::body ActiveOptics::enable {} {
    }
 
 # M1 figure.
-   if { [state m1] && $m1figure == "none" } {
+   if { [state m1] && ( ! $m1figure ) } {
       cs m1Guide set mode Off
       logger command m1Guide
-   } elseif { $m1figure != "none" } {
-      switch $m1figure {
+   } elseif { $m1figure && $m1source != "" } {
+      switch $m1source {
          PWFS1 {
              cs m1Guide set mode On
              cs m1GuideConfig set weighting none
@@ -217,6 +235,12 @@ itcl::body ActiveOptics::enable {} {
              cs m1Guide set mode On
              cs m1GuideConfig set weighting none
              cs m1GuideConfig set source OIWFS
+             cs m1GuideConfig set frames 1
+         }
+         GAOS {
+             cs m1Guide set mode On
+             cs m1GuideConfig set weighting none
+             cs m1GuideConfig set source Altair
              cs m1GuideConfig set frames 1
          }
          HRWFS {
@@ -330,6 +354,10 @@ itcl::body ActiveOptics::state {component} {
             return 0
          }
       }
+      gaos {
+# DON'T KNOW HOW TO DO THIS!!!
+         return 1
+      }
       p1guide {
          if { [sa guideConfig get p1guide value] == "1" } {
             return 1
@@ -398,6 +426,9 @@ itcl::body ActiveOptics::source {component src} {
             return 1
          }
          if { $src == "OIWFS" && [sa guideConfig get m2oiguide] != "OFF" } {
+            return 1
+         }
+         if { $src == "GAOS" && [sa guideConfig get m2aoguide] != "OFF" } {
             return 1
          }
       }

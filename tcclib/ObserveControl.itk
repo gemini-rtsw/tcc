@@ -7,7 +7,7 @@
 #  Methods:
 #           none
 #
-#  D Terrett  25 October 2002
+#  D Terrett  11 November 2002
 #
 #  Copyright CCLRC
 #+
@@ -51,11 +51,18 @@ itcl::body ObserveControl::constructor args {
       AcqcamControl $w.acqcam
    }
 
+# Various chop/node and WFS probe controls.
    itk_component add buttons {
       frame $w.buttons -bd 2 -relief ridge
    }
-   pack $itk_component(acqcam) $itk_component(buttons) -side left -pady 10 \
-         -padx 10
+
+# Altair controls.
+   itk_component add altair {
+      AoControl $w.altair
+   }
+
+   pack $itk_component(acqcam) $itk_component(buttons) $itk_component(altair) \
+         -side left -pady 10 -padx 5 -anchor s
    set w $itk_component(buttons)
 
 # Button and option menu for configuring the A & G fold mirrors.
@@ -154,7 +161,7 @@ itcl::body ObserveControl::constructor args {
 #            -parcommand [itcl::code $this center 2]
 #   }
 
-   grid $itk_component(foldlab) $itk_component(foldsel) - -sticky w
+   grid $itk_component(foldlab) $itk_component(foldsel) - -sticky w -pady 5
    grid $itk_component(choplab) $itk_component(p1lab) \
          $itk_component(p2lab) -sticky ew -padx 5
    grid $itk_component(chop) $itk_component(p1follow) \

@@ -1,0 +1,39 @@
+#+
+#  AosControl <- itk::Widget
+#
+#  An AosControl widget contains various widget for controlling the 
+#  mount control system.
+#
+#  Options:
+#           none
+#
+#  Methods:
+#           none
+#
+#  D Terrett  11 November 2002
+#
+#  Copyright CCLRC
+#+
+
+itcl::class AosControl {
+   inherit itk::Widget
+   constructor args {}
+   private {
+      method getParVal {par}
+   }
+}
+
+itk::usual AosControl {
+   keep -cursor -font -highlightthickness -activeborderwidth -borderwidth \
+         -labelfont -popupcursor -insertborderwidth -insertofftime \
+         -insertontime -insertwidth -textfont -selectborderwidth
+}
+
+itcl::body AosControl::constructor args {
+
+   eval itk_initialize $args
+}
+
+itcl::body AosControl::getParVal par {
+         return [$itk_component($par) get]
+}

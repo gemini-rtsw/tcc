@@ -6,7 +6,7 @@
 #  Arguments:
 #             none
 #
-#  D Terrett 3 November 2002
+#  D Terrett 11 November 2002
 #
 #  Copyright CCLRC
 #-
@@ -32,14 +32,16 @@ proc createPanels {} {
 #         -title "Secondary Mirror Control"
 #   PanelMgr agsPanel -name .agsPanel -class AgsPanel \
 #         -title "A & G Control"
-#   PanelMgr aosPanel -name .aosPanel -class AosPanel \
-#         -title "Active Optics Control"
+   PanelMgr aosPanel -name .aosPanel -class AosPanel \
+         -title "Active Optics Control"
    PanelMgr previewPanel -name .previewPanel -class PreviewPanel \
          -title "Configuration Preview"
    PanelMgr logPanel -name .logPanel -class LogPanel \
          -title "Command Log"
    PanelMgr guideLoopPanel -name .guideLoopPanel \
          -class GuideLoopPanel -title "Guiding Loop Control"
+#   PanelMgr aoPanel -name .aoPanel \
+#         -class AoPanel -title "Adaptive Optics Control"
    PanelMgr handsetPanel -name .handsetPanel \
          -class HandsetPanel -title "Handsets"
    PanelMgr pointUpdatePanel -name .pointUpdatePanel \

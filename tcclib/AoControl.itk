@@ -1,0 +1,126 @@
+#+
+#  AoControl <- itk::Widget
+#
+#  An AoControl widget contains various widget for controlling the 
+#  mount control system.
+#
+#  Options:
+#           none
+#
+#  Methods:
+#           none
+#
+#  D Terrett  11 November 2002
+#
+#  Copyright CCLRC
+#+
+
+itcl::class AoControl {
+   inherit itk::Widget
+   constructor args {}
+   private {
+      method centre {}
+      method correct {}
+   }
+}
+
+itk::usual AoControl {
+#   keep -cursor -font -highlightthickness -activeborderwidth -borderwidth \
+#         -labelfont -popupcursor -insertborderwidth -insertofftime \
+#         -insertontime -insertwidth -textfont -selectborderwidth
+}
+
+itcl::body AoControl::constructor args {
+
+   set w $itk_interior
+   itk_component add frame {
+      frame $w.frame -borderwidth 2 -relief ridge
+   }
+   pack $itk_component(frame)
+   set w $itk_component(frame)
+
+# Label.
+   itk_component add label {
+      label $w.label -text ALTAIR
+   }
+
+# WFS stage follow.
+   itk_component add follow {
+      OnOffButton $w.follow -text Follow \
+            -oncommand {aoFollow followState On} \
+            -offcommand {aoFollow followState Off} \
+            -onvalue {ON On} \
+            -offvalue {OFF Off} \
+            -sadrecord {aossad followS}
+   }
+
+# Centre WFS.
+   itk_component add centre {
+      LiveButton $w.centre -text "Center WFS" -command [itcl::code $this centre]
+   }
+
+# Correct.
+   itk_component add correct {
+      LiveButton $w.correct -text Correct -command [itcl::code $this correct]
+   }
+
+# Offload tip/tilt & focus.
+   itk_component add ttf {
+      LiveButton $w.ttf -text "Offload TTF"
+   }
+
+# Create command senders.
+   if { [catch {cs aoFlatten info}] } {
+      epics cs aoFlatten
+   }
+   if { [catch {cs aoCentreWfs info}] } {
+      epics cs aoCentreWfs
+   }
+   if { [catch {cs aoCorrect info}] } {
+      epics cs aoCorrect
+   }
+
+   itk_component add entshut {
+      OnOffButton $w.entshut -text "Entr shutter" \
+            -oncommand {aoEntShutter state Open} \
+            -offcommand {aoEntShutter state Close} \
+            -onvalue {ON On} \
+            -offvalue {OFF Off} \
+            -sadrecord {aossad followS}
+   }
+
+   itk_component add exshut {
+      OnOffButton $w.exshut -text "Exit shutter" \
+            -oncommand {aoExitShutter state Open} \
+            -offcommand {aoExitShutter state Close} \
+            -onvalue {ON On} \
+            -offvalue {OFF Off} \
+            -sadrecord {aossad followS}
+   }
+
+   grid $itk_component(label) -padx 5 -sticky ew
+   grid $itk_component(follow) -padx 5 -sticky ew
+   grid $itk_component(centre) -padx 5 -sticky ew
+   grid $itk_component(correct) -padx 5 -sticky ew
+   grid $itk_component(ttf) -padx 5 -sticky ew
+   grid $itk_component(entshut) -padx 5 -sticky ew
+   grid $itk_component(exshut) -padx 5 -sticky ew
+
+   eval itk_initialize $args
+}
+
+itcl::body AoControl::centre {} {
+   cs aoFlatten set dummy 1
+   logger command aoFlatten
+   cs aoCentreWfs set retain 0
+   logger command aoCentreWfs
+}
+
+itcl::body AoControl::correct {} {
+   cs aoFlatten set dummy 1
+   logger command aoFlatten
+   cs aoCorrect set correct ON
+   cs aoCorrect set matrix ""
+   cs aoCorrect set gains 0
+   logger command aoCorrect
+}
