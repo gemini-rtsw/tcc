@@ -10,7 +10,7 @@
 #  Methods:
 #           none
 #
-#  D Terrett  16 January 2004
+#  D Terrett  17 January 2004
 #
 #  Copyright CCLRC
 #+
@@ -86,8 +86,8 @@ itcl::body GuideLoop::constructor args {
    }
 
 # GAOS
-   $w create rectangle 0 0 132 67 -fill white -tags "active gaos gaos_bg"
-   $w create text 62 35 -text GAOS -tags gaos -font $font
+   $w create rectangle 0 0 62 47 -fill white -tags "active gaos gaos_bg"
+   $w create text 32 25 -text GAOS -tags gaos -font $font
 
 # M1, M2 and Mount boxes.
    $w create rectangle 0 0 200 89 -fill white -tags "active m2 m2_bg"
@@ -98,7 +98,7 @@ itcl::body GuideLoop::constructor args {
    $w create text 42 15 -text "M2 COMA" -tags m2xy -font $font
    $w create rectangle 0 0 132 109 -fill white -tags "active m1 m1_bg"
    $w create text 92 45 -text M1 -tags m1 -font $font
-   $w create text 92 65 -text ASTIG -tags m1 -font $font
+   $w create text 92 65 -text FIGURE -tags m1 -font $font
    $w create rectangle 0 0 132 89 -fill white -tags "active mount mount_bg"
    $w create text 92 44 -text MOUNT -tags mount -font $font
 
@@ -127,8 +127,9 @@ itcl::body GuideLoop::constructor args {
    }
    $w create text 12 12 -text P1 -tags m2 -font $font
    $w create window 80 12 -width 110 -window $itk_component(m2p1) -tags m2
-   $itk_component(m2p1) add A -pady 0 -padx 0
-   $itk_component(m2p1) add B -pady 0 -padx 0
+#   $itk_component(m2p1) add A -pady 0 -padx 0
+#   $itk_component(m2p1) add B -pady 0 -padx 0
+   $itk_component(m2p1) add ON -pady 0 -padx 0
    $itk_component(m2p1) add OFF -pady 0 -padx 0
 
    itk_component add m2p2 {
@@ -140,8 +141,9 @@ itcl::body GuideLoop::constructor args {
    }
    $w create text 12 34 -text P2 -tags m2 -font $font
    $w create window 80 34 -width 110 -window $itk_component(m2p2) -tags m2
-   $itk_component(m2p2) add A -pady 0 -padx 0
-   $itk_component(m2p2) add B -pady 0 -padx 0
+#   $itk_component(m2p2) add A -pady 0 -padx 0
+#   $itk_component(m2p2) add B -pady 0 -padx 0
+   $itk_component(m2p2) add ON -pady 0 -padx 0
    $itk_component(m2p2) add OFF -pady 0 -padx 0
 
    itk_component add m2ao {
@@ -153,8 +155,9 @@ itcl::body GuideLoop::constructor args {
    }
    $w create text 12 56 -text AO -tags m2 -font $font
    $w create window 80 56 -width 110 -window $itk_component(m2ao) -tags m2
-   $itk_component(m2ao) add A -pady 0 -padx 0
-   $itk_component(m2ao) add B -pady 0 -padx 0
+#   $itk_component(m2ao) add A -pady 0 -padx 0
+#   $itk_component(m2ao) add B -pady 0 -padx 0
+   $itk_component(m2ao) add ON -pady 0 -padx 0
    $itk_component(m2ao) add OFF -pady 0 -padx 0
 
    itk_component add m2oi {
@@ -166,8 +169,9 @@ itcl::body GuideLoop::constructor args {
    }
    $w create text 12 78 -text OI -tags m2 -font $font
    $w create window 80 78 -width 110 -window $itk_component(m2oi) -tags m2
-   $itk_component(m2oi) add A -pady 0 -padx 0
-   $itk_component(m2oi) add B -pady 0 -padx 0
+#   $itk_component(m2oi) add A -pady 0 -padx 0
+#   $itk_component(m2oi) add B -pady 0 -padx 0
+   $itk_component(m2oi) add ON -pady 0 -padx 0
    $itk_component(m2oi) add OFF -pady 0 -padx 0
 
    itk_component add m2coma {
@@ -216,7 +220,7 @@ itcl::body GuideLoop::constructor args {
    $w move m2 182 10
    $w move m2xy 50 70
    $w move m1 250 115
-   $w move gaos 450 90
+   $w move gaos 500 110
    $w move pwfs1 50 242
    $w move oiwfs 250 242
    $w move pwfs2 450 242
@@ -230,7 +234,7 @@ itcl::body GuideLoop::constructor args {
          -tags {active oiwfs_m1} -arrow last -arrowshape {20 20 7}
    $w create line 530 243 530 190 381 190 -width 3 -fill white \
          -tags {active pwfs2_m1} -arrow last -arrowshape {20 20 7}
-   $w create line 450 130 381 130 -width 3 -fill white \
+   $w create line 501 130 381 130 -width 3 -fill white \
          -tags {active gaos_m1} -arrow last -arrowshape {20 20 7}
 
 # WFS to M2
@@ -242,7 +246,7 @@ itcl::body GuideLoop::constructor args {
          -tags {active oiwfs_m2} -arrow last -arrowshape {20 20 7}
    $w create line 582 257 610 257 610  44 381  44 -width 3 -fill white \
          -tags {active pwfs2_m2} -arrow last -arrowshape {20 20 7}
-   $w create line 530 91 530 65 381 65  -width 3 -fill white \
+   $w create line 530 111 530 65 381 65  -width 3 -fill white \
          -tags {active gaos_m2} -arrow last -arrowshape {20 20 7}
 
 # WFS to Probes
@@ -483,7 +487,7 @@ itcl::body GuideLoop::m2mode {probe val} {
    if { $val eq "OFF"} {
       AO configure -${probe}guide ""
    } else {
-      AO configure -${probe}guide $val
+      AO configure -${probe}guide On
    }
 }
 
