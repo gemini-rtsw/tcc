@@ -10,7 +10,7 @@ exec $HLPG_INSTALL_BASE/bin/solaris/ocswish "$0" "$@"
 #  the tcc uses. It is probably installation dependent and will need to be
 #  hacked to get it to work.
 #
-#  D Terrett  25 April 2001
+#  D Terrett 1 November 2000
 #
 #  Copyright CCLRC
 #-
@@ -33,8 +33,6 @@ set CATALOG_DIR $ROOT/pointcats
 # The tcc library files live in the lib subdirectory.
 lappend auto_path $ROOT/lib
 lappend auto_path $ROOT/tcclib
-lappend auto_path $ROOT/tcslib0.8
-lappend auto_path $ROOT/tclxml-2.0
 
 # Load the time and tcc extensions to tcl.
 load $ROOT/lib/solaris/tcctime.so
@@ -47,7 +45,6 @@ package require Itcl
 package require Itk
 package require Iwidgets
 package require Ocspkg
-package require xml
 
 # Set the name of the epics service configuration file.
 if { [info exists env(TCC_TCSNAME)] } {
