@@ -3,18 +3,18 @@
 #
 # Defines default configuration and configuration components.
 #+
-createPointingOrigin "Rotator axis" -x "0.0" -y "0.0"
+createPointingOrigin "Rotator axis" -x "0.0" -y "0.0" -refcount 1
 
-createCosys FK5/J2000 -frame FK5 -equinox J2000
+createCosys FK5/J2000 -frame FK5 -equinox J2000 -refcount 1
 createCosys FK4/B1950 -frame FK4 -equinox B1950
 createCosys FK4/B1900 -frame FK4 -equinox B1900
 
 createRotator north -cosys FK5/J2000 -ipa 180
 createRotator vertical -cosys "" -ipa 180
 
-createGuide "None"
+createGuide "None" -refcount 1
 
-createSlewOptions "All" \
+createSlewOptions "All" -refcount 1 \
    -chopThrow "On" \
    -sourceOffset "On" \
    -sourceDifTr "On" \
@@ -25,7 +25,7 @@ createSlewOptions "All" \
    -pointing "On" \
    -guiding "On"
 
-createTrackFrame FK5 \
+createTrackFrame FK5 -refcount 1 \
    -mountCosys "FK5/J2000" \
    -sourceACosys "FK5/J2000" \
    -sourceBCosys "FK5/J2000" \
@@ -34,7 +34,7 @@ createTrackFrame FK5 \
    -pwfs2Cosys "FK5/J2000" \
    -oiwfsCosys "FK5/J2000" 
 
-createConfig default \
+createConfig default -refcount 1 \
    -rotator north \
    -slewOptions All \
    -trackFrame FK5 \
