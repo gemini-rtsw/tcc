@@ -21,7 +21,7 @@ static char rcsid[]="$Id:";
 *            Tk_ItemCoordProc have been changed to use object instead of
 *            strings for the command arguments.
 *
-*   D L Terrett 3 May 2000
+*   D L Terrett 27 June 2001
 *
 *   Copyright CCLRC
 */
@@ -564,7 +564,7 @@ static void DisplayDV( Tk_Canvas canvas, Tk_Item *itemPtr, Display *display,
 
 /* Vent gates */
    if ( domeviewPtr->evgGC != None ) {
-      a1 = 210 * 64 + (short) ( D90X - domeviewPtr->domeaz * D2X );
+      a1 = 30 * 64 + (short) ( D90X - domeviewPtr->domeaz * D2X );
       a2 = 120 * 64;
       rgate = r - GATEWIDTH/2.0;
       x = xc - rgate;
@@ -574,7 +574,7 @@ static void DisplayDV( Tk_Canvas canvas, Tk_Item *itemPtr, Display *display,
          a1, a2);
    }
    if ( domeviewPtr->wvgGC != None ) {
-      a1 = 30 * 64 + (short) ( D90X - domeviewPtr->domeaz * D2X );
+      a1 = 210 * 64 + (short) ( D90X - domeviewPtr->domeaz * D2X );
       a2 = 120 * 64;
       rgate = r - GATEWIDTH/2.0;
       x = xc - rgate;
@@ -587,19 +587,6 @@ static void DisplayDV( Tk_Canvas canvas, Tk_Item *itemPtr, Display *display,
 /* Vent gate labels */
    x = xc - (short) ( 0.9 * r * cos( domeazr ) );
    y = yc - (short) ( 0.9 * r * sin( domeazr ) );
-   w[0].x = x + 10.0;
-   w[0].y = y;
-   w[1].x = x + 5.0;
-   w[1].y = y + 10.0;
-   w[2].x = x;
-   w[2].y = y + 2.0;
-   w[3].x = x - 5.0;
-   w[3].y = y + 10.0;
-   w[4].x = x - 10.0;
-   w[4].y = y;
-   XDrawLines( display, drawable, domeviewPtr->vglabGC, w, 5, CoordModeOrigin);
-   x = 2.0 * xc - x;
-   y = 2.0 * yc - y;
    e[0].x = x + 8.0;
    e[0].y = y + 8.0;
    e[1].x = x;
@@ -615,6 +602,19 @@ static void DisplayDV( Tk_Canvas canvas, Tk_Item *itemPtr, Display *display,
    e[6].x = x + 8.0;
    e[6].y = y - 8.0;
    XDrawLines( display, drawable, domeviewPtr->vglabGC, e, 7, CoordModeOrigin);
+   x = 2.0 * xc - x;
+   y = 2.0 * yc - y;
+   w[0].x = x + 10.0;
+   w[0].y = y;
+   w[1].x = x + 5.0;
+   w[1].y = y + 10.0;
+   w[2].x = x;
+   w[2].y = y + 2.0;
+   w[3].x = x - 5.0;
+   w[3].y = y + 10.0;
+   w[4].x = x - 10.0;
+   w[4].y = y;
+   XDrawLines( display, drawable, domeviewPtr->vglabGC, w, 5, CoordModeOrigin);
 
 
 /* Mirror */
