@@ -15,7 +15,7 @@
 #
 #     4. Zero the offset
 #
-#  D Terrett 5 December 2003
+#  D Terrett 14 January 2004
 #
 #  Copyright CCLRC
 #-
@@ -73,7 +73,7 @@ itcl::body Dark::constructor {wfs} {
       -oktest [itcl::code $this isexposedone]]
    $exposeaction connect ${wfs}SeqDark
 
- #Save the names of the command senders and the WFS for constructing
+# Save the names of the command senders and the WFS for constructing
 # the file name.
    set seqdark ${wfs}SeqDark
    set wfsname $wfs
@@ -106,8 +106,22 @@ itcl::body Dark::expose {} {
 # Link to WFS exposing flag.
    sa guideConfig link ${wfsname}state [itcl::scope Exposing]
 
-# Set the file name - some scheme needs to be invented for this.
-   $exposeaction set $seqdark filename ${wfsname}xxxxxxxx
+# Construct the file name from the WFS name and the exposure time.
+   switch $wfsname {
+      p1 {
+         set exp [cs pwfs1Observe get int]
+         set name pwfs1
+      }
+      p2 {
+         set exp [cs pwfs2Observe get int]
+         set name pwfs2
+      }
+   }
+   set filename [expr { int(1.0/$exp)}]Hz.fits
+
+# Set the file name.
+   $exposeaction set $seqdark filename \
+         [file join /gemini/files/wfs/ $name $filename]
 
 # Take the dark.
    $exposeaction start
