@@ -36,7 +36,8 @@ itcl::body SciTargetControl::constructor args {
    $itk_component(highlight) configure -background black
 
 # Add page for planets
-   set w [$itk_component(notebook) add -label "Planets"]
+   set w [$itk_component(notebook) add -label "Planets" \
+         -command "$itk_component(copy) configure -state disabled"] 
 
 # Radiobuttons for selecting a planet.
    itk_component add moon {
@@ -83,7 +84,8 @@ itcl::body SciTargetControl::constructor args {
          -padx 10 -pady 10 -sticky w
 
 # Add page for orbits
-   set w [$itk_component(notebook) add -label "Orbits"]
+   set w [$itk_component(notebook) add -label "Orbits" \
+         -command "$itk_component(copy) configure -state disabled"] 
 
 # Option menu for the orbit type.
    itk_component add eltype {
@@ -134,6 +136,12 @@ itcl::body SciTargetControl::constructor args {
    grid $itk_component(eccentricity) -sticky e -pady 1
    grid $itk_component(meanxxxx) -sticky e -pady 1
    grid $itk_component(dailymot) -sticky e -pady 1
+
+# Re-enable the copy menu when either the radec or azel pages are selected.
+   $itk_component(notebook) pageconfigure RA/Dec \
+         -command "$itk_component(copy) configure -state normal"
+   $itk_component(notebook) pageconfigure Az/El \
+         -command "$itk_component(copy) configure -state normal"
 
 # Add control for airmass limit.
    itk_component add airmass {
