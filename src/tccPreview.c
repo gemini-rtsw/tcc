@@ -7,7 +7,7 @@ static char rcsid[]="$Id:";
 *   FUNCTION NAME(S)
 *   tccPreviewCmd - Implements the tccPreview tcl command.
 *
-*   D L Terrett 12 June 1998
+*   D L Terrett 16 February 2000
 *
 *   Copyright CCLRC
 */
@@ -41,13 +41,22 @@ static int setWavel( Tcl_Interp*, int, int, char*[]);
 static int setLimits( Tcl_Interp*, int, char*[]); 
 static int setIpa( Tcl_Interp*, int, char*[]); 
 static int setIaa( Tcl_Interp*, int, char*[]); 
+static int setPlanet( Tcl_Interp*, int, char*[]); 
+static int setOrbit( Tcl_Interp*, int, char*[]); 
 static int update( Tcl_Interp*, char* );
 static int limitTimes( double, double );
+
+/* Target types */
+#define NONE 0
+#define COORD 1
+#define PLANET 2
+#define ORBIT 3
 
 /* Static storage for configuration data */
 double Aoprms[15];   /* Apparent to observed parameters */
 struct TELP Telp;    /* Telescope structure */
 double Elong;        /* True geodetic longitude */
+double Elat;         /* True geodetic latitude */
 double Xpmr, Ypmr;   /* Polar motion */
 int TargetSet[4];    /* Targets for source A, PWFS1, PWFS2 & OIWFS */
 double Theta1[4];
@@ -63,6 +72,10 @@ double Iaa;          /* Instrument alignment angle */
 double Ipa;          /* Sky position angle */
 double Pox[2];       /* Pointing origins */
 double Poy[2];
+int Planet;          /* Planet */
+int Jtype;           /* Orbital element type */
+double T0;           /* reference epoch */
+double Orbel[7];     /* Orbital elements */
 
 /* Static storage for results */
 int Visible;                     /* Source visible flag */
@@ -141,6 +154,15 @@ double Zlim = 0.5 * D2R;
  *         <epoch> <proper motion> dec> <parallax> <radial vel>?
  *
  *         Sets the a target position.
+ *
+ *      set orbit <jtype> <epoch> <orbinc> <anode> <perih> <aorq> 
+ *                <e> ?<aorl> <dm>?
+ *
+ *         Sets the Source A target position to the named planet.
+ *
+ *      set planet <planet>
+ *
+ *         Sets the Source A target position to the named planet.
  *
  *      set poriginA|poriginB <x> <y>
  *
@@ -278,10 +300,14 @@ int Tccext_PreviewCmd( ClientData clientdata, Tcl_Interp *interp, int argc,
             result = setIpa( interp, argc, argv);
         } else if ( strcmp( argv[2], "iaa" ) == 0 ) {
             result = setIaa( interp, argc, argv);
+        } else if ( strcmp( argv[2], "planet" ) == 0 ) {
+            result = setPlanet( interp, argc, argv);
+        } else if ( strcmp( argv[2], "orbit" ) == 0 ) {
+            result = setOrbit( interp, argc, argv);
         } else {
             Tcl_AppendResult( interp, "unknown option \"", argv[2],
                 "\" must be sourceA, pwfs1, pwfs2, oiwfs, poriginA, poriginB,",
-                " wavelsourceA wavelpwfs1, wavelpwfs2, oiwfswavel", 
+                " wavelsourceA wavelpwfs1, wavelpwfs2, oiwfswavel, planet", 
                 " ipa or iaa", (char *) NULL);
         }
     } else if ( strcmp( argv[1], "update" ) == 0 ) {
@@ -307,7 +333,7 @@ static int begin( Tcl_Interp *interp )
     int i;
 
     for ( i = 0; i < 4; i++ ) {
-        TargetSet[i] = 0;
+        TargetSet[i] = NONE;
         Pm[i].pm = 0;
         Pm[i].px = 0;
         Pm[i].rv = 0;
@@ -337,6 +363,8 @@ static int end( Tcl_Interp *interp, char *arg )
     struct WCS_CTX ctx;
     struct WCS wcs, iwcs;
     int hmsf[4];
+    double diam, r;
+    int jstat;
 
 /* Check that there is at least a source A target. */
     if ( !TargetSet[0] ) {
@@ -365,11 +393,33 @@ static int end( Tcl_Interp *interp, char *arg )
         Wavel[0], &aoprms[10], &aoprms[11]);
     aoprms[8] = Wavel[0];
 
+    switch ( TargetSet[0] ) {
+
 /* Convert source position to current epoch */
-    if ( astCoco( Theta1[0], Theta2[0], Pm[0], System[0], Equinox[0], Epoch[0],
-        System[0], Equinox[0], tt, aoprms, Telp, &a, &b) != 0 ) {
-        Tcl_AppendResult( interp, "unreachable position", (char *) NULL);
-        return TCL_ERROR;
+       case COORD:
+          if ( astCoco( Theta1[0], Theta2[0], Pm[0], System[0], Equinox[0], 
+             Epoch[0], System[0], Equinox[0], tt, aoprms, Telp, &a, &b) != 0 ) {
+             Tcl_AppendResult( interp, "unreachable position", (char *) NULL);
+             return TCL_ERROR;
+          }
+          break;
+
+/* Get planet position */
+       case PLANET:
+          slaRdplan( tt, Planet, Elong, Elat, &a, &b, &diam );
+          System[0] = APPT;
+          Theta1[0] = a;
+          Theta2[0] = b;
+          break;
+
+/* Get orbit position */
+       case ORBIT:
+          slaPlante( tt, Elong, Elat, Jtype, T0, Orbel[0], Orbel[1], Orbel[2],
+             Orbel[3], Orbel[4], Orbel[5], Orbel[6], &a, &b, &r, &jstat );
+          System[0] = APPT;
+          Theta1[0] = a;
+          Theta2[0] = b;
+          break;
     }
 
 /* Set pointing origin in telescope structure. */
@@ -732,7 +782,72 @@ static int setTarget( Tcl_Interp *interp, int target, int argc,
             return TCL_ERROR;
         }
     }
-    TargetSet[target] = 1;
+    TargetSet[target] = COORD;
+    return TCL_OK;
+}
+
+static int setPlanet( Tcl_Interp *interp, int argc, char *argv[])
+{
+    if ( argc != 4 ) {
+        Tcl_AppendResult( interp,
+      "wrong # args: should be \"tccPreview set planet planet\"",
+            (char *) NULL);
+       return TCL_ERROR;
+    }
+    if ( tccDcPlanet( interp, argv[3], &Planet ) ) return TCL_ERROR;
+    TargetSet[0] = PLANET;
+    return TCL_OK;
+}
+
+static int setOrbit( Tcl_Interp *interp, int argc, char *argv[])
+{
+    int i, nel;
+
+    if ( argc < 4 ) {
+        Tcl_AppendResult( interp,
+      "wrong # args: should be \"tccPreview set orbit jtype elements\"",
+            (char *) NULL);
+       return TCL_ERROR;
+    }
+    if ( sscanf( argv[3], "%d", &Jtype) != 1 ) {
+        Tcl_AppendResult( interp, "invalid orbit element set", (char *) NULL);
+        return TCL_ERROR;
+    }
+    if ( Jtype == 1 ) {
+      if ( argc != 12 ) {
+         Tcl_AppendResult(interp, 
+            "wrong number of orbital elements: 7 expected", (char *) NULL);
+         return TCL_ERROR;
+      }
+      nel = 7;
+    } else if ( Jtype == 2 ) {
+      if ( argc != 11 ) {
+         Tcl_AppendResult(interp, 
+            "wrong number of orbital elements: 6 expected", (char *) NULL);
+         return TCL_ERROR;
+      }
+      nel = 6;
+    } else if ( Jtype == 3 ) {
+      if ( argc != 10 ) {
+         Tcl_AppendResult(interp, 
+            "wrong number of oribital elements: 5 expected", (char *) NULL);
+         return TCL_ERROR;
+      }
+      nel = 5;
+    } else {
+       Tcl_AppendResult( interp, "invalid orbital element set \"", argv[3], 
+            "\"", (char *) NULL);
+       return TCL_ERROR;
+    }
+    if ( tccDcT0( interp, argv[4], &T0 ) != TCL_OK) return TCL_ERROR;
+    for ( i = 0; i < nel; i++ ) {
+        if ( sscanf( argv[i+5], "%lf", &Orbel[i]) != 1 ) {
+            Tcl_AppendResult( interp, "invalid orbital element \"", argv[i],
+                "\"", (char *) NULL);
+            return TCL_ERROR;
+        }
+    }
+    TargetSet[0] = ORBIT;
     return TCL_OK;
 }
 
@@ -740,7 +855,7 @@ static int update( Tcl_Interp *interp, char *arrayname )
 {
     char *val;
     double tlongm, tlatm, hm, tdc, pmb, rh, tlr, delut;
-    double elat, date;
+    double date;
     int y, m, d, status;
     char cmd[80];
 
@@ -885,7 +1000,7 @@ static int update( Tcl_Interp *interp, char *arrayname )
     slaAoppa( date, delut, tlongm * D2R, tlatm * D2R, hm, Xpmr, Ypmr,
         tdc + FREEZING, pmb, rh/100.0, WAVELR, tlr, Aoprms);
     slaPolmo( tlongm * D2R, tlatm * D2R, Xpmr, Ypmr, &Elong,
-        &elat, &Aoprms[14]);
+        &Elat, &Aoprms[14]);
 
      return TCL_OK;
 }
