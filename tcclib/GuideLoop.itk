@@ -10,7 +10,7 @@
 #  Methods:
 #           none
 #
-#  D Terrett  16 October 2003
+#  D Terrett  15 January 2004
 #
 #  Copyright CCLRC
 #+
@@ -28,6 +28,7 @@ itcl::class GuideLoop {
       method wfsmode {wfs val}
       method enable {}
       method m1mode {state}
+      method reset {}
       variable monids
    }
 }
@@ -113,12 +114,12 @@ itcl::body GuideLoop::constructor args {
    $itk_component(m1src) add OIWFS -pady 0
    $itk_component(m1src) add GAOS -pady 0
    $itk_component(m1src) add OFF -pady 0
-   itk_component add m1 {
-      SelectButton $w.m1 -orient vertical -command "AO configure -m1figure"
-   } {
-      usual
-      rename -offbackground -background background Background
-   }
+#   itk_component add m1 {
+#      SelectButton $w.m1 -orient vertical -command "AO configure -m1figure"
+#   } {
+#      usual
+#      rename -offbackground -background background Background
+#   }
 
 # Controls for M2
    itk_component add m2p1 {
@@ -264,15 +265,19 @@ itcl::body GuideLoop::constructor args {
    $w create line 183  40  20  40  20 442 251 442 -width 3 -fill white \
          -tags {active m2_mt} -arrow last -arrowshape {20 20 7}
 
-# ENABLE/DISABLE buttons.
+# ENABLE/DISABLE/RESET buttons.
    itk_component add on {
-      LiveButton $w.on -text ENABLE -command [itcl::code $this enable]
+      LiveButton $w.on -text Enable -command [itcl::code $this enable]
    }
    itk_component add off {
-      LiveButton $w.off -text DISABLE -command {AO disable}
+      LiveButton $w.off -text Disable -command {AO disable}
    }
-   $w create window 450 462 -window $itk_component(on)
-   $w create window 550 462 -window $itk_component(off)
+   itk_component add reset {
+      button $w.reset -text Reset -command [itcl::code $this reset]
+   }
+   $w create window 430 462 -window $itk_component(on)
+   $w create window 510 462 -window $itk_component(off)
+   $w create window 590 462 -window $itk_component(reset)
 
 # Monitor the guide states
    foreach rec {p1state p2state oistate aostate m2state absorbtilt m1state \
@@ -541,4 +546,23 @@ itcl::body GuideLoop::m1mode {state} {
    } else {
       AO configure -m1source $state
    }
+}
+
+itcl::body GuideLoop::reset {} {
+
+# Disable 
+   AO disable
+
+# Simulate pushing all the "off" buttons.
+   $itk_component(pwfs1) select OFF
+   $itk_component(pwfs2) select OFF
+   $itk_component(oiwfs) select OFF
+   $itk_component(m1src) select OFF
+   $itk_component(m2p1) select OFF
+   $itk_component(m2p2) select OFF
+   $itk_component(m2ao) select OFF
+   $itk_component(m2oi) select OFF
+   $itk_component(m2coma) select OFF
+   $itk_component(mt) select OFF
+   $itk_component(pr) select OFF
 }
