@@ -15,7 +15,9 @@
 #
 #     4. Zero the offset
 #
-#  D Terrett 16 January 2004
+#     5. Re-enable guiding (if it was enabled at the start).
+#
+#  D Terrett 17 January 2004
 #
 #  Copyright CCLRC
 #-
@@ -28,16 +30,19 @@ itcl::class Dark {
    }
    private {
       method offset {}
-      method expose {} {}
-      method zero {} {}
+      method expose {}
+      method zero {}
+      method reenable {}
       method isinposition {}
       method isexposedone {}
+      variable guideenabled
       variable wfsname
       variable wfsobj
       variable seqdark
       variable disableaction
       variable offsetaction
       variable exposeaction
+      variable resetaction
       variable InPosition
       variable Exposing
    }
@@ -77,15 +82,26 @@ itcl::body Dark::constructor {wfs} {
       -onok [itcl::code $this zero] \
       -oktest [itcl::code $this isexposedone] \
       -onstart "$wfsobj start 1"]
+
+# Create action for zeroing the offset.
+   set resetaction [seq::Action #auto tcs \
+      -waitvar [itcl::scope InPosition(value)] \
+      -onok [itcl::code $this reenable] \
+      -oktest [itcl::code $this isinposition]]
+   $resetaction set targetAdjust size -30.0
 }
 
 itcl::body Dark::destructor {} {
    itcl::delete object $disableaction
    itcl::delete object $offsetaction
    itcl::delete object $exposeaction
+   itcl::delete object $resetaction
 }
 
 itcl::body Dark::take {} {
+
+# Record the current state of guiding
+   set guideenabled [AO cget -enabled]
 
 # Disable guiding.
    $disableaction start
@@ -122,10 +138,11 @@ itcl::body Dark::expose {} {
 
 itcl::body Dark::zero {} {
 
+# Link to TCS in position flag.
+   sa tcssad link inPosition [itcl::scope InPosition]
+
 # Reverse the probe offset.
-   cs targetAdjust set size -30.0
-   logger command targetAdjust
-   cs targetAdjust post
+   $resetaction start
 }
 
 itcl::body Dark::isinposition {} {
@@ -143,4 +160,10 @@ itcl::body Dark::isexposedone {} {
       }
    }
    return [string equal $val No]
+}
+
+itcl::body Dark::reenable {} {
+   if { $guideenabled } {
+      AO enable
+   }
 }
