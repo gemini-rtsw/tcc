@@ -8,18 +8,18 @@ starts the status displays and
 
 starts the consoles and loads the sample targets, instrument definitions etc.
 
-Similarly, the star selector and pointing test applications are started by:
+Similarly, the pointing test and probecal applications are started by:
 
-	/gemini/tcc/tcc/starselect &
+	/gemini/tcc/tcc/pointtest &
 
 and
 
-	/gemini/tcc/tcc/pointtest &
+	/gemini/tcc/tcc/probecal &
 
 respectively.
 
 To connect to a copy of the tcs with epics records starting with something
-other than tcs: - e.g. tc1: - do:
+other than tcs: - e.g. a simulated tcs running as tc1: - do:
 
 	setenv TCC_TCSNAME tc1:
 
@@ -48,7 +48,7 @@ the command line. e.g.:
 
 	/gemini/tcc/tcc/tcc -layout &
 
-There are a number of star catalogues suitable for enginneering activities
+There are a number of star catalogues suitable for engineering activities
 and pointing tests in /gemini/tcc/tcc/pointcats.
 
 If, when you try to start Skycat from the tcc, using either with the Plot 
@@ -86,6 +86,41 @@ Type xhost again and you should get:
 with no clients listed. Exit from skycat and try again - there is no need to
 restart the tcc.
 
+INSTALLATION
+------------
+
+To install the tcc, check the code out of cvs, cd to the top level tcc
+directory and then either:
+
+	make MK
+or
+	make CP
+
+according to which site you are at. This will generate the site-dependent
+files and then build and install the binary extensions.
+
+There are two site dependent files that may need to be edited; calparams.dat
+and options. These are generated from calparams.MK or calparams.CP and
+options.MK or options.CP respectively depending on the parameter to the 
+make command.
+
+"options" defines the labels for the ISS ports on the tsd display and the
+names for various science fold mirror positions as used by the A&G - these
+must match the A&G software if the tsd is to display the science fold
+positions correctly.
+
+"calparams.dat" defines the x/y/z position that the peripheral wave-front
+sensors are sent to when the "center" button on the Acquisition and Guiding
+screen is pressed and the instrument origin x/y that these positions 
+correspond to. The x/y/z position should be set so that the rotary table and
+probe arm angles both go to zero; the position will need to be edited 
+whenever the probes are re-calibrated.
+
+If changes are made they should be made to the .CP or .MK files and then
+copied with the appropriate make commands and the modified files committed
+to cvs so that the changes are not lost if a new version of the tcc is
+installed.
+
 BUGS
 ----
 
@@ -95,69 +130,3 @@ click on "Stack Trace" and cut and paste the contents of the "Stack Trace
 for Error" box into a file and mail it to me (d.terrett@rl.ac.uk). It is 
 helpful if you can resize the window to eliminate the line wrapping before 
 cutting the text (this isn't always possible).
-
-1) When a target with no wavelength defined is loaded the undefinition (!)
-   of the wavelength isn't propogated to the wavelength editing window.
-
-2) The update button on the preview window re-maps the observation editor
-   window.
-
-3) The sub-component apply buttons don't log the command if there is no
-   sub-component name.
-
-4) The skycatSearch define target commands don't check that the coodinate
-   system object the refer to exists (all the GSC uses FK5/J2000 which is
-   defined in the data files in the data subdirectory so this isn't a
-   problem for the moment.
-
-5) The consoles sometimes get into a state where all commands sent to the
-   TCS time out (after about 2 seconds) although the commands are in fact
-   being accepted by the TCS. (This may well be a bug in either the TCS or
-   ocswish).
-
-6) The controls for entering temperature etc. on the system control panel
-   should be disabled when the weather data source is set to "server".
-
-7) If an object refers to a component that has been deleted, the component
-   is ignored without any message when the object is "applied".
-
-Obscure internal bugs:
-
-1) The -font option of the SelectButton widget doesn't work because the
-   widget has no components when it is first created.
-
-THINGS STILL TO DO
-------------------
-The following is a list of things that I know I still have to do (in no 
-particular order) so you don't have to tell me that they are missing. Some
-of them are obscure internal things so don't worry if you don't understand
-what some of them mean.
-
-1) Extend the configurations to include offsets and filters.
-
-2) Add input validation to all data entry fields. Try daft wavelengths to
-   see how the validation works.
-
-3) Add a help menu to each window that sends a URL to a web browser.
-
-4) Add a one line help to the bottom of each of the configuration editing
-   windows that displays a message when the mouse is over a data entry field.
-
-5) Put time-to-slew on the preview window.
-
-6) Put the distance from the object to the moon and sun on the preview
-   window.
-
-7) Improve the visibilty of the selection highlight.
-
-8) Improve the labeling of the buttons and the titles of the windows (I
-   need help on this one).
-
-9) Put the object to moon and sun distance on the status display.
-
-10) Implement "next object" on status display.
-
-11) Change the label of the "Set/Slew" button to Set or Slew depending on 
-    whether a SlewOptions component has been selected.
-
-12) Re-think the way merging of configurations work.
