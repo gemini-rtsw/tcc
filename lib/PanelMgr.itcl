@@ -25,6 +25,9 @@
 #           -title          The window title.
 #
 #  Methods:
+#           create          Creates the panel window if it doesn't already
+#                           exist.
+#
 #           iconify         Iconifies the panel window if it exists.
 #
 #           map             Creates the panel window or maps it into the 
@@ -43,7 +46,7 @@
 #        o  Destroying the PanelMgr object does not destroy the panel window -
 #           PanelMgr objects are not intended to be destroyed.
 #
-#  D Terrett 29 March 2001
+#  D Terrett 16 January 2004
 #
 #  Copyright CCLRC
 #+
@@ -51,13 +54,14 @@
 itcl::class PanelMgr {
    constructor args {eval configure $args}
    public {
+      method create {{component ""}}
       method iconify {}
       method map {{component ""}}
       method updategeometry {}
       method withdraw {}
       variable class ""
-      variable create 0 
       variable geometry ""
+      variable create 0
       variable name ""
       variable screen ""
       variable state normal
@@ -66,6 +70,20 @@ itcl::class PanelMgr {
 }
 
 itcl::body PanelMgr::map {{component ""}} {
+
+# If the window already exists then just map it and raise it otherwise
+# call the create method.
+   if [winfo exists $name] {
+      $name show $component
+      wm deiconify $name
+      raise $name
+      return 0
+   } else {
+      create
+   }
+}
+
+itcl::body PanelMgr::create {{component ""}} {
 #-
 # Putting an itk toplevel widget on another screen involves a horrible
 # hack. The widget doesn't have a -screen option and it isn't possible to
@@ -77,13 +95,8 @@ itcl::body PanelMgr::map {{component ""}} {
 # fails, tk can't create a top level window to report the error.
 #-
 
-# If the window already exists then just map it and raise it.
-   if [winfo exists $name] {
-      $name show $component
-      wm deiconify $name
-      raise $name
-      return 0
-   } else {
+# If the window already exists then do nothing.
+   if { ![winfo exists $name] } {
 
 # If the screen name isn't blank then save the toplevel command and re-define
 # it to add the -screen option.
