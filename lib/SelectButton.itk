@@ -19,7 +19,10 @@
 #           -orient        The orientation of the buttons (horizontal or
 #                          vertical).
 #
-#  D Terrett 18 October 2002
+#  Methods:
+#           select label   Selects the specified button.
+#
+#  D Terrett 15 Janaury 2003
 #
 #  Copyright CCLRC
 #+
@@ -39,6 +42,7 @@ itcl::class SelectButton {
    public {
       method add {label args}
       method get {} {return $current}
+      method select {label}
    }
    private {
       method selectioncommand {label}
@@ -101,3 +105,13 @@ itcl::body SelectButton::selectioncommand w {
       uplevel #0 $itk_option(-command) \"[$w cget -text]\"
    }
 }
+
+itcl::body SelectButton::select {label} {
+   for {set i 0} {$i < $n} {incr i} {
+      if { [string equal $label [$itk_component($i) cget -text]] } {
+         $itk_component($i) invoke
+         break
+      }
+   }
+}
+
