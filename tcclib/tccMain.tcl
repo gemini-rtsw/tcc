@@ -7,7 +7,7 @@
 #  Arguments:
 #            Any command line options and values.
 #
-#  D Terrett  1 December 2000
+#  D Terrett  26 January 2001
 #
 #  Copyright CCLRC
 #-
@@ -157,8 +157,7 @@ proc tccMain args {
 # Pack the toolbar.
    pack [TccToolbar .toolbar]
 
-# Set the title, icon etc.
-   wm title . [sa tcssad get name]
+# Set the icon.
    wm iconname . TCC
 
 # Load default components.
@@ -206,6 +205,14 @@ proc tccMain args {
       if [catch {source $layout} msg] {
          puts "Error processing layout \"$msg\""
       }
+   }
+
+# Set the title for the windows.
+   global env
+   if { [info exists env(TCC_TCSNAME)] } {
+      set title "Simulated Gemini TCS ($env(TCC_TCSNAME))"
+   } else {
+      wm title . [sa tcssad get name]
    }
 
 # Start the preview update process.
