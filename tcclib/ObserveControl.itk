@@ -3,7 +3,7 @@
 #
 #  Implements the ObserveControl widget.
 #
-#  D Terrett 12 November 1999
+#  D Terrett 23 November 1999
 #
 #  Copyright CCLRC
 #+
@@ -48,6 +48,10 @@ itcl::body ObserveControl::constructor args {
    $itk_component(mode) add "acquisition TV"
    pack $itk_component(mode)
 
+   itk_component add loops {
+      PanelButton $w.loops -text "Guide Loop Control" \
+         -panel guideLoopPanel -state disabled
+   }
    itk_component add tarhand {
       PanelButton $w.tarhand -text "Target Handset" \
          -panel offsetHandsetPanel
@@ -60,7 +64,7 @@ itcl::body ObserveControl::constructor args {
       PanelButton $w.guidehand -text "Pointing Handset" \
          -panel guideHandsetPanel
    }
-   pack $itk_component(tarhand) $itk_component(pohand) \
+   pack $itk_component(loops) $itk_component(tarhand) $itk_component(pohand) \
          $itk_component(guidehand) -fill x -expand yes
 
    eval itk_initialize $args

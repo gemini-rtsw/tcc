@@ -3,7 +3,7 @@
 #
 #  Creates all the panel objects that make up the tcc application.
 #
-#  D Terrett 28 May 1999
+#  D Terrett 22 November 1999
 #
 #  Copyright CCLRC
 #-
@@ -35,6 +35,8 @@ proc createPanels {} {
          -title "Configuration Preview"
    PanelMgr logPanel -name .logPanel -class LogPanel \
          -title "Command Log"
+   PanelMgr guideLoopPanel -name .guideLoopPanel \
+         -class GuideLoopPanel -title "Guiding Loop Control"
    PanelMgr guideHandsetPanel -name .guideHandsetPanel \
          -class GuideHandsetPanel -title "Pointing Handset"
    PanelMgr offsetHandsetPanel -name .offsetHandsetPanel \

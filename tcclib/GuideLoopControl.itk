@@ -1,0 +1,329 @@
+#+
+#  GuideLoopControl.itk
+#
+#  Implements the McsControl widget.
+#
+#  D Terrett  23 November 1999
+#
+#  Copyright CCLRC
+#+
+
+itcl::class GuideLoopControl {
+   inherit itk::Widget
+
+   constructor args {}
+
+   private method m1mode state
+   private method mtmode state
+   private method recolour {mech state}
+
+   private variable pwfs1 0
+   private variable pwfs2 0
+   private variable oiwfs 0
+   private variable m1 0
+   private variable m1_sw 0
+   private variable m2 0
+   private variable m2_sw 0
+   private variable mt 0
+   private variable mt_sw 0
+}
+
+itk::usual GuideLoopControl {
+   keep -background -cursor -highlightcolor -foreground
+   keep -insertbackground -selectbackground -selectforeground
+}
+
+itcl::body GuideLoopControl::constructor args {
+
+# Create canvas.
+   itk_component add canv {
+      canvas $itk_interior.canv -width 630 -height 360
+   }
+   pack $itk_component(canv)
+   set w $itk_component(canv)
+
+# WFS boxes
+   foreach sys {pwfs1 pwfs2 oiwfs} {
+      itk_component add ${sys}_off {
+         button $w.${sys}_off -text OFF -command [code $this recolour ${sys} 0]
+      }
+      itk_component add ${sys}_on {
+         button $w.${sys}_on -text ON -command [code $this recolour ${sys} 1]
+      }
+      itk_component add ${sys}_setup {
+         button $w.${sys}_setup -text SETUP
+      }
+      itk_component add $sys {
+         label $w.${sys} -text [string toupper $sys]
+      }
+
+      $w create rectangle 0 0 132 63 -fill white -tags "active ${sys} ${sys}_bg"
+      $w create window 32 12 -width 60 -height 20 -window $w.${sys}_off \
+            -tags $sys
+      $w create window 32 32 -width 60 -height 20 -window $w.${sys}_on \
+            -tags $sys
+      $w create window 32 52 -width 60 -height 20 -window $w.${sys}_setup \
+            -tags $sys
+#      $w create text 92 32 -text [string toupper $sys] -tags $sys
+   }
+
+# Find the name of the font used for the buttons and use it for all text.
+   set font [$w.oiwfs_off cget -font]
+
+   foreach sys {pwfs1 pwfs2 oiwfs} {
+      $w create text 92 32 -text [string toupper $sys] -tags $sys -font $font
+   }
+
+# M1, M2 and Mount boxes.
+   foreach sys {m2 m1 mount} {
+      $w create rectangle 0 0 132 63 -fill white -tags "active ${sys} ${sys}_bg"
+      $w create text 67 32 -text [string toupper $sys] -tags $sys -font $font
+   }
+
+# Controls for M1.
+   itk_component add m1Weight {
+      checkbutton $w.m1Weight -text Weighting -variable ${w}_m1Weight \
+            -onvalue Errors -offvalue None
+   }
+   $w create window 1 64 -window $itk_component(m1Weight) -anchor nw -tags m1
+   itk_component add m1Update {
+      iwidgets::entryfield $w.m1Update -labeltext "Interval (s)" -width 5
+   }
+   $itk_component(m1Update) insert end 60
+   $w create window 1 83 -window $itk_component(m1Update) -anchor nw -tags m1
+
+# Controls for Mount.
+   itk_component add mtWeight {
+      scale $w.mtWeight -from 0.0 -to 1.0 -resolution 0.1 -orient horizontal \
+            -showvalue 0 -length 100 -borderwidth 1
+   }
+   $w create window 15 66 -window $itk_component(mtWeight) -anchor nw \
+         -tags mount
+   $w create text 7 76 -text P1 -tags mount -font $font
+   $w create text 125 76 -text P2 -tags mount -font $font
+
+# Move boxes into position.
+   $w move oiwfs 20  90
+   $w move pwfs2 20 170
+   $w move pwfs1 20 250
+   $w move m2 250 20
+   $w move mount 470 120
+   $w move m1 470 250
+
+# PWFS1 to M1
+
+   $w create line 152 302 420 302 -width 3 -fill white -tags {active pwfs1_m1}
+   $w create oval 417 299 423 305 -width 3 -fill white -outline "" \
+         -tags {active pwfs1_m1}
+
+# M1 switch
+
+   $w create line 440 302 471 302 -width 3 -fill white -tags {active m1_in}
+   $w create line 420 302 440 302 -width 3 -fill "" -tags {active m1_close}
+   $w create line 430 287 440 302 -width 3 -fill white -tags {active m1_open}
+   itk_component add m1open {
+      LiveButton $w.m1open -text OPEN -command [code $this m1mode 0]
+   }
+   itk_component add m1close {
+      LiveButton $w.m1close -text CLOSE -command [code $this m1mode 1]
+   }
+   $w create window 430 317 -width 60 -height 20 -window $w.m1open
+   $w create window 430 337 -width 60 -height 20 -window $w.m1close
+
+# M2 switch
+
+   $w create line 282 83 282 122 262 122 -width 3 -fill white \
+         -tags {active m2_in}
+   $w create line 242 122 262 122 -width 3 -fill "" -tags {active m2_close}
+   $w create line 252 107 262 122 -width 3 -fill white -tags {active m2_open}
+   itk_component add m2open {
+      button $w.m2open -text OPEN -command [code $this recolour m2_sw 0]
+   }
+   itk_component add m2close {
+      button $w.m2close -text CLOSE -command [code $this recolour m2_sw 1]
+   }
+   $w create window 242 137 -width 60 -height 20 -window $w.m2open
+   $w create window 242 157 -width 60 -height 20 -window $w.m2close
+
+# Mount switch
+   $w create line 400 152 471 152 -width 3 -fill white -tags {active mt_in}
+   $w create line 380 152 400 152 -width 3 -fill white -tags {active mt_open}
+   $w create line 390 137 400 152 -width 3 -fill "" -tags {active mt_m2}
+   $w create line 390 167 400 152 -width 3 -fill "" -tags {active mt_pwfs}
+   itk_component add mtopen {
+      LiveButton $w.mtopen -text OPEN -command [code $this mtmode 0]
+   }
+   itk_component add mtm2 {
+      LiveButton $w.mtm2 -text M2 -command [code $this mtmode 1]
+   }
+   itk_component add mtwfs {
+      LiveButton $w.mtpwfs -text WFS -command [code $this mtmode -1]
+   }
+   $w create window 430 167 -width 60 -height 20 -window $w.mtm2
+   $w create window 430 187 -width 60 -height 20 -window $w.mtopen
+   $w create window 430 207 -width 60 -height 20 -window $w.mtpwfs
+
+# WFS to M2
+
+   $w create line 152 122 192 122 -width 3 -fill white -tags {active oiwfs_m2}
+   $w create line 192 122 242 122 -width 3 -fill white -tags {active wfs_m2}
+   $w create oval 239 119 245 125 -width 3 -fill white -outline "" \
+         -tags {active wfs_m2}
+   $w create line 152 192 192 192 -width 3 -fill white -tags {active pwfs2_m2}
+   $w create line 192 192 192 122 -width 3 -fill white -tags {active pwfs_m2}
+   $w create line 152 262 192 262 192 192 -width 3 -fill white \
+         -tags {active pwfs1_m2}
+
+# PWFS to mount
+   $w create line 152 211 189 211 -width 3 -fill white -tags {active pwfs2_mt}
+   $w create line 196 211 312 211 -width 3 -fill white -tags {active pwfs2_mt}
+   $w create line 152 282 312 282 312 211 -width 3 -fill white \
+         -tags {active pwfs1_mt}
+   $w create line 312 211 312 167 390 167 -width 3 -fill white \
+         -tags {active pwfs_mt}
+   $w create oval 393 170 387 164 -width 3 -fill white -outline "" \
+         -tags {active pwfs_mt}
+
+# M2 to mount
+   $w create line 350 83 350 137 390 137 -width 3 -fill white \
+         -tags {active m2_mt}
+   $w create oval 387 134 393 140 -width 3 -fill white -outline "" \
+         -tags {active m2_mt}
+
+# Create the command senders required by this screen.
+   if [catch {cs m1Guide info}] {
+      epics cs m1Guide
+   }
+   if [catch {cs mountGuide info}] {
+      epics cs mountGuide
+   }
+
+   eval itk_initialize $args
+}
+
+body GuideLoopControl::recolour {mech state} {
+
+   set w $itk_component(canv)
+
+# Record the new state of the mechanism.
+   set $mech $state
+
+   set pwfs 0
+   set wfs 0
+   set m2 0
+   set m1 0
+   set mt 0
+
+# Set everything to white.
+   $w itemconfigure active -fill white
+
+# Set switch positions.
+   if { $m2_sw } {
+      $w itemconfigure m2_open -fill ""
+   } else {
+      $w itemconfigure m2_close -fill ""
+   }
+   if { $m1_sw } {
+      $w itemconfigure m1_open -fill ""
+   } else {
+      $w itemconfigure m1_close -fill ""
+   }
+   if { $mt_sw == 1} {
+      $w itemconfigure mt_open -fill ""
+      $w itemconfigure mt_pwfs -fill ""
+   } elseif { $mt_sw == -1 } {
+      $w itemconfigure mt_open -fill ""
+      $w itemconfigure mt_m2 -fill ""
+   } else {
+      $w itemconfigure mt_pwfs -fill ""
+      $w itemconfigure mt_m2 -fill ""
+   }
+
+   if { $pwfs1 } {
+      set pwfs 1
+      $w itemconfigure pwfs1_bg -fill green
+      $w itemconfigure pwfs1_m1 -fill green
+      $w itemconfigure pwfs1_m2 -fill green
+      $w itemconfigure pwfs1_mt -fill green
+      if { $m1_sw } {
+         $w itemconfigure m1_close -fill green
+         $w itemconfigure m1_in -fill green
+         $w itemconfigure m1_bg -fill green
+      }
+   }
+   if { $pwfs2 } {
+      set pwfs 1
+      $w itemconfigure pwfs2_bg -fill green
+      $w itemconfigure pwfs2_m2 -fill green
+      $w itemconfigure pwfs2_mt -fill green
+   }
+   if { $oiwfs } {
+      set wfs 1
+      $w itemconfigure oiwfs_bg -fill green
+      $w itemconfigure oiwfs_m2 -fill green
+   }
+   if { $pwfs } {
+      set wfs 1
+      $w itemconfigure pwfs_mt -fill green
+      $w itemconfigure pwfs_m2 -fill green
+      if { $mt_sw == -1 } {
+         set mt 1
+         $w itemconfigure mt_pwfs -fill green
+      }
+   }
+   if { $wfs } {
+      $w itemconfigure wfs_m2 -fill green
+      if { $m2_sw } {
+         $w itemconfigure m2_close -fill green
+         $w itemconfigure m2_in -fill green
+         $w itemconfigure m2_bg -fill green
+         $w itemconfigure m2_mt -fill green
+         set m2 1
+      }
+   }
+   if { $m2 && ($mt_sw == 1) } {
+      set mt 1
+      $w itemconfigure mt_m2 -fill green
+   }
+   if { $mt } {
+      $w itemconfigure mt_in -fill green
+      $w itemconfigure mount_bg -fill green
+   }
+}
+
+body GuideLoopControl::m1mode state {
+
+   cs m1Guide set mode [expr {$state ? "On" : "Off"}]
+   cs m1Guide set update [$itk_component(m1Update) get]
+   upvar #0 [$itk_component(m1Weight) cget -variable] weight
+   cs m1Guide set weighting $weight
+
+   if [catch {cs m1Guide post} msg] {
+      tk_messageBox -icon error -parent $itk_interior -message \
+            "Error posting m1Guide command: TCS reports \
+            \"$msg\""
+   }
+
+   recolour m1_sw $state
+}
+
+body GuideLoopControl::mtmode state {
+
+   cs mountGuide set mode [expr {$state ? "On" : "Off"}]
+   if { $state == -1 } {
+      cs mountGuide set source AG 
+   } elseif { $state == 1 } {
+      cs mountGuide set source SCS 
+   } 
+   set p1 [$itk_component(mtWeight) get]
+   cs mountGuide set p1weight $p1
+   cs mountGuide set p2weight [expr {1 - $p1}]
+
+   if [catch {cs mountGuide post} msg] {
+      tk_messageBox -icon error -parent $itk_interior -message \
+            "Error posting mountGuide command: TCS reports \
+            \"$msg\""
+   }
+
+   recolour mt_sw $state
+}
