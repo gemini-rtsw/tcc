@@ -61,8 +61,11 @@ clean:
 	-rm tccext.so
 
 install: All
+	mkdir -p ../tcclib/solaris
 	cp tccext.so ../tcclib/solaris
+	mkdir -p ../tsdlib/solaris
 	cp tsdext.so ../tsdlib/solaris
+	mkdir -p ../lib/solaris
 	cp tcctime.so ../lib/solaris
 	cp slaext.so ../lib/solaris
 	cp bitmaps.so ../lib/solaris
