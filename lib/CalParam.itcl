@@ -1,0 +1,32 @@
+#+
+# CalParam
+#
+# A calibration parameter object supplies an application with calibration
+# parameters that may be revised over time. The values are read from a file
+# when the object is created.
+#
+# D Terrett 3 October 2000
+#
+# Copyright CCLRC
+#+
+
+itcl::class CalParam {
+   constructor {args} {}
+   public variable pwfs1_center_x
+   public variable pwfs1_center_y
+   public variable pwfs1_center_z
+   public variable pwfs1_hotspot_x
+   public variable pwfs1_hotspot_y
+   public variable pwfs2_center_x
+   public variable pwfs2_center_y
+   public variable pwfs2_center_z
+   public variable pwfs2_hotspot_x
+   public variable pwfs2_hotspot_y
+}
+
+itcl::body CalParam::constructor {args} {
+   global ROOT
+   source $ROOT/calparams.dat
+
+   eval configure $args
+}
