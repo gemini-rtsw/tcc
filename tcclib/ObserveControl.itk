@@ -30,7 +30,9 @@ itcl::class ObserveControl {
       method wfsql {}
       method wfsstop {}
       method selwfs {}
-      variable wfs Pwfs1   
+      method altairfollow {}
+      method altairpark {}
+      variable wfs Pwfs1
       variable Pwfs1Dark
       variable Pwfs2Dark
       variable OiwfsDark
@@ -155,10 +157,11 @@ itcl::body ObserveControl::constructor args {
    }
 
 # OIWFS follow and Park
-   itk_component add oiwfs {
-      frame $w.oiwfs
-   }
-   set w $itk_component(oiwfs)
+#   itk_component add oiwfs {
+#      frame $w.oiwfs
+#   }
+#   set w $itk_component(oiwfs)
+
    itk_component add oilab {
       label $w.lab -text OI   
    }
@@ -172,8 +175,26 @@ itcl::body ObserveControl::constructor args {
    itk_component add oipark {
       ApplyButton $w.oipark -text Park -command oiwfsPark
    }
-   pack $itk_component(oilab) $itk_component(oifollow) $itk_component(oipark) \
-      -side left -fill x -padx 3
+#   pack $itk_component(oilab) $itk_component(oifollow) $itk_component(oipark) \
+#      -side left -fill x -padx 3
+
+# AOWFS controls
+
+    itk_component add aowfslab {
+        label $w.alab -text AOWFS
+    }
+    itk_component add aofollow {
+        OnOffButton $w.altair -text Follow \
+                -onproc  [itcl::code $this altairfollow] \
+                -offcommand {aoFollow followState Off } \
+                -onvalue {ON On} \
+                -offvalue {OFF Off} \
+                -sadrecord {aossad followS}
+    }
+    itk_component add aopark {
+        LiveButton $w.aopark -command [itcl::code $this altairpark] -text Park
+    }
+    
 
 # PWFS1 controls.
    set w $itk_component(buttons)
@@ -190,9 +211,9 @@ itcl::body ObserveControl::constructor args {
 #   itk_component add p1flip {
 #      ApplyButton $w.p1flip -command pwfs1Flip -text "Flip arm"
 #   }
-   itk_component add p1unwrap {
-      ApplyButton $w.p1unwrap -command pwfs1Unwrap -text Unwrap
-   }
+#   itk_component add p1unwrap {
+#      ApplyButton $w.p1unwrap -command pwfs1Unwrap -text Unwrap
+#   }
 #   itk_component add p1center {
 #      ApplyButton $w.p1center -command pwfs1Move -text Center \
 #            -parcommand [itcl::code $this center 1]
@@ -215,9 +236,9 @@ itcl::body ObserveControl::constructor args {
 #   itk_component add p2flip {
 #      ApplyButton $w.p2flip -command pwfs2Flip -text "Flip arm"
 #   }
-   itk_component add p2unwrap {
-      ApplyButton $w.p2unwrap -command pwfs2Unwrap -text Unwrap
-   }
+#   itk_component add p2unwrap {
+#      ApplyButton $w.p2unwrap -command pwfs2Unwrap -text Unwrap
+#   }
    itk_component add p2park {
       ApplyButton $w.p2park -command pwfs2Park -text Park
    }
@@ -226,17 +247,14 @@ itcl::body ObserveControl::constructor args {
 #            -parcommand [itcl::code $this center 2]
 #   }
 
-   grid $itk_component(choplab) $itk_component(p1lab) \
-         $itk_component(p2lab) -sticky ew -padx 5
-   grid $itk_component(chop) $itk_component(p1follow) \
-         $itk_component(p2follow) -sticky ew -padx 5
-   grid $itk_component(beam) $itk_component(p1unwrap) \
-         $itk_component(p2unwrap) -sticky ew -padx 5
-   grid $itk_component(noda) $itk_component(p1park) \
-         $itk_component(p2park) -sticky ew -padx 5
-   grid $itk_component(nodb) $itk_component(oiwfs) -sticky ew -padx 5
+   grid $itk_component(choplab) $itk_component(p1lab) $itk_component(p2lab) -sticky ew -padx 5
+   grid $itk_component(chop) $itk_component(p1follow) $itk_component(p2follow) -sticky ew -padx 5
+    grid $itk_component(beam) $itk_component(p1park) $itk_component(p2park) -sticky ew -padx 5
+    grid $itk_component(noda) $itk_component(oilab) $itk_component(aowfslab) -sticky ew -padx 5
+    grid $itk_component(nodb) $itk_component(oifollow) $itk_component(aofollow) -sticky ew -padx 5
+    grid x $itk_component(oipark) $itk_component(aopark) -sticky ew -padx 5
    grid configure $itk_component(beam) -rowspan 2
-   grid configure $itk_component(oiwfs) -columnspan 2
+   #grid configure $itk_component(oiwfs) -columnspan 2
 
 # Create command senders.
    if { [catch {cs chop info}] } {
@@ -345,4 +363,30 @@ itcl::body ObserveControl::selwfs {} {
          } 
       }
    }
+}
+
+itcl::body ObserveControl::altairfollow {} {
+    cs aoFollow set followState On
+    cs aoEntShutter set state Open
+    cs aoExitShutter set state Open
+    logger command aoFollow
+    logger command aoEntShutter
+    logger command aoExitShutter
+    if { [catch {cs tcsApply post} msg] } {
+        tk_messageBox -icon error -parent $itk_interior -message \
+                "Error posting ALTAIR mechanism command: TCS reports \
+                \"$msg\""
+    }
+}
+
+itcl::body ObserveControl::altairpark {} {
+    cs aoFollow set followState Off
+    cs aoPark set dummy 1
+    logger command aoFollow
+    logger command aoPark
+    if { [catch {cs tcsApply post} msg] } {
+        tk_messageBox -icon error -parent $itk_interior -message \
+                "Error posting ALTAIR mechanism command: TCS reports \
+                \"$msg\""
+    }
 }
