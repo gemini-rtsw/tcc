@@ -30,8 +30,8 @@ proc createPanels {} {
          -title "Primary Mirror Control"
 #   PanelMgr m2sPanel -name .m2sPanel -class M2sPanel \
 #         -title "Secondary Mirror Control"
-#   PanelMgr agsPanel -name .agsPanel -class AgsPanel \
-#         -title "A & G Control"
+   PanelMgr agsPanel -name .agsPanel -class AgsPanel \
+         -title "A & G Control"
    PanelMgr aosPanel -name .aosPanel -class AosPanel \
          -title "Active Optics Control"
    PanelMgr previewPanel -name .previewPanel -class PreviewPanel \
