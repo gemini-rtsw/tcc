@@ -16,6 +16,7 @@
 *crsPanel*background:		PeachPuff1
 *tcsPanel*background:		PeachPuff1
 *m1sPanel*background:		PeachPuff1
+*agsPanel*background:		PeachPuff1
 
 # Handset pages
 *handsetPanel*page1*background:	SkyBlue
