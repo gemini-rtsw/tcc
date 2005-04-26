@@ -50,7 +50,6 @@ itcl::body WavelengthControl::constructor args {
       iwidgets::optionmenu $w.central -labeltext "M2 Central hole cover"
    }
    $itk_component(central) insert end "" open closed
-   $itk_component(central) select open
    pack $itk_component(central) -anchor e -padx 3 -pady 3
 
 # Deployable baffle
@@ -89,7 +88,11 @@ itcl::body WavelengthControl::reset {} {
 
 itcl::body WavelengthControl::load {name} {
    set wavelen [$name cget -wavel]
-   set set_baffles [$name cget -set_baffles]
+   if {[string match "*Acq Cam*" $name]} {
+       set set_baffles 0
+   } else {
+       set set_baffles [$name cget -set_baffles]
+   }
 #puts "WavelengthControl Load, name: $name, wavelen: $wavelen, prevwl: $prevwl set_baffles: $set_baffles"
    if {($wavelen != $prevwl) && $set_baffles } {
       if {$wavelen < 1} {

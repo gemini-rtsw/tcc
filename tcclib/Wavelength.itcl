@@ -46,11 +46,20 @@ itcl::class Wavelength {
 }
 
 itcl::body Wavelength::apply {comp} {
-#puts "Wavelength apply comp: $comp, wavel: $wavel centralBaffle: $centralBaffle deployableBaffle: $deployableBaffle"
+   set name ${::Config(tcs.field.wavelength,value)}
+   if {[string match "*Acq Cam*" $name]} {
+       set set_baffles 0
+   } elseif {[string length $name] > 0} {
+       set name "::WavelengthNames::$name"
+       set set_baffles [$name cget -set_baffles]
+   } else {
+       set set_baffles 0
+   }
+#   puts "Wavelength apply comp: $comp, wavel: $wavel centralBaffle: $centralBaffle deployableBaffle: $deployableBaffle set_baffles: $set_baffles"
    switch $comp {
       tcs.field.wavelength {
 	  # the following sets up the baffle values when a configuration is loaded and applied without the Wavelength panel being open
-	  if {$centralBaffle == ""  || $deployableBaffle == ""} {
+	  if {$centralBaffle == ""  || $deployableBaffle == "" && $set_baffles } {
 	     if {$wavel < 1} {
 		 set centralBaffle closed
 		 set deployableBaffle visible
