@@ -55,37 +55,42 @@ itcl::body Wavelength::apply {comp} {
    } else {
        set set_baffles 0
    }
-#   puts "Wavelength apply comp: $comp, wavel: $wavel centralBaffle: $centralBaffle deployableBaffle: $deployableBaffle set_baffles: $set_baffles"
+#  puts "Wavelength apply comp: $comp, wavel: $wavel centralBaffle: $centralBaffle deployableBaffle: $deployableBaffle set_baffles: $set_baffles"
    switch $comp {
       tcs.field.wavelength {
-	  # the following sets up the baffle values when a configuration is loaded and applied without the Wavelength panel being open
-	  if {$centralBaffle == ""  || $deployableBaffle == "" && $set_baffles } {
-	     if {$wavel < 1} {
-		 set centralBaffle closed
-		 set deployableBaffle visible
-	     } elseif {$wavel > 3} {
-		 set centralBaffle open
-		 set deployableBaffle "thermal IR"
-	     } else {
-		 set centralBaffle open
-		 set deployableBaffle "near IR"
-	     }
-	 }
+#  the following sets up the baffle values when a configuration is loaded and applied without the Wavelength panel being open
+#  removed this ... decided to not set the baffle at all unless its explicitly configured.
+# 	  if {$centralBaffle == ""  || $deployableBaffle == "" && $set_baffles } {
+# 	     if {$wavel < 1} {
+# 		 set centralBaffle closed
+# 		 set deployableBaffle visible
+# 	     } elseif {$wavel > 3} {
+# 		 set centralBaffle open
+# 		 set deployableBaffle "thermal IR"
+# 	     } else {
+# 		 set centralBaffle open
+# 		 set deployableBaffle "near IR"
+# 	     }
+# 	 }
          cs wavelSourceA set wavel $wavel
          logger command wavelSourceA
-	 switch $centralBaffle {
-            closed {cs m2Baffle set centralBaffle Closed}
-            open {cs m2Baffle set centralBaffle Open}
-         }
-         switch $deployableBaffle {
-            "thermal IR" {cs m2Baffle set deployBaffle Retracted}
-            "near IR" {cs m2Baffle set deployBaffle [list "Near IR"]}
-            visible {cs m2Baffle set deployBaffle Visible}
-            extended {cs m2Baffle set deployBaffle Extended}
-         }
+         if { ! [string is space $centralBaffle] } {
+	     switch $centralBaffle {
+		 closed {cs m2Baffle set centralBaffle Closed}
+		 open {cs m2Baffle set centralBaffle Open}
+	     }
+	 }
+         if { ! [string is space $deployableBaffle] } {
+	     switch $deployableBaffle {
+		 "thermal IR" {cs m2Baffle set deployBaffle Retracted}
+		 "near IR" {cs m2Baffle set deployBaffle [list "Near IR"]}
+		 visible {cs m2Baffle set deployBaffle Visible}
+		 extended {cs m2Baffle set deployBaffle Extended}
+	     }
+	 }
          if { !( [string is space $centralBaffle] && \
-               [string is space $deployableBaffle] ) } {
-            logger command m2Baffle
+		     [string is space $deployableBaffle] ) } {
+	     logger command m2Baffle
          }
       }
       tcs.field.guide.oiwfswavelength {
