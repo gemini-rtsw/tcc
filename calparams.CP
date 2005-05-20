@@ -36,3 +36,6 @@ set pwfs2_center_z  0.0
 set acqcam_x 479
 set acqcam_y 513
 
+# The wavelength cutoffs for automatic baffle configuration
+set baffle_visible 1.05
+set baffle_nearir 1.05
