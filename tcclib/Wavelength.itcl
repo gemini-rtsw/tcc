@@ -55,23 +55,23 @@ itcl::body Wavelength::apply {comp} {
    } else {
        set set_baffles 0
    }
-#  puts "Wavelength apply comp: $comp, wavel: $wavel centralBaffle: $centralBaffle deployableBaffle: $deployableBaffle set_baffles: $set_baffles"
+#puts "Wavelength apply comp: $comp, wavel: $wavel centralBaffle: $centralBaffle deployableBaffle: $deployableBaffle set_baffles: $set_baffles"
    switch $comp {
       tcs.field.wavelength {
 #  the following sets up the baffle values when a configuration is loaded and applied without the Wavelength panel being open
 #  removed this ... decided to not set the baffle at all unless its explicitly configured.
-#  	 if {$centralBaffle == ""  || $deployableBaffle == "" && $set_baffles } {
-# 	     if {$wavelen <= [calparam cget -baffle_visible]} {
-# 		 set centralBaffle closed
-# 		 set deployableBaffle visible
-# 	     } elseif {$wavelen < [calparam cget -baffle_nearir]} {
-# 		 set centralBaffle open
-# 		 set deployableBaffle "near IR"
-# 	     } else {
-# 		 set centralBaffle open
-# 		 set deployableBaffle "thermal IR"
-# 	     }
-# 	 }
+  	 if {($centralBaffle == ""  || $deployableBaffle == "") && $set_baffles } {
+ 	     if {$wavel <= [calparam cget -baffle_visible]} {
+ 		 set centralBaffle closed
+ 		 set deployableBaffle visible
+ 	     } elseif {$wavel < [calparam cget -baffle_nearir]} {
+ 		 set centralBaffle open
+ 		 set deployableBaffle "near IR"
+ 	     } else {
+ 		 set centralBaffle open
+ 		 set deployableBaffle "thermal IR"
+ 	     }
+ 	 }
 	 cs wavelSourceA set wavel $wavel
          logger command wavelSourceA
          if { ! [string is space $centralBaffle] } {
