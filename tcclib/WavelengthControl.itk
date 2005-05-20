@@ -93,23 +93,23 @@ itcl::body WavelengthControl::load {name} {
    } else {
        set set_baffles [$name cget -set_baffles]
    }
-#puts "WavelengthControl Load, name: $name, wavelen: $wavelen, prevwl: $prevwl set_baffles: $set_baffles"
+# puts "WavelengthControl Load, name: $name, wavelen: $wavelen, prevwl: $prevwl set_baffles: $set_baffles"
    if {($wavelen != $prevwl) && $set_baffles } {
-      if {$wavelen < 1} {
+      if {$wavelen <= [calparam cget -baffle_visible]} {
 	$itk_component(central) select closed
 	$itk_component(deploy) select visible
-      } elseif {$wavelen > 3} {
-	$itk_component(central) select open
-	$itk_component(deploy) select "thermal IR"
-      } else {
+      } elseif {$wavelen < [calparam cget -baffle_nearir]} {
 	$itk_component(central) select open
 	$itk_component(deploy) select "near IR"
+      } else {
+	$itk_component(central) select open
+	$itk_component(deploy) select "thermal IR"
       }
       set prevwl $wavelen
    } else {
       $itk_component(central) select $prevcentral
       $itk_component(deploy) select $prevdeploy
    }
-#	[$name cget -centralBaffle][$name cget -deployableBaffle]
+# puts "centralBaffle: [$name cget -centralBaffle] deployableBaffle: [$name cget -deployableBaffle]"
    $itk_component(wavel) insert end $wavelen
 }
