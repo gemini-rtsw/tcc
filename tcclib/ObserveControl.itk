@@ -380,6 +380,12 @@ itcl::body ObserveControl::altairfollow {} {
 }
 
 itcl::body ObserveControl::altairpark {} {
+
+    # Turn on Air Purge
+    set path "/gemini/altair/altair/bin/solaris/"
+    eval exec $path/aoRpc3 ON
+    logger log "Turned on Altair Air Purge"
+
     cs aoFollow set followState Off
     cs aoPark set dummy 1
     logger command aoFollow

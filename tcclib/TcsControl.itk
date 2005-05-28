@@ -30,6 +30,7 @@ itcl::class TcsControl {
       method agmech {cmd}
       method mountdatum {par}
       method altairfollow {}
+      method altairdatum {}
       method altairpark {}
       variable dome
       variable shutter
@@ -190,8 +191,11 @@ itcl::body TcsControl::constructor args {
       ApplyButton $w.oidatum -command oiwfsDatum -text Datum
    }
    itk_component add aodatum {
-      ApplyButton $w.aodatum -command aoDatum -text Unpark
+      LiveButton $w.aodatum -command [itcl::code $this altairdatum] -text Unpark
    }
+#   itk_component add aodatum {
+#      ApplyButton $w.aodatum -command aoDatum -text Unpark
+#   }
 
 # Commands for parking mechanisms.
    itk_component add mcspark {
@@ -614,7 +618,28 @@ itcl::body TcsControl::altairfollow {} {
    }
 }
 
+itcl::body TcsControl::altairdatum {} {
+
+   # Turn off Air Purge
+   set path "/gemini/altair/altair/bin/solaris/"
+   eval exec $path/aoRpc3 AP OFF
+   logger log "Turned off Altair Air Purge"
+
+   logger command aoDatum
+   if { [catch {cs tcsApply post} msg] } {
+      tk_messageBox -icon error -parent $itk_interior -message \
+            "Error posting ALTAIR mechanism command: TCS reports \
+            \"$msg\""
+   }
+}
+
 itcl::body TcsControl::altairpark {} {
+
+   # Turn on Air Purge
+   set path "/gemini/altair/altair/bin/solaris/"
+   eval exec $path/aoRpc3 AP ON
+   logger log "Turned on Altair Air Purge"
+
    cs aoFollow set followState Off
    cs aoPark set dummy 1
    logger command aoFollow
@@ -622,6 +647,6 @@ itcl::body TcsControl::altairpark {} {
    if { [catch {cs tcsApply post} msg] } {
       tk_messageBox -icon error -parent $itk_interior -message \
             "Error posting ALTAIR mechanism command: TCS reports \
-            \"$msg\""
+           \"$msg\""
    }
 }
