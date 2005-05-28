@@ -171,6 +171,13 @@ itcl::body Field::apply {comp} {
       ${targetns}::$altairtarget apply $comp.altairtarget
    }
    if { ! [string equal $guide ""] } {
+       if {[string equal $guide "P2 only"]} {
+	   set inst $::Config(tcs.instrument,value)
+	   if {[string match "*MICHELLE*" $inst]} {
+	       set guide "P2 MIR"
+	       set ::Config(tcs.field.guide,value) "P2 MIR"
+	   }
+       }
       ::GuideNames::$guide apply $comp.guide
        if {[string equal $guide "OIWFS only"]} {
 	   set inst $::Config(tcs.instrument,value)
@@ -180,6 +187,10 @@ itcl::body Field::apply {comp} {
 	       cs oiwfsSelect set oiwfs GMOS
 	       logger command oiwfsSelect
 	   } elseif {[string match "*NIFS*" $inst]} {
+	       #puts "found NIRS"
+	       cs oiwfsSelect set oiwfs NIRS
+	       logger command oiwfsSelect
+	   } elseif {[string match "*GNIRS*" $inst]} {
 	       #puts "found NIRS"
 	       cs oiwfsSelect set oiwfs NIRS
 	       logger command oiwfsSelect
@@ -197,6 +208,7 @@ itcl::body Field::apply {comp} {
 	   cs oiwfsSelect set oiwfs None
 	   logger command oiwfsSelect
        }
+
    }
    if { ! [string equal $rotator ""] } {
       ::RotatorNames::$rotator apply $comp.rotator
