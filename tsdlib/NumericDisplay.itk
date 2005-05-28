@@ -229,15 +229,24 @@ itcl::body NumericDisplay::constructor args {
       StatusField $w.seeoi -labeltext OI -labelpos w -entryborder 3 \
             -entryrelief groove -width 5
    }
+   itk_component add seeao {
+      StatusField $w.seeao -labeltext AO -labelpos w -entryborder 3 \
+            -entryrelief groove -width 5
+   }
    [$itk_component(seeoi) component label] configure -width 2 -anchor e
    pack $itk_component(seelab)
-   pack $itk_component(seep2) $itk_component(seeoi) -side left
+   pack $itk_component(seep2) $itk_component(seeoi) $itk_component(seeao) -side left
+#   grid $itk_component(seelab) - -sticky news
+#   grid $itk_component(seep2) $itk_component(seeoi) -sticky news
+#   grid $itk_component(seeao) - -sticky ns
+
+
    set w $itk_component(objtime)
 
    grid $itk_component(choplab) $itk_component(chop1) $itk_component(chop2) \
          $itk_component(ipa) $itk_component(seeing) - -sticky e -pady 2
    grid configure $itk_component(ipa) -sticky w
-   grid configure $itk_component(seeing) -padx {10 0}
+   grid configure $itk_component(seeing) -padx {2 0}
 
 # Instrument origin and IAA. and  P and Q
 
@@ -686,7 +695,12 @@ itcl::body NumericDisplay::update {} {
    } else {
       $itk_component(seeoi) configure -text $seeing -status error
    }
-   
+   set seeing [sa agssad get aoseeing]
+   if { [string is double -strict $seeing] } {
+      $itk_component(seeao) configure -text [format %.2f $seeing] -status ok
+   } else {
+      $itk_component(seeao) configure -text $seeing -status error
+   }   
 }
 
 itcl::body NumericDisplay::inPosition {rec value} {
