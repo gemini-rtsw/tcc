@@ -74,6 +74,9 @@ itcl::body GuideAlarm::constructor {args} {
         set guideCounts($wfs) [sa guidects get $wfs]
         if {$wfs != "gaos"} {
             set guideCentroid($wfs) [sa guidects get ${wfs}cent]
+	    if {![string is boolean $guideCentroid($wfs)]} {
+		set guideCentroid($wfs) 0
+	    }
         } else  {
             set guideCentroid($wfs) 0
         }
@@ -101,9 +104,11 @@ itcl::body GuideAlarm::constructor {args} {
         itk_component add ${wfs}limlab { label $w.limlab -text "Limit:" }
         itk_component add ${wfs}liment { entry $w.liment -textvariable ${wfs}CountLimit -width 5 }
         itk_component add ${wfs}centroid { label $w.cent -text "Subaperture OK"}
+
         if {$guideCentroid($wfs)} {
             $itk_component(${wfs}centroid) configure -text "Subaperture BAD"
         }
+
         bind $itk_component(${wfs}liment) <KeyPress-Return> "$this configure -${wfs}Limit \[set ${wfs}CountLimit\] ; $this alarmCheck $wfs"
         
         grid $itk_component(${wfs}title) $itk_component(${wfs}silent) -sticky news
@@ -120,7 +125,7 @@ itcl::body GuideAlarm::constructor {args} {
     sa guidects proc pwfs1cent "$this updateProc2"
     sa guidects proc pwfs2cent "$this updateProc2"
     sa guidects proc oiwfscent "$this updateProc2"
-    
+
     # start the scan task ...
     $this scanLoop
     
