@@ -12,6 +12,7 @@
 itcl::class SciTargetControl {
    inherit TargetControl
    constructor args {}
+   itk_option define -keepApply keepApply KeepApply 0
    public {
       method load {name}
       method reset {}
@@ -29,6 +30,8 @@ itk::usual SciTargetControl {
 }
 
 itcl::body SciTargetControl::constructor args {
+
+   eval itk_initialize $args
 
 # Set colour of highlight frame.
    $itk_component(highlight) configure -background black
@@ -95,12 +98,13 @@ itcl::body SciTargetControl::constructor args {
 
 # Unpack Apply button and checkbutton so that new science targets have to be
 # applied from the main configuration window.
-   pack forget $itk_component(aframe)
+
+   if {!$itk_option(-keepApply)} {
+       pack forget $itk_component(aframe)
+   }
 
 # Define object description.
    set description "science target"
-
-   eval itk_initialize $args
 }
 
 itcl::body SciTargetControl::reset {} {
