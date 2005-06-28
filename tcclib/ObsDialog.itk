@@ -127,6 +127,14 @@ itcl::body ObsDialog::apply {} {
 # Delete the TcsConfigFile object.
          itcl::delete object $config
       }
+      set inst $::Config(tcs.instrument,value)
+      set name "$::Config(tcs.field,namespace)\:\:$::Config(tcs.field,value)"
+      set rotator [$name cget -rotator]
+      # puts "inst: $inst name: $name rotator: $rotator"
+      if {[string match "MICHELLE*SPEC" $inst]} {
+	  # puts "setting IPA to 0"
+	  $name configure -rotator "IPA0"
+      }
    }
 }
 
