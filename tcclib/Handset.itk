@@ -29,8 +29,14 @@
 itcl::class Handset {
    inherit itk::Widget
    constructor args {}
+   common mon_inpos 0
+   common need_to_close_loop 0
    itk_option define -adjust adjust Adjust ""
    itk_option define -vt vt Vt sourceA
+   itk_option define -cloop cloop Cloop 0 {}
+   public {
+      method traceProc { name index op }
+   }
    private {
       method push {button}
       method rot {dir}
@@ -42,6 +48,7 @@ itcl::class Handset {
       variable cs ""
       variable angles
       variable labels
+      variable control_loop 0
    }
 }
 
@@ -115,6 +122,13 @@ itcl::body Handset::constructor {args} {
    initlabels
 
    set w $itk_interior
+
+# frame for loop control checkbutton
+
+   itk_component add loopframe {
+      frame $w.loopframe
+   }
+   pack $itk_component(loopframe)    
 
 # Step size widget for setting the step size.
    itk_component add stepsize {
@@ -258,6 +272,28 @@ itcl::body Handset::constructor {args} {
    relabel
 
    eval itk_initialize $args
+
+# checkbutton for opening loop
+   if {$itk_option(-cloop)} {
+       itk_component add loopControl {
+	   checkbutton $itk_component(loopframe).loopControl -variable [itcl::scope control_loop] \
+	       -onvalue 1 -offvalue 0 \
+	       -text "Open guide loop while offsetting?"
+       }
+       pack $itk_component(loopControl) -pady 5
+       
+       # Monior TCS inPosition Flag
+       if {! $mon_inpos} {
+	   set mon_inpos 1
+	   global inPosition
+	   set varName "inPosition\(value\)"
+	   #puts " varName  $varName this:[itcl::code $this] traceProc"
+	   trace variable $varName w "[itcl::code $this] traceProc"
+	   
+	   set $varName [sa tcssad get inPosition]
+	   sa tcssad link inPosition inPosition
+       }
+   }
 }
 
 itcl::configbody Handset::adjust {
@@ -312,6 +348,13 @@ itcl::configbody Handset::adjust {
 }
 
 itcl::body Handset::push {dir} {
+
+# Open loop if neccesary
+    if {$control_loop && [AO cget -enabled]} {
+	puts "opening loop"
+	AO disable
+	set need_to_close_loop 1
+    }
 
 # Called whenever one of the handset buttons is pressed.
    if { ! [string equal $cs ""] } {
@@ -497,4 +540,18 @@ itcl::body Handset::initlabels {} {
          }
       }
    }
+}
+
+itcl::body Handset::traceProc {name index op} {
+
+   set gVar "$name\($index\)"
+   #puts "gVar: $gVar"
+   global $name
+   #puts "traceProc called with name: $name index: $index op: $op gVar: $gVar [set $gVar]"
+   if { $need_to_close_loop && [string match TRUE [set $gVar]]} {
+       puts "closing loop"
+       AO enable
+       set need_to_close_loop 0
+   }
+
 }
