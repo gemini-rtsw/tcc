@@ -29,6 +29,7 @@
 itcl::class Handset {
    inherit itk::Widget
    constructor args {}
+   destructor {}
    common mon_inpos 0
    common need_to_close_loop 0
    itk_option define -adjust adjust Adjust ""
@@ -36,6 +37,7 @@ itcl::class Handset {
    itk_option define -cloop cloop Cloop 0 {}
    public {
       method traceProc { name index op }
+      method timeout {}
    }
    private {
       method push {button}
@@ -49,6 +51,7 @@ itcl::class Handset {
       variable angles
       variable labels
       variable control_loop 0
+      variable tid 0
    }
 }
 
@@ -296,6 +299,17 @@ itcl::body Handset::constructor {args} {
    }
 }
 
+
+itcl::body Handset::destructor {} {
+    global inPosition
+
+    after cancel $tid
+    if {$mon_inpos} {
+	sa tcssad unlink inPosition inPosition
+	trace remove variable inPosition(value) write "[itcl::code $this] traceProc"
+    }
+}
+
 itcl::configbody Handset::adjust {
 
 # Create the command sender if necessary.
@@ -338,7 +352,7 @@ itcl::configbody Handset::adjust {
       }
       instr {
          $itk_component(title1) configure -foreground PeachPuff3 \
-               -text "Does not adjust telescope pointing"
+	     -text "Does not adjust telescope pointing"
          $itk_component(title2) configure -foreground PeachPuff3 \
                -text "Does not adjust target position"
          $itk_component(title3) configure -foreground red \
@@ -354,6 +368,8 @@ itcl::body Handset::push {dir} {
 	puts "opening loop"
 	AO disable
 	set need_to_close_loop 1
+	# start timeout process
+	set tid [after 3000 "$this timeout"]
     }
 
 # Called whenever one of the handset buttons is pressed.
@@ -548,10 +564,25 @@ itcl::body Handset::traceProc {name index op} {
    #puts "gVar: $gVar"
    global $name
    #puts "traceProc called with name: $name index: $index op: $op gVar: $gVar [set $gVar]"
-   if { $need_to_close_loop && [string match TRUE [set $gVar]]} {
-       puts "closing loop"
+   if { $need_to_close_loop} {
+       if {[string match TRUE [set $gVar]]} {
+	   puts "closing loop"
+	   AO enable
+	   set need_to_close_loop 0
+       }  else {
+	   # the telescope is not in position, cancel the timeout
+	   after cancel $tid
+       }
+   }
+}
+
+itcl::body Handset::timeout {} {
+    puts "timeout callback"
+    # will get here if the telescope did not go out of position
+    # assume the move was too fast, close the loop
+   if { $need_to_close_loop } {
+       puts "closing loop in timeout"
        AO enable
        set need_to_close_loop 0
    }
-
 }
