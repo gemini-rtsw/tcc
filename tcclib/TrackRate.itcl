@@ -71,8 +71,38 @@ itcl::body TrackRate::apply {comp} {
 
 # Set all the parameters.
    cs $cs set t0 [list $t0]
-   cs $cs set dtheta1 [list $c1Rate]
-   cs $cs set dtheta2 [list $c2Rate]
+
+# Convert c1 (ra or az)
+    if {[string is double $c1Rate] && [string length $c1Rate] > 0} {
+       if {[string equal $cosys AzEl]} {
+	   set newc1Rate [expr $c1Rate / 3600.0 ]
+       } else {
+	   set pi 3.14159265
+	   set dec [$::Config(tcs.field.sciencetarget,namespace)::$::Config(tcs.field.sciencetarget,value) cget -c2]
+	   set parts [split $dec " :"]
+	   #puts "dec parts: $parts"
+	   set num_dec [expr [lindex $parts 0] + [lindex $parts 1] / 60.0 + [lindex $parts 2] / 3600.0]
+	   #puts "changing c1Rate: $c1Rate aph dec: $dec or $num_dec"
+	   set newc1Rate [expr $c1Rate / (3600.0 * 15.0 * cos($num_dec * $pi / 180.0 ))]
+	   #puts "to $newc1Rate sps"
+       }
+   } else {
+        set newc1Rate $c1Rate
+   }
+# Convert c2 (dec or el)
+   if {[string is double $c2Rate] && [string length $c2Rate] > 0} {
+       if { [string equal $cosys AzEl]} {
+	   set newc2Rate [expr $c2Rate / 3600.0]
+       } else {   
+	   #puts "changing c2Rate from: $c2Rate aph"
+	   set newc2Rate [expr $c2Rate / 3600.0]
+	   #puts "to $newc2Rate aps"
+       }
+   } else {  
+        set newc2Rate $c2Rate
+   }
+   cs $cs set dtheta1 [list $newc1Rate]
+   cs $cs set dtheta2 [list $newc2Rate]
    if { [string equal $cosys ""] } {
       CosysNames::FK5/J2000 apply $comp.cosys
    } else {
