@@ -86,40 +86,6 @@ itcl::body TcsConfig::apply {comp} {
       }
    }
 
-# Set OIWFS mode in the TCS
-   set guide $::Config(tcs.field.guide,value)
-   if { ! [string equal $guide ""] } {
-       if {[string equal $guide "OIWFS only"]} {
-	   set inst $::Config(tcs.instrument,value)
-	   #puts "OIWFS only, choosing oiwfs based on instrument: $inst"
-	   if {[string match "*GMOS*" $inst]} {
-	       #puts "found GMOS"
-	       cs oiwfsSelect set oiwfs GMOS
-	       logger command oiwfsSelect
-	   } elseif {[string match "*NIFS*" $inst]} {
-	       #puts "found NIRS"
-	       cs oiwfsSelect set oiwfs NIRS
-	       logger command oiwfsSelect
-	   } elseif {[string match "*GNIRS*" $inst]} {
-	       #puts "found NIRS"
-	       cs oiwfsSelect set oiwfs NIRS
-	       logger command oiwfsSelect
-	   } elseif {[string match "*NIRI*" $inst]} {
-	       #puts "found NIRI"
-	       cs oiwfsSelect set oiwfs NIRI
-	       logger command oiwfsSelect
-	   } else {
-	       #puts "no OIWFS"
-	       cs oiwfsSelect set oiwfs None
-	       logger command oiwfsSelect
-	   }
-       } else {
-	   #puts "no OIWFS"
-	   cs oiwfsSelect set oiwfs None
-	   logger command oiwfsSelect
-       }
-   }
-
 # Call the apply method of all the components that have a value. Note that
 # Altair comes after SlewOptions so that Slew options doesn't overwrite
 # the filter 1 setting.
