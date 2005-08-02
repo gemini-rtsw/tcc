@@ -36,6 +36,7 @@ itcl::class ObserveControl {
       variable Pwfs1Dark
       variable Pwfs2Dark
       variable OiwfsDark
+      variable set_instr_orig 1
    }
 }
 
@@ -118,6 +119,16 @@ itcl::body ObserveControl::constructor args {
 
 # Button and option menu for configuring the A & G fold mirrors.
    set w $itk_component(mirrors)
+
+# Checkbutton to enable/disable automatic Instr Origin configuration
+
+   itk_component add instrOrigin {
+       checkbutton $w.instorig -variable [itcl::scope set_instr_orig] \
+	   -onvalue 1 -offvalue 0 \
+	   -text "Auto Conf.\nInstrument Origin"
+   }
+   pack $itk_component(instrOrigin)
+
    itk_component add lpath {
       SelectButton $w.lpath -command [itcl::code $this setfold] \
             -orient vertical
@@ -130,8 +141,9 @@ itcl::body ObserveControl::constructor args {
    $itk_component(lpath) add "GCAL>Instr"
    $itk_component(lpath) add "Sky>AC/HR"
    $itk_component(lpath) add "Sky>AO>AC/HR"
-   $itk_component(lpath) add "AO cal>Instr"
-   $itk_component(lpath) add "AO cal>AC/HR"
+# AWE removed because these have no real use
+#   $itk_component(lpath) add "AO cal>Instr"
+#   $itk_component(lpath) add "AO cal>AC/HR"
    pack $itk_component(lpath)
 
 # Buttons for controlling chopping and M2 beam.
@@ -282,14 +294,55 @@ itcl::body ObserveControl::destructor {} {
 
 itcl::body ObserveControl::setfold {path} {
    switch $path {
-      "Sky>Instr" {iss configure -source SKY -sink INSTR -ao OUT}
-      "Sky>AO>Inst" {iss configure -source AO -sink INSTR -ao IN}
+      "Sky>Instr" {
+	  iss configure -source SKY -sink INSTR -ao OUT
+	  if {$set_instr_orig} {
+	      # set Pointing origin based on current instrument
+	      set inst [$::Config(tcs.instrument,namespace)::$::Config(tcs.instrument,value) cget -name]
+	      #puts "setting pointing origin based on Instrument: $inst"
+	      set pos [$::Config(tcs.pointorig,list) index $inst]
+	      #puts "at pos: $pos in PointOrig list"
+	      if {$pos > -1} {
+		  # have a valid Pointing Origin
+		  set ::Config(tcs.pointorig,value) $inst
+		  # apply
+		  $::Config(tcs.pointorig,namespace)::$::Config(tcs.pointorig,value) apply tcs.pointorig
+	      }
+	  }
+      }
+      "Sky>AO>Inst" {
+	  iss configure -source AO -sink INSTR -ao IN
+	  if {$set_instr_orig} {
+	      # set pointing origin to Rotator axis
+	      set ::Config(tcs.pointorig,value) "Rotator axis"
+	      # apply
+	      $::Config(tcs.pointorig,namespace)::$::Config(tcs.pointorig,value) apply tcs.pointorig
+	  }
+      }
       "GCAL>Instr" {iss configure -source CAL -sink INSTR}
-      "Sky>AC/HR" {iss configure -source SKY -sink HRWFS -ao OUT}
-      "Sky>AO>AC/HR" {iss configure -source AO -sink HRWFS -ao IN}
-      "AO cal>Instr" {iss configure -source AO -sink HRWFS}
-      "AO cal>AC/HR" {iss configure -source AO -sink HRWFS}
+      "Sky>AC/HR" {
+	  iss configure -source SKY -sink HRWFS -ao OUT
+	  if {$set_instr_orig} {
+	      # set pointing origin to Rotator axis
+	      set ::Config(tcs.pointorig,value) "Rotator axis"
+	      # apply
+	      $::Config(tcs.pointorig,namespace)::$::Config(tcs.pointorig,value) apply tcs.pointorig
+	  }
+      }
+      "Sky>AO>AC/HR" {
+	  iss configure -source AO -sink HRWFS -ao IN
+	  if {$set_instr_orig} {
+	      # set pointing origin to Rotator axis
+	      set ::Config(tcs.pointorig,value) "Rotator axis"
+	      # apply
+	      $::Config(tcs.pointorig,namespace)::$::Config(tcs.pointorig,value) apply tcs.pointorig
+	  }
+      }
    }
+# AWE removed because these have no real use
+#      "AO cal>Instr" {iss configure -source AO -sink HRWFS}
+#      "AO cal>AC/HR" {iss configure -source AO -sink HRWFS}
+
    iss update
    if { [catch {cs tcsApply post} msg] } {
       tk_messageBox -icon error -parent $itk_interior -message $msg
