@@ -127,7 +127,7 @@ proc createPanels {} {
          -class CosysPanel -title "Rotator Coordinate System" \
          -components tcs.field.rotator.cosys
    EditPanelMgr tcsPointOrigPanel -name .tcsPointOrigPanel \
-         -class PointOrigPanel -title "Pointing Origin" \
+         -class PointOrigPanel -title "Instrument Origin" \
          -components tcs.pointorig 
    EditPanelMgr tcsChopPanel -name .tcsChopPanel \
          -class ChopPanel -title "Chop Configuration" \
