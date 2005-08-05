@@ -20,6 +20,7 @@ itcl::class NumericDisplay {
    inherit itk::Widget
    constructor args {}
    destructor {}
+   itk_option define -eng eng Eng 0 {}
    public {
       method update {}
    }
@@ -171,7 +172,7 @@ itcl::body NumericDisplay::constructor args {
 
 # Track rates and Chilean local time.
    itk_component add ratelab {
-      label $w.ratelab -text "TRACK RATE (arcsec/s):"
+      label $w.ratelab -text "TRACK RATE (arcsec/hr):"
    }
    itk_component add rate1 {
       StatusField $w.rate1 -labelmargin 5 -width 11 -entryborder 3 \
@@ -253,14 +254,6 @@ itcl::body NumericDisplay::constructor args {
    itk_component add instrlab {
       label $w.instrlab -text "INSTRUMENT (arcsec):"
    }
-   itk_component add instrx {
-      StatusField $w.instrx -labelmargin 5 -width 6 -entryborder 3 \
-            -entryrelief groove -anchor e -labeltext X
-   }
-   itk_component add instry {
-      StatusField $w.instry -labelmargin 5 -width 6 -entryborder 3 \
-            -entryrelief groove -anchor e -labeltext Y
-   }
    itk_component add iaa {
       StatusField $w.iaa -width 6 -entryborder 3 \
             -entryrelief groove -anchor e -labeltext IAA:
@@ -279,7 +272,20 @@ itcl::body NumericDisplay::constructor args {
    grid $itk_component(instrlab) $itk_component(instrp) $itk_component(instrq) \
          $itk_component(iaa) -sticky e -pady 2
    grid configure $itk_component(iaa) -sticky w
-   grid x $itk_component(instrx) $itk_component(instry) -sticky e -pady 2
+
+   eval itk_initialize $args
+
+   if {$itk_option(-eng) == 1} {
+       itk_component add instrx {
+	   StatusField $w.instrx -labelmargin 5 -width 6 -entryborder 3 \
+	       -entryrelief groove -anchor e -labeltext X
+       }
+       itk_component add instry {
+	   StatusField $w.instry -labelmargin 5 -width 6 -entryborder 3 \
+	       -entryrelief groove -anchor e -labeltext Y
+       }
+       grid x $itk_component(instrx) $itk_component(instry) -sticky e -pady 2
+   }
 
 # Now that the grid is complete make adjustments to the row and column
 # spans.
@@ -456,7 +462,8 @@ itcl::body NumericDisplay::constructor args {
    newobject "" ""
    newtarget "" ""
 
-   eval itk_initialize $args
+#   eval itk_initialize $args
+
 }
 
 itcl::body NumericDisplay::destructor {} {
@@ -598,9 +605,10 @@ itcl::body NumericDisplay::update {} {
    $itk_component(off2) configure -text \
          [format "%10.2f" [expr {[lindex $target 3] * 206264.80624710}] ]
    set rate1 [expr { [sa tcssad get sourceADiffRA value] * \
-         cos( [lindex $target 1] ) * 15.0}]
+         cos( [lindex $target 1] ) * 15.0 *3600}]
+   set rate2 [expr { [sa tcssad get sourceADiffDec value] * 3600}]
    $itk_component(rate1) configure -text [format %.6f $rate1]
-   $itk_component(rate2) configure -text [sa tcssad get sourceADiffDec value]
+   $itk_component(rate2) configure -text [format %.6f $rate2]
 
 # Chop throw.
    set throw1 [expr {([lindex $targetb 0] + [lindex $targetb 2] - \
@@ -615,10 +623,12 @@ itcl::body NumericDisplay::update {} {
    $itk_component(chop2) configure -text [format "%10.2f" $throw2]
 
    set xy [ast instrument A]
-   $itk_component(instrx) configure \
-         -text [format %.2f [expr {[lindex $xy 0] / 0.62056151}]]
-   $itk_component(instry) configure \
-         -text [format %.2f [expr {[lindex $xy 1] / 0.62056151}]]
+   if {$itk_option(-eng)} {
+       $itk_component(instrx) configure \
+	   -text [format %.2f [expr {[lindex $xy 0] / 0.62056151}]]
+       $itk_component(instry) configure \
+	   -text [format %.2f [expr {[lindex $xy 1] / 0.62056151}]]
+   }
 
 # Calculate P and Q
    set instx [expr {[lindex $xy 0] / 0.62056151}]
