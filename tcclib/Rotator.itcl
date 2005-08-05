@@ -42,6 +42,14 @@ itcl::class Rotator {
 }
 
 itcl::body Rotator::apply {comp} {
+   if { [string equal $cosys fixed] } {
+      cs rotMove set rma $ipa
+      if { [catch {cs rotMove post} msg] } {
+	  tk_messageBox -icon error -parent $itk_interior -message \
+	      "Error posting CR move command: TCS reports \
+            \"$msg\""
+      }
+   }
    cs rotator set ipa [list $ipa]
    if { [string equal $cosys ""] } {
       cs rotator set system FK5
