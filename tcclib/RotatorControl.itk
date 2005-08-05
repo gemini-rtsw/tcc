@@ -39,6 +39,11 @@ itk::usual RotatorControl {
 
 itcl::body RotatorControl::constructor args {
 
+# Create the sender if it doesn't already exist.
+   if { [catch {cs rotMove info}] } {
+      epics cs rotMove
+   }
+
 # Frame for angle.
    itk_component add angle {
       frame $itk_interior.angle -bd 2 -relief ridge
@@ -112,7 +117,10 @@ itcl::body RotatorControl::load {name} {
 # controls.
    $itk_component(ipa) insert end [$name cget -ipa]
    set cosys [$name cget -cosys]
-   if { [string equal $cosys AzEl] } {
+   if { [string equal $cosys fixed] } {
+      set refdir vertical
+      set ::Config($itk_option(-component).cosys,value) $cosys
+   } elseif { [string equal $cosys AzEl] } {
       set refdir vertical
       set ::Config($itk_option(-component).cosys,value) ""
    } else {
@@ -127,8 +135,12 @@ itcl::body RotatorControl::load {name} {
 }
 
 itcl::body RotatorControl::save {name} {
+puts " RotatorControl::save name: $name"
    $name configure -ipa [$itk_component(ipa) get]
-   if { [string equal $refdir north] } {
+    if { [string equal $refdir north] } {
+      $name configure -cosys [$itk_component(cosys) get]
+   } elseif { [string equal [$name cget -cosys] fixed] } {
+      set refdir vertical
       $name configure -cosys [$itk_component(cosys) get]
    } else {
       $name configure -cosys AzEl
@@ -136,22 +148,22 @@ itcl::body RotatorControl::save {name} {
 }
 
 itcl::body RotatorControl::setdir {} {
-   if { [string equal $refdir vertical] } {
+   if { [string equal $refdir vertical] && ![string equal [$itk_component(cosys) get] fixed]} {
       set ::Config($itk_option(-component).cosys,value) AzEl
-   } else {
-      if { [string equal [$itk_component(cosys) get] AzEl] } {
-         set ::Config($itk_option(-component).cosys,value) ""
-      }
+   } elseif { [string equal [$itk_component(cosys) get] AzEl] } {
+      set ::Config($itk_option(-component).cosys,value) ""
    }
 }
 
 itcl::body RotatorControl::checkcosys {} {
    set cosys [$itk_component(cosys) get]
-   if { ![string equal $cosys ""] } {
-      if { [CosysNames::$cosys cget -isazel] } {
-         set refdir vertical
-      } else {
-         set refdir north
-      }
+   if { [string equal $cosys fixed] } {
+       set refdir vertical
+   } elseif { ![string equal $cosys ""] } {
+       if { [CosysNames::$cosys cget -isazel] } {
+	   set refdir vertical
+       } else {
+	   set refdir north
+       }
    }
 }
