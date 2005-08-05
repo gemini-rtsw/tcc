@@ -307,7 +307,12 @@ itcl::body ObserveControl::setfold {path} {
 		  set ::Config(tcs.pointorig,value) $inst
 		  # apply
 		  $::Config(tcs.pointorig,namespace)::$::Config(tcs.pointorig,value) apply tcs.pointorig
-	      }
+	      } else {
+		  # set pointing origin to Rotator axis
+		  set ::Config(tcs.pointorig,value) "Rotator axis"
+		  # apply
+		  $::Config(tcs.pointorig,namespace)::$::Config(tcs.pointorig,value) apply tcs.pointorig
+	      }   
 	  }
       }
       "Sky>AO>Inst" {
