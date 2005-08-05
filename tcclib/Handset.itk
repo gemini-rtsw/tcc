@@ -50,8 +50,7 @@ itcl::class Handset {
       variable cs ""
       variable angles
       variable labels
-      variable control_loop 0
-      variable tid 0
+      variable control_loop 1
    }
 }
 
@@ -301,7 +300,7 @@ itcl::body Handset::constructor {args} {
 
 
 itcl::body Handset::destructor {} {
-    global inPosition
+    global inPosition tid
 
     after cancel $tid
     if {$mon_inpos} {
@@ -362,14 +361,15 @@ itcl::configbody Handset::adjust {
 }
 
 itcl::body Handset::push {dir} {
-
+    global tid
 # Open loop if neccesary
     if {$control_loop && [AO cget -enabled]} {
-	puts "opening loop"
+	#puts "opening loop"
 	AO disable
 	set need_to_close_loop 1
 	# start timeout process
 	set tid [after 3000 "$this timeout"]
+	#puts "tid: $tid"
     }
 
 # Called whenever one of the handset buttons is pressed.
@@ -562,26 +562,28 @@ itcl::body Handset::traceProc {name index op} {
 
    set gVar "$name\($index\)"
    #puts "gVar: $gVar"
-   global $name
+   global $name tid
    #puts "traceProc called with name: $name index: $index op: $op gVar: $gVar [set $gVar]"
    if { $need_to_close_loop} {
        if {[string match TRUE [set $gVar]]} {
-	   puts "closing loop"
+	   #puts "closing loop in 2 seconds"
+	   #puts "closing loop"
 	   AO enable
 	   set need_to_close_loop 0
        }  else {
 	   # the telescope is not in position, cancel the timeout
+	   #puts "not in position, cancelling timeout $tid"
 	   after cancel $tid
        }
    }
 }
 
 itcl::body Handset::timeout {} {
-    puts "timeout callback"
+    #puts "timeout callback"
     # will get here if the telescope did not go out of position
     # assume the move was too fast, close the loop
    if { $need_to_close_loop } {
-       puts "closing loop in timeout"
+       #puts "closing loop in timeout"
        AO enable
        set need_to_close_loop 0
    }
