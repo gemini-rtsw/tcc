@@ -112,9 +112,14 @@ itcl::body ISS::update {} {
    }
 
 # Position AO fold mirror.
-   if { ! [string equal $ao ""] } {
-      posaofold
+# AWE will remove because new TCS will handle this
+   if { [string equal $ao ""] } {
+       set ao OUT
    }
+   posaofold
+#   if { ![string equal $ao ""] } {
+#       posaofold
+#   }
 
 # Position science fold.
    if { ! [string equal $scfold ""] } {
@@ -188,6 +193,7 @@ itcl::body ISS::posaofold {} {
             } else {
                cs aoFold set aofold value IN
                # turn off ag inpos override
+	       # AWE will remove because new TCS will handle this
 	       cs agInPosOver set override value 0
                logger command aoFold
             }
@@ -197,6 +203,7 @@ itcl::body ISS::posaofold {} {
          if { [sa agssad get aoName] != "park-pos." } {
             cs aoFoldPark set dummy value MARK
             # turn on ag inpos override
+	    # AWE will remove because new TCS will handle this
 	    cs agInPosOver set override value 1
             logger command aoFoldPark
          }
