@@ -17,6 +17,18 @@ proc tsdMain args {
 # connection.
    wm withdraw .
 
+# Parse command line args
+   #puts "args: $args"
+   set eng 0
+   foreach {arg val} [join $args] {
+       #puts "$arg is set to $val"
+       if {[string equal $arg "-eng"] && [string length $val] < 1} {
+	   set eng 1
+       } else {
+	   set eng $val
+       }
+   }
+
 # Create the epics service.
    service epics
 
@@ -49,7 +61,7 @@ proc tsdMain args {
    tcssad.UTC add updateDisplays
 
 # Pack the numeric and graphic displays.
-   pack [NumericDisplay .numericDisplay] -anchor w -fill x -expand y
+   pack [NumericDisplay .numericDisplay -eng $eng] -anchor w -fill x -expand y
    pack [GraphicDisplay .graphicDisplay] -anchor w -fill x -expand y
 
 # Set the icon.
