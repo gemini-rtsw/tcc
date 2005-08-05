@@ -28,6 +28,12 @@ itcl::class TcsConfigControl {
       variable options {
          -field -pointOrig -slewOptions -chop -altair -trackFrame -instrument
       }
+      variable fieldcomponents {
+         field.guide field.rotator field.wavelength field.sciencetarget field.pwfs1target field.pwfs2target field.oiwfstarget field.altairtarget
+      }
+      variable fieldoptions {
+         -guide -rotator -wavelength -sciencetarget -pwfs1target -pwfs2target -oiwfstarget -altairtarget
+      }
       variable view ""
    }
 }
@@ -207,6 +213,7 @@ itcl::body TcsConfigControl::apply {} {
 #-
 # Set OIWFS mode in the TCS
    set guide $::Config(tcs.field.guide,value)
+puts "TcsConfigControl::apply, guide: $guide"
    if { ! [string equal $guide ""] } {
        if {[string equal $guide "OIWFS only"]} {
 	   set inst $::Config(tcs.instrument,value)
@@ -214,27 +221,33 @@ itcl::body TcsConfigControl::apply {} {
 	   if {[string match "*GMOS*" $inst]} {
 	       puts "found GMOS"
 	       cs oiwfsSelect set oiwfs GMOS
+               cs oiwfsSelect set output WFS
 	       logger command oiwfsSelect
 	   } elseif {[string match "*NIFS*" $inst]} {
 	       puts "found NIRS"
 	       cs oiwfsSelect set oiwfs NIRS
+               cs oiwfsSelect set output WFS
 	       logger command oiwfsSelect
 	   } elseif {[string match "*GNIRS*" $inst]} {
 	       puts "found NIRS"
 	       cs oiwfsSelect set oiwfs NIRS
+               cs oiwfsSelect set output WFS
 	       logger command oiwfsSelect
 	   } elseif {[string match "*NIRI*" $inst]} {
 	       puts "found NIRI"
 	       cs oiwfsSelect set oiwfs NIRI
+               cs oiwfsSelect set output WFS
 	       logger command oiwfsSelect
 	   } else {
 	       puts "no OIWFS"
 	       cs oiwfsSelect set oiwfs None
+               cs oiwfsSelect set output WFS
 	       logger command oiwfsSelect
 	   }
        } else {
 	   puts "no OIWFS"
 	   cs oiwfsSelect set oiwfs None
+           cs oiwfsSelect set output WFS
 	   logger command oiwfsSelect
        }
    }
@@ -297,6 +310,13 @@ itcl::body TcsConfigControl::load {name} {
                      -source [namespace tail $name]
             }
          }
+      }
+      set name ::FieldNames::[$name cget -field]
+      foreach subcomponent $fieldcomponents suboption $fieldoptions {
+	  set comp [$name cget $suboption]
+	  if { ! [string equal $comp ""] } {
+	      set ::Config(tcs.[string tolower $subcomponent],value) $comp
+	  }
       }
    }
 }
