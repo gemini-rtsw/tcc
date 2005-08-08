@@ -50,3 +50,18 @@
 # Fonts for tsd displays.
 *numericDisplay.Font:		-*-*-bold-r-normal-sans-18-*-*-*-*-*-*-*
 *graphicDisplay.Font:		-*-*-bold-r-normal-sans-18-*-*-*-*-*-*-*
+
+# Disable AO related features
+*tcsConfigPanel*control*altair*state:   disabled
+*tcsPanel*control*altair*state:         disabled
+*tcsPanel*control*aodatum*state:        disabled
+*tcsPanel*control*aopark*state:         disabled
+*observePanel*control*altair*state:     disabled
+*observePanel*control*aopark*state:     disabled
+*observePanel*control*gaosframe*state:  disabled
+*observePanel*control*lpath*1*state:    disabled
+*observePanel*control*lpath*4*state:    disabled
+*observePanel*guideloop*m2ao*0*state:   disabled
+*observePanel*guideloop*m2ao*1*state:   disabled
+*observePanel*guideloop*m1src*3*state:  disabled
+*tcsFieldPanel*notebook*page5*state:    disabled
