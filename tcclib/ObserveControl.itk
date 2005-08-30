@@ -308,8 +308,8 @@ itcl::body ObserveControl::setfold {path} {
 		  # apply
 		  $::Config(tcs.pointorig,namespace)::$::Config(tcs.pointorig,value) apply tcs.pointorig
 	      } else {
-		  # set pointing origin to Rotator axis
-		  set ::Config(tcs.pointorig,value) "Rotator axis"
+		  # set pointing origin to rotator_axis
+		  set ::Config(tcs.pointorig,value) "rotator_axis"
 		  # apply
 		  $::Config(tcs.pointorig,namespace)::$::Config(tcs.pointorig,value) apply tcs.pointorig
 	      }   
@@ -318,8 +318,8 @@ itcl::body ObserveControl::setfold {path} {
       "Sky>AO>Inst" {
 	  iss configure -source AO -sink INSTR -ao IN
 	  if {$set_instr_orig} {
-	      # set pointing origin to Rotator axis
-	      set ::Config(tcs.pointorig,value) "Rotator axis"
+	      # set pointing origin to rotator_axis
+	      set ::Config(tcs.pointorig,value) "rotator_axis"
 	      # apply
 	      $::Config(tcs.pointorig,namespace)::$::Config(tcs.pointorig,value) apply tcs.pointorig
 	  }
@@ -328,17 +328,36 @@ itcl::body ObserveControl::setfold {path} {
       "Sky>AC/HR" {
 	  iss configure -source SKY -sink HRWFS -ao OUT
 	  if {$set_instr_orig} {
-	      # set pointing origin to Rotator axis
-	      set ::Config(tcs.pointorig,value) "Rotator axis"
+	      # set pointing origin to rotator_axis
+	      set ::Config(tcs.pointorig,value) "rotator_axis"
 	      # apply
 	      $::Config(tcs.pointorig,namespace)::$::Config(tcs.pointorig,value) apply tcs.pointorig
+	      # configure wavelength based on AC col filter
+	      #set ac_filt [sa hrwfs::currStatus get colfilt]
+# 	      set ac_filt [.observePanel.frame.control.acqcam.frame.setup.col get]
+	      
+# 	      puts "got ac filter: $ac_filt"
+# 	      switch $ac_filt {
+# 		  "U-red1"  { set new_wavelength "Acq Cam U" }
+# 		  "B-blue"  { set new_wavelength "Acq Cam B" }
+# 		  "V-green" { set new_wavelength "Acq Cam V" }
+# 		  "R-red2"  { set new_wavelength "Acq Cam R" }
+# 		  "I-red3"  { set new_wavelength "Acq Cam I" }
+# 		  "neutral" { set new_wavelength "Acq Cam neutral" }
+# 		  default   { set new_wavelength "" }
+# 	      }
+# 	      puts "new wavelength: $new_wavelength"
+# 	      set fieldObj ${::Config(tcs.field,namespace)}::${::Config(tcs.field,value)}
+# 	      puts "fieldObj: $fieldObj"
+# 	      $fieldObj configure -wavelength $new_wavelength
+# 	      $fieldObj apply tcs.field
 	  }
       }
       "Sky>AO>AC/HR" {
 	  iss configure -source AO -sink HRWFS -ao IN
 	  if {$set_instr_orig} {
-	      # set pointing origin to Rotator axis
-	      set ::Config(tcs.pointorig,value) "Rotator axis"
+	      # set pointing origin to rotator_axis
+	      set ::Config(tcs.pointorig,value) "rotator_axis"
 	      # apply
 	      $::Config(tcs.pointorig,namespace)::$::Config(tcs.pointorig,value) apply tcs.pointorig
 	  }
