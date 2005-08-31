@@ -213,7 +213,6 @@ itcl::body TcsConfigControl::apply {} {
 #-
 # Set OIWFS mode in the TCS
    set guide $::Config(tcs.field.guide,value)
-puts "TcsConfigControl::apply, guide: $guide"
    if { ! [string equal $guide ""] } {
        if {[string equal $guide "OIWFS only"]} {
 	   set inst $::Config(tcs.instrument,value)
@@ -245,13 +244,13 @@ puts "TcsConfigControl::apply, guide: $guide"
 	       logger command oiwfsSelect
 	   }
        } else {
-	   puts "no OIWFS"
+	   #puts "no OIWFS"
 	   cs oiwfsSelect set oiwfs None
            cs oiwfsSelect set output WFS
 	   logger command oiwfsSelect
        }
    }
-
+   
 # Process the wrap controls
    switch -- [$itk_component(azwrap) get] {
       + {cs wrap set azimuth 1}
@@ -267,6 +266,13 @@ puts "TcsConfigControl::apply, guide: $guide"
 
 # Call the normal apply function.
    $this ComponentControl::applycmd
+
+# Reinvoke the sf to aout conf inst origin and wavelength
+   global sfPos
+
+   if {$sfPos != "empty"} {
+       .observePanel.frame.control.mirrors.lpath select $sfPos
+   }
 }
 
 itcl::body TcsConfigControl::save {name} {
@@ -307,7 +313,12 @@ itcl::body TcsConfigControl::load {name} {
             if { ! [string equal $comp ""] } {
                set ::Config(tcs.[string tolower $component],value) $comp
                $itk_component($component) configure \
-                     -source [namespace tail $name]
+		   -source [namespace tail $name]
+		if {$component == "pointOrig" && $comp != "rotator_axis"} {
+		    global instPO
+		    set instPO $comp
+		    #puts "set instPO to $instPO"
+		}
             }
          }
       }
