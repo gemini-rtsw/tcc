@@ -37,6 +37,7 @@ itcl::class ObserveControl {
       variable Pwfs2Dark
       variable OiwfsDark
       variable set_instr_orig 1
+      variable set_wavelength 1
    }
 }
 
@@ -125,9 +126,18 @@ itcl::body ObserveControl::constructor args {
    itk_component add instrOrigin {
        checkbutton $w.instorig -variable [itcl::scope set_instr_orig] \
 	   -onvalue 1 -offvalue 0 \
-	   -text "Auto Conf.\nInstrument Origin"
+	   -text "Auto Conf.\nInstr. Origin"
    }
    pack $itk_component(instrOrigin)
+
+# Checkbutton to enable/disable automatic Wavelength configuration
+
+   itk_component add configWavelength {
+       checkbutton $w.wavelen -variable [itcl::scope set_wavelength] \
+	   -onvalue 1 -offvalue 0 \
+	   -text "Auto Conf.\nWavelength"
+   }
+   pack $itk_component(configWavelength)
 
    itk_component add lpath {
       SelectButton $w.lpath -command [itcl::code $this setfold] \
@@ -136,6 +146,7 @@ itcl::body ObserveControl::constructor args {
       usual
       rename -offbackground -background background Background
    }
+
    $itk_component(lpath) add "Sky>Instr"
    $itk_component(lpath) add "Sky>AO>Inst"
    $itk_component(lpath) add "GCAL>Instr"
@@ -293,26 +304,22 @@ itcl::body ObserveControl::destructor {} {
 }
 
 itcl::body ObserveControl::setfold {path} {
+
+   global sfPos
+   set sfPos $path
+
    switch $path {
       "Sky>Instr" {
 	  iss configure -source SKY -sink INSTR -ao OUT
 	  if {$set_instr_orig} {
-	      # set Pointing origin based on current instrument
-	      set inst [$::Config(tcs.instrument,namespace)::$::Config(tcs.instrument,value) cget -name]
-	      #puts "setting pointing origin based on Instrument: $inst"
-	      set pos [$::Config(tcs.pointorig,list) index $inst]
-	      #puts "at pos: $pos in PointOrig list"
-	      if {$pos > -1} {
-		  # have a valid Pointing Origin
-		  set ::Config(tcs.pointorig,value) $inst
-		  # apply
-		  $::Config(tcs.pointorig,namespace)::$::Config(tcs.pointorig,value) apply tcs.pointorig
-	      } else {
-		  # set pointing origin to rotator_axis
-		  set ::Config(tcs.pointorig,value) "rotator_axis"
-		  # apply
-		  $::Config(tcs.pointorig,namespace)::$::Config(tcs.pointorig,value) apply tcs.pointorig
-	      }   
+	      global instPO
+	      set ::Config(tcs.pointorig,value) $instPO
+	      $::Config(tcs.pointorig,namespace)::$::Config(tcs.pointorig,value) apply tcs.pointorig
+	  }
+	  if {$set_wavelength} {
+	      # reset the observing wavelength
+	      set fieldObj ${::Config(tcs.field,namespace)}::${::Config(tcs.field,value)}
+ 	      $fieldObj apply tcs.field
 	  }
       }
       "Sky>AO>Inst" {
@@ -323,6 +330,11 @@ itcl::body ObserveControl::setfold {path} {
 	      # apply
 	      $::Config(tcs.pointorig,namespace)::$::Config(tcs.pointorig,value) apply tcs.pointorig
 	  }
+	  if {$set_wavelength} {
+	      # reset the observing wavelength
+	      set fieldObj ${::Config(tcs.field,namespace)}::${::Config(tcs.field,value)}
+ 	      $fieldObj apply tcs.field
+	  }
       }
       "GCAL>Instr" {iss configure -source CAL -sink INSTR}
       "Sky>AC/HR" {
@@ -332,25 +344,33 @@ itcl::body ObserveControl::setfold {path} {
 	      set ::Config(tcs.pointorig,value) "rotator_axis"
 	      # apply
 	      $::Config(tcs.pointorig,namespace)::$::Config(tcs.pointorig,value) apply tcs.pointorig
+	  }
+	  if {$set_wavelength} {
+	      global env
 	      # configure wavelength based on AC col filter
-	      #set ac_filt [sa hrwfs::currStatus get colfilt]
-# 	      set ac_filt [.observePanel.frame.control.acqcam.frame.setup.col get]
-	      
-# 	      puts "got ac filter: $ac_filt"
-# 	      switch $ac_filt {
-# 		  "U-red1"  { set new_wavelength "Acq Cam U" }
-# 		  "B-blue"  { set new_wavelength "Acq Cam B" }
-# 		  "V-green" { set new_wavelength "Acq Cam V" }
-# 		  "R-red2"  { set new_wavelength "Acq Cam R" }
-# 		  "I-red3"  { set new_wavelength "Acq Cam I" }
-# 		  "neutral" { set new_wavelength "Acq Cam neutral" }
-# 		  default   { set new_wavelength "" }
-# 	      }
-# 	      puts "new wavelength: $new_wavelength"
-# 	      set fieldObj ${::Config(tcs.field,namespace)}::${::Config(tcs.field,value)}
-# 	      puts "fieldObj: $fieldObj"
-# 	      $fieldObj configure -wavelength $new_wavelength
-# 	      $fieldObj apply tcs.field
+	      if {$env(TCC_TCSNAME) == "tcs"} {
+		  set ac_filt [sa hrwfs::currStatus get colfilt]
+	      } else {
+		  set ac_filt [.observePanel.frame.control.acqcam.frame.setup.col get]
+	      }
+	      #puts "got ac filter: $ac_filt"
+ 	      switch $ac_filt {
+ 		  "U-red1"  { set new_wavelength "Acq Cam U" }
+ 		  "B-blue"  { set new_wavelength "Acq Cam B" }
+ 		  "V-green" { set new_wavelength "Acq Cam V" }
+ 		  "R-red2"  { set new_wavelength "Acq Cam R" }
+ 		  "I-red3"  { set new_wavelength "Acq Cam I" }
+ 		  "neutral" { set new_wavelength "Acq Cam neutral" }
+ 		  default   { set new_wavelength "" }
+ 	      }
+ 	      #puts "new wavelength: $new_wavelength"
+ 	      set fieldObj ${::Config(tcs.field,namespace)}::${::Config(tcs.field,value)}
+ 	      #puts "fieldObj: $fieldObj"
+	      set old_wavelength [$fieldObj cget -wavelength]
+	      #puts "old wavelength: $old_wavelength"
+ 	      $fieldObj configure -wavelength $new_wavelength
+ 	      $fieldObj apply tcs.field
+ 	      $fieldObj configure -wavelength $old_wavelength
 	  }
       }
       "Sky>AO>AC/HR" {
@@ -360,6 +380,34 @@ itcl::body ObserveControl::setfold {path} {
 	      set ::Config(tcs.pointorig,value) "rotator_axis"
 	      # apply
 	      $::Config(tcs.pointorig,namespace)::$::Config(tcs.pointorig,value) apply tcs.pointorig
+	  }
+	  if {$set_wavelength} {
+	      global env
+	      # configure wavelength based on AC col filter
+	      if {$env(TCC_TCSNAME) == "tcs"} {
+		  set ac_filt [sa hrwfs::currStatus get colfilt]
+	      } else {
+		  set ac_filt [.observePanel.frame.control.acqcam.frame.setup.col get]
+	      }
+	      
+ 	      #puts "got ac filter: $ac_filt"
+ 	      switch $ac_filt {
+ 		  "U-red1"  { set new_wavelength "Acq Cam U" }
+ 		  "B-blue"  { set new_wavelength "Acq Cam B" }
+ 		  "V-green" { set new_wavelength "Acq Cam V" }
+ 		  "R-red2"  { set new_wavelength "Acq Cam R" }
+ 		  "I-red3"  { set new_wavelength "Acq Cam I" }
+ 		  "neutral" { set new_wavelength "Acq Cam neutral" }
+ 		  default   { set new_wavelength "" }
+ 	      }
+ 	      #puts "new wavelength: $new_wavelength"
+ 	      set fieldObj ${::Config(tcs.field,namespace)}::${::Config(tcs.field,value)}
+ 	      #puts "fieldObj: $fieldObj"
+	      set old_wavelength [$fieldObj cget -wavelength]
+	      #puts "old wavelength: $old_wavelength"
+ 	      $fieldObj configure -wavelength $new_wavelength
+ 	      $fieldObj apply tcs.field
+ 	      $fieldObj configure -wavelength $old_wavelength
 	  }
       }
    }
