@@ -253,5 +253,9 @@ proc tccMain args {
    update
    wm resizable . 0 0
 
+# Add Global variables
+   global sfPos instPO
+   set sfPos empty
+   set instPO rotator_axis
    return
 }
