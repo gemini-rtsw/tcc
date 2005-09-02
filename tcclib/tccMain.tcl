@@ -73,9 +73,12 @@ proc tccMain args {
 # Create the configuration structures.
    createConfig
 
+# Create the Action Logger
+   LogActions logactions
+
 # Create all the panel manager objects.
    createPanels
-
+   
 # Create the command senders for all the TCS commands that are used by
 # the configuration components.
    epics cs mount
@@ -257,5 +260,6 @@ proc tccMain args {
    global sfPos instPO
    set sfPos empty
    set instPO rotator_axis
+
    return
 }
