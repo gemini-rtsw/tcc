@@ -29,7 +29,10 @@ itcl::body TccToolbar::constructor args {
       iwidgets::menubar $itk_interior.menubar -menubuttons {
          menubutton file -text File -menu {
             command layout -label "Save layout..." -command saveLayout
-            command exit -label Exit -command exit
+	     command exit -label Exit -command {
+		 logactions destructor
+		 exit
+	     }
          }
       }
    } {}
