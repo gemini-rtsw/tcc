@@ -31,6 +31,7 @@ itcl::class SelectButton {
    constructor args {}
    itk_option define -command command Command {}
    itk_option define -orient orient Orient horizontal
+   itk_option define -state state State normal
    itk_option define -onbackground onBackground OnBackGround Green
    itk_option define -offbackground offBackground OffBackGround White
    itk_option define -activebackground activeBackground Foreground White
@@ -119,3 +120,8 @@ itcl::body SelectButton::select {label} {
    }
 }
 
+itcl::configbody SelectButton::state {
+    for {set i 0} {$i < $n} {incr i} {
+	$itk_component($i) configure -state $itk_option(-state)
+    }
+}
