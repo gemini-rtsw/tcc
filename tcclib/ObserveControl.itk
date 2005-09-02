@@ -321,7 +321,11 @@ itcl::body ObserveControl::setfold {path} {
 	  if {$set_wavelength} {
 	      # reset the observing wavelength
 	      set fieldObj ${::Config(tcs.field,namespace)}::${::Config(tcs.field,value)}
- 	      $fieldObj apply tcs.field
+	      set old_wavelength [$fieldObj cget -wavelength]
+	      #puts "old wavelength: $old_wavelength"
+	      set wavelObj ::WavelengthNames::$old_wavelength
+ 	      #puts "wavelObj: $wavelObj"
+	      $wavelObj apply tcs.field.wavelength
 	  }
       }
       "Sky>AO>Inst" {
@@ -335,7 +339,11 @@ itcl::body ObserveControl::setfold {path} {
 	  if {$set_wavelength} {
 	      # reset the observing wavelength
 	      set fieldObj ${::Config(tcs.field,namespace)}::${::Config(tcs.field,value)}
- 	      $fieldObj apply tcs.field
+	      set old_wavelength [$fieldObj cget -wavelength]
+	      #puts "old wavelength: $old_wavelength"
+	      set wavelObj ::WavelengthNames::$old_wavelength
+ 	      #puts "wavelObj: $wavelObj"
+	      $wavelObj apply tcs.field.wavelength
 	  }
       }
       "GCAL>Instr" {iss configure -source CAL -sink INSTR}
@@ -365,14 +373,10 @@ itcl::body ObserveControl::setfold {path} {
  		  "neutral" { set new_wavelength "Acq Cam neutral" }
  		  default   { set new_wavelength "" }
  	      }
- 	      #puts "new wavelength: $new_wavelength"
- 	      set fieldObj ${::Config(tcs.field,namespace)}::${::Config(tcs.field,value)}
- 	      #puts "fieldObj: $fieldObj"
-	      set old_wavelength [$fieldObj cget -wavelength]
-	      #puts "old wavelength: $old_wavelength"
- 	      $fieldObj configure -wavelength $new_wavelength
- 	      $fieldObj apply tcs.field
- 	      $fieldObj configure -wavelength $old_wavelength
+ 	      puts "new wavelength: $new_wavelength"
+	      set wavelObj ::WavelengthNames::$new_wavelength
+ 	      puts "wavelObj: $wavelObj"
+	      $wavelObj apply tcs.field.wavelength
 	  }
       }
       "Sky>AO>AC/HR" {
@@ -402,14 +406,10 @@ itcl::body ObserveControl::setfold {path} {
  		  "neutral" { set new_wavelength "Acq Cam neutral" }
  		  default   { set new_wavelength "" }
  	      }
- 	      #puts "new wavelength: $new_wavelength"
- 	      set fieldObj ${::Config(tcs.field,namespace)}::${::Config(tcs.field,value)}
- 	      #puts "fieldObj: $fieldObj"
-	      set old_wavelength [$fieldObj cget -wavelength]
-	      #puts "old wavelength: $old_wavelength"
- 	      $fieldObj configure -wavelength $new_wavelength
- 	      $fieldObj apply tcs.field
- 	      $fieldObj configure -wavelength $old_wavelength
+ 	      puts "new wavelength: $new_wavelength"
+	      set wavelObj ::WavelengthNames::$new_wavelength
+ 	      puts "wavelObj: $wavelObj"
+	      $wavelObj apply tcs.field.wavelength
 	  }
       }
    }
