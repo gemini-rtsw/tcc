@@ -208,7 +208,7 @@ itcl::body ShutterAlarm::alarmPopup {} {
    bind $lim.ent1 <KeyPress-Return> "$this configure -topLimit \$shutterTopLimit "
 
    itk_component add ent2 { entry $lim.ent2 -textvariable shutterBotLimit -width 5 }
-   bind $lim.ent2 <KeyPress-Return> ".shutAlarm.alarm configure -botLimit \$shutterBotLimit"
+   bind $lim.ent2 <KeyPress-Return> "$this configure -botLimit \$shutterBotLimit"
 
    grid $lim.liml1 $lim.ent1 $lim.liml2 $lim.ent2 -sticky news -padx 3 -pady 3
 
@@ -229,4 +229,8 @@ itcl::body ShutterAlarm::alarmPopup {} {
    grid $sa.lev - - -sticky news -padx 2 -pady 2
    grid $sa.lim - - -sticky news -padx 2 -pady 2
    grid $sa.clear $sa.reset $sa.exit -sticky news -padx 2 -pady 2
+
+   # Add Action Logging
+   logactions logwin $sa
+
 }
