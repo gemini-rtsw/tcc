@@ -46,7 +46,9 @@ itcl::class Wavelength {
 }
 
 itcl::body Wavelength::apply {comp} {
-   set name ${::Config(tcs.field.wavelength,value)}
+   set fieldObj ${::Config(tcs.field,namespace)}::${::Config(tcs.field,value)}
+   set name [$fieldObj cget -wavelength]
+#puts "Wavelength::apply wavel: $wavel, name: $name"
    if {[string match "*Acq Cam*" $name]} {
        set set_baffles 0
    } elseif {[string length $name] > 0} {
