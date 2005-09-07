@@ -61,8 +61,15 @@ itcl::body LogActions::logwin {path} {
 	#puts "have event in %W"
 	if [catch {set class [winfo class %W]}] {return}
 	switch $class {
+	    Menubutton {
+		#puts "Menubutton %W opens menu: [%W cget -menu]"
+		return
+	    }
 	    Button { 
 		set command [%W cget -command]
+		#puts "Button command: $command"
+		if {[string first "map" $command] > 0} { return }
+		if {[string first "_toggleList" $command] > 0} { return }
 		if {[string first "OnOffButton" $command] > 0} {
 		    set class OnOffButton
 		    set start [string first "pressed" $command]
