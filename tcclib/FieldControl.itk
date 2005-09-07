@@ -378,6 +378,7 @@ itcl::body FieldControl::reset {} {
 
 
 itcl::body FieldControl::swapguide {} {
+   global env
    if {$curr_guide == ""} {
 	set new_wavelength ""
 	set fieldObj ${::Config(tcs.field,namespace)}::${::Config(tcs.field,value)}
@@ -386,11 +387,6 @@ itcl::body FieldControl::swapguide {} {
 	set curr_guide ${::Config(tcs.field.guide,value)}
    	set curr_sciencetarget ${::Config(tcs.field.sciencetarget,value)}
 	set curr_wl_name ${::Config(tcs.field.wavelength,value)}
-
-	#not using these because they are only up to date after a store
-	#set curr_guide [$fieldObj cget -guide]
-	#set curr_sciencetarget [$fieldObj cget -sciencetarget]
-	#set curr_wl_name [$fieldObj cget -wavelength]
 
 	if {![string equal $curr_wl_name ""]} {
 	   set curr_wavelength [::WavelengthNames::$curr_wl_name cget -wavel]
@@ -401,7 +397,11 @@ itcl::body FieldControl::swapguide {} {
 	if { [catch {sa hrwfs::currStatus info}] } {
 	   epics sa hrwfs::currStatus
 	}
-	set guide_wl [sa hrwfs::currStatus get colfilt]
+        if {$env(TCC_TCSNAME) == "tcs"} {
+	    set guide_wl [sa hrwfs::currStatus get colfilt]
+	} else {
+	    set guide_wl [.observePanel.frame.control.acqcam.frame.setup.col get]
+	}
 	#puts "swapguide got guide wl: $guide_wl"
 	switch $guide_wl {
 	   "U-red1"  { set new_wavelength "Acq Cam U" }
@@ -464,10 +464,6 @@ itcl::body FieldControl::swapguide {} {
 	   set new_wavelength "Acq Cam neutral"
 	}
 	#puts "guide wl: $guide_wl using wl: $new_wavelength"
-
-	#set ::Config(tcs.field.wavelength,value) $new_wavelength
-	#set ::Config(tcs.field.guide,value) "No guiding"
-   	#set ::Config(tcs.field.sciencetarget,value) $curr_guidetarget
 
    	::WavelengthNames::$new_wavelength configure -set_baffles 0
 	$fieldObj configure -guide "No guiding"
