@@ -46,23 +46,24 @@ itcl::class Wavelength {
 }
 
 itcl::body Wavelength::apply {comp} {
-   set fieldObj ${::Config(tcs.field,namespace)}::${::Config(tcs.field,value)}
-   set name [$fieldObj cget -wavelength]
-#puts "Wavelength::apply wavel: $wavel, name: $name"
-   if {[string match "*Acq Cam*" $name]} {
-       set set_baffles 0
-   } elseif {[string length $name] > 0} {
-       set name "::WavelengthNames::$name"
-       set set_baffles [$name cget -set_baffles]
-   } else {
-       set set_baffles 0
-   }
-#puts "Wavelength apply comp: $comp, wavel: $wavel centralBaffle: $centralBaffle deployableBaffle: $deployableBaffle set_baffles: $set_baffles"
    switch $comp {
       tcs.field.wavelength {
+	  set fieldObj ${::Config(tcs.field,namespace)}::${::Config(tcs.field,value)}
+	  #set name ${::Config(tcs.field.wavelength,value)}
+	  set name [string range $this [expr [string last "::" $this] +2] end] 
+	  # [$fieldObj cget -wavelength]
+	  #puts "Wavelength::apply wavel: $wavel, name: $name, this: $this"
+	  if {[string match "*Acq Cam*" $name]} {
+	      set loc_set_baffles 0
+	  } else {
+	      set loc_set_baffles $set_baffles
+	  }
+
+	  #puts "Wavelength apply comp: $comp, wavel: $wavel centralBaffle: $centralBaffle deployableBaffle: $deployableBaffle set_baffles: $set_baffles loc_set_baffles: $loc_set_baffles"
+	  
 #  the following sets up the baffle values when a configuration is loaded and applied without the Wavelength panel being open
 #  removed this ... decided to not set the baffle at all unless its explicitly configured.
-  	 if {($centralBaffle == ""  || $deployableBaffle == "") && $set_baffles } {
+  	 if {($centralBaffle == ""  || $deployableBaffle == "") && $loc_set_baffles } {
  	     if {$wavel <= [calparam cget -baffle_visible]} {
  		 set centralBaffle closed
  		 set deployableBaffle visible
@@ -73,16 +74,16 @@ itcl::body Wavelength::apply {comp} {
  		 set centralBaffle open
  		 set deployableBaffle "thermal IR"
  	     }
- 	 }
+ 	 }	     
 	 cs wavelSourceA set wavel $wavel
          logger command wavelSourceA
-         if { ! [string is space $centralBaffle] } {
+         if { ! [string is space $centralBaffle] && $loc_set_baffles} {
 	     switch $centralBaffle {
 		 closed {cs m2Baffle set centralBaffle Closed}
 		 open {cs m2Baffle set centralBaffle Open}
 	     }
 	 }
-         if { ! [string is space $deployableBaffle] } {
+         if { ! [string is space $deployableBaffle] && $loc_set_baffles} {
 	     switch $deployableBaffle {
 		 "thermal IR" {cs m2Baffle set deployBaffle Retracted}
 		 "near IR" {cs m2Baffle set deployBaffle [list "Near IR"]}
@@ -91,7 +92,7 @@ itcl::body Wavelength::apply {comp} {
 	     }
 	 }
          if { !( [string is space $centralBaffle] && \
-		     [string is space $deployableBaffle] ) } {
+		     [string is space $deployableBaffle] ) && $loc_set_baffles} {
 	     logger command m2Baffle
          }
       }
