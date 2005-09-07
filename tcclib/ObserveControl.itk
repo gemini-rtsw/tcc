@@ -310,26 +310,20 @@ itcl::body ObserveControl::setfold {path} {
    global sfPos
    set sfPos $path
 
+   logactions logmess "ObserveControl::setfold moving Science Fold to $path"
+
    switch $path {
       "Sky>Instr" {
 	  iss configure -source SKY -sink INSTR -ao OUT
 	  if {$set_instr_orig} {
 	      global instPO
-	      #apply guide config (nod states) before point origin
-	      set fieldObj ${::Config(tcs.field,namespace)}::${::Config(tcs.field,value)}
-	      set guide [$fieldObj cget -guide]
-	      #puts "guide: $guide"
-	      set guideObj ::GuideNames::$guide
- 	      #puts "guideObj: $guideObj"
-	      $guideObj apply tcs.field.guide
-
 	      set ::Config(tcs.pointorig,value) $instPO
 	      $::Config(tcs.pointorig,namespace)::$::Config(tcs.pointorig,value) apply tcs.pointorig
 	  }
 	  if {$set_wavelength} {
 	      # reset the observing wavelength
 	      set fieldObj ${::Config(tcs.field,namespace)}::${::Config(tcs.field,value)}
-	      set old_wavelength [$fieldObj cget -wavelength]
+ 	      set old_wavelength [$fieldObj cget -wavelength]
 	      #puts "old wavelength: $old_wavelength"
 	      set wavelObj ::WavelengthNames::$old_wavelength
  	      #puts "wavelObj: $wavelObj"
@@ -339,13 +333,6 @@ itcl::body ObserveControl::setfold {path} {
       "Sky>AO>Inst" {
 	  iss configure -source AO -sink INSTR -ao IN
 	  if {$set_instr_orig} {
-	      #apply guide config (nod states) before point origin
-	      set fieldObj ${::Config(tcs.field,namespace)}::${::Config(tcs.field,value)}
-	      set guide [$fieldObj cget -guide]
-	      #puts "guide: $guide"
-	      set guideObj ::GuideNames::$guide
- 	      #puts "guideObj: $guideObj"
-	      $guideObj apply tcs.field.guide
 	      # set pointing origin to rotator_axis
 	      set ::Config(tcs.pointorig,value) "rotator_axis"
 	      # apply
@@ -365,13 +352,6 @@ itcl::body ObserveControl::setfold {path} {
       "Sky>AC/HR" {
 	  iss configure -source SKY -sink HRWFS -ao OUT
 	  if {$set_instr_orig} {
-	      #apply guide config (nod states) before point origin
-	      set fieldObj ${::Config(tcs.field,namespace)}::${::Config(tcs.field,value)}
-	      set guide [$fieldObj cget -guide]
-	      #puts "guide: $guide"
-	      set guideObj ::GuideNames::$guide
- 	      #puts "guideObj: $guideObj"
-	      $guideObj apply tcs.field.guide
 	      # set pointing origin to rotator_axis
 	      set ::Config(tcs.pointorig,value) "rotator_axis"
 	      # apply
@@ -395,22 +375,15 @@ itcl::body ObserveControl::setfold {path} {
  		  "neutral" { set new_wavelength "Acq Cam neutral" }
  		  default   { set new_wavelength "" }
  	      }
- 	      puts "new wavelength: $new_wavelength"
+ 	      #puts "new wavelength: $new_wavelength"
 	      set wavelObj ::WavelengthNames::$new_wavelength
- 	      puts "wavelObj: $wavelObj"
+ 	      #puts "wavelObj: $wavelObj"
 	      $wavelObj apply tcs.field.wavelength
 	  }
       }
       "Sky>AO>AC/HR" {
 	  iss configure -source AO -sink HRWFS -ao IN
 	  if {$set_instr_orig} {
-	      #apply guide config (nod states) before point origin
-	      set fieldObj ${::Config(tcs.field,namespace)}::${::Config(tcs.field,value)}
-	      set guide [$fieldObj cget -guide]
-	      #puts "guide: $guide"
-	      set guideObj ::GuideNames::$guide
- 	      #puts "guideObj: $guideObj"
-	      $guideObj apply tcs.field.guide
 	      # set pointing origin to rotator_axis
 	      set ::Config(tcs.pointorig,value) "rotator_axis"
 	      # apply
@@ -435,9 +408,9 @@ itcl::body ObserveControl::setfold {path} {
  		  "neutral" { set new_wavelength "Acq Cam neutral" }
  		  default   { set new_wavelength "" }
  	      }
- 	      puts "new wavelength: $new_wavelength"
+ 	      #puts "new wavelength: $new_wavelength"
 	      set wavelObj ::WavelengthNames::$new_wavelength
- 	      puts "wavelObj: $wavelObj"
+ 	      #puts "wavelObj: $wavelObj"
 	      $wavelObj apply tcs.field.wavelength
 	  }
       }
