@@ -43,6 +43,7 @@ itcl::class SelectButton {
       method get {} {return $current}
       method select {label}
       method clear {}
+      method setState {elements state}
    }
    private {
       method selectioncommand {label}
@@ -118,6 +119,12 @@ itcl::body SelectButton::select {label} {
          break
       }
    }
+}
+
+itcl::body SelectButton::setState {elements state} {
+    foreach i $elements {
+	$itk_component($i) configure -state $state
+    }	
 }
 
 itcl::configbody SelectButton::state {
