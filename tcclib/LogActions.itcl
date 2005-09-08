@@ -51,7 +51,7 @@ itcl::body LogActions::logwin {path} {
 	if {[catch {set name [%W cget -text]}]} {
 	    if {[catch {set name [%W cget -label]}]} {
 		set name "no info"
-		return
+		break
 	    } 
 	}
 	if {$name == ""} {
@@ -59,17 +59,17 @@ itcl::body LogActions::logwin {path} {
 	}
 	set info ""
 	#puts "have event in %W"
-	if [catch {set class [winfo class %W]}] {return}
+	if [catch {set class [winfo class %W]}] {break}
 	switch $class {
 	    Menubutton {
 		#puts "Menubutton %W opens menu: [%W cget -menu]"
-		return
+		break
 	    }
 	    Button { 
 		set command [%W cget -command]
 		#puts "Button command: $command"
-		if {[string first "map" $command] > 0} { return }
-		if {[string first "_toggleList" $command] > 0} { return }
+		if {[string first "map" $command] > 0} { break }
+		if {[string first "_toggleList" $command] > 0} { break }
 		if {[string first "OnOffButton" $command] > 0} {
 		    set class OnOffButton
 		    set start [string first "pressed" $command]
@@ -80,11 +80,11 @@ itcl::body LogActions::logwin {path} {
 	    Scale { set info "value: [%W get]"}
 	    Entry {
 		bind %W <KeyRelease-Return> {
-		    if [catch {set top [winfo toplevel %W]}] {return}
+		    if [catch {set top [winfo toplevel %W]}] {break}
 		    puts $logfid "[clock format [clock seconds]]  [wm title $top] $name $class value [%W get]"
 		    flush $logfid
 		}
-		return
+		break
 	    }
 	}
 	puts $logfid "[clock format [clock seconds]]  [wm title [winfo toplevel %W]]  $name  $class  $info"
