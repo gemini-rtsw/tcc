@@ -223,9 +223,9 @@ itcl::body TcsConfigControl::apply {} {
 # Set OIWFS mode in the TCS
    set guide $::Config(tcs.field.guide,value)
    if { ! [string equal $guide ""] } {
-       if {[string equal $guide "OIWFS only"]} {
+       if {[string equal $guide "OIWFS only"] || [string equal $guide "No guiding"]} {
 	   set inst $::Config(tcs.instrument,value)
-	   puts "OIWFS only, choosing oiwfs based on instrument: $inst"
+	   puts "OIWFS only or No guiding, choosing oiwfs based on instrument: $inst"
 	   if {[string match "*GMOS*" $inst]} {
 	       puts "found GMOS"
 	       cs oiwfsSelect set oiwfs GMOS
