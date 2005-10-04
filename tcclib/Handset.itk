@@ -290,25 +290,34 @@ itcl::body Handset::constructor {args} {
        # Monior TCS inPosition Flag
        if {! $mon_inpos} {
 	   set mon_inpos 1
-	   global inPosition
+	   global inPosition followS INPOS FOLLOW
+	   set INPOS ""
+	   set FOLLOW ""
 	   set varName "inPosition\(value\)"
 	   #puts " varName  $varName this:[itcl::code $this] traceProc"
 	   trace variable $varName w "[itcl::code $this] traceProc"
 	   
 	   set $varName [sa tcssad get inPosition]
 	   sa tcssad link inPosition inPosition
+
+	   set varName "followS\(value\)"
+	   trace variable $varName w "[itcl::code $this] traceProc"	   
+	   set $varName [sa mcssad get followS]
+	   sa mcssad link followS followS
        }
    }
 }
 
 
 itcl::body Handset::destructor {} {
-    global inPosition tid
+    global inPosition followS tid
 
     after cancel $tid
     if {$mon_inpos} {
 	sa tcssad unlink inPosition inPosition
 	trace remove variable inPosition(value) write "[itcl::code $this] traceProc"
+	sa mcssad unlink followS followS
+	trace remove variable followS(value) write "[itcl::code $this] traceProc"
     }
 }
 
@@ -364,14 +373,16 @@ itcl::configbody Handset::adjust {
 }
 
 itcl::body Handset::push {dir} {
-    global tid
+    global tid INPOS
 # Open loop if neccesary
     if {$control_loop && [AO cget -enabled]} {
 	#puts "opening loop"
 	AO disable
 	set need_to_close_loop 1
 	# start timeout process
-	set tid [after 5000 "$this timeout"]
+	if {[string match TRUE $INPOS]} {
+	    set tid [after 5000 "$this timeout"]
+	}
 	#puts "tid: $tid"
     }
 
@@ -565,11 +576,23 @@ itcl::body Handset::traceProc {name index op} {
 
    set gVar "$name\($index\)"
    #puts "gVar: $gVar"
-   global $name tid
+   global $name INPOS FOLLOW tid
    #puts "traceProc called with name: $name index: $index op: $op gVar: $gVar [set $gVar]"
+
+   switch $name {
+       inPosition { 
+	   #puts "setting INPOS"
+	   set INPOS [set $gVar]
+       }
+       followS {
+	   #puts "setting FOLLOW"
+	   set FOLLOW [set $gVar]
+       }
+   }
+   #puts "INPOS: $INPOS   FOLLOW: $FOLLOW"
+
    if { $need_to_close_loop} {
-       if {[string match TRUE [set $gVar]]} {
-	   #puts "closing loop in 2 seconds"
+       if {[string match TRUE $INPOS] && [string match ON $FOLLOW]} {
 	   #puts "closing loop"
 	   AO enable
 	   set need_to_close_loop 0
