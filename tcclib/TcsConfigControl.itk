@@ -223,35 +223,49 @@ itcl::body TcsConfigControl::apply {} {
 # Set OIWFS mode in the TCS
    set guide $::Config(tcs.field.guide,value)
    if { ! [string equal $guide ""] } {
+       set inst $::Config(tcs.instrument,value)
        if {[string equal $guide "OIWFS only"] || [string equal $guide "No guiding"]} {
-	   set inst $::Config(tcs.instrument,value)
-	   puts "OIWFS only or No guiding, choosing oiwfs based on instrument: $inst"
+	   #puts "OIWFS only or No guiding, choosing oiwfs based on instrument: $inst"
 	   if {[string match "*GMOS*" $inst]} {
-	       puts "found GMOS"
+	       #puts "found GMOS"
 	       cs oiwfsSelect set oiwfs GMOS
                cs oiwfsSelect set output WFS
 	       logger command oiwfsSelect
 	   } elseif {[string match "*NIFS*" $inst]} {
-	       puts "found NIFS"
+	       #puts "found NIFS"
 	       cs oiwfsSelect set oiwfs NIFS
                cs oiwfsSelect set output WFS
 	       logger command oiwfsSelect
 	   } elseif {[string match "*GNIRS*" $inst]} {
-	       puts "found NIRS"
+	       #puts "found NIRS"
 	       cs oiwfsSelect set oiwfs NIRS
                cs oiwfsSelect set output WFS
 	       logger command oiwfsSelect
 	   } elseif {[string match "*NIRI*" $inst]} {
-	       puts "found NIRI"
+	       #puts "found NIRI"
 	       cs oiwfsSelect set oiwfs NIRI
                cs oiwfsSelect set output WFS
 	       logger command oiwfsSelect
 	   } else {
-	       puts "no OIWFS"
+	       #puts "no OIWFS"
 	       cs oiwfsSelect set oiwfs None
                cs oiwfsSelect set output WFS
 	       logger command oiwfsSelect
 	   }
+       } elseif {[string equal $guide "ALTAIR"] && [string match "*NIFS*" $inst]} {
+	   set oiwfstarget $::Config(tcs.field.oiwfstarget,value)
+	   #puts "oiwfs target: $oiwfstarget"
+	   if {! [string equal $oiwfstarget ""]} {
+	       #puts "found NIFS (Altair/OI)"
+	       cs oiwfsSelect set oiwfs NIFS
+               cs oiwfsSelect set output WFS
+	       logger command oiwfsSelect
+	   } else {
+	       #puts "no OIWFS"
+	       cs oiwfsSelect set oiwfs None
+               cs oiwfsSelect set output WFS
+	       logger command oiwfsSelect
+	   }   
        } else {
 	   #puts "no OIWFS"
 	   cs oiwfsSelect set oiwfs None
@@ -326,7 +340,7 @@ itcl::body TcsConfigControl::load {name} {
 		if {$component == "pointOrig" && $comp != "rotator_axis"} {
 		    global instPO
 		    set instPO $comp
-		    #puts "set instPO to $instPO"
+		    puts "set instPO to $instPO"
 		}
             }
          }
