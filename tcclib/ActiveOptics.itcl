@@ -69,6 +69,9 @@ itcl::body ActiveOptics::constructor {args} {
    if { [catch {cs aoBlendOI info}] } {
       epics cs aoBlendOI
    }
+   if { [catch {cs oiwfsOut info}] } {
+      epics cs oiwfsOut
+   }
    if { [catch {sa guideConfig info}] } {
       epics sa guideConfig
    }
@@ -110,10 +113,23 @@ itcl::body ActiveOptics::enable {} {
    }
 
 # Configure OIWFS Blending in AO
-
    if { $oiblend } {
+       # need to ensure that OIWFS Guide Output is set to AO
+       if {[sa aossad get oiOutGuide] == "SCS"} {
+	   puts "changing OIWFS Output to AO"
+	   if {$oiwfsActive} { Oiwfs stop }
+	   cs oiwfsOut set detSigOutput 1
+	   cs oiwfsOut set detSigOutputDir 3
+       }
        cs aoBlendOI set state ON
    } else {
+       # need to ensure that OIWFS Guide Output is set to SCS
+       if {[sa aossad get oiOutGuide] == "AO"} {
+	   puts "changing OIWFS Output to SCS"
+	   if {$oiwfsActive} { Oiwfs stop }
+	   cs oiwfsOut set detSigOutput 0
+	   cs oiwfsOut set detSigOutputDir 3
+       }
        cs aoBlendOI set state OFF
    }
    cs aoBlendOI set dir 0
@@ -365,6 +381,13 @@ itcl::body ActiveOptics::disable {} {
    cs aoBlendOI set state OFF
    cs aoBlendOI set dir 0
    cs aoBlendOI set dir 3
+
+# need to ensure that OIWFS Guide Output is set to SCS
+   if {[sa aossad get oiOutGuide] == "AO"} {
+       puts "changing OIWFS Output to SCS"
+       cs oiwfsOut set detSigOutput 0
+       cs oiwfsOut set detSigOutputDir 3
+   }
 
 # Post the command.
    if { [catch {cs tcsApply post} msg] } {
