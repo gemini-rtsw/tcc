@@ -21,6 +21,7 @@ itcl::class ActiveOptics {
       variable p2guide ""
       variable aoguide ""
       variable oiguide ""
+      variable oiblend 0
       variable comacorr 0
       variable m1source ""
       variable m1filename ""
@@ -65,10 +66,12 @@ itcl::body ActiveOptics::constructor {args} {
    if { [catch {cs oiwfsSelect info}] } {
       epics cs oiwfsSelect
    }
+   if { [catch {cs aoBlendOI info}] } {
+      epics cs aoBlendOI
+   }
    if { [catch {sa guideConfig info}] } {
       epics sa guideConfig
    }
-
    eval configure $args
 }
 
@@ -105,6 +108,16 @@ itcl::body ActiveOptics::enable {} {
          }
       }
    }
+
+# Configure OIWFS Blending in AO
+
+   if { $oiblend } {
+       cs aoBlendOI set state 1
+   } else {
+       cs aoBlendOI set state 0
+   }
+   cs aoBlendOI set dir 0
+   cs aoBlendOI set dir 3
 
 # M2 tip/tilt is on and we want it off.
    if { $m2p1guide eq "" && $m2p2guide eq "" && $m2aoguide eq "" && \
@@ -348,6 +361,11 @@ itcl::body ActiveOptics::disable {} {
    cs m1Guide set mode Off
    logger command m1Guide
 
+# Turn off OI Blending in AO
+   cs aoBlendOI set state 0
+   cs aoBlendOI set dir 0
+   cs aoBlendOI set dir 3
+
 # Post the command.
    if { [catch {cs tcsApply post} msg] } {
       tk_messageBox -icon error -message \
@@ -388,6 +406,13 @@ itcl::body ActiveOptics::state {component} {
       }
       gaos {
          if { [sa guideConfig get aostate] == "On" } {
+            return 1
+         } else {
+            return 0
+         }
+      }
+      oiblend {
+	  if { [sa aossad get oiblend] == "1" } {
             return 1
          } else {
             return 0
