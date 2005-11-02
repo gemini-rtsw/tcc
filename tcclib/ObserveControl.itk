@@ -55,6 +55,7 @@ itcl::body ObserveControl::constructor args {
    }
 
 # AWE Guide Alarm
+# puts "path to GuideAlarm: $w.alarm"
    itk_component add alarm {
       GuideAlarm $w.alarm
    }
@@ -333,10 +334,17 @@ itcl::body ObserveControl::setfold {path} {
       "Sky>AO>Inst" {
 	  iss configure -source AO -sink INSTR -ao IN
 	  if {$set_instr_orig} {
-	      # set pointing origin to rotator_axis
-	      set ::Config(tcs.pointorig,value) "rotator_axis"
-	      # apply
-	      $::Config(tcs.pointorig,namespace)::$::Config(tcs.pointorig,value) apply tcs.pointorig
+	      global instPO
+	      puts "instPO is $instPO"
+	      if {$instPO == "nifs"} {
+		  set ::Config(tcs.pointorig,value) $instPO
+		  $::Config(tcs.pointorig,namespace)::$::Config(tcs.pointorig,value) apply tcs.pointorig
+	      } else {
+		  # set pointing origin to rotator_axis
+		  set ::Config(tcs.pointorig,value) "rotator_axis"
+		  # apply
+		  $::Config(tcs.pointorig,namespace)::$::Config(tcs.pointorig,value) apply tcs.pointorig
+	      }
 	  }
 	  if {$set_wavelength} {
 	      # reset the observing wavelength
