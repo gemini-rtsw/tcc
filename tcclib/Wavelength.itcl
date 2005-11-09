@@ -74,7 +74,17 @@ itcl::body Wavelength::apply {comp} {
  		 set centralBaffle open
  		 set deployableBaffle "thermal IR"
  	     }
- 	 }	     
+ 	 }
+
+# for GS Engineering: Override baffles to retracted and closed when ist is HR
+	 set inst $::Config(tcs.instrument,value)
+	 #puts "Wavelength apply, inst: $inst"
+	 if { $inst == "HRWFS"} {
+	      set loc_set_baffles 1
+	      set centralBaffle closed
+	      set deployableBaffle "thermal IR"
+	 }
+
 	 cs wavelSourceA set wavel $wavel
          logger command wavelSourceA
          if { ! [string is space $centralBaffle] && $loc_set_baffles} {
