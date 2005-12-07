@@ -165,6 +165,9 @@ proc tccMain args {
 # Create the object the controls the Acquisition Camera/HRWFS.
    Hrwfs hrwfs
 
+# Create the object the configures the Peripheral WFS
+   Pwfs pwfs
+
 # Create the object that controls the active optics.
    ActiveOptics AO
 
