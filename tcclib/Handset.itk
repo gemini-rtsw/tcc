@@ -38,6 +38,7 @@ itcl::class Handset {
    public {
       method traceProc { name index op }
       method timeout {}
+      variable oiAngle 138.94
    }
    private {
       method push {button}
@@ -198,6 +199,24 @@ itcl::body Handset::constructor {args} {
       frame $w.aframe
    }
    pack $itk_component(aframe) -side left -pady 5
+
+# temporary, entry for OIWFS offset angle
+   itk_component add oframe {
+      frame $w.oframe
+   }
+   set w $itk_component(oframe)
+   pack $itk_component(oframe) -side left -pady 5
+
+   itk_component add offlab {
+      label $w.offlab -text "OIWFS \nangle:"
+   }
+   itk_component add offent {
+       entry $w.offent -textvariable [itcl::scope oiAngle] -width 6
+   }
+
+   grid $itk_component(offlab) 
+   grid $itk_component(offent)
+
    set w $itk_component(aframe)
    itk_component add orient {
       iwidgets::radiobox $w.orient -labeltext "Alignment"
@@ -208,6 +227,7 @@ itcl::body Handset::constructor {args} {
    $itk_component(orient) add instr -text Instr
    $itk_component(orient) add pwfs1 -text PWFS1
    $itk_component(orient) add pwfs2 -text PWFS2
+   $itk_component(orient) add oiwfs -text OIWFS
    $itk_component(orient) configure -command [itcl::code $this relabel]
 
 # buttons for rotating and flipping.
@@ -224,9 +244,9 @@ itcl::body Handset::constructor {args} {
    itk_component add vflip {
       button $w.vflip -image images::vflip -command [itcl::code $this vflip]
    }
-   grid $itk_component(orient) - - -
+   grid $itk_component(orient) - - - 
    grid $itk_component(rot) $itk_component(arot) $itk_component(hflip) \
-         $itk_component(vflip)
+         $itk_component(vflip) -
 
 # Title
    set w $itk_interior
@@ -256,7 +276,7 @@ itcl::body Handset::constructor {args} {
 
 # Fill in the table of angles (xy is last in the list so that it becomes
 # the default selection).
-   foreach frame {tracking azel instr pwfs1 pwfs2 xy} {
+   foreach frame {tracking azel instr pwfs1 pwfs2 oiwfs xy} {
       $itk_component(orient) select $frame
       reset
    }
@@ -392,7 +412,7 @@ itcl::body Handset::push {dir} {
 
 # Set the frame id. The pwfs frames are not supported by the tcs so
 # x/y used.
-      set frameid [lsearch -exact {azel xy instr tracking pwfs1 pwfs2} $frame]
+      set frameid [lsearch -exact {azel xy instr tracking pwfs1 pwfs2 oiwfs} $frame]
       if { $frameid > 3 } {
          set frameid 1
       }
@@ -412,6 +432,10 @@ itcl::body Handset::push {dir} {
             cs $cs set angle [expr {$angles($frame,$dir) + \
                   [sa agssad get p2TableAngle] + \
                   [sa agssad get p2ArmAngle]}]
+         }
+         oiwfs {
+	    #puts "oiwfs frame, angle is $angles($frame,$dir) + $oiAngle"
+            cs $cs set angle [expr {$angles($frame,$dir) + $oiAngle}]
          }
          default {
             cs $cs set angle $angles($frame,$dir)
@@ -507,6 +531,7 @@ itcl::body Handset::reset {} {
          set angles($frame,l) 180.0
          set angles($frame,d) 270.0
       }
+      oiwfs -
       instr {
          set angles($frame,u) 0.0
          set angles($frame,r) 90.0
@@ -531,7 +556,7 @@ itcl::body Handset::relabel {} {
 itcl::body Handset::initlabels {} {
 
 # Fill in the table of labels with their default values.
-   foreach frame {tracking xy azel instr pwfs1 pwfs2} {
+   foreach frame {tracking xy azel instr pwfs1 pwfs2 oiwfs} {
       switch $frame {
          xy {
 #            set labels($frame,u) +y
@@ -561,6 +586,7 @@ itcl::body Handset::initlabels {} {
 	   set labels($frame,l) -P
 	   set labels($frame,r) +P
          }
+	 oiwfs -
 	 pwfs2 -
 	 pwfs1 {
             set labels($frame,u) ""
