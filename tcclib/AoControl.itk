@@ -42,30 +42,30 @@ itcl::body AoControl::constructor args {
 
    set w $itk_interior
    itk_component add frame {
-      frame $w.frame -borderwidth 2 -relief ridge
+      frame $w.frame -borderwidth 2
    }
    pack $itk_component(frame)
    set w $itk_component(frame)
 
 # Label.
-   itk_component add label {
-      label $w.label -text GAOS
-   }
+#    itk_component add label {
+#       label $w.label -text GAOS
+#    }
 
 # Flatten.
-   itk_component add flatten {
-      ApplyButton $w.flatten -text Flatten -command aoFlatten
-   }
+#    itk_component add flatten {
+#       ApplyButton $w.flatten -text Flatten -command aoFlatten
+#    }
 
 # Take Picture.
-   itk_component add takepic {
-      button $w.takepic -text "Take Picture" -state disabled
-   }
+#    itk_component add takepic {
+#       button $w.takepic -text "Take Picture" -state disabled
+#    }
 
 # Centre WFS.
-   itk_component add centre {
-      LiveButton $w.centre -text "Center WFS" -command [itcl::code $this centre]
-   }
+#    itk_component add centre {
+#       LiveButton $w.centre -text "Center WFS" -command [itcl::code $this centre]
+#    }
 
 # Close loop.
    itk_component add loop {
@@ -89,20 +89,20 @@ itcl::body AoControl::constructor args {
    set w $itk_component(frame)
 
 # Prepare control matrix
-   itk_component add prepare {
-      LiveButton $w.prepare -text "Prepare Mtx" \
-            -command [itcl::code $this preparecm 1]
-   }
+#    itk_component add prepare {
+#       LiveButton $w.prepare -text "Prepare Mtx" \
+#             -command [itcl::code $this preparecm 1]
+#    }
 
 # Correct.
-   itk_component add correct {
-      OnOffButton $w.correct -text "Correct Only" \
-            -onproc [itcl::code $this correct ON] \
-            -offproc [itcl::code $this correct OFF] \
-            -onvalue 1 \
-            -offvalue 0 \
-            -sadrecord {guideConfig aostate}
-   }
+#    itk_component add correct {
+#       OnOffButton $w.correct -text "Correct Only" \
+#             -onproc [itcl::code $this correct ON] \
+#             -offproc [itcl::code $this correct OFF] \
+#             -onvalue 1 \
+#             -offvalue 0 \
+#             -sadrecord {guideConfig aostate}
+#    }
 
 # Create command senders.
    if { [catch {cs aoFlatten info}] } {
@@ -118,13 +118,14 @@ itcl::body AoControl::constructor args {
       epics cs aoOiwfsSource
    }
 
-   grid $itk_component(label) -padx 5 -sticky ew
-   grid $itk_component(flatten) -padx 5 -sticky ew
-   grid $itk_component(takepic) -padx 5 -sticky ew
-   grid $itk_component(centre) -padx 5 -sticky ew
-   grid $itk_component(loop) -padx 5 -sticky ew
-   grid $itk_component(prepare) -padx 5 -sticky ew
-   grid $itk_component(correct) -padx 5 -sticky ew
+   grid $itk_component(loop) -padx 2 -sticky ew
+#   grid $itk_component(label) -padx 5 -sticky ew
+#    grid $itk_component(flatten) -padx 5 -sticky ew
+#    grid $itk_component(takepic) -padx 5 -sticky ew
+#    grid $itk_component(centre) -padx 5 -sticky ew
+#   grid $itk_component(loop) -padx 5 -sticky ew
+#    grid $itk_component(prepare) -padx 5 -sticky ew
+#    grid $itk_component(correct) -padx 5 -sticky ew
 
    eval itk_initialize $args
 }
@@ -181,10 +182,10 @@ puts "\nAoControl loop state $state"
          }
          after 10
 
-# OIWFS source.
-         cs aoOiwfsSource set state ON
-         cs aoOiwfsSource set bandwidth 0
-         logger command aoOiwfsSource
+# OIWFS source. this shouldn't be forced ... is only on for oi blending 
+#         cs aoOiwfsSource set state ON
+#         cs aoOiwfsSource set bandwidth 0
+#         logger command aoOiwfsSource
 
 # Change M2 settup to AOS.
          AO configure -aoguide On -p1guide "" -p2guide "" -oiguide ""
