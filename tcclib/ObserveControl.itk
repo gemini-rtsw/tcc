@@ -29,7 +29,11 @@ itcl::class ObserveControl {
       method wfssky {}
       method wfsql {}
       method wfsstop {}
+      method expose {}
+      method lenssel {}
       method selwfs {}
+      method hrstart {}
+      method hrstop {}
       method altairfollow {}
       method altairpark {}
       variable wfs Pwfs1
@@ -60,17 +64,31 @@ itcl::body ObserveControl::constructor args {
       GuideAlarm $w.alarm
    }
    #puts "created GuideAlarm object: $w.alarm"
-   grid $itk_component(guideloop) - - $itk_component(alarm) -sticky news
+   grid $itk_component(guideloop) $itk_component(alarm) -sticky news
 
-# Sky offset control.
-   itk_component add offframe {
-      frame $w.offframe -borderwidth 2 -relief sunken
+# bottom frame
+    itk_component add botframe {
+       frame $w.botframe -borderwidth 2
+    }
+
+   grid $itk_component(botframe) -
+
+   set w $itk_component(botframe)
+
+# WFS controls
+   itk_component add wfs {
+      frame $w.wfs -bd 2 -relief ridge
    }
-   itk_component add offset {
-      Sky $itk_component(offframe).offset
+
+# HRWFS/AC controls
+   itk_component add hrac {
+      frame $w.hrac -bd 2 -relief ridge
    }
-   pack $itk_component(offset)
-   grid $itk_component(offframe) -sticky ew -pady 5 -columnspan 5
+
+# Altair controls.
+   itk_component add altair {
+      AoControl $w.altair
+   }
 
 # Acquisition Camera/HRWFS controls.
    itk_component add acqcam {
@@ -82,25 +100,44 @@ itcl::body ObserveControl::constructor args {
       frame $w.mirrors  -bd 2 -relief ridge
    }
 
-# WFS controls
-   itk_component add wfs {
-      frame $w.wfs -bd 2 -relief ridge
-   }
-
 # Various chop/node and WFS probe controls.
    itk_component add buttons {
       frame $w.buttons -bd 2 -relief ridge
    }
 
-# Altair controls.
-   itk_component add altair {
-      AoControl $w.altair
+# Configure Wavelength and Fieldstop for the wfs
+
+    itk_component add wfsconfig {
+       WfsConfig $w.wfsconfig
+    }
+
+   grid $itk_component(hrac) $itk_component(mirrors)  $itk_component(altair)  -padx 5 -pady 5 -sticky s
+   grid  $itk_component(wfs) ^ $itk_component(buttons) 
+   grid $itk_component(wfsconfig) ^ ^ -padx 5 -pady 5 -sticky s
+
+# HRWFS/AC controls.
+   set w $itk_component(hrac)
+   itk_component add hracsel {
+      iwidgets::optionmenu $w.hracsel -command [itcl::code $this lenssel]
    }
+   $itk_component(hracsel) insert end AC HRWFS
 
-   grid $itk_component(acqcam) $itk_component(mirrors) $itk_component(wfs) \
-         $itk_component(altair) -pady 5 -padx 5 -sticky s
-   grid ^ ^ $itk_component(buttons) ^ -pady 5
+   itk_component add expose {
+      iwidgets::combobox $w.expose -labeltext "exp(s)" -labelpos w \
+         -width 5 -selectioncommand [itcl::code $this expose] -validate real
+   }
+   $itk_component(expose) insert list end 0.01 0.1 1.0 10.0
+   $itk_component(expose) insert entry end 0.01
 
+   itk_component add hrstart {
+      LiveButton $w.hrstart -text "Q/L" \
+            -command [itcl::code $this hrstart]
+   }
+   itk_component add hrstop {
+      LiveButton $w.hrstop -text Stop \
+            -command [itcl::code $this hrstop]
+   }
+   grid $itk_component(hracsel) $itk_component(expose) $itk_component(hrstart) $itk_component(hrstop)
 # WFS controls.
    set w $itk_component(wfs)
    itk_component add wfssel {
@@ -153,9 +190,6 @@ itcl::body ObserveControl::constructor args {
    $itk_component(lpath) add "GCAL>Instr"
    $itk_component(lpath) add "Sky>AC/HR"
    $itk_component(lpath) add "Sky>AO>AC/HR"
-# AWE removed because these have no real use
-#   $itk_component(lpath) add "AO cal>Instr"
-#   $itk_component(lpath) add "AO cal>AC/HR"
    pack $itk_component(lpath)
 
    $itk_component(lpath) setState {0 1 2} disabled
@@ -182,105 +216,12 @@ itcl::body ObserveControl::constructor args {
             -sadrecord {tcssad nodState} -setvalue B
    }
 
-# OIWFS follow and Park
-#   itk_component add oiwfs {
-#      frame $w.oiwfs
-#   }
-#   set w $itk_component(oiwfs)
 
-   itk_component add oilab {
-      label $w.lab -text OI   
-   }
-   itk_component add oifollow {
-      OnOffButton $w.oifollow -text Follow \
-            -oncommand {oiFollow followState On} \
-            -offcommand {oiFollow followState Off} \
-            -onvalue {ON On} -offvalue {OFF Off} \
-            -sadrecord {agssad oiFollowS}
-   }
-   itk_component add oipark {
-      ApplyButton $w.oipark -text Park -command oiwfsPark
-   }
-#   pack $itk_component(oilab) $itk_component(oifollow) $itk_component(oipark) \
-#      -side left -fill x -padx 3
-
-# AOWFS controls
-
-    itk_component add aowfslab {
-        label $w.alab -text AOWFS
-    }
-    itk_component add aofollow {
-        OnOffButton $w.altair -text Follow \
-                -onproc  [itcl::code $this altairfollow] \
-                -offcommand {aoFollow followState Off } \
-                -onvalue {ON On} \
-                -offvalue {OFF Off} \
-                -sadrecord {aossad followS}
-    }
-    itk_component add aopark {
-        LiveButton $w.aopark -command [itcl::code $this altairpark] -text Park
-    }
-    
-
-# PWFS1 controls.
-   set w $itk_component(buttons)
-   itk_component add p1lab {
-      label $w.p1lab -text "P1 probe"
-   }
-   itk_component add p1follow {
-      OnOffButton $w.p1follow -text Follow \
-            -oncommand {p1Follow followState On} \
-            -offcommand {p1Follow followState Off} \
-            -onvalue {ON On} -offvalue {OFF Off} \
-            -sadrecord {agssad p1FollowS}
-   }
-#   itk_component add p1flip {
-#      ApplyButton $w.p1flip -command pwfs1Flip -text "Flip arm"
-#   }
-#   itk_component add p1unwrap {
-#      ApplyButton $w.p1unwrap -command pwfs1Unwrap -text Unwrap
-#   }
-#   itk_component add p1center {
-#      ApplyButton $w.p1center -command pwfs1Move -text Center \
-#            -parcommand [itcl::code $this center 1]
-#   }
-   itk_component add p1park {
-      ApplyButton $w.p1park -command pwfs1Park -text Park
-   }
-
-# PWFS2 controls.
-   itk_component add p2lab {
-      label $w.p2lab -text "P2 probe"
-   }
-   itk_component add p2follow {
-      OnOffButton $w.p2follow -text Follow \
-            -oncommand {p2Follow followState On} \
-            -offcommand {p2Follow followState Off} \
-            -onvalue {ON On} -offvalue {OFF Off} \
-            -sadrecord {agssad p2FollowS}
-   }
-#   itk_component add p2flip {
-#      ApplyButton $w.p2flip -command pwfs2Flip -text "Flip arm"
-#   }
-#   itk_component add p2unwrap {
-#      ApplyButton $w.p2unwrap -command pwfs2Unwrap -text Unwrap
-#   }
-   itk_component add p2park {
-      ApplyButton $w.p2park -command pwfs2Park -text Park
-   }
-#   itk_component add p2center {
-#      ApplyButton $w.p2center -command pwfs2Move -text Center \
-#            -parcommand [itcl::code $this center 2]
-#   }
-
-   grid $itk_component(choplab) $itk_component(p1lab) $itk_component(p2lab) -sticky ew -padx 5
-   grid $itk_component(chop) $itk_component(p1follow) $itk_component(p2follow) -sticky ew -padx 5
-    grid $itk_component(beam) $itk_component(p1park) $itk_component(p2park) -sticky ew -padx 5
-    grid $itk_component(noda) $itk_component(oilab) $itk_component(aowfslab) -sticky ew -padx 5
-    grid $itk_component(nodb) $itk_component(oifollow) $itk_component(aofollow) -sticky ew -padx 5
-    grid x $itk_component(oipark) $itk_component(aopark) -sticky ew -padx 5
-   grid configure $itk_component(beam) -rowspan 2
-   #grid configure $itk_component(oiwfs) -columnspan 2
+   grid $itk_component(choplab) -sticky ew -padx 5
+   grid $itk_component(chop) -sticky ew -padx 5
+   grid $itk_component(beam) -sticky ew -padx 5
+   grid $itk_component(noda) -sticky ew -padx 5
+   grid $itk_component(nodb) -sticky ew -padx 5
 
 # Create command senders.
    if { [catch {cs chop info}] } {
@@ -369,7 +310,7 @@ itcl::body ObserveControl::setfold {path} {
 	      global env
 	      # configure wavelength based on AC col filter
 	      if {$env(TCC_TCSNAME) == "tcs"} {
-		  set ac_filt [sa hrwfs::currStatus get colfilt]
+		  set ac_filt [$itk_component(wfsconfig) getValue HrwfsColFilt]
 	      } else {
 		  set ac_filt [.observePanel.frame.control.acqcam.frame.setup.col get]
 	      }
@@ -381,12 +322,18 @@ itcl::body ObserveControl::setfold {path} {
  		  "R-red2"  { set new_wavelength "Acq Cam R" }
  		  "I-red3"  { set new_wavelength "Acq Cam I" }
  		  "neutral" { set new_wavelength "Acq Cam neutral" }
- 		  default   { set new_wavelength "Acq Cam neutral" }
+		  default {
+		      tk_messageBox -icon warning -parent $itk_interior \
+			  -message "Warning, no valid HRWFS/AC color filter"
+		      set new_wavelength "invalid"
+		  }
  	      }
  	      #puts "new wavelength: $new_wavelength"
-	      set wavelObj ::WavelengthNames::$new_wavelength
- 	      #puts "wavelObj: $wavelObj"
-	      $wavelObj apply tcs.field.wavelength
+	      if {$new_wavelength != "invalid"} {
+		  set wavelObj ::WavelengthNames::$new_wavelength
+		  #puts "wavelObj: $wavelObj"
+		  $wavelObj apply tcs.field.wavelength
+	      }
 	  }
       }
       "Sky>AO>AC/HR" {
@@ -401,11 +348,10 @@ itcl::body ObserveControl::setfold {path} {
 	      global env
 	      # configure wavelength based on AC col filter
 	      if {$env(TCC_TCSNAME) == "tcs"} {
-		  set ac_filt [sa hrwfs::currStatus get colfilt]
+		  set ac_filt [$itk_component(wfsconfig) getValue HrwfsColFilt]
 	      } else {
 		  set ac_filt [.observePanel.frame.control.acqcam.frame.setup.col get]
 	      }
-	      
  	      #puts "got ac filter: $ac_filt"
  	      switch $ac_filt {
  		  "U-red1"  { set new_wavelength "Acq Cam U" }
@@ -414,12 +360,18 @@ itcl::body ObserveControl::setfold {path} {
  		  "R-red2"  { set new_wavelength "Acq Cam R" }
  		  "I-red3"  { set new_wavelength "Acq Cam I" }
  		  "neutral" { set new_wavelength "Acq Cam neutral" }
- 		  default   { set new_wavelength "Acq Cam neutral" }
+		  default {
+		      tk_messageBox -icon warning -parent $itk_interior \
+			  -message "Warning, no valid HRWFS/AC color filter"
+		      set new_wavelength "invalid"
+		  }
  	      }
  	      #puts "new wavelength: $new_wavelength"
-	      set wavelObj ::WavelengthNames::$new_wavelength
- 	      #puts "wavelObj: $wavelObj"
-	      $wavelObj apply tcs.field.wavelength
+	      if {$new_wavelength != "invalid"} {
+		  set wavelObj ::WavelengthNames::$new_wavelength
+		  #puts "wavelObj: $wavelObj"
+		  $wavelObj apply tcs.field.wavelength
+	      }
 	  }
       }
    }
@@ -479,6 +431,32 @@ itcl::body ObserveControl::wfsql {} {
 # Start the selected WFS with the quick-look tool.
    $wfs configure -quicklook 1
    $wfs start -1
+}
+
+itcl::body ObserveControl::expose {} {
+
+# Set exposure time.
+   hrwfs expose [$itk_component(expose) get]
+}
+
+itcl::body ObserveControl::lenssel {} {
+
+# Select hrwfs lens.
+   hrwfs lenssel [$itk_component(hracsel) get]
+}
+
+itcl::body ObserveControl::hrstop {} {
+
+# Stop hrwfs.
+   hrwfs stop
+}
+
+itcl::body ObserveControl::hrstart {} {
+
+# Start continuous exposures to DHS.
+   hrwfs expose [$itk_component(expose) get]
+   hrwfs output DHS
+   hrwfs start -1
 }
 
 itcl::body ObserveControl::selwfs {} {
