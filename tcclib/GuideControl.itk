@@ -17,12 +17,7 @@ itcl::class GuideControl {
    itk_option define -component component Component {}
    public {
       method load {name}
-      method reset {}
       method save {name}
-   }
-   private {
-      method filter {wfs}
-      variable defaultwavels
    }
 }
 
@@ -70,61 +65,9 @@ itcl::body GuideControl::constructor {args} {
       pack $itk_component(${wfs}chop) $itk_component(${wfs}nod) \
             -padx 5 -pady 2 -anchor w
 
-# Effective wavelength.
-      if { $wfs == "oiwfs" } {
-
-# A subcomponent selector for the OIWFS.
-         itk_component add oiwfsfilter {
-            WavelengthSelector $w.oiwfsfilter -labeltext "with filter" \
-                  -labelpos w
-         }
-         pack $itk_component(${wfs}filter) -anchor w -padx 3 -pady 3
-      } else {
-
-# An option menus and an entry field for the PWFSs.
-	 itk_component add ${wfs}f1 {
-	    frame $w.${wfs}f1
-	 }
-         itk_component add ${wfs}filter {
-            iwidgets::optionmenu $w.${wfs}f1.${wfs}filter -labeltext "with filter" \
-                  -command [itcl::code $this filter $wfs]
-         }
-	 itk_component add ${wfs}currFlt {
-	    MonitorLabel $w.${wfs}f1.currFlt agssad ${wfs}Filter -width 8 -anchor w
-	 }
-	 pack $itk_component(${wfs}filter) $itk_component(${wfs}currFlt) -side left -ipadx 4
-	 
-         $itk_component(${wfs}filter) insert end neutral Blue Green Red Red04 \
-               Red1 ""
-         if { $wfs == "pwfs2" } {
-            $itk_component(${wfs}filter) insert Red1 "ALTAIR"
-         }
-         itk_component add ${wfs}wavel {
-            iwidgets::entryfield $w.${wfs}wavel -labeltext "Wavelength (um)" \
-                  -width 8
-         }
-	 itk_component add ${wfs}f2 {
-	    frame $w.${wfs}f2
-	 }
-         itk_component add ${wfs}fldstop {
-            iwidgets::optionmenu $w.${wfs}f2.${wfs}fldstop -labeltext "field stop"
-         }
-	 itk_component add ${wfs}currFld {
-	    MonitorLabel $w.${wfs}f2.currFld agssad ${wfs}Fldstop -width 8 -anchor w
-	 }
-	 pack $itk_component(${wfs}fldstop) $itk_component(${wfs}currFld) -side left -ipadx 4
-         $itk_component(${wfs}fldstop) insert end prism 10.0 6.4 3.2 1.6 open1 open2 open3 open4 ""
-         pack $itk_component(${wfs}f1) $itk_component(${wfs}wavel) \
-               $itk_component(${wfs}f2) -anchor w -padx 3 -pady 3
-      }
    }
-
 # Define the object description.
    set description "guide configuration"
-
-# Define the default wavelengths for the peripheral wave-front filters.
-   array set defaultwavels {neutral 0.65 Blue 0.45 Green 0.55 Red 0.60 \
-         Red04 0.64 Red1 0.70 ALTAIR 0.70}
 
    eval itk_initialize $args
 }
@@ -149,13 +92,6 @@ itcl::body GuideControl::save {name} {
          4 {set chop never}
       }
       $name configure -${wfs}Active $chop -${wfs}NodState $nod
-      if { $wfs == "oiwfs" } {
-         $name configure -oiwfsWavelength [$itk_component(oiwfsfilter) get name]
-      } else {
-         $name configure -${wfs}Filter [$itk_component(${wfs}filter) get] \
-               -${wfs}Wavel [$itk_component(${wfs}wavel) get]
-         $name configure -${wfs}FldStop [$itk_component(${wfs}fldstop) get]
-      }
    }
 }
 
@@ -176,42 +112,5 @@ itcl::body GuideControl::load {name} {
          B {$itk_component(${wfs}nod) select 1}
          AB {$itk_component(${wfs}nod) select 2}
       }
-      if { $wfs != "oiwfs" } {
-         $itk_component(${wfs}filter) select [$name cget -${wfs}Filter]
-         filter $wfs
-         set wavel [$name cget -${wfs}Wavel]
-         if { $wavel != "" } {
-            $itk_component(${wfs}wavel) clear
-            $itk_component(${wfs}wavel) insert end $wavel
-         }
-         $itk_component(${wfs}fldstop) select [$name cget -${wfs}FldStop]
-      } else {
-         set ::Config($itk_option(-component).oiwfswavelength,value) \
-               [$name cget -oiwfsWavelength]
-      }
-   }
-}
-
-itcl::body GuideControl::reset {} {
-   $itk_component(pwfs1wavel) clear
-   $itk_component(pwfs2wavel) clear
-   $itk_component(pwfs1filter) select ""
-   $itk_component(pwfs2filter) select ""
-   $itk_component(pwfs1fldstop) select ""
-   $itk_component(pwfs2fldstop) select ""
-}
-
-itcl::configbody GuideControl::component {
-   if { $itk_option(-component) != "" } {
-      $itk_component(oiwfsfilter) configure \
-            -component $itk_option(-component).oiwfswavelength
-   }
-}
-
-itcl::body GuideControl::filter {wfs} {
-   set filt [$itk_component(${wfs}filter) get]
-   if { $filt != "" } {
-      $itk_component(${wfs}wavel) clear
-      $itk_component(${wfs}wavel) insert end $defaultwavels($filt)
    }
 }

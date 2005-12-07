@@ -11,31 +11,17 @@
 #           -oiwfsNodState  The nod states in which the probe follows
 #                           the star.
 #
-#           -oiwfsWavelength The OIWFS guiding wavelength component
-#
 #           -pwfs1Active    The chop states in which the guide star is
 #                           active
-#
-#           -pwfs1Filter    The PWFS1 filter.
-#
-#           -pwfs1FldStop   The PWFS1 field stop
 #
 #           -pwfs1NodState  The nod states in which the probe follows
 #                           the star.
 #
-#           -pwfs1Wavel     The PFWS1 guiding wavelength
-#
 #           -pwfs2Active    The chop states in which the guide star is
 #                           active
 #
-#           -pwfs2Filter    The PWFS2 filter.
-#
-#           -pwfs2FldStop   The PWFS2 field stop
-#
 #           -pwfs2NodState  The nod states in which the probe follows
 #                           the star.
-#
-#           -pwfs2Wavel     The PFWS2 guiding wavelength
 #
 #  Methods:
 #           apply comp      Sets the chop/nod flags
@@ -64,13 +50,6 @@ itcl::class Guide {
       variable pwfs1NodState AB
       variable pwfs2NodState AB
       variable oiwfsNodState AB
-      variable pwfs1Filter ""
-      variable pwfs2Filter ""
-      variable pwfs1FldStop ""
-      variable pwfs2FldStop ""
-      variable pwfs1Wavel ""
-      variable pwfs2Wavel ""
-      variable oiwfsWavelength ""
    }
    private {
       method setEnableFlags {wfs active nodstate}
@@ -81,67 +60,25 @@ itcl::body Guide::apply {comp} {
    setEnableFlags pwfs1 $pwfs1Active $pwfs1NodState
    setEnableFlags pwfs2 $pwfs2Active $pwfs2NodState
    setEnableFlags oiwfs $oiwfsActive $oiwfsNodState
-   if { ! [string equal $pwfs1Filter ""] } {
-      cs pwfs1Filter set filter $pwfs1Filter
-      logger command pwfs1Filter
-   }
-   if { ! ( [string equal $pwfs2Filter ""] || \
-         [string equal $pwfs2Filter ALTAIR] ) } {
-      cs pwfs2Filter set filter $pwfs2Filter
-      logger command pwfs2Filter
-   }
-   if { ! [string equal $pwfs1FldStop ""] } {
-      cs pwfs1FldStop set position $pwfs1FldStop
-      logger command pwfs1FldStop
-   }
-   if { ! [string equal $pwfs2FldStop ""] } {
-      cs pwfs2FldStop set position $pwfs2FldStop
-      logger command pwfs2FldStop
-   }
-   if { ! [string equal $pwfs1Wavel ""] } {
-      cs wavelPwfs1 set wavel $pwfs1Wavel
-      logger command wavelPwfs1
-   }
-   if { ! [string equal $pwfs2Wavel ""] } {
-      cs wavelPwfs2 set wavel $pwfs2Wavel
-      logger command wavelPwfs2
-   }
-   if { ! [string equal $oiwfsWavelength ""] } {
-      ::OIWFSWavelengthNames::$oiwfsWavelength apply $comp.oiwfswavelength
-   }
 }
 
 itcl::body Guide::init {} {
    set oiwfsActive A
    set oiwfsNodState AB
-   set oiwfsWavelength ""
    set pwfs1Active A
-   set pwfs1Filter ""
-   set pwfs1FldStop ""
    set pwfs1NodState AB
-   set pwfs1Wavel ""
    set pwfs2Active A
-   set pwfs2Filter ""
-   set pwfs2FldStop ""
    set pwfs2NodState AB
-   set pwfs2Wavel ""
 }
 
 itcl::body Guide::save {node} {
    set node [paramset $node guide]
    param $node pwfs1Active $pwfs1Active
    param $node pwfs1NodState $pwfs1NodState
-   param $node pwfs1Filter $pwfs1Filter
-   param $node pwfs1FldStop $pwfs1FldStop
-   param $node pwfs1Wavelength $pwfs1Wavel
    param $node pwfs2Active $pwfs2Active
    param $node pwfs2NodState $pwfs2NodState
-   param $node pwfs2Filter $pwfs2Filter
-   param $node pwfs2FldStop $pwfs2FldStop
-   param $node pwfs2Wavelength $pwfs1Wavel
    param $node oiwfsActive $oiwfsActive
    param $node oiwfsNodState $oiwfsNodState
-   param $node oiwfsWavelength $oiwfsWavelength
 }
 
 itcl::body Guide::setEnableFlags {wfs active nodstate} {
@@ -245,13 +182,13 @@ itcl::body Guide::setEnableFlags {wfs active nodstate} {
 }
 
 itcl::body Guide::preview {view} {
-   if { ! [string equal $pwfs1Wavel ""] } {
-      $view configure -p1Wavel $pwfs1Wavel
-   }
-   if { ! [string equal $pwfs2Wavel ""] } {
-      $view configure -p2Wavel $pwfs2Wavel
-   }
-   if { ! [string equal $oiwfsWavelength ""] } {
-      ::OIWFSWavelengthNames::$oiwfsWavelength preview $view oiwfs
-   }
+#    if { ! [string equal $pwfs1Wavel ""] } {
+#       $view configure -p1Wavel $pwfs1Wavel
+#    }
+#    if { ! [string equal $pwfs2Wavel ""] } {
+#       $view configure -p2Wavel $pwfs2Wavel
+#    }
+#    if { ! [string equal $oiwfsWavelength ""] } {
+#       ::OIWFSWavelengthNames::$oiwfsWavelength preview $view oiwfs
+#    }
 }
