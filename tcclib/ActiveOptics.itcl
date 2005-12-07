@@ -66,9 +66,6 @@ itcl::body ActiveOptics::constructor {args} {
    if { [catch {cs oiwfsSelect info}] } {
       epics cs oiwfsSelect
    }
-   if { [catch {cs aoBlendOI info}] } {
-      epics cs aoBlendOI
-   }
    if { [catch {cs oiwfsOut info}] } {
       epics cs oiwfsOut
    }
@@ -81,6 +78,61 @@ itcl::body ActiveOptics::constructor {args} {
 itcl::body ActiveOptics::enable {} {
 
 # Set parameters according to the current state...
+
+# Configure OIWFS Blending in AO
+   if { $oiblend } {
+       # need to ensure that OIWFS Guide Output is set to AO
+#        if {[sa aossad get oiOutGuide] == "SCS"} {
+# 	   puts "changing OIWFS Output to AO"
+# 	   if {$oiwfsActive} { 
+# 	       Oiwfs stop 
+# 	       cs oiwfsOut set detSigOutput 1
+# 	       cs oiwfsOut set detSigOutputDir 3
+# 	       Oiwfs start -1
+# 	   } else {
+# 	       cs oiwfsOut set detSigOutput 1
+# 	       cs oiwfsOut set detSigOutputDir 3
+# 	   }
+#        }
+       # wait for the altair loop to settle
+       # make sure correctM is Busy, otherwise it will never settle
+       if {[sa aossad get correctBusy] == "BUSY"} {
+	   while {[sa aossad get aoSettled] == "0"} { after 200 }   
+       }
+       cs aoOiwfsSource set state ON
+   } else {
+       # need to ensure that OIWFS Guide Output is set to SCS
+#        if {[sa aossad get oiOutGuide] == "AO"} {
+# 	   puts "changing OIWFS Output to SCS"
+# 	   if {$oiwfsActive} { 
+# 	       Oiwfs stop 
+# 	       cs oiwfsOut set detSigOutput 0
+# 	       cs oiwfsOut set detSigOutputDir 3
+# 	       Oiwfs start -1
+# 	   } else {
+# 	       cs oiwfsOut set detSigOutput 0
+# 	       cs oiwfsOut set detSigOutputDir 3
+# 	   }
+#        }
+        cs aoOiwfsSource set state OFF
+	cs aoOiwfsSource set bandwidth -1
+   }
+   logger command aoOiwfsSource
+
+# Post the Blending Command.
+# The blending command must be finished before the loops are closed.
+   if { [catch {cs tcsApply post} msg] } {
+      tk_messageBox -icon error -message \
+            "Error posting guide commands: TCS reports \
+           \"$msg\""
+      return
+   }
+
+# need to wait for aoOiwfsSource to go idle
+   after 500
+   #puts "Oi Blend Busy: [sa aossad get oiblendBusy]"
+   while {[sa aossad get oiblendBusy] == "BUSY"} { after 200 }   
+   #puts "Oi Blend Busy: [sa aossad get oiblendBusy]"
 
 # The probe guide states can either be A, B, AB or on. If it is the latter
 # then we must first determine which chop states it will be active in
@@ -111,41 +163,6 @@ itcl::body ActiveOptics::enable {} {
          }
       }
    }
-
-# Configure OIWFS Blending in AO
-   if { $oiblend } {
-       # need to ensure that OIWFS Guide Output is set to AO
-#        if {[sa aossad get oiOutGuide] == "SCS"} {
-# 	   puts "changing OIWFS Output to AO"
-# 	   if {$oiwfsActive} { 
-# 	       Oiwfs stop 
-# 	       cs oiwfsOut set detSigOutput 1
-# 	       cs oiwfsOut set detSigOutputDir 3
-# 	       Oiwfs start -1
-# 	   } else {
-# 	       cs oiwfsOut set detSigOutput 1
-# 	       cs oiwfsOut set detSigOutputDir 3
-# 	   }
-#        }
-       cs aoBlendOI set state ON
-   } else {
-       # need to ensure that OIWFS Guide Output is set to SCS
-#        if {[sa aossad get oiOutGuide] == "AO"} {
-# 	   puts "changing OIWFS Output to SCS"
-# 	   if {$oiwfsActive} { 
-# 	       Oiwfs stop 
-# 	       cs oiwfsOut set detSigOutput 0
-# 	       cs oiwfsOut set detSigOutputDir 3
-# 	       Oiwfs start -1
-# 	   } else {
-# 	       cs oiwfsOut set detSigOutput 0
-# 	       cs oiwfsOut set detSigOutputDir 3
-# 	   }
-#        }
-       cs aoBlendOI set state OFF
-   }
-   cs aoBlendOI set dir 0
-   cs aoBlendOI set dir 3
 
 # M2 tip/tilt is on and we want it off.
    if { $m2p1guide eq "" && $m2p2guide eq "" && $m2aoguide eq "" && \
@@ -366,6 +383,26 @@ itcl::body ActiveOptics::enable {} {
 
 itcl::body ActiveOptics::disable {} {
 
+# Turn off OI Blending in AO
+#   cs aoOiwfsSource set state OFF
+#   cs aoOiwfsSource set bandwidth 0
+#   logger command aoOiwfsSource
+
+# Post the Blending Command.
+# The blending command must be finished before the loops are closed.
+#   if { [catch {cs tcsApply post} msg] } {
+#      tk_messageBox -icon error -message \
+            "Error posting guide commands: TCS reports \
+            \"$msg\""
+#      return
+#   }
+
+# need to wait for aoOiwfsSource to go idle
+#   after 500
+   #puts "Oi Blend Busy: [sa aossad get oiblendBusy]"
+#   while {[sa aossad get oiblendBusy] == "BUSY"} { after 200 }   
+   #puts "Oi Blend Busy: [sa aossad get oiblendBusy]"
+
 # Stop the wave-front sensors.
    Pwfs1 stop
    Pwfs2 stop
@@ -388,11 +425,6 @@ itcl::body ActiveOptics::disable {} {
 # Turn off M1 AO
    cs m1Guide set mode Off
    logger command m1Guide
-
-# Turn off OI Blending in AO
-   cs aoBlendOI set state OFF
-   cs aoBlendOI set dir 0
-   cs aoBlendOI set dir 3
 
 # need to ensure that OIWFS Guide Output is set to SCS
 #    if {[sa aossad get oiOutGuide] == "AO"} {
@@ -462,6 +494,13 @@ itcl::body ActiveOptics::state {component} {
       }
       p2guide {
          if { [sa guideConfig get p2guide value] == "1" } {
+            return 1
+         } else {
+            return 0
+         }
+      }
+      oiguide {
+         if { [sa guideConfig get oiguide value] == "1" } {
             return 1
          } else {
             return 0
