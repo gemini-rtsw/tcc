@@ -63,5 +63,6 @@
 *observePanel*control*lpath*4*state:    disabled
 *observePanel*guideloop*m2ao*0*state:   disabled
 *observePanel*guideloop*m2ao*1*state:   disabled
+*observePanel*guideloop*oiao*state:     disabled
 *observePanel*guideloop*m1src*3*state:  disabled
 *tcsFieldPanel*notebook*page5*state:    disabled
