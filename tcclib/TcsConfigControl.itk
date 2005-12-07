@@ -46,6 +46,10 @@ itk::usual TcsConfigControl {
 
 itcl::body TcsConfigControl::constructor {args} {
 
+   if { [catch {cs aoGimOffsets info}] } {
+      epics cs aoGimOffsets
+   }
+
 # Expand the component selector.
    $itk_component(selector) configure -width 43
 
@@ -224,7 +228,7 @@ itcl::body TcsConfigControl::apply {} {
    set guide $::Config(tcs.field.guide,value)
    if { ! [string equal $guide ""] } {
        set inst $::Config(tcs.instrument,value)
-       if {[string equal $guide "OIWFS only"] || [string equal $guide "No guiding"]} {
+       if {[string match "*OI*" $guide] || [string equal $guide "No guiding"]} {
 	   #puts "OIWFS only or No guiding, choosing oiwfs based on instrument: $inst"
 	   if {[string match "*GMOS*" $inst]} {
 	       #puts "found GMOS"
@@ -252,7 +256,7 @@ itcl::body TcsConfigControl::apply {} {
                cs oiwfsSelect set output WFS
 	       logger command oiwfsSelect
 	   }
-       } elseif {[string equal $guide "ALTAIR"] && [string match "*NIFS*" $inst]} {
+       } elseif {([string equal $guide "AO-OI"]) && [string match "*NIFS*" $inst]} {
 	   set oiwfstarget $::Config(tcs.field.oiwfstarget,value)
 	   #puts "oiwfs target: $oiwfstarget"
 	   if {! [string equal $oiwfstarget ""]} {
@@ -273,7 +277,45 @@ itcl::body TcsConfigControl::apply {} {
 	   logger command oiwfsSelect
        }
    }
-   
+
+# Configure default filters, fieldstop for the WFS
+
+    if {[string match "*P1*" $guide]} {
+	pwfs filter pwfs1 "Red"
+	pwfs fldstop pwfs1 "open1"
+    }
+    
+    if {[string match "*P2*" $guide]} {
+	pwfs filter pwfs2 "Red"
+	pwfs fldstop pwfs2 "open1"
+    }
+
+    if {[string match "*OI*" $guide]} {
+	if {[string match "*GMOS*" $inst]} {
+	    set ::Config(tcs.field.guide.oiwfswavelength,value) "GMOS OIWFS"
+	} else {
+	    set ::Config(tcs.field.guide.oiwfswavelength,value) "K"
+	}
+    }
+#     set oiwlList $::Config(tcs.field.guide.oiwfswavelength,list)
+#     puts "OIWFS Wavelength List: $oiwlList inst: $inst"
+#     set inst [$::Config(tcs.instrument,namespace)::$inst cget -name]
+#     set inst [string toupper $inst]
+#     puts "OIWFS Wavelength List: $oiwlList inst: $inst"
+#     set oiwlName "$inst OIWFS K"
+#     puts "looking for name: $oiwlName"
+#     if {[$oiwlList index $oiwlName] > 0} {
+# 	puts "found OI wl $oiwlName"
+# 	set ::Config(tcs.field.guide.oiwfswavelength,value) $oiwlName
+#     }
+
+# Zero the offsets for the Gimbals if we're using altair   
+    if {[string equal $guide "ALTAIR"] || [string equal $guide "ALTAIR + OI"] } {
+	cs aoGimOffsets set xoff 0
+	cs aoGimOffsets set yoff 0
+	cs aoGimOffsets set zoff 0
+    }
+
 # Process the wrap controls
    switch -- [$itk_component(azwrap) get] {
       + {cs wrap set azimuth 1}
@@ -294,8 +336,9 @@ itcl::body TcsConfigControl::apply {} {
    global sfPos
 
    if {$sfPos != "empty"} {
-       .observePanel.frame.control.mirrors.lpath select $sfPos
+       .observePanel.frame.control.botframe.mirrors.lpath select $sfPos
    }
+
 }
 
 itcl::body TcsConfigControl::save {name} {
