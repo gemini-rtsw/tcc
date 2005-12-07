@@ -398,11 +398,11 @@ itcl::body FieldControl::swapguide {} {
 	   epics sa hrwfs::currStatus
 	}
         if {$env(TCC_TCSNAME) == "tcs"} {
-	    set guide_wl [sa hrwfs::currStatus get colfilt]
+	    set guide_wl [.observePanel.frame.control.botframe.wfsconfig getValue HrwfsColFilt]
 	} else {
 	    set guide_wl [.observePanel.frame.control.acqcam.frame.setup.col get]
 	}
-	#puts "swapguide got guide wl: $guide_wl"
+#	puts "swapguide got guide wl: $guide_wl"
 	switch $guide_wl {
 	   "U-red1"  { set new_wavelength "Acq Cam U" }
 	   "B-blue"  { set new_wavelength "Acq Cam B" }
@@ -464,6 +464,7 @@ itcl::body FieldControl::swapguide {} {
 	   set new_wavelength "Acq Cam neutral"
 	}
 	#puts "guide wl: $guide_wl using wl: $new_wavelength"
+       logactions logmess "guide wl: $guide_wl using wl: $new_wavelength"
 
    	::WavelengthNames::$new_wavelength configure -set_baffles 0
 	$fieldObj configure -guide "No guiding"
@@ -474,7 +475,7 @@ itcl::body FieldControl::swapguide {} {
 
 	# set Light Path Mode (for the A&G)
 	if [winfo exists .observePanel] {
-	    ::.observePanel.frame.control.mirrors.lpath select $lpath
+	    ::.observePanel.frame.control.botframe.mirrors.lpath select $lpath
 	}
 
 	# Append _GUIDE to the object name.
@@ -516,7 +517,7 @@ itcl::body FieldControl::swapguide {} {
 
 	# set Light Path Mode (for the A&G)
 	if [winfo exists .observePanel] {
-	    ::.observePanel.frame.control.mirrors.lpath select $lpath
+	    ::.observePanel.frame.control.botframe.mirrors.lpath select $lpath
 	}
 	
 	#clear temp storage
@@ -567,7 +568,7 @@ itcl::body FieldControl::load {name} {
 
 	# set Light Path Mode (for the A&G)
 	if [winfo exists .observePanel] {
-	    ::.observePanel.frame.control.mirrors.lpath select $lpath
+	    ::.observePanel.frame.control.botframe.mirrors.lpath select $lpath
 	}
 	
 	#clear temp storage
