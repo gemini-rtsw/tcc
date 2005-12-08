@@ -413,11 +413,15 @@ itcl::body FieldControl::swapguide {} {
 	   default   { set new_wavelength "" }
 	}
        switch $curr_guide {
+	   "P1-P2" -
+	   "P1-OI" -
+	   "AO-P1" -
 	   "P1" {
 	       set curr_guidetarget ${::Config(tcs.field.pwfs1target,value)}
 	       #set ::Config(tcs.field.pwfs1target,value) ""
 	       set lpath "Sky>AC/HR"
 	   }
+	   "P2-OI" -
 	   "P2" {
 	       set curr_guidetarget ${::Config(tcs.field.pwfs2target,value)}
 	       #set ::Config(tcs.field.pwfs2target,value) ""
@@ -428,6 +432,7 @@ itcl::body FieldControl::swapguide {} {
 	       #set ::Config(tcs.field.oiwfstarget,value) ""
 	       set lpath "Sky>AC/HR"
 	   }
+	   "AO-OI" -
 	   "AO" {
 	       set curr_guidetarget ${::Config(tcs.field.altairtarget,value)}
 	       #set ::Config(tcs.field.altairtarget,value) ""
@@ -491,10 +496,14 @@ itcl::body FieldControl::swapguide {} {
 	#puts "swapping back ..."
 	
 	switch $curr_guide {
+	   "P1-P2" -
+	   "P1-OI" -
+	   "AO-P1" -
 	   "P1" {
 		   $fieldObj configure -pwfs1target $curr_guidetarget
 		   set lpath "Sky>Instr"
 	        }
+	   "P2-OI" -
 	   "P2" {
 		   $fieldObj configure -pwfs2target $curr_guidetarget
 		   set lpath "Sky>Instr"
@@ -503,6 +512,7 @@ itcl::body FieldControl::swapguide {} {
 		   $fieldObj configure -oiwfstarget $curr_guidetarget
 		   set lpath "Sky>Instr"
 	        }
+	   "AO-OI" -
 	   "AO" {
 		   $fieldObj configure -altairtarget $curr_guidetarget
 		   set lpath "Sky>AO>Inst"
