@@ -19,7 +19,6 @@ itcl::class ObserveControl {
    public {
       method reset {} {
 	   $itk_component(guideloop) reset
-	   $itk_component(altair) reset
 	}
    }
    private {
@@ -88,20 +87,22 @@ itcl::body ObserveControl::constructor args {
 
    set w $itk_component(botframe)
 
+# Controls frame
+   itk_component add conframe {
+       frame $w.conframe -borderwidth 2
+   }
+
 # WFS controls
    itk_component add wfs {
-      frame $w.wfs -bd 2 -relief ridge
+      frame $w.conframe.wfs -bd 2 -relief ridge
    }
 
 # HRWFS/AC controls
    itk_component add hrac {
-      frame $w.hrac -bd 2 -relief ridge
+      frame $w.conframe.hrac -bd 2 -relief ridge
    }
 
-# Altair controls.
-   itk_component add altair {
-      AoControl $w.altair
-   }
+   pack $itk_component(hrac) $itk_component(wfs) -side left -padx 6
 
 # Acquisition Camera/HRWFS controls.
    itk_component add acqcam {
@@ -124,9 +125,12 @@ itcl::body ObserveControl::constructor args {
        WfsConfig $w.wfsconfig
     }
 
-   grid $itk_component(hrac) $itk_component(mirrors)  $itk_component(altair)  -padx 5 -pady 5 -sticky s
-   grid  $itk_component(wfs) ^ $itk_component(buttons) 
-   grid $itk_component(wfsconfig) ^ ^ -padx 5 -pady 5 -sticky s
+#   grid $itk_component(hrac) $itk_component(mirrors)  -padx 5 -pady 5 -sticky s
+#   grid  $itk_component(wfs) ^ $itk_component(buttons) -padx 5 -pady 5 -sticky s
+#   grid $itk_component(wfsconfig) ^ ^ -padx 5 -pady 5 -sticky s
+
+   grid $itk_component(conframe) - $itk_component(mirrors)  -padx 5 -pady 5 -sticky n
+   grid $itk_component(wfsconfig) $itk_component(buttons) ^  -padx 5 -pady 5 -sticky s
 
 # HRWFS/AC controls.
    set w $itk_component(hrac)
@@ -325,7 +329,7 @@ itcl::body ObserveControl::setfold {path} {
 	      if {$env(TCC_TCSNAME) == "tcs"} {
 		  set ac_filt [$itk_component(wfsconfig) getValue HrwfsColFilt]
 	      } else {
-		  set ac_filt [.observePanel.frame.control.acqcam.frame.setup.col get]
+		  set ac_filt [.observePanel.frame.control.botframe.wfsconfig.tabs.canvas.notebook.cs.page1.cs.hrwfs.col get]
 	      }
 	      #puts "got ac filter: $ac_filt"
  	      switch $ac_filt {
@@ -363,7 +367,7 @@ itcl::body ObserveControl::setfold {path} {
 	      if {$env(TCC_TCSNAME) == "tcs"} {
 		  set ac_filt [$itk_component(wfsconfig) getValue HrwfsColFilt]
 	      } else {
-		  set ac_filt [.observePanel.frame.control.acqcam.frame.setup.col get]
+		  set ac_filt [.observePanel.frame.control.botframe.wfsconfig.tabs.canvas.notebook.cs.page1.cs.hrwfs.col get]
 	      }
  	      #puts "got ac filter: $ac_filt"
  	      switch $ac_filt {
