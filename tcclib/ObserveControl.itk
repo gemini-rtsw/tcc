@@ -53,6 +53,19 @@ itcl::body ObserveControl::constructor args {
 
    set w $itk_interior
 
+# Create command senders and status acceptors.
+
+   if { [catch {sa pwfs1Guide info}] } {
+      epics sa pwfs1Guide
+   }
+   if { [catch {sa pwfs2Guide info}] } {
+      epics sa pwfs2Guide
+   }
+   if { [catch {sa oiwfsGuide info}] } {
+      epics sa oiwfsGuide
+   }
+
+
 # Guiding control picture.
    itk_component add guideloop {
       GuideLoop $w.guideloop
