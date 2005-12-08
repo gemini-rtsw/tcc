@@ -17,6 +17,7 @@ itcl::class WfsConfig {
       method getValue {comp}
    }
    private {
+       method pageSelectCB {color}
        method filter {wfs}
        method fldstop {wfs}
        method ndsel {}
@@ -26,12 +27,9 @@ itcl::class WfsConfig {
 }
 
 itk::usual WfsConfig {
-    keep -font -activeforeground -disabledforeground \
-          -highlightcolor -highlightthickness -background -borderwidth \
-          -cursor -foreground -highlightcolor -highlightthickness \
-          -insertbackground -insertborderwidth -insertofftime -insertontime \
-          -insertwidth -labelfont -selectbackground -selectborderwidth \
-          -selectforeground -textbackground -textfont
+   keep -borderwidth -cursor -font -highlightthickness -insertborderwidth \
+         -insertofftime -insertontime -insertwidth -labelfont -popupcursor \
+         -selectborderwidth -textfont
 }
 
 itcl::body WfsConfig::constructor {args} {
@@ -40,7 +38,10 @@ itcl::body WfsConfig::constructor {args} {
 
    itk_component add tabbook {
       iwidgets::tabnotebook $w.tabs -tabpos n -width 400 -height 150
+   } {
+      ignore -background -tabbackground
    }
+
 # -equaltabs false
    pack $itk_component(tabbook)
 
@@ -48,8 +49,21 @@ itcl::body WfsConfig::constructor {args} {
 
 # add a page
        set w  [$itk_component(tabbook) add -label $label]
+
+# Set colours from the options database
+       set bg [option get $w background Background] 
+       set fg [option get $w foreground Foreground] 
+       setWidgetColors $w [option get $w background Background] \
+	   [option get $w foreground Foreground]
+
+# Configure page to set background when selected.
+   $itk_component(tabbook) pageconfigure $label -background $bg \
+         -foreground $fg -command [itcl::code $this pageSelectCB $bg]
+
        itk_component add $wfs {
 	   frame $w.$wfs -bd 2
+       } {
+	   ignore -background
        }
        pack $itk_component($wfs)
 
@@ -64,6 +78,7 @@ itcl::body WfsConfig::constructor {args} {
                   -labelpos w -component tcs.field.guide.oiwfswavelength
          } {
 	     usual
+	     ignore -background
 	 }
          pack $itk_component(${wfs}filter) -anchor w -padx 3 -pady 3
       } elseif { $wfs == "hrwfs" } {
@@ -71,25 +86,36 @@ itcl::body WfsConfig::constructor {args} {
 	  itk_component add nd {
 	      iwidgets::optionmenu $w.nd -labeltext "ND filt" -labelpos w -width 100 \
 		  -command [itcl::code $this ndsel]
+	  } {
+	      ignore -background
 	  }
 	  $itk_component(nd) insert end open nd100 nd1000 filt04 filt06 filt08
 
 	  itk_component add col {
 	      iwidgets::optionmenu $w.col -labeltext "Col filt" -labelpos w \
 		  -width 100 -command [itcl::code $this colsel]
+	  } {
+	      ignore -background
 	  }
+
 	  $itk_component(col) insert end neutral  U-red1 B-blue V-green R-red2 \
 	      I-red3
 	  itk_component add currNDFilt {
 	      MonitorLabel $w.currNDFilt hrwfs::currStatus ndfilt -width 12 -anchor e -font "Arial 12 bold"
+	  } {
+	      ignore -background
 	  }
 
 	  itk_component add currColFilt {
 	      MonitorLabel $w.currColFilt hrwfs::currStatus colfilt -width 12 -anchor e -font "Arial 12 bold"
+	  } {
+	      ignore -background
 	  }
 	  itk_component add window {
 	      iwidgets::optionmenu $w.window -labeltext Window -labelpos w -width 100 \
 		  -command [itcl::code $this window]
+	  } {
+	      ignore -background
 	  }
 	  $itk_component(window) insert end full 200x200 100x100 
 
@@ -104,10 +130,14 @@ itcl::body WfsConfig::constructor {args} {
          itk_component add ${wfs}filter {
             iwidgets::optionmenu $w.${wfs}filter -labeltext "filter" -labelpos w -width 100 \
 		-command [itcl::code $this filter $wfs]
+	 } {
+	     ignore -background
 	 }
 	 itk_component add ${wfs}currFlt {
 	    MonitorLabel $w.currFlt agssad ${wfs}Filter -width 12 -anchor w -font "Arial 12 bold"
-	 } 
+	 }  {
+	     ignore -background
+	 }
 
          $itk_component(${wfs}filter) insert end neutral Blue Green Red Red04 \
                Red1 ""
@@ -116,16 +146,22 @@ itcl::body WfsConfig::constructor {args} {
          }
          itk_component add ${wfs}wavel {
             iwidgets::entryfield $w.${wfs}wavel -labeltext "wavelength" -width 8
-         } 
+         }  {
+	     ignore -background
+	 }
 
          itk_component add ${wfs}fldstop {
             iwidgets::optionmenu $w.${wfs}fldstop -labeltext "fieldstop" -labelpos w -width 100 \
 		-command [itcl::code $this fldstop $wfs]
-         } 
+         }  {
+	     ignore -background
+	 }
 
 	 itk_component add ${wfs}currFld {
 	    MonitorLabel $w.currFld agssad ${wfs}Fldstop -width 12 -anchor w -font "Arial 12 bold"
-	 } 
+	 }  {
+	     ignore -background
+	 }
 
          $itk_component(${wfs}fldstop) insert end prism 10.0 6.4 3.2 1.6 open1 open2 open3 open4 ""
 
@@ -182,4 +218,21 @@ itcl::body WfsConfig::getValue {comp} {
     }
     #puts "got value $value"
     return $value
+}
+
+itcl::body WfsConfig::pageSelectCB {color} {
+
+# Re-configure the notebook background to match the selected page.
+   $itk_component(tabbook) config -background $color -tabbackground $color \
+         -backdrop $color
+
+# Restore the colours of the tabs.
+   $itk_component(tabbook) pageconfigure HRWFS/AC -background \
+         [option get $itk_component(hrwfs) background Background] 
+   $itk_component(tabbook) pageconfigure PWFS1 -background \
+         [option get $itk_component(pwfs1) background Background] 
+   $itk_component(tabbook) pageconfigure P2/AO -background \
+         [option get $itk_component(pwfs2) background Background] 
+   $itk_component(tabbook) pageconfigure OIWFS -background \
+         [option get $itk_component(oiwfs) background Background] 
 }
