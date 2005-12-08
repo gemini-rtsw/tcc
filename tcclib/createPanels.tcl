@@ -38,8 +38,8 @@ proc createPanels {} {
          -title "Configuration Preview"
    PanelMgr logPanel -name .logPanel -class LogPanel \
          -title "Command Log"
-#   PanelMgr aoPanel -name .aoPanel \
-#         -class AoPanel -title "Adaptive Optics Control"
+   PanelMgr aoPanel -name .aoPanel \
+         -class AosPanel -title "Adaptive Optics Control"
    PanelMgr handsetPanel -name .handsetPanel \
          -class HandsetPanel -title "Handsets"
    PanelMgr pointUpdatePanel -name .pointUpdatePanel \
