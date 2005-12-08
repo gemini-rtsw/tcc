@@ -17,6 +17,7 @@
 *tcsPanel*background:		PeachPuff1
 *m1sPanel*background:		PeachPuff1
 *agsPanel*background:		PeachPuff1
+*aosPanel*background:		PeachPuff1
 
 # Handset pages
 *handsetPanel*page1*background:	SkyBlue
@@ -52,6 +53,7 @@
 *graphicDisplay.Font:		-*-*-bold-r-normal-sans-18-*-*-*-*-*-*-*
 
 # Disable AO related features
+*toolbar*ao*state:                      disabled
 *tcsConfigPanel*control*altair*state:   disabled
 *tcsPanel*control*altair*state:         disabled
 *tcsPanel*control*aodatum*state:        disabled
@@ -64,5 +66,6 @@
 *observePanel*guideloop*m2ao*0*state:   disabled
 *observePanel*guideloop*m2ao*1*state:   disabled
 *observePanel*guideloop*oiao*state:     disabled
+*observePanel*guideloop*gaoson*state:   disabled
 *observePanel*guideloop*m1src*3*state:  disabled
 *tcsFieldPanel*notebook*page5*state:    disabled
