@@ -17,6 +17,7 @@
 *tcsPanel*background:		PeachPuff1
 *m1sPanel*background:		PeachPuff1
 *agsPanel*background:		PeachPuff1
+*aosPanel*background:		PeachPuff1
 
 # Handset pages
 *handsetPanel*page1*background:	SkyBlue
@@ -50,8 +51,15 @@
 *FieldPanel*data*page4*background: 	Wheat
 *FieldPanel*data*page5*background: 	LemonChiffon
 
+# WFS config pages
+*wfsconfig*page1*background:   Pink
+*wfsconfig*page2*background:   SkyBlue
+*wfsconfig*page3*background:   OldLace
+*wfsconfig*page4*background:   Wheat
+
 # Font for "major" tcc items.
-*majorFont:			-*-*-bold-r-normal-sans-14-*-*-*-*-*-*-*
+# *majorFont:			-*-*-bold-r-normal-sans-14-*-*-*-*-*-*-*
+*Font:			-*-*-bold-r-normal-sans-12-*-*-*-*-*-*-*
 
 # Fonts for tsd displays.
 *numericDisplay.Font:		-*-*-bold-r-normal-sans-18-*-*-*-*-*-*-*
