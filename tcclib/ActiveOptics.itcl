@@ -1,5 +1,5 @@
 #+
-# ActiveOptics
+# Activeoptics
 #
 # An ActiveOptics object controls the state of the active optics (M2 tip/tilt,
 # coma correction, M1 figure). 
@@ -27,6 +27,7 @@ itcl::class ActiveOptics {
       variable m1filename ""
       variable probeguide none
       variable mountguide none
+      variable gaos 0
       variable pwfs1Expose 0.01
       variable pwfs1Active 0
       variable pwfs2Expose 0.005
@@ -72,6 +73,21 @@ itcl::body ActiveOptics::constructor {args} {
    if { [catch {sa guideConfig info}] } {
       epics sa guideConfig
    }
+
+# Create GAOS command senders.
+   if { [catch {cs aoFlatten info}] } {
+      epics cs aoFlatten
+   }
+   if { [catch {cs aoCentreWfs info}] } {
+      epics cs aoCentreWfs
+   }
+   if { [catch {cs aoCorrect info}] } {
+      epics cs aoCorrect
+   }
+   if { [catch {cs aoOiwfsSource info}] } {
+      epics cs aoOiwfsSource
+   }
+
    eval configure $args
 }
 
@@ -79,8 +95,72 @@ itcl::body ActiveOptics::enable {} {
 
 # Set parameters according to the current state...
 
-# Configure OIWFS Blending in AO
-   if { $oiblend } {
+# Start GAOS
+    if { $gaos && ![state gaos]} {
+	#puts "turning GAOS On"
+	# Flatten.
+	cs aoFlatten set dummy 1
+	logger command aoFlatten
+	
+	# Disable guiding.
+	# Stop the wave-front sensors.
+	Pwfs1 stop
+	Pwfs2 stop
+	Oiwfs stop
+	
+	# Turn off M2.
+	cs m2Guide set state Off
+	logger command m2Guide
+	cs m2GuideMode set coma Off
+	logger command m2GuideMode
+	
+	# Turn off probe guiding.
+	cs wfsGuideMode set state Off
+	logger command wfsGuideMode
+	
+	# Turn off mount guiding.
+	cs mountGuide set mode Off
+	logger command mountGuide
+	
+	# Turn off M1 AO
+	cs m1Guide set mode Off
+	logger command m1Guide
+	
+	# Post the command.
+	if { [catch {cs tcsApply post} msg] } {
+	    tk_messageBox -icon error -message \
+		"Error posting guide commands: TCS reports \
+            \"$msg\""
+	    return
+	}
+	
+	# Post ALTAIR correct command.
+	cs aoCorrect set correct ON
+	cs aoCorrect set matrix 0
+	cs aoCorrect set gains 0
+	logger command aoCorrect
+	if { [catch {cs tcsApply post} msg] } {
+            tk_messageBox -icon error -parent $itk_interior -message $msg
+	}
+	after 10
+		
+    } elseif { !$gaos && [state gaos] } {
+       #puts "turning GAOS off"
+       # Post ALTAIR correct command.
+       cs aoCorrect set correct OFF
+       logger command aoCorrect
+       if { [catch {cs tcsApply post} msg] } {
+	   tk_messageBox -icon error -parent $itk_interior -message $msg
+       }
+       after 10
+       
+       # Flatten.
+       cs aoFlatten set dummy 1
+       logger command aoFlatten
+    }
+
+    # Configure OIWFS Blending in AO
+    if { $oiblend } {
        # need to ensure that OIWFS Guide Output is set to AO
 #        if {[sa aossad get oiOutGuide] == "SCS"} {
 # 	   puts "changing OIWFS Output to AO"
@@ -96,12 +176,12 @@ itcl::body ActiveOptics::enable {} {
 #        }
        # wait for the altair loop to settle
        # make sure correctM is Busy, otherwise it will never settle
-       if {[sa aossad get correctBusy] == "BUSY"} {
-	   while {[sa aossad get aoSettled] == "0"} { after 200 }   
-       }
-       cs aoOiwfsSource set state ON
-   } else {
-       # need to ensure that OIWFS Guide Output is set to SCS
+	if {[sa aossad get correctBusy] == "BUSY"} {
+	    while {[sa aossad get aoSettled] == "0"} { after 200 }   
+	}
+	cs aoOiwfsSource set state ON
+    } else {
+	# need to ensure that OIWFS Guide Output is set to SCS
 #        if {[sa aossad get oiOutGuide] == "AO"} {
 # 	   puts "changing OIWFS Output to SCS"
 # 	   if {$oiwfsActive} { 
@@ -441,6 +521,22 @@ itcl::body ActiveOptics::disable {} {
       return
    }
 
+# Stop GAOS
+   if { [state gaos] } {
+       #puts "turning GAOS off"
+       # Post ALTAIR correct command.
+       cs aoCorrect set correct OFF
+       logger command aoCorrect
+       if { [catch {cs tcsApply post} msg] } {
+	   tk_messageBox -icon error -parent $itk_interior -message $msg
+       }
+       after 10
+       
+       # Flatten.
+       cs aoFlatten set dummy 1
+       logger command aoFlatten
+   }
+
 # Set the state to "disabled"
    set enabled 0
 }
@@ -479,7 +575,7 @@ itcl::body ActiveOptics::state {component} {
          }
       }
       oiblend {
-	  if { [sa aossad get oiblend] == "1" } {
+	  if {( [sa aossad get oiblend] == "1") || ([sa aossad get oiblend] == "ON") } {
             return 1
          } else {
             return 0
