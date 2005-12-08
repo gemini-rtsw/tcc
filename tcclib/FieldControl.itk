@@ -400,7 +400,7 @@ itcl::body FieldControl::swapguide {} {
         if {$env(TCC_TCSNAME) == "tcs"} {
 	    set guide_wl [.observePanel.frame.control.botframe.wfsconfig getValue HrwfsColFilt]
 	} else {
-	    set guide_wl [.observePanel.frame.control.acqcam.frame.setup.col get]
+	    set guide_wl [.observePanel.frame.control.botframe.wfsconfig.tabs.canvas.notebook.cs.page1.cs.hrwfs.col get]
 	}
 #	puts "swapguide got guide wl: $guide_wl"
 	switch $guide_wl {
@@ -412,36 +412,35 @@ itcl::body FieldControl::swapguide {} {
 	   "neutral" { set new_wavelength "Acq Cam neutral" }
 	   default   { set new_wavelength "" }
 	}
-	switch $curr_guide {
-	   "P1 only" {
-   		   set curr_guidetarget ${::Config(tcs.field.pwfs1target,value)}
-		   #set ::Config(tcs.field.pwfs1target,value) ""
-		   set lpath "Sky>AC/HR"
-	        }
-	   "P2 MIR" -
-	   "P2 only" {
-   		   set curr_guidetarget ${::Config(tcs.field.pwfs2target,value)}
-		   #set ::Config(tcs.field.pwfs2target,value) ""
-		   set lpath "Sky>AC/HR"
-	        }
-	   "OIWFS only" {
-   		   set curr_guidetarget ${::Config(tcs.field.oiwfstarget,value)}
-		   #set ::Config(tcs.field.oiwfstarget,value) ""
-		   set lpath "Sky>AC/HR"
-	        }
-	   "ALTAIR" {
-   		   set curr_guidetarget ${::Config(tcs.field.altairtarget,value)}
-		   #set ::Config(tcs.field.altairtarget,value) ""
-		   set lpath "Sky>AO>AC/HR"
-	        }
-	    default {
-		   tk_messageBox -icon warning -parent $itk_interior \
-			-message "Invalid guide configuration ... doing nothing"
-		   # puts "No guidestar set ... do nothing"
-		   set curr_guide ""
-		   set curr_sciencetarget ""
-		   return
-		}
+       switch $curr_guide {
+	   "P1" {
+	       set curr_guidetarget ${::Config(tcs.field.pwfs1target,value)}
+	       #set ::Config(tcs.field.pwfs1target,value) ""
+	       set lpath "Sky>AC/HR"
+	   }
+	   "P2" {
+	       set curr_guidetarget ${::Config(tcs.field.pwfs2target,value)}
+	       #set ::Config(tcs.field.pwfs2target,value) ""
+	       set lpath "Sky>AC/HR"
+	   }
+	   "OI" {
+	       set curr_guidetarget ${::Config(tcs.field.oiwfstarget,value)}
+	       #set ::Config(tcs.field.oiwfstarget,value) ""
+	       set lpath "Sky>AC/HR"
+	   }
+	   "AO" {
+	       set curr_guidetarget ${::Config(tcs.field.altairtarget,value)}
+	       #set ::Config(tcs.field.altairtarget,value) ""
+	       set lpath "Sky>AO>AC/HR"
+	   }
+	   default {
+	       tk_messageBox -icon warning -parent $itk_interior \
+		   -message "Invalid guide configuration ... doing nothing"
+	       # puts "No guidestar set ... do nothing"
+	       set curr_guide ""
+	       set curr_sciencetarget ""
+	       return
+	   }
 	}
 	if {$curr_guidetarget == ""} {
 	   tk_messageBox -icon warning -parent $itk_interior \
