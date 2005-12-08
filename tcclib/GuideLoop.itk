@@ -25,6 +25,7 @@ itcl::class GuideLoop {
    private {
       method recolour {args}
       method comacorr {val}
+      method gaos {val}
       method m2mode {probe val}
       method mtmode {val}
       method probemode {val}
@@ -87,8 +88,8 @@ itcl::body GuideLoop::constructor args {
    }
 
 # GAOS
-   $w create rectangle 0 0 130 67 -fill white -tags "active gaos gaos_bg"
-   $w create text 52 23 -text GAOS -tags gaos -font $font
+   $w create rectangle 0 0 138 73 -fill white -tags "active gaos gaos_bg"
+   $w create text 42 23 -text GAOS -tags gaos -font $font
    itk_component add oiao {
       SelectButton $w.oiao -orient horizontal \
             -command [itcl::code $this oiblend]
@@ -96,11 +97,22 @@ itcl::body GuideLoop::constructor args {
       usual
       rename -offbackground -background background Background
    }
-   $w create rectangle 0 38 130 67 -fill white -tags "active gaos gaos_bg"
-   $w create window 80 54 -width 100 -window $w.oiao -tags gaos
-   $w create text 16 55 -text OI -tags gaos -font $font
+   $w create rectangle 0 44 138 73 -fill white -tags "active gaos gaos_bg"
+   $w create window 80 60 -width 100 -window $w.oiao -tags gaos
+   $w create text 16 61 -text OI -tags gaos -font $font
    $itk_component(oiao) add ON -pady 0
    $itk_component(oiao) add OFF -pady 0
+
+   itk_component add gaoson {
+      SelectButton $w.gaoson -orient vertical -command [itcl::code $this gaos]
+   } {
+      usual
+      rename -offbackground -background background Background
+   }
+
+   $w create window 106 22 -width 60 -window $w.gaoson -tags gaos
+   $w.gaoson add ON -pady 0
+   $w.gaoson add OFF -pady 0
 
 # M1, M2 and Mount boxes.
    $w create rectangle 0 0 200 89 -fill white -tags "active m2 m2_bg"
@@ -524,6 +536,17 @@ itcl::body GuideLoop::comacorr {val} {
    }
 }
 
+itcl::body GuideLoop::gaos {val} {
+   switch $val {
+      ON {
+         AO configure -gaos 1
+      }
+      OFF {
+         AO configure -gaos 0
+      }
+   }
+}
+
 itcl::body GuideLoop::m2mode {probe val} {
    if { $val eq "OFF"} {
       AO configure -${probe}guide ""
@@ -621,4 +644,5 @@ itcl::body GuideLoop::reset {} {
    $itk_component(mt) select OFF
    $itk_component(pr) select OFF
    $itk_component(oiao) select OFF
+   $itk_component(gaoson) select OFF
 }
