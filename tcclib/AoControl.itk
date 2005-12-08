@@ -48,63 +48,63 @@ itcl::body AoControl::constructor args {
    set w $itk_component(frame)
 
 # Label.
-#    itk_component add label {
-#       label $w.label -text GAOS
-#    }
+    itk_component add label {
+       label $w.label -text GAOS
+    }
 
 # Flatten.
-#    itk_component add flatten {
-#       ApplyButton $w.flatten -text Flatten -command aoFlatten
-#    }
+    itk_component add flatten {
+       ApplyButton $w.flatten -text Flatten -command aoFlatten
+    }
 
 # Take Picture.
-#    itk_component add takepic {
-#       button $w.takepic -text "Take Picture" -state disabled
-#    }
+    itk_component add takepic {
+       button $w.takepic -text "Take Picture" -state disabled
+    }
 
 # Centre WFS.
-#    itk_component add centre {
-#       LiveButton $w.centre -text "Center WFS" -command [itcl::code $this centre]
-#    }
+    itk_component add centre {
+       LiveButton $w.centre -text "Center WFS" -command [itcl::code $this centre]
+    }
 
 # Close loop.
-   itk_component add loop {
-      frame $w.loop
-   }
-   set w $itk_component(loop)
-   itk_component add dmh {
-      checkbutton $w.dmh -variable [itcl::scope dmh] \
-            -command [itcl::code $this aoenable]
-   }
-   itk_component add aom2 {
-      OnOffButton $w.aom2 -text "AO + M2"  -state disabled \
-            -onproc [itcl::code $this loop ON] \
-            -offproc [itcl::code $this loop OFF] \
-            -onvalue On \
-            -offvalue Off \
-            -sadrecord {guideConfig aostate}
-   }
-
-   pack $itk_component(dmh) $itk_component(aom2) -side right
-   set w $itk_component(frame)
-
-# Prepare control matrix
-#    itk_component add prepare {
-#       LiveButton $w.prepare -text "Prepare Mtx" \
-#             -command [itcl::code $this preparecm 1]
+#    itk_component add loop {
+#       frame $w.loop
 #    }
-
-# Correct.
-#    itk_component add correct {
-#       OnOffButton $w.correct -text "Correct Only" \
-#             -onproc [itcl::code $this correct ON] \
-#             -offproc [itcl::code $this correct OFF] \
-#             -onvalue 1 \
-#             -offvalue 0 \
+#    set w $itk_component(loop)
+#    itk_component add dmh {
+#       checkbutton $w.dmh -variable [itcl::scope dmh] \
+#             -command [itcl::code $this aoenable]
+#    }
+#    itk_component add aom2 {
+#       OnOffButton $w.aom2 -text "AO + M2"  -state disabled \
+#             -onproc [itcl::code $this loop ON] \
+#             -offproc [itcl::code $this loop OFF] \
+#             -onvalue On \
+#             -offvalue Off \
 #             -sadrecord {guideConfig aostate}
 #    }
 
-# Create command senders.
+#    pack $itk_component(dmh) $itk_component(aom2) -side right
+#    set w $itk_component(frame)
+
+# Prepare control matrix
+    itk_component add prepare {
+       LiveButton $w.prepare -text "Prepare Mtx" \
+             -command [itcl::code $this preparecm 1]
+    }
+
+# Correct.
+    itk_component add correct {
+       OnOffButton $w.correct -text "Correct Only" \
+             -onproc [itcl::code $this correct ON] \
+             -offproc [itcl::code $this correct OFF] \
+             -onvalue 1 \
+             -offvalue 0 \
+             -sadrecord {guideConfig aostate}
+    }
+
+# Create GAOS command senders.
    if { [catch {cs aoFlatten info}] } {
       epics cs aoFlatten
    }
@@ -118,14 +118,13 @@ itcl::body AoControl::constructor args {
       epics cs aoOiwfsSource
    }
 
-   grid $itk_component(loop) -padx 2 -sticky ew
-#   grid $itk_component(label) -padx 5 -sticky ew
-#    grid $itk_component(flatten) -padx 5 -sticky ew
-#    grid $itk_component(takepic) -padx 5 -sticky ew
-#    grid $itk_component(centre) -padx 5 -sticky ew
-#   grid $itk_component(loop) -padx 5 -sticky ew
-#    grid $itk_component(prepare) -padx 5 -sticky ew
-#    grid $itk_component(correct) -padx 5 -sticky ew
+#   grid $itk_component(loop) -padx 2 -sticky ew
+   grid $itk_component(label) -padx 5 -sticky ew
+   grid $itk_component(flatten) -padx 5 -sticky ew
+   grid $itk_component(takepic) -padx 5 -sticky ew
+   grid $itk_component(centre) -padx 5 -sticky ew
+   grid $itk_component(prepare) -padx 5 -sticky ew
+   grid $itk_component(correct) -padx 5 -sticky ew
 
    eval itk_initialize $args
 }
