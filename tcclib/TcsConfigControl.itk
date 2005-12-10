@@ -290,6 +290,10 @@ itcl::body TcsConfigControl::apply {} {
 #	pwfs fldstop pwfs2 "open1"
     }
 
+    if {[string match "*AO*" $guide]} {
+	pwfs filter pwfs2 "ALTAIR"
+    }
+
     if {[string match "*OI*" $guide]} {
 	if {[string match "*GMOS*" $inst]} {
 	    set ::Config(tcs.field.guide.oiwfswavelength,value) "GMOS OIWFS"
