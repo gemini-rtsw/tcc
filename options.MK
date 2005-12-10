@@ -56,6 +56,7 @@
 *wfsconfig*page2*background:   SkyBlue
 *wfsconfig*page3*background:   OldLace
 *wfsconfig*page4*background:   Wheat
+*wfsconfig*page5*background:   LemonChiffon
 
 # Font for "major" tcc items.
 # *majorFont:			-*-*-bold-r-normal-sans-14-*-*-*-*-*-*-*
