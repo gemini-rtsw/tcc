@@ -93,6 +93,13 @@ itcl::body ActiveOptics::constructor {args} {
 
 itcl::body ActiveOptics::enable {} {
 
+# check to make sure we're not using OI probe guiding with GMOS
+    if { ($probeguide == "OIWFS") && [string match "*GMOS*" $::Config(tcs.instrument,value)]} {
+	tk_messageBox -icon error \
+	    -message "You cannot use OIWFS probe guiding with GMOS"
+	return
+    }
+
 # Set parameters according to the current state...
 
 # Start GAOS
