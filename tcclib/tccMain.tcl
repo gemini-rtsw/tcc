@@ -206,6 +206,8 @@ proc tccMain args {
                tk_messageBox -icon error -parent . -message \
                   "initialization directory \"$filespec\" is empty"
             } else {
+		# sort the list
+		set filenames [lsort $filenames]
                foreach filename $filenames {
                   if { ! [file isdirectory $filename] } {
                      puts "processing $filename"
