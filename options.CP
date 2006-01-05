@@ -68,4 +68,5 @@
 *observePanel*guideloop*oiao*state:     disabled
 *observePanel*guideloop*gaoson*state:   disabled
 *observePanel*guideloop*m1src*3*state:  disabled
+*observePanel*wfsconfig*page5*state:    disabled
 *tcsFieldPanel*notebook*page5*state:    disabled
