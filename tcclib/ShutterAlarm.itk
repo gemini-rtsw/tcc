@@ -11,7 +11,7 @@
 itcl::class ShutterAlarm {
    inherit itk::Widget
    constructor {args} {}
-   destructor {after cancel $tid}
+   destructor {}
    common current
    common peak
    public {
@@ -70,6 +70,19 @@ itcl::body ShutterAlarm::constructor {args} {
    $this scanLoop
 
    eval itk_initialize $args
+}
+
+itcl::body ShutterAlarm::destructor {} {
+    after cancel $tid
+    sa shutterDriveCurrents unproc t1x "$this updateProc"
+    sa shutterDriveCurrents unproc t1y "$this updateProc"
+    sa shutterDriveCurrents unproc t1z "$this updateProc"
+    sa shutterDriveCurrents unproc t1w "$this updateProc"
+    sa shutterDriveCurrents unproc b2x "$this updateProc"
+    sa shutterDriveCurrents unproc b2y "$this updateProc"
+    sa shutterDriveCurrents unproc b2z "$this updateProc"
+    sa shutterDriveCurrents unproc b2w "$this updateProc"
+    destroy .shutAlarm
 }
 
 itcl::body ShutterAlarm::updateProc {name alarm time values} {
@@ -164,7 +177,7 @@ itcl::body ShutterAlarm::alarmPopup {} {
    }
 
    itk_component add sa {
-                    	toplevel $sa
+       toplevel $sa
    }
    wm title $sa "ECS shutter current alarm"
    wm transient $sa
