@@ -17,6 +17,7 @@
 itcl::class TcsControl {
    inherit itk::Widget
    constructor args {}
+   destructor {destroy $alarmObj}
    private {
       method disable {par}
       method enable {par}
@@ -34,6 +35,7 @@ itcl::class TcsControl {
       method altairpark {}
       variable dome
       variable shutter
+      variable alarmObj
    }
 }
 
@@ -232,7 +234,8 @@ itcl::body TcsControl::constructor args {
    itk_component add alarm {
       ShutterAlarm $w.alarm
    }
-
+   set alarmObj $w.alarm
+   
    grid $itk_component(mcs) $itk_component(mcsdatum) $itk_component(mcspark) \
          -sticky nsew -padx 5 -pady 3
    grid $itk_component(scs) $itk_component(scsinit) $itk_component(scspark) \
