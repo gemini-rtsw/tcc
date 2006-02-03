@@ -228,7 +228,21 @@ itcl::body TcsConfigControl::apply {} {
    set guide $::Config(tcs.field.guide,value)
    if { ! [string equal $guide ""] } {
        set inst $::Config(tcs.instrument,value)
-       if {[string match "*OI*" $guide] || [string equal $guide "No guiding"]} {
+       if {([string equal $guide "AO-OI"]) && [string match "*NIFS*" $inst]} {
+	   set oiwfstarget $::Config(tcs.field.oiwfstarget,value)
+	   #puts "oiwfs target: $oiwfstarget"
+	   if {! [string equal $oiwfstarget ""]} {
+	       #puts "found NIFS (Altair/OI)"
+	       cs oiwfsSelect set oiwfs NIFS
+               cs oiwfsSelect set output WFS
+	       logger command oiwfsSelect
+	   } else {
+	       #puts "no OIWFS"
+	       cs oiwfsSelect set oiwfs None
+               cs oiwfsSelect set output WFS
+	       logger command oiwfsSelect
+	   }   
+       } elseif {[string match "*OI*" $guide] || [string equal $guide "No guiding"]} {
 	   #puts "OIWFS only or No guiding, choosing oiwfs based on instrument: $inst"
 	   if {[string match "*GMOS*" $inst]} {
 	       #puts "found GMOS"
@@ -261,20 +275,6 @@ itcl::body TcsConfigControl::apply {} {
                cs oiwfsSelect set output WFS
 	       logger command oiwfsSelect
 	   }
-       } elseif {([string equal $guide "AO-OI"]) && [string match "*NIFS*" $inst]} {
-	   set oiwfstarget $::Config(tcs.field.oiwfstarget,value)
-	   #puts "oiwfs target: $oiwfstarget"
-	   if {! [string equal $oiwfstarget ""]} {
-	       #puts "found NIFS (Altair/OI)"
-	       cs oiwfsSelect set oiwfs NIFS
-               cs oiwfsSelect set output WFS
-	       logger command oiwfsSelect
-	   } else {
-	       #puts "no OIWFS"
-	       cs oiwfsSelect set oiwfs None
-               cs oiwfsSelect set output WFS
-	       logger command oiwfsSelect
-	   }   
        } else {
 	   #puts "no OIWFS"
 	   cs oiwfsSelect set oiwfs None
