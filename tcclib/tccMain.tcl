@@ -148,6 +148,7 @@ proc tccMain args {
    epics cs aoDeployAdc
    epics cs aoFlatten
    epics cs aoPrepareCm
+   epics cs aoFlex
    epics cs aoMoveAdc
    epics cs filter1
    epics cs oiwfsSelect
