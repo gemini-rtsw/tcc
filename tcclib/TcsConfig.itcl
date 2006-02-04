@@ -86,6 +86,12 @@ itcl::body TcsConfig::apply {comp} {
       }
    }
 
+# Apply the oiwfswavelength here (it was previously in the CC heirarchy but is now in WfsConfig
+   set oiwfsWavelength $::Config(tcs.field.guide.oiwfswavelength,value)
+   if {$oiwfsWavelength ne ""} {
+       ::OIWFSWavelengthNames::$oiwfsWavelength apply tcs.field.guide.oiwfswavelength
+   }
+
 # Call the apply method of all the components that have a value. Note that
 # Altair comes after SlewOptions so that Slew options doesn't overwrite
 # the filter 1 setting.
