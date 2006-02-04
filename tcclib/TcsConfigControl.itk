@@ -280,10 +280,10 @@ itcl::body TcsConfigControl::apply {} {
 	   cs oiwfsSelect set oiwfs None
            cs oiwfsSelect set output WFS
 	   logger command oiwfsSelect
-       }
+         }
    }
 
-# Configure default filters, fieldstop for the WFS
+# Configure default filters, fieldstop for the WFS, and AO Flexture Model
 
     if {[string match "*P1*" $guide]} {
 	pwfs filter pwfs1 "Red"
@@ -297,6 +297,13 @@ itcl::body TcsConfigControl::apply {} {
 
     if {[string match "*AO*" $guide]} {
 	pwfs filter pwfs2 "ALTAIR"
+	if {[string match "*NIRI*" $inst]} {
+	    cs aoFlex set file "/aoBase/rel/data/aoFlexCoefNiri.dat"
+	    cs aoFlex set dir 3
+	} elseif {[string match "*NIFS*" $inst]} {
+	    cs aoFlex set file "/aoBase/rel/data/aoFlexCoefNifs.dat"
+	    cs aoFlex set dir 3
+	}
     }
 
     if {[string match "*OI*" $guide]} {
