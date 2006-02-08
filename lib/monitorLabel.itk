@@ -13,7 +13,8 @@ itcl::class MonitorLabel {
    inherit itk::Widget
    constructor {sys var args} {}
    public {
-	method getValue {}
+       method getValue {}
+       method traceProc { name index op }
    }
    private {
       variable varName ""
@@ -29,6 +30,9 @@ itcl::class MonitorLabel {
    }
    itk_option define -anchor anchor Anchor "c" {
 	#puts "new anchor: $itk_option(-anchor)"
+   }
+   itk_option define -trans trans Trans "" {
+	#puts "new trans: $itk_option(-trans)"
    }
 }
 
@@ -51,9 +55,6 @@ itcl::body MonitorLabel::constructor {sys var args} {
 
    global $var
 
-   set $varName [sa $sys get $var]
-   sa $sys link $var $var
-
    itk_component add frame {
 	frame $itk_interior.fr
    }
@@ -65,8 +66,14 @@ itcl::body MonitorLabel::constructor {sys var args} {
    }
 
    itk_component add label { 
-	label $w.lab -textvariable $varName -width $itk_option(-width) -font $itk_option(-font)
+	label $w.lab -text "" -width $itk_option(-width) -font $itk_option(-font)
    }
+
+   trace variable $varName w "$this traceProc"
+
+   set $varName [sa $sys get $var]
+   sa $sys link $var $var
+
 
    pack $itk_component(desc) $itk_component(label) -side left -anchor $itk_option(-anchor)
 }
@@ -79,3 +86,19 @@ itcl::body MonitorLabel::getValue {} {
    return [set $varName]
 }
 
+itcl::body MonitorLabel::traceProc {name index op} {
+
+   set gVar "$name\($index\)"
+   #puts "gVar: $gVar"
+   global $name
+   #puts "traceProc called with name: $name index: $index op: $op gVar: $gVar [set $gVar] colRules: $itk_option(-trans)"
+
+   $itk_component(label) configure -text [set $gVar]
+
+   foreach {val text} $itk_option(-trans) {
+      if {[string match $val [set $gVar]]} {
+         $itk_component(label) configure -text $text
+      }
+   }
+
+}
