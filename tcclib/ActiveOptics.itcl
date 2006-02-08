@@ -92,7 +92,7 @@ itcl::body ActiveOptics::constructor {args} {
 }
 
 itcl::body ActiveOptics::enable {} {
-
+#puts "ActiveOptics::enable"
 # check to make sure we're not using OI probe guiding with GMOS
     if { ($probeguide == "OIWFS") && [string match "*GMOS*" $::Config(tcs.instrument,value)]} {
 	tk_messageBox -icon error \
@@ -101,6 +101,51 @@ itcl::body ActiveOptics::enable {} {
     }
 
 # Set parameters according to the current state...
+    # Configure OIWFS Blending in AO
+    if { $oiblend } {
+       # need to ensure that OIWFS Guide Output is set to AO
+#        if {[sa aossad get oiOutGuide] == "SCS"} {
+# 	   puts "changing OIWFS Output to AO"
+# 	   if {$oiwfsActive} { 
+# 	       Oiwfs stop 
+# 	       cs oiwfsOut set detSigOutput 1
+# 	       cs oiwfsOut set detSigOutputDir 3
+# 	       Oiwfs start -1
+# 	   } else {
+# 	       cs oiwfsOut set detSigOutput 1
+# 	       cs oiwfsOut set detSigOutputDir 3
+# 	   }
+#        }
+
+       # first disable all loops if neccesary
+	if {$enabled} {
+	    $this disable
+	}
+
+       # wait for the altair loop to settle
+       # make sure correctM is Busy, otherwise it will never settle
+	if {[sa aossad get correctBusy] == "BUSY"} {
+	    while {[sa aossad get aoSettled] == "0"} { after 200 }   
+	}
+	cs aoOiwfsSource set state ON
+    } else {
+	# need to ensure that OIWFS Guide Output is set to SCS
+#        if {[sa aossad get oiOutGuide] == "AO"} {
+# 	   puts "changing OIWFS Output to SCS"
+# 	   if {$oiwfsActive} { 
+# 	       Oiwfs stop 
+# 	       cs oiwfsOut set detSigOutput 0
+# 	       cs oiwfsOut set detSigOutputDir 3
+# 	       Oiwfs start -1
+# 	   } else {
+# 	       cs oiwfsOut set detSigOutput 0
+# 	       cs oiwfsOut set detSigOutputDir 3
+# 	   }
+#        }
+        cs aoOiwfsSource set state OFF
+	cs aoOiwfsSource set bandwidth -1
+   }
+   logger command aoOiwfsSource
 
 # Start GAOS
     if { $gaos && ![state gaos]} {
@@ -165,46 +210,6 @@ itcl::body ActiveOptics::enable {} {
        cs aoFlatten set dummy 1
        logger command aoFlatten
     }
-
-    # Configure OIWFS Blending in AO
-    if { $oiblend } {
-       # need to ensure that OIWFS Guide Output is set to AO
-#        if {[sa aossad get oiOutGuide] == "SCS"} {
-# 	   puts "changing OIWFS Output to AO"
-# 	   if {$oiwfsActive} { 
-# 	       Oiwfs stop 
-# 	       cs oiwfsOut set detSigOutput 1
-# 	       cs oiwfsOut set detSigOutputDir 3
-# 	       Oiwfs start -1
-# 	   } else {
-# 	       cs oiwfsOut set detSigOutput 1
-# 	       cs oiwfsOut set detSigOutputDir 3
-# 	   }
-#        }
-       # wait for the altair loop to settle
-       # make sure correctM is Busy, otherwise it will never settle
-	if {[sa aossad get correctBusy] == "BUSY"} {
-	    while {[sa aossad get aoSettled] == "0"} { after 200 }   
-	}
-	cs aoOiwfsSource set state ON
-    } else {
-	# need to ensure that OIWFS Guide Output is set to SCS
-#        if {[sa aossad get oiOutGuide] == "AO"} {
-# 	   puts "changing OIWFS Output to SCS"
-# 	   if {$oiwfsActive} { 
-# 	       Oiwfs stop 
-# 	       cs oiwfsOut set detSigOutput 0
-# 	       cs oiwfsOut set detSigOutputDir 3
-# 	       Oiwfs start -1
-# 	   } else {
-# 	       cs oiwfsOut set detSigOutput 0
-# 	       cs oiwfsOut set detSigOutputDir 3
-# 	   }
-#        }
-        cs aoOiwfsSource set state OFF
-	cs aoOiwfsSource set bandwidth -1
-   }
-   logger command aoOiwfsSource
 
 # Post the Blending Command.
 # The blending command must be finished before the loops are closed.
@@ -469,6 +474,7 @@ itcl::body ActiveOptics::enable {} {
 }
 
 itcl::body ActiveOptics::disable {} {
+#puts "ActiveOptics::disable"
 
 # Turn off OI Blending in AO
 #   cs aoOiwfsSource set state OFF
