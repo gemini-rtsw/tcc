@@ -21,6 +21,7 @@ itcl::class WfsConfig {
        method filter {wfs}
        method fldstop {wfs}
        method ndsel {}
+       method aoflenssel {}
        method aondsel {}
        method colsel {}
        method window {}
@@ -38,11 +39,14 @@ itcl::body WfsConfig::constructor {args} {
    if { [catch {cs aoNDFilter info}] } {
       epics cs aoNDFilter
    }
+   if { [catch {cs aoFLens info}] } {
+      epics cs aoFLens
+   }
 
    set w $itk_interior
 
    itk_component add tabbook {
-      iwidgets::tabnotebook $w.tabs -tabpos n -width 400 -height 150 -equaltabs false
+      iwidgets::tabnotebook $w.tabs -tabpos n -width 460 -height 150 -equaltabs true
    } {
       ignore -background -tabbackground
    }
@@ -112,7 +116,7 @@ itcl::body WfsConfig::constructor {args} {
 	   } {
 	       ignore -background
 	   }
-	   $itk_component(aond) insert end IN OUT
+	   $itk_component(aond) insert end IN OUT ""
 	   
 	   itk_component add currAONDFilt {
 	       MonitorLabel $w.currNDFilt aossad ndFiltPos -width 12 -anchor e -font "Arial 12 bold"
@@ -120,9 +124,23 @@ itcl::body WfsConfig::constructor {args} {
 	       ignore -background
 	   }
 
-	   grid $itk_component(${wfs}filter) $itk_component(${wfs}currFlt) -sticky nes -pady 3
-	   grid $itk_component(${wfs}wavel) x -sticky nws -pady 3
+	   itk_component add aoflens {
+	       iwidgets::optionmenu $w.flens -labeltext "Field Lens" -labelpos w -width 100 \
+		   -command [itcl::code $this aoflenssel]
+	   } {
+	       ignore -background
+	   }
+	   $itk_component(aoflens) insert end IN OUT ""
+	   
+	   itk_component add currflens {
+	       MonitorLabel $w.currflens aossad flensPos -width 12 -anchor e -font "Arial 12 bold" -trans "* OUT {} unknown FLENS IN"
+	   } {
+	       ignore -background
+	   }
+
+	   grid $itk_component(${wfs}filter) $itk_component(${wfs}currFlt) $itk_component(${wfs}wavel) -sticky e -pady 3
 	   grid $itk_component(aond) $itk_component(currAONDFilt) -sticky nes -pady 2
+	   grid $itk_component(aoflens) $itk_component(currflens) -sticky nes -pady 2
 	   
        } elseif { $wfs == "hrwfs" } {
 	   
@@ -206,8 +224,7 @@ itcl::body WfsConfig::constructor {args} {
 	   
 	   $itk_component(${wfs}fldstop) insert end prism 10.0 6.4 3.2 1.6 open1 open2 open3 open4 ""
 	   
-	   grid $itk_component(${wfs}filter) $itk_component(${wfs}currFlt) -sticky nes -pady 3
-	   grid $itk_component(${wfs}wavel) x -sticky nws -pady 3
+	   grid $itk_component(${wfs}filter) $itk_component(${wfs}currFlt) $itk_component(${wfs}wavel) -sticky e -pady 3
 	   grid $itk_component(${wfs}fldstop) $itk_component(${wfs}currFld) -sticky nes -pady 3
        }
    }
@@ -243,6 +260,29 @@ itcl::body WfsConfig::aondsel {} {
    cs aoNDFilter set pos [$itk_component(aond) get]
    cs aoNDFilter set mode 1
    cs aoNDFilter set dir 3
+}
+
+itcl::body WfsConfig::aoflenssel {} {
+# Select ALTAIR Field Lens IN/OUT
+    set demand [$itk_component(aoflens) get]
+    switch $demand {
+	IN {
+	    cs aoFLens set pos FLENS
+	    cs aoFLens set mode 1
+	    cs aoFLens set dir 3
+	    cs aoFLens set flens 1
+	    cs aoFLens set create 0
+	    cs aoFLens set create 3
+	}
+	OUT {
+	    cs aoFLens set pos PARK
+	    cs aoFLens set mode 1
+	    cs aoFLens set dir 3
+	    cs aoFLens set flens 0
+	    cs aoFLens set create 0
+	    cs aoFLens set create 3
+	}
+    }
 }
 
 itcl::body WfsConfig::ndsel {} {
