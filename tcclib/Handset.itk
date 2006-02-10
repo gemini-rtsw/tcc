@@ -51,7 +51,7 @@ itcl::class Handset {
       variable cs ""
       variable angles
       variable labels
-      variable control_loop 1
+      variable control_loop 0
    }
 }
 
@@ -120,7 +120,7 @@ itk::usual Handset {
 }
 
 itcl::body Handset::constructor {args} {
-
+puts "creating Handset with args: $args"
     global tid
     set tid 0
 
@@ -300,6 +300,7 @@ itcl::body Handset::constructor {args} {
 
 # checkbutton for opening loop
    if {$itk_option(-cloop)} {
+       set control_loop 1
        itk_component add loopControl {
 	   checkbutton $itk_component(loopframe).loopControl -variable [itcl::scope control_loop] \
 	       -onvalue 1 -offvalue 0 \
