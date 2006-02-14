@@ -104,13 +104,10 @@ itcl::body WavelengthControl::set_lock {} {
 }
 
 itcl::body WavelengthControl::load {name} {
-#puts "WavelengthControl::load name: $name locked: $locked locked_name: $locked_name"
-#puts "curr_wl_name: ${::Config(tcs.field.wavelength,value)} "
     if {$locked} {
 	set ::Config(tcs.field.wavelength,value) $locked_name
 	set name ::WavelengthNames::$locked_name
-#puts "locked: curr_wl_name: ${::Config(tcs.field.wavelength,value)} "
-
+	$itk_component(selector) select $locked_name
     }
    set wavelen [$name cget -wavel]
    if {[string match "*Acq Cam*" $name]} {
