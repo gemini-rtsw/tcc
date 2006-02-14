@@ -18,6 +18,9 @@ itcl::class WavelengthControl {
       variable prevdeploy
    }
    public {
+      variable locked 0
+      variable locked_name ""
+      method set_lock {}
       method load {name}
       method reset {}
       method save {name}
@@ -38,6 +41,12 @@ itcl::body WavelengthControl::constructor args {
     pack $itk_component(wframe)
     set w $itk_component(wframe)
 
+# Lock the wavelength
+   itk_component add wllock {
+       checkbutton $w.lock -variable [itcl::scope locked] -onvalue 1 -offvalue 0 -text "Lock Current WL: " -command "$this set_lock"
+   }
+   pack $itk_component(wllock) -padx 4 -pady 4
+   
 # Entryfield for the wavelength.
    itk_component add wavel {
       iwidgets::entryfield $w.wavel \
@@ -86,7 +95,23 @@ itcl::body WavelengthControl::reset {} {
    $itk_component(deploy) select ""
 }
 
+itcl::body WavelengthControl::set_lock {} {
+    if {$locked} {
+	set locked_name  ${::Config(tcs.field.wavelength,value)}
+    } else {
+	set locked_name ""
+    }
+}
+
 itcl::body WavelengthControl::load {name} {
+#puts "WavelengthControl::load name: $name locked: $locked locked_name: $locked_name"
+#puts "curr_wl_name: ${::Config(tcs.field.wavelength,value)} "
+    if {$locked} {
+	set ::Config(tcs.field.wavelength,value) $locked_name
+	set name ::WavelengthNames::$locked_name
+#puts "locked: curr_wl_name: ${::Config(tcs.field.wavelength,value)} "
+
+    }
    set wavelen [$name cget -wavel]
    if {[string match "*Acq Cam*" $name]} {
        set set_baffles 0
