@@ -1,0 +1,44 @@
+#+
+#  AoWaveFrontSensor
+#
+#  Implements the interface to a wave-front sensor
+#
+#  Methods:
+#           start frames
+#
+#           stop
+#
+#  Options:
+#
+#           -quicklook
+#
+#  Interface with the AO Wave Front Sensor ... pretty simple for now.
+#  written by A.Ebbers
+#-
+
+itcl::class AoWaveFrontSensor {
+   constructor {} {}
+   public {
+      method start {{frames -1}}
+      method stop {}
+      variable quicklook 0
+   }
+}
+
+itcl::body AoWaveFrontSensor::constructor {} {
+
+# Create command senders
+   if { [catch {cs gaosObserve info}] } {
+      epics cs gaosObserve
+   }
+}
+
+itcl::body AoWaveFrontSensor::start {{frames -1}} {
+    cs gaosObserve set dir 0
+    cs gaosObserve set dir 3
+}
+
+itcl::body AoWaveFrontSensor::stop {} {
+    cs gaosObserve set dir 0
+    cs gaosObserve set dir 4
+}
