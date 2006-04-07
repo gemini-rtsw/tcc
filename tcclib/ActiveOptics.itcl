@@ -21,19 +21,28 @@ itcl::class ActiveOptics {
       variable p2guide ""
       variable aoguide ""
       variable oiguide ""
-      variable oiblend 0
       variable comacorr 0
       variable m1source ""
       variable m1filename ""
       variable probeguide none
       variable mountguide none
       variable gaos 0
+      variable useLwfs 0
+      variable oiblend 0
+      variable gaosBTO 0
+      variable gaosTTGS 0
+      variable gaosSFO 0
+      variable ttgsloop 0
+      variable sfoloop 0
       variable pwfs1Expose 0.01
       variable pwfs1Active 0
       variable pwfs2Expose 0.005
       variable pwfs2Active 0
       variable oiwfsExpose 0.005
       variable oiwfsActive 0
+      variable gaosExpose 0.001
+      variable ttgsExpose 0.001
+      variable sfoExpose 1.0
    }
 }
 
@@ -87,6 +96,24 @@ itcl::body ActiveOptics::constructor {args} {
    if { [catch {cs aoOiwfsSource info}] } {
       epics cs aoOiwfsSource
    }
+   if { [catch {cs aoUseLwfs info}] } {
+      epics cs aoUseLwfs
+   }
+   if { [catch {cs ttgsloop info}] } {
+      epics cs ttgsloop
+   }
+   if { [catch {cs sfoloop info}] } {
+      epics cs sfoloop
+   }
+   if { [catch {cs gaosTTGS info}] } {
+      epics cs gaosTTGS
+   }
+   if { [catch {cs gaosSFO info}] } {
+      epics cs gaosSFO
+   }
+   if { [catch {cs gaosBTO info}] } {
+      epics cs gaosBTO
+   }
 
    eval configure $args
 }
@@ -103,26 +130,13 @@ itcl::body ActiveOptics::enable {} {
 # Set parameters according to the current state...
     # Configure OIWFS Blending in AO
     if { $oiblend } {
-       # need to ensure that OIWFS Guide Output is set to AO
-#        if {[sa aossad get oiOutGuide] == "SCS"} {
-# 	   puts "changing OIWFS Output to AO"
-# 	   if {$oiwfsActive} { 
-# 	       Oiwfs stop 
-# 	       cs oiwfsOut set detSigOutput 1
-# 	       cs oiwfsOut set detSigOutputDir 3
-# 	       Oiwfs start -1
-# 	   } else {
-# 	       cs oiwfsOut set detSigOutput 1
-# 	       cs oiwfsOut set detSigOutputDir 3
-# 	   }
-#        }
 
        # first disable all loops if neccesary
 	if {$enabled} {
 	    $this disable
 	}
 
-       # wait for the altair loop to settle
+       # wait for the gaos loop to settle
        # make sure correctM is Busy, otherwise it will never settle
 	if {[sa aossad get correctBusy] == "BUSY"} {
 	    while {[sa aossad get aoSettled] == "0"} { after 200 }   
@@ -130,24 +144,47 @@ itcl::body ActiveOptics::enable {} {
 	cs aoOiwfsSource set state ON
     } else {
 	# need to ensure that OIWFS Guide Output is set to SCS
-#        if {[sa aossad get oiOutGuide] == "AO"} {
-# 	   puts "changing OIWFS Output to SCS"
-# 	   if {$oiwfsActive} { 
-# 	       Oiwfs stop 
-# 	       cs oiwfsOut set detSigOutput 0
-# 	       cs oiwfsOut set detSigOutputDir 3
-# 	       Oiwfs start -1
-# 	   } else {
-# 	       cs oiwfsOut set detSigOutput 0
-# 	       cs oiwfsOut set detSigOutputDir 3
-# 	   }
-#        }
         cs aoOiwfsSource set state OFF
 	cs aoOiwfsSource set bandwidth -1
    }
    logger command aoOiwfsSource
 
 # Start GAOS
+
+    # turn on the BTO
+    if { $gaosBTO && ![state gaosBTO]} {
+	cs gaosBTO set dem On
+	cs gaosBTO set dir 3
+    } elseif { !$gaosBTO && [state gaosBTO]} {
+	cs gaosBTO set dem Off
+	cs gaosBTO set dir 3
+    }
+
+    # turn on the TTGS
+    if { $gaosTTGS && ![state gaosTTGS]} {
+	# set the exposure time
+	cs gaosTTGS set exp [expr $ttgsExpose * 1000]
+	cs gaosTTGS set expDIR 3
+
+	cs gaosTTGS set dem 1
+	cs gaosTTGS set dir 3
+    } elseif {!$gaosTTGS && [state gaosTTGS]} {
+	cs gaosTTGS set dem 0
+	cs gaosTTGS set dir 3
+    }
+
+    # turn on the SFO
+    if { $gaosSFO && ![state gaosSFO]} {
+	# set the exposure time
+	cs gaosSFO set exp $sfoExpose
+
+	cs gaosSFO set startDIR 0
+	cs gaosSFO set apply 3
+    } elseif {!$gaosSFO && [state gaosSFO]} {
+	cs gaosSFO set stopDIR 0
+	cs gaosSFO set apply 3
+    }
+
     if { $gaos && ![state gaos]} {
 	#puts "turning GAOS On"
 	# Flatten.
@@ -186,7 +223,7 @@ itcl::body ActiveOptics::enable {} {
 	    return
 	}
 	
-	# Post ALTAIR correct command.
+	# Post GAOS correct command.
 	cs aoCorrect set correct ON
 	cs aoCorrect set matrix 0
 	cs aoCorrect set gains 0
@@ -198,7 +235,7 @@ itcl::body ActiveOptics::enable {} {
 		
     } elseif { !$gaos && [state gaos] } {
        #puts "turning GAOS off"
-       # Post ALTAIR correct command.
+       # Post GAOS correct command.
        cs aoCorrect set correct OFF
        logger command aoCorrect
        if { [catch {cs tcsApply post} msg] } {
@@ -209,6 +246,22 @@ itcl::body ActiveOptics::enable {} {
        # Flatten.
        cs aoFlatten set dummy 1
        logger command aoFlatten
+    }
+
+    # turn on TTGS and SFO loops
+    if {[state gaos]} {
+	if {$ttgsloop && ![state ttgsloop]} {
+	    cs ttgsloop set dem 1
+	    cs ttgsloop set dir 3
+	} elseif {!$ttgsloop && [state ttgsloop]} {
+	    cs ttgsloop set dem 0
+	    cs ttgsloop set dir 3
+	}
+	if {$sfoloop && ![state sfoloop]} {
+	    cs sfoloop set dem 1
+	} elseif {!$sfoloop && [state sfoloop]} {
+	    cs sfoloop set dem 0
+	}
     }
 
 # Post the Blending Command.
@@ -476,26 +529,6 @@ itcl::body ActiveOptics::enable {} {
 itcl::body ActiveOptics::disable {} {
 #puts "ActiveOptics::disable"
 
-# Turn off OI Blending in AO
-#   cs aoOiwfsSource set state OFF
-#   cs aoOiwfsSource set bandwidth 0
-#   logger command aoOiwfsSource
-
-# Post the Blending Command.
-# The blending command must be finished before the loops are closed.
-#   if { [catch {cs tcsApply post} msg] } {
-#      tk_messageBox -icon error -message \
-            "Error posting guide commands: TCS reports \
-            \"$msg\""
-#      return
-#   }
-
-# need to wait for aoOiwfsSource to go idle
-#   after 500
-   #puts "Oi Blend Busy: [sa aossad get oiblendBusy]"
-#   while {[sa aossad get oiblendBusy] == "BUSY"} { after 200 }   
-   #puts "Oi Blend Busy: [sa aossad get oiblendBusy]"
-
 # Stop the wave-front sensors.
    Pwfs1 stop
    Pwfs2 stop
@@ -534,10 +567,27 @@ itcl::body ActiveOptics::disable {} {
       return
    }
 
+   # turn off the BTO
+   cs gaosBTO set dem Off
+   cs gaosBTO set dir 3
+
+   # turn off the TTGS
+   cs gaosTTGS set dem 0
+   cs gaosTTGS set dir 3
+
+   # turn off the SFO
+   cs gaosSFO set stopDIR 0
+   cs gaosSFO set apply 3
+
+   # turn off TTGS and SFO loops
+   cs ttgsloop set dem 0
+   cs ttgsloop set dir 3
+   cs sfoloop set dem 0
+
 # Stop GAOS
    if { [state gaos] } {
        #puts "turning GAOS off"
-       # Post ALTAIR correct command.
+       # Post GAOS correct command.
        cs aoCorrect set correct OFF
        logger command aoCorrect
        if { [catch {cs tcsApply post} msg] } {
@@ -555,7 +605,7 @@ itcl::body ActiveOptics::disable {} {
 }
 
 itcl::body ActiveOptics::state {component} {
-
+global env
 # Returns the current state of a component.
 
    switch $component {
@@ -587,8 +637,66 @@ itcl::body ActiveOptics::state {component} {
             return 0
          }
       }
+      useLwfs {
+         if { [sa guideConfig get useLwfs] == "ON" } {
+            return 1
+         } else {
+            return 0
+         }
+      }
+      ttgs -
+      gaosTTGS {
+	 if {$env(TCC_TCSNAME) == "tc1" && [sa guideConfig get aoTTGS] == "No Value"} {
+	     return $gaosTTGS
+	 }
+         if { [sa guideConfig get aoTTGS] == "0" } {
+            return 0
+         } else {
+            return 1
+         }
+      }
+      gaosBTO {
+	 if {$env(TCC_TCSNAME) == "tc1" && [sa guideConfig get aoBTO] == "No Value"} {
+	     return $gaosBTO
+	 }
+         if { [sa guideConfig get aoBTO] == "CLOSED" } {
+            return 1
+         } else {
+            return 0
+         }
+      }
+      gaosSFO {
+	 if {$env(TCC_TCSNAME) == "tc1" && [sa guideConfig get aoSFO] == "No Value"} {
+	     return $gaosSFO
+	 }
+         if { [sa guideConfig get aoSFO] == "1" } {
+            return 1
+         } else {
+            return 0
+         }
+      }
+      ttgsloop {
+	 if {$env(TCC_TCSNAME) == "tc1" && [sa guideConfig get ttgsloop] == "No Value"} {
+	     return $ttgsloop
+	 }
+         if { [sa guideConfig get ttgsloop] == "1" } {
+            return 1
+         } else {
+            return 0
+         }
+      }
+      sfoloop {
+	 if {$env(TCC_TCSNAME) == "tc1" && [sa guideConfig get sfoloop] == "No Value"} {
+	     return $sfoloop
+	 }
+         if { [sa guideConfig get sfoloop] == "enabled" } {
+            return 1
+         } else {
+            return 0
+         }
+      }
       oiblend {
-	  if {( [sa aossad get oiblend] == "1") || ([sa aossad get oiblend] == "ON") } {
+	  if {( [sa guideConfig get oiblend] == "1") || ([sa guideConfig get oiblend] == "ON") } {
             return 1
          } else {
             return 0

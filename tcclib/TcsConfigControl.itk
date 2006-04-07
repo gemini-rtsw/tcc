@@ -23,16 +23,16 @@ itcl::class TcsConfigControl {
       method sesidle {}
       method wrap {par}
       variable components {
-         field pointOrig slewOptions chop altair trackFrame instrument
+         field pointOrig slewOptions chop gaos trackFrame instrument
       }
       variable options {
-         -field -pointOrig -slewOptions -chop -altair -trackFrame -instrument
+         -field -pointOrig -slewOptions -chop -gaos -trackFrame -instrument
       }
       variable fieldcomponents {
-         field.guide field.rotator field.wavelength field.sciencetarget field.pwfs1target field.pwfs2target field.oiwfstarget field.altairtarget
+         field.guide field.rotator field.wavelength field.sciencetarget field.pwfs1target field.pwfs2target field.oiwfstarget field.gaostarget
       }
       variable fieldoptions {
-         -guide -rotator -wavelength -sciencetarget -pwfs1target -pwfs2target -oiwfstarget -altairtarget
+         -guide -rotator -wavelength -sciencetarget -pwfs1target -pwfs2target -oiwfstarget -gaostarget
       }
       variable view ""
    }
@@ -100,9 +100,9 @@ itcl::body TcsConfigControl::constructor {args} {
       rename -textfont -majorfont majorFont Font
       rename -labelfont -majorfont majorFont Font
    }
-   itk_component add altair {
-      ComponentSelector $w.altair -labeltext "Adaptive Optics" \
-            -component tcs.altair \
+   itk_component add gaos {
+      ComponentSelector $w.gaos -labeltext "Adaptive Optics" \
+            -component tcs.gaos \
             -active 1 
    } {
       usual
@@ -138,7 +138,7 @@ itcl::body TcsConfigControl::constructor {args} {
    }
 
    pack $itk_component(field) $itk_component(pointOrig) \
-         $itk_component(chop) $itk_component(altair) \
+         $itk_component(chop) $itk_component(gaos) \
          $itk_component(slewOptions) $itk_component(instrument) -fill x -pady 1
 
 # Session control
@@ -232,7 +232,7 @@ itcl::body TcsConfigControl::apply {} {
 	   set oiwfstarget $::Config(tcs.field.oiwfstarget,value)
 	   #puts "oiwfs target: $oiwfstarget"
 	   if {! [string equal $oiwfstarget ""]} {
-	       #puts "found NIFS (Altair/OI)"
+	       #puts "found NIFS (Gaos/OI)"
 	       cs oiwfsSelect set oiwfs NIFS
                cs oiwfsSelect set output WFS
 	       logger command oiwfsSelect
@@ -296,7 +296,8 @@ itcl::body TcsConfigControl::apply {} {
     }
 
     if {[string match "*AO*" $guide]} {
-	pwfs filter pwfs2 "ALTAIR"
+	set ::Config(tcs.field.guide.gaoswavelength,value) "GAOS"
+#	pwfs filter pwfs2 "GAOS"
 	if {[string match "*NIRI*" $inst]} {
 	    cs aoFlex set file "/aoBase/rel/data/aoFlexCoefNiri.dat"
 	    cs aoFlex set dir 3
@@ -313,6 +314,7 @@ itcl::body TcsConfigControl::apply {} {
 	    set ::Config(tcs.field.guide.oiwfswavelength,value) "K"
 	}
     }
+
 #     set oiwlList $::Config(tcs.field.guide.oiwfswavelength,list)
 #     puts "OIWFS Wavelength List: $oiwlList inst: $inst"
 #     set inst [$::Config(tcs.instrument,namespace)::$inst cget -name]
@@ -325,7 +327,7 @@ itcl::body TcsConfigControl::apply {} {
 # 	set ::Config(tcs.field.guide.oiwfswavelength,value) $oiwlName
 #     }
 
-# Zero the offsets for the Gimbals if we're using altair   
+# Zero the offsets for the Gimbals if we're using gaos   
     if {[string match "*AO*" $guide]} {
 	cs aoGimOffsets set xoff 0
 	cs aoGimOffsets set yoff 0
@@ -399,7 +401,7 @@ itcl::body TcsConfigControl::load {name} {
 		if {$component == "pointOrig"} {
 		    global instPO
 		    set instPO $comp
-		    puts "set instPO to $instPO"
+		    #puts "set instPO to $instPO"
 		}
             }
          }

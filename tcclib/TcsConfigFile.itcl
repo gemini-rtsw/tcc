@@ -41,7 +41,7 @@ itcl::body TcsConfigFile::constructor {xml parent} {
    set w $parent
 
 # Initialise lists of nodes that represent configuration components.
-   set nodelist(altair) ""
+   set nodelist(gaos) ""
    set nodelist(chop) ""
    set nodelist(cosys) ""
    set nodelist(field) ""
@@ -56,6 +56,7 @@ itcl::body TcsConfigFile::constructor {xml parent} {
    set nodelist(trackrate) ""
    set nodelist(wavelength) ""
    set nodelist(oiwfswavelength) ""
+   set nodelist(gaoswavelength) ""
 
 # Compile a lists of all the component defined in the document.
    foreach node [dom::DOMImplementation selectNode $root \
@@ -71,9 +72,9 @@ itcl::body TcsConfigFile::constructor {xml parent} {
 
 # Process each of the lists of component types (note that the order is
 # important so that we don't get errors because a subcomponent isn't defined).
-   foreach type {cosys wavelength oiwfswavelength rotator guide trackrate \
+   foreach type {cosys wavelength oiwfswavelength gaoswavelength rotator guide trackrate \
          target field instrument pointorig slewoptions trackframe \
-         chop altair tcsconfig} {
+         chop gaos tcsconfig} {
 
 # Targets and track rates are special cases.
       switch $type {
@@ -109,10 +110,10 @@ itcl::body TcsConfigFile::createComponent {type node} {
 
 # Create a component of the appropriate type.
    switch $type {
-      altair {
-         set class AltairComponent
-         set namespace ::AltairNames
-         set list AltairList
+      gaos {
+         set class GaosComponent
+         set namespace ::GaosNames
+         set list GaosList
       }
       cosys {
          set class CosysComponent
@@ -128,6 +129,11 @@ itcl::body TcsConfigFile::createComponent {type node} {
          set class WavelengthComponent
          set namespace ::OIWFSWavelengthNames
          set list OIWFSWavelengthList
+      }
+      gaoswavelength {
+         set class WavelengthComponent
+         set namespace ::GAOSWavelengthNames
+         set list GAOSWavelengthList
       }
       field {
          set class FieldComponent
@@ -174,10 +180,10 @@ itcl::body TcsConfigFile::createComponent {type node} {
          set namespace ::TcsConfigNames
          set list TcsConfigList
       }
-      altair {
-         set class AltairComponent
-         set namespace ::AltairNames
-         set list AltairList
+      gaos {
+         set class GaosComponent
+         set namespace ::GaosNames
+         set list GaosList
       }
    }
 
@@ -316,8 +322,8 @@ itcl::body TcsConfigFile::findcomp {node} {
 
 # Adds a paramset node to the appropriate node list.
    switch [dom::element getAttribute $node type] {
-      altair {
-         lappend nodelist(altair) $node
+      gaos {
+         lappend nodelist(gaos) $node
       }
       chop {
          lappend nodelist(chop) $node
@@ -363,6 +369,9 @@ itcl::body TcsConfigFile::findcomp {node} {
       }
       oiwfswavelength {
          lappend nodelist(oiwfswavelength) $node
+      }
+      gaoswavelength {
+         lappend nodelist(gaoswavelength) $node
       }
    }
 }

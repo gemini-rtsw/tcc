@@ -16,7 +16,12 @@ itcl::class ObserveControl {
    inherit itk::Widget
    constructor args {}
    destructor {}
+   common mon_inpos 0
+   common need_to_close_loop 0
    public {
+      method setValue {name alarm time {values NoVal}}
+      method timeout {}
+      method openloop {}
       method reset {} {
 	   $itk_component(guideloop) reset
 	}
@@ -33,8 +38,8 @@ itcl::class ObserveControl {
       method selwfs {}
       method hrstart {}
       method hrstop {}
-      method altairfollow {}
-      method altairpark {}
+      method gaosfollow {}
+      method gaospark {}
       variable wfs Pwfs1
       variable Pwfs1Dark
       variable Pwfs2Dark
@@ -160,7 +165,7 @@ itcl::body ObserveControl::constructor args {
    itk_component add wfssel {
       iwidgets::optionmenu $w.wfssel -command [itcl::code $this selwfs]
    }
-   $itk_component(wfssel) insert end P1 P2 OI
+   $itk_component(wfssel) insert end P1 P2 OI AO
    itk_component add dark {
       LiveButton $w.dark -text SKY -command [itcl::code $this wfssky]
    }
@@ -256,10 +261,32 @@ itcl::body ObserveControl::constructor args {
    set Pwfs2Dark [Dark #auto p2]
    set OiwfsDark [Dark #auto oi]
 
+   if {! $mon_inpos} {
+       set mon_inpos 1
+       global inPosition followS INPOS FOLLOW
+       set INPOS ""
+       set FOLLOW ""
+       
+       sa tcssad proc inPosition [itcl::code $this setValue]
+       setValue tcssad.inPosition alarm time [sa tcssad get inPosition]
+       
+       sa mcssad proc followS [itcl::code $this setValue]
+       setValue mcssad.followS alarm time [sa mcssad get followS]
+   }
+		  
+		  
    eval itk_initialize $args
 }
 
 itcl::body ObserveControl::destructor {} {
+    global inPosition followS tid
+
+    after cancel $tid
+    if {$mon_inpos} {
+	sa tcssad unproc inPosition [itcl::code $this setValue]
+	sa mcssad unproc followS [itcl::code $this setValue]
+    }
+
    itcl::delete object $Pwfs1Dark
    itcl::delete object $Pwfs2Dark
 }
@@ -273,6 +300,7 @@ itcl::body ObserveControl::setfold {path} {
 
    switch $path {
       "Sky>Instr" {
+	  openloop
 	  iss configure -source SKY -sink INSTR -ao OUT
 	  if {$set_instr_orig} {
 	      global instPO
@@ -316,6 +344,7 @@ itcl::body ObserveControl::setfold {path} {
       }
       "GCAL>Instr" {iss configure -source CAL -sink INSTR}
       "Sky>AC/HR" {
+	  openloop
 	  iss configure -source SKY -sink HRWFS -ao OUT
 	  if {$set_instr_orig} {
 	      # set pointing origin to rotator_axis
@@ -494,10 +523,14 @@ itcl::body ObserveControl::selwfs {} {
             $itk_component(dark) configure -state disabled
          } 
       }
+      AO {
+         set wfs Aowfs
+	 $itk_component(dark) configure -state disabled
+      }
    }
 }
 
-itcl::body ObserveControl::altairfollow {} {
+itcl::body ObserveControl::gaosfollow {} {
     cs aoFollow set followState On
     cs aoEntShutter set state Open
     cs aoExitShutter set state Open
@@ -506,17 +539,17 @@ itcl::body ObserveControl::altairfollow {} {
     logger command aoExitShutter
     if { [catch {cs tcsApply post} msg] } {
         tk_messageBox -icon error -parent $itk_interior -message \
-                "Error posting ALTAIR mechanism command: TCS reports \
+                "Error posting GAOS mechanism command: TCS reports \
                 \"$msg\""
     }
 }
 
-itcl::body ObserveControl::altairpark {} {
+itcl::body ObserveControl::gaospark {} {
 
-    # Turn on Air Purge
-    set path "/gemini/altair/altair/bin/solaris/"
-    eval exec $path/aoRpc3 ON
-    logger log "Turned on Altair Air Purge"
+    # Turn on Air Purge (commented out due to power bar being inaccesable)
+    #set path "/gemini/altair/altair/bin/solaris/"
+    #eval exec $path/aoRpc3 ON
+    #logger log "Turned on Altair Air Purge"
 
     cs aoFollow set followState Off
     cs aoPark set dummy 1
@@ -524,7 +557,65 @@ itcl::body ObserveControl::altairpark {} {
     logger command aoPark
     if { [catch {cs tcsApply post} msg] } {
         tk_messageBox -icon error -parent $itk_interior -message \
-                "Error posting ALTAIR mechanism command: TCS reports \
+                "Error posting GAOS mechanism command: TCS reports \
                 \"$msg\""
+    }
+}
+
+itcl::body ObserveControl::setValue {name alarm time {values NoVal}} {
+
+   set locname [string range $name [string wordstart $name end] end]
+   global $locname INPOS FOLLOW tid
+   #puts "setValue called with name: $locname values: $values"
+
+   switch $locname {
+       inPosition { 
+	   #puts "setting INPOS"
+	   set INPOS $values
+       }
+       followS {
+	   #puts "setting FOLLOW"
+	   set FOLLOW $values
+       }
+   }
+   #puts "INPOS: $INPOS   FOLLOW: $FOLLOW"
+
+   if { $need_to_close_loop} {
+       if {[string match TRUE $INPOS] && [string match ON $FOLLOW]} {
+	   #puts "closing loop"
+	   AO enable
+	   set need_to_close_loop 0
+       }  else {
+	   # the telescope is not in position, cancel the timeout
+	   #puts "not in position, cancelling timeout $tid"
+	   after cancel $tid
+       }
+   }
+}
+
+itcl::body ObserveControl::timeout {} {
+    #puts "timeout callback"
+    # will get here if the telescope did not go out of position
+    # assume the move was too fast, close the loop
+   if { $need_to_close_loop } {
+       #puts "closing loop in timeout"
+       AO enable
+       set need_to_close_loop 0
+   }
+}
+
+
+itcl::body ObserveControl::openloop {} {
+    global tid INPOS
+# Open loop if neccesary
+    if {[AO cget -enabled]} {
+	#puts "opening loop"
+	AO disable
+	set need_to_close_loop 1
+	# start timeout process
+	if {[string match TRUE $INPOS]} {
+	    set tid [after 10000 "$this timeout"]
+	}
+	#puts "tid: $tid"
     }
 }

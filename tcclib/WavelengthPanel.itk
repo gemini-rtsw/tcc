@@ -18,6 +18,9 @@ itcl::class WavelengthPanel {
    public {
       method sync {component name} {$itk_component(control) sync $name}
    }
+   private {
+       variable obswavel
+   }
 }
 
 itk::usual WavelengthPanel {
@@ -25,12 +28,16 @@ itk::usual WavelengthPanel {
 }
 
 itcl::body WavelengthPanel::constructor args {
-
+    if [string match "*tcsFieldWavelengthPanel" $this] {
+	set obswavel 1
+    } else {
+	set obswavel 0
+    }
    setWidgetColors $itk_interior \
          $itk_option(-background) $itk_option(-foreground)
 
    itk_component add control {
-      WavelengthControl $itk_interior.control
+      WavelengthControl $itk_interior.control -obsWavel $obswavel
    } {
       usual
       rename -component -components components Components

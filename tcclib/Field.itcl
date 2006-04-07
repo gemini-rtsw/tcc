@@ -14,7 +14,7 @@
 #
 #           -oiwfstarget    The name of the oiwfs target
 #
-#           -altairtarget    The name of the altair target
+#           -gaostarget    The name of the gaos target
 #
 #           -rotator        The name of the rotator confguration
 #
@@ -74,7 +74,7 @@ itcl::class Field {
       variable pwfs1target ""
       variable pwfs2target ""
       variable oiwfstarget ""
-      variable altairtarget ""
+      variable gaostarget ""
       variable rotator ""
       variable guide ""
       variable wavelength ""
@@ -92,7 +92,7 @@ itcl::class Field {
       variable current_pwfs1target ""
       variable current_pwfs2target ""
       variable current_oiwfstarget ""
-      variable current_altairtarget ""
+      variable current_gaostarget ""
       variable current_guide ""
       variable current_rotator ""
       variable current_wavelength ""
@@ -167,8 +167,8 @@ itcl::body Field::apply {comp} {
    if { ! [string equal $oiwfstarget ""] } {
       ${targetns}::$oiwfstarget apply $comp.oiwfstarget
    }
-   if { ! [string equal $altairtarget ""] } {
-      ${targetns}::$altairtarget apply $comp.altairtarget
+   if { ! [string equal $gaostarget ""] } {
+      ${targetns}::$gaostarget apply $comp.gaostarget
    }
    if { ! [string equal $guide ""] } {
       ::GuideNames::$guide apply $comp.guide
@@ -197,7 +197,7 @@ itcl::body Field::init {} {
    $this configure -pwfs1target ""
    $this configure -pwfs2target ""
    $this configure -oiwfstarget ""
-   $this configure -altairtarget ""
+   $this configure -gaostarget ""
    $this configure -guide ""
    $this configure -rotator ""
    $this configure -wavelength ""
@@ -220,8 +220,8 @@ itcl::body Field::preview {view} {
    if { ! [string equal $oiwfstarget ""] } {
       ${targetns}::$oiwfstarget preview $view oiwfs
    }
-   if { ! [string equal $altairtarget ""] } {
-      ${targetns}::$altairtarget preview $view altair
+   if { ! [string equal $gaostarget ""] } {
+      ${targetns}::$gaostarget preview $view gaos
    }
    if { ! [string equal $guide ""] } {
       ::GuideNames::$guide preview $view
@@ -240,7 +240,7 @@ itcl::body Field::save {node} {
    param $node pwfs1target $pwfs1target
    param $node pwfs2target $pwfs2target
    param $node oiwfstarget $oiwfstarget
-   param $node altairtarget $altairtarget
+   param $node gaostarget $gaostarget
    param $node guide $guide
    param $node rotator $rotator
    param $node wavelength $wavelength
@@ -317,16 +317,16 @@ itcl::configbody Field::oiwfstarget {
    }
 }
 
-itcl::configbody Field::altairtarget {
-   if { ! [string equal $current_altairtarget ""] } {
-      ${targetns}::$current_altairtarget refdec
+itcl::configbody Field::gaostarget {
+   if { ! [string equal $current_gaostarget ""] } {
+      ${targetns}::$current_gaostarget refdec
    }
-   set current_altairtarget ""
-   if { ! [string equal $altairtarget ""] } {
-      if { [catch {${targetns}::$altairtarget refinc}] } {
-         error "Target \"$altairtarget\" does not exist"
+   set current_gaostarget ""
+   if { ! [string equal $gaostarget ""] } {
+      if { [catch {${targetns}::$gaostarget refinc}] } {
+         error "Target \"$gaostarget\" does not exist"
       } else {
-         set current_altairtarget $altairtarget
+         set current_gaostarget $gaostarget
       }
    }
 }

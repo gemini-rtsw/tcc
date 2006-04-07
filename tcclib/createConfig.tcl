@@ -21,7 +21,7 @@ proc createConfig {} {
    set ::Config(tcs,namespace) ::TcsConfigNames
    set ::Config(tcs,list) TcsConfigList
    set ::Config(tcs,panel) tcsConfigPanel
-   set ::Config(tcs,subcomp) [list field pointorig altair slewoptions \
+   set ::Config(tcs,subcomp) [list field pointorig gaos slewoptions \
          trackframe instrument ]
    set ::Config(tcs,label) "TCS configuration"
 
@@ -32,7 +32,7 @@ proc createConfig {} {
    set ::Config(tcs.field,list) FieldList
    set ::Config(tcs.field,panel) tcsFieldPanel
    set ::Config(tcs.field,subcomp) [list sciencetarget pwfs1target pwfs2target \
-         oiwfstarget altairtarget guide rotator wavelength]
+         oiwfstarget gaostarget guide rotator wavelength]
    set ::Config(tcs.field,label) Field
 
    set ::Config(tcs.field.sciencetarget,value) ""
@@ -215,49 +215,49 @@ proc createConfig {} {
    set ::Config(tcs.field.oiwfstarget.trackrate.cosys,label) \
          "Coordinate system"
 
-   set ::Config(tcs.field.altairtarget,value) ""
-   set ::Config(tcs.field.altairtarget,anon) ::[Target #auto]
-   set ::Config(tcs.field.altairtarget,class) TargetComponent
-   set ::Config(tcs.field.altairtarget,namespace) \
+   set ::Config(tcs.field.gaostarget,value) ""
+   set ::Config(tcs.field.gaostarget,anon) ::[Target #auto]
+   set ::Config(tcs.field.gaostarget,class) TargetComponent
+   set ::Config(tcs.field.gaostarget,namespace) \
          $::Config(tcs.field,anon)TargetNames
-   set ::Config(tcs.field.altairtarget,list) \
+   set ::Config(tcs.field.gaostarget,list) \
          $::Config(tcs.field,anon)TargetList
-   set ::Config(tcs.field.altairtarget,panel) tcsFieldPanel
-   set ::Config(tcs.field.altairtarget,subcomp) [list cosys trackrate]
-   set ::Config(tcs.field.altairtarget,label) "ALTAIR target"
+   set ::Config(tcs.field.gaostarget,panel) tcsFieldPanel
+   set ::Config(tcs.field.gaostarget,subcomp) [list cosys trackrate]
+   set ::Config(tcs.field.gaostarget,label) "GAOS target"
 
-   set ::Config(tcs.field.altairtarget.cosys,value) ""
-   set ::Config(tcs.field.altairtarget.cosys,anon) ::[Cosys #auto]
-   set ::Config(tcs.field.altairtarget.cosys,class) CosysComponent
-   set ::Config(tcs.field.altairtarget.cosys,namespace) ::CosysNames
-   set ::Config(tcs.field.altairtarget.cosys,list) CosysList
-   set ::Config(tcs.field.altairtarget.cosys,panel) \
-         tcsFieldAltairTargetCosysPanel
-   set ::Config(tcs.field.altairtarget.cosys,subcomp) ""
-   set ::Config(tcs.field.altairtarget.cosys,label) "Coordinate system"
+   set ::Config(tcs.field.gaostarget.cosys,value) ""
+   set ::Config(tcs.field.gaostarget.cosys,anon) ::[Cosys #auto]
+   set ::Config(tcs.field.gaostarget.cosys,class) CosysComponent
+   set ::Config(tcs.field.gaostarget.cosys,namespace) ::CosysNames
+   set ::Config(tcs.field.gaostarget.cosys,list) CosysList
+   set ::Config(tcs.field.gaostarget.cosys,panel) \
+         tcsFieldGaosTargetCosysPanel
+   set ::Config(tcs.field.gaostarget.cosys,subcomp) ""
+   set ::Config(tcs.field.gaostarget.cosys,label) "Coordinate system"
 
-   set ::Config(tcs.field.altairtarget.trackrate,value) ""
-   set ::Config(tcs.field.altairtarget.trackrate,anon) ::[TrackRate #auto]
-   set ::Config(tcs.field.altairtarget.trackrate,class) TrackRateComponent
-   set ::Config(tcs.field.altairtarget.trackrate,namespace) \
+   set ::Config(tcs.field.gaostarget.trackrate,value) ""
+   set ::Config(tcs.field.gaostarget.trackrate,anon) ::[TrackRate #auto]
+   set ::Config(tcs.field.gaostarget.trackrate,class) TrackRateComponent
+   set ::Config(tcs.field.gaostarget.trackrate,namespace) \
          $::Config(tcs.field,anon)TrackRateNames
-   set ::Config(tcs.field.altairtarget.trackrate,list) \
+   set ::Config(tcs.field.gaostarget.trackrate,list) \
          $::Config(tcs.field,anon)TrackRateList
-   set ::Config(tcs.field.altairtarget.trackrate,panel) \
-         tcsFieldAltairTargetTrackRatePanel
-   set ::Config(tcs.field.altairtarget.trackrate,subcomp) cosys
-   set ::Config(tcs.field.altairtarget.trackrate,label) \
+   set ::Config(tcs.field.gaostarget.trackrate,panel) \
+         tcsFieldGaosTargetTrackRatePanel
+   set ::Config(tcs.field.gaostarget.trackrate,subcomp) cosys
+   set ::Config(tcs.field.gaostarget.trackrate,label) \
          "Differential track rate"
 
-   set ::Config(tcs.field.altairtarget.trackrate.cosys,value) ""
-   set ::Config(tcs.field.altairtarget.trackrate.cosys,anon) ::[Cosys #auto]
-   set ::Config(tcs.field.altairtarget.trackrate.cosys,class) CosysComponent
-   set ::Config(tcs.field.altairtarget.trackrate.cosys,namespace) ::CosysNames
-   set ::Config(tcs.field.altairtarget.trackrate.cosys,list) CosysList
-   set ::Config(tcs.field.altairtarget.trackrate.cosys,panel) \
-      tcsFieldAltairTargetTrackRateCosysPanel
-   set ::Config(tcs.field.altairtarget.trackrate.cosys,subcomp) ""
-   set ::Config(tcs.field.altairtarget.trackrate.cosys,label) \
+   set ::Config(tcs.field.gaostarget.trackrate.cosys,value) ""
+   set ::Config(tcs.field.gaostarget.trackrate.cosys,anon) ::[Cosys #auto]
+   set ::Config(tcs.field.gaostarget.trackrate.cosys,class) CosysComponent
+   set ::Config(tcs.field.gaostarget.trackrate.cosys,namespace) ::CosysNames
+   set ::Config(tcs.field.gaostarget.trackrate.cosys,list) CosysList
+   set ::Config(tcs.field.gaostarget.trackrate.cosys,panel) \
+      tcsFieldGaosTargetTrackRateCosysPanel
+   set ::Config(tcs.field.gaostarget.trackrate.cosys,subcomp) ""
+   set ::Config(tcs.field.gaostarget.trackrate.cosys,label) \
          "Coordinate system"
 
    set ::Config(tcs.field.guide,value) ""
@@ -279,6 +279,17 @@ proc createConfig {} {
          tcsGuideOiwfsWavelengthPanel
    set ::Config(tcs.field.guide.oiwfswavelength,subcomp) ""
    set ::Config(tcs.field.guide.oiwfswavelength,label) "OIWFS Filter"
+
+   set ::Config(tcs.field.guide.gaoswavelength,value) ""
+   set ::Config(tcs.field.guide.gaoswavelength,anon) ::[Wavelength #auto]
+   set ::Config(tcs.field.guide.gaoswavelength,class) WavelengthComponent
+   set ::Config(tcs.field.guide.gaoswavelength,namespace) \
+         ::GAOSWavelengthNames
+   set ::Config(tcs.field.guide.gaoswavelength,list) GAOSWavelengthList
+   set ::Config(tcs.field.guide.gaoswavelength,panel) \
+         tcsGuideGaosWavelengthPanel
+   set ::Config(tcs.field.guide.gaoswavelength,subcomp) ""
+   set ::Config(tcs.field.guide.gaoswavelength,label) "GAOS Filter"
 
    set ::Config(tcs.field.rotator,value) ""
    set ::Config(tcs.field.rotator,anon) ::[Rotator #auto]
@@ -336,14 +347,14 @@ proc createConfig {} {
    set ::Config(tcs.chop.cosys,subcomp) ""
    set ::Config(tcs.chop.cosys,label) "Coordinate system"
 
-   set ::Config(tcs.altair,value) ""
-   set ::Config(tcs.altair,anon) ::[Altair #auto]
-   set ::Config(tcs.altair,class) AltairComponent
-   set ::Config(tcs.altair,namespace) ::AltairNames
-   set ::Config(tcs.altair,list) AltairList
-   set ::Config(tcs.altair,panel) tcsAltairPanel
-   set ::Config(tcs.altair,subcomp) ""
-   set ::Config(tcs.altair,label) "ALTAIR configuration"
+   set ::Config(tcs.gaos,value) ""
+   set ::Config(tcs.gaos,anon) ::[Gaos #auto]
+   set ::Config(tcs.gaos,class) GaosComponent
+   set ::Config(tcs.gaos,namespace) ::GaosNames
+   set ::Config(tcs.gaos,list) GaosList
+   set ::Config(tcs.gaos,panel) tcsGaosPanel
+   set ::Config(tcs.gaos,subcomp) ""
+   set ::Config(tcs.gaos,label) "GAOS configuration"
 
    set ::Config(tcs.slewoptions,value) "Normal"
    set ::Config(tcs.slewoptions,anon) ::[SlewOptions #auto]

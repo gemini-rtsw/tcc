@@ -23,6 +23,7 @@ itcl::class WfsConfig {
        method ndsel {}
        method aoflenssel {}
        method aondsel {}
+       method aottgsiris {}
        method colsel {}
        method window {}
    }
@@ -42,11 +43,14 @@ itcl::body WfsConfig::constructor {args} {
    if { [catch {cs aoFLens info}] } {
       epics cs aoFLens
    }
+   if { [catch {cs aoTTGSiris info}] } {
+      epics cs aoTTGSiris
+   }
 
    set w $itk_interior
 
    itk_component add tabbook {
-      iwidgets::tabnotebook $w.tabs -tabpos n -width 460 -height 150 -equaltabs true
+      iwidgets::tabnotebook $w.tabs -tabpos n -width 460 -height 155 -equaltabs true
    } {
       ignore -background -tabbackground
    }
@@ -91,25 +95,17 @@ itcl::body WfsConfig::constructor {args} {
 	   pack $itk_component(${wfs}filter) -anchor w -padx 3 -pady 3
        } elseif { $wfs == "aowfs" } {
 	   
+# A subcomponent selector for the AOWFS.
 	   itk_component add ${wfs}filter {
-	       iwidgets::optionmenu $w.${wfs}filter -labeltext "filter" -labelpos w -width 100 \
-		   -command [itcl::code $this filter $wfs]
+	       WavelengthSelector $w.${wfs}filter -labeltext "filter" \
+		   -labelpos w -component tcs.field.guide.gaoswavelength
 	   } {
+	       usual
 	       ignore -background
 	   }
-	   itk_component add ${wfs}currFlt {
-	       MonitorLabel $w.currFlt agssad pwfs2Filter -width 12 -anchor w -font "Arial 12 bold"
-	   }  {
-	       ignore -background
-	   }
-	   
-	   $itk_component(${wfs}filter) insert end "ALTAIR" ""
-	   
-	   itk_component add ${wfs}wavel {
-	       iwidgets::entryfield $w.${wfs}wavel -labeltext "wavelength" -width 8
-	   }  {
-	       ignore -background
-	   }
+#	   pack $itk_component(${wfs}filter) -anchor w -padx 3 -pady 3
+
+
 	   itk_component add aond {
 	       iwidgets::optionmenu $w.nd -labeltext "ND filt" -labelpos w -width 100 \
 		   -command [itcl::code $this aondsel]
@@ -117,7 +113,8 @@ itcl::body WfsConfig::constructor {args} {
 	       ignore -background
 	   }
 	   $itk_component(aond) insert end IN OUT ""
-	   
+	   #puts "aond optionmenu: $itk_component(aond)"
+
 	   itk_component add currAONDFilt {
 	       MonitorLabel $w.currNDFilt aossad ndFiltPos -width 12 -anchor e -font "Arial 12 bold"
 	   } {
@@ -131,6 +128,7 @@ itcl::body WfsConfig::constructor {args} {
 	       ignore -background
 	   }
 	   $itk_component(aoflens) insert end IN OUT ""
+	   #puts "aoflens optionmenu: $itk_component(aoflens)"
 	   
 	   itk_component add currflens {
 	       MonitorLabel $w.currflens aossad flensPos -width 12 -anchor e -font "Arial 12 bold" -trans "* OUT {} unknown FLENS IN"
@@ -138,9 +136,25 @@ itcl::body WfsConfig::constructor {args} {
 	       ignore -background
 	   }
 
-	   grid $itk_component(${wfs}filter) $itk_component(${wfs}currFlt) $itk_component(${wfs}wavel) -sticky e -pady 3
-	   grid $itk_component(aond) $itk_component(currAONDFilt) -sticky nes -pady 2
-	   grid $itk_component(aoflens) $itk_component(currflens) -sticky nes -pady 2
+	   itk_component add aoiris {
+	       iwidgets::optionmenu $w.iris -labeltext "TTGS iris" -labelpos w -width 100 \
+		   -command [itcl::code $this aottgsiris]
+	   } {
+	       ignore -background
+	   }
+	   $itk_component(aoiris) insert end open close ""
+
+	   itk_component add currTTGSiris {
+	       MonitorLabel $w.currTTGSiris aossad ttgsIrisPos -width 12 -anchor e -font "Arial 12 bold"
+	   } {
+	       ignore -background
+	   }
+
+	   grid $itk_component(${wfs}filter) - -sticky nes -pady 1
+	   grid $itk_component(aond) $itk_component(currAONDFilt) -sticky nes
+	   grid $itk_component(aoflens) $itk_component(currflens) -sticky nes
+	   grid $itk_component(aoiris) $itk_component(currTTGSiris) -sticky nes
+	   grid configure $itk_component(currAONDFilt) $itk_component(currflens) $itk_component(currTTGSiris) -sticky nws
 	   
        } elseif { $wfs == "hrwfs" } {
 	   
@@ -255,15 +269,28 @@ itcl::body WfsConfig::fldstop {wfs} {
 	pwfs fldstop $wfs [$itk_component(${wfs}fldstop) get]
 }
 
+itcl::body WfsConfig::aottgsiris {} {
+#puts "WfsConfig::aottgsiris sending [$itk_component(aoiris) get]"
+# Select GAOS ND TTGS iris open close
+   cs aoTTGSiris set pos [$itk_component(aoiris) get]
+   cs aoTTGSiris set mode 1
+   cs aoTTGSiris set dir 3
+}
+
 itcl::body WfsConfig::aondsel {} {
-# Select ALTAIR ND filter IN/OUT
+#puts "WfsConfig::aondsel sending [$itk_component(aond) get]"
+# Select GAOS ND filter IN/OUT
    cs aoNDFilter set pos [$itk_component(aond) get]
    cs aoNDFilter set mode 1
    cs aoNDFilter set dir 3
+   if { $::Config(tcs.gaos,value) != "" } {
+       $::Config(tcs.gaos,namespace)::$::Config(tcs.gaos,value) configure -ndFilter [$itk_component(aond) get]
+   }
 }
 
 itcl::body WfsConfig::aoflenssel {} {
-# Select ALTAIR Field Lens IN/OUT
+#puts "WfsConfig::aoflenssel sending [$itk_component(aoflens) get]"
+# Select GAOS Field Lens IN/OUT
     set demand [$itk_component(aoflens) get]
     switch $demand {
 	IN {
@@ -283,6 +310,10 @@ itcl::body WfsConfig::aoflenssel {} {
 	    cs aoFLens set create 3
 	}
     }
+    if { $::Config(tcs.gaos,value) != "" } {
+	$::Config(tcs.gaos,namespace)::$::Config(tcs.gaos,value) configure -fldLens [$itk_component(aoflens) get]
+    }
+
 }
 
 itcl::body WfsConfig::ndsel {} {

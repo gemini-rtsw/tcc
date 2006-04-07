@@ -96,10 +96,11 @@ itcl::body GuideControl::save {name} {
 }
 
 itcl::body GuideControl::load {name} {
-
+puts "GuideControl::load name: $name"
 # Copy the contents of the guide object selected in the combobox
 # into the edit control.
    foreach wfs {pwfs1 pwfs2 oiwfs} {
+puts "${wfs}Active: [$name cget -${wfs}Active]"
       switch [$name cget -${wfs}Active] {
          A {$itk_component(${wfs}chop) select 0}
          B {$itk_component(${wfs}chop) select 1}
@@ -107,6 +108,7 @@ itcl::body GuideControl::load {name} {
          antiNod {$itk_component(${wfs}chop) select 3}
          default {$itk_component(${wfs}chop) select 4}
       }
+puts "${wfs}NodState: [$name cget -${wfs}NodState]"
       switch [$name cget -${wfs}NodState] {
          A {$itk_component(${wfs}nod) select 0}
          B {$itk_component(${wfs}nod) select 1}

@@ -36,8 +36,9 @@ itcl::class Handset {
    itk_option define -vt vt Vt sourceA
    itk_option define -cloop cloop Cloop 0 {}
    public {
-      method traceProc { name index op }
+      method setValue {name alarm time {values NoVal}}
       method timeout {}
+      method openloop {}
       variable oiAngle 138.94
    }
    private {
@@ -120,7 +121,7 @@ itk::usual Handset {
 }
 
 itcl::body Handset::constructor {args} {
-puts "creating Handset with args: $args"
+#puts "creating Handset with args: $args"
     global tid
     set tid 0
 
@@ -314,17 +315,12 @@ puts "creating Handset with args: $args"
 	   global inPosition followS INPOS FOLLOW
 	   set INPOS ""
 	   set FOLLOW ""
-	   set varName "inPosition\(value\)"
-	   #puts " varName  $varName this:[itcl::code $this] traceProc"
-	   trace variable $varName w "[itcl::code $this] traceProc"
-	   
-	   set $varName [sa tcssad get inPosition]
-	   sa tcssad link inPosition inPosition
 
-	   set varName "followS\(value\)"
-	   trace variable $varName w "[itcl::code $this] traceProc"	   
-	   set $varName [sa mcssad get followS]
-	   sa mcssad link followS followS
+	   sa tcssad proc inPosition [itcl::code $this setValue]
+	   setValue tcssad.inPosition alarm time [sa tcssad get inPosition]
+
+	   sa mcssad proc followS [itcl::code $this setValue]
+	   setValue mcssad.followS alarm time [sa mcssad get followS]
        }
    }
 }
@@ -335,10 +331,8 @@ itcl::body Handset::destructor {} {
 
     after cancel $tid
     if {$mon_inpos} {
-	sa tcssad unlink inPosition inPosition
-	trace remove variable inPosition(value) write "[itcl::code $this] traceProc"
-	sa mcssad unlink followS followS
-	trace remove variable followS(value) write "[itcl::code $this] traceProc"
+	sa tcssad unproc inPosition [itcl::code $this setValue]
+	sa mcssad unproc followS [itcl::code $this setValue]
     }
 }
 
@@ -394,18 +388,8 @@ itcl::configbody Handset::adjust {
 }
 
 itcl::body Handset::push {dir} {
-    global tid INPOS
-# Open loop if neccesary
-    if {$control_loop && [AO cget -enabled]} {
-	#puts "opening loop"
-	AO disable
-	set need_to_close_loop 1
-	# start timeout process
-	if {[string match TRUE $INPOS]} {
-	    set tid [after 5000 "$this timeout"]
-	}
-	#puts "tid: $tid"
-    }
+
+   openloop
 
 # Called whenever one of the handset buttons is pressed.
    if { ! [string equal $cs ""] } {
@@ -599,21 +583,20 @@ itcl::body Handset::initlabels {} {
    }
 }
 
-itcl::body Handset::traceProc {name index op} {
+itcl::body Handset::setValue {name alarm time {values NoVal}} {
 
-   set gVar "$name\($index\)"
-   #puts "gVar: $gVar"
-   global $name INPOS FOLLOW tid
-   #puts "traceProc called with name: $name index: $index op: $op gVar: $gVar [set $gVar]"
+   set locname [string range $name [string wordstart $name end] end]
+   global $locname INPOS FOLLOW tid
+   puts "setValue called with name: $locname values: $values"
 
-   switch $name {
+   switch $locname {
        inPosition { 
 	   #puts "setting INPOS"
-	   set INPOS [set $gVar]
+	   set INPOS $values
        }
        followS {
 	   #puts "setting FOLLOW"
-	   set FOLLOW [set $gVar]
+	   set FOLLOW $values
        }
    }
    #puts "INPOS: $INPOS   FOLLOW: $FOLLOW"
@@ -640,4 +623,20 @@ itcl::body Handset::timeout {} {
        AO enable
        set need_to_close_loop 0
    }
+}
+
+
+itcl::body Handset::openloop {} {
+    global tid INPOS
+# Open loop if neccesary
+    if {$control_loop && [AO cget -enabled]} {
+	#puts "opening loop"
+	AO disable
+	set need_to_close_loop 1
+	# start timeout process
+	if {[string match TRUE $INPOS]} {
+	    set tid [after 5000 "$this timeout"]
+	}
+	#puts "tid: $tid"
+    }
 }

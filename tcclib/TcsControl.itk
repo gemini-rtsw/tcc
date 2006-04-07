@@ -30,9 +30,9 @@ itcl::class TcsControl {
       method m1unpark {par} {return UNPARK}
       method agmech {cmd}
       method mountdatum {par}
-      method altairfollow {}
-      method altairdatum {}
-      method altairpark {}
+      method gaosfollow {}
+      method gaosdatum {}
+      method gaospark {}
       variable dome
       variable shutter
       variable alarmObj
@@ -156,9 +156,9 @@ itcl::body TcsControl::constructor args {
             -offvalue {OFF Off} \
             -sadrecord {agssad oiFollowS}
    }
-   itk_component add altair {
-      OnOffButton $w.altair -text AOWFS \
-            -onproc  [itcl::code $this altairfollow] \
+   itk_component add gaos {
+      OnOffButton $w.gaos -text AOWFS \
+            -onproc  [itcl::code $this gaosfollow] \
             -offcommand {aoFollow followState Off } \
             -onvalue {ON On} \
             -offvalue {OFF Off} \
@@ -193,7 +193,7 @@ itcl::body TcsControl::constructor args {
       ApplyButton $w.oidatum -command oiwfsDatum -text Datum
    }
    itk_component add aodatum {
-      LiveButton $w.aodatum -command [itcl::code $this altairdatum] -text Unpark
+      LiveButton $w.aodatum -command [itcl::code $this gaosdatum] -text Unpark
    }
 #   itk_component add aodatum {
 #      ApplyButton $w.aodatum -command aoDatum -text Unpark
@@ -226,7 +226,7 @@ itcl::body TcsControl::constructor args {
       ApplyButton $w.oipark -command oiwfsPark -text Park
    }
    itk_component add aopark {
-      LiveButton $w.aopark -command [itcl::code $this altairpark] -text Park
+      LiveButton $w.aopark -command [itcl::code $this gaospark] -text Park
    }
 
 # AWE temporary placement of Shutter Alarm
@@ -252,7 +252,7 @@ itcl::body TcsControl::constructor args {
          -sticky nsew -padx 5 -pady 3
    grid $itk_component(oiwfs) $itk_component(oidatum) $itk_component(oipark) \
          -sticky ew -padx 5 -pady 3
-   grid $itk_component(altair) $itk_component(aodatum) $itk_component(aopark) \
+   grid $itk_component(gaos) $itk_component(aodatum) $itk_component(aopark) \
          -sticky ew -padx 5 -pady 3
    grid $itk_component(alarm) - - \
          -sticky ew -padx 10 -pady 3
@@ -610,7 +610,7 @@ itcl::body TcsControl::mountdatum {par} {
    }
 }
 
-itcl::body TcsControl::altairfollow {} {
+itcl::body TcsControl::gaosfollow {} {
    cs aoFollow set followState On
    cs aoEntShutter set state Open
    cs aoExitShutter set state Open
@@ -619,32 +619,32 @@ itcl::body TcsControl::altairfollow {} {
    logger command aoExitShutter
    if { [catch {cs tcsApply post} msg] } {
       tk_messageBox -icon error -parent $itk_interior -message \
-            "Error posting ALTAIR mechanism command: TCS reports \
+            "Error posting GAOS mechanism command: TCS reports \
             \"$msg\""
    }
 }
 
-itcl::body TcsControl::altairdatum {} {
+itcl::body TcsControl::gaosdatum {} {
 
-   # Turn off Air Purge
-   set path "/gemini/altair/altair/bin/solaris/"
-   eval exec $path/aoRpc3 AP OFF
-   logger log "Turned off Altair Air Purge"
+   # Turn off Air Purge (commented out due to power bar being inaccesable)
+   #set path "/gemini/altair/altair/bin/solaris/"
+   #eval exec $path/aoRpc3 AP OFF
+   #logger log "Turned off Altair Air Purge"
 
    logger command aoDatum
    if { [catch {cs tcsApply post} msg] } {
       tk_messageBox -icon error -parent $itk_interior -message \
-            "Error posting ALTAIR mechanism command: TCS reports \
+            "Error posting GAOS mechanism command: TCS reports \
             \"$msg\""
    }
 }
 
-itcl::body TcsControl::altairpark {} {
+itcl::body TcsControl::gaospark {} {
 
-   # Turn on Air Purge
-   set path "/gemini/altair/altair/bin/solaris/"
-   eval exec $path/aoRpc3 AP ON
-   logger log "Turned on Altair Air Purge"
+   # Turn on Air Purge  (commented out due to power bar being inaccesable)
+#   set path "/gemini/altair/altair/bin/solaris/"
+#   eval exec $path/aoRpc3 AP ON
+#   logger log "Turned on Altair Air Purge"
 
    cs aoFollow set followState Off
    cs aoPark set dummy 1
@@ -652,7 +652,7 @@ itcl::body TcsControl::altairpark {} {
    logger command aoPark
    if { [catch {cs tcsApply post} msg] } {
       tk_messageBox -icon error -parent $itk_interior -message \
-            "Error posting ALTAIR mechanism command: TCS reports \
+            "Error posting GAOS mechanism command: TCS reports \
            \"$msg\""
    }
 }

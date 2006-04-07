@@ -1,11 +1,15 @@
 #+
-#  Altair <- Paramset
+#  Gaos <- Paramset
 #
-#  Implements the Altair class. A Altair object stores various parameters
-#  that are needed for the initial setup of ALTAIR when the telescope is
+#  Implements the Gaos class. A Gaos object stores various parameters
+#  that are needed for the initial setup of GAOS when the telescope is
 #  slewed.
 #
 #  Options:
+#
+#          -ndFilter     Neutral Density Filter position
+#
+#          -fldLens      Field Lens Position
 #
 #          -deployAdc    ADC position
 #
@@ -18,13 +22,13 @@
 #          -windspeed    Wind speed aloft.
 #
 #  Methods:
-#          apply comp    Applies the Altair configuration to the TCS by 
+#          apply comp    Applies the Gaos configuration to the TCS by 
 #                        setting the values of the command parameters.
 #                        The argument is ignored.
 #
-#          init          Returns the Altair object to its initial state.
+#          init          Returns the Gaos object to its initial state.
 #
-#          save node     Saves the values of the Altair configuration
+#          save node     Saves the values of the Gaos configuration
 #                        to the xml node
 #
 #  D Terrett 15 May 2003
@@ -32,7 +36,7 @@
 #  Copyright CCLRC
 #+
 
-itcl::class Altair {
+itcl::class Gaos {
    inherit Paramset
    destructor {$this init}
    public {
@@ -41,15 +45,41 @@ itcl::class Altair {
       method save {node}
       variable adjustAdc {}
       variable deployAdc {}
-      variable gsmag {}
+      variable ndFilter {} {
+	  # update the GAOS Config screen if it exists
+	  #puts "setting ndFilter to $ndFilter"
+	  if { [winfo exists .tcsGaosPanel.frame.control] } {
+	      .tcsGaosPanel.frame.control configure -ndFilter $ndFilter
+	  }
+      }
+      variable fldLens {} {
+	  # update the GAOS Config screen if it exists
+	  #puts "setting fldLens to $fldLens"
+	  if { [winfo exists .tcsGaosPanel.frame.control] } {
+	      .tcsGaosPanel.frame.control configure -fldLens $fldLens
+	  }
+      }
+      variable gsmag {} {
+	  # update the gsmag entry if it exists
+	  if { [winfo exists .tcsGaosPanel.frame.control.chop.gsmag] } {
+	      .tcsGaosPanel.frame.control.chop.gsmag clear
+	      .tcsGaosPanel.frame.control.chop.gsmag insert end $gsmag
+	  }
+      }
+      variable lgs {}
       variable seeing {}
       variable windspeed {}
    }
 }
 
-itcl::body Altair::apply {comp} {
+itcl::body Gaos::apply {comp} {
+#puts "Gaos::apply comp: $comp name: $::Config($comp,value)"
+# Don't do anything if empty or No AO"
+    if { ($::Config($comp,value) == "") || ($::Config($comp,value) == "No AO") } {
+	return
+    }
 
-# In order to configure ALTAIR we need know the Cass rotator position and
+# In order to configure GAOS we need know the Cass rotator position and
 # guide start X/Y. If we are being called as part of an overall TCS
 # configuration then we must predict what these are going to be using the
 # Preview functions. If not, we use the current values from the telescope.
@@ -65,7 +95,7 @@ itcl::body Altair::apply {comp} {
       set zd [$view cget -zd]
       set xy [$view cget -p2xy]
       if { [llength $xy] == 0 } {
-         error "Configuration must contain an ALTAIR guide star"
+         error "Configuration must contain an GAOS guide star"
       }
       set x [lindex $xy 0]
       set y [lindex $xy 1]
@@ -84,6 +114,54 @@ itcl::body Altair::apply {comp} {
       set zd [expr { 90.0 - $el }]
       set x [sa tcssad get aoDemandx]
       set y [sa tcssad get aoDemandy]
+   }
+
+# Turn on aoUseLwfs if neccesary
+   if {$lgs} {
+       cs aoUseLwfs set state ON
+   } else {
+       cs aoUseLwfs set state OFF
+   }
+   logger command aoUseLwfs
+
+# Select GAOS ND filter IN/OUT 
+# this writes directly to Altair ... will be replaced by tcs interface
+# Update the WfsConfig in the A&G screen at the same time, if it exists
+   if {[winfo exists .observePanel.frame.control.botframe.wfsconfig.tabs.canvas.notebook.cs.page5.cs.aowfs.nd]} {
+       .observePanel.frame.control.botframe.wfsconfig.tabs.canvas.notebook.cs.page5.cs.aowfs.nd select $ndFilter
+   } else {
+       #puts "Gaos::apply setting ndfilter to $ndFilter"
+       cs aoNDFilter set pos $ndFilter
+       cs aoNDFilter set mode 1
+       cs aoNDFilter set dir 3
+   }
+
+# Select GAOS Field Lens IN/OUT
+# this writes directly to Altair ... will be replaced by tcs interface
+# Update the WfsConfig in the A&G screen at the same time, if it exists
+
+   if {[winfo exists .observePanel.frame.control.botframe.wfsconfig.tabs.canvas.notebook.cs.page5.cs.aowfs.flens]} {
+       .observePanel.frame.control.botframe.wfsconfig.tabs.canvas.notebook.cs.page5.cs.aowfs.flens select $fldLens
+   } else {
+       #puts "Gaos::apply setting fldlens to $fldLens"
+       switch $fldLens {
+	   IN {
+	       cs aoFLens set pos FLENS
+	       cs aoFLens set mode 1
+	       cs aoFLens set dir 3
+	       cs aoFLens set flens 1
+	       cs aoFLens set create 0
+	       cs aoFLens set create 3
+	   }
+	   OUT {
+	       cs aoFLens set pos PARK
+	       cs aoFLens set mode 1
+	       cs aoFLens set dir 3
+	       cs aoFLens set flens 0
+	       cs aoFLens set create 0
+	       cs aoFLens set create 3
+	   }
+       }
    }
 
 # Deploy (or not) the ADC.
@@ -123,19 +201,25 @@ itcl::body Altair::apply {comp} {
    logger command filter1
 }
 
-itcl::body Altair::save {node} {
-   set node [paramset $node altair]
+itcl::body Gaos::save {node} {
+   set node [paramset $node gaos]
    param $node adjustAdc $adjustAdc
    param $node deployAdc $deployAdc
+   param $node ndFilter $ndFilter
+   param $node fldLens $fldLens
+   param $node lgs $lgs
    param $node gsmag $gsmag
    param $node seeing $seeing
    param $node windspeed $windspeed
 }
 
-itcl::body Altair::init {} {
+itcl::body Gaos::init {} {
    set adjustAdc ""
    set deployAdc ""
    set gsmag ""
    set seeing ""
+   set lgs ""
    set windspeed ""
+   set ndFilter ""
+   set fldLens ""
 }

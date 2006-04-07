@@ -13,7 +13,7 @@
 #
 #           -chop           The name of the chop component.
 #
-#           -altair         The name of the ALTAIR component.
+#           -gaos         The name of the GAOS component.
 #
 #           -slewOptions    The name of the slew options component.
 #
@@ -47,7 +47,7 @@ itcl::class TcsConfig {
       variable field ""
       variable pointOrig ""
       variable chop ""
-      variable altair ""
+      variable gaos ""
       variable slewOptions ""
       variable trackFrame ""
       variable instrument ""
@@ -56,7 +56,7 @@ itcl::class TcsConfig {
       variable current_field ""
       variable current_pointOrig ""
       variable current_chop ""
-      variable current_altair ""
+      variable current_gaos ""
       variable current_slewOptions ""
       variable current_trackFrame ""
       variable current_instrument ""
@@ -92,8 +92,14 @@ itcl::body TcsConfig::apply {comp} {
        ::OIWFSWavelengthNames::$oiwfsWavelength apply tcs.field.guide.oiwfswavelength
    }
 
+# Apply the gaoswavelength here (it was previously in the CC heirarchy but is now in WfsConfig
+   set gaosWavelength $::Config(tcs.field.guide.gaoswavelength,value)
+   if {$gaosWavelength ne ""} {
+       ::GAOSWavelengthNames::$gaosWavelength apply tcs.field.guide.gaoswavelength
+   }
+
 # Call the apply method of all the components that have a value. Note that
-# Altair comes after SlewOptions so that Slew options doesn't overwrite
+# Gaos comes after SlewOptions so that Slew options doesn't overwrite
 # the filter 1 setting.
    if { $field ne "" } {
       ::FieldNames::$field apply $comp.field
@@ -107,8 +113,8 @@ itcl::body TcsConfig::apply {comp} {
    if { $slewOptions ne "" } {
       ::SlewOptionsNames::$slewOptions apply $comp.slewoptions
    }
-   if { $altair ne "" } {
-      ::AltairNames::$altair apply $comp.altair
+   if { $gaos ne "" } {
+      ::GaosNames::$gaos apply $comp.gaos
    }
    if { $trackFrame ne "" } {
       ::TrackFrameNames::$trackFrame apply $comp.trackframe
@@ -122,7 +128,7 @@ itcl::body TcsConfig::init {} {
    $this configure -field ""
    $this configure -pointOrig ""
    $this configure -chop ""
-   $this configure -altair ""
+   $this configure -gaos ""
    $this configure -slewOptions ""
    $this configure -trackFrame ""
    $this configure -instrument ""
@@ -153,7 +159,7 @@ itcl::body TcsConfig::save {node} {
    param $node field $field
    param $node pointOrig $pointOrig
    param $node chop $chop
-   param $node altair $altair
+   param $node gaos $gaos
    param $node slewOptions $slewOptions
    param $node trackFrame $trackFrame
    param $node instrument $instrument
@@ -201,16 +207,16 @@ itcl::configbody TcsConfig::chop {
    }
 }
 
-itcl::configbody TcsConfig::altair {
-   if { ! [string equal $current_altair ""] } {
-      AltairNames::$current_altair refdec
+itcl::configbody TcsConfig::gaos {
+   if { ! [string equal $current_gaos ""] } {
+      GaosNames::$current_gaos refdec
    }
-   set current_altair ""
-   if { ! [string equal $altair ""] } {
-      if { [catch {AltairNames::$altair refinc}] } {
-         error "Altair configuration \"$altair\" does not exist"
+   set current_gaos ""
+   if { ! [string equal $gaos ""] } {
+      if { [catch {GaosNames::$gaos refinc}] } {
+         error "Gaos configuration \"$gaos\" does not exist"
       } else {
-         set current_altair $altair
+         set current_gaos $gaos
       }
    }
 }

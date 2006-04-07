@@ -27,13 +27,13 @@ proc fieldTrace {n1 n2 op} {
       }
       set namespace [$fieldname cget -targetns]
       set listname [$fieldname cget -targetlist]
-      foreach target {science pwfs1 pwfs2 oiwfs altair} {
+      foreach target {science pwfs1 pwfs2 oiwfs gaos} {
          set ::Config(tcs.field.${target}target,namespace) $namespace
          set ::Config(tcs.field.${target}target,list) $listname
       }
       set namespace [$fieldname cget -trackratens]
       set listname [$fieldname cget -trackratelist]
-      foreach target {science pwfs1 pwfs2 oiwfs altair} {
+      foreach target {science pwfs1 pwfs2 oiwfs gaos} {
          set ::Config(tcs.field.${target}target.trackrate,namespace) $namespace
          set ::Config(tcs.field.${target}target.trackrate,list) $listname
       }

@@ -101,17 +101,17 @@ proc createPanels {} {
          -name .tcsFieldOiwfsTargetTrackRateCosysPanel -class CosysPanel \
          -title "Oiwfs Target Differential Track Rate Coordinate System" \
          -components tcs.field.oiwfstarget.trackrate.cosys
-   EditPanelMgr tcsFieldAltairTargetCosysPanel \
-         -name .tcsFieldAltairTargetCosysPanel -class CosysPanel \
-         -title "ALTAIR Target Coordinate System" \
+   EditPanelMgr tcsFieldGaosTargetCosysPanel \
+         -name .tcsFieldGaosTargetCosysPanel -class CosysPanel \
+         -title "GAOS Target Coordinate System" \
          -components tcs.field.pwfs2target.cosys
-   EditPanelMgr tcsFieldAltairTargetTrackRatePanel \
-         -name .tcsFieldAltairTargetTrackRatePanel -class TrackRatePanel \
-         -title "ALTAIR Target Differential Track Rates" \
-         -components tcs.field.altairtarget.trackrate
-   EditPanelMgr tcsFieldAltairTargetTrackRateCosysPanel \
-         -name .tcsFieldAltairTargetTrackRateCosysPanel -class CosysPanel \
-         -title "ALTAIR Target Differential Track Rate Coordinate System" \
+   EditPanelMgr tcsFieldGaosTargetTrackRatePanel \
+         -name .tcsFieldGaosTargetTrackRatePanel -class TrackRatePanel \
+         -title "GAOS Target Differential Track Rates" \
+         -components tcs.field.gaostarget.trackrate
+   EditPanelMgr tcsFieldGaosTargetTrackRateCosysPanel \
+         -name .tcsFieldGaosTargetTrackRateCosysPanel -class CosysPanel \
+         -title "GAOS Target Differential Track Rate Coordinate System" \
          -components tcs.field.pwfs2target.trackrate.cosys
    EditPanelMgr tcsGuidePanel -name .tcsGuidePanel \
          -class GuidePanel -title "Guide Configuration" \
@@ -120,6 +120,10 @@ proc createPanels {} {
          -name .tcsGuideOiwfsWavelengthPanel -class WavelengthPanel \
          -title "Oiwfs Guiding Wavelength" \
          -components tcs.field.guide.oiwfswavelength
+   EditPanelMgr tcsGuideGaosWavelengthPanel \
+         -name .tcsGuideGaosWavelengthPanel -class WavelengthPanel \
+         -title "Gaos Guiding Wavelength" \
+         -components tcs.field.guide.gaoswavelength
    EditPanelMgr tcsRotatorPanel -name .tcsRotatorPanel \
          -class RotatorPanel -title "Rotator Configuration" \
          -components tcs.field.rotator 
@@ -135,9 +139,9 @@ proc createPanels {} {
    EditPanelMgr tcsChopCosysPanel -name .tcsChopCosysPanel \
          -class CosysPanel -title "Chop Coordinate System" \
          -components tcs.chop.cosys
-   EditPanelMgr tcsAltairPanel -name .tcsAltairPanel \
-         -class AltairPanel -title "ALTAIR Configuration" \
-         -components tcs.altair 
+   EditPanelMgr tcsGaosPanel -name .tcsGaosPanel \
+         -class GaosPanel -title "GAOS Configuration" \
+         -components tcs.gaos 
    EditPanelMgr tcsSlewOptionsPanel -name .tcsSlewOptionsPanel \
          -class SlewOptionsPanel -title "Slew Options" \
          -components tcs.slewoptions 
@@ -172,10 +176,10 @@ proc createPanels {} {
          -name .tcsTrackFrameOiwfsCosysPanel \
          -class CosysPanel -title "OIWFS Tracking Frame Coordinate System" \
          -components tcs.trackframe.oiwfscosys
-   EditPanelMgr tcsTrackFrameAltairCosysPanel \
-         -name .tcsTrackFrameAltairCosysPanel \
-         -class CosysPanel -title "ALTAIR Tracking Frame Coordinate System" \
-         -components tcs.trackframe.altaircosys
+   EditPanelMgr tcsTrackFrameGaosCosysPanel \
+         -name .tcsTrackFrameGaosCosysPanel \
+         -class CosysPanel -title "GAOS Tracking Frame Coordinate System" \
+         -components tcs.trackframe.gaoscosys
    EditPanelMgr tcsInstrumentPanel -name .tcsInstrumentPanel \
          -class InstrumentPanel -title "Instrument Configuration" \
          -components tcs.instrument 

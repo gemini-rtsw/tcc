@@ -1,7 +1,7 @@
 #+
-#  AltairControl <- ComponentControl
+#  GaosControl <- ComponentControl
 #
-#  A Altair control is a ComponentControl widget with widgets for the 
+#  A Gaos control is a ComponentControl widget with widgets for the 
 #  guide star magnitude, wind speed, seeing estimate and whether the
 #  ADC should be deployed.
 #
@@ -14,7 +14,7 @@
 #  Copyright CCLRC
 #+
 
-itcl::class AltairControl {
+itcl::class GaosControl {
    inherit ComponentControl
    constructor args {}
    itk_option define -component component Component {}
@@ -22,20 +22,28 @@ itcl::class AltairControl {
       method load {name}
       method reset {}
       method save {name}
-   }
-   private {
       variable deployAdc IN
       variable adjustAdc ON
+      variable ndFilter OUT
+      variable fldLens OUT
+      variable lgs OFF
    }
 }
 
-itk::usual AltairControl {
+itk::usual GaosControl {
    keep -borderwidth -cursor -font -highlightthickness -insertborderwidth \
          -insertofftime -insertontime -insertwidth -labelfont -popupcursor \
          -selectborderwidth -textfont -title
 }
 
-itcl::body AltairControl::constructor args {
+itcl::body GaosControl::constructor args {
+
+   if { [catch {cs aoNDFilter info}] } {
+      epics cs aoNDFilter
+   }
+   if { [catch {cs aoFLens info}] } {
+      epics cs aoFLens
+   }
 
 # Frame.
    itk_component add chop {
@@ -63,6 +71,27 @@ itcl::body AltairControl::constructor args {
    }
    pack $itk_component(windspeed) -anchor e -pady 4
 
+# LGS
+   itk_component add lgs {
+      checkbutton $w.lgs -text "use LGS" \
+            -variable [itcl::scope lgs] -onvalue ON -offvalue OFF
+   }
+   pack $itk_component(lgs) -pady 4
+
+# Neutral Density Filter.
+   itk_component add ndFilter {
+      checkbutton $w.ndFilter -text "ND Filter" \
+            -variable [itcl::scope ndFilter] -onvalue IN -offvalue OUT
+   }
+   pack $itk_component(ndFilter) -pady 4
+
+# Field Lens
+   itk_component add fldLens {
+      checkbutton $w.fldLens -text "Field Lens" \
+            -variable [itcl::scope fldLens] -onvalue IN -offvalue OUT
+   }
+   pack $itk_component(fldLens) -pady 4
+
 # Deploy ADC.
    itk_component add deployAdc {
       checkbutton $w.deployAdc -text "Deploy ADC" \
@@ -78,34 +107,43 @@ itcl::body AltairControl::constructor args {
    pack $itk_component(adjustAdc) -pady 4
 
 # Set the object description.
-   set description "ALTAIR configuration"
+   set description "GAOS configuration"
 
    eval itk_initialize $args
 }
 
-itcl::body AltairControl::reset {} {
+itcl::body GaosControl::reset {} {
    $itk_component(gsmag) clear
    $itk_component(seeing) clear
    $itk_component(windspeed) clear
+   set lgs OFF
    set deployAdc IN
    set adjustAdc ON
+   set ndfilter OUT
+   set fldlens OUT
 }
 
-itcl::body AltairControl::load {name} {
+itcl::body GaosControl::load {name} {
 
-# Copy the contents of the specified Altair object into the edit
+# Copy the contents of the specified Gaos object into the edit
 # controls.
    $itk_component(gsmag) insert end [$name cget -gsmag]
    $itk_component(seeing) insert end [$name cget -seeing]
    $itk_component(windspeed) insert end [$name cget -windspeed]
    set deployAdc [string toupper [$name cget -deployAdc]]
    set adjustAdc [string toupper [$name cget -adjustAdc]]
+   set ndFilter [string toupper [$name cget -ndFilter]]
+   set fldLens [string toupper [$name cget -fldLens]]
+   set lgs [string toupper [$name cget -lgs]]
 }
 
-itcl::body AltairControl::save {name} {
+itcl::body GaosControl::save {name} {
    $name configure -gsmag [$itk_component(gsmag) get]
    $name configure -seeing [$itk_component(seeing) get]
    $name configure -windspeed [$itk_component(windspeed) get]
    $name configure -deployAdc $deployAdc
    $name configure -adjustAdc $adjustAdc
+   $name configure -ndFilter $ndFilter
+   $name configure -fldLens $fldLens
+   $name configure -lgs $lgs
 }
