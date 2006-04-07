@@ -54,19 +54,28 @@
 
 # Disable AO related features
 *toolbar*ao*state:                      disabled
-*tcsConfigPanel*control*altair*state:   disabled
-*tcsPanel*control*altair*state:         disabled
+*tcsConfigPanel*control*gaos*state:   disabled
+*tcsPanel*control*gaos*state:         disabled
 *tcsPanel*control*aodatum*state:        disabled
 *tcsPanel*control*aopark*state:         disabled
 *observePanel*control*altair*state:     disabled
 *observePanel*control*aopark*state:     disabled
 *observePanel*control*gaosframe*state:  disabled
+*observePanel*control*ttgsframe*state:  disabled
 *observePanel*control*lpath*1*state:    disabled
 *observePanel*control*lpath*4*state:    disabled
 *observePanel*guideloop*m2ao*0*state:   disabled
 *observePanel*guideloop*m2ao*1*state:   disabled
 *observePanel*guideloop*oiao*state:     disabled
+*observePanel*guideloop*ttao*state:     disabled
+*observePanel*guideloop*sfao*state:     disabled
+*observePanel*guideloop*aobto*state:     disabled
+*observePanel*guideloop*aosfo*state:     disabled
+*observePanel*guideloop*sfo_ex*state:     disabled
+*observePanel*guideloop*aottgs*state:     disabled
+*observePanel*guideloop*ttgs_ex*state:     disabled
 *observePanel*guideloop*gaoson*state:   disabled
+*observePanel*guideloop*gaos_ex*state:   disabled
 *observePanel*guideloop*m1src*3*state:  disabled
 *observePanel*wfsconfig*page5*state:    disabled
 *tcsFieldPanel*notebook*page5*state:    disabled
