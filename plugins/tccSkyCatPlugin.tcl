@@ -32,9 +32,9 @@ proc SkyCat_plugin {this} {
    $w add_menuitem $gemmenu command "Pick OIWFS Target" \
          "Pick an object and define it as the on instrument wave front sensor target" \
          -command "TccSkyCat::pick_target oiwfs"
-   $w add_menuitem $gemmenu command "Pick ALTAIR Target" \
-         "Pick an object and define it as the ALTAIR wave front sensor target" \
-         -command "TccSkyCat::pick_target altair"
+   $w add_menuitem $gemmenu command "Pick GAOS Target" \
+         "Pick an object and define it as the GAOS wave front sensor target" \
+         -command "TccSkyCat::pick_target gaos"
    $w add_menuitem $gemmenu command "Set IPD" \
          "Set Instrument Principle Direction" \
          -command "TccSkyCat::pick_angle"

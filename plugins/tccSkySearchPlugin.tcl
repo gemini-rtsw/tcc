@@ -30,9 +30,9 @@ proc SkySearch_plugin {this} {
    $w add_menuitem $gemmenu command "Selection -> OIWFS target" \
          "Define the selected entry as the on instrument wave front sensor target" \
          -command "TccSkyQuery::define_selected oiwfstarget"
-   $w add_menuitem $gemmenu command "Selection -> ALTAIR target" \
-         "Define the selected entry as the ALTAIR wave front sensor target" \
-         -command "TccSkyQuery::define_selected altairtarget"
+   $w add_menuitem $gemmenu command "Selection -> GAOS target" \
+         "Define the selected entry as the GAOS wave front sensor target" \
+         -command "TccSkyQuery::define_selected gaostarget"
    $w add_menuitem $gemmenu command "Result -> targets" \
          "Define the search result as targets" \
          -command "TccSkyQuery::define_contents"
