@@ -176,6 +176,7 @@ proc tccMain args {
    WaveFrontSensor Pwfs1 pwfs1
    WaveFrontSensor Pwfs2 pwfs2
    OiWaveFrontSensor Oiwfs oiwfs
+   AoWaveFrontSensor Aowfs
 
 # Create object for executing nods
    Nod Nodder
