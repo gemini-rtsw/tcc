@@ -78,11 +78,23 @@ command aoOiwfsSource tcsApply ALTAIR OIWFS source
    bandwidth tc1:aoOiwfsSource.B   Bandwidth
 }
 
+command aoUseLwfs tcsApply GAOS LGS ON?
+{
+   state     tc1:aoUseLwfs.A       State (ON/OFF)
+}
+
 command aoGimOffsets tcsApply ALTAIR Gimbal Offsets
 {
    xoff      ao:wfcs:xOffset.VAL   X Offset
    yoff      ao:wfcs:yOffset.VAL   Y Offset
    zoff      ao:wfcs:zOffset.VAL   Z Offset
+}
+
+command aoTTGSiris tcsApply ALTAIR TTGS iris Position
+{
+   pos       ao:cc:lgsirisAssembly.A      Demanded position
+   mode      ao:cc:lgsirisAssembly.MODE   Mode
+   dir       ao:cc:lgsirisAssembly.DIR    Directive
 }
 
 command aoNDFilter tcsApply ALTAIR ND Filter Position
@@ -105,4 +117,37 @@ command aoFlex tcsApply ALTAIR flexture model
 {
    file      ao:ncpa.B      Demanded position
    dir       ao:ncpa.DIR    Directive
+}
+
+command ttgsloop tcsApply GAOS TTGS Correct Control
+{
+   dem       ao:wfcs:strapCorrCtl.A   Demanded state (0/1)
+   dir 	     ao:wfcs:strapCorrCtl.DIR Directive
+}
+
+command sfoloop tcsApply GAOS SFO Correct Control
+{
+   dem       ao:cc:lgszoomSfoLoop   Demanded state (0/1)
+}
+
+command gaosTTGS tcsApply GAOS TTGS integrating
+{
+   exp       ao:wfcs:strapSEX.A     Exposure Time (msec)
+   expDIR    ao:wfcs:strapSEX.DIR   Exposure Time Directive (START=3)
+   dem       ao:wfcs:strapGtCtl.A   Demanded state (0/1)
+   dir 	     ao:wfcs:strapGtCtl.DIR Directive
+}
+
+command gaosSFO tcsApply GAOS SFO integrating
+{
+   exp       sfo:setExpTime.A       Set Exposure Time (sec)
+   startDIR  sfo:observe.DIR 	    Start Directive (MARK)
+   stopDIR   sfo:endObserve.DIR     Stop Directive (MARK)
+   apply     sfo:apply.DIR	    Apply (START)
+}
+
+command gaosBTO tcsApply GAOS BTO loop closed
+{
+   dem       bto:FSALoopCtrl.A      Demanded State (On/Off)
+   dir       bto:apply.DIR          Directive (START)
 }
