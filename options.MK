@@ -42,7 +42,7 @@
 *tcsFieldPwfs1TargetTrackRatePanel*background:	  SkyBlue
 *tcsFieldPwfs2TargetTrackRatePanel*background:    OldLace
 *tcsFieldOiwfsTargetTrackRatePanel*background:    Wheat
-*tcsFieldAltairTargetTrackRatePanel*background:   LemonChiffon
+*tcsFieldGaosTargetTrackRatePanel*background:   LemonChiffon
 
 # Target entry pages
 *FieldPanel*data*page1*background: 	Pink
