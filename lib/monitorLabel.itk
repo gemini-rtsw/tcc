@@ -12,11 +12,14 @@
 itcl::class MonitorLabel {
    inherit itk::Widget
    constructor {sys var args} {}
+   destructor {}
    public {
        method getValue {}
        method traceProc { name index op }
    }
    private {
+      variable unlink ""
+      variable untrace ""
       variable varName ""
    }
    itk_option define -width width Width 0 {
@@ -74,8 +77,19 @@ itcl::body MonitorLabel::constructor {sys var args} {
    set $varName [sa $sys get $var]
    sa $sys link $var $var
 
+   set unlink "sa $sys unlink $var $var"
+   set untrace "trace remove variable $varName write MonitorLabel::traceProc"
 
    pack $itk_component(desc) $itk_component(label) -side left -anchor $itk_option(-anchor)
+}
+
+itcl::body MonitorLabel::destructor {} {
+    global [string trimright $varName "(value)"]
+    puts "MonitorLabel::destructor"
+#    puts "unlink: $unlink"
+    puts "untrace: $untrace"
+#    $unlink
+    $untrace
 }
 
 itcl::body MonitorLabel::getValue {} {
