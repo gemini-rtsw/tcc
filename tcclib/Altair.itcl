@@ -189,6 +189,27 @@ itcl::body Gaos::apply {comp} {
    cs aoPrepareCm set windspeed $windspeed
    logger command aoPrepareCm
 
+# write the exposure time to the A&G screen if it exists
+   switch $gsmag {
+       11 -
+       11.0 { set exp 0.001}
+       12 -
+       12.0 { set exp 0.002}
+       13 -
+       13.0 { set exp 0.005}
+       14 -
+       14.0 { set exp 0.01}
+       15 -
+       15.0 { set exp 0.02}
+       default { set exp 0.001}
+   }
+   if [winfo exists .observePanel] {
+       #puts "have exp: $exp"
+       .observePanel.frame.control.guideloop.canv.gaos_ex clear entry
+       .observePanel.frame.control.guideloop.canv.gaos_ex insert entry end $exp
+   }
+   AO configure -gaosExpose $exp
+
 # Flatten the mirror.
    cs aoFlatten dummy 1
    logger command aoFlatten
