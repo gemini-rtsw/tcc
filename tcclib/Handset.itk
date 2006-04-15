@@ -35,8 +35,9 @@ itcl::class Handset {
    itk_option define -adjust adjust Adjust ""
    itk_option define -vt vt Vt sourceA
    itk_option define -cloop cloop Cloop 0 {}
+   itk_option define -loopDef loopDef LoopDef 1 {}
    public {
-      method setValue {name alarm time {values NoVal}}
+      method traceProc { name index op }
       method timeout {}
       method openloop {}
       variable oiAngle 138.94
@@ -301,7 +302,7 @@ itcl::body Handset::constructor {args} {
 
 # checkbutton for opening loop
    if {$itk_option(-cloop)} {
-       set control_loop 1
+       set control_loop $itk_option(-loopDef)
        itk_component add loopControl {
 	   checkbutton $itk_component(loopframe).loopControl -variable [itcl::scope control_loop] \
 	       -onvalue 1 -offvalue 0 \
@@ -315,12 +316,17 @@ itcl::body Handset::constructor {args} {
 	   global inPosition followS INPOS FOLLOW
 	   set INPOS ""
 	   set FOLLOW ""
+	   set varName "inPosition\(value\)"
+	   #puts " varName  $varName this:[itcl::code $this] traceProc"
+	   trace variable $varName w "[itcl::code $this] traceProc"
+	   
+	   set $varName [sa tcssad get inPosition]
+	   sa tcssad link inPosition inPosition
 
-	   sa tcssad proc inPosition [itcl::code $this setValue]
-	   setValue tcssad.inPosition alarm time [sa tcssad get inPosition]
-
-	   sa mcssad proc followS [itcl::code $this setValue]
-	   setValue mcssad.followS alarm time [sa mcssad get followS]
+	   set varName "followS\(value\)"
+	   trace variable $varName w "[itcl::code $this] traceProc"	   
+	   set $varName [sa mcssad get followS]
+	   sa mcssad link followS followS
        }
    }
 }
@@ -331,8 +337,10 @@ itcl::body Handset::destructor {} {
 
     after cancel $tid
     if {$mon_inpos} {
-	sa tcssad unproc inPosition [itcl::code $this setValue]
-	sa mcssad unproc followS [itcl::code $this setValue]
+	sa tcssad unlink inPosition inPosition
+	trace remove variable inPosition(value) write "[itcl::code $this] traceProc"
+	sa mcssad unlink followS followS
+	trace remove variable followS(value) write "[itcl::code $this] traceProc"
     }
 }
 
@@ -583,20 +591,21 @@ itcl::body Handset::initlabels {} {
    }
 }
 
-itcl::body Handset::setValue {name alarm time {values NoVal}} {
+itcl::body Handset::traceProc {name index op} {
 
-   set locname [string range $name [string wordstart $name end] end]
-   global $locname INPOS FOLLOW tid
-   puts "setValue called with name: $locname values: $values"
+   set gVar "$name\($index\)"
+   #puts "gVar: $gVar"
+   global $name INPOS FOLLOW tid
+   #puts "traceProc called with name: $name index: $index op: $op gVar: $gVar [set $gVar]"
 
-   switch $locname {
+   switch $name {
        inPosition { 
 	   #puts "setting INPOS"
-	   set INPOS $values
+	   set INPOS [set $gVar]
        }
        followS {
 	   #puts "setting FOLLOW"
-	   set FOLLOW $values
+	   set FOLLOW [set $gVar]
        }
    }
    #puts "INPOS: $INPOS   FOLLOW: $FOLLOW"
