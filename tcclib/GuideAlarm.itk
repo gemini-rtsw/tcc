@@ -230,8 +230,10 @@ itcl::body GuideAlarm::updateProc {name alarm time values} {
     set tname [lrange [split $name "." ] 1 1 ]
     set tnamev [format "%s%s" $tname "(value)"]
     set $tnamev $values
-    set guideCounts($tname) [format "%.0f" [set $tnamev]]
-    #puts "set guideCounts($tname) to $guideCounts($tname)"
+    if [string is digit [set $tnamev]] {
+	set guideCounts($tname) [format "%.0f" [set $tnamev]]
+	#puts "set guideCounts($tname) to $guideCounts($tname)"
+    }
     if {[string match "ttgs*" $tname]} {
 	alarmCheck ttgs
     } else {
