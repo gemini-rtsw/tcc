@@ -228,6 +228,13 @@ itcl::body GraphicDisplay::update {} {
       $itk_component(opticsview) configure -m2sstate OFF
    }
 
+# Determine if the laser is propogating
+   if {[string equal [sa aossad get laserProp] "SKY"]} {
+       $itk_component(opticsview) configure -laserProp ON
+   } else {
+       $itk_component(opticsview) configure -laserProp OFF
+   }
+
 # Determine the state of M1.
    if { [string equal [sa pcssad get apssMsg] "APSS inflated"] && \
          [string equal [sa pcssad get aosMsg] "aO sub-system is ON"] && \
