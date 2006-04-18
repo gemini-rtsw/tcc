@@ -38,6 +38,8 @@
 #          -m2sstate          The follow/in position state of the m2
 #                             system (OFF FOLLOWING or INPOSITION).
 #
+#          -laserProp         Is the laser propogating (ON or OFF)
+#
 #          -portAlabel        The label for ISS port 1.
 #
 #          -portBlabel        The label for ISS port 2 or 4.
@@ -87,6 +89,7 @@ itcl::class OpticsView {
    itk_option define -scfold scFold ScFold 0 
    itk_option define -hrwfs hrwfs Hrwfs in 
    itk_option define -m2sstate m2sState M2sState OFF
+   itk_option define -laserProp laserProp LaserProp OFF
    itk_option define -aopresent aoPresent AoPresent 0 {}
    itk_option define -vignette vignette Vignette 0 
    itk_option define -portAlabel portALabel Label "" "relabel A"
@@ -170,6 +173,9 @@ itcl::body OpticsView::constructor args {
 
 # M2 central baffle open
    $c create line -9 405 -9 427 -width 2 -tags centralBaffleOp
+
+# Laser Propogation Line
+   $c create line 0 400 0 570 -width 3 -tags laserPropogate
 
 # M2 fixed stuff
    $c create line -9 400 -9 405 -fill black -width 2
@@ -433,6 +439,16 @@ itcl::body OpticsView::update {} {
       $c itemconfigure deployableBaffle3 -fill black
    }
 
+# Configure the laser propogation display
+   switch $itk_option(-laserProp) {
+       "ON" {
+	   $c itemconfigure laserPropogate -fill red
+       }
+       "OFF" {
+	   $c itemconfigure laserPropogate -fill grey
+       }
+   }
+   
 # Set the M2 support colour.
    switch $itk_option(-m2sstate) {
       OFF {
