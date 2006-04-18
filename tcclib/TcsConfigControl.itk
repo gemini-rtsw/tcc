@@ -215,6 +215,13 @@ itcl::body TcsConfigControl::apply {} {
 #+
 # Called when the apply button is pressed.
 #-
+# First check to make sure that the laser isn't propogating!
+    if {[string equal [sa aossad get laserProp] "SKY"]} {
+	tk_messageBox -icon error \
+	    -message "You cannot SLEW while the laser is propogating"
+	return
+    }
+
 # Try setting Guide mode (chop states) first here to see if the P2>P2 MAx prob goes away
     #apply guide config (nod states) before point origin
     set fieldObj ${::Config(tcs.field,namespace)}::${::Config(tcs.field,value)}
