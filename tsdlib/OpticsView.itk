@@ -135,7 +135,7 @@ itcl::body OpticsView::constructor args {
 # 570 pixels into their proper positions.
 
    itk_component add canvas {
-      canvas $itk_interior.canvas -width 240 -height 570
+      canvas $itk_interior.canvas -width 240 -height 570 -bg green
    }
    pack $itk_component(canvas)
    set c $itk_component(canvas)
@@ -175,7 +175,7 @@ itcl::body OpticsView::constructor args {
    $c create line -9 405 -9 427 -width 2 -tags centralBaffleOp
 
 # Laser Propogation Line
-   $c create line 0 400 0 570 -width 3 -tags laserPropogate
+   $c create line 0 400 0 430 -width 3 -arrow last -tags laserPropogate
 
 # M2 fixed stuff
    $c create line -9 400 -9 405 -fill black -width 2
@@ -366,6 +366,9 @@ itcl::body OpticsView::constructor args {
 
 # Raise the a&g outline so that the front edge cuts the light beam.
    $c raise ag
+
+# raise the laser
+   $c raise laserPropogate
 
 # Flip and move
    $c scale all 0 0 1 -1
