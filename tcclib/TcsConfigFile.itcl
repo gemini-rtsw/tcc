@@ -56,7 +56,7 @@ itcl::body TcsConfigFile::constructor {xml parent} {
    set nodelist(trackrate) ""
    set nodelist(wavelength) ""
    set nodelist(oiwfswavelength) ""
-   set nodelist(gaoswavelength) ""
+   set nodelist(aowfswavelength) ""
 
 # Compile a lists of all the component defined in the document.
    foreach node [dom::DOMImplementation selectNode $root \
@@ -72,7 +72,7 @@ itcl::body TcsConfigFile::constructor {xml parent} {
 
 # Process each of the lists of component types (note that the order is
 # important so that we don't get errors because a subcomponent isn't defined).
-   foreach type {cosys wavelength oiwfswavelength gaoswavelength rotator guide trackrate \
+   foreach type {cosys wavelength oiwfswavelength aowfswavelength rotator guide trackrate \
          target field instrument pointorig slewoptions trackframe \
          chop gaos tcsconfig} {
 
@@ -130,10 +130,10 @@ itcl::body TcsConfigFile::createComponent {type node} {
          set namespace ::OIWFSWavelengthNames
          set list OIWFSWavelengthList
       }
-      gaoswavelength {
+      aowfswavelength {
          set class WavelengthComponent
-         set namespace ::GAOSWavelengthNames
-         set list GAOSWavelengthList
+         set namespace ::AOWFSWavelengthNames
+         set list AOWFSWavelengthList
       }
       field {
          set class FieldComponent
@@ -370,8 +370,8 @@ itcl::body TcsConfigFile::findcomp {node} {
       oiwfswavelength {
          lappend nodelist(oiwfswavelength) $node
       }
-      gaoswavelength {
-         lappend nodelist(gaoswavelength) $node
+      aowfswavelength {
+         lappend nodelist(aowfswavelength) $node
       }
    }
 }

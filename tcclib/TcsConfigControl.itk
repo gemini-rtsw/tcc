@@ -29,10 +29,10 @@ itcl::class TcsConfigControl {
          -field -pointOrig -slewOptions -chop -gaos -trackFrame -instrument
       }
       variable fieldcomponents {
-         field.guide field.rotator field.wavelength field.sciencetarget field.pwfs1target field.pwfs2target field.oiwfstarget field.gaostarget
+         field.guide field.rotator field.wavelength field.sciencetarget field.pwfs1target field.pwfs2target field.oiwfstarget field.aowfstarget
       }
       variable fieldoptions {
-         -guide -rotator -wavelength -sciencetarget -pwfs1target -pwfs2target -oiwfstarget -gaostarget
+         -guide -rotator -wavelength -sciencetarget -pwfs1target -pwfs2target -oiwfstarget -aowfstarget
       }
       variable view ""
    }
@@ -239,7 +239,7 @@ itcl::body TcsConfigControl::apply {} {
 	   set oiwfstarget $::Config(tcs.field.oiwfstarget,value)
 	   #puts "oiwfs target: $oiwfstarget"
 	   if {! [string equal $oiwfstarget ""]} {
-	       #puts "found NIFS (Gaos/OI)"
+	       #puts "found NIFS (Aowfs/OI)"
 	       cs oiwfsSelect set oiwfs NIFS
                cs oiwfsSelect set output WFS
 	       logger command oiwfsSelect
@@ -303,8 +303,8 @@ itcl::body TcsConfigControl::apply {} {
     }
 
     if {[string match "*AO*" $guide]} {
-	set ::Config(tcs.field.guide.gaoswavelength,value) "GAOS"
-#	pwfs filter pwfs2 "GAOS"
+	set ::Config(tcs.field.guide.aowfswavelength,value) "AOWFS"
+#	pwfs filter pwfs2 "AOWFS"
 	if {[string match "*NIRI*" $inst]} {
 	    cs aoFlex set file "/aoBase/rel/data/aoFlexCoefNiri.dat"
 	    cs aoFlex set dir 3
@@ -334,7 +334,7 @@ itcl::body TcsConfigControl::apply {} {
 # 	set ::Config(tcs.field.guide.oiwfswavelength,value) $oiwlName
 #     }
 
-# Zero the offsets for the Gimbals if we're using gaos   
+# Zero the offsets for the Gimbals if we're using aowfs   
     if {[string match "*AO*" $guide]} {
 	cs aoGimOffsets set xoff 0
 	cs aoGimOffsets set yoff 0

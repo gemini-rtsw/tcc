@@ -101,17 +101,17 @@ proc createPanels {} {
          -name .tcsFieldOiwfsTargetTrackRateCosysPanel -class CosysPanel \
          -title "Oiwfs Target Differential Track Rate Coordinate System" \
          -components tcs.field.oiwfstarget.trackrate.cosys
-   EditPanelMgr tcsFieldGaosTargetCosysPanel \
-         -name .tcsFieldGaosTargetCosysPanel -class CosysPanel \
-         -title "GAOS Target Coordinate System" \
+   EditPanelMgr tcsFieldAowfsTargetCosysPanel \
+         -name .tcsFieldAowfsTargetCosysPanel -class CosysPanel \
+         -title "AOWFS Target Coordinate System" \
          -components tcs.field.pwfs2target.cosys
-   EditPanelMgr tcsFieldGaosTargetTrackRatePanel \
-         -name .tcsFieldGaosTargetTrackRatePanel -class TrackRatePanel \
-         -title "GAOS Target Differential Track Rates" \
-         -components tcs.field.gaostarget.trackrate
-   EditPanelMgr tcsFieldGaosTargetTrackRateCosysPanel \
-         -name .tcsFieldGaosTargetTrackRateCosysPanel -class CosysPanel \
-         -title "GAOS Target Differential Track Rate Coordinate System" \
+   EditPanelMgr tcsFieldAowfsTargetTrackRatePanel \
+         -name .tcsFieldAowfsTargetTrackRatePanel -class TrackRatePanel \
+         -title "AOWFS Target Differential Track Rates" \
+         -components tcs.field.aowfstarget.trackrate
+   EditPanelMgr tcsFieldAowfsTargetTrackRateCosysPanel \
+         -name .tcsFieldAowfsTargetTrackRateCosysPanel -class CosysPanel \
+         -title "AOWFS Target Differential Track Rate Coordinate System" \
          -components tcs.field.pwfs2target.trackrate.cosys
    EditPanelMgr tcsGuidePanel -name .tcsGuidePanel \
          -class GuidePanel -title "Guide Configuration" \
@@ -120,10 +120,10 @@ proc createPanels {} {
          -name .tcsGuideOiwfsWavelengthPanel -class WavelengthPanel \
          -title "Oiwfs Guiding Wavelength" \
          -components tcs.field.guide.oiwfswavelength
-   EditPanelMgr tcsGuideGaosWavelengthPanel \
-         -name .tcsGuideGaosWavelengthPanel -class WavelengthPanel \
-         -title "Gaos Guiding Wavelength" \
-         -components tcs.field.guide.gaoswavelength
+   EditPanelMgr tcsGuideAowfsWavelengthPanel \
+         -name .tcsGuideAowfsWavelengthPanel -class WavelengthPanel \
+         -title "Aowfs Guiding Wavelength" \
+         -components tcs.field.guide.aowfswavelength
    EditPanelMgr tcsRotatorPanel -name .tcsRotatorPanel \
          -class RotatorPanel -title "Rotator Configuration" \
          -components tcs.field.rotator 
@@ -176,10 +176,10 @@ proc createPanels {} {
          -name .tcsTrackFrameOiwfsCosysPanel \
          -class CosysPanel -title "OIWFS Tracking Frame Coordinate System" \
          -components tcs.trackframe.oiwfscosys
-   EditPanelMgr tcsTrackFrameGaosCosysPanel \
-         -name .tcsTrackFrameGaosCosysPanel \
-         -class CosysPanel -title "GAOS Tracking Frame Coordinate System" \
-         -components tcs.trackframe.gaoscosys
+   EditPanelMgr tcsTrackFrameAowfsCosysPanel \
+         -name .tcsTrackFrameAowfsCosysPanel \
+         -class CosysPanel -title "AOWFS Tracking Frame Coordinate System" \
+         -components tcs.trackframe.aowfscosys
    EditPanelMgr tcsInstrumentPanel -name .tcsInstrumentPanel \
          -class InstrumentPanel -title "Instrument Configuration" \
          -components tcs.instrument 

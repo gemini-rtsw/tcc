@@ -96,17 +96,17 @@ itcl::body FieldControl::constructor args {
    itk_component add oiwfsname {
       label $w.oiwfsname -width 30 -borderwidth 2 -relief sunken
    }
-   itk_component add gaoslabel {
-      label $w.gaoslabel -text "GAOS target"
+   itk_component add aowfslabel {
+      label $w.aowfslabel -text "AOWFS target"
    }
-   itk_component add gaosname {
-      label $w.gaosname -width 30 -borderwidth 2 -relief sunken
+   itk_component add aowfsname {
+      label $w.aowfsname -width 30 -borderwidth 2 -relief sunken
    }
 #   grid $itk_component(sciencelabel) $itk_component(sciencename)
 #   grid $itk_component(pwfs1label)  $itk_component(pwfs1name)
 #   grid $itk_component(pwfs2label) $itk_component(pwfs2name)
 #   grid $itk_component(oiwfslabel) $itk_component(oiwfsname)
-#   grid $itk_component(gaoslabel) $itk_component(gaosname)
+#   grid $itk_component(aowfslabel) $itk_component(aowfsname)
 
 # Guide, rotator and wavelength selection.
    itk_component add subsel {
@@ -230,7 +230,7 @@ itcl::body FieldControl::constructor args {
    }
    pack $itk_component(oiwfscontrol)
 
-# and GAOS
+# and AOWFS
    set w [$itk_component(targets) add -label AOWFS]
    set bg [option get $w background Background] 
    set fg [option get $w foreground Foreground] 
@@ -239,13 +239,13 @@ itcl::body FieldControl::constructor args {
    $itk_component(targets) pageconfigure AOWFS -background $bg \
          -foreground $fg -command [itcl::code $this pageSelectCB $bg]
 
-   itk_component add gaoscontrol {
-      SciTargetControl $w.gaoscontrol -keepApply 1
+   itk_component add aowfscontrol {
+      SciTargetControl $w.aowfscontrol -keepApply 1
    } {
       usual
       ignore -title
    }
-   pack $itk_component(gaoscontrol)
+   pack $itk_component(aowfscontrol)
    pack $itk_component(targets)
 
 # Airmass limit and program ID.
@@ -350,7 +350,7 @@ itcl::body FieldControl::save {name} {
    }
 
 # Configure the targets.
-   foreach target {science pwfs1 pwfs2 oiwfs gaos} {
+   foreach target {science pwfs1 pwfs2 oiwfs aowfs} {
       $name configure -${target}target \
             [$itk_component(${target}name) cget -text]
    }
@@ -373,7 +373,7 @@ itcl::body FieldControl::reset {} {
    set ::Config(tcs.field.pwfs1target,value) ""
    set ::Config(tcs.field.pwfs2target,value) ""
    set ::Config(tcs.field.oiwfstarget,value) ""
-   set ::Config(tcs.field.gaostarget,value) ""
+   set ::Config(tcs.field.aowfstarget,value) ""
 }
 
 
@@ -434,8 +434,8 @@ itcl::body FieldControl::swapguide {} {
 	   }
 	   "AO-OI" -
 	   "AO" {
-	       set curr_guidetarget ${::Config(tcs.field.gaostarget,value)}
-	       #set ::Config(tcs.field.gaostarget,value) ""
+	       set curr_guidetarget ${::Config(tcs.field.aowfstarget,value)}
+	       #set ::Config(tcs.field.aowfstarget,value) ""
 	       set lpath "Sky>AO>AC/HR"
 	   }
 	   default {
@@ -514,7 +514,7 @@ itcl::body FieldControl::swapguide {} {
 	        }
 	   "AO-OI" -
 	   "AO" {
-		   $fieldObj configure -gaostarget $curr_guidetarget
+		   $fieldObj configure -aowfstarget $curr_guidetarget
 		   set lpath "Sky>AO>Inst"
 	        }
 	}
@@ -568,7 +568,7 @@ itcl::body FieldControl::load {name} {
 	        }
 	   "AO-OI" -
 	   "AO" {
-		   $fieldObj configure -gaostarget $curr_guidetarget
+		   $fieldObj configure -aowfstarget $curr_guidetarget
 		   set lpath "Sky>AO>Inst"
 	        }
 	}
@@ -600,7 +600,7 @@ itcl::body FieldControl::load {name} {
    set currentname ${name}
 
 # Set the namespace and list to save targets and track rates in.
-   foreach target {science pwfs1 pwfs2 oiwfs gaos} {
+   foreach target {science pwfs1 pwfs2 oiwfs aowfs} {
       set ::Config($comp.${target}target,list) ${name}TargetList
       set ::Config($comp.${target}target,namespace) ${name}TargetNames
       set ::Config($comp.${target}target,value) [$name cget -${target}target]
@@ -628,7 +628,7 @@ itcl::configbody FieldControl::component {
        set comp $itk_option(-component)
 
 # Configure the component options of the target controls.
-      foreach target {science pwfs1 pwfs2 oiwfs gaos} {
+      foreach target {science pwfs1 pwfs2 oiwfs aowfs} {
          $itk_component(${target}control) configure \
                -component $comp.${target}target
 
@@ -650,7 +650,7 @@ itcl::configbody FieldControl::component {
 # Set the name of the current component and the list and namespace for
 # targets.
       set currentname $::Config($comp,anon)
-      foreach target {science pwfs1 pwfs2 oiwfs gaos} {
+      foreach target {science pwfs1 pwfs2 oiwfs aowfs} {
          set ::Config($comp.${target}target,list) ${currentname}TargetList
          set ::Config($comp.${target}target,namespace) ${currentname}TargetNames
       }
@@ -672,8 +672,8 @@ itcl::body FieldControl::sync {component name} {
       tcs.field.oiwfstarget {
          $itk_component(oiwfscontrol) sync $name
       }
-      tcs.field.gaostarget {
-         $itk_component(gaoscontrol) sync $name
+      tcs.field.aowfstarget {
+         $itk_component(aowfscontrol) sync $name
       }
    }
 }
@@ -713,8 +713,8 @@ itcl::body FieldControl::newtarget {name type args} {
    if { $target == $::Config(tcs.field.oiwfstarget,value) } {
       $field configure -oiwfstarget ""
    }
-   if { $target == $::Config(tcs.field.gaostarget,value) } {
-      $field configure -gaostarget ""
+   if { $target == $::Config(tcs.field.aowfstarget,value) } {
+      $field configure -aowfstarget ""
    }
    catch {$field remove target $target}
 
@@ -747,5 +747,5 @@ itcl::body FieldControl::pageSelectCB {color} {
    $itk_component(targets) pageconfigure OIWFS -background \
          [option get $itk_component(oiwfscontrol) background Background] 
    $itk_component(targets) pageconfigure AOWFS -background \
-         [option get $itk_component(gaoscontrol) background Background] 
+         [option get $itk_component(aowfscontrol) background Background] 
 }
