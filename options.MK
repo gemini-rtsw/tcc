@@ -42,7 +42,7 @@
 *tcsFieldPwfs1TargetTrackRatePanel*background:	  SkyBlue
 *tcsFieldPwfs2TargetTrackRatePanel*background:    OldLace
 *tcsFieldOiwfsTargetTrackRatePanel*background:    Wheat
-*tcsFieldGaosTargetTrackRatePanel*background:   LemonChiffon
+*tcsFieldAowfsTargetTrackRatePanel*background:   LemonChiffon
 
 # Target entry pages
 *FieldPanel*data*page1*background: 	Pink
@@ -65,3 +65,6 @@
 # Fonts for tsd displays.
 *numericDisplay.Font:		-*-*-bold-r-normal-sans-18-*-*-*-*-*-*-*
 *graphicDisplay.Font:		-*-*-bold-r-normal-sans-18-*-*-*-*-*-*-*
+
+# Disable AO Unpark (actually datum)
+*tcsPanel*control*aodatum*state:        disabled
