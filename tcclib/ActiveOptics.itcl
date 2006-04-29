@@ -29,7 +29,6 @@ itcl::class ActiveOptics {
       variable gaos 0
       variable useLwfs 0
       variable oiblend 0
-      variable gaosBTO 0
       variable gaosTTGS 0
       variable gaosSFO 0
       variable ttgsloop 0
@@ -151,15 +150,6 @@ itcl::body ActiveOptics::enable {} {
 
 # Start GAOS
 
-    # turn on the BTO
-    if { $gaosBTO && ![state gaosBTO]} {
-	cs gaosBTO set dem On
-	cs gaosBTO set dir 3
-    } elseif { !$gaosBTO && [state gaosBTO]} {
-	cs gaosBTO set dem Off
-	cs gaosBTO set dir 3
-    }
-
     # turn on the TTGS
     if { $gaosTTGS && ![state gaosTTGS]} {
 	# set the exposure time
@@ -202,6 +192,12 @@ itcl::body ActiveOptics::enable {} {
 	    #write new gsmag and prepare control matrix
 	    cs aoPrepareCm set gsmag $gsmag
 	    logger command aoPrepareCm
+	}
+
+	# turn on the BTO when using LGS
+	if { $useLwfs} {
+	    cs gaosBTO set dem On
+	    cs gaosBTO set dir 3
 	}
 
 	# Flatten.
@@ -252,6 +248,14 @@ itcl::body ActiveOptics::enable {} {
 		
     } elseif { !$gaos && [state gaos] } {
        #puts "turning GAOS off"
+       # turn off BTO when using LGS
+       if $useLwfs {
+	   cs gaosBTO set dem Off
+	   cs gaosBTO set clr On
+	   cs gaosBTO set fsaTip 0
+	   cs gaosBTO set fsaTilt 0
+	   cs gaosBTO set dir 3
+       }
        # Post GAOS correct command.
        cs aoCorrect set correct OFF
        logger command aoCorrect
@@ -584,13 +588,6 @@ itcl::body ActiveOptics::disable {} {
       return
    }
 
-   # turn off the BTO
-   cs gaosBTO set dem Off
-   cs gaosBTO set clr On
-   cs gaosBTO set fsaTip 0
-   cs gaosBTO set fsaTilt 0
-   cs gaosBTO set dir 3
-
    # turn off the TTGS
    cs gaosTTGS set dem 0
    cs gaosTTGS set dir 3
@@ -607,6 +604,16 @@ itcl::body ActiveOptics::disable {} {
 # Stop GAOS
    if { [state gaos] } {
        #puts "turning GAOS off"
+
+       # turn off BTO when using LGS
+       if $useLwfs {
+	   cs gaosBTO set dem Off
+	   cs gaosBTO set clr On
+	   cs gaosBTO set fsaTip 0
+	   cs gaosBTO set fsaTilt 0
+	   cs gaosBTO set dir 3
+       }
+
        # Post GAOS correct command.
        cs aoCorrect set correct OFF
        logger command aoCorrect
@@ -673,16 +680,6 @@ global env
             return 0
          } else {
             return 1
-         }
-      }
-      gaosBTO {
-	 if {$env(TCC_TCSNAME) == "tc1" && [sa guideConfig get aoBTO] == "No Value"} {
-	     return $gaosBTO
-	 }
-         if { [sa guideConfig get aoBTO] == "CLOSED" } {
-            return 1
-         } else {
-            return 0
          }
       }
       gaosSFO {
