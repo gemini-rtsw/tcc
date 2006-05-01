@@ -45,6 +45,8 @@ itcl::class Chop {
       variable frequency {}
       variable source {}
       variable throw {}
+      variable average {}
+      variable mult {}
    }
    private {
       variable current_cosys {}
@@ -52,6 +54,11 @@ itcl::class Chop {
 }
 
 itcl::body Chop::apply {comp} {
+
+# Set Sequence Closed Loop Parameters
+   cs p2Seq set ave $average
+   cs p2Seq set mult $mult
+   logger command p2Seq
 
 # Set relative chop parameters.
    cs chopRelative set angle [list $angle]
@@ -96,6 +103,8 @@ itcl::body Chop::init {} {
    set frequency ""
    set dutycycle ""
    set source ""
+   set average ""
+   set mult ""
 }
 
 itcl::configbody Chop::cosys {

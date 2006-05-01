@@ -118,6 +118,26 @@ itcl::body ChopControl::constructor args {
    $itk_component(source) insert end SCS ICS0 ICS1 ICS2 ICS3 ICS4
    pack $itk_component(source) -anchor e -pady 4
 
+# Sequence Closed Loop parameters
+   itk_component add seqtitle {
+      label $w.seqtitle -text "Sequence Closed Loop"
+   }
+   pack $itk_component(seqtitle) -anchor w
+
+   # Control for average frames for AO
+   itk_component add average {
+      iwidgets::entryfield $w.ave \
+            -labeltext "Average Frames for AO" -width 8
+   }
+   pack $itk_component(average) -anchor e -pady 4
+
+   # Control for mult coeff for image rms
+   itk_component add mult {
+      iwidgets::entryfield $w.mult \
+            -labeltext "Mult Coeff rms" -width 8
+   }
+   pack $itk_component(mult) -anchor e -pady 4
+
 # Set initial state.
    set refdir north
    set ::Config($itk_option(-component).cosys,value) FK5/J2000
@@ -140,12 +160,23 @@ itcl::body ChopControl::reset {} {
    $itk_component(freq) clear
    $itk_component(duty) clear
    $itk_component(source) select SCS
+   $itk_component(average) clear
+   $itk_component(mult) clear
 }
 
 itcl::body ChopControl::load {name} {
-
 # Copy the contents of the specified chop object into the edit
 # controls.
+    switch [string range $name 13 end] {
+	BasicChop {
+	    $itk_component(average) insert end 60
+	    $itk_component(mult) insert end 4.0
+	}
+	NoChop {
+	    $itk_component(average) insert end 30
+	    $itk_component(mult) insert end [calparam cget -p2seq_mult]
+	}
+    }
    $itk_component(throw) insert end [$name cget -throw]
    $itk_component(pa) insert end [$name cget -angle]
    $itk_component(freq) insert end [$name cget -frequency]
@@ -172,6 +203,9 @@ itcl::body ChopControl::save {name} {
    $name configure -frequency [$itk_component(freq) get]
    $name configure -dutycycle [$itk_component(duty) get]
    $name configure -source [$itk_component(source) get]
+   $name configure -average [$itk_component(average) get]
+   $name configure -mult [$itk_component(mult) get]
+
    if { [string equal $refdir north] } {
       $name configure -cosys [$itk_component(cosys) get]
    } else {
