@@ -144,6 +144,7 @@ proc tccMain args {
    epics cs planet
    epics cs chopRelative
    epics cs chopConfig
+   epics cs p2Seq
    epics cs pointParam
    epics cs aoDeployAdc
    epics cs aoFlatten
