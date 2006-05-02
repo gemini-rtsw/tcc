@@ -41,4 +41,4 @@ set baffle_visible 1.05
 set baffle_nearir 3.0
 
 # The P2 Sequence Closed Loop mult coeff
-set p2seq_mult 3.0
+set p2seq_mult 3.5
