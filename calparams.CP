@@ -39,6 +39,3 @@ set acqcam_y 513
 # The wavelength cutoffs for automatic baffle configuration
 set baffle_visible 1.0
 set baffle_nearir 1.0
-
-# The P2 Sequence Closed Loop mult coeff
-set p2seq_mult 2.5

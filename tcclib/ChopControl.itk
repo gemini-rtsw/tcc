@@ -167,16 +167,8 @@ itcl::body ChopControl::reset {} {
 itcl::body ChopControl::load {name} {
 # Copy the contents of the specified chop object into the edit
 # controls.
-    switch [string range $name 13 end] {
-	BasicChop {
-	    $itk_component(average) insert end 60
-	    $itk_component(mult) insert end 4.0
-	}
-	NoChop {
-	    $itk_component(average) insert end 30
-	    $itk_component(mult) insert end [calparam cget -p2seq_mult]
-	}
-    }
+   $itk_component(average) insert end [$name cget -average]
+	$itk_component(mult) insert end [$name cget -mult]
    $itk_component(throw) insert end [$name cget -throw]
    $itk_component(pa) insert end [$name cget -angle]
    $itk_component(freq) insert end [$name cget -frequency]
