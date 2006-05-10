@@ -145,7 +145,7 @@ itcl::body ActiveOptics::enable {} {
 	# need to ensure that OIWFS Guide Output is set to SCS
         cs aoOiwfsSource set state OFF
 	cs aoOiwfsSource set bandwidth -1
-   }
+    }
    logger command aoOiwfsSource
 
 # Start GAOS
@@ -267,7 +267,7 @@ itcl::body ActiveOptics::enable {} {
        # Flatten.
        cs aoFlatten set dummy 1
        logger command aoFlatten
-    }
+   }
 
     # turn on TTGS and SFO loops
     if {[state gaos]} {
@@ -295,7 +295,7 @@ itcl::body ActiveOptics::enable {} {
    }
 
 # need to wait for aoOiwfsSource to go idle
-   after 500
+#   after 500
    #puts "Oi Blend Busy: [sa aossad get oiblendBusy]"
    while {[sa aossad get oiblendBusy] == "BUSY"} { after 200 }   
    #puts "Oi Blend Busy: [sa aossad get oiblendBusy]"
@@ -401,6 +401,7 @@ itcl::body ActiveOptics::enable {} {
                }
             }
             if { $beam ne "" } {
+puts "beam is $beam gonna wait for 1 second"
                cs m2GuideConfig set reset Off
                cs m2GuideConfig set samplefreq 200
                cs m2GuideConfig set filter raw
@@ -520,7 +521,7 @@ itcl::body ActiveOptics::enable {} {
       }
 
 # Start all the active ones.
-      if { $active } {
+      if { $active && ![state $wfs]} {
 
 # Determine which processing mode to set the WFS to depending on whether
 # or not it is being used for M2 tip/tilt & focus.
@@ -676,10 +677,10 @@ global env
 	 if {$env(TCC_TCSNAME) == "tc1" && [sa guideConfig get aoTTGS] == "No Value"} {
 	     return $gaosTTGS
 	 }
-         if { [sa guideConfig get aoTTGS] == "0" } {
-            return 0
-         } else {
+         if { [sa guideConfig get aoTTGS] == "1" } {
             return 1
+         } else {
+            return 0
          }
       }
       gaosSFO {
