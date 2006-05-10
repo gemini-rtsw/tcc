@@ -411,11 +411,12 @@ itcl::body GuideLoop::constructor args {
 }
 
 itcl::body GuideLoop::destructor {} {
+    puts "GuideLoop::destructor"
    foreach rec {p1state p2state oistate aostate m2state absorbtilt m1state \
-         m1source p1guide p1guide p1mweight p2mweight m2p1guide m2p2guide \
-         m2oiguide m2aoguide coma} mon $monids {
-      ::guideConfig.$rec remove $mon
-   }
+         m1source p1guide p2guide oiguide p1mweight p2mweight m2p1guide m2p2guide \
+	 m2oiguide m2aoguide coma oiblend aoTTGS aoSFO ttgsloop sfoloop useLwfs} mon $monids {
+	::guideConfig.$rec remove $mon
+    }
 }
 
 itcl::body GuideLoop::recolour args {
