@@ -17,6 +17,16 @@
 #
 #          -throw        The chop throw.
 #
+#          -average      Seq closed loop default
+#
+#          -mult         Seq closed loop default
+#
+#          -weight_a     Target to Mount Filter Weight A
+#
+#          -weight_b     Target to Mount Filter Weight B
+#
+#          -shortCircuit Target to Mount Filter short circuit
+#
 #  Methods:
 #          apply comp    Applies the chop configuration to the TCS by 
 #                        setting the values of the command parameters.
@@ -47,6 +57,9 @@ itcl::class Chop {
       variable throw {}
       variable average {}
       variable mult {}
+      variable weight_a {}
+      variable weight_b {}
+      variable shortCircuit {}
    }
    private {
       variable current_cosys {}
@@ -59,6 +72,12 @@ itcl::body Chop::apply {comp} {
    cs p2Seq set ave $average
    cs p2Seq set mult $mult
    logger command p2Seq
+
+# Set Target to Mount Filter
+   cs filter2 set a $weight_a
+   cs filter2 set b $weight_b
+   cs filter2 set shortCircuit $shortCircuit
+   logger command filter2
 
 # Set relative chop parameters.
    cs chopRelative set angle [list $angle]
@@ -94,6 +113,11 @@ itcl::body Chop::save {node} {
    param $node frequency $frequency
    param $node source $source
    param $node throw $throw
+   param $node average $average
+   param $node mult $mult
+   param $node weight_a $weight_a
+   param $node weight_b $weight_b
+   param $node shortCircuit $shortCircuit
 }
 
 itcl::body Chop::init {} {
@@ -105,6 +129,9 @@ itcl::body Chop::init {} {
    set source ""
    set average ""
    set mult ""
+   set weight_a ""
+   set weight_b ""
+   set shortCircuit ""
 }
 
 itcl::configbody Chop::cosys {
