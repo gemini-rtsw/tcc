@@ -37,7 +37,7 @@ itcl::class Handset {
    itk_option define -cloop cloop Cloop 0 {}
    itk_option define -loopDef loopDef LoopDef 1 {}
    public {
-      method traceProc { name index op }
+      method updateProc { name alarm time values }
       method timeout {}
       method openloop {}
       variable oiAngle 138.94
@@ -313,34 +313,28 @@ itcl::body Handset::constructor {args} {
        # Monior TCS inPosition Flag
        if {! $mon_inpos} {
 	   set mon_inpos 1
-	   global inPosition followS INPOS FOLLOW
+	   global INPOS FOLLOW
 	   set INPOS ""
 	   set FOLLOW ""
-	   set varName "inPosition\(value\)"
-	   #puts " varName  $varName this:[itcl::code $this] traceProc"
-	   trace variable $varName w "[itcl::code $this] traceProc"
-	   
-	   set $varName [sa tcssad get inPosition]
-	   sa tcssad link inPosition inPosition
 
-	   set varName "followS\(value\)"
-	   trace variable $varName w "[itcl::code $this] traceProc"	   
-	   set $varName [sa mcssad get followS]
-	   sa mcssad link followS followS
+	   sa tcssad proc inPosition2 "$this updateProc"
+	   sa mcssad proc followS2 "$this updateProc"
+	   
+	   #initial value
+	   updateProc tcssad.inPosition2 alarm time [sa tcssad get inPosition2]
+	   updateProc mcssad.followS2 alarm time [sa mcssad get followS2]
        }
    }
 }
 
 
 itcl::body Handset::destructor {} {
-    global inPosition followS tid
+    global tid
 
     after cancel $tid
     if {$mon_inpos} {
-	sa tcssad unlink inPosition inPosition
-	trace remove variable inPosition(value) write "[itcl::code $this] traceProc"
-	sa mcssad unlink followS followS
-	trace remove variable followS(value) write "[itcl::code $this] traceProc"
+	sa tcssad unproc inPosition2 "$this updateProc"
+	sa mcssad unproc followS2 "$this updateProc"
     }
 }
 
@@ -591,21 +585,20 @@ itcl::body Handset::initlabels {} {
    }
 }
 
-itcl::body Handset::traceProc {name index op} {
+itcl::body Handset::updateProc {name alarm time values} {
+    global INPOS FOLLOW tid
+    
+    #puts [format "updateProc: %s %-20s\n%s\n" $time $name $values]
+    set tname [lrange [split $name "." ] 1 1 ]
 
-   set gVar "$name\($index\)"
-   #puts "gVar: $gVar"
-   global $name INPOS FOLLOW tid
-   #puts "traceProc called with name: $name index: $index op: $op gVar: $gVar [set $gVar]"
-
-   switch $name {
-       inPosition { 
+   switch $tname {
+       inPosition2 { 
 	   #puts "setting INPOS"
-	   set INPOS [set $gVar]
+	   set INPOS $values
        }
-       followS {
+       followS2 {
 	   #puts "setting FOLLOW"
-	   set FOLLOW [set $gVar]
+	   set FOLLOW $values
        }
    }
    #puts "INPOS: $INPOS   FOLLOW: $FOLLOW"
