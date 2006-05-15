@@ -152,6 +152,7 @@ proc tccMain args {
    epics cs aoFlex
    epics cs aoMoveAdc
    epics cs filter1
+   epics cs filter2
    epics cs oiwfsSelect
 
 # Set the timeout period for posting commands to the TCS.
