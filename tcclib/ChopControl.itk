@@ -138,6 +138,34 @@ itcl::body ChopControl::constructor args {
    }
    pack $itk_component(mult) -anchor e -pady 4
 
+# Sequence Target to Mount Filter Parameters
+   itk_component add mnttitle {
+      label $w.mnttitle -text "Target to Mount Filter"
+   }
+   pack $itk_component(mnttitle) -anchor w
+   # Control for A Weight
+   itk_component add aweight {
+      iwidgets::entryfield $w.aweight \
+            -labeltext "A Weight" -width 4
+   }
+   pack $itk_component(aweight) -anchor e -pady 4
+
+   # Control for B Weight
+   itk_component add bweight {
+      iwidgets::entryfield $w.bweight \
+            -labeltext "b Weight" -width 4
+   }
+   pack $itk_component(bweight) -anchor e -pady 4
+
+   # Control for Short Circuit
+   itk_component add shortc {
+      iwidgets::optionmenu $w.shortc \
+            -labeltext "Short Circuit"
+   }
+   $itk_component(shortc) insert end Closed Open {One Shot} ""
+   pack $itk_component(shortc) -anchor e -pady 4
+
+
 # Set initial state.
    set refdir north
    set ::Config($itk_option(-component).cosys,value) FK5/J2000
@@ -162,6 +190,9 @@ itcl::body ChopControl::reset {} {
    $itk_component(source) select SCS
    $itk_component(average) clear
    $itk_component(mult) clear
+   $itk_component(aweight) clear
+   $itk_component(bweight) clear
+   $itk_component(shortc) select ""
 }
 
 itcl::body ChopControl::load {name} {
@@ -174,6 +205,9 @@ itcl::body ChopControl::load {name} {
    $itk_component(freq) insert end [$name cget -frequency]
    $itk_component(duty) insert end [$name cget -dutycycle]
    $itk_component(source) select [$name cget -source]
+   $itk_component(weighta) insert end [$name cget -weight_a]
+   $itk_component(weightb) insert end [$name cget -weight_b]
+   $itk_component(shortc) select [$name cget -shortCircuit]
    set cosys [$name cget -cosys]
    if { [string equal $cosys AzEl] } {
       set refdir vertical
@@ -197,6 +231,9 @@ itcl::body ChopControl::save {name} {
    $name configure -source [$itk_component(source) get]
    $name configure -average [$itk_component(average) get]
    $name configure -mult [$itk_component(mult) get]
+   $name configure -weight_a [$itk_component(weighta) get]
+   $name configure -weight_b [$itk_component(weightb) get]
+   $name configure -shortCircuit [$itk_component(shortc) get]
 
    if { [string equal $refdir north] } {
       $name configure -cosys [$itk_component(cosys) get]
