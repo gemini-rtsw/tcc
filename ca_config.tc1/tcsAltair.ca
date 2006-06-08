@@ -28,6 +28,7 @@ command aoPrepareCm tcsApply Prepare ALTAIR control matrix
    seeing    tc1:aoPrepareCm.C Seeing estimate
    gsmag     tc1:aoPrepareCm.D Guide star magnitude
    windspeed tc1:aoPrepareCm.E Windspeed
+   flens     ao:prepareCm.F    Use Field Lens 0/1
 }
 
 command aoFlatten tcsApply Flatten ALTAIR science path.
@@ -113,6 +114,11 @@ command aoFLens tcsApply ALTAIR Field Lens Position
    create    ao:prepareCm.DIR		Prepare Control Matrix DIR
 }
 
+command aoLgsPark tcsApply ALTAIR park
+{
+   dir       ao:lgs:park.DIR            LGS IS Park directive
+}
+
 command aoFlex tcsApply ALTAIR flexture model
 {
    file      ao:ncpa.B      Demanded position
@@ -150,4 +156,7 @@ command gaosBTO tcsApply GAOS BTO loop closed
 {
    dem       bto:FSALoopCtrl.A      Demanded State (On/Off)
    dir       bto:apply.DIR          Directive (START)
+   clr       bto:FSAZeroRTC.A       Zero the intefrated corrections (write On, then apply)
+   fsaTip    bto:FSAMove.A          Set the FSA Tip Demand
+   fsaTilt   bto:FSAMove.B          Set the FSA Tilt Demand
 }
