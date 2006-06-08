@@ -447,6 +447,9 @@ itcl::body TcsControl::constructor args {
    if { [catch {cs aoPark info}] } {
       epics cs aoPark
    }
+   if { [catch {cs aoLgsPark info}] } {
+      epics cs aoLgsPark
+   }
    if { [catch {cs aoDatum info}] } {
       epics cs aoDatum
    }
@@ -647,8 +650,31 @@ itcl::body TcsControl::gaospark {} {
 #   logger log "Turned on Altair Air Purge"
 
    cs aoFollow set followState Off
-   cs aoPark set dummy 1
    logger command aoFollow
+   if { [catch {cs tcsApply post} msg] } {
+      tk_messageBox -icon error -parent $itk_interior -message \
+            "Error posting GAOS mechanism command: TCS reports \
+           \"$msg\""
+   }
+   # need to wait for gimbals to go idle
+   while {[sa aossad get wfsposBusy] == "BUSY"} { after 200 }   
+
+   if {[AO state useLwfs]} {
+       cs aoUseLwfs set state OFF
+       logger command aoUseLwfs
+       if { [catch {cs tcsApply post} msg] } {
+	   tk_messageBox -icon error -parent $itk_interior -message \
+	       "Error posting GAOS mechanism command: TCS reports \
+               \"$msg\""
+       }
+       # need to wait for useLwfs to go idle
+       while {[sa aossad get useLwfsBusy] == "BUSY"} { after 200 }   
+    
+       cs aoLgsPark set dir 0
+       cs aoLgsPark set dir 3
+   }
+
+   cs aoPark set dummy 1
    logger command aoPark
    if { [catch {cs tcsApply post} msg] } {
       tk_messageBox -icon error -parent $itk_interior -message \
