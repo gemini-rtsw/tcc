@@ -222,6 +222,13 @@ itcl::body TcsConfigControl::apply {} {
 	return
     }
 
+# Ensure that the STRAP is off
+    if {[AO state gaosTTGS]} {
+	tk_messageBox -icon error \
+	    -message "Warning The STRAP Detector is On"
+	return
+    }
+
 # Try setting Guide mode (chop states) first here to see if the P2>P2 MAx prob goes away
     #apply guide config (nod states) before point origin
     set fieldObj ${::Config(tcs.field,namespace)}::${::Config(tcs.field,value)}
@@ -334,12 +341,13 @@ itcl::body TcsConfigControl::apply {} {
 # 	set ::Config(tcs.field.guide.oiwfswavelength,value) $oiwlName
 #     }
 
-# Zero the offsets for the Gimbals if we're using aowfs   
-    if {[string match "*AO*" $guide]} {
+# Zero the offsets for the Gimbals if we're using aowfs and not LGS
+    if {[string match "*AO*" $guide] && ![AO state useLwfs]} {
 	cs aoGimOffsets set xoff 0
 	cs aoGimOffsets set yoff 0
 	cs aoGimOffsets set zoff 0
     }
+
 # this is a slew ... reset wrap controls
    $itk_component(azwrap) select 1
    $itk_component(rotwrap) select 1
