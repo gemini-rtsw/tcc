@@ -175,6 +175,9 @@ itcl::body ActiveOptics::enable {} {
 	cs gaosSFO set apply 3
     }
 
+    # wait for the TTGS (STRAP) to go IDLE
+    while {[sa aossad get strapBusy] == "BUSY"} { after 200 }   
+
     if { $gaos && ![state gaos]} {
 	#puts "turning GAOS On"
 	# first check if we have to update the gsmag (gaosExpose)
@@ -192,6 +195,11 @@ itcl::body ActiveOptics::enable {} {
 	    #write new gsmag and prepare control matrix
 	    cs aoPrepareCm set gsmag $gsmag
 	    logger command aoPrepareCm
+	    if { [catch {cs tcsApply post} msg] } {
+		tk_messageBox -icon error -parent $itk_interior -message $msg
+	    }
+	    #wait for prepareCm to go idle
+	    while {[sa aossad get prepareBusy] == "BUSY"} { after 200 }   
 	}
 
 	# turn on the BTO when using LGS
@@ -235,7 +243,9 @@ itcl::body ActiveOptics::enable {} {
             \"$msg\""
 	    return
 	}
-	
+	#wait for flatten to go idle
+	while {[sa aossad get flattenBusy] == "BUSY"} { after 200 }   
+
 	# Post GAOS correct command.
 	cs aoCorrect set correct ON
 	cs aoCorrect set matrix 0
@@ -677,7 +687,7 @@ global env
 	 if {$env(TCC_TCSNAME) == "tc1" && [sa guideConfig get aoTTGS] == "No Value"} {
 	     return $gaosTTGS
 	 }
-         if { [sa guideConfig get aoTTGS] == "1" } {
+         if { [sa guideConfig get aoTTGS] >= "1" } {
             return 1
          } else {
             return 0
