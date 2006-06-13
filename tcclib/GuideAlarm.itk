@@ -28,11 +28,13 @@ itcl::class GuideAlarm {
         variable oiwfsLimit 1000.0
         variable gaosLimit 500.0
         variable ttgsLimit 500.0
+        variable sfoLimit 500.0
         variable pwfs1Silent 0
         variable pwfs2Silent 0
         variable oiwfsSilent 0
         variable gaosSilent 0
         variable ttgsSilent 0
+        variable sfoSilent 0
         variable exitnow 0
     }
     private {
@@ -43,13 +45,13 @@ itcl::class GuideAlarm {
 }
 
 itk::usual GuideAlarm {
-    keep -background -cursor -foreground -font \
+    keep -background -cursor -foreground -font\
             -highlightcolor -highlightthickness \
         }
 
 itcl::body GuideAlarm::constructor {args} {
-    global guideCounts pwfs1CountLimit pwfs2CountLimit oiwfsCountLimit gaosCountLimit ttgsCountLimit
-    global pwfs1silent pwfs2silent oiwfssilent gaossilent ttgssilent guideCentroid
+    global guideCounts pwfs1CountLimit pwfs2CountLimit oiwfsCountLimit gaosCountLimit ttgsCountLimit sfoCountLimit
+    global pwfs1silent pwfs2silent oiwfssilent gaossilent ttgssilent sfosilent guideCentroid
     
     #puts "GuideAlarm this: $this"
     
@@ -57,12 +59,12 @@ itcl::body GuideAlarm::constructor {args} {
         frame $itk_interior.fr
     }
     
-    itk_component add title {
-        label $itk_component(frame).title -text "Guide Alarm"
-    } {
-        usual
-        rename -font -majorfont majorFont Font
-    }
+#     itk_component add title {
+#         label $itk_component(frame).title -text "Guide Alarm"
+#     } {
+#         usual
+#         rename -font -majorfont majorFont Font
+#     }
     
     itk_component add desc {
         message $itk_component(frame).desc -text "Alarm will sound if counts are below limit while wfs is in use.  \
@@ -71,7 +73,7 @@ itcl::body GuideAlarm::constructor {args} {
     
     grid $itk_component(frame) -sticky news
     
-    foreach wfs {pwfs1 pwfs2 oiwfs gaos ttgs} {
+    foreach wfs {pwfs1 pwfs2 oiwfs gaos ttgs sfo} {
         #puts "setting up wfs: $wfs"
 	if {$wfs == "ttgs"} {
 	    set guideCounts(${wfs}1) [sa guidects get ${wfs}1]
@@ -81,7 +83,7 @@ itcl::body GuideAlarm::constructor {args} {
 	} else {
 	    set guideCounts($wfs) [sa guidects get $wfs]
 	}
-        if {$wfs != "gaos" && $wfs != "ttgs"} {
+        if {$wfs != "gaos" && $wfs != "ttgs" && $wfs != "sfo"} {
             set guideCentroid($wfs) [sa guidects get ${wfs}cent]
 	    if {![string is boolean $guideCentroid($wfs)]} {
 		set guideCentroid($wfs) 0
@@ -107,8 +109,20 @@ itcl::body GuideAlarm::constructor {args} {
             usual
             rename -font -majorfont majorFont Font
         }
-        itk_component add ${wfs}silent { checkbutton $w.sil -variable ${wfs}silent -onvalue 1 -offvalue 0 -text silent -command "$this setSilent $wfs"}
-        itk_component add ${wfs}clab { label $w.clab -text "Counts:" }
+        itk_component add ${wfs}silent { 
+	    checkbutton $w.sil -variable ${wfs}silent -onvalue 1 -offvalue 0 -text silent -command "$this setSilent $wfs"
+	} {
+            usual
+            rename -font -majorfont majorFont Font
+	}
+
+        itk_component add ${wfs}clab { 
+	    label $w.clab -text "Counts:" 
+	} {
+            usual
+            rename -font -majorfont majorFont Font
+	}
+
 	if {$wfs == "ttgs"} {        
 	    itk_component add ${wfs}cnts1 { label $w.cnts1 -textvariable guideCounts(${wfs}1) }
 	    itk_component add ${wfs}cnts2 { label $w.cnts2 -textvariable guideCounts(${wfs}2) }
@@ -117,10 +131,25 @@ itcl::body GuideAlarm::constructor {args} {
 	} else {
 	    itk_component add ${wfs}cnts { label $w.cnts -textvariable guideCounts($wfs) }
 	}
-        itk_component add ${wfs}limlab { label $w.limlab -text "Limit:" }
-        itk_component add ${wfs}liment { entry $w.liment -textvariable ${wfs}CountLimit -width 5 }
+        itk_component add ${wfs}limlab { 
+	    label $w.limlab -text "Limit:" 
+	} {
+            usual
+            rename -font -majorfont majorFont Font
+	}
+        itk_component add ${wfs}liment {
+	    entry $w.liment -textvariable ${wfs}CountLimit -width 5 
+	} {
+            usual
+            rename -font -majorfont majorFont Font
+	}
 
-	itk_component add ${wfs}centroid { label $w.cent -text "Subaperture OK"}
+	itk_component add ${wfs}centroid { 
+	    label $w.cent -text "Subaperture OK"
+	} {
+            usual
+            rename -font -majorfont majorFont Font
+	}
 	
 	if {$guideCentroid($wfs)} {
 	    $itk_component(${wfs}centroid) configure -text "Subaperture BAD"
@@ -129,18 +158,18 @@ itcl::body GuideAlarm::constructor {args} {
         
         grid $itk_component(${wfs}title) $itk_component(${wfs}silent) -sticky news
 	if {$wfs == "ttgs"} {
-	    grid $itk_component(${wfs}clab) - -sticky news
+	    #grid $itk_component(${wfs}clab) - -sticky news
 	    grid $itk_component(${wfs}cnts1) $itk_component(${wfs}cnts2) -sticky news
 	    grid $itk_component(${wfs}cnts4) $itk_component(${wfs}cnts3) -sticky news
 	} else {
 	    grid $itk_component(${wfs}clab) $itk_component(${wfs}cnts) -sticky news
 	}
         grid $itk_component(${wfs}limlab) $itk_component(${wfs}liment) -sticky news
-        if {$wfs != "gaos" && $wfs != "ttgs"} {
+        if {$wfs != "gaos" && $wfs != "ttgs" && $wfs != "sfo"} {
 	    grid $itk_component(${wfs}centroid) - -sticky news
 	}
     }
-    pack $itk_component(title) $itk_component(pwfs1frame) $itk_component(pwfs2frame) $itk_component(oiwfsframe) $itk_component(gaosframe)  $itk_component(ttgsframe) -side top -padx 3 -pady 3 -ipadx 3 -ipady 3
+    pack $itk_component(pwfs1frame) $itk_component(pwfs2frame) $itk_component(oiwfsframe) $itk_component(gaosframe)  $itk_component(ttgsframe) $itk_component(sfoframe) -side top -padx 3 -pady 3 -ipadx 3 -ipady 3 -fill x -expand 1
     
     sa guidects proc pwfs1 "$this updateProc"
     sa guidects proc pwfs2 "$this updateProc"
@@ -150,6 +179,7 @@ itcl::body GuideAlarm::constructor {args} {
     sa guidects proc ttgs2  "$this updateProc"
     sa guidects proc ttgs3  "$this updateProc"
     sa guidects proc ttgs4  "$this updateProc"
+    sa guidects proc sfo    "$this updateProc"
     sa guidects proc pwfs1cent "$this updateProc2"
     sa guidects proc pwfs2cent "$this updateProc2"
     sa guidects proc oiwfscent "$this updateProc2"
@@ -170,6 +200,7 @@ itcl::body GuideAlarm::destructor {} {
     sa guidects unproc ttgs2  "$this updateProc"
     sa guidects unproc ttgs3  "$this updateProc"
     sa guidects unproc ttgs4  "$this updateProc"
+    sa guidects unproc sfo    "$this updateProc"
     sa guidects unproc pwfs1cent "$this updateProc2"
     sa guidects unproc pwfs2cent "$this updateProc2"
     sa guidects unproc oiwfscent "$this updateProc2"
@@ -188,7 +219,7 @@ itcl::body GuideAlarm::setWfsColor {wfs color} {
 }
 
 itcl::body GuideAlarm::setSilent {wfs} {
-    global pwfs1silent pwfs2silent oiwfssilent gaossilent ttgssilent
+    global pwfs1silent pwfs2silent oiwfssilent gaossilent ttgssilent sfosilent
     
     #puts "setSilent wfs: $wfs val: [set ${wfs}silent]"
     set ${wfs}Silent [set ${wfs}silent]
@@ -205,7 +236,7 @@ itcl::body GuideAlarm::alarmCheck {wfs} {
 	    } else {
 		set alarmOn($wfs) 0
 	    }
-	} elseif {$wfs == "gaos"} {
+	} elseif {($wfs == "gaos") || ($wfs == "sfo")} {
 	    if { $guideCounts($wfs) < [set ${wfs}Limit]} {
 		set alarmOn($wfs) 1
 	    } else {
@@ -298,7 +329,7 @@ itcl::body GuideAlarm::scanLoop {} {
     
     set canguide [expr {[AO state mount] && [AO state m2]}]
     
-    foreach wfs {pwfs1 pwfs2 oiwfs gaos ttgs} {
+    foreach wfs {pwfs1 pwfs2 oiwfs gaos ttgs sfo} {
         if {[AO state $wfs] && $canguide} {
             if {!$alarmEnabled($wfs)} {
                 set alarmEnabled($wfs) 1
