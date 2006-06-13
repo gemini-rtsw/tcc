@@ -47,6 +47,7 @@
 
 # Font for "major" tcc items.
 *Font:			-*-*-bold-r-normal-sans-12-*-*-*-*-*-*-*
+*alarm*Font:			-*-*-bold-r-normal-sans-10-*-*-*-*-*-*-*
 
 # Fonts for tsd displays.
 *numericDisplay.Font:		-*-*-bold-r-normal-sans-18-*-*-*-*-*-*-*
@@ -62,6 +63,7 @@
 *observePanel*control*aopark*state:     disabled
 *observePanel*control*gaosframe*state:  disabled
 *observePanel*control*ttgsframe*state:  disabled
+*observePanel*control*sfoframe*state:  disabled
 *observePanel*control*lpath*1*state:    disabled
 *observePanel*control*lpath*4*state:    disabled
 *observePanel*guideloop*m2ao*0*state:   disabled
