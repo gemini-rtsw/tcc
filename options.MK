@@ -61,6 +61,7 @@
 # Font for "major" tcc items.
 # *majorFont:			-*-*-bold-r-normal-sans-14-*-*-*-*-*-*-*
 *Font:			-*-*-bold-r-normal-sans-12-*-*-*-*-*-*-*
+*alarm*Font:			-*-*-bold-r-normal-sans-10-*-*-*-*-*-*-*
 
 # Fonts for tsd displays.
 *numericDisplay.Font:		-*-*-bold-r-normal-sans-18-*-*-*-*-*-*-*
