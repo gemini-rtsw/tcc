@@ -658,6 +658,16 @@ itcl::body TcsControl::gaospark {} {
    }
    # need to wait for gimbals to go idle
    while {[sa aossad get wfsposBusy] == "BUSY"} { after 200 }   
+#do it again ... fisrt attempt often fails
+   cs aoFollow set followState Off
+   logger command aoFollow
+   if { [catch {cs tcsApply post} msg] } {
+      tk_messageBox -icon error -parent $itk_interior -message \
+            "Error posting GAOS mechanism command: TCS reports \
+           \"$msg\""
+   }
+   # need to wait for gimbals to go idle
+   while {[sa aossad get wfsposBusy] == "BUSY"} { after 200 }   
 
    if {[AO state useLwfs]} {
        cs aoUseLwfs set state OFF
@@ -673,6 +683,9 @@ itcl::body TcsControl::gaospark {} {
        cs aoLgsPark set dir 0
        cs aoLgsPark set dir 3
    }
+
+   # need to wait for Altair to go idle
+   while {[sa aossad get gaosBusy] == "BUSY"} { after 200 }   
 
    cs aoPark set dummy 1
    logger command aoPark
