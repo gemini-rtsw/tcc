@@ -312,11 +312,29 @@ itcl::body TcsConfigControl::apply {} {
     if {[string match "*AO*" $guide]} {
 	set ::Config(tcs.field.guide.aowfswavelength,value) "GAOS"
 #	pwfs filter pwfs2 "AOWFS"
+	# set the NCPA and Flexure config file names for altair
+	if {[AO state useLwfs]} {
+	    set wfs Lgs
+	} else {
+	    set wfs Ngs
+	}
+	set instr ""
+	set port 0
 	if {[string match "*NIRI*" $inst]} {
-	    cs aoFlex set file "/aoBase/rel/data/aoFlexCoefNiri.dat"
-	    cs aoFlex set dir 3
+	    set instr NIRI
+	    set port [sa agssad get portNiri]
 	} elseif {[string match "*NIFS*" $inst]} {
-	    cs aoFlex set file "/aoBase/rel/data/aoFlexCoefNifs.dat"
+	    set instr NIFS
+	    set port [sa agssad get portNifs]
+	}
+	set port "p$port"
+	if {[string length $inst] > 0} {
+	    set ncpafile "/aoBase/rel/input/aoNcpa${instr}${port}${wfs}.dat"
+	    set flexfile "/aoBase/rel/data/aoFlex${instr}${port}.dat"
+	    #puts "ncpafile: $ncpafile"
+	    #puts "flexfile: $flexfile"
+	    cs aoFlex set ncpa $ncpafile
+	    cs aoFlex set flex $flexfile
 	    cs aoFlex set dir 3
 	}
     }
