@@ -33,9 +33,13 @@ itcl::class TcsControl {
       method gaosfollow {}
       method gaosdatum {}
       method gaospark {}
+      method lockIndex {}
+      method lockPark {}
       variable dome
       variable shutter
       variable alarmObj
+      variable indexlock 0
+      variable parklock 0
    }
 }
 
@@ -167,33 +171,33 @@ itcl::body TcsControl::constructor args {
 
 # Commands for datuming, initing or unparking mechanisms.
    itk_component add mcsdatum {
-      ApplyButton $w.mcsdatum -command mountDatum -text Datum \
+      ApplyButton $w.mcsdatum -command mountDatum -text Datum  -state disabled\
             -parcommand [itcl::code $this mountdatum]
    }
    itk_component add scsinit {
-      ApplyButton $w.scsinit -command m2Init -text Init
+      ApplyButton $w.scsinit -command m2Init -text Init -state disabled
    }
    itk_component add crsdatum {
-      ApplyButton $w.crsdatum -command rotDatum -text Datum
+      ApplyButton $w.crsdatum -command rotDatum -text Datum -state disabled
    }
    itk_component add ecsinit {
-      ApplyButton $w.ecsinit -command enclosureInit -text Init
+      ApplyButton $w.ecsinit -command enclosureInit -text Init -state disabled
    }
    itk_component add pcsunpark {
-      ApplyButton $w.pcsunpark -command m1Park -text Unpark \
+      ApplyButton $w.pcsunpark -command m1Park -text Unpark  -state disabled\
             -parcommand [itcl::code $this m1unpark]
    }
    itk_component add p1datum {
-      ApplyButton $w.p1datum -command pwfs1Datum -text Datum
+      ApplyButton $w.p1datum -command pwfs1Datum -text Datum -state disabled
    }
    itk_component add p2datum {
-      ApplyButton $w.p2datum -command pwfs2Datum -text Datum
+      ApplyButton $w.p2datum -command pwfs2Datum -text Datum -state disabled
    }
    itk_component add oidatum {
-      ApplyButton $w.oidatum -command oiwfsDatum -text Datum
+      ApplyButton $w.oidatum -command oiwfsDatum -text Datum -state disabled
    }
    itk_component add aodatum {
-      LiveButton $w.aodatum -command [itcl::code $this gaosdatum] -text Unpark
+      LiveButton $w.aodatum -command [itcl::code $this gaosdatum] -text Unpark -state disabled
    }
 #   itk_component add aodatum {
 #      ApplyButton $w.aodatum -command aoDatum -text Unpark
@@ -201,32 +205,42 @@ itcl::body TcsControl::constructor args {
 
 # Commands for parking mechanisms.
    itk_component add mcspark {
-      ApplyButton $w.mcspark -command telpark -text Park
+      ApplyButton $w.mcspark -command telpark -text Park -state disabled
    }
    itk_component add scspark {
-      ApplyButton $w.scspark -command m2Park -text Park
+      ApplyButton $w.scspark -command m2Park -text Park -state disabled
    }
    itk_component add crspark {
-      ApplyButton $w.crspark -command rotPark -text Park
+      ApplyButton $w.crspark -command rotPark -text Park -state disabled
    }
    itk_component add ecspark {
-      ApplyButton $w.ecspark -command enclosurePark -text Park
+      ApplyButton $w.ecspark -command enclosurePark -text Park -state disabled
    }
    itk_component add pcspark {
-      ApplyButton $w.pcspark -command m1Park -text Park \
+      ApplyButton $w.pcspark -command m1Park -text Park  -state disabled\
             -parcommand [itcl::code $this m1park]
    }
    itk_component add p1park {
-      ApplyButton $w.p1park -command pwfs1Park -text Park
+      ApplyButton $w.p1park -command pwfs1Park -text Park -state disabled
    }
    itk_component add p2park {
-      ApplyButton $w.p2park -command pwfs2Park -text Park
+      ApplyButton $w.p2park -command pwfs2Park -text Park -state disabled
    }
    itk_component add oipark {
-      ApplyButton $w.oipark -command oiwfsPark -text Park
+      ApplyButton $w.oipark -command oiwfsPark -text Park -state disabled
    }
    itk_component add aopark {
-      LiveButton $w.aopark -command [itcl::code $this gaospark] -text Park
+      LiveButton $w.aopark -command [itcl::code $this gaospark] -text Park -state disabled
+   }
+
+# implement locks for the index and park columns
+   itk_component add lockindex {
+       checkbutton $w.lockindex -command [itcl::code $this lockIndex] \
+	   -variable [itcl::scope indexlock]
+   }
+   itk_component add lockpark {
+       checkbutton $w.lockpark -command [itcl::code $this lockPark] \
+	   -variable [itcl::scope parklock]
    }
 
 # AWE temporary placement of Shutter Alarm
@@ -236,6 +250,8 @@ itcl::body TcsControl::constructor args {
    }
    set alarmObj $w.alarm
    
+   grid x $itk_component(lockindex) $itk_component(lockpark) \
+         -sticky nsew -padx 5
    grid $itk_component(mcs) $itk_component(mcsdatum) $itk_component(mcspark) \
          -sticky nsew -padx 5 -pady 3
    grid $itk_component(scs) $itk_component(scsinit) $itk_component(scspark) \
@@ -694,4 +710,52 @@ itcl::body TcsControl::gaospark {} {
             "Error posting GAOS mechanism command: TCS reports \
            \"$msg\""
    }
+}
+
+itcl::body TcsControl::lockIndex {} {
+    if {$indexlock} {
+	$itk_component(mcsdatum) configure -state normal
+	$itk_component(scsinit) configure -state normal
+	$itk_component(crsdatum) configure -state normal
+	$itk_component(ecsinit) configure -state normal
+	$itk_component(pcsunpark) configure -state normal
+	$itk_component(p1datum) configure -state normal
+	$itk_component(p2datum) configure -state normal
+	$itk_component(oidatum) configure -state normal
+	$itk_component(aodatum) configure -state normal
+    } else {
+	$itk_component(mcsdatum) configure -state disabled
+	$itk_component(scsinit) configure -state disabled
+	$itk_component(crsdatum) configure -state disabled
+	$itk_component(ecsinit) configure -state disabled
+	$itk_component(pcsunpark) configure -state disabled
+	$itk_component(p1datum) configure -state disabled
+	$itk_component(p2datum) configure -state disabled
+	$itk_component(oidatum) configure -state disabled
+	$itk_component(aodatum) configure -state disabled
+    }
+}
+
+itcl::body TcsControl::lockPark {} {
+    if {$parklock} {
+	$itk_component(mcspark) configure -state normal
+	$itk_component(scspark) configure -state normal
+	$itk_component(crspark) configure -state normal
+	$itk_component(ecspark) configure -state normal
+	$itk_component(pcspark) configure -state normal
+	$itk_component(p1park) configure -state normal
+	$itk_component(p2park) configure -state normal
+	$itk_component(oipark) configure -state normal
+	$itk_component(aopark) configure -state normal
+    } else {
+	$itk_component(mcspark) configure -state disabled
+	$itk_component(scspark) configure -state disabled
+	$itk_component(crspark) configure -state disabled
+	$itk_component(ecspark) configure -state disabled
+	$itk_component(pcspark) configure -state disabled
+	$itk_component(p1park) configure -state disabled
+	$itk_component(p2park) configure -state disabled
+	$itk_component(oipark) configure -state disabled
+	$itk_component(aopark) configure -state disabled	
+    }
 }
