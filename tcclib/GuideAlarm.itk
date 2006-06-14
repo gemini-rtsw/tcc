@@ -301,7 +301,7 @@ itcl::body GuideAlarm::ringBell {} {
     
     set makeNoise 0
     
-    foreach wfs {pwfs1 pwfs2 oiwfs gaos ttgs} {
+    foreach wfs {pwfs1 pwfs2 oiwfs gaos ttgs sfo} {
         if {$alarmEnabled($wfs) && $alarmOn($wfs)} {
             #puts "in ring bell wfs: $wfs silent: [set ${wfs}Silent]"
             if {![set ${wfs}Silent]} {
@@ -345,7 +345,7 @@ itcl::body GuideAlarm::scanLoop {} {
     }
     
     if {$num_enabled > 0} {
-        foreach wfs {pwfs1 pwfs2 oiwfs gaos ttgs} {
+        foreach wfs {pwfs1 pwfs2 oiwfs gaos ttgs sfo} {
             if {$alarmOn($wfs) == 1} {
                 set gottaRingBell 1
             } elseif {$alarmEnabled($wfs)} {
