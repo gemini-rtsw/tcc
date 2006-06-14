@@ -266,9 +266,11 @@ proc tccMain args {
    wm resizable . 0 0
 
 # Add Global variables
-   global sfPos instPO
+   # putting AOreuseGains here since I can't think of a better place at the moment (low O2)... might reconsider
+   global sfPos instPO AOreuseGains
    set sfPos empty
    set instPO rotator_axis
+   set AOreuseGains 0 
 
    return
 }
