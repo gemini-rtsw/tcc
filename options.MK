@@ -66,6 +66,3 @@
 # Fonts for tsd displays.
 *numericDisplay.Font:		-*-*-bold-r-normal-sans-18-*-*-*-*-*-*-*
 *graphicDisplay.Font:		-*-*-bold-r-normal-sans-18-*-*-*-*-*-*-*
-
-# Disable AO Unpark (actually datum)
-*tcsPanel*control*aodatum*state:        disabled
