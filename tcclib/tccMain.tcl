@@ -267,7 +267,7 @@ proc tccMain args {
 
 # Add Global variables
    # putting AOreuseGains here since I can't think of a better place at the moment (low O2)... might reconsider
-   global sfPos instPO AOreuseGains
+   global sfPos instPO AOreuseGains AOtryingToReuseGain
    set sfPos empty
    set instPO rotator_axis
    set AOreuseGains 0 

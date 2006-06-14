@@ -118,7 +118,7 @@ itcl::body ActiveOptics::constructor {args} {
 }
 
 itcl::body ActiveOptics::enable {} {
-    global AOreuseGains
+    global AOtryingToReuseGain AOreuseGains
 #puts "ActiveOptics::enable"
 # check to make sure we're not using OI probe guiding with GMOS
     if { ($probeguide == "OIWFS") && [string match "*GMOS*" $::Config(tcs.instrument,value)]} {
@@ -257,7 +257,7 @@ itcl::body ActiveOptics::enable {} {
 	}
 	after 10
 	if { $useLwfs} {
-	    set AOreuseGains 1
+	    set AOtryingToReuseGain 1
 	} else {
 	    set AOreuseGains 0
 	}

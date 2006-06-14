@@ -425,7 +425,7 @@ itcl::body GuideLoop::destructor {} {
 }
 
 itcl::body GuideLoop::recolour args {
-
+    global AOtryingToReuseGain AOreuseGains
    set w $itk_component(canv)
 # Disable LGS options unless useLwfs is true
    if {[AO state useLwfs]} {
@@ -540,6 +540,7 @@ itcl::body GuideLoop::recolour args {
       # aoSettled
       if { [AO state aoSettled] } {
 	  $w itemconfigure aoSettled -fill green
+	  if {$AOtryingToReuseGain} {set AOreuseGains 1}
       } else {
 	  $w itemconfigure aoSettled -fill yellow
       }
