@@ -99,6 +99,10 @@ itcl::body GuideLoop::constructor args {
 
 # GAOS
 #   $w create rectangle 0 0 140 137 -fill white -tags "active gaos gaos_bg"
+# display aoSettled state
+   $w create rectangle 0 0 100 20 -fill white -tags "settled aoSettled"
+   $w create text 50 10 -text aoSettled -tags settled -font $font
+
    $w create rectangle -2 -3 144 278 -fill white -tags "active gaos gaos_bg"
    $w create text 96 23 -text GAOS -tags gaos -font $font
 
@@ -333,6 +337,7 @@ itcl::body GuideLoop::constructor args {
    $w move m2xy 300 10
    $w move m1 250 115
    $w move gaos 473 74
+   $w move settled 480 40
    $w move oiwfs 250 342
    $w move pwfs_comb 31 191
    $w move pwfs1 35 195
@@ -444,7 +449,6 @@ itcl::body GuideLoop::recolour args {
 
 # Set everything to white.
    $w itemconfigure active -fill white
-
 # P1 signals.
    if { [AO state pwfs1] } {
       $w itemconfigure pwfs1_bg -fill green
@@ -533,6 +537,12 @@ itcl::body GuideLoop::recolour args {
 # GAOS signals
    if { [AO state gaos] } {
       $w itemconfigure gaos_bg -fill green
+      # aoSettled
+      if { [AO state aoSettled] } {
+	  $w itemconfigure aoSettled -fill green
+      } else {
+	  $w itemconfigure aoSettled -fill yellow
+      }
       if { [AO state m1] && [AO source m1 Altair] } {
          $w itemconfigure gaos_m1 -fill green
       } else {
