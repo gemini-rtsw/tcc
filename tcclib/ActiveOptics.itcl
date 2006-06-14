@@ -118,6 +118,7 @@ itcl::body ActiveOptics::constructor {args} {
 }
 
 itcl::body ActiveOptics::enable {} {
+    global AOreuseGains
 #puts "ActiveOptics::enable"
 # check to make sure we're not using OI probe guiding with GMOS
     if { ($probeguide == "OIWFS") && [string match "*GMOS*" $::Config(tcs.instrument,value)]} {
@@ -249,13 +250,18 @@ itcl::body ActiveOptics::enable {} {
 	# Post GAOS correct command.
 	cs aoCorrect set correct ON
 	cs aoCorrect set matrix 0
-	cs aoCorrect set gains 0
+	cs aoCorrect set gains $AOreuseGains
 	logger command aoCorrect
 	if { [catch {cs tcsApply post} msg] } {
             tk_messageBox -icon error -parent $itk_interior -message $msg
 	}
 	after 10
-		
+	if { $useLwfs} {
+	    set AOreuseGains 1
+	} else {
+	    set AOreuseGains 0
+	}
+	    
     } elseif { !$gaos && [state gaos] } {
        #puts "turning GAOS off"
        # turn off BTO when using LGS
@@ -282,6 +288,8 @@ itcl::body ActiveOptics::enable {} {
     # turn on TTGS and SFO loops
     if {[state gaos]} {
 	if {$ttgsloop && ![state ttgsloop]} {
+	    # wait for the main ALTAIR loop to be settled
+	    while {[sa aossad get aoSettled] != 1} { after 200 }   
 	    cs ttgsloop set dem 1
 	    cs ttgsloop set dir 3
 	} elseif {!$ttgsloop && [state ttgsloop]} {

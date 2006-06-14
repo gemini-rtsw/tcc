@@ -40,6 +40,8 @@ itk::usual AoControl {
 
 itcl::body AoControl::constructor args {
 
+   global AOreuseGains
+
    set w $itk_interior
    itk_component add frame {
       frame $w.frame -borderwidth 2
@@ -104,6 +106,10 @@ itcl::body AoControl::constructor args {
              -sadrecord {guideConfig aostate}
     }
 
+    itk_component add reusegains {
+	checkbutton $w.gains -variable AOreuseGains -onvalue 1 -offvalue 0 -text "Reuse Gains"
+    }
+
 # Create GAOS command senders.
    if { [catch {cs aoFlatten info}] } {
       epics cs aoFlatten
@@ -125,6 +131,7 @@ itcl::body AoControl::constructor args {
    grid $itk_component(centre) -padx 5 -sticky ew
    grid $itk_component(prepare) -padx 5 -sticky ew
    grid $itk_component(correct) -padx 5 -sticky ew
+   grid $itk_component(reusegains) -padx 5 -sticky ew
 
    eval itk_initialize $args
 }
@@ -141,13 +148,19 @@ itcl::body AoControl::centre {} {
 }
 
 itcl::body AoControl::correct {arg} {
+   global AOreuseGains
    switch $arg {
       ON {
          cs aoCorrect set correct ON
          cs aoCorrect set matrix 0
-         cs aoCorrect set gains 0
+         cs aoCorrect set gains $AOreuseGains
          cs aoOiwfsSource set state OFF
          logger command aoOiwfsSource
+	 if {[AO state useLwfs]} {
+	     set AOreuseGains 1
+	 } else {
+	     set AOreuseGains 0
+	 }
       }
       OFF {
          cs aoCorrect set correct OFF
