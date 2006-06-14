@@ -35,6 +35,7 @@ itcl::class TcsControl {
       method gaospark {}
       method lockIndex {}
       method lockPark {}
+      method checkState {win}
       variable dome
       variable shutter
       variable alarmObj
@@ -714,15 +715,15 @@ itcl::body TcsControl::gaospark {} {
 
 itcl::body TcsControl::lockIndex {} {
     if {$indexlock} {
-	$itk_component(mcsdatum) configure -state normal
-	$itk_component(scsinit) configure -state normal
-	$itk_component(crsdatum) configure -state normal
-	$itk_component(ecsinit) configure -state normal
-	$itk_component(pcsunpark) configure -state normal
-	$itk_component(p1datum) configure -state normal
-	$itk_component(p2datum) configure -state normal
-	$itk_component(oidatum) configure -state normal
-	$itk_component(aodatum) configure -state normal
+	$itk_component(mcsdatum) configure -state [checkState $itk_component(mcsdatum) ]
+	$itk_component(scsinit) configure -state [checkState $itk_component(scsinit) ]
+	$itk_component(crsdatum) configure -state [checkState $itk_component(crsdatum) ]
+	$itk_component(ecsinit) configure -state [checkState $itk_component(ecsinit) ]
+	$itk_component(pcsunpark) configure -state [checkState $itk_component(pcsunpark) ]
+	$itk_component(p1datum) configure -state [checkState $itk_component(p1datum) ]
+	$itk_component(p2datum) configure -state [checkState $itk_component(p2datum) ]
+	$itk_component(oidatum) configure -state [checkState $itk_component(oidatum) ]
+	$itk_component(aodatum) configure -state [checkState $itk_component(aodatum) ]
     } else {
 	$itk_component(mcsdatum) configure -state disabled
 	$itk_component(scsinit) configure -state disabled
@@ -738,15 +739,15 @@ itcl::body TcsControl::lockIndex {} {
 
 itcl::body TcsControl::lockPark {} {
     if {$parklock} {
-	$itk_component(mcspark) configure -state normal
-	$itk_component(scspark) configure -state normal
-	$itk_component(crspark) configure -state normal
-	$itk_component(ecspark) configure -state normal
-	$itk_component(pcspark) configure -state normal
-	$itk_component(p1park) configure -state normal
-	$itk_component(p2park) configure -state normal
-	$itk_component(oipark) configure -state normal
-	$itk_component(aopark) configure -state normal
+	$itk_component(mcspark) configure -state [checkState $itk_component(mcspark) ]
+	$itk_component(scspark) configure -state [checkState $itk_component(scspark) ]
+	$itk_component(crspark) configure -state [checkState $itk_component(crspark) ]
+	$itk_component(ecspark) configure -state [checkState $itk_component(ecspark) ]
+	$itk_component(pcspark) configure -state [checkState $itk_component(pcspark) ]
+	$itk_component(p1park) configure -state [checkState $itk_component(p1park) ]
+	$itk_component(p2park) configure -state [checkState $itk_component(p2park) ]
+	$itk_component(oipark) configure -state [checkState $itk_component(oipark) ]
+	$itk_component(aopark) configure -state [checkState $itk_component(aopark) ]
     } else {
 	$itk_component(mcspark) configure -state disabled
 	$itk_component(scspark) configure -state disabled
@@ -758,4 +759,12 @@ itcl::body TcsControl::lockPark {} {
 	$itk_component(oipark) configure -state disabled
 	$itk_component(aopark) configure -state disabled	
     }
+}
+
+itcl::body TcsControl::checkState { win } {
+    set state [option get $win state State]
+    if {[string length $state] == 0} {
+	set state normal
+    }
+    return $state
 }
