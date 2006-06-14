@@ -461,6 +461,9 @@ itcl::body TcsControl::constructor args {
    if { [catch {cs aoEntShutter info}] } {
       epics cs aoEntShutter
    }
+   if { [catch {cs aoDmVolt info}] } {
+      epics cs aoDmVolt
+   }
    if { [catch {cs aoPark info}] } {
       epics cs aoPark
    }
@@ -651,7 +654,16 @@ itcl::body TcsControl::gaosdatum {} {
    #eval exec $path/aoRpc3 AP OFF
    #logger log "Turned off Altair Air Purge"
 
-   logger command aoDatum
+   #this is actually unpark, not datum
+   # turn on the dm Voltage
+   cs aoDmVolt set dir 0
+   cs aoDmVolt set dir 3
+   # open the shutters
+   cs aoEntShutter set state Open
+   cs aoExitShutter set state Open
+   logger command aoEntShutter
+   logger command aoExitShutter
+
    if { [catch {cs tcsApply post} msg] } {
       tk_messageBox -icon error -parent $itk_interior -message \
             "Error posting GAOS mechanism command: TCS reports \
