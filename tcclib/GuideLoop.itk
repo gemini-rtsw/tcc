@@ -540,7 +540,10 @@ itcl::body GuideLoop::recolour args {
       # aoSettled
       if { [AO state aoSettled] } {
 	  $w itemconfigure aoSettled -fill green
-	  if {$AOtryingToReuseGain} {set AOreuseGains 1}
+	  if {$AOtryingToReuseGain} {
+	      set AOreuseGains 1
+	      set AOtryingToReuseGain 0
+	  }
       } else {
 	  $w itemconfigure aoSettled -fill yellow
       }

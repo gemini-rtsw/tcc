@@ -270,7 +270,8 @@ proc tccMain args {
    global sfPos instPO AOreuseGains AOtryingToReuseGain
    set sfPos empty
    set instPO rotator_axis
-   set AOreuseGains 0 
+   set AOreuseGains 0
+   set AOtryingToReuseGain 0
 
    return
 }
