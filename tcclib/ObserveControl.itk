@@ -18,17 +18,19 @@ itcl::class ObserveControl {
    destructor {}
    common mon_inpos 0
    common need_to_close_loop 0
+   common set_instr_orig 1
+   common set_wavelength 1
    public {
       method traceProc { name index op }
 #      method setValue {name alarm time {values NoVal}}
       method timeout {}
       method openloop {}
+      method setfold {path {configISS 1}}
       method reset {} {
-	   $itk_component(guideloop) reset
-	}
+	  $itk_component(guideloop) reset
+      }
    }
    private {
-      method setfold {path}
       method setnod {state}
       method center {p par}
       method wfssky {}
@@ -45,8 +47,6 @@ itcl::class ObserveControl {
       variable Pwfs1Dark
       variable Pwfs2Dark
       variable OiwfsDark
-      variable set_instr_orig 1
-      variable set_wavelength 1
    }
 }
 
@@ -207,7 +207,6 @@ itcl::body ObserveControl::constructor args {
       usual
       rename -offbackground -background background Background
    }
-
    $itk_component(lpath) add "Sky>Instr"
    $itk_component(lpath) add "Sky>AO>Inst"
    $itk_component(lpath) add "GCAL>Instr"
@@ -299,17 +298,15 @@ itcl::body ObserveControl::destructor {} {
    itcl::delete object $Pwfs2Dark
 }
 
-itcl::body ObserveControl::setfold {path} {
-
+itcl::body ObserveControl::setfold {path {configISS 1}} {
+   # puts "ObserveControl::setfold configISS: $configISS path: $path"
    global sfPos
    set sfPos $path
-
    logactions logmess "ObserveControl::setfold moving Science Fold to $path"
-
    switch $path {
       "Sky>Instr" {
 	  openloop
-	  iss configure -source SKY -sink INSTR -ao OUT
+	  if {$configISS} {iss configure -source SKY -sink INSTR -ao OUT}
 	  if {$set_instr_orig} {
 	      global instPO
 	      set ::Config(tcs.pointorig,value) $instPO
@@ -326,7 +323,7 @@ itcl::body ObserveControl::setfold {path} {
 	  }
       }
       "Sky>AO>Inst" {
-	  iss configure -source AO -sink INSTR -ao IN
+	  if {$configISS} {iss configure -source AO -sink INSTR -ao IN}
 	  if {$set_instr_orig} {
 	      global instPO
 	      puts "instPO is $instPO"
@@ -350,10 +347,12 @@ itcl::body ObserveControl::setfold {path} {
 	      $wavelObj apply tcs.field.wavelength
 	  }
       }
-      "GCAL>Instr" {iss configure -source CAL -sink INSTR}
+      "GCAL>Instr" {
+	  if {$configISS} {iss configure -source CAL -sink INSTR}
+      }
       "Sky>AC/HR" {
 	  openloop
-	  iss configure -source SKY -sink HRWFS -ao OUT
+	  if {$configISS} {iss configure -source SKY -sink HRWFS -ao OUT}
 	  if {$set_instr_orig} {
 	      # set pointing origin to rotator_axis
 	      set ::Config(tcs.pointorig,value) "rotator_axis"
@@ -391,7 +390,7 @@ itcl::body ObserveControl::setfold {path} {
 	  }
       }
       "Sky>AO>AC/HR" {
-	  iss configure -source AO -sink HRWFS -ao IN
+	  if {$configISS} {iss configure -source AO -sink HRWFS -ao IN}
 	  if {$set_instr_orig} {
 	      # set pointing origin to rotator_axis
 	      set ::Config(tcs.pointorig,value) "rotator_axis"
@@ -433,10 +432,13 @@ itcl::body ObserveControl::setfold {path} {
 #      "AO cal>Instr" {iss configure -source AO -sink HRWFS}
 #      "AO cal>AC/HR" {iss configure -source AO -sink HRWFS}
 
-   iss update
-   if { [catch {cs tcsApply post} msg] } {
-      tk_messageBox -icon error -parent $itk_interior -message $msg
-   }
+#   puts "configISS2: $configISS"
+    if {$configISS} {
+	iss update
+	if { [catch {cs tcsApply post} msg] } {
+	    tk_messageBox -icon error -parent $itk_interior -message $msg
+	}
+    }
 }
 
 itcl::body ObserveControl::setnod state {
