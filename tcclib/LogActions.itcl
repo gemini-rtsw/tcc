@@ -24,7 +24,7 @@ itcl::body LogActions::constructor {} {
 	set log [string trimright $::ROOT "/."]/log/[exec date +%m_%d]
     }
     #puts "ext: [exec date +%H_%M] log dir:  $log"
-    puts [exec mkdir -p $log]
+    puts [exec mkdir -m777 -p $log]
     set file $log/tcclog.[exec date +%H_%M]
     #puts "file: $file"
     set logfid [open $file "CREAT WRONLY APPEND"]
