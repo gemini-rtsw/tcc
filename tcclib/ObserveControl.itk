@@ -20,6 +20,7 @@ itcl::class ObserveControl {
    common need_to_close_loop 0
    common set_instr_orig 1
    common set_wavelength 1
+   common wfsConfigObj
    public {
       method traceProc { name index op }
 #      method setValue {name alarm time {values NoVal}}
@@ -127,9 +128,10 @@ itcl::body ObserveControl::constructor args {
 
 # Configure Wavelength and Fieldstop for the wfs
 
-    itk_component add wfsconfig {
-       WfsConfig $w.wfsconfig
-    }
+   itk_component add wfsconfig {
+      WfsConfig $w.wfsconfig
+   }
+   set wfsConfigObj $itk_component(wfsconfig)
 
 #   grid $itk_component(hrac) $itk_component(mirrors)  -padx 5 -pady 5 -sticky s
 #   grid  $itk_component(wfs) ^ $itk_component(buttons) -padx 5 -pady 5 -sticky s
@@ -363,7 +365,7 @@ itcl::body ObserveControl::setfold {path {configISS 1}} {
 	      global env
 	      # configure wavelength based on AC col filter
 	      if {$env(TCC_TCSNAME) == "tcs"} {
-		  set ac_filt [$itk_component(wfsconfig) getValue HrwfsColFilt]
+		  set ac_filt [$wfsConfigObj getValue HrwfsColFilt]
 	      } else {
 		  set ac_filt [.observePanel.frame.control.botframe.wfsconfig.tabs.canvas.notebook.cs.page1.cs.hrwfs.col get]
 	      }
@@ -401,7 +403,7 @@ itcl::body ObserveControl::setfold {path {configISS 1}} {
 	      global env
 	      # configure wavelength based on AC col filter
 	      if {$env(TCC_TCSNAME) == "tcs"} {
-		  set ac_filt [$itk_component(wfsconfig) getValue HrwfsColFilt]
+		  set ac_filt [$wfsConfigObj getValue HrwfsColFilt]
 	      } else {
 		  set ac_filt [.observePanel.frame.control.botframe.wfsconfig.tabs.canvas.notebook.cs.page1.cs.hrwfs.col get]
 	      }
