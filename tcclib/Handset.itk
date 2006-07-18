@@ -606,7 +606,11 @@ itcl::body Handset::updateProc {name alarm time values} {
    if { $need_to_close_loop} {
        if {[string match TRUE $INPOS] && [string match ON $FOLLOW]} {
 	   #puts "closing loop"
-	   AO enable
+	   if {[AO state useLwfs]} {
+	       AO enableLgs
+	   } else {
+	       AO enable
+	   }
 	   set need_to_close_loop 0
        }  else {
 	   # the telescope is not in position, cancel the timeout
@@ -622,7 +626,11 @@ itcl::body Handset::timeout {} {
     # assume the move was too fast, close the loop
    if { $need_to_close_loop } {
        #puts "closing loop in timeout"
-       AO enable
+       if {[AO state useLwfs]} {
+	   AO enableLgs
+       } else {
+	   AO enable
+       }
        set need_to_close_loop 0
    }
 }
@@ -633,7 +641,11 @@ itcl::body Handset::openloop {} {
 # Open loop if neccesary
     if {$control_loop && [AO cget -enabled]} {
 	#puts "opening loop"
-	AO disable
+	if {[AO state useLwfs]} {
+	    AO disableLgs
+	} else {
+	    AO disable
+	}
 	set need_to_close_loop 1
 	# start timeout process
 	if {[string match TRUE $INPOS]} {
