@@ -14,6 +14,8 @@ itcl::class ActiveOptics {
    public {
       method enable {}
       method disable {}
+      method enableLgs {}
+      method disableLgs {}
       method state {component}
       method source {component src {beam A}}
       variable enabled 0
@@ -24,6 +26,9 @@ itcl::class ActiveOptics {
       variable comacorr 0
       variable m1source ""
       variable m1filename ""
+      variable probefrom ""
+      variable probeto ""
+#new TCS      variable probeguide OFF
       variable probeguide none
       variable mountguide none
       variable gaos 0
@@ -33,6 +38,9 @@ itcl::class ActiveOptics {
       variable gaosSFO 0
       variable ttgsloop 0
       variable sfoloop 0
+      variable simgaosTTGS 0
+      variable simsfoloop 0
+      variable simttgsloop 0
       variable pwfs1Expose 0.01
       variable pwfs1Active 0
       variable pwfs2Expose 0.005
@@ -117,10 +125,60 @@ itcl::body ActiveOptics::constructor {args} {
    eval configure $args
 }
 
+itcl::body ActiveOptics::enableLgs {} {
+global env
+# this will be called by the handset to reclose the loop after an offset in LGS mode
+    if {[state useLwfs] && $enabled} {
+	if {$env(TCC_TCSNAME) == "tc1"} {
+	    #simulating ... but not yet simulated in the tcs
+	    set gaosTTGS $simgaosTTGS
+	    set sfoloop $simsfoloop
+	    set ttgsloop $simttgsloop
+	}
+	$this enable
+    }
+}
+
+itcl::body ActiveOptics::disableLgs {} {
+global env
+
+# this will be called by the handset to open the loop before an offset in LGS mode
+    if {[state useLwfs] && $enabled} {
+	if {$env(TCC_TCSNAME) == "tc1"} {
+	    #simulating ... but not yet simulated in the tcs
+	    if { $oiblend } {
+		Oiwfs stop
+	    }
+	    set simgaosTTGS $gaosTTGS
+	    set simsfoloop $sfoloop
+	    set simttgsloop $ttgsloop
+	    set gaosTTGS 0
+	    set sfoloop 0
+	    set ttgsloop 0
+	    ::.observePanel.frame.control.guideloop recolour
+	} else {
+	    if { $oiblend } {
+		Oiwfs stop
+	    }
+	    # turn off TTGS and SFO loops
+	    cs ttgsloop set dem 0
+	    cs ttgsloop set dir 3
+	    cs sfoloop set dem 0
+	    
+	    # turn off the TTGS
+	    cs gaosTTGS set dem 0
+	    cs gaosTTGS set dir 3
+	}
+	# wait for the TTGS (STRAP) to be off
+	while {[state gaosTTGS] == "1"} { after 200 }
+    }
+}
+
 itcl::body ActiveOptics::enable {} {
     global AOtryingToReuseGain AOreuseGains
 #puts "ActiveOptics::enable"
 # check to make sure we're not using OI probe guiding with GMOS
+# new TCS    if { ($probeto == "OIWFS") && [string match "*GMOS*" $::Config(tcs.instrument,value)]} {
     if { ($probeguide == "OIWFS") && [string match "*GMOS*" $::Config(tcs.instrument,value)]} {
 	tk_messageBox -icon error \
 	    -message "You cannot use OIWFS probe guiding with GMOS"
@@ -162,6 +220,11 @@ itcl::body ActiveOptics::enable {} {
     } elseif {!$gaosTTGS && [state gaosTTGS]} {
 	cs gaosTTGS set dem 0
 	cs gaosTTGS set dir 3
+    }
+
+    # if using OIWFS blending, wait for TTGS to finish turning on
+    if {$oiblend } {
+	while {[state gaosTTGS] == "0"} { after 200 }
     }
 
     # turn on the SFO
@@ -520,11 +583,15 @@ puts "beam is $beam gonna wait for 1 second"
    }
 
 # Probe guiding.
+# new TCS   if { $probeguide == "OFF" && ( [state p1guide] || [state p2guide] || [state oiguide]) } {
    if { $probeguide == "none" && ( [state p1guide] || [state p2guide] || [state oiguide]) } {
       cs wfsGuideMode set state Off
       logger command wfsGuideMode
+#new TCS   } elseif { $probeguide != "OFF" } {
    } elseif { $probeguide != "none" } {
       cs wfsGuideMode set state On
+#new TCS      cs wfsGuideMode set from $probefrom
+#new TCS      cs wfsGuideMode set to $probeto
       cs wfsGuideMode set probe $probeguide
       logger command wfsGuideMode
    }
