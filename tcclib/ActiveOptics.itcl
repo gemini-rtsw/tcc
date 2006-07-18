@@ -28,7 +28,6 @@ itcl::class ActiveOptics {
       variable m1filename ""
       variable probefrom ""
       variable probeto ""
-#new TCS      variable probeguide OFF
       variable probeguide none
       variable mountguide none
       variable gaos 0
@@ -176,9 +175,8 @@ global env
 
 itcl::body ActiveOptics::enable {} {
     global AOtryingToReuseGain AOreuseGains
-#puts "ActiveOptics::enable"
+# puts "ActiveOptics::enable"
 # check to make sure we're not using OI probe guiding with GMOS
-# new TCS    if { ($probeto == "OIWFS") && [string match "*GMOS*" $::Config(tcs.instrument,value)]} {
     if { ($probeguide == "OIWFS") && [string match "*GMOS*" $::Config(tcs.instrument,value)]} {
 	tk_messageBox -icon error \
 	    -message "You cannot use OIWFS probe guiding with GMOS"
@@ -223,7 +221,7 @@ itcl::body ActiveOptics::enable {} {
     }
 
     # if using OIWFS blending, wait for TTGS to finish turning on
-    if {$oiblend } {
+    if {$oiblend && $gaosTTGS} {
 	while {[state gaosTTGS] == "0"} { after 200 }
     }
 
@@ -583,15 +581,11 @@ puts "beam is $beam gonna wait for 1 second"
    }
 
 # Probe guiding.
-# new TCS   if { $probeguide == "OFF" && ( [state p1guide] || [state p2guide] || [state oiguide]) } {
    if { $probeguide == "none" && ( [state p1guide] || [state p2guide] || [state oiguide]) } {
       cs wfsGuideMode set state Off
       logger command wfsGuideMode
-#new TCS   } elseif { $probeguide != "OFF" } {
    } elseif { $probeguide != "none" } {
       cs wfsGuideMode set state On
-#new TCS      cs wfsGuideMode set from $probefrom
-#new TCS      cs wfsGuideMode set to $probeto
       cs wfsGuideMode set probe $probeguide
       logger command wfsGuideMode
    }
