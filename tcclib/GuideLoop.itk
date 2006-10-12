@@ -20,15 +20,17 @@ itcl::class GuideLoop {
    destructor {}
    public {
       method reset {}
+      method recolour {args}
    }
    private {
-      method recolour {args}
       method comacorr {val}
       method gaos {val}
       method gaosTTGS {val}
       method gaosSFO {val}
       method m2mode {probe val}
       method mtmode {val}
+      method probefrom {val}
+      method probeto {val}
       method probemode {val}
       method wfsmode {wfs val}
       method enable {}
@@ -53,7 +55,7 @@ itcl::body GuideLoop::constructor args {
    }
    pack $itk_component(canv)
    set w $itk_component(canv)
-
+   AO setCanvas $itk_component(canv)
    bind $w <Button-2> {
        puts "on canvas x: %x y: %y"
    }
@@ -316,21 +318,43 @@ itcl::body GuideLoop::constructor args {
 
 # Box for WFS probes.
    $w create rectangle 0 0 132 87 -fill white -tags "active probes probes_bg"
-   $w create text 92 35 -text PROBES -tags probes -font $font
+   $w create text 92 44 -text PROBES -tags probes -font $font
 
 # Controls for probes.
-   itk_component add pr {
-      SelectButton $w.pr -orient vertical \
+   itk_component add prfrom {
+      SelectButton $w.prfrom -orient vertical \
+            -command [itcl::code $this probefrom]
+   } {
+      usual
+      rename -offbackground -background background Background
+   }
+   $w create window 17 34 -width 30 -window $w.prfrom -tags probes
+   $itk_component(prfrom) add P1 -pady 0
+   $itk_component(prfrom) add P2 -pady 0
+   $itk_component(prfrom) add OI -pady 0
+
+   itk_component add prto {
+      SelectButton $w.prto -orient vertical \
+            -command [itcl::code $this probeto]
+   } {
+      usual
+      rename -offbackground -background background Background
+   }
+   $w create window 47 34 -width 30 -window $w.prto -tags probes
+   $itk_component(prto) add P1 -pady 0
+   $itk_component(prto) add P2 -pady 0
+   $itk_component(prto) add OI -pady 0
+
+   itk_component add pron {
+      SelectButton $w.pron -orient vertical \
             -command [itcl::code $this probemode]
    } {
       usual
       rename -offbackground -background background Background
    }
-   $w create window 32 44 -width 60 -window $w.pr -tags probes
-   $itk_component(pr) add P1 -pady 0
-   $itk_component(pr) add P2 -pady 0
-   $itk_component(pr) add OI -pady 0
-   $itk_component(pr) add OFF -pady 0
+   $w create window 32 76 -width 60 -window $w.pron -tags probes
+   $itk_component(pron) add OFF -pady 0
+   $itk_component(prto) setState "0 1 2" disabled
 
 # Move boxes into position.
    $w move m2 100 10
@@ -386,6 +410,11 @@ itcl::body GuideLoop::constructor args {
          -tags {active m2_mt} -arrow last -arrowshape {20 20 7}
 
 # ENABLE/DISABLE/RESET buttons.
+# display loopProcessing state
+   $w create rectangle 0 0 100 20 -fill white -tags "processing processing_bg"
+   $w create text 50 10 -text IDLE -tags "processingText processing" -font $font
+   $w move processing 420 420
+
    itk_component add on {
       LiveButton $w.on -text Enable -command [itcl::code $this enable]
    }
@@ -427,6 +456,7 @@ itcl::body GuideLoop::destructor {} {
 itcl::body GuideLoop::recolour args {
     global AOtryingToReuseGain AOreuseGains
    set w $itk_component(canv)
+
 # Disable LGS options unless useLwfs is true
    if {[AO state useLwfs]} {
        $itk_component(ttao) configure -state normal
@@ -449,6 +479,7 @@ itcl::body GuideLoop::recolour args {
 
 # Set everything to white.
    $w itemconfigure active -fill white
+
 # P1 signals.
    if { [AO state pwfs1] } {
       $w itemconfigure pwfs1_bg -fill green
@@ -649,13 +680,63 @@ itcl::body GuideLoop::recolour args {
    }
 
 # WFS probes
-   if { ( [AO state p1guide] && [AO state pwfs1] ) ||
-         ( [AO state p2guide] && [AO state pwfs2] ) ||
-         ( [AO state oiguide] && [AO state oiwfs] ) } {
-      $w itemconfigure probes_bg -fill green
-   } elseif { [AO state p1guide] || [AO state p2guide] || [AO state oiguide]} {
-      $w itemconfigure probes_bg -fill yellow
-   }
+    switch [$itk_component(prfrom) get] {
+	P1 {
+	    switch [$itk_component(prto) get] {
+		P1 {
+		    if {[AO state p1guide] && [AO state pwfs1]} {
+			$w itemconfigure probes_bg -fill green
+		    } elseif {[AO state p1guide]} {
+			$w itemconfigure probes_bg -fill yellow
+		    }
+		}
+	    }
+	}
+	P2 {
+	    switch [$itk_component(prto) get] {
+		P2 {
+		    if {[AO state p2guide] && [AO state pwfs2]} {
+			$w itemconfigure probes_bg -fill green
+		    } elseif {[AO state p2guide]} {
+			$w itemconfigure probes_bg -fill yellow
+		    }
+		}
+	    }
+	}
+	OI {
+	    switch [$itk_component(prto) get] {
+		P1 {
+		    if {[AO state p1guide] && [AO state pwfs1] && [AO state oiwfs]} {
+			$w itemconfigure probes_bg -fill green
+		    } elseif {[AO state p1guide]} {
+			$w itemconfigure probes_bg -fill yellow
+		    }
+		}
+		P2 {
+		    if {[AO state p2guide] && [AO state pwfs2] && [AO state oiwfs]} {
+			$w itemconfigure probes_bg -fill green
+		    } elseif {[AO state p2guide]} {
+			$w itemconfigure probes_bg -fill yellow
+		    }
+		}
+		OI {
+		    if {[AO state oiguide] && [AO state oiwfs]} {
+			$w itemconfigure probes_bg -fill green
+		    } elseif {[AO state oiguide]} {
+			$w itemconfigure probes_bg -fill yellow
+		    }
+		}
+	    }
+	}
+    }
+
+#    if { ( [AO state p1guide] && [AO state pwfs1] ) ||
+#          ( [AO state p2guide] && [AO state pwfs2] ) ||
+#          ( [AO state oiguide] && [AO state oiwfs] ) } {
+#       $w itemconfigure probes_bg -fill green
+#    } elseif { [AO state p1guide] || [AO state p2guide] || [AO state oiguide]} {
+#       $w itemconfigure probes_bg -fill yellow
+#    }
 }
 
 itcl::body GuideLoop::comacorr {val} {
@@ -763,19 +844,51 @@ itcl::body GuideLoop::oiblend {val} {
    }
 }
 
-itcl::body GuideLoop::probemode {val} {
+itcl::body GuideLoop::probefrom {val} {
+   $itk_component(prto) clear
+   $itk_component(prto) setState "0 1 2" disabled
    switch $val {
       P1 {
-         AO configure -probeguide PWFS1
+         AO configure -probefrom PWFS1
+	 $itk_component(prto) setState 0 normal
       }
       P2 {
-         AO configure -probeguide PWFS2
+         AO configure -probefrom PWFS2
+	 $itk_component(prto) setState 1 normal
       }
       OI {
-         AO configure -probeguide OIWFS
+         AO configure -probefrom OIWFS
+	 $itk_component(prto) setState "0 1 2" normal
+      }
+   }
+}
+
+itcl::body GuideLoop::probeto {val} {
+   switch $val {
+      P1 {
+         AO configure -probeto PWFS1
+      }
+      P2 {
+         AO configure -probeto PWFS2
+      }
+      OI {
+         AO configure -probeto OIWFS
+      }
+   }
+   AO configure -probeguide ON
+   $itk_component(pron) clear
+}
+
+itcl::body GuideLoop::probemode {val} {
+   switch $val {
+      ON {
+         AO configure -probeguide ON
       }
       OFF {
-         AO configure -probeguide none
+         AO configure -probeguide OFF
+	 $itk_component(prfrom) clear
+	 $itk_component(prto) clear
+	 $itk_component(prto) setState "0 1 2" disabled
       }
    }
 }
@@ -821,7 +934,8 @@ itcl::body GuideLoop::m1mode {state} {
 
 itcl::body GuideLoop::reset {} {
 
-# Disable 
+# Disable
+   AO process IDLE
    AO disable
 
 # Simulate pushing all the "off" buttons.
@@ -835,11 +949,14 @@ itcl::body GuideLoop::reset {} {
    $itk_component(m2oi) select OFF
    $itk_component(m2coma) select OFF
    $itk_component(mt) select OFF
-   $itk_component(pr) select OFF
+   $itk_component(pron) select OFF
+   $itk_component(prfrom) clear
+   $itk_component(prto) clear
    $itk_component(oiao) select OFF
    $itk_component(gaoson) select OFF
    $itk_component(ttao) select OFF
    $itk_component(sfao) select OFF
    $itk_component(aosfo) select OFF
    $itk_component(aottgs) select OFF
+   $itk_component(prto) setState "0 1 2" disabled
 }
