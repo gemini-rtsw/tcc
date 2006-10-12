@@ -40,6 +40,7 @@ itcl::class Handset {
       method updateProc { name alarm time values }
       method timeout {}
       method openloop {}
+      method sendOffset {frame stepsize angle}
       variable oiAngle 138.94
    }
    private {
@@ -391,44 +392,48 @@ itcl::configbody Handset::adjust {
 
 itcl::body Handset::push {dir} {
 
-   openloop
-
 # Called whenever one of the handset buttons is pressed.
    if { ! [string equal $cs ""] } {
       set frame [$itk_component(orient) get]
-
-# Set the frame id. The pwfs frames are not supported by the tcs so
-# x/y used.
-      set frameid [lsearch -exact {azel xy instr tracking pwfs1 pwfs2 oiwfs} $frame]
-      if { $frameid > 3 } {
-         set frameid 1
-      }
-      cs $cs set frame $frameid
-
 # Set the step size.
-      cs $cs set size [$itk_component(stepsize) get]
+      set stepsize [$itk_component(stepsize) get]
 
 # Set the angle. For the pwfs the arm and table angles have to be added.
       switch $frame {
          pwfs1 {
-            cs $cs set angle [expr {$angles($frame,$dir) + \
+            set angle [expr {$angles($frame,$dir) + \
                   [sa agssad get p1TableAngle] + \
                   [sa agssad get p1ArmAngle]}]
          }
          pwfs2 {
-            cs $cs set angle [expr {$angles($frame,$dir) + \
+            set angle [expr {$angles($frame,$dir) + \
                   [sa agssad get p2TableAngle] + \
                   [sa agssad get p2ArmAngle]}]
          }
          oiwfs {
 	    #puts "oiwfs frame, angle is $angles($frame,$dir) + $oiAngle"
-            cs $cs set angle [expr {$angles($frame,$dir) + $oiAngle}]
+            set angle [expr {$angles($frame,$dir) + $oiAngle}]
          }
          default {
-            cs $cs set angle $angles($frame,$dir)
+            set angle $angles($frame,$dir)
          }
       }
+      sendOffset $frame $stepsize $angle
+   }
+}
 
+itcl::body Handset::sendOffset { frame stepsize angle } {
+   openloop
+   if { ! [string equal $cs ""] } {
+      set frameid [lsearch -exact {azel xy instr tracking pwfs1 pwfs2 oiwfs} $frame]
+      if { $frameid > 3 } {
+         set frameid 1
+      }
+      cs $cs set frame $frameid
+# Set the step size.
+      cs $cs set size $stepsize
+# Set the angle.
+      cs $cs set angle $angle
 # Set the virtual telescope.
       if { ![string equal $itk_option(-adjust) pointing] } {
          set mask 0
@@ -439,7 +444,6 @@ itcl::body Handset::push {dir} {
          }
          cs $cs set vt [expr { - $mask }]
       }
-
       logger command $cs
       if { [catch {cs tcsApply post} msg] } {
          tk_messageBox -icon error -parent $itk_interior -message \
