@@ -116,13 +116,25 @@ itcl::body Gaos::apply {comp} {
       set y [sa tcssad get aoDemandy]
    }
 
-# Turn on aoUseLwfs if neccesary
-   if {$lgs} {
-       cs aoUseLwfs set state ON
-   } else {
-       cs aoUseLwfs set state OFF
-   }
-   logger command aoUseLwfs
+#### mbec - commented until debugged, 09sep06
+# # Turn on aoUseLwfs if neccesary
+#    if {$lgs} {
+#        cs aoUseLwfs set state ON
+#    } else {
+#        cs aoUseLwfs set state OFF
+#    }
+#    logger command aoUseLwfs
+#
+#   # note, this is now ON/OFF vs 0/1
+#   if {[AO state useLwfs] != $lgs } {
+#      puts "AO state useLwfs and lgs disagree: [AO state useLwfs] $lgs"
+#   }
+####
+
+# Turn off Cal Source Lamps ... just in case someone left them on
+   cs aoCalSource set dmd OFF
+   cs aoCalSource set mode 1
+   cs aoCalSource set dir 3
 
 # Select GAOS ND filter IN/OUT 
 # this writes directly to Altair ... will be replaced by tcs interface
@@ -144,7 +156,7 @@ itcl::body Gaos::apply {comp} {
    if {[winfo exists .observePanel.frame.control.botframe.wfsconfig.tabs.canvas.notebook.cs.page5.cs.aowfs.flens] && 
        [winfo ismapped .observePanel.frame.control.botframe.wfsconfig.tabs.canvas.notebook.cs.page5.cs.aowfs.flens]} {
        .observePanel.frame.control.botframe.wfsconfig.tabs.canvas.notebook.cs.page5.cs.aowfs.flens select $fldLens
-   } else {
+   }
        #puts "Gaos::apply setting fldlens to $fldLens"
        logactions logmess "Gaos::apply setting fldlens to $fldLens"
        switch $fldLens {
@@ -161,7 +173,6 @@ itcl::body Gaos::apply {comp} {
 	       cs aoPrepareCm set flens 0
 	   }
        }
-   }
 
 # Deploy (or not) the ADC.
    cs aoDeployAdc set position $deployAdc
