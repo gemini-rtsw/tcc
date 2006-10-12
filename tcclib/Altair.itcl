@@ -74,6 +74,12 @@ itcl::class Gaos {
 
 itcl::body Gaos::apply {comp} {
 #puts "Gaos::apply comp: $comp name: $::Config($comp,value)"
+
+# recolour the A&G screen because the Adaptive Optics Mode could effect available options
+  if [winfo exists .observePanel] {
+      ::.observePanel.frame.control.guideloop recolour
+  }
+
 # Don't do anything if empty or No AO"
     if { ($::Config($comp,value) == "") || ($::Config($comp,value) == "No AO") } {
 	return
