@@ -19,16 +19,21 @@
 itcl::class PoHandsetControl {
    inherit itk::Widget
    constructor args {}
-   destructor {after cancel $refid}
+   destructor {after cancel $refid; sa tcssad unproc gacqId ; destroy .gacq}
+   
    private {
       method setvt {}
       method refresh {}
       method update {}
       method setlock {}
       method copya {}
-      method reset
+      method reset {}
+      method gacq_monitor {name alarm time values}
+      method gacq_ack {}
+      method gacq_rej {}
+      method gacq_validate {}
       variable vt
-      variable refid
+      variable refid ""
       variable lock 1
    }
 }
@@ -147,6 +152,7 @@ itcl::body PoHandsetControl::constructor args {
       LiveButton $w.reset -command [itcl::code $this reset] -text Reset \
             -width 8
    }
+
    pack $itk_component(absorb) $itk_component(reset) -side left -expand y \
          -pady 5
 
@@ -172,6 +178,11 @@ itcl::body PoHandsetControl::constructor args {
 
    set refid [after 1000 [itcl::code $this refresh]]
 
+   sa tcssad proc gacqId [itcl::code $this gacq_monitor]
+
+# temporary for testing
+   gacq_validate
+
    eval itk_initialize $args
 }
 
@@ -196,6 +207,69 @@ itcl::body PoHandsetControl::reset {} {
             "Error posting pointing origin offset command: TCS reports \
             \"$msg\""
    }
+}
+
+
+itcl::body PoHandsetControl::gacq_ack {} {
+   # select the instrument offset
+   [$itk_component(handset) component orient] select instr
+
+   # send the IAA/IPA
+   cs rotator set iaa [sa tcssad get gacqIAA]
+   cs rotator set ipa [sa tcssad get gacqIPA]
+   logger command rotator
+   if { [catch {cs tcsApply post} msg] } {
+      tk_messageBox -icon error -parent $itk_interior -message \
+            "Error posting rotator ipa command: TCS reports \
+            \"$msg\""
+   }
+   
+   # send the P
+   $itk_component(handset) sendOffset instr [sa tcssad get gacqP] 90.0
+   
+   # send the Q
+   $itk_component(handset) sendOffset instr [sa tcssad get gacqQ] 180.0
+      
+   wm withdraw .gacq
+}
+
+itcl::body PoHandsetControl::gacq_rej {} {
+   wm withdraw .gacq
+}
+
+itcl::body PoHandsetControl::gacq_validate {} {
+   
+   if { ![winfo exists .gacq] } {
+      toplevel .gacq
+      wm title .gacq  "GACQ"
+      label .gacq.title -text "Apply GACQ offset?"
+      frame .gacq.f1
+      label .gacq.f1.p -text "P: [sa tcssad get gacqP]" -width 20
+      label .gacq.f1.q -text "Q: [sa tcssad get gacqQ]" -width 20
+      label .gacq.f1.iaa -text "IAA: [sa tcssad get gacqIAA]" -width 20
+      label .gacq.f1.ipa -text "IPA: [sa tcssad get gacqIPA]" -width 20
+      frame .gacq.f2
+      button .gacq.f2.ok -text OK -command [itcl::code $this gacq_ack] -width 10
+      button .gacq.f2.cancel -text Cancel -command [itcl::code $this gacq_rej] -width 10
+      pack .gacq.f1.p .gacq.f1.q .gacq.f1.iaa .gacq.f1.ipa
+      pack .gacq.f2.ok .gacq.f2.cancel -side left
+      pack .gacq.title .gacq.f1 .gacq.f2
+   } else {
+      .gacq.f1.p configure -text "P: [sa tcssad get gacqP]"
+      .gacq.f1.q configure -text "Q: [sa tcssad get gacqQ]"
+      .gacq.f1.iaa configure -text "IAA: [sa tcssad get gacqIAA]"
+      .gacq.f1.ipa configure -text "IPA: [sa tcssad get gacqIPA]"
+      wm deiconify .gacq
+      raise .gacq
+   }
+
+   # wake up ssa   
+   bell
+   
+}
+   
+itcl::body PoHandsetControl::gacq_monitor {name alarm time values} {
+   after idle [itcl::code $this gacq_validate]
 }
 
 itcl::body PoHandsetControl::setvt {} {
