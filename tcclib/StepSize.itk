@@ -82,6 +82,13 @@ itcl::body StepSize::constructor args {
    $itk_component(step7) configure -textvariable [itcl::scope custom2]
    pack $itk_component(custom1) $itk_component(custom2) -side left
 
+# bindings to disable the arrow key (offset telescope) shortcuts when using the entry fields
+
+   foreach key {<Up> <Down> <Left> <Right>} {
+       bind [$itk_component(custom1) component entry] $key "[bind Entry $key]; break"
+       bind [$itk_component(custom2) component entry] $key "[bind Entry $key]; break"
+   }
+
 # Select the 1 button.
    push $itk_component(step3)
 
