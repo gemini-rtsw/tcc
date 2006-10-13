@@ -8,7 +8,7 @@
 *graphicDisplay.background:	Wheat
 
 # Background for the "direct action" panels.
-*observePanel*background:		PeachPuff1
+*observePanel*background:	PeachPuff1
 *ecsPanel*background:		PeachPuff1
 *guideLoopPanel*background:	PeachPuff1
 *mcsPanel*background:		PeachPuff1
@@ -57,6 +57,9 @@
 *wfsconfig*page3*background:   OldLace
 *wfsconfig*page4*background:   Wheat
 *wfsconfig*page5*background:   LemonChiffon
+
+# GACQ Offset request background
+*gacq*background:    Red
 
 # Font for "major" tcc items.
 # *majorFont:			-*-*-bold-r-normal-sans-14-*-*-*-*-*-*-*

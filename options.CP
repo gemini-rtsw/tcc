@@ -45,6 +45,9 @@
 *FieldPanel*data*page4*background: 	LightGray
 *FieldPanel*data*page5*background: 	LightGray
 
+# GACQ Offset request background
+*gacq*background:    Red
+
 # Font for "major" tcc items.
 *Font:			-*-*-bold-r-normal-sans-12-*-*-*-*-*-*-*
 *alarm*Font:			-*-*-bold-r-normal-sans-10-*-*-*-*-*-*-*
