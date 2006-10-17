@@ -18,6 +18,9 @@ set hrwfs_sky_dir /home/SSA/sky
 # The name of the script that starts the HRWFS AO program.
 set hrwfs_ao_prog /home/gemvx/bin/StartHrwfsAO
 
+# the directory where the skycalc executable can be found
+set skycalc_dir /usr/astro/starlink/bin
+
 # The x/y/z position that corresponds to the A&G PWFS1 probeSel center
 # command.
 
