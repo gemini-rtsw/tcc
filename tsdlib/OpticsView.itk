@@ -84,10 +84,13 @@ itcl::class OpticsView {
    itk_option define -centralbaffle centralBaffle CentralBaffle "" 
    itk_option define -deployablebaffle deployableBaffle DeployableBaffle 0 
    itk_option define -aofold aoFold AoFold out 
+   itk_option define -aofoldhealth aoFoldHealth AoFoldHealth undefined 
    itk_option define -aoentrance aoEntrance AoEntrance 0 
    itk_option define -aoexit aoExit AoExit 0 
    itk_option define -scfold scFold ScFold 0 
+   itk_option define -scfoldhealth scFoldHealth ScFoldHealth undefined 
    itk_option define -hrwfs hrwfs Hrwfs in 
+   itk_option define -hrwfshealth hrwfsHealth HrwfsHealth undefined 
    itk_option define -m2sstate m2sState M2sState OFF
    itk_option define -laserProp laserProp LaserProp OFF
    itk_option define -aopresent aoPresent AoPresent 0 {}
@@ -275,74 +278,78 @@ itcl::body OpticsView::constructor args {
 
 # AO fold
    $c create line -9 74 9 54 -width 2 -tags AoFold
-   $c create line -11 72 7 53 -tags AoFoldBck
+#   $c create line -11 72 7 53 -tags AoFoldBck
+   $c create polygon -11 72 7 52 5 50 -13 70 -tags AoFoldBck
 
 # Science fold in various positions
    $c create line -20 29 20 29 -width 2 -tags {ScFold ScFoldCB ScFoldBC}
-   $c create line -20 27 20 27 -tags {ScFold ScFoldCBbck scFoldBCbck}
+#   $c create line -20 27 20 27 -tags {ScFold ScFoldCBbck scFoldBCbck}
+   $c create polygon -20 27 20 27 20 24 -20 24 -tags {ScFoldBck ScFoldCBbck scFoldBCbck}
 
    eval $c create line [$c coords ScFoldCB] -width 2 \
          -tags [list {ScFold ScFoldED ScFoldDE}]
-   eval $c create line [$c coords ScFoldCBbck] \
-         -tags [list {ScFold ScFoldEDbck ScFoldDEbck}]
+   eval $c create polygon [$c coords ScFoldCBbck] \
+         -tags [list {ScFoldBck ScFoldEDbck ScFoldDEbck}]
    $c scale ScFoldED 0 30 1 -1
    $c scale ScFoldEDbck 0 30 1 -1
 
    $c create line -1 10 -1 50 -width 2 -tags {ScFold ScFoldBE ScFoldEB}
-   $c create line -3 10 -3 50 -tags {ScFold ScFoldBEbck ScFoldEBbck}
+#   $c create line -3 10 -3 50 -tags {ScFold ScFoldBEbck ScFoldEBbck}
+   $c create polygon -3 10 -3 50 -6 50 -6 10 -tags {ScFoldBck ScFoldBEbck ScFoldEBbck}
 
    eval $c create line [$c coords ScFoldBE] -width 2 \
          -tags [list {ScFold ScFoldCD ScFoldDC}]
-   eval $c create line [$c coords ScFoldBEbck] \
-         -tags [list {ScFold ScFoldCDbck scFoldDCbck}]
+   eval $c create polygon [$c coords ScFoldBEbck] \
+         -tags [list {ScFoldBck ScFoldCDbck scFoldDCbck}]
    $c scale ScFoldCD 0 30 -1 1
    $c scale ScFoldCDbck 0 30 -1 1
 
    $c create line -10 13 10 47 -width 2 -tags {ScFold ScFoldUD ScFoldDU}
-   $c create line -9 11 11 45 -tags {ScFold ScFoldUDbck ScFoldDUbck}
+   $c create polygon -8 11 12 45 14 43 -6 9 -tags {ScFoldBck ScFoldUDbck ScFoldDUbck}
 
    eval $c create line [$c coords ScFoldUD] -width 2 \
          -tags [list {ScFold ScFoldUE ScFoldEU}]
-   eval $c create line [$c coords ScFoldUDbck] \
-         -tags [list {ScFold ScFoldUEbck ScFoldEU}]
+   eval $c create polygon [$c coords ScFoldUDbck] \
+         -tags [list {ScFoldBck ScFoldUEbck ScFoldEU}]
    $c scale ScFoldUE 0 30 -1 1
    $c scale ScFoldUEbck 0 30 -1 1
 
    eval $c create line [$c coords ScFoldUD] -width 2 \
          -tags [list {ScFold ScFoldCA ScFoldAC}]
-   eval $c create line [$c coords ScFoldUDbck] \
-         -tags [list {ScFold ScFoldCAbck ScFoldACbck}]
+   eval $c create polygon [$c coords ScFoldUDbck] \
+         -tags [list {ScFoldBck ScFoldCAbck ScFoldACbck}]
    $c scale ScFoldCA 0 30 1 -1
    $c scale ScFoldCAbck 0 30 1 -1
 
    eval $c create line [$c coords ScFoldCA] -width 2 \
          -tags [list {ScFold ScFoldBA ScFoldAB}]
-   eval $c create line [$c coords ScFoldCAbck] \
-         -tags [list {ScFold ScFoldBAbck ScFoldABbck}]
+   eval $c create polygon [$c coords ScFoldCAbck] \
+         -tags [list {ScFoldBck ScFoldBAbck ScFoldABbck}]
    $c scale ScFoldBA 0 30 -1 1
    $c scale ScFoldBAbck 0 30 -1 1
 
    $c create line -17 20 17 40 -width 2 -tags {ScFold ScFoldUC ScFoldCU}
-   $c create line -15 19 19 39 -tags {ScFold ScFoldUCbck ScFoldCUbck}
+#   $c create line -15 19 19 39 -tags {ScFold ScFoldUCbck ScFoldCUbck}
+   $c create polygon -15 18 19 38 21 36 -13 16 -tags {ScFoldBck ScFoldUCbck ScFoldCUbck}
 
    eval $c create line [$c coords ScFoldUC] -width 2 \
          -tags [list {ScFold ScFoldUB ScFoldBUbck}]
-   eval $c create line [$c coords ScFoldUCbck] \
-         -tags [list {ScFold ScFoldUBbck ScFoldBU}]
+   eval $c create polygon [$c coords ScFoldUCbck] \
+         -tags [list {ScFoldBck ScFoldUBbck ScFoldBU}]
    $c scale ScFoldUB 0 30 -1 1
    $c scale ScFoldUBbck 0 30 -1 1
 
    eval $c create line [$c coords ScFoldUC] -width 2 \
          -tags [list {ScFold ScFoldDA ScFoldAD}]
-   eval $c create line [$c coords ScFoldUCbck] \
-         -tags [list {ScFold ScFoldDAbck ScFoldADbck}]
+   eval $c create polygon [$c coords ScFoldUCbck] \
+         -tags [list {ScFoldBck ScFoldDAbck ScFoldADbck}]
    $c scale ScFoldDA 0 30 1 -1
    $c scale ScFoldDAbck 0 30 1 -1
 
    eval $c create line [$c coords ScFoldDA] -width 2 \
          -tags [list {ScFold ScFoldEA ScFoldAE}]
-   eval $c create line [$c coords ScFoldDAbck] \
-         -tags [list {ScFold ScFoldEAbck ScFoldAEbck}]
+   eval $c create polygon [$c coords ScFoldDAbck] \
+         -tags [list {ScFoldBck ScFoldEAbck ScFoldAEbck}]
    $c scale ScFoldEA 0 30 -1 1
    $c scale ScFoldEAbck 0 30 -1 1
 
@@ -351,11 +358,13 @@ itcl::body OpticsView::constructor args {
 
 # HRWFS fold when deployed
    $c create line -9 -51 9 -69 -width 2 -tags HrwfsFoldIn
-   $c create line -11 -53 7 -70 -tags HrwfsFoldInBck
+#   $c create line -11 -53 7 -70 -tags HrwfsFoldInBck
+   $c create polygon -11 -53 7 -71 5 -73 -13 -55 -outline "" -fill "" -tags HrwfsFoldInBck
 
 # HRWFS fold when retracted
    $c create line  41 -51 59 -69 -width 2 -tags HrwfsFoldOut
-   $c create line  39 -53 57 -70 -tags HrwfsFoldOutBck
+#   $c create line  39 -53 57 -70 -tags HrwfsFoldOutBck
+   $c create polygon 39 -53 57 -71 55 -73 37 -55 -outline "" -fill "" -tags HrwfsFoldOutBck
 
 # ISS port numbers
    $c create text 0 -100 -anchor c -tags portAnumber
@@ -479,17 +488,49 @@ itcl::body OpticsView::update {} {
    }
 
 # Configure the AO fold mirror
+   switch $itk_option(-aofoldhealth) {
+       GOOD {
+	   set AoFoldBckCol green
+       }
+       WARNING {
+	   set AoFoldBckCol yellow
+       }
+       BAD {
+	   set AoFoldBckCol red
+       }
+       default {
+	   set AoFoldBckCol ""
+       }
+   }
+
    if { $itk_option(-aofold) == "IN" } {
       $c itemconfigure AoFold -fill white
-      $c itemconfigure AoFoldBck -fill black
+      $c itemconfigure AoFoldBck -outline black -fill $AoFoldBckCol
    } else {
       $c itemconfigure AoFold -fill ""
-      $c itemconfigure AoFoldBck -fill ""
+      $c itemconfigure AoFoldBck -outline "" -fill ""
    }
 
 # Configure the science fold mirror
    $c itemconfigure ScFold -fill ""
+   $c itemconfigure ScFoldBck -outline "" -fill ""
    $c itemconfigure ScFoldUnknown -bitmap ""
+
+   switch $itk_option(-scfoldhealth) {
+       GOOD {
+	   set ScFoldBckCol green
+       }
+       WARNING {
+	   set ScFoldBckCol yellow
+       }
+       BAD {
+	   set ScFoldBckCol red
+       }
+       default {
+	   set ScFoldBckCol ""
+       }
+   }
+
    if { $itk_option(-scfold) == "PARK" } {
       set scfoldpos ""
    } else {
@@ -498,21 +539,40 @@ itcl::body OpticsView::update {} {
          $c itemconfigure ScFoldUnknown -bitmap question
       } elseif { $itk_option(-scfold) != "MOVING" } {
          $c itemconfigure ScFold$itk_option(-scfold) -fill white
-         $c itemconfigure ScFold$itk_option(-scfold)bck -fill black
+         $c itemconfigure ScFold$itk_option(-scfold)bck -outline black -fill $ScFoldBckCol
       }
    }
 
 # Configure the HRWFS fold mirror
+   switch $itk_option(-hrwfshealth) {
+       GOOD {
+	   set HrwfsBckCol green
+       }
+       WARNING {
+	   set HrwfsBckCol yellow
+       }
+       BAD {
+	   set HrwfsBckCol red
+       }
+       default {
+	   set HrwfsBckCol ""
+       }
+   }
+
    if { $itk_option(-hrwfs) == "IN" } {
       $c itemconfigure HrwfsFoldIn -fill white
-      $c itemconfigure HrwfsFoldInBck -fill black
+      $c itemconfigure HrwfsFoldInBck -outline black
+      $c itemconfigure HrwfsFoldInBck -fill $HrwfsBckCol
       $c itemconfigure HrwfsFoldOut -fill ""
+      $c itemconfigure HrwfsFoldOutBck -outline ""
       $c itemconfigure HrwfsFoldOutBck -fill ""
    } else {
       $c itemconfigure HrwfsFoldIn -fill ""
+      $c itemconfigure HrwfsFoldInBck -outline ""
       $c itemconfigure HrwfsFoldInBck -fill ""
       $c itemconfigure HrwfsFoldOut -fill white
-      $c itemconfigure HrwfsFoldOutBck -fill black
+      $c itemconfigure HrwfsFoldOutBck -outline black
+      $c itemconfigure HrwfsFoldOutBck -fill $HrwfsBckCol
    }
 
 # Configure the GPOL slides.
