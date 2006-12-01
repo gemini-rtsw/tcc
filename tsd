@@ -31,7 +31,6 @@ if { [string compare [file pathtype $ROOT] relative] == 0 } {
    set ROOT [file join [pwd] $ROOT]
 }
 
-
 # The tsd library files live in the lib subdirectory of the directory 
 # containing this script.
 lappend auto_path [file join $ROOT lib]
@@ -78,10 +77,15 @@ if { [catch {set fid [open "|$skycalc_path/skycalc < lib/skycalc_input_file" r]}
 # Set the name of the epics service configuration file.
 if { [info exists ::env(TCC_TCSNAME)] } {
    puts "Using $::env(TCC_TCSNAME)"
-   set ext .$::env(TCC_TCSNAME)
+   if {$::env(TCC_TCSNAME) == "tcs"} {
+       set ext ""
+   } else {
+       set ext .$::env(TCC_TCSNAME)
+   }
 } else {
    set ext ""
 }
+
 appData add configPath [file join $ROOT ca_config$ext]
 appData add configFile tsd.ca
 
