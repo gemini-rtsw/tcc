@@ -212,6 +212,7 @@ itcl::body TcsConfigControl::destructor {} {
 }
 
 itcl::body TcsConfigControl::apply {} {
+    global instPO
 #+
 # Called when the apply button is pressed.
 #-
@@ -383,12 +384,18 @@ itcl::body TcsConfigControl::apply {} {
    }
    logger command wrap
 
+# if the instrument origin is different from instPO (science fold on AC)
+# restore instPO before storing/slewing.  rotator_axis will be reapplied below
+
+   if { ($::Config(tcs.pointorig,value) == "rotator_axis") && ($instPO != "rotator_axis") } {
+       set ::Config(tcs.pointorig,value) $instPO
+   }
+
 # Call the normal apply function.
    $this ComponentControl::applycmd
 
-# Reinvoke the sf to aout conf inst origin and wavelength
+# Reinvoke the sf to auto conf inst origin and wavelength
    global sfPos
-
    if {$sfPos != "empty"} {
        ObserveControl::setfold $sfPos 0
    }
