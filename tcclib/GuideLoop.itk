@@ -21,7 +21,6 @@ itcl::class GuideLoop {
    public {
       method reset {}
       method recolour {args}
-      method configSfoEx {}
    }
    private {
       method comacorr {val}
@@ -39,6 +38,7 @@ itcl::class GuideLoop {
       method oiblend {val}
       method ttgsloop {val}
       method sfoloop {val}
+      method configSfoEx {}
       variable monids
    }
 }
@@ -184,7 +184,7 @@ itcl::body GuideLoop::constructor args {
    $itk_component(aottgs) add OFF -pady 0
    # TTGS exp
    itk_component add ttgs_ex {
-       iwidgets::combobox $w.ttgs_ex -arrowrelief flat -width 5 -selectioncommand configSfoEx\
+       iwidgets::combobox $w.ttgs_ex -arrowrelief flat -width 5 -selectioncommand [itcl::code $this configSfoEx] \
 	   -validate real -labeltext "exp(s)"
    }
    $w create window 66 191 -window $w.ttgs_ex -tags gaos
@@ -926,6 +926,9 @@ itcl::body GuideLoop::enable {} {
 }
 
 itcl::body GuideLoop::configSfoEx {} {
+    puts "configSfoEx"
+    set ttgsLimit [expr 1.65*[$itk_component(ttgs_ex) get]*4000]
+    .observePanel.frame.control.alarm configure -ttgsLimit $ttgsLimit
     switch [$itk_component(ttgs_ex) get] {
 	0.001 {$itk_component(sfo_ex) insert entry end 1.0}
 	0.002 {$itk_component(sfo_ex) insert entry end 2.0}
