@@ -21,6 +21,7 @@ itcl::class GuideLoop {
    public {
       method reset {}
       method recolour {args}
+      method configSfoEx {}
    }
    private {
       method comacorr {val}
@@ -183,11 +184,11 @@ itcl::body GuideLoop::constructor args {
    $itk_component(aottgs) add OFF -pady 0
    # TTGS exp
    itk_component add ttgs_ex {
-       iwidgets::combobox $w.ttgs_ex -arrowrelief flat -width 5 \
+       iwidgets::combobox $w.ttgs_ex -arrowrelief flat -width 5 -selectioncommand configSfoEx\
 	   -validate real -labeltext "exp(s)"
    }
    $w create window 66 191 -window $w.ttgs_ex -tags gaos
-   $w.ttgs_ex insert list end 0.02 0.01 0.005 0.002 0.001
+   $w.ttgs_ex insert list end 0.05 0.02 0.01 0.005 0.002 0.001
    $w.ttgs_ex insert entry end [AO cget -ttgsExpose]
    [$w.ttgs_ex component list] configure -hscrollmode none \
             -vscrollmode none
@@ -211,7 +212,7 @@ itcl::body GuideLoop::constructor args {
 	   -validate real -labeltext "exp(s)"
    }
    $w create window 66 262 -window $w.sfo_ex -tags gaos
-   $w.sfo_ex insert list end 10.0 7.0 5.0 2.0 1.0
+   $w.sfo_ex insert list end 50.0 20.0 10.0 7.0 5.0 2.0 1.0
    $w.sfo_ex insert entry end [AO cget -sfoExpose]
    [$w.sfo_ex component list] configure -hscrollmode none \
             -vscrollmode none
@@ -922,6 +923,17 @@ itcl::body GuideLoop::enable {} {
        }
    }
    AO enable
+}
+
+itcl::body GuideLoop::configSfoEx {} {
+    switch [$itk_component(ttgs_ex) get] {
+	0.001 {$itk_component(sfo_ex) insert entry end 1.0}
+	0.002 {$itk_component(sfo_ex) insert entry end 2.0}
+	0.005 {$itk_component(sfo_ex) insert entry end 5.0}
+	0.01  {$itk_component(sfo_ex) insert entry end 10.0}
+	0.02  {$itk_component(sfo_ex) insert entry end 20.0}
+	0.05  {$itk_component(sfo_ex) insert entry end 50.0}
+    }
 }
 
 itcl::body GuideLoop::m1mode {state} {
