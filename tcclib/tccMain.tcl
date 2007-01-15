@@ -150,6 +150,7 @@ proc tccMain args {
    epics cs aoFlatten
    epics cs aoPrepareCm
    epics cs aoFlex
+   epics cs aoSFOdefocus
    epics cs aoMoveAdc
    epics cs filter1
    epics cs filter2

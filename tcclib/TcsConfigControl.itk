@@ -1,5 +1,5 @@
 #+
-#  TcsConfigControl <- ComponentControl
+#  Tcsconfigcontrol <- ComponentControl
 #
 #  Implements the TcsConfigControl widget.
 #
@@ -324,9 +324,13 @@ itcl::body TcsConfigControl::apply {} {
 	if {[string match "*NIRI*" $inst]} {
 	    set instr NIRI
 	    set port [sa agssad get portNiri]
+	    #set the deocus offset
+	    cs aoSFOdefocus set offset [calparam cget -niri_sfo_defocus]
 	} elseif {[string match "*NIFS*" $inst]} {
 	    set instr NIFS
 	    set port [sa agssad get portNifs]
+	    #set the deocus offset
+	    cs aoSFOdefocus set offset [calparam cget -nifs_sfo_defocus]
 	}
 	set port "p$port"
 	if {[string length $inst] > 0} {
