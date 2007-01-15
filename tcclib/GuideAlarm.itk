@@ -330,18 +330,33 @@ itcl::body GuideAlarm::scanLoop {} {
     set canguide [expr {[AO state mount] && [AO state m2]}]
     
     foreach wfs {pwfs1 pwfs2 oiwfs gaos ttgs sfo} {
-        if {[AO state $wfs] && $canguide} {
-            if {!$alarmEnabled($wfs)} {
-                set alarmEnabled($wfs) 1
-                alarmCheck $wfs
-            } else  {
-                set alarmEnabled($wfs) 1
-            }
-            incr num_enabled
-        } else {
-            set alarmEnabled($wfs) 0
-            setWfsColor $wfs PeachPuff1
-        }
+	if {$wfs == "sfo" || $wfs == "ttgs"} {
+	    if {[AO state $wfs] && [AO state ${wfs}loop] && $canguide} {
+		if {!$alarmEnabled($wfs)} {
+		    set alarmEnabled($wfs) 1
+		    alarmCheck $wfs
+		} else  {
+		    set alarmEnabled($wfs) 1
+		}
+		incr num_enabled
+	    } else {
+		set alarmEnabled($wfs) 0
+		setWfsColor $wfs PeachPuff1
+	    }
+	} else {
+	    if {[AO state $wfs] && $canguide} {
+		if {!$alarmEnabled($wfs)} {
+		    set alarmEnabled($wfs) 1
+		    alarmCheck $wfs
+		} else  {
+		    set alarmEnabled($wfs) 1
+		}
+		incr num_enabled
+	    } else {
+		set alarmEnabled($wfs) 0
+		setWfsColor $wfs PeachPuff1
+	    }
+	}
     }
     
     if {$num_enabled > 0} {
