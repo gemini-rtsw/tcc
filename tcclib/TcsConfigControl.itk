@@ -332,6 +332,11 @@ itcl::body TcsConfigControl::apply {} {
 	    #set the deocus offset
 	    cs aoSFOdefocus set offset [calparam cget -nifs_sfo_defocus]
 	}
+	if {$port == 0} {
+	    tk_messageBox -icon error \
+		-message "The AGS has specified an invalid port (0) for $instr"
+	    return
+	}
 	set port "p$port"
 	if {[string length $inst] > 0} {
 	    set ncpafile "/aoBase/rel/input/aoNcpa${instr}${port}${wfs}.dat"
