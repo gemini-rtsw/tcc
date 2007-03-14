@@ -213,6 +213,7 @@ itcl::body TcsConfigControl::destructor {} {
 
 itcl::body TcsConfigControl::apply {} {
     global instPO
+
 #+
 # Called when the apply button is pressed.
 #-
@@ -228,6 +229,61 @@ itcl::body TcsConfigControl::apply {} {
 	tk_messageBox -icon error \
 	    -message "Warning The STRAP Detector is On"
 	return
+    }
+
+# If this is an AO target and we're using the Laser, check for a collision
+    set slewoptions $::Config(tcs.slewoptions,value)
+    #puts "ltcscheck is [::SlewOptionsNames::$slewoptions cget -ltcscheck]" 
+    if {([string match "*LGS*" $::Config(tcs.gaos,value)]) && [::SlewOptionsNames::$slewoptions cget -ltcscheck]} {
+	logactions logmess "LGS target ... checking for collisions"
+	logactions logmess "have target: $::Config(tcs.field.sciencetarget,value)"
+	set laserTarget ${::Config(tcs.field.sciencetarget,namespace)}::${::Config(tcs.field.sciencetarget,value)}
+	set ra [$laserTarget cget -c1]
+	set ra [string trim $ra " "]
+	set dec [$laserTarget cget -c2]
+	set dec [string trim $dec " "]
+	set epoch [$laserTarget cget -cosys]
+	set epoch [string trimleft $epoch "FK54/JB"]
+	# fov is in the range 1 to 1.67
+	set fov 1.67 
+	# convert ra and dec to the format needed by the script
+	set found [string first " " $ra]
+	while {$found != -1} {
+	    set ra [string replace $ra $found $found ":"]
+	    set found [string first " " $ra]
+	}
+	set found [string first " " $dec]
+	while {$found != -1} {
+	    set dec [string replace $dec $found $found ":"]
+	    set found [string first " " $dec]
+	}
+	logactions logmess "sending: ltcsQuery $ra $dec $epoch $fov"
+	if { [catch {exec ltcsQuery $ra $dec $epoch $fov} result ] } {
+	    set choice [tk_messageBox -icon warning \
+			    -message "Checking for a collision using: ltcsQuery $ra $dec $epoch $fov\nReturned error: $result\nContinue with slew anyway?" \
+			    -type yesno -default yes ]
+	    if {$choice == "no"} {
+		return
+	    }
+	} else {
+	    logactions logmess "ltcsQuery returned: $result"
+	    #set result { { "UH2.2M" "Wed Jan 24 11:24:17 2007" "Wed Jan 24 14:26:32 2007" "03:02:15" } }
+	    #puts "result: $result"
+	    set result [string trim $result " {}"]
+	    if {[llength $result] > 0} {
+		#we have a collision
+		set telescope [lindex $result 0]
+		set start [lindex $result 1]
+		set end [lindex $result 2]
+		set duration [lindex $result 3]
+		set choice [tk_messageBox -icon warning \
+				-message "Collision detected with $telescope from $start until $end for $duration\nContinue with slew anyway?" \
+				-type yesno -default no ]
+		if {$choice == "no"} {
+		    return
+		}
+	    }
+	}
     }
 
 # Try setting Guide mode (chop states) first here to see if the P2>P2 MAx prob goes away
@@ -298,7 +354,7 @@ itcl::body TcsConfigControl::apply {} {
          }
    }
 
-# Configure default filters, fieldstop for the WFS, and AO Flexture Model
+# Configure default filters, fieldstop for the WFS
 
     if {[string match "*P1*" $guide]} {
 	pwfs filter pwfs1 "Red"
@@ -308,45 +364,6 @@ itcl::body TcsConfigControl::apply {} {
     if {[string match "*P2*" $guide]} {
 	pwfs filter pwfs2 "Red"
 #	pwfs fldstop pwfs2 "open1"
-    }
-
-    if {[string match "*AO*" $guide]} {
-	set ::Config(tcs.field.guide.aowfswavelength,value) "GAOS"
-#	pwfs filter pwfs2 "AOWFS"
-	# set the NCPA and Flexure config file names for altair
-	if {[AO state useLwfs]} {
-	    set wfs Lgs
-	} else {
-	    set wfs Ngs
-	}
-	set instr ""
-	set port 0
-	if {[string match "*NIRI*" $inst]} {
-	    set instr NIRI
-	    set port [sa agssad get portNiri]
-	    #set the deocus offset
-	    cs aoSFOdefocus set offset [calparam cget -niri_sfo_defocus]
-	} elseif {[string match "*NIFS*" $inst]} {
-	    set instr NIFS
-	    set port [sa agssad get portNifs]
-	    #set the deocus offset
-	    cs aoSFOdefocus set offset [calparam cget -nifs_sfo_defocus]
-	}
-	if {$port == 0} {
-	    tk_messageBox -icon error \
-		-message "The AGS has specified an invalid port (0) for $instr"
-	    return
-	}
-	set port "p$port"
-	if {[string length $inst] > 0} {
-	    set ncpafile "/aoBase/rel/input/aoNcpa${instr}${port}${wfs}.dat"
-	    set flexfile "/aoBase/rel/data/aoFlex${instr}${port}${wfs}.dat"
-	    #puts "ncpafile: $ncpafile"
-	    #puts "flexfile: $flexfile"
-	    cs aoFlex set ncpa $ncpafile
-	    cs aoFlex set flex $flexfile
-	    cs aoFlex set dir 3
-	}
     }
 
     if {[string match "*OI*" $guide]} {
@@ -402,6 +419,50 @@ itcl::body TcsConfigControl::apply {} {
 
 # Call the normal apply function.
    $this ComponentControl::applycmd
+
+# Configure default filters, fieldstop for the WFS, and AO Flexture Model
+    if {[string match "*AO*" $guide]} {
+	logactions logmess "Configuring for AO"
+	set ::Config(tcs.field.guide.aowfswavelength,value) "GAOS"
+#	pwfs filter pwfs2 "AOWFS"
+	# set the NCPA and Flexure config file names for altair
+	if {[AO state useLwfs]} {
+	    logactions logmess "using LGS"
+	    set wfs Lgs
+	} else {
+	    set wfs Ngs
+	}
+	set instr ""
+	set port 0
+	if {[string match "*NIRI*" $inst]} {
+	    set instr NIRI
+	    set port [sa agssad get portNiri]
+	    #set the deocus offset
+	    cs aoSFOdefocus set offset [calparam cget -niri_sfo_defocus]
+	} elseif {[string match "*NIFS*" $inst]} {
+	    set instr NIFS
+	    set port [sa agssad get portNifs]
+	    #set the deocus offset
+	    cs aoSFOdefocus set offset [calparam cget -nifs_sfo_defocus]
+	}
+	if {$port == 0} {
+	    tk_messageBox -icon error \
+		-message "The AGS has specified an invalid port (0) for $instr"
+	    return
+	}
+	set port "p$port"
+	if {[string length $inst] > 0} {
+	    set ncpafile "/aoBase/rel/input/aoNcpa${instr}${port}${wfs}.dat"
+	    set flexfile "/aoBase/rel/data/aoFlex${instr}${port}${wfs}.dat"
+	    logactions logmess "Setting ncpafile: $ncpafile"
+	    logactions logmess "Setting flexfile: $flexfile"
+	    #puts "ncpafile: $ncpafile"
+	    #puts "flexfile: $flexfile"
+	    cs aoFlex set ncpa $ncpafile
+	    cs aoFlex set flex $flexfile
+	    cs aoFlex set dir 3
+	}
+    }
 
 # Reinvoke the sf to auto conf inst origin and wavelength
    global sfPos
