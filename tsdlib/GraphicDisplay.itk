@@ -253,88 +253,58 @@ itcl::body GraphicDisplay::update {} {
 # Configure the science fold position.
    set sfmoving 0
    set lin [sadVal agssad sfLin 1000.0]
-   if { $lin == 1000.0 } {
-      $itk_component(opticsview) configure -scfold UNKNOWN
-   } elseif { $lin < -300.0 } {
-      $itk_component(opticsview) configure -scfold PARK
+   if { ([sa agssad get sfParked] == 1) && ([sa agssad get sfBusy]=="IDLE") } {
+       $itk_component(opticsview) configure -scfold PARK
+   } elseif {$lin == 1000.0} {
+       $itk_component(opticsview) configure -scfold UNKNOWN
    } else {
-      if { $lin < -10.0 } {
-         set sfmoving 1
-      }
-      set tilt [sadVal agssad sfTilt 0.0]
-      set rot [sadVal agssad sfRot 0.0]
-      if { $tilt < 20.0 && $tilt > -20.0 } {
-         if { $rot > 90.0 } {
-            set sfpos DE
-            if { $rot < 130.0 || $rot > 140.0 } {
-               set sfmoving 1
-            }
-         } elseif { $rot > 0.0 } {
-            set sfpos CD
-            if { $rot < 40.0 || $rot > 50.0 } {
-               set sfmoving 1
-            }
-         } elseif { $rot > -90.0 } {
-            set sfpos CB
-            if { $rot < -50.0 || $rot > -40.0 } {
-               set sfmoving 1
-            }
-         } else {
-            set sfpos BE
-            if { $rot < -140.0 || $rot > -130.0 } {
-               set sfmoving 1
-            }
-         }
-      } else {
-         if { $tilt > 20.0 } {
-            set sfpos U
-            if { $tilt > 47.5 || $tilt < 42.5 } {
-               set sfmoving 1
-            }
-         } else {
-            set sfpos A
-            if { $tilt < -47.5 || $tilt > -42.5 } {
-               set sfmoving 1
-            }
-         }
-         if { $rot > 135.0 } {
-            append sfpos E
-            if { $rot < 175.0 || $rot > 185.0 } {
-               set sfmoving 1
-            }
-         } elseif { $rot > 45.0 } {
-            append sfpos D
-            if { $rot < 85.0 || $rot > 95.0 } {
-               set sfmoving 1
-            }
-         } elseif { $rot > -45.0 } {
-            append sfpos C
-            if { $rot < -5.0 || $rot > 5.0 } {
-               set sfmoving 1
-            }
-         } elseif { $rot > -135.0 } {
-            append sfpos B
-            if { $rot < -95.0 || $rot > -85.0 } {
-               set sfmoving 1
-            }
-         } else {
-            append sfpos E
-            if { $rot < -185.0 || $rot > -175.0 } {
-               set sfmoving 1
-            }
-         }
-      }
-      if { $sfmoving } {
-         if { $flash } {
-            $itk_component(opticsview) configure -scfold MOVING
-         } else {
-            $itk_component(opticsview) configure -scfold $sfpos
-         }
-      } else {
-         $itk_component(opticsview) configure -scfold $sfpos
-      }
-   }
+       if {[sadVal agssad sfInPosition 0] && ([sa agssad get sfBusy]=="IDLE") } {
+	   set sfmoving 0
+       } else {
+	   set sfmoving 1
+       }
+       set tilt [sadVal agssad sfTilt 0.0]
+       set rot [sadVal agssad sfRot 0.0]
+       if { $tilt < 20.0 && $tilt > -20.0 } {
+	   if { $rot > 90.0 } {
+	       set sfpos DE
+	   } elseif { $rot > 0.0 } {
+	       set sfpos CD
+	   } elseif { $rot > -90.0 } {
+	       set sfpos CB
+	   } else {
+	       set sfpos BE
+	   }
+       } else {
+	   if { $tilt > 20.0 } {
+	       set sfpos U
+	   } else {
+	   set sfpos A
+	   }
+	   if { $rot > 135.0 } {
+	       append sfpos E
+	   } elseif { $rot > 45.0 } {
+	       append sfpos D
+	   } elseif { $rot > -45.0 } {
+	       append sfpos C
+	   } elseif { $rot > -135.0 } {
+	       append sfpos B
+	   } else {
+	       append sfpos E
+	   }
+       }
 
+       if { $sfmoving } {
+	   if { $flash } {
+	       $itk_component(opticsview) configure -scfold MOVING
+	   } else {
+	       $itk_component(opticsview) configure -scfold $sfpos
+	   }
+       } else {
+	   $itk_component(opticsview) configure -scfold $sfpos
+       }
+   }
+   
 # Determine if there is light from GCAL.
    set calunit [expr { [sa gcalsad get shutter value] == "OPEN" ||
          [sa gcalsad get ArLampState value] == "ON" ||
