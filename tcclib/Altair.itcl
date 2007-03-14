@@ -21,6 +21,8 @@
 #
 #          -windspeed    Wind speed aloft.
 #
+#          -lgs          LGS/NGS mode
+#
 #  Methods:
 #          apply comp    Applies the Gaos configuration to the TCS by 
 #                        setting the values of the command parameters.
@@ -70,23 +72,38 @@ itcl::class Gaos {
       variable seeing {}
       variable windspeed {}
    }
+   private {
+      common waitvar 0
+      method setUseLwfs {}
+      method initWfs {}
+   }
 }
 
 itcl::body Gaos::apply {comp} {
+    global AOreuseGains AOtryingToReuseGain
 #puts "Gaos::apply comp: $comp name: $::Config($comp,value)"
 
 # recolour the A&G screen because the Adaptive Optics Mode could effect available options
-  if [winfo exists .observePanel] {
-      ::.observePanel.frame.control.guideloop recolour
-  }
+    if [winfo exists .observePanel] {
+	::.observePanel.frame.control.guideloop recolour
+    }
 
 # Don't do anything if empty or No AO"
     if { ($::Config($comp,value) == "") || ($::Config($comp,value) == "No AO") } {
+	if {[sa aossad get useAO] != "No"} {
+	    cs configForAO set useAO "No"
+	    logger command configForAO
+	}
 	return
     }
 
+    if {[sa aossad get useAO] != "Yes"} {
+	cs configForAO set useAO "Yes"
+	logger command configForAO
+    }
+
 # In order to configure GAOS we need know the Cass rotator position and
-# guide start X/Y. If we are being called as part of an overall TCS
+# guide star X/Y. If we are being called as part of an overall TCS
 # configuration then we must predict what these are going to be using the
 # Preview functions. If not, we use the current values from the telescope.
    if { [uplevel 1 \$this isa TcsConfig] } {
@@ -122,20 +139,19 @@ itcl::body Gaos::apply {comp} {
       set y [sa tcssad get aoDemandy]
    }
 
-#### mbec - commented until debugged, 09sep06
-# # Turn on aoUseLwfs if neccesary
-#    if {$lgs} {
-#        cs aoUseLwfs set state ON
-#    } else {
-#        cs aoUseLwfs set state OFF
+# set loop to use default gains
+   set AOreuseGains 0
+   set AOtryingToReuseGain 0
+
+#  Start switching between WFS
+   if {[$this setUseLwfs]} {
+       return
+   }
+   
+#    # note, this is now ON/OFF vs 0/1
+#    if {[AO state useLwfs] != $lgs } {
+#       puts "AO state useLwfs and lgs disagree: [AO state useLwfs] $lgs"
 #    }
-#    logger command aoUseLwfs
-#
-#   # note, this is now ON/OFF vs 0/1
-#   if {[AO state useLwfs] != $lgs } {
-#      puts "AO state useLwfs and lgs disagree: [AO state useLwfs] $lgs"
-#   }
-####
 
 # Turn off Cal Source Lamps ... just in case someone left them on
    cs aoCalSource set dmd OFF
@@ -259,4 +275,110 @@ itcl::body Gaos::init {} {
    set windspeed ""
    set ndFilter ""
    set fldLens ""
+}
+
+itcl::body Gaos::setUseLwfs {} {
+
+# Open/Reset the loops
+   if [winfo exists .observePanel] {
+       .observePanel.frame.control.guideloop reset
+   }
+
+# disable follow for all wfs
+   .tcsPanel.frame.control.row1.f2.p1 select Off
+   .tcsPanel.frame.control.row1.f2.p2 select Off
+   .tcsPanel.frame.control.row1.f2.oiwfs select Off
+   .tcsPanel.frame.control.row1.f2.gaos select Off
+
+# Turn on aoUseLwfs if neccesary
+   if {$lgs && ![AO state useLwfs]} {
+       logactions logmess "Gaos::apply Configuring NGS/LGS lgs: $lgs"
+       cs aoUseLwfs set state ON
+   } elseif {!$lgs && [AO state useLwfs]} {
+       logactions logmess "Gaos::apply Configuring NGS/LGS lgs: $lgs"
+       cs aoUseLwfs set state OFF
+   } else {
+       return 0
+   }
+
+   cs aoUseLwfs set dir 3
+#  logger command aoUseLwfs
+
+# wait for useLwfsBusy to be not BUSY ... this needs to run in the background and let other events continue
+   after 500
+#timeout in seconds
+   set timeout 90
+   set waitvar 0
+   for { set i 0 } { $i < $timeout } { incr i } {
+      if { [string equal [sa aossad get useLwfsBusy] "BUSY"] } {
+         after 1000 "set [itcl::scope waitvar] 1"
+         vwait [itcl::scope waitvar]
+      } else {
+	  switch [sa aossad get useLwfsBusy] {
+	      IDLE {
+		  logactions logmess "useLwfs completed successfully after time: $i seconds"
+		  # start initWfs
+		  $this initWfs
+		  break
+	      }
+	      ERR {
+		  logactions logmess "GAOS failed to configure, useLwfs ended with Error: [sa aossad get useLwfsMess] Aborting GAOS config"
+		  tk_messageBox -icon error \
+		      -message "GAOS failed to configure, useLwfs ended with Error: \n[sa aossad get useLwfsMess]\nAborting GAOS config"
+		  return 1
+	      }
+	  }  
+	 break
+      }
+   }
+   if { $i == $timeout } {
+       logactions logmess "GAOS failed to configure, useLwfs timed out after $timeout seconds Aborting GAOS config"
+       tk_messageBox -icon error \
+	   -message "GAOS failed to configure, useLwfs timed out after $timeout seconds\nAborting GAOS config"
+       return 1
+   }
+   return 0
+}
+
+itcl::body Gaos::initWfs {} {
+
+# Initialize the appropriate WFS
+   logactions logmess "Gaos::apply Initializing the NGS/LGS WFS lgs: $lgs"
+
+   if {$lgs} {
+       cs aoInitWfs set wfs 1
+   } else {
+       cs aoInitWfs set wfs 0
+   }
+   cs aoInitWfs set dir 3
+
+# wait for wfsInit to be not BUSY ... this needs to run in the background and let other events continue
+   after 500
+#timeout in seconds
+   set timeout 20
+   set waitvar 0
+   for { set i 0 } { $i < $timeout } { incr i } {
+      if { [string equal [sa aossad get initWfsBusy] "BUSY"] } {
+         after 1000 "set [itcl::scope waitvar] 1"
+         vwait [itcl::scope waitvar]
+      } else {
+	  switch [sa aossad get initWfsBusy] {
+	      IDLE {
+		  logactions logmess "GAOS Init WFS completed successfully after time: $i seconds"
+		  return 0
+	      }
+	      ERR {
+		  logactions logmess "GAOS Init WFS ended with Error: [sa aossad get initWfsMess] GAOS config continuing"
+		  tk_messageBox -icon error \
+		      -message "GAOS Init WFS ended with Error: \n[sa aossad get initWfsMess] \nGAOS config continuing"
+		  return 0
+	      }
+	  }  
+      }
+   }
+   if { $i == $timeout } {
+       tk_messageBox -icon error \
+	   -message "GAOS Init WFS timed out after $timeout seconds"
+       return 0
+   }      
 }
