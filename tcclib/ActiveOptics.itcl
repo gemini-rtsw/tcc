@@ -22,6 +22,7 @@ itcl::class ActiveOptics {
       method timeout {}
       method setCanvas {canv}
       method process {state}
+      method setTTGSFluxMode {}
       variable processState IDLE
       variable canvas ""
       variable timeout 0
@@ -57,6 +58,8 @@ itcl::class ActiveOptics {
       variable oiwfsActive 0
       variable gaosExpose 0.001
       variable ttgsExpose 0.001
+      variable ttgsFlux 0
+      variable ttgsGain 0.2
       variable sfoExpose 1.0
    }
 }
@@ -110,9 +113,6 @@ itcl::body ActiveOptics::constructor {args} {
    }
    if { [catch {cs aoOiwfsSource info}] } {
       epics cs aoOiwfsSource
-   }
-   if { [catch {cs aoUseLwfs info}] } {
-      epics cs aoUseLwfs
    }
    if { [catch {cs ttgsloop info}] } {
       epics cs ttgsloop
@@ -246,10 +246,39 @@ itcl::body ActiveOptics::enable {} {
 
     # turn on the TTGS
     if { $gaosTTGS && ![state gaosTTGS]} {
+	# set the Gain
+	set path "/gemini/altair/altair/bin/solaris/"
+	#puts "sending cmd: $path/aoSunClient altairwfcs1x 35  aoStrapTTGains d${ttgsGain} 0 0 0 0"
+	if [ catch {eval exec $path/aoSunClient altairwfcs1x 35  aoStrapTTGains d${ttgsGain} 0 0 0 0} result ] {
+	    # 	    set stat [string match "*Return Val = -1*" $msg]
+	    # 	    set index1 [string first "msg" $msg  ]
+	    # 	    set index2 [string length $msg  ]
+	    # 	    set statMsg [string range $msg $index1 $index2 ]
+	    puts "aoStrapTTGains failed with mess: $result"
+	}
+	# set the flux mode (0:low, 1:high)
+	# only set the flux mode if the requested mode is different from the current mode
+	if {[sa aossad get strapSFXMode] != $ttgsFlux} {
+	    if {[$this setTTGSFluxMode]} {
+		return
+	    }
+	}
+	after 500
 	# set the exposure time
-	cs gaosTTGS set exp [expr $ttgsExpose * 1000]
-	cs gaosTTGS set expDIR 3
-
+	if {[expr [sa aossad get strapExpTime] / 1000] != $ttgsExpose} {
+	    cs gaosTTGS set exp [expr $ttgsExpose * 1000]
+	    cs gaosTTGS set expDIR 3
+	    # wait for the TTGS (STRAP SEX) to go IDLE
+	    after 500
+	    while {[sa aossad get strapSEXBusy] == "BUSY"} { after 200 }
+	    after 200
+	    if {[sa aossad get strapSEXBusy] == "ERR"} {
+		tk_messageBox -icon error -message \
+		    "Error Setting STRAP Exposure Time: MESS: [sa aossad get strapSEXMess]"
+		process IDLE
+		return
+	    }
+	}
 	cs gaosTTGS set dem 1
 	cs gaosTTGS set dir 3
     } elseif {!$gaosTTGS && [state gaosTTGS]} {
@@ -1018,9 +1047,8 @@ itcl::body ActiveOptics::setTimeout {chanStr value time incr reason} {
    while {[eval $chanStr] == $value} {
        if {$timeout} break
        after $incr
-       puts "incr"
        update 
-   }   
+   } 
    if ($timeout) {
        set timeout 0
        process IDLE
@@ -1069,4 +1097,72 @@ itcl::body ActiveOptics::process {state} {
 	}
     }
     return
+}
+
+itcl::body ActiveOptics::setTTGSFluxMode {} {
+
+    # first turn off the Gate (should be already off ... being careful
+    cs gaosTTGS set dem 0
+    cs gaosTTGS set dir 3
+    after 500
+    while {[sa aossad get strapGTBusy] == "BUSY"} { after 200 }
+    after 500
+
+    #turn off HVolt Ctl
+    cs gaosTTGS set hvCtl 0
+    cs gaosTTGS set hvDIR 3
+    after 500
+    while {[sa aossad get strapHVStat] == "1"} { after 200 }
+    after 500
+
+    #turn off Temp Ctl
+    cs gaosTTGS set tempCtl 0
+    cs gaosTTGS set tempDIR 3
+    after 500
+    while {[sa aossad get strapTPStat] == "1"} { after 200 }
+    after 500
+
+    #turn off RT Ctl
+    cs gaosTTGS set rtCtl 0
+    cs gaosTTGS set rtDIR 3
+    after 500
+    while {[sa aossad get strapRTStat] == "1"} { after 200 }
+    after 500
+
+    #set Flux Mode
+    cs gaosTTGS set flux $ttgsFlux
+    cs gaosTTGS set fluxDIR 3
+    after 500
+    while {[sa aossad get strapSFXBusy] == "BUSY"} { after 200 }
+    after 500
+    if {[sa aossad get strapSFXBusy] == "ERR"} {
+	tk_messageBox -icon error -message \
+	    "Error Setting STRAP Flux Mode: MESS: [sa aossad get strapSFXMess]"
+	process IDLE
+	return 1
+    }
+    after 500
+
+    #turn on Temp Ctl
+    cs gaosTTGS set tempCtl 1
+    cs gaosTTGS set tempDIR 3
+    after 500
+    while {[sa aossad get strapTPStat] == "0"} { after 200 }
+    after 500
+
+    #turn on HVolt Ctl
+    cs gaosTTGS set hvCtl 1
+    cs gaosTTGS set hvDIR 3
+    after 500
+    while {[sa aossad get strapHVStat] == "0"} { after 200 }
+    after 500
+
+    #turn on RT Ctl
+    cs gaosTTGS set rtCtl 1
+    cs gaosTTGS set rtDIR 3
+    after 500
+    while {[sa aossad get strapRTStat] == "0"} { after 200 }
+    after 500
+
+    return 0
 }
