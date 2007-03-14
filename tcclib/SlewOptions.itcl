@@ -35,6 +35,8 @@
 #
 #          -disableao        Disable the ao configuration
 #
+#          -ltcscheck        Check for a Collision when using LGS
+#
 #  Methods:
 #           apply comp Applies the slew options to the TCS by setting 
 #                      the values of the command parameters.
@@ -71,6 +73,7 @@ itcl::class SlewOptions {
       variable instrOffset {}
       variable resetao 0
       variable disableao 0
+      variable ltcscheck 0
    }
 }
 
@@ -118,6 +121,7 @@ itcl::body SlewOptions::init {} {
    set instrOffset {}
    set resetao 0
    set disableao 0
+   set ltcscheck 0
 }
 
 itcl::body SlewOptions::preview {view} {}
@@ -137,4 +141,5 @@ itcl::body SlewOptions::save {node} {
    param $node instrOffset $instrOffset
    param $node resetao $resetao
    param $node disableao $disableao
+   param $node ltcscheck $ltcscheck
 }
