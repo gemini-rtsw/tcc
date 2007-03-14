@@ -146,6 +146,9 @@ proc tccMain args {
    epics cs chopConfig
    epics cs p2Seq
    epics cs pointParam
+   epics cs configForAO
+   epics cs aoUseLwfs
+   epics cs aoInitWfs
    epics cs aoDeployAdc
    epics cs aoFlatten
    epics cs aoPrepareCm
