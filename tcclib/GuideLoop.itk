@@ -184,12 +184,15 @@ itcl::body GuideLoop::constructor args {
    $itk_component(aottgs) add OFF -pady 0
    # TTGS exp
    itk_component add ttgs_ex {
-       iwidgets::combobox $w.ttgs_ex -arrowrelief flat -width 5 -selectioncommand [itcl::code $this configSfoEx] \
-	   -validate real -labeltext "exp(s)"
+       iwidgets::combobox $w.ttgs_ex -arrowrelief flat -width 11 -selectioncommand [itcl::code $this configSfoEx] \
+	   -listheight 320 -editable 1 -labeltext "Mag(exp)"
    }
    $w create window 66 191 -window $w.ttgs_ex -tags gaos
-   $w.ttgs_ex insert list end 0.05 0.02 0.01 0.005 0.002 0.001
-   $w.ttgs_ex insert entry end [AO cget -ttgsExpose]
+   $w.ttgs_ex insert list end 19.0(0.05) 18.5(0.05) 18.0(0.05) 17.5(0.02) 17.0(0.01) 16.5(0.005) 16.0(0.005) \
+       15.5(0.002) 15.0(0.001) 14.5(0.001) 14.0(0.001) 13.5(0.001) 13.0(0.001) 12.5(0.001) 12.0(0.001) 11.5(0.001) \
+       11.0(0.001) 10.5(0.001) 10.0(0.001)
+#   $w.ttgs_ex insert list end 0.05 0.02 0.01 0.005 0.002 0.001
+   $w.ttgs_ex insert entry end 10.0(0.001)
    [$w.ttgs_ex component list] configure -hscrollmode none \
             -vscrollmode none
 
@@ -467,9 +470,13 @@ itcl::body GuideLoop::recolour args {
        $itk_component(sfo_ex) configure -state normal
        $itk_component(ttgs_ex) configure -state normal
    } else {
+       $itk_component(ttao) select OFF
        $itk_component(ttao) configure -state disabled
+       $itk_component(sfao) select OFF
        $itk_component(sfao) configure -state disabled
+       $itk_component(aosfo) select OFF
        $itk_component(aosfo) configure -state disabled
+       $itk_component(aottgs) select OFF
        $itk_component(aottgs) configure -state disabled
        $itk_component(sfo_ex) configure -state disabled
        $itk_component(ttgs_ex) configure -state disabled
@@ -910,8 +917,62 @@ itcl::body GuideLoop::enable {} {
    AO configure -pwfs2Expose [$itk_component(pwfs2_ex) get]
    AO configure -oiwfsExpose [$itk_component(oiwfs_ex) get]
    AO configure -gaosExpose [$itk_component(gaos_ex) get]
-   AO configure -ttgsExpose [$itk_component(ttgs_ex) get]
-   AO configure -sfoExpose [$itk_component(sfo_ex) get]
+
+   if { [string match "*LGS*" $::Config(tcs.gaos,value)] } {
+       set ttgsexp [$itk_component(ttgs_ex) get]
+       set ind [string first "(" $ttgsexp]
+       set ttgsmag [string range $ttgsexp 0 [expr $ind-1]]
+       set ttgsexp [string trim [string range $ttgsexp $ind end] "()"]
+
+       AO configure -ttgsExpose $ttgsexp
+       AO configure -sfoExpose [$itk_component(sfo_ex) get]
+
+       switch $ttgsmag {
+	   10.0 -
+	   10.5 -
+	   11.0 -
+	   11.5 -
+	   12.0 -
+	   12.5 {
+	       AO configure -ttgsGain 0.2
+	       AO configure -ttgsFlux 1
+	   }
+	   13.0 -
+	   13.5 -
+	   14.0 -
+	   14.5 -
+	   15.0 -
+	   15.5 -
+	   16.0 {
+	       AO configure -ttgsGain 0.2
+	       AO configure -ttgsFlux 0
+	   }
+	   16.5 {
+	       AO configure -ttgsGain 0.4
+	       AO configure -ttgsFlux 0
+	   }
+	   17.0 {
+	       AO configure -ttgsGain 0.7
+	       AO configure -ttgsFlux 0
+	   }
+	   17.5 {
+	       AO configure -ttgsGain 1.1
+	       AO configure -ttgsFlux 0
+	   }
+	   18.0 {
+	       AO configure -ttgsGain 1.6
+	       AO configure -ttgsFlux 0
+	   }
+	   18.5 {
+	       AO configure -ttgsGain 2.0
+	       AO configure -ttgsFlux 0
+	   }
+	   19.0 {
+	       AO configure -ttgsGain 2.6
+	       AO configure -ttgsFlux 0
+	   }
+       }
+   }
    if { $::Config(tcs.gaos,value) != "" } {
        switch [$itk_component(gaos_ex) get] {
 	   0.001 { $::Config(tcs.gaos,namespace)::$::Config(tcs.gaos,value) configure -gsmag 11 }
@@ -926,11 +987,16 @@ itcl::body GuideLoop::enable {} {
 }
 
 itcl::body GuideLoop::configSfoEx {} {
-    puts "configSfoEx"
-    set ttgsLimit [expr 1.65*[$itk_component(ttgs_ex) get]*4000]
-    .observePanel.frame.control.alarm configure -ttgsLimit $ttgsLimit
+    #puts "configSfoEx"
+    set exp [$itk_component(ttgs_ex) get]
+    set exp [string trim [string range $exp [string first "(" $exp] end] "()"]
+    #puts "exp: $exp"
+    if {[string length $exp] > 0} {
+	set ttgsLimit [expr 1.65*$exp*1000]
+	.observePanel.frame.control.alarm configure -ttgsLimit $ttgsLimit
+    }
     $itk_component(sfo_ex) clear entry
-    switch [$itk_component(ttgs_ex) get] {
+    switch $exp {
 	0.001 {$itk_component(sfo_ex) insert entry end 1.0}
 	0.002 {$itk_component(sfo_ex) insert entry end 2.0}
 	0.005 {$itk_component(sfo_ex) insert entry end 5.0}
