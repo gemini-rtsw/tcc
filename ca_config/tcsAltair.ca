@@ -8,6 +8,11 @@
 # Copyright CCLRC
 #-
 
+command configForAO tcsApply Tell the TCS whether we're using AO
+{
+   useAO     tcs:configureForAO.A  Yes or No
+}
+
 command aoDeployAdc tcsApply Deploy ALTAIR ADC
 {
    position  tcs:aoDeployAdc.A position
@@ -86,7 +91,16 @@ command aoOiwfsSource tcsApply ALTAIR OIWFS source
 
 command aoUseLwfs tcsApply GAOS LGS ON?
 {
-   state     tcs:aoUseLwfs.A       State (ON/OFF)
+# AWE for now, control directly in Altair
+#   state     tcs:aoUseLwfs.A       State (ON/OFF)
+   state     ao:useLwfs.A       State (ON/OFF)
+   dir       ao:useLwfs.DIR     Directive
+}
+
+command aoInitWfs tcsApply GAOS Init WFS
+{
+   wfs       ao:wfcs:wfsInit.A    WFS (0:NGS, 1:LGS)
+   dir       ao:wfcs:wfsInit.DIR  Directive
 }
 
 command aoGimOffsets tcsApply ALTAIR Gimbal Offsets
@@ -158,6 +172,14 @@ command gaosTTGS tcsApply GAOS TTGS integrating
 {
    exp       ao:wfcs:strapSEX.A     Exposure Time (msec)
    expDIR    ao:wfcs:strapSEX.DIR   Exposure Time Directive (START=3)
+   flux      ao:wfcs:strapSFX.A     Flux Mode (low=0/hi=1)
+   fluxDIR   ao:wfcs:strapSFX.DIR   Flux Mode Directive (START=3)
+   rtCtl     ao:wfcs:strapRTCtl.A   RT Ctl (0/1)
+   rtDIR     ao:wfcs:strapRTCtl.DIR RT Directive (START=3)
+   tempCtl   ao:wfcs:strapTPCtl.A   Temp Ctl (0/1)
+   tempDIR   ao:wfcs:strapTPCtl.DIR Temp Directive (START=3)
+   hvCtl     ao:wfcs:strapHVCtl.A   HVolt Ctl (0/1)
+   hvDIR     ao:wfcs:strapHVCtl.DIR HVolt Directive (START=3)
    dem       ao:wfcs:strapGtCtl.A   Demanded state (0/1)
    dir 	     ao:wfcs:strapGtCtl.DIR Directive
 }
