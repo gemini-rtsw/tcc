@@ -130,6 +130,8 @@ itcl::body Gaos::apply {comp} {
 
 # Delete the preview.
       itcl::delete object $view
+
+      logactions logmess "Gaos::apply using Preview to determine zd: $zd rotpos: $rotpos"
    } else {
       set rotpos [sa tcssad get demandRma]
       scan [sa tcssad get demandEl] "%d:%d:%f" d m s
@@ -137,6 +139,7 @@ itcl::body Gaos::apply {comp} {
       set zd [expr { 90.0 - $el }]
       set x [sa tcssad get aoDemandx]
       set y [sa tcssad get aoDemandy]
+      logactions logmess "Gaos::apply using current values to determine zd: $zd rotpos: $rotpos"
    }
 
 # set loop to use default gains
