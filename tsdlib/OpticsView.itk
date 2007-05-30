@@ -360,6 +360,9 @@ itcl::body OpticsView::constructor args {
    $c create line  41 -51 59 -69 -width 2 -tags HrwfsFoldOut
    $c create polygon 39 -53 57 -71 54 -75 36 -57 -outline "" -fill "" -tags HrwfsFoldOutBck
 
+# HRWFS fold unknown
+   $c create bitmap 0 -60 -anchor c -foreground black -tags HrwfsFoldUnknown 
+
 # ISS port numbers
    $c create text 0 -100 -anchor c -tags portAnumber
    $c create text 50 55 -anchor c -tags portBnumber
@@ -554,19 +557,29 @@ itcl::body OpticsView::update {} {
    }
 
    if { $itk_option(-hrwfs) == "IN" } {
+      $c itemconfigure HrwfsFoldUnknown -bitmap ""
       $c itemconfigure HrwfsFoldIn -fill white
       $c itemconfigure HrwfsFoldInBck -outline black
       $c itemconfigure HrwfsFoldInBck -fill $HrwfsBckCol
       $c itemconfigure HrwfsFoldOut -fill ""
       $c itemconfigure HrwfsFoldOutBck -outline ""
       $c itemconfigure HrwfsFoldOutBck -fill ""
-   } else {
+   } elseif { $itk_option(-hrwfs) == "OUT" } {
+      $c itemconfigure HrwfsFoldUnknown -bitmap ""
       $c itemconfigure HrwfsFoldIn -fill ""
       $c itemconfigure HrwfsFoldInBck -outline ""
       $c itemconfigure HrwfsFoldInBck -fill ""
       $c itemconfigure HrwfsFoldOut -fill white
       $c itemconfigure HrwfsFoldOutBck -outline black
       $c itemconfigure HrwfsFoldOutBck -fill $HrwfsBckCol
+   } else {
+      $c itemconfigure HrwfsFoldUnknown -bitmap question
+      $c itemconfigure HrwfsFoldIn -fill ""
+      $c itemconfigure HrwfsFoldInBck -outline ""
+      $c itemconfigure HrwfsFoldInBck -fill ""
+      $c itemconfigure HrwfsFoldOut -fill ""
+      $c itemconfigure HrwfsFoldOutBck -outline ""
+      $c itemconfigure HrwfsFoldOutBck -fill ""
    }
 
 # Configure the GPOL slides.
