@@ -258,10 +258,12 @@ itcl::body ActiveOptics::enable {} {
 	}
 	# set the flux mode (0:low, 1:high)
 	# only set the flux mode if the requested mode is different from the current mode
-	if {[sa aossad get strapSFXMode] != $ttgsFlux} {
-	    if {[$this setTTGSFluxMode]} {
-		return
-	    }
+	# also call the Flux Mode proc to attempt to turn TTGS on if any part of the 3 controlled components is off (red)
+	if {([sa aossad get strapRTStat] == 0) || ([sa aossad get strapTPStat] == 0) || ([sa aossad get strapHVStat] == 0) || 
+	    ([sa aossad get strapSFXMode] != $ttgsFlux) } {
+	       if {[$this setTTGSFluxMode]} {
+		   return
+	       }
 	}
 	after 500
 	# set the exposure time
@@ -844,6 +846,8 @@ global env
 	 } else {
 	     if { [sa guideConfig get useLwfs] == "1" } {
 		 return 1
+	     } elseif { [sa guideConfig get useLwfs] == "-1" } {
+		 return -1
 	     } else {
 		 return 0
 	     }
