@@ -188,7 +188,7 @@ proc tccMain args {
    Nod Nodder
 
 # Create the ocs session object for the one and only session.
-   OcsSession ocssession sessionQueue
+   OcsSessionXmlRpc ocssession sessionQueue
 
 # Create the logger objects.
    Logger logger tcs apply applyC errMessage
