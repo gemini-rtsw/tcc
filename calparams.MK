@@ -1,7 +1,7 @@
 # This file is for Mauna Kea
 
-# The name of the OCS session soap server.
-set ocs_proxy http://gnodb.hi.gemini.edu:9000/wdba/services
+# The name of the OCS session xml/rpc server.
+set ocs_proxy http://gnodb.hi.gemini.edu:11000/wdba/exec
 
 # Where the tcs is stored.
 set tcs_root_dir /gemini/epics3.13.4/tcs/tcs
