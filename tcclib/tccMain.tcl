@@ -65,6 +65,9 @@ proc tccMain args {
 # AWE monitor Guide Counts
    epics sa guidects
 
+# AWE monitor NICI ND Filter
+   epics sa nici
+
 # Create status senders for setting SIR records
    global env
    epics ss $env(TCC_TCSNAME):sad:programID
@@ -158,6 +161,8 @@ proc tccMain args {
    epics cs filter1
    epics cs filter2
    epics cs oiwfsSelect
+   epics cs niciNdFilt
+   epics cs niciMag
 
 # Set the timeout period for posting commands to the TCS.
    cs tcsApply setTimeout 3
