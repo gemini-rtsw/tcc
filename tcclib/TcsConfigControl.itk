@@ -231,6 +231,38 @@ itcl::body TcsConfigControl::apply {} {
 	return
     }
 
+# If we're using NICI, send the Star Magnitude to NICI
+    set inst $::Config(tcs.instrument,value)
+    set oiName [sa agssad get oiwfsName]
+    if { [string match "*NICI*" $inst] } {
+	set target $::Config(tcs.field.sciencetarget,value)
+	puts "Science Target: $target"
+	set magnitude [$::Config(tcs.field.sciencetarget,namespace)::$target cget -brightness]
+	set magparts [split $magnitude " "]
+	set magnitude [lindex $magparts 0]
+	if {[string is double -strict $magnitude]} {
+	    puts "writing magnitude $magnitude to NICI"
+	    cs niciMag set mag $magnitude
+	    cs niciMag set dir 3
+	} else {
+	    tk_messageBox -icon error \
+		-message "Attempting to send invalid Magnitude to NICI"
+	    return
+	}
+    }
+
+# If we're using NICI, make sure that the filter is set to block
+    if {([string match "*NICI*" $inst] ||[string match "NICI" $oiName]) } {
+	set niciFilter [sa nici get ndfilt]
+	puts "NICI ndfilter is set to $niciFilter"
+	if {![string match "Block" $niciFilter]} {
+	    tk_messageBox -icon error \
+		-message "Warning The NICI ndFilter is not set to Block"
+	    return
+	}
+    }
+
+
 # If this is an AO target and we're using the Laser, check for a collision
     set slewoptions $::Config(tcs.slewoptions,value)
     #puts "ltcscheck is [::SlewOptionsNames::$slewoptions cget -ltcscheck]" 
