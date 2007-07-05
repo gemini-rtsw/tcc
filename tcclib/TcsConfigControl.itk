@@ -251,8 +251,9 @@ itcl::body TcsConfigControl::apply {} {
 	}
     }
 
-# If we're using NICI, make sure that the filter is set to block
-    if {([string match "*NICI*" $inst] ||[string match "NICI" $oiName]) } {
+# If we're using NICI, make sure that the filter is set to block ([string match "*NICI*" $inst] ||[string match "NICI" $oiName])
+# rather, if NICI is on the telescope
+    if {[sa agssad get portNici] > 0 } {
 	set niciFilter [sa nici get ndfilt]
 	puts "NICI ndfilter is set to $niciFilter"
 	if {![string match "Block" $niciFilter]} {
@@ -365,6 +366,11 @@ itcl::body TcsConfigControl::apply {} {
 	   } elseif {[string match "*NIRI*" $inst]} {
 	       #puts "found NIRI"
 	       cs oiwfsSelect set oiwfs NIRI
+               cs oiwfsSelect set output WFS
+	       logger command oiwfsSelect
+	   } elseif {[string match "*NICI*" $inst]} {
+	       #puts "found NICI"
+	       cs oiwfsSelect set oiwfs NICI
                cs oiwfsSelect set output WFS
 	       logger command oiwfsSelect
 	   } elseif {[string match "*BHROS*" $inst]} {
