@@ -256,7 +256,7 @@ itcl::body TcsConfigControl::apply {} {
     if {[sa agssad get portNici] > 0 } {
 	set niciFilter [sa nici get ndfilt]
 	puts "NICI ndfilter is set to $niciFilter"
-	if {![string match "Block" $niciFilter]} {
+	if {![string match "*Block*" $niciFilter]} {
 	    tk_messageBox -icon error \
 		-message "Warning The NICI ndFilter is not set to Block"
 	    return
@@ -407,6 +407,8 @@ itcl::body TcsConfigControl::apply {} {
     if {[string match "*OI*" $guide]} {
 	if {[string match "*GMOS*" $inst]} {
 	    set ::Config(tcs.field.guide.oiwfswavelength,value) "GMOS OIWFS"
+	} elseif {[string match "*NICI*" $inst]} {
+	    set ::Config(tcs.field.guide.oiwfswavelength,value) "NICI OIWFS"
 	} else {
 	    set ::Config(tcs.field.guide.oiwfswavelength,value) "K"
 	}
