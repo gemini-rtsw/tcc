@@ -41,8 +41,11 @@ itcl::body SciTargetControl::constructor args {
          -command "$itk_component(trackrate) configure -state disabled"]
 
 # Option menu for the orbit type.
+#removed orbtype for now ... let TCS calculate Planet targets
+#      iwidgets::optionmenu $w.format -command [itcl::code $this orbtype]
+
    itk_component add format {
-      iwidgets::optionmenu $w.format -command [itcl::code $this orbtype]
+      iwidgets::optionmenu $w.format
    }
    $itk_component(format) insert end "Major planet (AsA format)" \
          "Major planet (JPL Horizons format)" \
@@ -137,6 +140,11 @@ itcl::body SciTargetControl::load {name} {
    $this TargetControl::load $name
 
    switch [$name cget -type] {
+      namedTarget {
+	  $itk_component(notebook) select "Solar System"
+	  $itk_component(format) select [$name cget -object]
+	  # orbtype
+      }
       conicTarget {
 
 # Select the solar system page.
@@ -144,6 +152,7 @@ itcl::body SciTargetControl::load {name} {
 
 # Get the element format.
          set format [$name cget -format]
+
          switch $format {
             "AsA major planet" {
                $itk_component(format) select "Major planet (AsA format)"
@@ -222,7 +231,7 @@ itcl::body SciTargetControl::load {name} {
          }
 
 # Update the entry field labels.
-         orbtype
+#         orbtype
       }
    }
 }
@@ -238,6 +247,7 @@ itcl::body SciTargetControl::save {name} {
    switch $page {
       "Solar System" {
          switch [$itk_component(format) get] {
+	    Moon -
             Mercury -
             Venus -
             Mars -
@@ -245,7 +255,12 @@ itcl::body SciTargetControl::save {name} {
             Saturn -
             Uranus -
             Neptune -
-            Pluto -
+	    Pluto {
+               $name init
+               $name configure \
+                     -type namedTarget \
+		     -object [$itk_component(format) get]
+	    }
             "Major planet (AsA format)" {
                $name init
                $name configure \
@@ -352,7 +367,7 @@ itcl::body SciTargetControl::save {name} {
 }
 
 itcl::body SciTargetControl::orbtype {} {
-
+# Don't do this ... let the TCS calculate the Planet positions
 # Update the entry field labels and states.
    set format [$itk_component(format) get]
    switch $format {
