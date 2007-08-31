@@ -144,6 +144,9 @@ proc tccMain args {
    epics cs poHandset
    epics cs poHandConfig
    epics cs orbit
+   epics cs pwfs1orbit
+   epics cs pwfs2orbit
+   epics cs oiwfsorbit
    epics cs planet
    epics cs chopRelative
    epics cs chopConfig
