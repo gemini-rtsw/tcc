@@ -27,6 +27,7 @@ itcl::class GaosControl {
       variable ndFilter OUT
       variable fldLens OUT
       variable lgs OFF
+      variable force OFF
    }
 }
 
@@ -109,6 +110,13 @@ itcl::body GaosControl::constructor args {
    }
    pack $itk_component(adjustAdc) -pady 4
 
+# force Reapply.
+   itk_component add forceMode {
+      checkbutton $w.forceMode -text "Force NGS/LGS Mode Apply" \
+            -variable [itcl::scope force] -onvalue ON -offvalue OFF
+   }
+   pack $itk_component(forceMode) -pady 4
+
 # Set the object description.
    set description "GAOS configuration"
 
@@ -124,6 +132,7 @@ itcl::body GaosControl::reset {} {
    set adjustAdc ON
    set ndfilter OUT
    set fldlens OUT
+   set force OFF
 }
 
 itcl::body GaosControl::load {name} {
@@ -138,6 +147,7 @@ itcl::body GaosControl::load {name} {
    set ndFilter [string toupper [$name cget -ndFilter]]
    set fldLens [string toupper [$name cget -fldLens]]
    set lgs [string toupper [$name cget -lgs]]
+   set force [string toupper [$name cget -force]]
 }
 
 itcl::body GaosControl::save {name} {
@@ -149,4 +159,5 @@ itcl::body GaosControl::save {name} {
    $name configure -ndFilter $ndFilter
    $name configure -fldLens $fldLens
    $name configure -lgs $lgs
+   $name configure -force $force
 }

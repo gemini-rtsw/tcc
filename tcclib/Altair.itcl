@@ -71,6 +71,7 @@ itcl::class Gaos {
       variable lgs {}
       variable seeing {}
       variable windspeed {}
+      variable force {}
    }
    private {
       common waitvar 0
@@ -145,16 +146,6 @@ itcl::body Gaos::apply {comp} {
 # set loop to use default gains
    set AOreuseGains 0
    set AOtryingToReuseGain 0
-
-#  Start switching between WFS
-   if {[$this setUseLwfs]} {
-       return
-   }
-   
-#    # note, this is now ON/OFF vs 0/1
-#    if {[AO state useLwfs] != $lgs } {
-#       puts "AO state useLwfs and lgs disagree: [AO state useLwfs] $lgs"
-#    }
 
 # Turn off Cal Source Lamps ... just in case someone left them on
    cs aoCalSource set dmd OFF
@@ -255,6 +246,11 @@ itcl::body Gaos::apply {comp} {
    cs filter1 set grab 0.1
    cs filter1 set maxv 2.0
    logger command filter1
+
+#  Start switching between WFS
+   if {[$this setUseLwfs]} {
+       return
+   }
 }
 
 itcl::body Gaos::save {node} {
@@ -294,10 +290,10 @@ itcl::body Gaos::setUseLwfs {} {
    .tcsPanel.frame.control.row1.f2.gaos select Off
 
 # Turn on aoUseLwfs if neccesary
-   if {$lgs && ![AO state useLwfs]} {
+   if {$lgs && [expr {![AO state useLwfs] || [string equal $force "ON"]}]} {
        logactions logmess "Gaos::apply Configuring NGS/LGS lgs: $lgs"
        cs aoUseLwfs set state ON
-   } elseif {!$lgs && [AO state useLwfs]} {
+   } elseif {!$lgs && [expr {[AO state useLwfs] || [string equal $force "ON"]}]} {
        logactions logmess "Gaos::apply Configuring NGS/LGS lgs: $lgs"
        cs aoUseLwfs set state OFF
    } else {
