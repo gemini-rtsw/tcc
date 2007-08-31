@@ -102,25 +102,32 @@ itcl::body TcsConfig::apply {comp} {
 # Gaos comes after SlewOptions so that Slew options doesn't overwrite
 # the filter 1 setting.
    if { $field ne "" } {
+       logactions logmess "Applying Field Config: $field"
       ::FieldNames::$field apply $comp.field
    }
    if { $pointOrig ne "" } {
+       logactions logmess "Applying PointOrig Config: $pointOrig"
       ::PointOrigNames::$pointOrig apply $comp.pointorig
    }
    if { $chop ne "" } {
+       logactions logmess "Applying Chop Config: $chop"
       ::ChopNames::$chop apply $comp.chop
    }
    if { $slewOptions ne "" } {
+       logactions logmess "Applying slewOptions Config: $slewOptions"
       ::SlewOptionsNames::$slewOptions apply $comp.slewoptions
    }
-   if { $gaos ne "" } {
-      ::GaosNames::$gaos apply $comp.gaos
-   }
    if { $trackFrame ne "" } {
+       logactions logmess "Applying trackFrame Config: $trackFrame"
       ::TrackFrameNames::$trackFrame apply $comp.trackframe
    }
    if { $instrument ne "" } {
+       logactions logmess "Applying Instrument Config: $instrument"
       ::InstrumentNames::$instrument apply $comp.instrument
+   }
+   if { $gaos ne "" } {
+       logactions logmess "Applying Gaos Config: $gaos"
+      ::GaosNames::$gaos apply $comp.gaos
    }
 }
 
