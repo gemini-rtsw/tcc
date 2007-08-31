@@ -253,7 +253,8 @@ itcl::body TcsConfigControl::apply {} {
 
 # If we're using NICI, make sure that the filter is set to block ([string match "*NICI*" $inst] ||[string match "NICI" $oiName])
 # rather, if NICI is on the telescope
-    if {[sa agssad get portNici] > 0 } {
+
+    if {([sa agssad get portNici] != "No Value") && ([sa agssad get portNici] > 0) } {
 	set niciFilter [sa nici get ndfilt]
 	puts "NICI ndfilter is set to $niciFilter"
 	if {![string match "*Block*" $niciFilter]} {
