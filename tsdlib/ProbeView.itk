@@ -159,32 +159,33 @@ itcl::body ProbeView::update {} {
       if { [isFollowing agssad $itk_option(-probe)FollowS] } {
          if { [isInPosition agssad $itk_option(-probe)InPosition] } {
             $itk_component(canvas) itemconfigure $arm -fill green
+	    # only check the nodState if following (this is to stop using the stipple and just use fill color
+	    switch [sa tcssad get nodState] {
+		A {
+		    if { [string equal [sa ${probename}Guide get nodachopa] On] ||
+			 [string equal [sa ${probename}Guide get nodachopb] On] } {
+			$itk_component(canvas) itemconfigure $arm -fill green
+		    } else {
+			$itk_component(canvas) itemconfigure $arm -fill orange
+		    }
+		}
+		B {
+		    if { [string equal [sa ${probename}Guide get nodbchopa] On] ||
+			 [string equal [sa ${probename}Guide get nodbchopb] On] } {
+			$itk_component(canvas) itemconfigure $arm -fill green
+		    } else {
+			$itk_component(canvas) itemconfigure $arm -fill orange
+		    }
+		}
+	    }
          } else {
             $itk_component(canvas) itemconfigure $arm -fill yellow
          }
-         switch [sa tcssad get nodState] {
-            A {
-               if { [string equal [sa ${probename}Guide get nodachopa] On] ||
-                     [string equal [sa ${probename}Guide get nodachopb] On] } {
-                  $itk_component(canvas) itemconfigure $arm -stipple ""
-               } else {
-                  $itk_component(canvas) itemconfigure $arm -stipple gray50
-               }
-            }
-            B {
-               if { [string equal [sa ${probename}Guide get nodbchopa] On] ||
-                     [string equal [sa ${probename}Guide get nodbchopb] On] } {
-                  $itk_component(canvas) itemconfigure $arm -stipple ""
-               } else {
-                  $itk_component(canvas) itemconfigure $arm -stipple gray50
-               }
-            }
-         }
       } else {
-         $itk_component(canvas) itemconfigure $arm -fill red -stipple ""
+         $itk_component(canvas) itemconfigure $arm -fill red 
       }
    } else {
-      $itk_component(canvas) itemconfigure $arm -fill red -stipple ""
+      $itk_component(canvas) itemconfigure $arm -fill red
 
    }
    if { $ag != "" && $xg != "" && $yg != "" } {
