@@ -22,8 +22,8 @@ itcl::class ShutterAlarm {
       method resetPeak {}
       variable alarm 0
       variable flash 0
-      variable topLimit 30.0
-      variable botLimit 30.0
+      variable topLimit 0.0
+      variable botLimit 0.0
       variable alarmBut ""
       variable alarmMess ""
    }
@@ -42,6 +42,9 @@ itcl::body ShutterAlarm::constructor {args} {
    global shutterCurrent shutterPeakCurrent
 
    #puts "ShutterAlarm this: $this"
+
+    set topLimit [calparam cget -top_shutter_current_limit]
+    set botLimit [calparam cget -bottom_shutter_current_limit]
 
    itk_component add button { 
         button $itk_interior.alarmButton -text "Shutter Current Monitor" -command "$this alarmPopup"

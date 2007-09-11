@@ -46,3 +46,7 @@ set baffle_nearir 3.0
 # AO: the SFO defocus offset 
 set niri_sfo_defocus 10.0
 set nifs_sfo_defocus 35.0
+
+# The Current Limits for the Top and Bottom Shutter Alarms
+set top_shutter_current_limit 30.0
+set bottom_shutter_current_limit 32.0

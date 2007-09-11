@@ -42,3 +42,7 @@ set acqcam_y 513
 # The wavelength cutoffs for automatic baffle configuration
 set baffle_visible 1.0
 set baffle_nearir 1.0
+
+# The Current Limits for the Top and Bottom Shutter Alarms
+set top_shutter_current_limit 30.0
+set bottom_shutter_current_limit 30.0
