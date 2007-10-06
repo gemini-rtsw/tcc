@@ -1109,35 +1109,35 @@ itcl::body ActiveOptics::setTTGSFluxMode {} {
     cs gaosTTGS set dem 0
     cs gaosTTGS set dir 3
     after 500
-    if {[setTimeout "sa aossad get strapGTBusy" 1 5000 200 "STRAP GateCtl to turn off"]} return 1
+    if {[setTimeout "sa aossad get strapGTBusy" 1 5000 200 "STRAP GateCtl to turn off"]} {return 1}
     after 500
 
     #turn off HVolt Ctl
     cs gaosTTGS set hvCtl 0
     cs gaosTTGS set hvDIR 3
     after 500
-    if {[setTimeout "sa aossad get strapHVStat" 1 5000 200 "STRAP HVStat to turn off"]} return 1
+    if {[setTimeout "sa aossad get strapHVStat" 1 5000 200 "STRAP HVStat to turn off"]} {return 1}
     after 500
 
     #turn off Temp Ctl
     cs gaosTTGS set tempCtl 0
     cs gaosTTGS set tempDIR 3
     after 500
-    if {[setTimeout "sa aossad get strapTPStat" 1 5000 200 "STRAP TPStat to turn off"]} return 1
+    if {[setTimeout "sa aossad get strapTPStat" 1 5000 200 "STRAP TPStat to turn off"]} {return 1}
     after 500
 
     #turn off RT Ctl
     cs gaosTTGS set rtCtl 0
     cs gaosTTGS set rtDIR 3
     after 500
-    if {[setTimeout "sa aossad get strapRTStat" 1 5000 200 "STRAP RTStat to turn off"]} return 1
+    if {[setTimeout "sa aossad get strapRTStat" 1 5000 200 "STRAP RTStat to turn off"]} {return 1}
     after 500
 
     #set Flux Mode
     cs gaosTTGS set flux $ttgsFlux
     cs gaosTTGS set fluxDIR 3
     after 500
-    if {[setTimeout "sa aossad get strapSFXBusy" BUSY 5000 200 "STRAP SFXBusy to be IDLE"]} return 1
+    if {[setTimeout "sa aossad get strapSFXBusy" BUSY 5000 200 "STRAP SFXBusy to be IDLE"]} {return 1}
     after 500
     if {[sa aossad get strapSFXBusy] == "ERR"} {
 	tk_messageBox -icon error -message \
@@ -1151,21 +1151,21 @@ itcl::body ActiveOptics::setTTGSFluxMode {} {
     cs gaosTTGS set tempCtl 1
     cs gaosTTGS set tempDIR 3
     after 500
-    if {[setTimeout "sa aossad get strapTPStat" 0 5000 200 "STRAP TPStat to turn on"]} return 1
+    if {[setTimeout "sa aossad get strapTPStat" 0 5000 200 "STRAP TPStat to turn on"]} {return 1}
     after 500
 
     #turn on HVolt Ctl
     cs gaosTTGS set hvCtl 1
     cs gaosTTGS set hvDIR 3
     after 500
-    if {[setTimeout "sa aossad get strapHVStat" 0 30000 200 "STRAP HVStat to turn on"]} return 1
+    if {[setTimeout "sa aossad get strapHVStat" 0 30000 200 "STRAP HVStat to turn on"]} {return 1}
     after 500
 
     #turn on RT Ctl
     cs gaosTTGS set rtCtl 1
     cs gaosTTGS set rtDIR 3
     after 500
-    if {[setTimeout "sa aossad get strapRTStat" 0 5000 200 "STRAP RTStat to turn on"]} return 1
+    if {[setTimeout "sa aossad get strapRTStat" 0 5000 200 "STRAP RTStat to turn on"]} {return 1}
     after 500
 
     return 0
