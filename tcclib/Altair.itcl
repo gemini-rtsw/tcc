@@ -89,19 +89,18 @@ itcl::body Gaos::apply {comp} {
 	::.observePanel.frame.control.guideloop recolour
     }
 
+
+    logactions logmess "Gaos::Apply, TCS useAO is: [sa aossad get useAO], config is $::Config($comp,value)"
+
 # Don't do anything if empty or No AO"
     if { ($::Config($comp,value) == "") || ($::Config($comp,value) == "No AO") } {
-	if {[sa aossad get useAO] != "No"} {
-	    cs configForAO set useAO "No"
-	    logger command configForAO
-	}
 	return
     }
 
-    if {[sa aossad get useAO] != "Yes"} {
-	cs configForAO set useAO "Yes"
-	logger command configForAO
-    }
+#  Start switching between WFS
+   if {[$this setUseLwfs]} {
+       return
+   }
 
 # In order to configure GAOS we need know the Cass rotator position and
 # guide star X/Y. If we are being called as part of an overall TCS
@@ -110,8 +109,22 @@ itcl::body Gaos::apply {comp} {
    if { [uplevel 1 \$this isa TcsConfig] } {
 
 # Call the configuration's preview method.
+# AWE Problem ... preview doesn't work for Named Targets (ie major planets)
+# need to convert to a conicTarget in order to preview
+
       set view [Preview ::#auto]
+
       uplevel 1 preview $view
+
+#AWE temp debugging
+#       puts "view is $view"
+#       foreach {el} [$view configure] {
+# 	  puts "view $el"
+#       }
+
+#       puts "p2Target is [$view cget -p2Target]"
+#       puts "type is [lindex [$view cget -p2Target] 0]"
+
       $view slew 0.0
 
 # Fetch the predictions.
@@ -246,11 +259,6 @@ itcl::body Gaos::apply {comp} {
    cs filter1 set grab 0.1
    cs filter1 set maxv 2.0
    logger command filter1
-
-#  Start switching between WFS
-   if {[$this setUseLwfs]} {
-       return
-   }
 }
 
 itcl::body Gaos::save {node} {
