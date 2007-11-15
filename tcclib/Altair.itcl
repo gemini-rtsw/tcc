@@ -171,11 +171,19 @@ itcl::body Gaos::apply {comp} {
    if {[winfo exists .observePanel.frame.control.botframe.wfsconfig.tabs.canvas.notebook.cs.page5.cs.aowfs.nd]} {
        .observePanel.frame.control.botframe.wfsconfig.tabs.canvas.notebook.cs.page5.cs.aowfs.nd select $ndFilter
    } else {
-       #puts "Gaos::apply setting ndfilter to $ndFilter"
-       logactions logmess "Gaos::apply moving ND Filter to $ndFilter"
-       cs aoNDFilter set pos $ndFilter
-       cs aoNDFilter set mode 1
-       cs aoNDFilter set dir 3
+       if {[AO state useLwfs]} {
+	   #puts "Gaos::apply setting ndfilter to $ndFilter"
+	   logactions logmess "Gaos::apply moving ND Filter to $ndFilter"
+	   cs aolgsNDFilter set pos $ndFilter
+	   cs aolgsNDFilter set mode 1
+	   cs aolgsNDFilter set dir 3
+       } else {
+	   #puts "Gaos::apply setting ndfilter to $ndFilter"
+	   logactions logmess "Gaos::apply moving ND Filter to $ndFilter"
+	   cs aongsNDFilter set pos $ndFilter
+	   cs aongsNDFilter set mode 1
+	   cs aongsNDFilter set dir 3
+       }
    }
 
 # Select GAOS Field Lens IN/OUT

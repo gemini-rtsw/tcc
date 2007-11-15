@@ -37,8 +37,11 @@ itk::usual WfsConfig {
 
 itcl::body WfsConfig::constructor {args} {
 
-   if { [catch {cs aoNDFilter info}] } {
-      epics cs aoNDFilter
+   if { [catch {cs aongsNDFilter info}] } {
+      epics cs aongsNDFilter
+   }
+   if { [catch {cs aolgsNDFilter info}] } {
+      epics cs aolgsNDFilter
    }
    if { [catch {cs aoFLens info}] } {
       epics cs aoFLens
@@ -280,13 +283,24 @@ itcl::body WfsConfig::aottgsiris {} {
 itcl::body WfsConfig::aondsel {} {
 #puts "WfsConfig::aondsel sending [$itk_component(aond) get]"
 # Select GAOS ND filter IN/OUT
-   cs aoNDFilter set pos [$itk_component(aond) get]
-   cs aoNDFilter set mode 1
-   cs aoNDFilter set dir 3
+       if {[AO state useLwfs]} {
+	   #puts "WfsConfig::aondsel setting ndfilter to $ndFilter"
+	   logactions logmess "Gaos::apply moving ND Filter to $ndFilter"
+	   cs aolgsNDFilter set pos [$itk_component(aond) get]
+	   cs aolgsNDFilter set mode 1
+	   cs aolgsNDFilter set dir 3
+	   logactions logmess "WfsConfig::aondsel moving LGS ND Filter to [$itk_component(aond) get]"
+       } else {
+	   #puts "WfsConfig::aondsel setting ndfilter to $ndFilter"
+	   logactions logmess "Gaos::apply moving ND Filter to $ndFilter"
+	   cs aongsNDFilter set pos [$itk_component(aond) get]
+	   cs aongsNDFilter set mode 1
+	   cs aongsNDFilter set dir 3
+	   logactions logmess "WfsConfig::aondsel moving NGS ND Filter to [$itk_component(aond) get]"
+       }
    if { $::Config(tcs.gaos,value) != "" } {
        $::Config(tcs.gaos,namespace)::$::Config(tcs.gaos,value) configure -ndFilter [$itk_component(aond) get]
    }
-   logactions logmess "WfsConfig::aondsel moving ND Filter to [$itk_component(aond) get]"
 }
 
 itcl::body WfsConfig::aoflenssel {} {
