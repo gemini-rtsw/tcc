@@ -228,6 +228,15 @@ itcl::body Gaos::apply {comp} {
    cs aoPrepareCm set windspeed $windspeed
    logger command aoPrepareCm
 
+# Apply preparing the CM
+   if { [catch {cs tcsApply post} msg] } {
+      tk_messageBox -icon error -message \
+            "Error posting GAOS commands: TCS reports \
+           \"$msg\""
+      process IDLE
+      return
+   }
+
 # write the exposure time to the A&G screen if it exists
    switch $gsmag {
        11 -
@@ -259,6 +268,15 @@ itcl::body Gaos::apply {comp} {
    cs filter1 set grab 0.1
    cs filter1 set maxv 2.0
    logger command filter1
+
+# Apply Commands
+   if { [catch {cs tcsApply post} msg] } {
+      tk_messageBox -icon error -message \
+            "Error posting GAOS commands: TCS reports \
+           \"$msg\""
+      process IDLE
+      return
+   }
 }
 
 itcl::body Gaos::save {node} {
