@@ -317,6 +317,14 @@ itcl::body WfsConfig::aoflenssel {} {
     if { $::Config(tcs.gaos,value) != "" } {
 	$::Config(tcs.gaos,namespace)::$::Config(tcs.gaos,value) configure -fldLens [$itk_component(aoflens) get]
     }
+# Apply preparing the CM
+   if { [catch {cs tcsApply post} msg] } {
+      tk_messageBox -icon error -message \
+            "Error posting GAOS commands: TCS reports \
+           \"$msg\""
+      process IDLE
+      return
+   }
 
 }
 
