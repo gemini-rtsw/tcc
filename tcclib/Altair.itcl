@@ -169,6 +169,7 @@ itcl::body Gaos::apply {comp} {
 # this writes directly to Altair ... will be replaced by tcs interface
 # Update the WfsConfig in the A&G screen at the same time, if it exists
    if {[winfo exists .observePanel.frame.control.botframe.wfsconfig.tabs.canvas.notebook.cs.page5.cs.aowfs.nd]} {
+       .observePanel.frame.control.botframe.wfsconfig.tabs.canvas.notebook.cs.page5.cs.aowfs.nd select ""
        .observePanel.frame.control.botframe.wfsconfig.tabs.canvas.notebook.cs.page5.cs.aowfs.nd select $ndFilter
    } else {
        if {[AO state useLwfs]} {
@@ -194,7 +195,6 @@ itcl::body Gaos::apply {comp} {
 
    if {[winfo exists .observePanel.frame.control.botframe.wfsconfig.tabs.canvas.notebook.cs.page5.cs.aowfs.flens] && 
        [winfo ismapped .observePanel.frame.control.botframe.wfsconfig.tabs.canvas.notebook.cs.page5.cs.aowfs.flens]} {
-       .observePanel.frame.control.botframe.wfsconfig.tabs.canvas.notebook.cs.page5.cs.aowfs.flens select ""
        .observePanel.frame.control.botframe.wfsconfig.tabs.canvas.notebook.cs.page5.cs.aowfs.flens select $fldLens
    }
        #puts "Gaos::apply setting fldlens to $fldLens"
@@ -244,7 +244,6 @@ itcl::body Gaos::apply {comp} {
       tk_messageBox -icon error -message \
             "Error posting GAOS commands: TCS reports \
            \"$msg\""
-      process IDLE
       return
    }
 
@@ -285,7 +284,6 @@ itcl::body Gaos::apply {comp} {
       tk_messageBox -icon error -message \
             "Error posting GAOS commands: TCS reports \
            \"$msg\""
-      process IDLE
       return
    }
 }
