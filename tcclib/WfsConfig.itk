@@ -285,14 +285,14 @@ itcl::body WfsConfig::aondsel {} {
 # Select GAOS ND filter IN/OUT
        if {[AO state useLwfs]} {
 	   #puts "WfsConfig::aondsel setting ndfilter to $ndFilter"
-	   logactions logmess "Gaos::apply moving ND Filter to $ndFilter"
+	   logactions logmess "WfsConfig::aondsel moving ND Filter to [$itk_component(aond) get]"
 	   cs aolgsNDFilter set pos [$itk_component(aond) get]
 	   cs aolgsNDFilter set mode 1
 	   cs aolgsNDFilter set dir 3
 	   logactions logmess "WfsConfig::aondsel moving LGS ND Filter to [$itk_component(aond) get]"
        } else {
 	   #puts "WfsConfig::aondsel setting ndfilter to $ndFilter"
-	   logactions logmess "Gaos::apply moving ND Filter to $ndFilter"
+	   logactions logmess "WfsConfig::aondsel moving ND Filter to [$itk_component(aond) get]"
 	   cs aongsNDFilter set pos [$itk_component(aond) get]
 	   cs aongsNDFilter set mode 1
 	   cs aongsNDFilter set dir 3
@@ -335,7 +335,6 @@ itcl::body WfsConfig::aoflenssel {} {
       process IDLE
       return
    }
-
 }
 
 itcl::body WfsConfig::ndsel {} {
