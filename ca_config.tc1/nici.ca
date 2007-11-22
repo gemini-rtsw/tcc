@@ -10,16 +10,22 @@
 status nici
 {
    ndfilt            nici:ao:nd:positionV         0 ND Filter Name
-}
-
-command niciNdFilt tcsApply
-{
-   target            nici:ao:nd:move.A
-   dir               nici:ao:nd:move.DIR
+   ndfilt2           nici:ao:nd:positionV         0 ND Filter Name 2nd instance for link
+   ndCAR	     nici:mag2ndC		  0 ND Filter CAR (BUSY/IDLE/ERROR)
+   ndReq             nici:mag2nd.VALA		  0 ND Filter Request
+   ndMag	     nici:mag2nd.VALC		  0 ND Filter Magnitude Used
 }
 
 command niciMag tcsApply
 {
    mag               nici:mag2filter.A
+   mode              nici:mag2nd.B
+   conf              nici:mag2nd.E
    dir               nici:mag2filter.DIR
+}
+
+command niciAOLoop tcsApply
+{
+   dem               nici:ao:AoLoop.A
+   dir               nici:ao:AoLoop.DIR
 }
