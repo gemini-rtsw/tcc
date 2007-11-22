@@ -21,6 +21,7 @@ itcl::class MonitorLabel {
       variable unlink ""
       variable untrace ""
       variable varName ""
+      variable buttonList {}
    }
    itk_option define -width width Width 0 {
 	#puts "new width: $itk_option(-width)"
@@ -36,6 +37,12 @@ itcl::class MonitorLabel {
    }
    itk_option define -trans trans Trans "" {
 	#puts "new trans: $itk_option(-trans)"
+   }
+   itk_option define -state state State "" {
+        #puts "new state: $itk_option(-state)"
+       foreach {button} $buttonList {
+           $button configure -state $itk_option(-state)
+       }
    }
 }
 
@@ -67,10 +74,12 @@ itcl::body MonitorLabel::constructor {sys var args} {
    itk_component add desc { 
 	label $w.desc -text $itk_option(-text) -font $itk_option(-font)
    }
+   lappend buttonList $itk_component(desc)
 
    itk_component add label { 
 	label $w.lab -text "" -width $itk_option(-width) -font $itk_option(-font)
    }
+   lappend buttonList $itk_component(label)
 
    trace variable $varName w "$this traceProc"
 
