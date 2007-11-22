@@ -69,3 +69,8 @@
 # Fonts for tsd displays.
 *numericDisplay.Font:		-*-*-bold-r-normal-sans-18-*-*-*-*-*-*-*
 *graphicDisplay.Font:		-*-*-bold-r-normal-sans-18-*-*-*-*-*-*-*
+
+# Disable NICI related features
+*observePanel*control*niciframe*state:  disabled
+*observePanel*wfsconfig*page4*nicifr*state:    disabled
+*observePanel*wfsconfig*page4*nicifr2*state:    disabled
