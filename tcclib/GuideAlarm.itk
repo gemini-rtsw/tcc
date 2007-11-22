@@ -32,12 +32,14 @@ itcl::class GuideAlarm {
 	    set ttgsCountLimit $ttgsLimit
 	}
         variable sfoLimit 7000.0
+        variable niciLimit 10.0
         variable pwfs1Silent 0
         variable pwfs2Silent 0
         variable oiwfsSilent 0
         variable gaosSilent 0
         variable ttgsSilent 0
         variable sfoSilent 0
+        variable niciSilent 0
         variable exitnow 0
     }
     private {
@@ -53,8 +55,8 @@ itk::usual GuideAlarm {
         }
 
 itcl::body GuideAlarm::constructor {args} {
-    global guideCounts pwfs1CountLimit pwfs2CountLimit oiwfsCountLimit gaosCountLimit ttgsCountLimit sfoCountLimit
-    global pwfs1silent pwfs2silent oiwfssilent gaossilent ttgssilent sfosilent guideCentroid
+    global guideCounts pwfs1CountLimit pwfs2CountLimit oiwfsCountLimit gaosCountLimit ttgsCountLimit sfoCountLimit niciCountLimit
+    global pwfs1silent pwfs2silent oiwfssilent gaossilent ttgssilent sfosilent nicisilent guideCentroid
     
     #puts "GuideAlarm this: $this"
     
@@ -75,8 +77,13 @@ itcl::body GuideAlarm::constructor {args} {
     }
     
     grid $itk_component(frame) -sticky news
-    
-    foreach wfs {pwfs1 pwfs2 oiwfs gaos ttgs sfo} {
+
+   # seperate container for oiwfs alarms
+    itk_component add alloiwfsframe {
+       frame $itk_component(frame).alloiwfsframe -relief ridge -bd 2
+    }
+
+    foreach wfs {pwfs1 pwfs2 oiwfs gaos ttgs sfo nici} {
         #puts "setting up wfs: $wfs"
 	if {$wfs == "ttgs"} {
 	    set guideCounts(${wfs}1) [sa guidects get ${wfs}1]
@@ -86,7 +93,7 @@ itcl::body GuideAlarm::constructor {args} {
 	} else {
 	    set guideCounts($wfs) [sa guidects get $wfs]
 	}
-        if {$wfs != "gaos" && $wfs != "ttgs" && $wfs != "sfo"} {
+        if {$wfs != "gaos" && $wfs != "ttgs" && $wfs != "sfo" && $wfs != "nici"} {
             set guideCentroid($wfs) [sa guidects get ${wfs}cent]
 	    if {![string is boolean $guideCentroid($wfs)]} {
 		set guideCentroid($wfs) 0
@@ -100,17 +107,33 @@ itcl::body GuideAlarm::constructor {args} {
         # puts "guideCounts($wfs) = $guideCounts($wfs)"
         
         # create the display widgets
-        
-        itk_component add ${wfs}frame {
-            frame $itk_component(frame).${wfs}frame -relief ridge -bd 2
+
+        if {$wfs == "oiwfs" || $wfs == "nici" } {
+            itk_component add ${wfs}frame {
+                frame $itk_component(frame).alloiwfsframe.${wfs}frame -relief ridge -bd 2
+            }
+            set w $itk_component(${wfs}frame)
+        } else {
+            itk_component add ${wfs}frame {
+                frame $itk_component(frame).${wfs}frame -relief ridge -bd 2
+            }
+            set w $itk_component(${wfs}frame)
         }
-        set w $itk_component(${wfs}frame)
         #  puts "w: $w"
-        itk_component add ${wfs}title {
-            label $w.lab -text $wfs
-        } {
-            usual
-            rename -font -majorfont majorFont Font
+        if {$wfs == "nici"} {
+           itk_component add ${wfs}title {
+               label $w.lab -text "oi APD"
+           } {
+               usual
+               rename -font -majorfont majorFont Font
+           }
+        } else {
+           itk_component add ${wfs}title {
+               label $w.lab -text $wfs
+           } {
+               usual
+               rename -font -majorfont majorFont Font
+           }
         }
         itk_component add ${wfs}silent { 
 	    checkbutton $w.sil -variable ${wfs}silent -onvalue 1 -offvalue 0 -text silent -command "$this setSilent $wfs"
@@ -168,11 +191,12 @@ itcl::body GuideAlarm::constructor {args} {
 	    grid $itk_component(${wfs}clab) $itk_component(${wfs}cnts) -sticky news
 	}
         grid $itk_component(${wfs}limlab) $itk_component(${wfs}liment) -sticky news
-        if {$wfs != "gaos" && $wfs != "ttgs" && $wfs != "sfo"} {
+        if {$wfs != "gaos" && $wfs != "ttgs" && $wfs != "sfo" && $wfs != "nici"} {
 	    grid $itk_component(${wfs}centroid) - -sticky news
 	}
     }
-    pack $itk_component(pwfs1frame) $itk_component(pwfs2frame) $itk_component(oiwfsframe) $itk_component(gaosframe)  $itk_component(ttgsframe) $itk_component(sfoframe) -side top -padx 3 -pady 3 -ipadx 3 -ipady 3 -fill x -expand 1
+    pack $itk_component(oiwfsframe) $itk_component(niciframe) -side top -padx 3 -pady 1 -ipadx 3 -ipady 1 -fill x -expand 1
+    pack $itk_component(pwfs1frame) $itk_component(pwfs2frame) $itk_component(alloiwfsframe) $itk_component(gaosframe)  $itk_component(ttgsframe) $itk_component(sfoframe) -side top -padx 3 -pady 3 -ipadx 3 -ipady 3 -fill x -expand 1
     
     sa guidects proc pwfs1 "$this updateProc"
     sa guidects proc pwfs2 "$this updateProc"
@@ -183,6 +207,7 @@ itcl::body GuideAlarm::constructor {args} {
     sa guidects proc ttgs3  "$this updateProc"
     sa guidects proc ttgs4  "$this updateProc"
     sa guidects proc sfo    "$this updateProc"
+    sa guidects proc nici   "$this updateProc"
     sa guidects proc pwfs1cent "$this updateProc2"
     sa guidects proc pwfs2cent "$this updateProc2"
     sa guidects proc oiwfscent "$this updateProc2"
@@ -204,6 +229,7 @@ itcl::body GuideAlarm::destructor {} {
     sa guidects unproc ttgs3  "$this updateProc"
     sa guidects unproc ttgs4  "$this updateProc"
     sa guidects unproc sfo    "$this updateProc"
+    sa guidects unproc nici   "$this updateProc"
     sa guidects unproc pwfs1cent "$this updateProc2"
     sa guidects unproc pwfs2cent "$this updateProc2"
     sa guidects unproc oiwfscent "$this updateProc2"
@@ -222,7 +248,7 @@ itcl::body GuideAlarm::setWfsColor {wfs color} {
 }
 
 itcl::body GuideAlarm::setSilent {wfs} {
-    global pwfs1silent pwfs2silent oiwfssilent gaossilent ttgssilent sfosilent
+    global pwfs1silent pwfs2silent oiwfssilent gaossilent ttgssilent sfosilent nicisilent
     
     #puts "setSilent wfs: $wfs val: [set ${wfs}silent]"
     set ${wfs}Silent [set ${wfs}silent]
@@ -239,7 +265,7 @@ itcl::body GuideAlarm::alarmCheck {wfs} {
 	    } else {
 		set alarmOn($wfs) 0
 	    }
-	} elseif {($wfs == "gaos") || ($wfs == "sfo")} {
+	} elseif {($wfs == "gaos") || ($wfs == "sfo") || ($wfs == "nici")} {
 	    if { $guideCounts($wfs) < [set ${wfs}Limit]} {
 		set alarmOn($wfs) 1
 	    } else {
@@ -304,7 +330,7 @@ itcl::body GuideAlarm::ringBell {} {
     
     set makeNoise 0
     
-    foreach wfs {pwfs1 pwfs2 oiwfs gaos ttgs sfo} {
+    foreach wfs {pwfs1 pwfs2 oiwfs gaos ttgs sfo nici} {
         if {$alarmEnabled($wfs) && $alarmOn($wfs)} {
             #puts "in ring bell wfs: $wfs silent: [set ${wfs}Silent]"
             if {![set ${wfs}Silent]} {
@@ -332,9 +358,22 @@ itcl::body GuideAlarm::scanLoop {} {
     
     set canguide [expr {[AO state mount] && [AO state m2]}]
     
-    foreach wfs {pwfs1 pwfs2 oiwfs gaos ttgs sfo} {
+    foreach wfs {pwfs1 pwfs2 oiwfs gaos ttgs sfo nici} {
 	if {$wfs == "sfo" || $wfs == "ttgs"} {
 	    if {[AO state $wfs] && [AO state ${wfs}loop] && $canguide} {
+		if {!$alarmEnabled($wfs)} {
+		    set alarmEnabled($wfs) 1
+		    alarmCheck $wfs
+		} else  {
+		    set alarmEnabled($wfs) 1
+		}
+		incr num_enabled
+	    } else {
+		set alarmEnabled($wfs) 0
+		setWfsColor $wfs PeachPuff1
+	    }
+	} elseif {$wfs == "nici"} {
+	    if {[AO state oiaoLoop] && $canguide} {
 		if {!$alarmEnabled($wfs)} {
 		    set alarmEnabled($wfs) 1
 		    alarmCheck $wfs
@@ -363,7 +402,7 @@ itcl::body GuideAlarm::scanLoop {} {
     }
     
     if {$num_enabled > 0} {
-        foreach wfs {pwfs1 pwfs2 oiwfs gaos ttgs sfo} {
+        foreach wfs {pwfs1 pwfs2 oiwfs gaos ttgs sfo nici} {
             if {$alarmOn($wfs) == 1} {
                 set gottaRingBell 1
             } elseif {$alarmEnabled($wfs)} {

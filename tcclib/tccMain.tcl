@@ -164,8 +164,8 @@ proc tccMain args {
    epics cs filter1
    epics cs filter2
    epics cs oiwfsSelect
-   epics cs niciNdFilt
    epics cs niciMag
+   epics cs niciAOLoop
 
 # Set the timeout period for posting commands to the TCS.
    cs tcsApply setTimeout 3

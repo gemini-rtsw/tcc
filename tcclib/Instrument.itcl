@@ -64,6 +64,12 @@ itcl::body Instrument::apply {comp} {
 
 # Enable the Science Fold selection buttons
    .observePanel.frame.control.botframe.mirrors.lpath setState {0 1 2} normal
+
+# recolour the A&G screen because the current instrument (if NICI) could effect available options
+    if [winfo exists .observePanel] {
+	::.observePanel.frame.control.guideloop recolour
+    }
+
 }
 
 itcl::body Instrument::init {} {

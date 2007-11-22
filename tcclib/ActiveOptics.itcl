@@ -56,6 +56,9 @@ itcl::class ActiveOptics {
       variable pwfs2Active 0
       variable oiwfsExpose 0.005
       variable oiwfsActive 0
+      variable oiao 0
+      variable oiaoAPD 0
+      variable oiaoLoop 0
       variable gaosExpose 0.001
       variable ttgsExpose 0.001
       variable ttgsFlux 0
@@ -661,6 +664,18 @@ puts "beam is $beam gonna wait for 1 second"
       logger command wfsGuideMode
    }
 
+   if {$oiao && $oiaoLoop} {
+	puts "Turn ON NICI OIAO Loop"
+	cs niciAOLoop set dem close
+	cs niciAOLoop set dir 3
+        #AWE is this neccesary? make sure oiwfsActive is false
+        set oiwfsActive 0
+   } else {
+	puts "Turn OFF NICI OIAO Loop"
+	cs niciAOLoop set dem open
+	cs niciAOLoop set dir 3
+   }
+
    foreach wfs [list pwfs1 pwfs2 oiwfs] \
          active [list $pwfs1Active $pwfs2Active $oiwfsActive] \
          wfsobj [list Pwfs1 Pwfs2 Oiwfs] \
@@ -715,7 +730,16 @@ itcl::body ActiveOptics::disable {} {
 # Stop the wave-front sensors.
    Pwfs1 stop
    Pwfs2 stop
-   Oiwfs stop
+   if {$oiao} {
+	puts "Turn off NICI OIAO Loop"
+	cs niciAOLoop set dem open
+	cs niciAOLoop set dir 3
+        #AWE manual recolour shouldn't be needed in the non-simulated version ... set the record to be monitored
+	::.observePanel.frame.control.guideloop recolour
+
+   } else {
+      Oiwfs stop
+   }
 
 # Turn off M2.
    cs m2Guide set state Off
@@ -820,6 +844,31 @@ global env
       oiwfs {
          if { [sa guideConfig get oistate value] == "Yes" } {
             return 1
+         } else {
+            return 0
+         }
+      }
+      oiao {
+	 # AWE for now, will assume oiao mode when NICI is the instrument
+	 set inst $::Config(tcs.instrument,value)
+         if { [string match "*NICI*" $inst] } {
+	    set oiao 1
+            return 1
+         } else {
+	    set oiao 0
+            return 0
+         }
+      }
+      oiaoAPD {
+	 # AWE will be checking a channel in NICI
+         return $oiaoAPD
+      }
+      oiaoLoop {
+         # AWE will be checking a channel in NICI
+	 if {$env(TCC_TCSNAME) == "tc1"} {
+            return $oiaoLoop
+         } elseif { [sa guideConfig get niciAOloop] == "CLOSED" } {
+	    return 1
          } else {
             return 0
          }

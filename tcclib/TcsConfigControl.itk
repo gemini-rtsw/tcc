@@ -237,12 +237,15 @@ itcl::body TcsConfigControl::apply {} {
     if { [string match "*NICI*" $inst] } {
 	set target $::Config(tcs.field.sciencetarget,value)
 	puts "Science Target: $target"
-	set magnitude [$::Config(tcs.field.sciencetarget,namespace)::$target cget -brightness]
+	set magnitude [$::Config(tcs.field.oiwfstarget,namespace)::$target cget -brightness]
 	set magparts [split $magnitude " "]
 	set magnitude [lindex $magparts 0]
 	if {[string is double -strict $magnitude]} {
 	    puts "writing magnitude $magnitude to NICI"
 	    cs niciMag set mag $magnitude
+	    cs niciMag set mode Auto
+	    cs niciMag set conf config
+	    cs niciMag set dir 0
 	    cs niciMag set dir 3
 	} else {
 	    tk_messageBox -icon error \

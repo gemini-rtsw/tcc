@@ -90,7 +90,7 @@ itcl::body ObserveControl::constructor args {
        frame $w.botframe -borderwidth 2
     }
 
-   grid $itk_component(botframe) -
+   grid $itk_component(botframe) ^
 
    set w $itk_component(botframe)
 
@@ -109,7 +109,7 @@ itcl::body ObserveControl::constructor args {
       frame $w.conframe.hrac -bd 2 -relief ridge
    }
 
-   pack $itk_component(hrac) $itk_component(wfs) -side left -padx 6
+   pack $itk_component(hrac) $itk_component(wfs) -side left -padx 3
 
 # Acquisition Camera/HRWFS controls.
 #   itk_component add acqcam {
@@ -132,20 +132,21 @@ itcl::body ObserveControl::constructor args {
       WfsConfig $w.wfsconfig
    }
    set wfsConfigObj $itk_component(wfsconfig)
+   $itk_component(guideloop) configure -wfsConfigObj $wfsConfigObj
 
 #   grid $itk_component(hrac) $itk_component(mirrors)  -padx 5 -pady 5 -sticky s
 #   grid  $itk_component(wfs) ^ $itk_component(buttons) -padx 5 -pady 5 -sticky s
 #   grid $itk_component(wfsconfig) ^ ^ -padx 5 -pady 5 -sticky s
 
-   grid $itk_component(conframe) - $itk_component(mirrors)  -padx 5 -pady 5 -sticky n
-   grid $itk_component(wfsconfig) $itk_component(buttons) ^  -padx 5 -pady 5 -sticky s
+   grid $itk_component(conframe) - $itk_component(mirrors)  -padx 2 -pady 2 -sticky n
+   grid $itk_component(wfsconfig) $itk_component(buttons) ^  -padx 2 -pady 2 -sticky s
 
 # HRWFS/AC controls.
    set w $itk_component(hrac)
    itk_component add hracsel {
       iwidgets::optionmenu $w.hracsel -command [itcl::code $this lenssel]
    }
-   $itk_component(hracsel) insert end AC HRWFS
+   $itk_component(hracsel) insert end AC HR
 
    itk_component add expose {
       iwidgets::combobox $w.expose -labeltext "exp(s)" -labelpos w \
@@ -155,11 +156,11 @@ itcl::body ObserveControl::constructor args {
    $itk_component(expose) insert entry end 0.01
 
    itk_component add hrstart {
-      LiveButton $w.hrstart -text "Q/L" \
+      LiveButton $w.hrstart -text "QL" \
             -command [itcl::code $this hrstart]
    }
    itk_component add hrstop {
-      LiveButton $w.hrstop -text Stop \
+      LiveButton $w.hrstop -text "Stop" \
             -command [itcl::code $this hrstop]
    }
    grid $itk_component(hracsel) $itk_component(expose) $itk_component(hrstart) $itk_component(hrstop)
@@ -173,10 +174,10 @@ itcl::body ObserveControl::constructor args {
       LiveButton $w.dark -text SKY -command [itcl::code $this wfssky]
    }
    itk_component add ql {
-      LiveButton $w.ql -text Q/L -command [itcl::code $this wfsql]
+      LiveButton $w.ql -text "QL" -command [itcl::code $this wfsql]
    }
    itk_component add stop {
-      LiveButton $w.stop -text STOP -command [itcl::code $this wfsstop]
+      LiveButton $w.stop -text "Stop" -command [itcl::code $this wfsstop]
    }
    grid $itk_component(wfssel) $itk_component(ql) $itk_component(dark) \
          $itk_component(stop)
@@ -189,7 +190,7 @@ itcl::body ObserveControl::constructor args {
    itk_component add instrOrigin {
        checkbutton $w.instorig -variable [itcl::scope set_instr_orig] \
 	   -onvalue 1 -offvalue 0 \
-	   -text "Auto Conf.\nInstr. Origin"
+	   -text "Auto\nHotspot"
    }
    pack $itk_component(instrOrigin)
 
@@ -198,7 +199,7 @@ itcl::body ObserveControl::constructor args {
    itk_component add configWavelength {
        checkbutton $w.wavelen -variable [itcl::scope set_wavelength] \
 	   -onvalue 1 -offvalue 0 \
-	   -text "Auto Conf.\nWavelength"
+	   -text "Auto\nWavelength"
    }
    pack $itk_component(configWavelength)
 

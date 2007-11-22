@@ -41,6 +41,9 @@ itcl::class GuideLoop {
       method configSfoEx {}
       variable monids
    }
+   itk_option define -wfsConfigObj wfsConfigObj WfsConfigObj "" {
+	#puts "wfsConfigObj: $itk_option(-wfsConfigObj)"
+   }
 }
 
 itk::usual GuideLoop {
@@ -61,11 +64,11 @@ itcl::body GuideLoop::constructor args {
        puts "on canvas x: %x y: %y"
    }
 
-# WFS boxes
+# WFS boxes AWE ... seperating out the OIWFS
    # rectangle to group pwfs1 and pwfs2
    $w create rectangle 0 0 141 146 -fill white -tags "active pwfs1_bg pwfs2_bg pwfs_comb"
 
-   foreach sys {pwfs1 pwfs2 oiwfs} {
+   foreach sys {pwfs1 pwfs2} {
       itk_component add $sys {
          SelectButton $w.$sys -orient vertical \
             -command [itcl::code $this wfsmode $sys]
@@ -94,11 +97,45 @@ itcl::body GuideLoop::constructor args {
    }
 
 # Find the name of the font used for the buttons and use it for all text.
-   set font [$w.oiwfs cget -font]
+   set font [$w.pwfs1 cget -font]
 
-   foreach sys {pwfs1 pwfs2 oiwfs} label {PWFS1 PWFS2 OIWFS} {
+   foreach sys {pwfs1 pwfs2} label {PWFS1 PWFS2} {
       $w create text 92 25 -text $label -tags $sys -font $font
    }
+
+# OIWFS including an AO mode for NICI
+   itk_component add oiwfs {
+     SelectButton $w.oiwfs -orient vertical \
+        -command [itcl::code $this wfsmode oiwfs]
+   } {
+      usual
+      rename -offbackground -background background Background
+   }
+   $w create window 32 24 -width 60 -window $w.oiwfs -tags oiwfs
+   $itk_component(oiwfs) add ON -pady 0
+   $itk_component(oiwfs) add OFF -pady 0
+   itk_component add oiwfs_label {
+      label $w.oiwfs_label -text [string toupper oiwfs]
+   }
+   $w create rectangle 0 0 132 67 -fill white -tags "active oiwfs oiwfs_bg"
+   $w create rectangle 64 2 88 22 -fill white -tags "active oiwfs oiwfs_ao"
+   $w create rectangle 64 24 88 44 -fill white -tags "active oiwfs oiwfs_wfs"
+
+# WFS controls.
+   itk_component add oiwfs_ex {
+      iwidgets::combobox $w.oiwfs_ex -arrowrelief flat -width 5 \
+            -validate real -labeltext "exp(s)"
+   }
+
+   $w create window 62 55 -window $w.oiwfs_ex -tag oiwfs
+   $w.oiwfs_ex insert list end 1.0 0.5 0.1 0.05 0.02 0.01 0.005
+   $w.oiwfs_ex insert entry end [AO cget -oiwfsExpose]
+   [$w.oiwfs_ex component list] configure -hscrollmode none \
+         -vscrollmode none
+
+   $w create text 108 25 -text OI -tags oiwfs -font $font
+   $w create text 75 13 -text AO -tags "oiwfs oiwfs_aotxt" -font $font
+   $w create text 75 35 -text WFS -tags "oiwfs oiwfs_wfstxt" -font $font
 
 # GAOS
 #   $w create rectangle 0 0 140 137 -fill white -tags "active gaos gaos_bg"
@@ -452,7 +489,7 @@ itcl::body GuideLoop::destructor {} {
     puts "GuideLoop::destructor"
    foreach rec {p1state p2state oistate aostate m2state absorbtilt m1state \
          m1source p1guide p2guide oiguide p1mweight p2mweight m2p1guide m2p2guide \
-	 m2oiguide m2aoguide coma oiblend aoTTGS aoSFO ttgsloop sfoloop useLwfs} mon $monids {
+	 m2oiguide m2aoguide coma oiblend aoTTGS aoSFO ttgsloop sfoloop useLwfs niciAOloop} mon $monids {
 	::guideConfig.$rec remove $mon
     }
 }
@@ -548,8 +585,63 @@ itcl::body GuideLoop::recolour args {
    }
 
 # OIWFS signals
-   if { [AO state oiwfs] } {
+   # puts "recolour OI oiao: [AO state oiao], oiAPD: [AO state oiaoAPD],  oiaoLoop: [AO state oiaoLoop]"
+   if { [AO state oiao] } {
+      # disable the regular oiwfs guide alarm and enable the nici guide alarm
+      .observePanel.frame.control.alarm.fr.alloiwfsframe.oiwfsframe.lab configure -state disabled
+      .observePanel.frame.control.alarm.fr.alloiwfsframe.oiwfsframe.sil configure -state disabled
+      .observePanel.frame.control.alarm.fr.alloiwfsframe.oiwfsframe.clab configure -state disabled
+      .observePanel.frame.control.alarm.fr.alloiwfsframe.oiwfsframe.cnts configure -state disabled
+      .observePanel.frame.control.alarm.fr.alloiwfsframe.oiwfsframe.limlab configure -state disabled
+      .observePanel.frame.control.alarm.fr.alloiwfsframe.oiwfsframe.liment configure -state disabled
+      .observePanel.frame.control.alarm.fr.alloiwfsframe.oiwfsframe.cent configure -state disabled
+      .observePanel.frame.control.alarm.fr.alloiwfsframe.niciframe.lab configure -state normal
+      .observePanel.frame.control.alarm.fr.alloiwfsframe.niciframe.sil configure -state normal
+      .observePanel.frame.control.alarm.fr.alloiwfsframe.niciframe.clab configure -state normal
+      .observePanel.frame.control.alarm.fr.alloiwfsframe.niciframe.cnts configure -state normal
+      .observePanel.frame.control.alarm.fr.alloiwfsframe.niciframe.limlab configure -state normal
+      .observePanel.frame.control.alarm.fr.alloiwfsframe.niciframe.liment configure -state normal
+      .observePanel.frame.control.alarm.fr.alloiwfsframe.niciframe.cent configure -state normal
+      $w itemconfigure oiwfs_ao -outline black 
+      $w itemconfigure oiwfs_wfs -outline grey
+      $w itemconfigure oiwfs_aotxt -fill black 
+      $w itemconfigure oiwfs_wfstxt -fill grey
+      $itk_component(oiwfs_ex) configure -state disabled
+      $itk_option(-wfsConfigObj) niciState normal
+      if { [AO state oiaoAPD] } {
+         $w itemconfigure oiwfs_ao -fill green
+      }
+      if { [AO state oiaoLoop] } {
+         $w itemconfigure oiwfs_bg -fill green
+         if { [$itk_component(prfrom) get] == "OI" && [$itk_component(prto) get] == "P2" } {
+            $w itemconfigure oiwfs_pr -fill green
+         } else {
+            $w itemconfigure oiwfs_pr -fill yellow
+         }
+      }
+   } elseif { [AO state oiwfs] } {
+      # enable the regular oiwfs guide alarm and disable the nici guide alarm
+      .observePanel.frame.control.alarm.fr.alloiwfsframe.oiwfsframe.lab configure -state normal
+      .observePanel.frame.control.alarm.fr.alloiwfsframe.oiwfsframe.sil configure -state normal
+      .observePanel.frame.control.alarm.fr.alloiwfsframe.oiwfsframe.clab configure -state normal
+      .observePanel.frame.control.alarm.fr.alloiwfsframe.oiwfsframe.cnts configure -state normal
+      .observePanel.frame.control.alarm.fr.alloiwfsframe.oiwfsframe.limlab configure -state normal
+      .observePanel.frame.control.alarm.fr.alloiwfsframe.oiwfsframe.liment configure -state normal
+      .observePanel.frame.control.alarm.fr.alloiwfsframe.oiwfsframe.cent configure -state normal
+      .observePanel.frame.control.alarm.fr.alloiwfsframe.niciframe.lab configure -state disabled
+      .observePanel.frame.control.alarm.fr.alloiwfsframe.niciframe.sil configure -state disabled
+      .observePanel.frame.control.alarm.fr.alloiwfsframe.niciframe.clab configure -state disabled
+      .observePanel.frame.control.alarm.fr.alloiwfsframe.niciframe.cnts configure -state disabled
+      .observePanel.frame.control.alarm.fr.alloiwfsframe.niciframe.limlab configure -state disabled
+      .observePanel.frame.control.alarm.fr.alloiwfsframe.niciframe.liment configure -state disabled
+      .observePanel.frame.control.alarm.fr.alloiwfsframe.niciframe.cent configure -state disabled
       $w itemconfigure oiwfs_bg -fill green
+      $w itemconfigure oiwfs_ao -outline grey
+      $w itemconfigure oiwfs_wfs -outline black
+      $w itemconfigure oiwfs_aotxt -fill grey 
+      $w itemconfigure oiwfs_wfstxt -fill black
+      $itk_component(oiwfs_ex) configure -state disabled
+      $itk_option(-wfsConfigObj) niciState normal
       if { [AO state m1] && [AO source m1 OIWFS] } {
          $w itemconfigure oiwfs_m1 -fill green
       } else {
@@ -571,6 +663,28 @@ itcl::body GuideLoop::recolour args {
       } else {
          $w itemconfigure oiwfs_gaos -fill yellow
       }	  
+   } else {
+      # enable the regular oiwfs guide alarm and disable the nici guide alarm
+      .observePanel.frame.control.alarm.fr.alloiwfsframe.oiwfsframe.lab configure -state normal
+      .observePanel.frame.control.alarm.fr.alloiwfsframe.oiwfsframe.sil configure -state normal
+      .observePanel.frame.control.alarm.fr.alloiwfsframe.oiwfsframe.clab configure -state normal
+      .observePanel.frame.control.alarm.fr.alloiwfsframe.oiwfsframe.cnts configure -state normal
+      .observePanel.frame.control.alarm.fr.alloiwfsframe.oiwfsframe.limlab configure -state normal
+      .observePanel.frame.control.alarm.fr.alloiwfsframe.oiwfsframe.liment configure -state normal
+      .observePanel.frame.control.alarm.fr.alloiwfsframe.oiwfsframe.cent configure -state normal
+      .observePanel.frame.control.alarm.fr.alloiwfsframe.niciframe.lab configure -state disabled
+      .observePanel.frame.control.alarm.fr.alloiwfsframe.niciframe.sil configure -state disabled
+      .observePanel.frame.control.alarm.fr.alloiwfsframe.niciframe.clab configure -state disabled
+      .observePanel.frame.control.alarm.fr.alloiwfsframe.niciframe.cnts configure -state disabled
+      .observePanel.frame.control.alarm.fr.alloiwfsframe.niciframe.limlab configure -state disabled
+      .observePanel.frame.control.alarm.fr.alloiwfsframe.niciframe.liment configure -state disabled
+      .observePanel.frame.control.alarm.fr.alloiwfsframe.niciframe.cent configure -state disabled
+      $w itemconfigure oiwfs_ao -outline grey
+      $w itemconfigure oiwfs_wfs -outline black
+      $w itemconfigure oiwfs_aotxt -fill grey 
+      $w itemconfigure oiwfs_wfstxt -fill black
+      $itk_component(oiwfs_ex) configure -state normal
+      $itk_option(-wfsConfigObj) niciState disabled
    }
 
 # GAOS signals
@@ -723,9 +837,11 @@ itcl::body GuideLoop::recolour args {
 		P2 {
 		    if {[AO state p2guide] && [AO state pwfs2] && [AO state oiwfs]} {
 			$w itemconfigure probes_bg -fill green
+		    } elseif {[AO state p2guide] && [AO state pwfs2] && [AO state oiao] && [AO state oiaoLoop]} {
+			$w itemconfigure probes_bg -fill green
 		    } elseif {[AO state p2guide]} {
 			$w itemconfigure probes_bg -fill yellow
-		    }
+                    }
 		}
 		OI {
 		    if {[AO state oiguide] && [AO state oiwfs]} {
@@ -902,12 +1018,24 @@ itcl::body GuideLoop::probemode {val} {
 }
 
 itcl::body GuideLoop::wfsmode {wfs val} {
-   switch $val {
-      ON {
-         AO configure -${wfs}Active 1
+   #puts "GuideLoop::wfsmode oiao: [AO state oiao], wfs: $wfs, val: $val"
+   if { [AO state oiao] && $wfs == "oiwfs" } {
+      switch $val {
+         ON {
+            AO configure -oiaoLoop 1
+         }
+         OFF {
+            AO configure -oiaoLoop 0
+         }
       }
-      OFF {
-         AO configure -${wfs}Active 0
+   } else {
+      switch $val {
+         ON {
+            AO configure -${wfs}Active 1
+         }
+         OFF {
+            AO configure -${wfs}Active 0
+         }
       }
    }
 }

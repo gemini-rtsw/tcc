@@ -15,6 +15,7 @@ itcl::class WfsConfig {
       method reset {}
       method save {name}
       method getValue {comp}
+      method niciState {state}
    }
    private {
        method pageSelectCB {color}
@@ -24,6 +25,7 @@ itcl::class WfsConfig {
        method aoflenssel {}
        method aondsel {}
        method aottgsiris {}
+       method startNICInd {}
        method colsel {}
        method window {}
    }
@@ -53,7 +55,7 @@ itcl::body WfsConfig::constructor {args} {
    set w $itk_interior
 
    itk_component add tabbook {
-      iwidgets::tabnotebook $w.tabs -tabpos n -width 460 -height 155 -equaltabs true
+      iwidgets::tabnotebook $w.tabs -tabpos n -width 430 -height 155 -equaltabs true
    } {
       ignore -background -tabbackground
    }
@@ -96,6 +98,54 @@ itcl::body WfsConfig::constructor {args} {
 	       ignore -background
 	   }
 	   pack $itk_component(${wfs}filter) -anchor w -padx 3 -pady 3
+	   
+    # ND Filter for the NICI OI/AO system
+
+           itk_component add niciFrame {
+              frame $w.nicifr
+           }  {
+	       ignore -background
+	   }
+           itk_component add niciLabel {
+              label $w.nicifr.lab -text "NICI" 
+           }  {
+	       ignore -background
+	   }
+	   itk_component add nicindcurrMag {
+	       MonitorLabel $w.nicifr.niciNdMag nici ndMag -width 6 -anchor w -text "Req Mag:"
+	   }  {
+	       ignore -background
+	   }
+	   itk_component add nicindreqFlt {
+	       MonitorLabel $w.nicifr.niciNdReq nici ndReq -width 8 -anchor w  -text "Req ND Flt:"
+	   }  {
+	       ignore -background
+	   }
+	   itk_component add nicindcurrFlt {
+	       MonitorLabel $w.nicifr.niciNdFlt nici ndfilt2 -width 8 -anchor w  -text "Cur ND Flt:"
+	   }  {
+	       ignore -background
+	   }
+           itk_component add niciFrame2 {
+              frame $w.nicifr2
+           }  {
+	       ignore -background
+	   }
+           itk_component add niciAutoBut {
+              button $w.nicifr2.nicibut -text "Start AUTO ND Config" -command [itcl::code $this startNICInd]
+           }  {
+	       ignore -background
+	   }
+	   itk_component add nicindcar {
+	       MonitorLabel $w.nicifr2.nicicar nici ndCAR -width 10 -anchor w -text "CAR:"
+	   }  {
+	       ignore -background
+	   }
+	   pack $itk_component(niciLabel) -side top
+           pack $itk_component(nicindcurrMag) $itk_component(nicindreqFlt) $itk_component(nicindcurrFlt) -side left -padx 2
+           pack $itk_component(niciAutoBut) $itk_component(nicindcar) -side left -padx 2
+	   pack $itk_component(niciFrame) $itk_component(niciFrame2) -side top -padx 3 -pady 3
+
        } elseif { $wfs == "aowfs" } {
 	   
 # A subcomponent selector for the AOWFS.
@@ -212,7 +262,7 @@ itcl::body WfsConfig::constructor {args} {
 	       ignore -background
 	   }
 	   itk_component add ${wfs}currFlt {
-	       MonitorLabel $w.currFlt agssad ${wfs}Filter -width 12 -anchor w -font "Arial 12 bold"
+	       MonitorLabel $w.currFlt agssad ${wfs}Filter -width 10 -anchor w -font "Arial 12 bold"
 	   }  {
 	       ignore -background
 	   }
@@ -221,7 +271,7 @@ itcl::body WfsConfig::constructor {args} {
                Red1 ""
 
 	   itk_component add ${wfs}wavel {
-	       iwidgets::entryfield $w.${wfs}wavel -labeltext "wavelength" -width 8
+	       iwidgets::entryfield $w.${wfs}wavel -labeltext "wavelength" -width 6
 	   }  {
 	       ignore -background
 	   }
@@ -234,15 +284,15 @@ itcl::body WfsConfig::constructor {args} {
 	   }
 	   
 	   itk_component add ${wfs}currFld {
-	       MonitorLabel $w.currFld agssad ${wfs}Fldstop -width 12 -anchor w -font "Arial 12 bold"
+	       MonitorLabel $w.currFld agssad ${wfs}Fldstop -width 10 -anchor w -font "Arial 12 bold"
 	   }  {
 	       ignore -background
 	   }
 	   
 	   $itk_component(${wfs}fldstop) insert end prism 10.0 6.4 3.2 1.6 open1 open2 open3 open4 ""
 	   
-	   grid $itk_component(${wfs}filter) $itk_component(${wfs}currFlt) $itk_component(${wfs}wavel) -sticky e -pady 3
-	   grid $itk_component(${wfs}fldstop) $itk_component(${wfs}currFld) -sticky nes -pady 3
+	   grid $itk_component(${wfs}filter) $itk_component(${wfs}currFlt) $itk_component(${wfs}wavel) -sticky e -pady 2
+	   grid $itk_component(${wfs}fldstop) $itk_component(${wfs}currFld) -sticky nes -pady 2
        }
    }
    
@@ -337,6 +387,18 @@ itcl::body WfsConfig::aoflenssel {} {
       return
    }
 }
+itcl::body WfsConfig::startNICInd {} {
+# Trigger AUTO NICI ND Configuration ... after making sure ...
+    set choice [tk_messageBox -icon question -type yesno -default no -title "NICI ND Filter Config" -message \
+            "About to begin NICI Automatic ND Filter configuration.  This will begin with the Requested Filter.\nAre you sure?"]
+
+    if {$choice == "yes"} {
+	logactions logmess "WfsConfig::startNICInd Starting NICI Automatic ND Filter Configuration"
+	cs niciMag set conf moving
+	cs niciMag set dir 0
+	cs niciMag set dir 3
+    }
+}
 
 itcl::body WfsConfig::ndsel {} {
 # Select hrwfs neutral desity filter.
@@ -384,4 +446,14 @@ itcl::body WfsConfig::pageSelectCB {color} {
          [option get $itk_component(oiwfs) background Background] 
    $itk_component(tabbook) pageconfigure AOWFS -background \
          [option get $itk_component(aowfs) background Background] 
+}
+
+itcl::body WfsConfig::niciState {state} {
+
+    $itk_component(niciLabel) configure -state $state
+    $itk_component(nicindcurrMag) configure -state $state
+    $itk_component(nicindreqFlt) configure -state $state
+    $itk_component(nicindcurrFlt) configure -state $state
+    $itk_component(niciAutoBut) configure -state $state
+    $itk_component(nicindcar) configure -state $state
 }
