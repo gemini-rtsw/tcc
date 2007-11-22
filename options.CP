@@ -8,7 +8,7 @@
 *graphicDisplay.background:	Wheat
 
 # Background for the "direct action" panels.
-*observePanel*background:		PeachPuff1
+*observePanel*background:	PeachPuff1
 *ecsPanel*background:		PeachPuff1
 *guideLoopPanel*background:	PeachPuff1
 *handsetPanel*background:	PeachPuff1
@@ -38,12 +38,26 @@
 *TrackRatePanel*background:		LightGray
 *WavelengthPanel*background:		LightGray
 
+# TrackRate entry pages
+*tcsFieldScienceTargetTrackRatePanel*background:  Pink
+*tcsFieldPwfs1TargetTrackRatePanel*background:    SkyBlue
+*tcsFieldPwfs2TargetTrackRatePanel*background:    OldLace
+*tcsFieldOiwfsTargetTrackRatePanel*background:    Wheat
+*tcsFieldAowfsTargetTrackRatePanel*background:   LemonChiffon
+
 # Target entry pages
-*FieldPanel*data*page1*background: 	LightGray
-*FieldPanel*data*page2*background: 	LightGray
-*FieldPanel*data*page3*background: 	LightGray
-*FieldPanel*data*page4*background: 	LightGray
-*FieldPanel*data*page5*background: 	LightGray
+*FieldPanel*data*page1*background:    Pink
+*FieldPanel*data*page2*background:    SkyBlue
+*FieldPanel*data*page3*background:    OldLace
+*FieldPanel*data*page4*background:    Wheat
+*FieldPanel*data*page5*background:    LemonChiffon
+
+# WFS config pages
+*wfsconfig*page1*background:   Pink
+*wfsconfig*page2*background:   SkyBlue
+*wfsconfig*page3*background:   OldLace
+*wfsconfig*page4*background:   Wheat
+*wfsconfig*page5*background:   LemonChiffon
 
 # GACQ Offset request background
 *gacq*background:    Red
@@ -67,6 +81,7 @@
 *observePanel*control*gaosframe*state:  disabled
 *observePanel*control*ttgsframe*state:  disabled
 *observePanel*control*sfoframe*state:  disabled
+*observePanel*control*niciframe*state:  disabled
 *observePanel*control*lpath*1*state:    disabled
 *observePanel*control*lpath*4*state:    disabled
 *observePanel*guideloop*m2ao*0*state:   disabled
