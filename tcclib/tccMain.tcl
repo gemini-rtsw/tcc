@@ -29,6 +29,7 @@ proc tccMain args {
 # Process command line arguments.
    set layout $::ROOT/default_layout.tcc
    set init ""
+   set calfile "calparams.dat"
    foreach {opt val} $args {
       switch -- $opt {
          -layout {
@@ -36,6 +37,9 @@ proc tccMain args {
          }
          -init {
             lappend init $val
+         }
+         -cal {
+            lappend calfile $val
          }
          default {
             tk_messageBox -icon warning -message \
@@ -171,7 +175,7 @@ proc tccMain args {
    cs tcsApply setTimeout 3
 
 # Create the CalParam object.
-   CalParam calparam
+   CalParam calparam -calFile $calfile
 
 # Create the object the represents the configuration of the mirrors within
 # the instrument support structure.
