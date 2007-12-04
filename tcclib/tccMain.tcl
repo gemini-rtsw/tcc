@@ -39,7 +39,7 @@ proc tccMain args {
             lappend init $val
          }
          -cal {
-            lappend calfile $val
+            set calfile "$val"
          }
          default {
             tk_messageBox -icon warning -message \
