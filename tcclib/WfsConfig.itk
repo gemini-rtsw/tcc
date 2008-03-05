@@ -26,6 +26,7 @@ itcl::class WfsConfig {
        method aondsel {}
        method aottgsiris {}
        method startNICInd {}
+       method setmanNICInd {}
        method colsel {}
        method window {}
    }
@@ -55,7 +56,7 @@ itcl::body WfsConfig::constructor {args} {
    set w $itk_interior
 
    itk_component add tabbook {
-      iwidgets::tabnotebook $w.tabs -tabpos n -width 430 -height 155 -equaltabs true
+      iwidgets::tabnotebook $w.tabs -tabpos n -width 430 -height 180 -equaltabs true
    } {
       ignore -background -tabbackground
    }
@@ -126,6 +127,22 @@ itcl::body WfsConfig::constructor {args} {
 	   }  {
 	       ignore -background
 	   }
+	   itk_component add niciManFltFrame {
+	       frame $w.nicimanfr
+	   } {
+	       ignore -background
+	   }
+	   itk_component add niciNDManualFlt {
+	       iwidgets::optionmenu $w.nicimanfr.niciNdFltSel -labeltext "ND filter" -labelpos w -width 90
+	   } {
+	       ignore -background
+	   }
+	   $itk_component(niciNDManualFlt) insert end Block ND5 ND3 ND2 ND1 Open
+           itk_component add niciManFltApply {
+              button $w.nicimanfr.nicimanflapply -text "Apply ND Filter" -command [itcl::code $this setmanNICInd]
+           }  {
+	       ignore -background
+	   }
            itk_component add niciFrame2 {
               frame $w.nicifr2
            }  {
@@ -143,8 +160,9 @@ itcl::body WfsConfig::constructor {args} {
 	   }
 	   pack $itk_component(niciLabel) -side top
            pack $itk_component(nicindcurrMag) $itk_component(nicindreqFlt) $itk_component(nicindcurrFlt) -side left -padx 2
-           pack $itk_component(niciAutoBut) $itk_component(nicindcar) -side left -padx 2
-	   pack $itk_component(niciFrame) $itk_component(niciFrame2) -side top -padx 3 -pady 3
+           pack $itk_component(niciNDManualFlt) $itk_component(niciManFltApply) -side left
+	   pack $itk_component(niciAutoBut) $itk_component(nicindcar) -side left -padx 2
+	   pack $itk_component(niciFrame) $itk_component(niciManFltFrame) $itk_component(niciFrame2) -side top -padx 3 -pady 3
 
        } elseif { $wfs == "aowfs" } {
 	   
@@ -394,9 +412,34 @@ itcl::body WfsConfig::startNICInd {} {
 
     if {$choice == "yes"} {
 	logactions logmess "WfsConfig::startNICInd Starting NICI Automatic ND Filter Configuration"
+	cs niciMag set mode Auto
+	cs niciMag set conf config
+	cs niciMag set dir 0
+	after 100
+	cs niciMag set dir 3	
 	cs niciMag set conf moving
 	cs niciMag set dir 0
 	cs niciMag set dir 3
+    }
+}
+
+itcl::body WfsConfig::setmanNICInd {} {
+# Sets NICI ND Filter ... after making sure ...
+    set choice [tk_messageBox -icon question -type yesno -default no -title "NICI ND Filter Config" -message \
+            "About to set NICI ND Filter.\nAre you sure?"]
+
+    if {$choice == "yes"} {
+	set reqPos [$itk_component(niciNDManualFlt) get]
+	logactions logmess "WfsConfig::setmanNICInd Setting NICI ND Filter position manually to $reqPos"
+	cs niciMag set mode Manual
+	cs niciMag set manPos $reqPos
+	cs niciMag set conf config
+	cs niciMag set dir 0
+	after 100
+	cs niciMag set dir 3	
+#	cs niciMag set conf moving
+#	cs niciMag set dir 0
+#	cs niciMag set dir 3
     }
 }
 
@@ -456,4 +499,6 @@ itcl::body WfsConfig::niciState {state} {
     $itk_component(nicindcurrFlt) configure -state $state
     $itk_component(niciAutoBut) configure -state $state
     $itk_component(nicindcar) configure -state $state
+    $itk_component(niciNDManualFlt) configure -state $state
+    $itk_component(niciManFltApply) configure -state $state
 }

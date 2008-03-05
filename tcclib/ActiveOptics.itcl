@@ -667,12 +667,16 @@ puts "beam is $beam gonna wait for 1 second"
    if {$oiao && $oiaoLoop} {
 	puts "Turn ON NICI OIAO Loop"
 	cs niciAOLoop set dem close
+	cs niciAOLoop set dir 0
+	after 100
 	cs niciAOLoop set dir 3
         #AWE is this neccesary? make sure oiwfsActive is false
         set oiwfsActive 0
    } else {
 	puts "Turn OFF NICI OIAO Loop"
 	cs niciAOLoop set dem open
+	cs niciAOLoop set dir 0
+	after 100
 	cs niciAOLoop set dir 3
    }
 
@@ -733,6 +737,8 @@ itcl::body ActiveOptics::disable {} {
    if {$oiao} {
 	puts "Turn off NICI OIAO Loop"
 	cs niciAOLoop set dem open
+	cs niciAOLoop set dir 0
+	after 100
 	cs niciAOLoop set dir 3
         #AWE manual recolour shouldn't be needed in the non-simulated version ... set the record to be monitored
 	::.observePanel.frame.control.guideloop recolour
@@ -865,6 +871,7 @@ global env
       }
       oiaoLoop {
          # AWE will be checking a channel in NICI
+	 set guiding [sa guideConfig get niciAOloop]
 	 if {$env(TCC_TCSNAME) == "tc1"} {
             return $oiaoLoop
          } elseif { [sa guideConfig get niciAOloop] == "CLOSED" } {
