@@ -72,6 +72,12 @@ itcl::body WrapView::constructor args {
       usual
       ignore -foreground
    }
+   itk_component add mcsoverr {
+      label $itk_interior.mcsoverr -foreground white
+   } {
+      usual
+      ignore -foreground
+   }
    itk_component add rotlab {
       label $itk_interior.rotlab -text "Rotator wrap"
    }
@@ -81,10 +87,17 @@ itcl::body WrapView::constructor args {
       usual
       ignore -foreground
    }
+   itk_component add crcsoverr {
+      label $itk_interior.crcsoverr -foreground white
+   } {
+      usual
+      ignore -foreground
+   }
 
    pack $itk_component(azwrap) $itk_component(azlab) \
-         $itk_component(azttl) $itk_component(rotwrap) \
-         $itk_component(rotlab) $itk_component(rotttl) 
+         $itk_component(azttl) $itk_component(mcsoverr) \
+	 $itk_component(rotwrap) $itk_component(rotlab) \
+         $itk_component(rotttl) $itk_component(crcsoverr) 
 
    eval itk_initialize $args
 }
@@ -120,6 +133,21 @@ itcl::body WrapView::update {} {
       }
    }
 
+   switch [sa systemoverride get mcs] {
+       "enabled" {
+	   $itk_component(mcsoverr) configure -text "MCS inPosition Override"
+	   $itk_component(mcsoverr) configure -background red
+       }
+       "disabled" {
+	   $itk_component(mcsoverr) configure -text "" \
+	       -background [$itk_interior cget -background]
+       }
+       default {
+	   $itk_component(mcsoverr) configure -text "" \
+	       -background [$itk_interior cget -background]
+       }
+   }
+
    set rotttl [sadVal tcssad timeToRotlim ""]
    $itk_component(rotttl) configure -text "" \
          -background [$itk_interior cget -background]
@@ -141,4 +169,20 @@ itcl::body WrapView::update {} {
          $itk_component(rotttl) configure -background red
       }
    }
+
+   switch [sa systemoverride get crcs] {
+       "enabled" {
+	   $itk_component(crcsoverr) configure -text "CRCS inPosition Override"
+	   $itk_component(crcsoverr) configure -background red
+       }
+       "disabled" {
+	   $itk_component(crcsoverr) configure -text "" \
+	       -background [$itk_interior cget -background]
+       }
+       default {
+	   $itk_component(crcsoverr) configure -text "" \
+	       -background [$itk_interior cget -background]
+       }
+   }
+
 }

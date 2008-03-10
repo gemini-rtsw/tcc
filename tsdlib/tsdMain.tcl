@@ -44,6 +44,7 @@ proc tsdMain args {
    epics sa aossad
    epics sa gcalsad
    epics sa gpolsad
+   epics sa systemoverride
 
 # Wait to get connected to the TCS.
    waitConnect
