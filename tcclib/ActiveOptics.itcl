@@ -664,20 +664,17 @@ puts "beam is $beam gonna wait for 1 second"
       logger command wfsGuideMode
    }
 
-   if {$oiao && $oiaoLoop} {
-	puts "Turn ON NICI OIAO Loop"
-	cs niciAOLoop set dem close
-	cs niciAOLoop set dir 0
-	after 100
-	cs niciAOLoop set dir 3
-        #AWE is this neccesary? make sure oiwfsActive is false
-        set oiwfsActive 0
+   if { $oiao && $oiaoLoop } {
+# Actually closing of the AO loop was moved to after the closing of P2
+
+#AWE is this neccesary? make sure oiwfsActive is false
+      set oiwfsActive 0
    } else {
-	puts "Turn OFF NICI OIAO Loop"
-	cs niciAOLoop set dem open
-	cs niciAOLoop set dir 0
-	after 100
-	cs niciAOLoop set dir 3
+#     puts "Turn OFF NICI OIAO Loop"
+      cs niciAOLoop set dem open
+      cs niciAOLoop set dir 0
+      after 100
+      cs niciAOLoop set dir 3
    }
 
    foreach wfs [list pwfs1 pwfs2 oiwfs] \
@@ -713,6 +710,18 @@ puts "beam is $beam gonna wait for 1 second"
             \"$msg\""
       process IDLE
       return
+   }
+
+   if { $oiao && $oiaoLoop } {
+      puts "Turn ON NICI OIAO Loop"
+#We have to wait for P2 loop to be closed before closing NICI AO
+      if { $pwfs2Active } {
+         if { [setTimeout "sa agssad get p2FollowS" OFF 30000 200 "waiting for P2 before activating NICI AO loop"] } return
+      }
+      cs niciAOLoop set dem close
+      cs niciAOLoop set dir 0
+      after 100
+      cs niciAOLoop set dir 3
    }
 
 # Set the state to "enabled"
