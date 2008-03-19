@@ -716,7 +716,9 @@ puts "beam is $beam gonna wait for 1 second"
       puts "Turn ON NICI OIAO Loop"
 #We have to wait for P2 loop to be closed before closing NICI AO
       if { $pwfs2Active } {
-         if { [setTimeout "sa agssad get p2FollowS" OFF 30000 200 "waiting for P2 before activating NICI AO loop"] } return
+#         if { [setTimeout "sa agssad get someLoopStatus" OPEN 30000 200 "P2 before activating NICI AO loop"] } return
+#Is there a way to know when the loop is closed? We'll have to do with a delay
+         after 1000
       }
       cs niciAOLoop set dem close
       cs niciAOLoop set dir 0
