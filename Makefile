@@ -11,3 +11,12 @@ default_target:
 	cd scriptlib; make
 	cd tcclib; make
 	cd tsdlib; make
+
+clean:
+	cd src; make clean
+	cd lib; make clean
+	cd pointlib; make clean
+	cd scriptlib; make clean
+	cd tcclib; make clean
+	cd tsdlib; make clean
+
