@@ -14,7 +14,7 @@
 itcl::class CalParam {
    constructor {args} {}
    public {
-      variable calFile {calparams.dat}
+      variable calFile <undefined>
       variable pwfs1_center_x <undefined>
       variable pwfs1_center_y <undefined>
       variable pwfs1_center_z <undefined>
@@ -41,6 +41,7 @@ itcl::class CalParam {
 
 itcl::body CalParam::constructor {args} {
    global ROOT
+   set calFile [file join calparams.$::env(GEMINI_SITE)]
    eval configure $args
    puts "CalParam using file $calFile"
    source $ROOT/$calFile
