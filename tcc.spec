@@ -20,7 +20,8 @@ BuildArch: %{arch}
 Prefix: %{_prefix}
 ## You may specify dependencies here
 # BuildRequires:
-# Requires: 
+Requires: epics_module-timelib epics_module-slalib epics_module-astlib
+Requires: ocswish seqexec
 ## Switch dependency checking off
 # AutoReqProv: no
 
