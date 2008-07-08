@@ -46,7 +46,7 @@ This is a default description for the %{name} package
 %build
 ## Write build instructions here, e.g
 # sh configure
-# make
+make
 
 %install
 ## Write install instructions here, e.g
