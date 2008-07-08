@@ -13,6 +13,7 @@
 #-
 
 proc tccMain args {
+  global ROOT
 
 # Withdraw the main window so that it doesn't appear if some error happens
 # during startup and a message box is created and so that the windows that
@@ -27,9 +28,9 @@ proc tccMain args {
    service epics
 
 # Process command line arguments.
-   set layout $::ROOT/default_layout.tcc
+   set layout $::ROOT/config/default_layout.tcc
    set init ""
-   set calfile "calparams.dat"
+   set calfile [file join ${ROOT} config calparams.$::env(GEMINI_SITE)]
    foreach {opt val} $args {
       switch -- $opt {
          -layout {
