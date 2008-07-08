@@ -19,6 +19,9 @@ exec $HLPG_INSTALL_BASE/bin/ocssh "$0" "$@"
 #  Copyright CCLRC
 #-
 
+# extent search path for packages so that package Seq can be found
+lappend auto_path [file join $::env(GEMINI_TOP) opt seqexec lib]
+
 # Load required packages
 package require Tcl 8.4
 package require Tk
@@ -52,9 +55,9 @@ set SAVE_FILE_DIR [file join /gemini files]
 lappend auto_path [file join $ROOT pointlib]
 
 # Load the tcctime and sla extensions to tcl.
-load [file join $ROOT lib $::env(HOST_ARCH) tcctime.so]
-load [file join $ROOT tcclib $::env(HOST_ARCH) tccext.so]
-load [file join $ROOT lib $::env(HOST_ARCH) slaext.so]
+load [file join $ROOT lib $::env(EPICS_HOST_ARCH) tcctime.so]
+load [file join $ROOT tcclib $::env(EPICS_HOST_ARCH) tccext.so]
+load [file join $ROOT lib $::env(EPICS_HOST_ARCH) slaext.so]
 
 # Set the name of the epics service configuration file.
 if { [info exists env(TCC_TCSNAME)] && \
