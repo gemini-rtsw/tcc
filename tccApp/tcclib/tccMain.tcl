@@ -214,7 +214,7 @@ proc tccMain args {
    wm iconname . TCC
 
 # Load default components.
-   set file [open $::ROOT/default_components.xml RDONLY]
+   set file [open $::ROOT/config/default_components.xml RDONLY]
    set config [TcsConfigFile #auto [read $file] .]
    itcl::delete object $config
    close $file

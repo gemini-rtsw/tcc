@@ -15,8 +15,18 @@ exec $HLPG_INSTALL_BASE/bin/ocssh "$0" "$@"
 #  Copyright CCLRC
 #-
 
-# extent search path for packages so that package Seq can be found
+# Define the root directory for locating libraries and applications.
+set ::ROOT [file dirname [info script]]
+if { [string compare [file pathtype $::ROOT] relative] == 0 } {
+   set ::ROOT [file join [pwd] $::ROOT]
+}
+
+# The tcc library files live in the lib subdirectory.
+lappend auto_path [file join $::ROOT lib]
+lappend auto_path [file join $::ROOT tcclib]
+
 lappend auto_path [file join $::env(GEMINI_TOP) opt seqexec lib]
+lappend auto_path [file join $::env(GEMINI_TOP) opt ocswish lib]
 
 # Load all the packages required by the tcc.
 package require Tcl 8.4
@@ -25,23 +35,14 @@ package require Itcl
 package require Itk
 package require Iwidgets
 package require Ocspkg
-package require dom
-#package require dom::libxml2
-package require xml::libxml2
 package require Seq
-
-# Define the root directory for locating libraries and applications.
-set ::ROOT [file dirname [info script]]
-if { [string compare [file pathtype $::ROOT] relative] == 0 } {
-   set ::ROOT [file join [pwd] $::ROOT]
-}
+package require dom
+package require xml::libxml2
+package require dom::tcl
+#package require dom::libxml2
 
 # Define the location of the star catalogue files.
 set ::CATALOG_DIR [file join $::ROOT pointcats]
-
-# The tcc library files live in the lib subdirectory.
-lappend auto_path [file join $::ROOT lib]
-lappend auto_path [file join $::ROOT tcclib]
 
 # Load the time and tcc extensions to tcl.
 load [file join $::ROOT lib $::env(EPICS_HOST_ARCH) tcctime.so]
