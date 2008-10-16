@@ -21,7 +21,7 @@ Prefix: %{_prefix}
 ## You may specify dependencies here
 # BuildRequires:
 Requires: epics_module-timelib epics_module-slalib epics_module-astlib
-Requires: ocswish seqexec tcldom-libxml2
+Requires: ocswish seqexec tcldom-libxml2 tcc-config
 ## Switch dependency checking off
 # AutoReqProv: no
 
