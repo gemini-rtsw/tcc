@@ -1,0 +1,183 @@
+#+
+#  ObsDialog <- iwidgets::Dialog
+#
+#  An ObsDialog widget is a dialog with a listbox for selecting an
+#  observation from the current session.
+#
+#  Options:
+#           -session  The name of the OcsSession object that implements
+#                     ocs session.
+#
+#  Methods:
+#           get   returns the id of the selected observation.
+#
+#  D Terrett 10 July 2003
+#
+#  Copyright CCLRC
+#-
+
+itcl::class ObsDialog {
+   inherit iwidgets::Dialog
+   constructor args {}
+   itk_option define -session session Session {} refresh
+   public {
+      method refresh {}
+   }
+   private {
+      method apply {}
+      method select {}
+      method view {}
+      variable obslist {}
+      variable view ""
+   }
+}
+
+itk::usual ObsDialog {
+   keep -activebackground -activerelief -background -borderwidth -cursor \
+         -elementborderwidth -foreground -highlightcolor -highlightthickness \
+         -insertbackground -insertborderwidth -insertofftime -insertontime \
+         -insertwidth -jump -labelfont -modality -selectbackground \
+         -selectborderwidth -textbackground -textfont 
+}
+
+option add *ObsDialog.borderWidth 2 widgetDefault
+option add *ObsDialog.height 380 widgetDefault
+option add *ObsDialog.width 450 widgetDefault
+option add *ObsDialog.master "." widgetDefault
+option add *ObsDialog.title "Observation Import Dialog" widgetDefault
+
+itcl::body ObsDialog::constructor {args} {
+
+   set w $itk_interior
+
+# Label
+   itk_component add label {
+      label $w.label -text "Observation ID"
+   }
+
+# List box for all the observations in the queue.
+   itk_component add obslist {
+      iwidgets::scrolledlistbox $w.obslist -selectmode single 
+   }
+   [$itk_component(obslist) component listbox] configure \
+         -listvariable [itcl::scope obslist]
+
+# Entry for entering the observation to fetch.
+   itk_component add progid {
+      entry $w.progid
+   }
+
+# Bind listbox selection to a command that copies the selection into the
+# entry field.
+   bind [$itk_component(obslist) component listbox] <<ListboxSelect>> \
+         [itcl::code $this select]
+
+# Bind a double click to apply.
+   bind [$itk_component(obslist) component listbox] <Double-Button-1> \
+         [itcl::code $this apply]
+
+# Bind <Return> in the entry widget to the OK button. This causes the apply
+# function to be executed twice. Wierd Huh!
+#   bind [$itk_component(progid) component entry] <Return> \
+#         [itcl::code $this invoke OK]
+
+# Configure buttons.
+   buttonconfigure Help -text Update -command [itcl::code $this refresh]
+   buttonconfigure Apply -text Import -command [itcl::code $this apply]
+   buttonconfigure OK \
+          -command "[itcl::code $this apply]; [itcl::code $this deactivate]"
+   add View -text "View XML" -command [itcl::code $this view]
+   pack $itk_component(label) -anchor w
+   pack $itk_component(obslist) -fill both -expand yes -pady 5
+   pack $itk_component(progid) -fill x -pady 5
+
+   eval itk_initialize $args
+}
+
+itcl::body ObsDialog::select {} {
+   $itk_component(progid) delete 0 end
+   set ind [$itk_component(obslist) curselection]
+   if { ! [string equal $ind ""] } {
+      $itk_component(progid) insert end [$itk_component(obslist) get $ind]
+   }
+}
+
+itcl::body ObsDialog::apply {} {
+
+# Get the observation id.
+   set obsid [$itk_component(progid) get]
+   if { [string is space $obsid] } {
+      set ind [$itk_component(obslist) curselection]
+      if { ! [string equal $ind ""] } {
+         set obsid [$itk_component(obslist) get $ind]
+      }
+   }
+
+   if { ! [string is space $obsid] } {
+
+# Process the XML field description.
+      if { [catch {set config [TcsConfigFile #auto \
+            [ocssession getField $obsid] $itk_interior]} msg] } {
+         tk_messageBox -icon error -message $msg
+      } else {
+
+# Select the new field.
+         set ::Config(tcs,value) [$config cget -tcsconfig]
+	 logactions logmess "Loaded **** [$config cget -tcsconfig] **** from OCS"
+# Delete the TcsConfigFile object.
+         itcl::delete object $config
+      }
+      set inst $::Config(tcs.instrument,value)
+      set name "$::Config(tcs.field,namespace)\:\:$::Config(tcs.field,value)"
+      set rotator [$name cget -rotator]
+      # puts "inst: $inst name: $name rotator: $rotator"
+      if {[string match "MICHELLE*SPEC" $inst]} {
+	  # puts "setting IPA to 0"
+	  $name configure -rotator "IPA0"
+      }
+   }
+}
+
+itcl::body ObsDialog::refresh {} {
+   if { ! [string equal $itk_option(-session) ""] } {
+      set obslist [$itk_option(-session) listObs]
+   }
+}
+
+itcl::body ObsDialog::view {} {
+
+# Get the observation id.
+   set obsid [$itk_component(progid) get]
+   if { [string is space $obsid] } {
+      set ind [$itk_component(obslist) curselection]
+      if { ! [string equal $ind ""] } {
+         set obsid [$itk_component(obslist) get $ind]
+      }
+   }
+
+   if { ! [string is space $obsid] } {
+
+# Fetch the XML field description.
+      if { [catch {set xml [ocssession getField $obsid] } msg] } {
+         tk_messageBox -icon error -message $msg
+      } else {
+
+# Create the widget to display the XML.
+         if { ! [winfo exists $itk_interior.view] } {
+            set top [toplevel $itk_interior.view]
+            wm title $top "XML source"
+            set view [iwidgets::scrolledtext $top.text -width 500 \
+                  -height 300 -wrap none]
+            pack $view -fill both -expand yes
+         } else {
+            $view configure -state normal
+            $view clear
+            wm deiconify [winfo toplevel $view]
+         }
+
+# Display the XML in a list box.
+         $view insert end $xml
+         $view configure -state disabled
+      }
+   }
+}

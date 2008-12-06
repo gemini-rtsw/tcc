@@ -1,0 +1,158 @@
+#+
+#  StateButton <- itk::Widget
+#
+#  Implements the StateButton class. A StateButton is a push button that
+#  sets some mechanism into a particular state. The current state of the
+#  mechanism, is indicated by the background colour (red for if is not
+#  in that state, green if it. When the button is pressed it goes yellow 
+#  until the mechanism has changed state.
+#
+#  Options:
+#
+#          -command        The command to execute when the button is pushed
+#
+#          -setcommand     The command sender, parameter and value that sets
+#                          the mechanism state.
+#
+#          -setvalue       A list of the sad record values that indicate that
+#                          the mechanism is in the desired state.
+#
+#          -sadrecord      The name of the sa that indicates the mechanism
+#                          state.
+#
+#  Methods:
+#          none
+#
+#  D Terrett 10 June 2003
+#
+#  Copyright CCLRC
+#-
+
+itcl::class StateButton {
+   inherit itk::Widget
+   constructor args {}
+   destructor {}
+   itk_option define -command command Command {}
+   itk_option define -setcommand setCommand Command {}
+   itk_option define -setvalue setValue Value {} checkstate
+   itk_option define -sadrecord sadrecord SadRecord {} checkstate
+   private {
+      method pressed {}
+      method monitor {record value}
+      method checkstate {}
+      variable state 0
+      variable monid
+      variable recmon ""
+   }
+}
+
+itk::usual StateButton {
+   keep -activeforeground -cursor -disabledforeground \
+         -foreground -font -highlightcolor -highlightthickness -width
+}
+
+itcl::body StateButton::constructor args {
+
+   itk_component add button {
+      button $itk_interior.button -command [itcl::code $this pressed]
+   } {
+      usual
+      keep -state -text -width
+      ignore -activebackground
+      ignore -background
+      ignore -command
+   }
+   pack $itk_component(button) -fill both -expand y
+
+   eval itk_initialize $args
+}
+
+itcl::body StateButton::destructor {} {
+
+# If a monitor exists remove it.
+   if { $recmon ne "" } {
+      $recmon remove $monid
+   }
+}
+
+itcl::body StateButton::pressed {} {
+
+# Set the command sender parameter appropriate for the desired state.
+   if { [llength $itk_option(-setcommand)] } {
+      foreach {cs par val} $itk_option(-setcommand) {}
+      cs $cs set $par $val
+
+# Log and post the command.
+      if { [string length $cs] } {
+         logger command $cs
+         if { [catch {cs tcsApply post} msg] } {
+            tk_messageBox -icon error -parent $itk_interior -message $msg
+            return
+         }
+      }
+   }
+
+# Execute the command if the -command option is set.
+   if { [llength $itk_option(-command)] } {
+      uplevel #0 $itk_option(-command)
+   }
+
+# If the mechanism wasn't already in the desired state then set the button 
+# background to indicate that a state change is in progress.
+   if { !$state } {
+      $itk_component(button) configure -background yellow \
+            -activebackground yellow
+   }
+}
+
+itcl::configbody StateButton::setcommand {
+   if { [llength $itk_option(-setcommand)] } {
+
+      set cs [lindex $itk_option(-setcommand) 0]
+
+# Create the command sender if it doesn't already exist.
+      if { [catch {cs $cs info}] } {
+         epics cs $cs
+      }
+   }
+}
+
+itcl::body StateButton::checkstate {} {
+   if { [llength $itk_option(-sadrecord)] } {
+
+# Extract the status acceptor and record names.
+      foreach {sa rec} $itk_option(-sadrecord) {}
+
+# Remove any existing monitor.
+      if { $recmon ne "" } {
+         $recmon remove $monid
+      }
+
+# Create the record monitor for this item if it doesn't already exist.
+      if { [llength [itcl::find objects ::$sa.$rec]] == 0 } {
+         set recmon [RecordMonitor ::$sa.$rec $sa $rec]
+      } else {
+         set recmon ::$sa.$rec
+      }
+
+# Monitor the record.
+      set monid [$recmon add [itcl::code $this monitor]]
+
+# Call the monitor routine to update the state.
+      monitor $recmon [sa $sa get $rec]
+   }
+}
+
+itcl::body StateButton::monitor {record value} {
+
+# Determine the state of the mechanism and set the colour.
+   if { [lsearch -exact $itk_option(-setvalue) $value] >= 0 } {
+      set state 1
+      $itk_component(button) configure -background green \
+            -activebackground green
+   } else {
+      set state 0
+      $itk_component(button) configure -background red \
+            -activebackground red
+   }
+}

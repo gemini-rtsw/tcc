@@ -1,0 +1,75 @@
+#+
+#  DomeView <- itk:Widget 
+#
+#  Plots a view of the dome on a canvas.
+#
+#  Options:
+#           none
+#
+#  Methods:
+#           update          Updates the view with the current state of the
+#                           telescope.
+#
+#  D Terrett 1 May 2001
+#
+#  Copyright CCLRC
+#-
+
+itcl::class DomeView {
+   inherit itk::Widget
+   constructor args {}
+   public {
+      method update {}
+   }
+}
+
+itk::usual DomeView {
+   keep -background -cursor -highlightcolor -highlightthickness \
+         -insertbackground -insertborderwidth -insertwidth -insertontime \
+         -insertofftime -selectbackground -selectborderwidth -selectforeground
+}
+
+itcl::body DomeView::constructor args {
+
+   itk_component add domeview {
+      canvas $itk_interior.domeview -width 340 -height 340
+   }
+
+# Create view of dome etc.
+   $itk_component(domeview) create domeview 170 170 -tags domeview
+
+# Create wind direction indicator.
+   $itk_component(domeview) create line 0 0 0 0 -arrow first \
+         -tags {wind arrow} -width 2
+   $itk_component(domeview) create line 0 0 0 0 -arrow none -tags {wind bar} \
+         -width 2
+   $itk_component(domeview) create text 310 0 -anchor n -text WIND -tags wind
+
+   pack $itk_component(domeview)
+
+   eval itk_initialize $args
+}
+
+itcl::body DomeView::update {} {
+
+# Update dome view.
+   $itk_component(domeview) itemconfigure domeview -display 1
+
+# Redraw wind speed indicator.
+   set wd [expr { [sadVal tcssad currentWindDir 0] / 57.29577951 }]
+   set cwd [expr {cos($wd)}]
+   set swd [expr {sin($wd)}]
+   $itk_component(domeview) coords arrow [expr {310.0 - 25.0 * $swd}] \
+         [expr {40.0 + 25.0 * $cwd}]  [expr {310.0 + 27.0 * $swd}] \
+         [expr {40.0 - 27.0 * $cwd}]
+   $itk_component(domeview) coords bar [expr {310.0 + 20.0 * $cwd}] \
+         [expr {40.0 + 20.0 * $swd}]  [expr {310.0 - 20.0 * $cwd}] \
+         [expr {40.0 - 20.0 * $swd}]
+
+# Colour it red if the speed exceeds 80kmh (50mph).
+   if { [sadVal tcssad currentWindSpeed 0] > 80.0 } {
+      $itk_component(domeview) itemconfigure wind -fill red
+   } else {
+      $itk_component(domeview) itemconfigure wind -fill black
+   }
+}

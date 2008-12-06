@@ -1,0 +1,119 @@
+#+
+#  LogControl <- itk::Widget
+#
+#  A LogControl is a window that displays log messages.
+#
+#  Options:
+#           none
+#
+#  Methods:
+#           add text        Adds a line of text to the window.
+#
+#           closefile       Closes the log file.
+#
+#           openfile file   Opens a log file.
+#
+#
+#  D Terrett 26 March 2001
+#
+#  Copyright CCLRC
+#+
+
+itcl::class LogControl {
+   inherit itk::Widget
+   constructor args {}
+   destructor {}
+   public {
+      method add {text}
+      method closefile {}
+      method openfile {filename}
+   }
+   private {
+      method comment {}
+      variable filespec
+      variable chanid ""
+   }
+}
+
+itk::usual LogControl {
+   keep -activebackground -activerelief -background -borderwidth -cursor \
+         -elementborderwidth -foreground -highlightcolor -highlightthickness \
+         -insertbackground -insertborderwidth -insertofftime -insertontime \
+         -insertwidth -jump -labelfont -selectbackground -selectborderwidth \
+         -selectforeground -textbackground -textfont -troughcolor 
+}
+
+itcl::body LogControl::constructor args {
+
+   itk_component add title {
+      label $itk_interior.title -text "No log file open"
+   }
+   itk_component add display {
+      iwidgets::scrolledtext $itk_interior.display -state disabled \
+            -hscrollmode none
+   }
+   itk_component add comment {
+      iwidgets::entryfield $itk_interior.comment -labeltext Comment: \
+            -command [itcl::code $this comment]
+   }
+   pack $itk_component(title)
+   pack $itk_component(comment) -fill x -padx 3 -pady 3 -side bottom
+   pack $itk_component(display) -fill both -expand y
+   eval itk_initialize $args
+}
+
+itcl::body LogControl::destructor {} {
+   if { ! [string equal $chanid ""] } {
+      catch {close $chanid}
+   }
+}
+
+itcl::body LogControl::add text {
+
+# Enable the text widget.
+   $itk_component(display) configure -state normal
+
+# Insert the new test.
+   $itk_component(display) insert end \n$text
+
+# Make the last line visible.
+   $itk_component(display) see end
+
+# Remove the first line if there are now more than 500 lines.
+   if { [$itk_component(display) index end] > 500 } {
+      $itk_component(display) delete 1.0 2.0
+   }
+
+# Disable the text widget to prevent it being edited.
+   $itk_component(display) configure -state disabled
+
+# Write the text to the log file.
+   if { ! [string equal $chanid ""] } {
+      puts $chanid $text
+      flush $chanid
+   }
+}
+
+itcl::body LogControl::closefile {} {
+   if { ! [string equal $chanid ""] } {
+      catch {close $chanid}
+      set chanid ""
+      set filespec ""
+      $itk_component(title) configure -text "No log file open"
+   }
+}
+
+itcl::body LogControl::openfile filename {
+   if { [catch {set chanid [open $filename {WRONLY CREAT TRUNC}]} msg]} {
+      tk_messageBox -icon error -message $msg -parent $itk_interior
+   } else {
+      set filespec $filename
+      $itk_component(title) configure -text "Logging to: \"$filespec\""
+      puts $chanid "Logfile opened at: [clock format [clock seconds]]"
+   }
+}
+
+itcl::body LogControl::comment {} {
+   add [$itk_component(comment) get]
+   $itk_component(comment) delete 0 end
+}

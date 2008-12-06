@@ -1,0 +1,144 @@
+#+
+#  Logger
+#
+#  Implements the Logger class. A logger object monitors a principle system
+#  applyC.CLID and errorMess.VAL and displays a log of activity in a 
+#  scrollable text window. The log method allows additional messages to be 
+#  written to the log.
+#
+#  Options:
+#          none
+#
+#  Methods:
+#          log message   Writes "message" into the log window.
+#
+#          command cs    Writes the values of the command sender cs's
+#                        parameters to the log window.
+#
+#  D Terrett 26 October 2002
+#
+#  Copyright CCLRC
+#+
+
+itcl::class Logger {
+   constructor {name apply applyC {errMessage ""}} {}
+   public {
+      method log {message}
+      method command {cs}
+   }
+   private {
+      method monitor {record status time value}
+      method send {text}
+      variable clid 0
+      variable applyMess {}
+      variable Apply
+      variable ApplyC
+      variable ErrMessage
+      variable Name
+   }
+}
+
+itcl::body Logger::constructor {name apply applyC {errMessage ""}} {
+
+# Create status acceptors.
+   if { [catch {sa $apply info}] } {
+      epics sa $apply
+   }
+   if { [catch {sa $applyC info}] } {
+      epics sa $applyC
+   }
+   if { $errMessage != "" } {
+      if { [catch {sa $errMessage info}] } {
+         epics sa $errMessage
+      }
+   }
+
+# Set up monitors on the epics records of interest.
+   sa $applyC proc clid [itcl::code $this monitor]
+   sa $apply proc mess [itcl::code $this monitor]
+   if { $errMessage != "" } {
+      sa $errMessage proc val [itcl::code $this monitor]
+   }
+
+# Save the record names.
+   set Apply $apply
+   set ApplyC $applyC
+   set ErrMessage $errMessage
+   set Name $name
+}
+
+itcl::body Logger::monitor {record status time value} {
+
+# Initialise message.
+   set text ""
+
+# Switch on the record name.
+   switch $record \
+         $ApplyC.clid {
+
+# If the client ID was incremented then a command was accepted.
+            if { $value > $clid } {
+                 set text "command accepted"
+                 set clid $value
+            }
+         } \
+         $ErrMessage.val {
+            set text $value
+         } \
+         $Apply.mess {
+            if { ! [string is space $value] } {
+               set text "rejected: $value"
+            }
+         }
+
+# Send the text to the logger.
+   if { ! [string is space $text] } {
+      send $text
+   }
+}
+
+itcl::body Logger::log {message} {
+
+# Send the text to the logger.
+   send $message
+}
+
+itcl::body Logger::command {cs} {
+
+# Get the command info
+   set info [cs $cs info]
+
+# Write the name of the command.
+   set text [lindex $info 1]
+
+# Get the names of the commands parameters.
+   set params [lindex $info 3]
+
+   foreach par $params {
+
+#  Ingnore parameters called dummy.
+      if { [string equal dummy $par] } continue
+
+#  Get the value
+      set val [cs $cs get $par]
+
+#  Ignore empty values or "No Value".
+      if { [string is space $val] || [string equal $val "No Value"] } continue
+
+#  add the name and value to the log window.
+      set text "$text, [lindex [cs $cs info $par] 2] = $val"
+   }
+
+# Send the text to the logger.
+   send $text
+}
+
+itcl::body Logger::send {text} {
+   set panel [logPanel cget -name]
+   if { [winfo exists $panel] } {
+       set logwindow [$panel component control]
+       $logwindow add "[sa tcssad get UTC value]:($Name) $text"
+   }
+   # irregardless, add log info to LogActions
+   logactions logmess "[sa tcssad get UTC value]:($Name) $text"
+}

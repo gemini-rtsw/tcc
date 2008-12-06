@@ -1,0 +1,224 @@
+<tcc_tcs_config_file>
+
+<!--
+  This file is loaded by the tcc as it starts up and defines various useful
+  configuration components.
+-->
+
+<!-- Commonly used coordinate systems -->
+
+ <paramset name="FK5/J2000" type="cosys">
+    <param name="frame" value="FK5"/>
+    <param name="equinox" value="J2000"/>
+ </paramset>
+
+ <paramset name="FK4/B1950" type="cosys">
+    <param name="frame" value="FK4"/>
+    <param name="equinox" value="B1950"/>
+ </paramset>
+
+ <paramset name="FK4/B1900" type="cosys">
+    <param name="frame" value="FK4"/>
+    <param name="equinox" value="B1900"/>
+ </paramset>
+
+ <paramset name="Apparent" type="cosys">
+    <param name="frame" value="Appt"/>
+ </paramset>
+
+ <paramset name="Fixed" type="cosys">
+    <param name="frame" value="Fixed"/>
+ </paramset>
+
+ <paramset name="AzEl" type="cosys">
+    <param name="frame" value="AzEl"/>
+ </paramset>
+
+
+<!-- Telescope tracking frames with all virtual telescopes the same -->
+
+ <paramset name="FK5/J2000" type="tracking_frame">
+    <param name="mountCosys" value="FK5/J2000"/>
+    <param name="sourceACosys" value="FK5/J2000"/>
+    <param name="sourceBCosys" value="FK5/J2000"/>
+    <param name="sourceCCosys" value="FK5/J2000"/>
+    <param name="pwfs1Cosys" value="FK5/J2000"/>
+    <param name="pwfs2Cosys" value="FK5/J2000"/>
+    <param name="oiwfsCosys" value="FK5/J2000"/>
+ </paramset>
+
+ <paramset name="FK4/B1950" type="tracking_frame">
+    <param name="mountCosys" value="FK4/B1950"/>
+    <param name="sourceACosys" value="FK4/B1950"/>
+    <param name="sourceBCosys" value="FK4/B1950"/>
+    <param name="sourceCCosys" value="FK4/B1950"/>
+    <param name="pwfs1Cosys" value="FK4/B1950"/>
+    <param name="pwfs2Cosys" value="FK4/B1950"/>
+    <param name="oiwfsCosys" value="FK4/B1950"/>
+ </paramset>
+
+ <paramset name="FK4/B1900" type="tracking_frame">
+    <param name="mountCosys" value="FK4/B1900"/>
+    <param name="sourceACosys" value="FK4/B1900"/>
+    <param name="sourceBCosys" value="FK4/B1900"/>
+    <param name="sourceCCosys" value="FK4/B1900"/>
+    <param name="pwfs1Cosys" value="FK4/B1900"/>
+    <param name="pwfs2Cosys" value="FK4/B1900"/>
+    <param name="oiwfsCosys" value="FK4/B1900"/>
+ </paramset>
+
+ <paramset name="AzEL" type="tracking_frame">
+    <param name="mountCosys" value="AzEl"/>
+    <param name="sourceACosys" value="AzEl"/>
+    <param name="sourceBCosys" value="AzEl"/>
+    <param name="sourceCCosys" value="AzEl"/>
+    <param name="pwfs1Cosys" value="AzEl"/>
+    <param name="pwfs2Cosys" value="AzEl"/>
+    <param name="oiwfsCosys" value="AzEl"/>
+ </paramset>
+
+
+<!-- Pointing origin for the rotator axis -->
+
+ <paramset name="rotator_axis" type="instrument_origin">
+    <param name="x" value="0.0"/>
+    <param name="y" value="0.0"/>
+ </paramset>
+
+
+<!-- Rotator configurations -->
+
+ <paramset name="tracking" type="rotator">
+    <param name="ipa" value="0.0"/>
+    <param name="cosys" value="FK5/J2000"/>
+ </paramset>
+
+ <paramset name="fixed" type="rotator">
+    <param name="ipa" value="0.0"/>
+    <param name="cosys" value="Fixed"/>
+ </paramset>
+
+
+<!-- Slew option with all options selected. -->
+
+ <paramset name="All" type="slew_options">
+    <param name="chopThrow" value="On"/>
+    <param name="sourceOffset" value="On"/>
+    <param name="sourceDifTr" value="On"/>
+    <param name="mountOffset" value="On"/>
+    <param name="mountDifTr" value="On"/>
+    <param name="filter1" value="On"/>
+    <param name="filter2" value="On"/>
+    <param name="pointing" value="On"/>
+    <param name="guiding" value="On"/>
+    <param name="guideOffset" value="On"/>
+    <param name="instrOffset" value="On"/>
+    <param name="resetao" value="1"/>
+    <param name="disableao" value="1"/>
+    <param name="ltcscheck" value="1"/>
+ </paramset>
+
+
+<!-- The normal slew options; everything except zeroing the local pointing -->
+
+ <paramset name="Normal" type="slew_options">
+    <param name="chopThrow" value="On"/>
+    <param name="sourceOffset" value="On"/>
+    <param name="sourceDifTr" value="On"/>
+    <param name="mountOffset" value="On"/>
+    <param name="mountDifTr" value="On"/>
+    <param name="filter1" value="On"/>
+    <param name="filter2" value="On"/>
+    <param name="pointing" value="Off"/>
+    <param name="guiding" value="On"/>
+    <param name="guideOffset" value="On"/>
+    <param name="instrOffset" value="On"/>
+    <param name="resetao" value="1"/>
+    <param name="disableao" value="1"/>
+    <param name="ltcscheck" value="1"/>
+ </paramset>
+
+
+<!-- "scratch" guide configuration -->
+
+ <paramset name="scratch" type="guide">
+    <param name="pwfs1Active" value="A"/>
+    <param name="pwfs1NodState" value="AB"/>
+    <param name="pwfs2Active" value="A"/>
+    <param name="pwfs2NodState" value="AB"/>
+    <param name="oiwfsActive" value="A"/>
+    <param name="oiwfsNodState" value="AB"/>
+ </paramset>
+
+
+<!-- Guide configuration for not guiding -->
+
+ <paramset name="No guiding" type="guide">
+    <param name="pwfs1Active" value="never"/>
+    <param name="pwfs1NodState" value="AB"/>
+    <param name="pwfs2Active" value="never"/>
+    <param name="pwfs2NodState" value="AB"/>
+    <param name="oiwfsActive" value="never"/>
+    <param name="oiwfsNodState" value="AB"/>
+ </paramset>
+
+
+<!-- GAOS filters -->
+
+ <paramset name="GAOS" type="aowfswavelength">
+    <param value="0.70" name="wavel"/>
+ </paramset>
+
+<!-- OIWFS filters -->
+
+ <paramset name="GMOS OIWFS" type="oiwfswavelength">
+    <param value="0.650" name="wavel"/>
+ </paramset>
+
+ <paramset name="NICI OIWFS" type="oiwfswavelength">
+    <param value="0.70" name="wavel"/>
+ </paramset>
+
+ <paramset name="J" type="oiwfswavelength">
+    <param value="1.25" name="wavel"/>
+ </paramset>
+
+ <paramset name="H" type="oiwfswavelength">
+    <param value="1.65" name="wavel"/>
+ </paramset>
+
+ <paramset name="K" type="oiwfswavelength">
+    <param value="2.20" name="wavel"/>
+ </paramset>
+
+ <paramset name="K'" type="oiwfswavelength">
+    <param value="2.12" name="wavel"/>
+ </paramset>
+
+<!-- Effective wavelengths for the Acquisition Camera filters -->
+
+ <paramset name="Acq Cam V" type="wavelength">
+    <param value="0.530" name="wavel"/>
+ </paramset>
+
+ <paramset name="Acq Cam R" type="wavelength">
+    <param value="0.640" name="wavel"/>
+ </paramset>
+
+ <paramset name="Acq Cam I" type="wavelength">
+    <param value="0.760" name="wavel"/>
+ </paramset>
+
+ <paramset name="Acq Cam U" type="wavelength">
+    <param value="0.375" name="wavel"/>
+ </paramset>
+
+ <paramset name="Acq Cam B" type="wavelength">
+    <param value="0.425" name="wavel"/>
+ </paramset>
+
+ <paramset name="Acq Cam neutral" type="wavelength">
+    <param value="0.5" name="wavel"/>
+ </paramset>
+
+</tcc_tcs_config_file>

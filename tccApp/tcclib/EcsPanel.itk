@@ -1,0 +1,46 @@
+#+
+#  EcsPanel <- Panel
+#
+#  An EcsPanel is a Panel widget with a EcsControl widget packed into 
+#  its interior
+#
+#  Options:
+#           none
+#
+#  Methods:
+#           none
+#
+#  D Terrett 29 March 2001
+#
+#  Copyright CCLRC
+#+
+
+itcl::class EcsPanel {
+   inherit Panel
+   constructor args {}
+}
+
+itk::usual EcsPanel {
+   keep -background -cursor
+}
+
+itcl::body EcsPanel::constructor args {
+
+# Withdraw the top level window so that we don't see geometry changes as
+# we wait for sa to connect.
+   set toplevel [winfo toplevel $itk_interior]
+   wm withdraw $toplevel
+
+   setWidgetColors $itk_interior \
+         $itk_option(-background) $itk_option(-foreground)
+
+   itk_component add control {
+      EcsControl $itk_interior.control
+   }
+
+   pack $itk_component(control) -fill both -expand y
+
+   eval itk_initialize $args
+
+   wm deiconify $toplevel
+}

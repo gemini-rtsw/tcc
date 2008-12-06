@@ -1,0 +1,78 @@
+#+
+#  Pwfs
+#
+#  A Pwfs is a object for controlling Pwfs1 and Pwfs2
+#
+#  Methods:
+#
+#           filter wfs name     Set the filter for wfs
+#
+#           fieldstop wfs name  Set the fieldstop for wfs
+#
+#  A. Ebbers December, 2005
+#+
+
+itcl::class Pwfs {
+   constructor {} {}
+   public {
+      method filter {wfs name}
+      method fldstop {wfs name}
+      method getWl {name}
+   }
+   private {
+       variable defaultwavels
+   }
+}
+
+itcl::body Pwfs::constructor {} {
+# Define the default wavelengths for the peripheral wave-front filters.
+   array set defaultwavels {neutral 0.65 Blue 0.45 Green 0.55 Red 0.60 \
+         Red04 0.64 Red1 0.70}
+}
+
+itcl::body Pwfs::filter {wfs name} {
+    #puts "Pwfs::filter wfs: $wfs target: $name"
+    if {$name == ""} {
+	return
+    }
+    cs ${wfs}Filter set filter $name
+    logger command ${wfs}Filter
+
+    switch $wfs {
+	pwfs1 {
+	    cs wavelPwfs1 set wavel $defaultwavels($name)
+	    logger command wavelPwfs1
+	    
+	}
+	pwfs2 {
+	    cs wavelPwfs2 set wavel $defaultwavels($name)
+	    logger command wavelPwfs2
+	}
+    }
+    if { [catch {cs tcsApply post} msg] } {
+	tk_messageBox -icon error -message \
+            "Error posting guide commands: TCS reports \
+           \"$msg\""
+	return
+    }   
+
+}
+
+itcl::body Pwfs::fldstop {wfs name} {
+    #puts "Pwfs::fldstop wfs: $wfs target: $name"
+    if {$name == ""} {
+	return
+    }
+    cs ${wfs}FldStop set position $name
+    logger command ${wfs}FldStop
+    if { [catch {cs tcsApply post} msg] } {
+	tk_messageBox -icon error -message \
+            "Error posting guide commands: TCS reports \
+           \"$msg\""
+	return
+    }   
+}
+
+itcl::body Pwfs::getWl {name} {
+    return $defaultwavels($name)
+}

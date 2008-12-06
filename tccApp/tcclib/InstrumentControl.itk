@@ -1,0 +1,105 @@
+#+
+#  InstrumentControl <- ComponentControl
+#
+#  An InstrumentControl is a ComponentControl widget with
+#  entry widgets for the IAA, baffle positions and ISS ports.
+#
+#  Options:
+#           none
+#
+#  D Terrett 26 April 2002
+#
+#  Copyright CCLRC
+#+
+
+itcl::class InstrumentControl {
+   inherit ComponentControl
+   constructor args {}
+   itk_option define -component component Component {}
+   public {
+      method load {name}
+      method reset {}
+      method save {name}
+   }
+}
+
+itk::usual InstrumentControl {
+   keep -borderwidth -cursor -font -insertborderwidth -insertofftime \
+         -insertontime -insertwidth -labelfont -popupcursor \
+         -selectborderwidth -textfont -title
+}
+
+itcl::body InstrumentControl::constructor args {
+
+# Frame for instrument configuration.
+   itk_component add config {
+      frame $itk_interior.config -bd 2 -relief ridge
+   }
+   pack $itk_component(config) -fill x -expand y
+   set w $itk_component(config)
+
+# ISS port
+   itk_component add port {
+      iwidgets::optionmenu $w.port -labeltext "ISS port"
+   }
+   $itk_component(port) insert end AC 1 2 3 4 5
+   pack $itk_component(port) -anchor e -padx 3 -pady 3
+
+# Entryfield for instrument name.
+   itk_component add name {
+      iwidgets::entryfield $w.name -labeltext Name -width 12
+   }
+   pack $itk_component(name) -anchor e -padx 3 -pady 3
+
+# Entryfield for the angle.
+   itk_component add iaa {
+      iwidgets::entryfield $w.iaa -labeltext [lindex [cs rotator info iaa] 2] \
+            -width 8
+   }
+   pack $itk_component(iaa) -anchor e -padx 3 -pady 3
+
+# Focus offset.
+   itk_component add focus {
+      iwidgets::entryfield $w.focus \
+            -labeltext "Focus offset (mm of M2 movement)" -width 8
+   }
+   pack $itk_component(focus) -anchor e -padx 3 -pady 3
+
+# Set the object description.
+   set description "Instrument configuration"
+
+   eval itk_initialize $args
+}
+
+itcl::body InstrumentControl::save {name} {
+#+
+# Updates the named instrument object.
+#-
+
+# Only allow the instrument configuration to be saved if there is an
+# instrument name.
+   if { [$itk_component(name) get] == "" } {
+      error "Instrument name must be supplied"
+   } 
+   $name configure -issPort [$itk_component(port) get] \
+         -name [$itk_component(name) get] \
+         -iaa [$itk_component(iaa) get] \
+         -focusOffset [$itk_component(focus) get]
+}
+
+itcl::body InstrumentControl::reset {} {
+   $itk_component(name) clear
+   $itk_component(iaa) clear
+   $itk_component(focus) clear
+}
+
+itcl::body InstrumentControl::load {name} {
+#+
+# Copies the contents of the Instrument object selected in the combobox
+# into the edit control.
+#-
+   $itk_component(port) select [$name cget -issPort]
+   $itk_component(name) insert end [$name cget -name]
+   $itk_component(iaa) insert end [$name cget -iaa]
+   $itk_component(focus) insert end [$name cget -focusOffset]
+}

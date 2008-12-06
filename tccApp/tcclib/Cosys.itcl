@@ -1,0 +1,119 @@
+#+
+#  Cosys <- Paramset
+#
+#  A Cosys object stores a frame and an equinox.
+#
+#  Options:
+#           -frame          The coordinate frame 
+#
+#           -equinox        The equinox of the frame
+#
+#  Methods:
+#           apply comp      Sets the system and equinox paramters of 
+#                           specified component
+#
+#           init            Returns the cosys object to its initial state.
+#
+#           save node       Writes the values of the options to the xml
+#                           node
+#
+#  D Terrett 4 November 2002
+#
+#  Copyright CCLRC
+#+
+
+itcl::class Cosys {
+   inherit Paramset
+   public {
+      method apply {comp}
+      method init {}
+      method save {xml}
+      variable frame {}
+      variable equinox {}
+      variable isazel {}
+   }
+}
+
+itcl::body Cosys::apply {comp} {
+
+# Determine which command sender to apply to.
+   switch $comp {
+      tcs.field.sciencetarget.cosys {
+         set cs sourceA
+      }
+      tcs.field.sciencetarget.trackrate.cosys {
+         set cs difTrSourceA
+      }
+      tcs.field.pwfs1target.cosys {
+         set cs pwfs1
+      }
+      tcs.field.pwfs1target.trackrate.cosys {
+         set cs difTrPwfs1
+      }
+      tcs.field.pwfs2target.cosys {
+         set cs pwfs2
+      }
+      tcs.field.pwfs2target.trackrate.cosys {
+         set cs difTrPwfs2
+      }
+      tcs.field.oiwfstarget.cosys {
+         set cs oiwfs
+      }
+      tcs.field.oiwfstarget.trackrate.cosys {
+         set cs difTrOiwfs
+      }
+      tcs.field.aowfstarget.cosys {
+         set cs pwfs2
+      }
+      tcs.field.aowfstarget.trackrate.cosys {
+         set cs difTrPwfs2
+      }
+      tcs.field.rotator.cosys {
+         set cs rotator
+      }
+      tcs.chop.cosys {
+         set cs chopRelative
+      }
+      tcs.trackframe.mountcosys {
+         set cs trackMount
+      }
+      tcs.trackframe.sourceAcosys {
+         set cs trackSourceA
+      }
+      tcs.trackframe.sourceBcosys {
+         set cs trackSourceB
+      }
+      tcs.trackframe.sourceCcosys {
+         set cs trackSourceC
+      }
+      tcs.trackframe.pwfs1cosys {
+         set cs trackPwfs1
+      }
+      tcs.trackframe.pwfs2cosys {
+         set cs trackPwfs2
+      }
+      tcs.trackframe.aowfscosys {
+         set cs trackOiwfs
+      }
+   }
+
+# Set the command sender parameters.
+   cs $cs set system [list $frame]
+   cs $cs set equinox [list $equinox]
+   logger command $cs
+}
+
+itcl::body Cosys::init {} {
+   set system ""
+   set equinox ""
+}
+
+itcl::body Cosys::save {node} {
+   set node [paramset $node cosys]
+   param $node frame $frame
+   param $node equinox $equinox
+}
+
+itcl::configbody Cosys::frame {
+   set isazel [string equal -nocase $frame AzEl]
+}

@@ -1,0 +1,30 @@
+#+
+#  FieldComponent <- Field, Component
+#
+#  A FieldComponent object is a Field object that is stored in a 
+#  configuration list.
+#
+#  Options:
+#           none
+#
+#  Methods:
+#           constructor list  Creates the Field object and puts it onto
+#                           "list".
+#
+#           save file       Writes commands to re-create the object to the
+#                           channel identifier "file" and then calls the
+#                           Field save method to add the objects data.
+#
+#  D Terrett 19 September 2001
+#
+#  Copyright CCLRC
+#+
+
+itcl::class FieldComponent {
+   inherit Component Field
+   constructor {list args} {
+      Component::constructor $list
+   } {
+      eval configure $args
+   }
+}

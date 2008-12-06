@@ -1,0 +1,69 @@
+#+
+#  PointOrigControl <- ComponentControl
+#
+#  A PointOrigControl is a ComponentControl widget with entryfield widgets for 
+#  X and Y.
+#
+#  D Terrett 28 February 2002
+#
+#  Copyright CCLRC
+#+
+
+itcl::class PointOrigControl {
+   inherit ComponentControl
+   constructor args {}
+   public {
+      method load {name}
+      method reset {}
+      method save {name}
+   }
+}
+
+itk::usual PointOrigControl {
+   keep -borderwidth -cursor -font -highlightthickness -insertborderwidth \
+         -insertofftime -insertontime -insertwidth -labelfont -popupcursor \
+         -selectborderwidth -textfont -title
+}
+
+itcl::body PointOrigControl::constructor args {
+
+   set w $itk_interior
+
+# Entryfields for the pointing origin X & Y.
+   itk_component add xy {
+      frame $w.xy -bd 2 -relief ridge
+   }
+   pack $itk_component(xy) -fill x -expand y
+   set w $itk_component(xy)
+   itk_component add x {
+      iwidgets::entryfield $w.x -labeltext "X (arcsec)" -width 8
+   }
+   itk_component add y {
+      iwidgets::entryfield $w.y -labeltext "Y (arcsec)" -width 8
+   }
+   pack $itk_component(x) $itk_component(y) -side left -padx 4 -pady 4
+
+# Set the object description.
+   set description "instrument origin"
+
+   eval itk_initialize $args
+}
+
+itcl::body PointOrigControl::reset {} {
+   $itk_component(x) clear
+   $itk_component(y) clear
+}
+
+itcl::body PointOrigControl::load {name} {
+#
+# Copy the contents of the PointOrig object selected in the combobox
+# into the edit controls.
+   $itk_component(x) insert end [$name cget -x]
+   $itk_component(y) insert end [$name cget -y]
+}
+
+itcl::body PointOrigControl::save {name} {
+
+# Update the named pointing origin object.
+   $name configure -x [$itk_component(x) get] -y [$itk_component(y) get]
+}

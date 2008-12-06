@@ -1,0 +1,222 @@
+#+
+#  Dark
+#
+#  A Dark object implements a sequence of operations to take a new dark
+#  (more properly called a sky) frame with one of the peripheral wave-
+#  front sensors.
+#
+#  The steps are are follows:
+#
+#     1. Disable guiding.
+#
+#     2. Disable movement of the probes
+#
+#     3. Offset the RA/Dec of the telescope
+#
+#     4. Take a WFS frame
+#
+#     5. Zero the offset
+#
+#     5. Re-enable probe movement
+#
+#     6. Re-enable guiding (if it was enabled at the start).
+#
+#  D Terrett 24 February 2005
+#
+#  Copyright CCLRC
+#-
+
+itcl::class Dark {
+   constructor {wfs} {}
+   destructor {}
+   public {
+      method take {} {}
+   }
+   private {
+      method offset {}
+      method expose {}
+      method zero {}
+      method enableguide {}
+      method enableprobe {}
+      method isinposition {}
+      method isexposedone {}
+      variable guideenabled
+      variable wfsname
+      variable wfsobj
+      variable seqdark
+      variable disableaction
+      variable offsetaction
+      variable exposeaction
+      variable resetaction
+      variable probeaction
+      variable InPosition
+      variable Exposing
+   }
+}
+
+itcl::body Dark::constructor {wfs} {
+
+# Create action for disabling guiding.
+   set disableaction [seq::Action #auto tcs \
+      -onstart "AO disable" \
+      -onok [itcl::code $this offset]]
+
+# Create action for offsetting the telescope
+   set offsetaction [seq::Action #auto tcs \
+      -waitvar [itcl::scope InPosition(value)] \
+      -onok [itcl::code $this expose] \
+      -oktest [itcl::code $this isinposition]]
+   $offsetaction set targetAdjust frame 3
+   $offsetaction set targetAdjust angle 0.0
+   $offsetaction set targetAdjust size 60.0
+   $offsetaction set targetAdjust vt -2
+   switch $wfs {
+      p1 {
+         set wfsname pwfs1
+         set wfsobj Pwfs1
+      }
+      p2 {
+         set wfsname pwfs2
+         set wfsobj Pwfs2
+      }
+      oi {
+         set wfsname oiwfs
+         set wfsobj Oiwfs
+      }
+   }
+
+# Create action for taking the dark frame.
+   set exposeaction [seq::Action #auto tcs \
+      -waitvar [itcl::scope Exposing(value)] \
+      -onok [itcl::code $this zero] \
+      -oktest [itcl::code $this isexposedone] \
+      -onstart "$wfsobj start"]
+
+# Create action for zeroing the offset.
+   set resetaction [seq::Action #auto tcs \
+      -waitvar [itcl::scope InPosition(value)] \
+      -onok [itcl::code $this enableprobe] \
+      -oktest [itcl::code $this isinposition]]
+   $resetaction set targetAdjust size -60.0
+
+# Create action for re-enabling the WFS probes
+   set probeaction [seq::Action #auto tcs \
+      -onok [itcl::code $this enableguide]]
+}
+
+itcl::body Dark::destructor {} {
+   itcl::delete object $disableaction
+   itcl::delete object $offsetaction
+   itcl::delete object $exposeaction
+   itcl::delete object $resetaction
+   itcl::delete object $probeaction
+}
+
+itcl::body Dark::take {} {
+# Record the current state of guiding
+   set guideenabled [AO cget -enabled]
+
+# Configure the enableprobe action to re-enable movement of the WFS probes
+   foreach wfs {pwfs1 pwfs2 oiwfs} {
+      foreach chopnod {nodachopa nodbchopa nodbchopa nodbchopb} {
+         $probeaction set ${wfs}Guide $chopnod [sa ${wfs}Guide get $chopnod]
+      }
+   }
+
+# Configure the disable action to disable movement of the WFS probes
+   foreach wfs {pwfs1 pwfs2 oiwfs} {
+      foreach chopnod {nodachopa nodbchopa nodbchopa nodbchopb} {
+         $disableaction set ${wfs}Guide $chopnod off
+      }
+   }
+
+# Disable guiding.
+   $disableaction start
+   foreach wfs {pwfs1 pwfs2 oiwfs} {
+      logger command ${wfs}Guide
+   }
+
+   
+}
+
+itcl::body Dark::offset {} {
+# Link to TCS in position flag.
+   sa tcssad link inPosition [itcl::scope InPosition]
+
+# Offset probe
+   $offsetaction start
+   logger command targetAdjust
+}
+   
+itcl::body Dark::expose {} {
+
+# Link to WFS exposing flag.
+   switch $wfsname {
+      pwfs1 {
+         sa guideConfig link p1state [itcl::scope Exposing]
+      }
+      pwfs2 {
+         sa guideConfig link p2state [itcl::scope Exposing]
+      }
+      oiwfs {
+         sa guideConfig link oistate [itcl::scope Exposing]
+      }
+   }
+
+# Configure the WFS object.
+   $wfsobj configure -mode sky
+
+# Take the dark.
+   $exposeaction start
+}
+
+itcl::body Dark::zero {} {
+# Link to TCS in position flag.
+   sa tcssad link inPosition [itcl::scope InPosition]
+
+# Reverse the probe offset.
+   $resetaction start
+   logger command targetAdjust
+}
+
+itcl::body Dark::isinposition {} {
+   after 2000
+   set val [sa tcssad get inPosition]
+   return [string equal $val TRUE]
+}
+
+itcl::body Dark::isexposedone {} {
+   switch $wfsname {
+      pwfs1 {
+         set val [sa guideConfig get p1state]
+      }
+      pwfs2 {
+         set val [sa guideConfig get p2state]
+      }
+      oiwfs {
+         set val [sa guideConfig get oistate]
+      }
+   }
+   return [string equal $val No]
+}
+
+itcl::body Dark::enableprobe {} {
+   $probeaction start
+   foreach wfs {pwfs1 pwfs2 oiwfs} {
+      logger command ${wfs}Guide
+   }
+}
+
+
+itcl::body Dark::enableguide {} {
+
+# Set the processing mode to seq to be safe (in case someone starts an exposure
+# from elsewhere which would overwrite the sky frame).
+   $wfsobj configure -mode seq
+   $wfsobj start 0
+
+# Re-enable guiding if it was on when we started.
+   if { $guideenabled } {
+      AO enable
+   }
+}

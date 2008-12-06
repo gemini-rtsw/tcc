@@ -1,0 +1,57 @@
+#+
+#  TsdToolbar <- itk::Widget
+#
+#  Implements the TsdToolbar widget which is packed into . to make the
+#  root window of the Gemini tsd.
+#
+#  Options:
+#           none
+#
+#  Methods:
+#           none
+#
+#  D Terrett 6 April 2000
+#
+#  Copyright CCLRC
+#-
+
+itcl::class TsdToolbar {
+   inherit itk::Widget
+   constructor args {}
+}
+
+itk::usual TsdToolbar {
+   keep -activebackground -activeforeground -background -cursor \
+         -disabledforeground -foreground -font -highlightcolor \
+         -highlightthickness
+}
+
+itcl::body TsdToolbar::constructor args {
+
+  itk_component add menubar {
+      iwidgets::menubar $itk_interior.menubar -menubuttons {
+         menubutton file -text File -menu {
+            command layout -label "Save layout..." -command saveLayout
+            command exit -label Exit -command exit
+         }
+      }
+   } {}
+   pack $itk_component(menubar) -fill x -expand y
+
+# Create a border.
+   itk_component add border {
+      frame $itk_interior.border
+   }
+   pack $itk_component(border) -fill both -expand y -padx 6 -pady 6
+
+  set w $itk_component(border)
+   itk_component add graphic {
+      PanelButton $w.graphic -text "Graphics view" -panel graphicPanel
+   }
+   itk_component add numeric {
+      PanelButton $w.numeric -text "Numeric view" -panel numericPanel
+   }
+   pack $itk_component(graphic) $itk_component(numeric) -fill x -expand y
+
+   eval itk_initialize $args
+}

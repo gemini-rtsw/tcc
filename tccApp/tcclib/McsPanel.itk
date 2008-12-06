@@ -1,0 +1,46 @@
+#+
+#  McsPanel <- Panel
+#
+#  Implements the McsPanel widget. A Panel widget with a McsControl
+#  widget packed into its interior
+#
+#  Options:
+#          none
+#
+#  Methods:
+#          none
+#
+#  D Terrett 29 March 2001
+#
+#  Copyright CCLRC
+#+
+
+itcl::class McsPanel {
+   inherit Panel
+   constructor args {}
+}
+
+itk::usual McsPanel {
+   keep -background -cursor
+}
+
+itcl::body McsPanel::constructor args {
+
+# Withdraw the top level window so that we don't see geometry changes as
+# we wait for sa to connect.
+   set toplevel [winfo toplevel $itk_interior]
+   wm withdraw $toplevel
+
+   setWidgetColors $itk_interior \
+         $itk_option(-background) $itk_option(-foreground)
+
+   itk_component add control {
+      McsControl $itk_interior.control
+   }
+
+   pack $itk_component(control) -fill both -expand y
+
+   eval itk_initialize $args
+
+   wm deiconify $toplevel
+}

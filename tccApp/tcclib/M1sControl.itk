@@ -1,0 +1,85 @@
+#+
+#  M1sControl <- itk::Widget
+#
+#  An M1sControl widget contains various widget for controlling the 
+#  primary mirror control system.
+#
+#  Options:
+#           none
+#
+#  Methods:
+#           none
+#
+#  D Terrett  14 July 2003
+#
+#  Copyright CCLRC
+#+
+
+itcl::class M1sControl {
+   inherit itk::Widget
+   constructor args {}
+   private {
+      method park {par} {return PARK}
+      method unpark {par} {return UNPARK}
+      method updateon {par} {return ON}
+      method updateoff {par} {return OFF}
+      method zeroset {par} {return FIGURE}
+   }
+}
+
+itk::usual M1sControl {
+   keep -cursor -font -highlightthickness
+}
+
+itcl::body M1sControl::constructor args {
+
+   set w $itk_interior
+   itk_component add top {
+      frame $w.top -borderwidth 2 -relief ridge
+   }
+   set w $itk_component(top)
+   itk_component add park {
+      ApplyButton $w.park -command m1Park -text Park \
+            -parcommand [itcl::code $this park]
+   }
+   itk_component add unpark {
+      ApplyButton $w.unpark -command m1Park -text UnPark \
+            -parcommand [itcl::code $this unpark]
+   }
+   set w $itk_interior
+   itk_component add bot {
+      frame $w.bot -borderwidth 2 -relief ridge
+   }
+   set w $itk_component(bot)
+   itk_component add model {
+      label $w.model -text "Open Loop Model"
+   }
+   itk_component add updateon {
+      ApplyButton $w.updateon -command m1FigUpdates -text On \
+            -parcommand [itcl::code $this updateon]
+   }
+   itk_component add updateoff {
+      ApplyButton $w.updateoff -command m1FigUpdates -text Off \
+            -parcommand [itcl::code $this updateoff]
+   }
+   itk_component add zero {
+      ApplyButton $w.zero -command m1ZeroSet -text Zero \
+            -parcommand [itcl::code $this zeroset]
+   }
+   itk_component add reload {
+      ApplyButton $w.reload -command m1ModelRestore -text Restore
+   }
+   grid $itk_component(park) $itk_component(unpark) -sticky ew \
+         -padx 5 -pady 3
+   grid columnconfigure $itk_component(top) {0 1} -weight 1 -uniform 1
+   grid $itk_component(model) -
+   grid $itk_component(updateon) $itk_component(updateoff) -sticky ew \
+         -padx 5 -pady 3
+   grid $itk_component(zero) $itk_component(reload) -sticky ew \
+         -padx 5 -pady 3
+   grid columnconfigure $itk_component(bot) {0 1} -weight 1 -uniform 1
+   grid $itk_component(top) -sticky ew
+   grid $itk_component(bot) -sticky ew
+
+   eval itk_initialize $args
+}

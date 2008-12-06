@@ -1,0 +1,271 @@
+#+
+#  TcsConfig <- Paramset
+#
+#  Implements the TcsConfig class. A TcsConfig contains a list of
+#  the configuration components (Component objects) that make up a 
+#  configuration and a set a flags to indicate which are active (i.e. 
+#  should be sent to the TCS when the configuration is applied.
+#
+#  Options:
+#           -field          The name of the field component.
+#
+#           -pointOrig      The name of the pointing origin component.
+#
+#           -chop           The name of the chop component.
+#
+#           -gaos         The name of the GAOS component.
+#
+#           -slewOptions    The name of the slew options component.
+#
+#           -trackFrame     The name of the tracking frame component.
+#
+#           -instrument     The name of the instrument component.
+#
+#  Methods:
+#          apply comp   Applies all the active components to the TCS.
+#
+#          init         Sets the tcs config object to its initial state.
+#
+#          preview      Sets all the active components in the preview.
+#
+#          save node    Saves the values of all the component options to
+#                       the xml node.
+#
+#  D Terrett 14 April 2004
+#
+#  Copyright CCLRC
+#+
+
+itcl::class TcsConfig {
+   inherit Paramset
+   destructor {$this init}
+   public {
+      method apply {comp}
+      method init {}
+      method preview {view}
+      method save {node}
+      variable field ""
+      variable pointOrig ""
+      variable chop ""
+      variable gaos ""
+      variable slewOptions ""
+      variable trackFrame ""
+      variable instrument ""
+   }
+   private {
+      variable current_field ""
+      variable current_pointOrig ""
+      variable current_chop ""
+      variable current_gaos ""
+      variable current_slewOptions ""
+      variable current_trackFrame ""
+      variable current_instrument ""
+   }
+}
+
+itcl::body TcsConfig::apply {comp} {
+
+# First determine whether the configuration contains a SlewOption that 
+# either disables or clears guiding and ao. This must be done before 
+# we start building the configuration to avoid applying it half way
+# through.
+   if { $slewOptions ne "" } {
+      if { [::SlewOptionsNames::$slewOptions cget -resetao] } {
+
+# Map the guide loop control window.
+         observePanel create
+         after 100
+
+# Reset AO.
+         .observePanel reset
+      } elseif { [::SlewOptionsNames::$slewOptions cget -disableao] } {
+
+# Disable AO.
+         AO disable
+         after 100
+      }
+   }
+
+# Apply the oiwfswavelength here (it was previously in the CC heirarchy but is now in WfsConfig
+   set oiwfsWavelength $::Config(tcs.field.guide.oiwfswavelength,value)
+   if {$oiwfsWavelength ne ""} {
+       ::OIWFSWavelengthNames::$oiwfsWavelength apply tcs.field.guide.oiwfswavelength
+   }
+
+# Apply the aowfswavelength here (it was previously in the CC heirarchy but is now in WfsConfig
+   set aowfsWavelength $::Config(tcs.field.guide.aowfswavelength,value)
+   if {$aowfsWavelength ne ""} {
+       ::AOWFSWavelengthNames::$aowfsWavelength apply tcs.field.guide.aowfswavelength
+   }
+
+# Call the apply method of all the components that have a value. Note that
+# Gaos comes after SlewOptions so that Slew options doesn't overwrite
+# the filter 1 setting.
+   if { $field ne "" } {
+       logactions logmess "Applying Field Config: $field"
+      ::FieldNames::$field apply $comp.field
+   }
+   if { $pointOrig ne "" } {
+       logactions logmess "Applying PointOrig Config: $pointOrig"
+      ::PointOrigNames::$pointOrig apply $comp.pointorig
+   }
+   if { $chop ne "" } {
+       logactions logmess "Applying Chop Config: $chop"
+      ::ChopNames::$chop apply $comp.chop
+   }
+   if { $slewOptions ne "" } {
+       logactions logmess "Applying slewOptions Config: $slewOptions"
+      ::SlewOptionsNames::$slewOptions apply $comp.slewoptions
+   }
+   if { $trackFrame ne "" } {
+       logactions logmess "Applying trackFrame Config: $trackFrame"
+      ::TrackFrameNames::$trackFrame apply $comp.trackframe
+   }
+   if { $instrument ne "" } {
+       logactions logmess "Applying Instrument Config: $instrument"
+      ::InstrumentNames::$instrument apply $comp.instrument
+   }
+   if { $gaos ne "" } {
+       logactions logmess "Applying Gaos Config: $gaos"
+      ::GaosNames::$gaos apply $comp.gaos
+   }
+}
+
+itcl::body TcsConfig::init {} {
+   $this configure -field ""
+   $this configure -pointOrig ""
+   $this configure -chop ""
+   $this configure -gaos ""
+   $this configure -slewOptions ""
+   $this configure -trackFrame ""
+   $this configure -instrument ""
+}
+
+itcl::body TcsConfig::preview {view} {
+
+# Call the preview method of all the components that have a value.
+   if { ! [string equal $field ""] } {
+      ::FieldNames::$field preview $view
+   }
+   if { ! [string equal $pointOrig ""] } {
+      ::PointOrigNames::$pointOrig preview $view poriginA
+   }
+   if { ! [string equal $slewOptions ""] } {
+      ::SlewOptionsNames::$slewOptions preview $view
+   }
+   if { ! [string equal $trackFrame ""] } {
+      ::TrackFrameNames::$trackFrame preview $view
+   }
+   if { ! [string equal $instrument ""] } {
+      ::InstrumentNames::$instrument preview $view
+   }
+}
+
+itcl::body TcsConfig::save {node} {
+   set node [paramset $node tcs_configuration]
+   param $node field $field
+   param $node pointOrig $pointOrig
+   param $node chop $chop
+   param $node gaos $gaos
+   param $node slewOptions $slewOptions
+   param $node trackFrame $trackFrame
+   param $node instrument $instrument
+}
+
+itcl::configbody TcsConfig::field {
+   if { ! [string equal $current_field ""] } {
+      FieldNames::$current_field refdec
+   }
+   set current_field ""
+   if { ! [string equal $field ""] } {
+      if { [catch {FieldNames::$field refinc}] } {
+         error "Field \"$field\" does not exist"
+      } else {
+         set current_field $field
+      }
+   }
+}
+
+itcl::configbody TcsConfig::pointOrig {
+   if { ! [string equal $current_pointOrig ""] } {
+      PointOrigNames::$current_pointOrig refdec
+   }
+   set current_pointOrig ""
+   if { ! [string equal $pointOrig ""] } {
+      if { [catch {PointOrigNames::$pointOrig refinc}] } {
+         error "Pointing origin \"$pointOrig\" does not exist"
+      } else {
+         set current_pointOrig $pointOrig
+      }
+   }
+}
+
+itcl::configbody TcsConfig::chop {
+   if { ! [string equal $current_chop ""] } {
+      ChopNames::$current_chop refdec
+   }
+   set current_chop ""
+   if { ! [string equal $chop ""] } {
+      if { [catch {ChopNames::$chop refinc}] } {
+         error "Chop configuration \"$chop\" does not exist"
+      } else {
+         set current_chop $chop
+      }
+   }
+}
+
+itcl::configbody TcsConfig::gaos {
+   if { ! [string equal $current_gaos ""] } {
+      GaosNames::$current_gaos refdec
+   }
+   set current_gaos ""
+   if { ! [string equal $gaos ""] } {
+      if { [catch {GaosNames::$gaos refinc}] } {
+         error "Gaos configuration \"$gaos\" does not exist"
+      } else {
+         set current_gaos $gaos
+      }
+   }
+}
+
+itcl::configbody TcsConfig::slewOptions {
+   if { ! [string equal $current_slewOptions ""] } {
+      SlewOptionsNames::$current_slewOptions refdec
+   }
+   set current_slewOptions ""
+   if { ! [string equal $slewOptions ""] } {
+      if { [catch {SlewOptionsNames::$slewOptions refinc}] } {
+         error "Slew options \"$slewOptions\" does not exist"
+      } else {
+         set current_slewOptions $slewOptions
+      }
+   }
+}
+
+itcl::configbody TcsConfig::trackFrame {
+   if { ! [string equal $current_trackFrame ""] } {
+      TrackFrameNames::$current_trackFrame refdec
+   }
+   set current_trackFrame ""
+   if { ! [string equal $trackFrame ""] } {
+      if { [catch {TrackFrameNames::$trackFrame refinc}] } {
+         error "tracking Frames \"$trackFrame\" does not exist"
+      } else {
+         set current_trackFrame $trackFrame
+      }
+   }
+}
+
+itcl::configbody TcsConfig::instrument {
+   if { ! [string equal $current_instrument ""] } {
+      InstrumentNames::$current_instrument refdec
+   }
+   set current_instrument ""
+   if { ! [string equal $instrument ""] } {
+      if { [catch {InstrumentNames::$instrument refinc}] } {
+         error "Instrument \"$instrument\" does not exist"
+      } else {
+         set current_instrument $instrument
+      }
+   }
+}

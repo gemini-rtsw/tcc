@@ -1,0 +1,219 @@
+#+
+#  Sky <- itk::Widget
+#
+#  Implements a widget for offsetting the telescope to a sky position
+#  (with guiding disabled) and returning to the program object and
+#  re-enabling guiding.
+#
+#  Notes:
+#       o When moving to the sky position, guiding is turned off, the 
+#         probes are "frozen" and the object name in the tcs sad has
+#         _SKY appended to it.
+#
+#       o When returning to the program object, the probes are "unfrozen",
+#         guiding is re-enabled and _SKY removed from the object name.
+#
+#       o Target offset 1 is used to implement the offset.
+#
+#       o If the target filter short-circuit parameter is set to "open"
+#         before the offset is applied it is set to "closed " and then 
+#         restored to "open" when the offset is removed.
+#
+#  D Terrett  13 May 2003
+#
+#  Copyright CCLRC
+#-
+
+itcl::class Sky {
+   inherit itk::Widget
+   constructor {args} {}
+   destructor {}
+   private {
+      method apply {}
+      method clear {}
+      method isinposition {}
+      method onerror {msg}
+      method unfreeze {}
+      variable csparvals
+      variable returnaction
+      variable unfreezeaction
+      variable InPosition
+      variable filter ""
+   }
+}
+
+itk::usual Sky {
+    keep -font -activeforeground -disabledforeground \
+          -highlightcolor -highlightthickness -background -borderwidth \
+          -cursor -foreground -highlightcolor -highlightthickness \
+          -insertbackground -insertborderwidth -insertofftime -insertontime \
+          -insertwidth -labelfont -selectbackground -selectborderwidth \
+          -selectforeground -textbackground -textfont
+
+}
+
+itcl::body Sky::constructor {args} {
+
+# Create command senders and status acceptors.
+   if { [catch {cs offsetSourceA1 info}] } {
+      epics cs offsetSourceA1
+   }
+   if { [catch {cs filter1 info}] } {
+      epics cs filter1
+   }
+   if { [catch {sa pwfs1Guide info}] } {
+      epics sa pwfs1Guide
+   }
+   if { [catch {sa pwfs2Guide info}] } {
+      epics sa pwfs2Guide
+   }
+   if { [catch {sa oiwfsGuide info}] } {
+      epics sa oiwfsGuide
+   }
+
+# Create actions that clear the offsets and renable the probes.
+   set returnaction [seq::Action #auto tcs \
+      -onok [itcl::code $this unfreeze] \
+      -oktest [itcl::code $this isinposition] \
+      -waitvar [itcl::scope InPosition(value)] \
+      -onerror [itcl::code $this onerror]]
+   set unfreezeaction [seq::Action #auto tcs \
+      -onok "AO enable" \
+      -oktest [itcl::code $this isinposition] \
+      -waitvar [itcl::scope InPosition(value)] \
+      -onerror [itcl::code $this onerror]]
+
+# Construct widgets.
+   itk_component add label {
+      label $itk_interior.label -text "Sky offset (arcsec)"
+   }
+   itk_component add ra {
+      iwidgets::entryfield $itk_interior.ra -labeltext RA: -width 8
+   }
+   itk_component add dec {
+      iwidgets::entryfield $itk_interior.dec -labeltext Dec: -width 8
+   }
+   itk_component add apply {
+      LiveButton $itk_interior.apply -text Sky \
+            -command [itcl::code $this apply]
+   }
+   itk_component add clear {
+      LiveButton $itk_interior.clear -text Object \
+            -command [itcl::code $this clear]
+   }
+   pack $itk_component(label) $itk_component(ra) $itk_component(dec) \
+         $itk_component(apply) $itk_component(clear) -padx 5 -pady 5 -side left
+
+# Create the array of guide parameter values.
+   set csparvals(pwfs1Guide) ""
+   set csparvals(pwfs2Guide) ""
+   set csparvals(oiwfsGuide) ""
+
+   eval itk_initialize $args
+}
+
+itcl::body Sky::destructor {} {
+   itcl::delete object $returnaction
+   itcl::delete object $unfreezeaction
+}
+
+itcl::body Sky::apply {} {
+# Disable guiding.
+   AO disable
+
+# For each guide probe.
+   foreach p {pwfs1Guide pwfs2Guide oiwfsGuide} {
+      set info [sa $p info]
+      set params [lindex $info 3]
+
+# Save probe states.
+      set csparvals($p) ""
+      foreach par $params {
+         lappend csparvals($p) [sa $p get $par]
+      }
+
+# Save the filter state.
+      set filter [cs filter1 get shortCircuit]
+
+# Freeze the probe.
+      foreach par $params {
+         cs $p set $par Off
+      }
+      logger command $p
+   }
+
+# Offset the telescope.
+   if { [string equal -nocase Open $filter] } {
+      cs filter1 set shortCircuit Closed
+      logger command filter1
+   }
+   cs offsetSourceA1 set type [list "tangent plane"]
+   cs offsetSourceA1 set dtheta1 [list [$itk_component(ra) get]]
+   cs offsetSourceA1 set dtheta2 [list [$itk_component(dec) get]]
+   logger command offsetSourceA1
+   if { [catch {cs tcsApply post} msg] } {
+      tk_messageBox -icon error -parent $itk_interior -message \
+            "Error posting commands: TCS reports \
+            \"$msg\""
+   } else {
+
+# Append _SKY to the object name.
+      global env
+      ss $env(TCC_TCSNAME):sad:sourceAObjectName set value \
+            [list [sa tcssad get sourceAObjectName]_SKY]
+      ss $env(TCC_TCSNAME):sad:sourceAObjectName post
+   }
+}
+
+itcl::body Sky::clear {} {
+
+# Clear the offsets.
+   cs offsetSourceA1 set dtheta1 0.0
+   cs offsetSourceA1 set dtheta2 0.0
+   logger command offsetSourceA1
+
+# Link to the TCS in postion flag.
+   sa tcssad link inPosition [itcl::scope InPosition]
+
+# Start the return action.
+   $returnaction start
+
+# Restore the object name.
+   set objname [sa tcssad get sourceAObjectName]
+   if { [string match -nocase *_SKY $objname] } {
+      global env
+      ss $env(TCC_TCSNAME):sad:sourceAObjectName set value [list [string \
+            range $objname 0 [expr [string length $objname] - 5]]]
+      ss $env(TCC_TCSNAME):sad:sourceAObjectName post
+   }
+}
+
+itcl::body Sky::unfreeze {} {
+
+# Restore probe states.
+   foreach p {pwfs1Guide pwfs2Guide oiwfsGuide} {
+      set info [cs $p info]
+      set params [lindex $info 3]
+      foreach par $params val $csparvals($p) {
+         cs $p set $par $val
+      }
+      logger command $p
+   }
+   if { [string equal -nocase Open $filter] } {
+      cs filter1 set shortCircuit Open
+      logger command filter1
+   }
+   $unfreezeaction start
+}
+
+itcl::body Sky::isinposition {} {
+   after 2000
+   set val [sa tcssad get inPosition]
+   return [string equal $val TRUE]
+}
+
+itcl::body Sky::onerror {msg} {
+   tk_messageBox -icon error -parent $itk_interior -message \
+         "Error posting commands: TCS reports \
+         \"$msg\""
+}

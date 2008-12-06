@@ -1,0 +1,102 @@
+#+
+#  ComponentSelector <- itk::Widget
+#
+#  A ComponentSelector is a SubComponentSelector, a label to show which
+#  configuration the subcomponent comes from and a checkbutton that
+#  indicates whether the subcomponent is "active" i.e whether it should
+#  be replaced when another configuration is selected.
+#
+#  Options:
+#           -active         The state of the active flag controlled by the 
+#                           checkbutton.
+#
+#           -component      Merged from SubComponentSelector
+#
+#           -labeltext      Merged from SubComponentSelector
+#
+#           -source         The source configuration of the component
+#
+#  Methods:
+#           select name   - Selects the component "name"
+#
+#  D Terrett  3 June 2003
+#
+#  Copyright CCLRC
+#+
+
+itcl::class ComponentSelector {
+   inherit itk::Widget
+   constructor args {}
+   destructor {}
+   itk_option define -active active Active 0 {set enable $itk_option(-active)}
+   itk_option define -source source Source ""
+   public {
+      method select {name}
+   }
+   private {
+      method enableTrace {n1 n2 op}
+      variable enable
+   }
+}
+
+itk::usual ComponentSelector {
+   keep -activebackground -activeforeground -background -borderwidth \
+         -cursor -disabledforeground -font -foreground -highlightcolor \
+         -highlightthickness -insertbackground -insertborderwidth \
+         -insertofftime -insertontime -insertwidth -labelfont -popupcursor \
+         -selectbackground -selectborderwidth -selectcolor -selectforeground \
+         -textbackground -textfont
+}
+
+itcl::body ComponentSelector::constructor args {
+
+   set w $itk_interior
+
+   itk_component add source {
+      label $w.source -bd 2 -relief groove -width 10 -anchor w
+   }
+
+   itk_component add enable {
+      checkbutton $w.enable -variable [itcl::scope enable]
+   }
+
+# Set a trace on the variable to detect changes in the state of the 
+# checkbutton.
+   trace variable enable w [itcl::code $this enableTrace]
+
+   itk_component add selector {
+      SubComponentSelector $w.selector
+   } {
+      usual
+      keep -component -labeltext
+   }
+
+   pack $itk_component(source) $itk_component(enable) -side left
+   pack $itk_component(selector) -side right
+
+   eval itk_initialize $args
+}
+
+itcl::body ComponentSelector::select name {
+
+# Clear the source label.
+   $itk_component(source) configure -text ""
+
+# Clear the -source option.
+   set $itk_option(-source) ""
+
+# Clear the subcomponent selector.
+   $itk_component(selector) select $name
+}
+
+itcl::configbody ComponentSelector::source {
+
+# Set the state of the label in the source widget.
+   $itk_component(source) configure -text $itk_option(-source)
+}
+
+itcl::body ComponentSelector::enableTrace {n1 n2 op} {
+
+# Set the state of the active option as the checkbutton variable changes.
+   set itk_option(-active) $enable
+}

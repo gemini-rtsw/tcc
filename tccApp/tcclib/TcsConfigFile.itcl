@@ -1,0 +1,444 @@
+#+
+#  TcsConfigFile
+#
+#  A TcsConfigFile object parses an XML description of
+#  tcs configuration components and creates and configures the
+#  components.
+#
+#  D Terrett 3 June 2003
+#
+#  Copyright CCLRC
+#+
+
+itcl::class TcsConfigFile {
+   constructor {xml parent} {}
+   public {
+      variable tcsconfig ""
+   }
+   private {
+      method createComponent {type node}
+      method createTarget {node}
+      method createTrackrate {node}
+      method report {msg}
+      method findcomp {node}
+      method elementis {node name}
+      method compconf {component node}
+      method targetconf {field target node}
+      variable w
+      variable nodelist
+   }
+}
+
+itcl::body TcsConfigFile::constructor {xml parent} {
+
+# Create a document object from the XML.
+   set doc [dom::DOMImplementation parse $xml]
+
+# Get the root node.
+   set root [dom::document cget $doc -documentElement]
+
+# Save the parent window for error report dialogs.
+   set w $parent
+
+# Initialise lists of nodes that represent configuration components.
+   set nodelist(gaos) ""
+   set nodelist(chop) ""
+   set nodelist(cosys) ""
+   set nodelist(field) ""
+   set nodelist(guide) ""
+   set nodelist(instrument) ""
+   set nodelist(pointorig) ""
+   set nodelist(rotator) ""
+   set nodelist(slewoptions) ""
+   set nodelist(target) ""
+   set nodelist(tcsconfig) ""
+   set nodelist(trackframe) ""
+   set nodelist(trackrate) ""
+   set nodelist(wavelength) ""
+   set nodelist(oiwfswavelength) ""
+   set nodelist(aowfswavelength) ""
+
+# Compile a lists of all the component defined in the document.
+   foreach node [dom::DOMImplementation selectNode $root \
+         {/descendant::node()/child::paramset}] {
+      findcomp $node
+   }
+
+# Extract the name of the first tcs config in the file.
+   if { [llength $nodelist(tcsconfig)] } {
+      set tcsconfig [dom::element getAttribute [lindex $nodelist(tcsconfig) 0] \
+             name]
+   }
+
+# Process each of the lists of component types (note that the order is
+# important so that we don't get errors because a subcomponent isn't defined).
+   foreach type {cosys wavelength oiwfswavelength aowfswavelength rotator guide trackrate \
+         target field instrument pointorig slewoptions trackframe \
+         chop gaos tcsconfig} {
+
+# Targets and track rates are special cases.
+      switch $type {
+         target {
+            foreach node $nodelist($type) {
+               if { [createTarget $node] } break
+            }
+         }
+         trackrate {
+            foreach node $nodelist($type) {
+               if { [createTrackrate $node] } break
+            }
+         }
+         default {
+            foreach node $nodelist($type) {
+               if { [createComponent $type $node] } break
+            }
+         }
+      }
+   }
+
+# Free the document.
+   dom::DOMImplementation destroy $doc
+}
+
+itcl::body TcsConfigFile::createComponent {type node} {
+
+# The node must have a name attribute.
+   if { [dom::element getAttribute $node name] == "" } {
+      return [report "$type with no name"]
+   }
+   set name [dom::element getAttribute $node name]
+
+# Create a component of the appropriate type.
+   switch $type {
+      gaos {
+         set class GaosComponent
+         set namespace ::GaosNames
+         set list GaosList
+      }
+      cosys {
+         set class CosysComponent
+         set namespace ::CosysNames
+         set list CosysList
+      }
+      wavelength {
+         set class WavelengthComponent
+         set namespace ::WavelengthNames
+         set list WavelengthList
+      }
+      oiwfswavelength {
+         set class WavelengthComponent
+         set namespace ::OIWFSWavelengthNames
+         set list OIWFSWavelengthList
+      }
+      aowfswavelength {
+         set class WavelengthComponent
+         set namespace ::AOWFSWavelengthNames
+         set list AOWFSWavelengthList
+      }
+      field {
+         set class FieldComponent
+         set namespace ::FieldNames
+         set list FieldList
+      }
+      instrument {
+         set class InstrumentComponent
+         set namespace ::InstrumentNames
+         set list InstrumentList
+      }
+      rotator {
+         set class RotatorComponent
+         set namespace ::RotatorNames
+         set list RotatorList
+      }
+      guide {
+         set class GuideComponent
+         set namespace ::GuideNames
+         set list GuideList
+      }
+      pointorig {
+         set class PointOrigComponent
+         set namespace ::PointOrigNames
+         set list PointOrigList
+      }
+      slewoptions {
+         set class SlewOptionsComponent
+         set namespace ::SlewOptionsNames
+         set list SlewOptionsList
+      }
+      trackframe {
+         set class TrackFrameComponent
+         set namespace ::TrackFrameNames
+         set list TrackFrameList
+      }
+      chop {
+         set class ChopComponent
+         set namespace ::ChopNames
+         set list ChopList
+      }
+      tcsconfig {
+         set class TcsConfigComponent
+         set namespace ::TcsConfigNames
+         set list TcsConfigList
+      }
+      gaos {
+         set class GaosComponent
+         set namespace ::GaosNames
+         set list GaosList
+      }
+   }
+
+# Create or init the component. We can't simply delete a component and 
+# re-create it because there might be a reference to it somewhere.
+   set component ${namespace}::$name
+   if { [catch {$class $component $list}] } {
+      $component init
+   }
+
+# Configure the component from the child nodes of type param.
+   foreach node [dom::DOMImplementation selectNode $node \
+         descendant-or-self::node()/child::param] {
+      compconf $component $node
+   }
+
+# Keep the display alive.
+   update
+   return 0
+}
+
+itcl::body TcsConfigFile::createTarget {node} {
+
+# The node must have a name and a type attribute.
+   set name [dom::element getAttribute $node name]
+   if { $name== "" } {
+      return [report "target with no name"]
+   }
+
+# Targets only exist in field so we have to search for the enclosing field
+# in the nodes ancestors.
+   set fieldnode [dom::DOMImplementation selectNode $node \
+         {ancestor::paramset[@type="field"][1]}]
+
+# If there is no parent field then use the target name.
+   if { $fieldnode == "" } {
+      set nofield 1
+      set field $name
+   } else {
+      set nofield 0
+      set field [dom::element getAttribute $fieldnode name]
+   }
+
+# Create the field if it doesn't exist
+   set field ::FieldNames::$field
+   if { [catch {$field info class}] } {
+      set field [FieldComponent $field FieldList]
+   }
+
+# Add the target to the field.
+   set target $name
+   if { [catch {$field subinit target $target}] } {
+      $field add target $target
+   }
+
+# Configure the target type.
+   set type [dom::element getAttribute $node type]
+   if { [catch {$field subconfigure target $target -type $type} msg] } {
+      if { [report $msg] } {
+         return 1
+      } else {
+         return 0
+      }
+   }
+
+# Configure the target object name from the target name.
+   $field subconfigure target $target -objname $target
+
+# Process all the param and paramset descendents of the target node.
+   foreach node [dom::DOMImplementation selectNode $node \
+         descendant-or-self::node()/child::param|paramset] {
+      targetconf $field $target $node
+   }
+
+# If the field was created implicitly then set the science target to be
+# this target.
+   $field configure -sciencetarget $target
+
+   update
+   return 0
+}
+
+itcl::body TcsConfigFile::createTrackrate {node} {
+
+# The node must have a name and a type attribute.
+   set name [dom::element getAttribute $node name]
+   if { $name== "" } {
+      return [report "track rate with no name"]
+   }
+
+# Track rates only exist in field so we have to search for the enclosing field
+# in the nodes ancestors.
+   set fieldnode [dom::DOMImplementation selectNode $node \
+         {ancestor::paramset[attribute::type="field"][position()=1]}]
+
+# If there is no parent field then this is an error.
+   if { $fieldnode == "" } {
+      return \
+            [report "Differential track rate \"$name\" appears outside a field"]
+   }
+
+# Create the field if it doesn't exist
+   set field ::FieldNames::[dom::element getAttribute $fieldnode name]
+   if { [catch {$field info class}] } {
+      set field [FieldComponent $field FieldList]
+   }
+
+# Add the trackrate to the field.
+   set trackrate $name
+   if { [catch {$field subinit trackrate $trackrate}] } {
+      $field add trackrate $trackrate
+   }
+
+# Configure the component from the param nodes.
+   foreach child [dom::DOMImplementation selectNode $node child::param] {
+      set name [dom::element getAttribute $child name]
+      if { ! [catch {$field subcget trackrate $trackrate -$name}] } {
+         if { [catch {$field subconfigure trackrate $trackrate \
+               -$name [dom::element getAttribute $child value]} msg] } {
+            if { [report $msg] } {
+               return 1
+            }
+         }
+      }
+   }
+   update
+   return 0
+}
+
+itcl::body TcsConfigFile::report {message} {
+   return [string equal [tk_messageBox -icon error -parent $w -type okcancel \
+         -message $message] cancel]
+}
+
+itcl::body TcsConfigFile::findcomp {node} {
+
+# Adds a paramset node to the appropriate node list.
+   switch [dom::element getAttribute $node type] {
+      gaos {
+         lappend nodelist(gaos) $node
+      }
+      chop {
+         lappend nodelist(chop) $node
+      }
+      cosys {
+         lappend nodelist(cosys) $node
+      }
+      field {
+         lappend nodelist(field) $node
+      }
+      guide {
+         lappend nodelist(guide) $node
+      }
+      instrument {
+         lappend nodelist(instrument) $node
+      }
+      instrument_origin {
+         lappend nodelist(pointorig) $node
+      }
+      rotator {
+         lappend nodelist(rotator) $node
+      }
+      slew_options {
+         lappend nodelist(slewoptions) $node
+      }
+      degdegTarget -
+      conicTarget -
+      namedTarget -
+      hmsdegTarget {
+         lappend nodelist(target) $node
+      }
+      tcs_configuration {
+         lappend nodelist(tcsconfig) $node
+      }
+      tracking_frame {
+         lappend nodelist(trackframe) $node
+      }
+      trackrate {
+         lappend nodelist(trackrate) $node
+      }
+      wavelength {
+         lappend nodelist(wavelength) $node
+      }
+      oiwfswavelength {
+         lappend nodelist(oiwfswavelength) $node
+      }
+      aowfswavelength {
+         lappend nodelist(aowfswavelength) $node
+      }
+   }
+}
+
+itcl::body TcsConfigFile::elementis {node name} {
+
+# Return TRUE if the node is an element with nodename $name.
+   if { [string equal [dom::node cget $node -nodeType] element] } {
+      if { [string equal [dom::node cget $node -nodeName] $name] } {
+         return 1
+      }
+   }
+   return 0
+}
+
+itcl::body TcsConfigFile::compconf {component node} {
+
+# Get the attribute name.
+   set name [dom::element getAttribute $node name]
+
+# If the component has an option of that name.
+   if { ! [catch {$component cget -$name}] } {
+
+# Configure the option value.
+      if { [catch {$component configure \
+            -$name [dom::element getAttribute $node value]} msg ]} {
+         if { [report $msg] } {
+            return 1
+         }
+      }
+   }
+}
+
+itcl::body TcsConfigFile::targetconf {field target node} {
+
+# If the element is a param.
+   if { [elementis $node param] } {
+
+# and the name attribute matches a target parameter name...
+      set name [dom::element getAttribute $node name]
+      if { ! [catch {$field subcget target $target -$name}] } {
+
+# configure the target parameter
+         if { [catch {$field subconfigure target $target -$name \
+                  [dom::element getAttribute $node value]} msg] } {
+            if { [report $msg] } {
+               return 1
+            }
+         }
+      }
+   }
+
+# If it is a paramset...
+   if { [elementis $node paramset] } {
+
+# and the name is "properMotion"..
+      set name [dom::element getAttribute $node name]
+      if { [string equal $name properMotion] } {
+
+# configure the -pmunits parameter of the target.
+         if { [catch {$field subconfigure target $target -pmunits \
+                  [dom::element getAttribute $node units]} msg] } {
+            if { [report $msg] } {
+               return 1
+            }
+         }
+      }
+   }
+}
+

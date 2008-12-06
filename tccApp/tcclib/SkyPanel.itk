@@ -1,0 +1,51 @@
+#+
+#  SkyPanel <- Panel
+#
+#  Implements the SkyPanel widget. A Panel widget with a 
+#  SkyControl widget packed into its interior.
+#
+#  Options:
+#           -components -    The -component options of the controls
+#
+#  Methods:
+#           none
+#
+#  D Terrett 16 January 2004
+#
+#  Copyright CCLRC
+#+
+
+itcl::class SkyPanel {
+   inherit Panel
+   constructor args {}
+}
+
+itk::usual SkyPanel {
+   keep -background -cursor
+}
+
+itcl::body SkyPanel::constructor args {
+
+   setWidgetColors $itk_interior \
+         $itk_option(-background) $itk_option(-foreground)
+
+# Sky control.
+   itk_component add control {
+      SkyControl $itk_interior.sky -menubar $itk_component(menubar)
+   }
+   pack $itk_component(control) -side left
+
+# Add the StarSelectControl load and command to the File menu.
+   $itk_component(menubar) insert .file.move command load \
+         -command "[$itk_component(control) component starselect] load" \
+         -label "Load catalog"
+
+# Add the view and unload menus
+   $itk_component(menubar) insert .file.move cascade view \
+         -label "View catalog"
+   $itk_component(menubar) insert .file.move cascade unload \
+         -label "Unload catalog"
+   $itk_component(menubar) insert .file.move separator separator
+
+   eval itk_initialize $args
+}

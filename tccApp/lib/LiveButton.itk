@@ -1,0 +1,58 @@
+#+
+#  LiveButton <- itk::Widget
+#
+#  Implements the LiveButton class. A LiveButton is simply a push button
+#  that in some way sends a command to the telescope. It is a distinct class
+#  so that all such buttons can be made distinctive in some way and can
+#  have additional behaviour (such as a confirmation dialog or a locked state
+#  that prevents the telescope being moved). An optional message is sent to
+#  the logger when the button is pressed.
+#
+#  Options:
+#          -command      A command to be executed when the button is pressed.
+#
+#  Methods:
+#          invoke
+#
+#  D Terrett 15 January 2004
+#
+#  Copyright CCLRC
+#-
+
+itcl::class LiveButton {
+   inherit itk::Widget
+   constructor args {}
+   itk_option define -command command Command {}
+   public {
+      method invoke {} {$itk_component(button) invoke}
+   }
+   private {
+      method command {}
+   }
+}
+
+itk::usual LiveButton {
+   keep -activeforeground -background -cursor -disabledforeground \
+         -foreground -font -highlightcolor -highlightthickness -width 
+}
+
+itcl::body LiveButton::constructor args {
+
+   itk_component add button {
+      button $itk_interior.button -command [itcl::code $this command]
+   } {
+      usual
+      keep -state -text -width -height -padx -pady -relief
+   }
+   pack $itk_component(button) -fill both -expand y
+
+   eval itk_initialize $args
+}
+
+itcl::body LiveButton::command {} {
+   if { ! [string equal $itk_option(-command) ""] } {
+      if { [catch {uplevel #0 $itk_option(-command)} msg] } {
+         tk_messageBox -icon error -parent $itk_interior -message $msg
+      }
+   }
+}

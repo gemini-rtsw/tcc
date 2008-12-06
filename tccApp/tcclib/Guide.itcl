@@ -1,0 +1,194 @@
+#+
+#  Guide <- Paramset
+#
+#  A guide component contains which chop and nod states the wave-front
+#  sensors should be active in.
+#
+#  Options:
+#           -oiwfsActive    The chop states in which the guide star is
+#                           active
+#
+#           -oiwfsNodState  The nod states in which the probe follows
+#                           the star.
+#
+#           -pwfs1Active    The chop states in which the guide star is
+#                           active
+#
+#           -pwfs1NodState  The nod states in which the probe follows
+#                           the star.
+#
+#           -pwfs2Active    The chop states in which the guide star is
+#                           active
+#
+#           -pwfs2NodState  The nod states in which the probe follows
+#                           the star.
+#
+#  Methods:
+#           apply comp      Sets the chop/nod flags
+#
+#           init            Returns the guide object to its initial state.
+#
+#           save node       Saves the values of the options to the xml
+#                           node.
+#
+#  D Terrett 5 December 2003
+#
+#  copyright CCLRC
+#+
+
+itcl::class Guide {
+   inherit Paramset
+   constructor {} {}
+   public {
+      method apply {comp}
+      method init {}
+      method preview {view}
+      method save {node}
+      variable pwfs1Active never
+      variable pwfs2Active never
+      variable oiwfsActive never
+      variable pwfs1NodState AB
+      variable pwfs2NodState AB
+      variable oiwfsNodState AB
+   }
+   private {
+      method setEnableFlags {wfs active nodstate}
+   }
+}
+
+itcl::body Guide::apply {comp} {
+   setEnableFlags pwfs1 $pwfs1Active $pwfs1NodState
+   setEnableFlags pwfs2 $pwfs2Active $pwfs2NodState
+   setEnableFlags oiwfs $oiwfsActive $oiwfsNodState
+}
+
+itcl::body Guide::init {} {
+   set oiwfsActive A
+   set oiwfsNodState AB
+   set pwfs1Active A
+   set pwfs1NodState AB
+   set pwfs2Active A
+   set pwfs2NodState AB
+}
+
+itcl::body Guide::save {node} {
+   set node [paramset $node guide]
+   param $node pwfs1Active $pwfs1Active
+   param $node pwfs1NodState $pwfs1NodState
+   param $node pwfs2Active $pwfs2Active
+   param $node pwfs2NodState $pwfs2NodState
+   param $node oiwfsActive $oiwfsActive
+   param $node oiwfsNodState $oiwfsNodState
+}
+
+itcl::body Guide::setEnableFlags {wfs active nodstate} {
+   switch $active {
+      A {
+         switch $nodstate {
+            A {
+               cs ${wfs}Guide set nodachopa On
+               cs ${wfs}Guide set nodachopb Off
+               cs ${wfs}Guide set nodbchopa Off
+               cs ${wfs}Guide set nodbchopb Off
+            }
+            B {
+               cs ${wfs}Guide set nodachopa Off
+               cs ${wfs}Guide set nodachopb Off
+               cs ${wfs}Guide set nodbchopa On
+               cs ${wfs}Guide set nodbchopb Off
+            }
+            AB {
+               cs ${wfs}Guide set nodachopa On
+               cs ${wfs}Guide set nodachopb Off
+               cs ${wfs}Guide set nodbchopa On
+               cs ${wfs}Guide set nodbchopb Off
+            }
+         }
+      }
+      B {
+         switch $nodstate {
+            A {
+               cs ${wfs}Guide set nodachopa Off
+               cs ${wfs}Guide set nodachopb On
+               cs ${wfs}Guide set nodbchopa Off
+               cs ${wfs}Guide set nodbchopb Off
+            }
+            B {
+               cs ${wfs}Guide set nodachopa Off
+               cs ${wfs}Guide set nodachopb Off
+               cs ${wfs}Guide set nodbchopa Off
+               cs ${wfs}Guide set nodbchopb On
+            }
+            AB {
+               cs ${wfs}Guide set nodachopa Off
+               cs ${wfs}Guide set nodachopb On
+               cs ${wfs}Guide set nodbchopa Off
+               cs ${wfs}Guide set nodbchopb On
+            }
+         }
+      }
+      Nod {
+         switch $nodstate {
+            A {
+               cs ${wfs}Guide set nodachopa On
+               cs ${wfs}Guide set nodachopb Off
+               cs ${wfs}Guide set nodbchopa Off
+               cs ${wfs}Guide set nodbchopb Off
+            }
+            B {
+               cs ${wfs}Guide set nodachopa Off
+               cs ${wfs}Guide set nodachopb Off
+               cs ${wfs}Guide set nodbchopa Off
+               cs ${wfs}Guide set nodbchopb On
+            }
+            AB {
+               cs ${wfs}Guide set nodachopa On
+               cs ${wfs}Guide set nodachopb Off
+               cs ${wfs}Guide set nodbchopa Off
+               cs ${wfs}Guide set nodbchopb On
+            }
+         }
+      }
+      antiNod {
+         switch $nodstate {
+            A {
+               cs ${wfs}Guide set nodachopa Off
+               cs ${wfs}Guide set nodachopb On
+               cs ${wfs}Guide set nodbchopa Off
+               cs ${wfs}Guide set nodbchopb Off
+            }
+            B {
+               cs ${wfs}Guide set nodachopa Off
+               cs ${wfs}Guide set nodachopb Off
+               cs ${wfs}Guide set nodbchopa On
+               cs ${wfs}Guide set nodbchopb Off
+            }
+            AB {
+               cs ${wfs}Guide set nodachopa Off
+               cs ${wfs}Guide set nodachopb On
+               cs ${wfs}Guide set nodbchopa On
+               cs ${wfs}Guide set nodbchopb Off
+            }
+         }
+      }
+      default {
+         cs ${wfs}Guide set nodachopa Off
+         cs ${wfs}Guide set nodachopb Off
+         cs ${wfs}Guide set nodbchopa Off
+         cs ${wfs}Guide set nodbchopb Off
+      }
+   }
+   logger command ${wfs}Guide
+}
+
+itcl::body Guide::preview {view} {
+#    if { ! [string equal $pwfs1Wavel ""] } {
+#       $view configure -p1Wavel $pwfs1Wavel
+#    }
+#    if { ! [string equal $pwfs2Wavel ""] } {
+#       $view configure -p2Wavel $pwfs2Wavel
+#    }
+#    if { ! [string equal $oiwfsWavelength ""] } {
+#       ::OIWFSWavelengthNames::$oiwfsWavelength preview $view oiwfs
+#    }
+}

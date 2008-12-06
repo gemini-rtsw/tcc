@@ -1,0 +1,122 @@
+#+
+# CalParam
+#
+# A calibration parameter object supplies an application with calibration
+# parameters and other values that may be revised over time or are potentially
+# different between north and south. The values are read from a file
+# when the object is created.
+#
+# D Terrett 20 January 2005
+#
+# Copyright CCLRC
+#+
+
+itcl::class CalParam {
+   constructor {args} {}
+   public {
+      variable calFile <undefined>
+      variable site <undefined>
+      variable pwfs1_center_x <undefined>
+      variable pwfs1_center_y <undefined>
+      variable pwfs1_center_z <undefined>
+      variable pwfs2_center_x <undefined>
+      variable pwfs2_center_y <undefined>
+      variable pwfs2_center_z <undefined>
+      variable acqcam_x <undefined>
+      variable acqcam_y <undefined>
+      variable ocs_proxy <undefined>
+      variable tcs_root_dir <undefined>
+      variable m1_tune_dir <undefined>
+      variable default_wfs_dir <undefined>
+      variable hrwfs_sky_dir <undefined>
+      variable skycalc_dir <undefined>
+      variable hrwfs_ao_prog <undefined>
+      variable baffle_visible <undefined>
+      variable baffle_nearir <undefined>
+      variable niri_sfo_defocus <undefined>
+      variable nifs_sfo_defocus <undefined>
+      variable top_shutter_current_limit <undefined>
+      variable bottom_shutter_current_limit <undefined>
+      variable p1m2TipGain
+      variable p1m2TiltGain
+      variable p1m2FocusGain
+      variable p2m2TipGain
+      variable p2m2TiltGain
+      variable p2m2FocusGain
+
+      method p1m2TipGain {instrument wfs}
+      method p1m2TiltGain {instrument wfs}
+      method p1m2FocusGain {instrument wfs}
+      method p2m2TipGain {instrument wfs}
+      method p2m2TiltGain {instrument wfs}
+      method p2m2FocusGain {instrument wfs}
+   }
+}
+
+itcl::body CalParam::constructor {args} {
+   global ROOT
+   
+   set m2TipGain(Default) 0.1
+   set m2TiltGain(Default) 0.1
+   set m2FocusGain(Default) 0.0002
+   eval configure $args
+   if { [string compare [exec uname] "Linux"] == 0 } {
+   	set calFile calparams.$::env(GEMINI_SITE).[exec uname]
+   } else {
+   	set calFile "calparams.dat"
+   }
+   puts "CalParam using file $calFile"
+   source $ROOT/$calFile
+}
+
+itcl::body CalParam::p1m2TipGain {instrument wfs} {
+   set key "$instrument,$wfs"
+   if { [array names p1m2TipGain -exact $key] == "" } {
+      return <undefined>
+   } else {
+      return $p1m2TipGain($key)
+   }
+}
+
+itcl::body CalParam::p1m2TiltGain {instrument wfs} {
+   set key "$instrument,$wfs"
+   if { [array names p1m2TiltGain -exact $key] == "" } {
+      return <undefined>
+   } else {
+      return $p1m2TiltGain($key)
+   }
+}
+itcl::body CalParam::p1m2FocusGain {instrument wfs} {
+   set key "$instrument,$wfs"
+   if { [array names p1m2FocusGain -exact $key] == "" } {
+      return <undefined>
+   } else {
+      return $p1m2FocusGain($key)
+   }
+}
+
+itcl::body CalParam::p2m2TipGain {instrument wfs} {
+   set key "$instrument,$wfs"
+   if { [array names p2m2TipGain -exact $key] == "" } {
+      return <undefined>
+   } else {
+      return $p2m2TipGain($key)
+   }
+}
+
+itcl::body CalParam::p2m2TiltGain {instrument wfs} {
+   set key "$instrument,$wfs"
+   if { [array names p2m2TiltGain -exact $key] == "" } {
+      return <undefined>
+   } else {
+      return $p2m2TiltGain($key)
+   }
+}
+itcl::body CalParam::p2m2FocusGain {instrument wfs} {
+   set key "$instrument,$wfs"
+   if { [array names p2m2FocusGain -exact $key] == "" } {
+      return <undefined>
+   } else {
+      return $p2m2FocusGain($key)
+   }
+}

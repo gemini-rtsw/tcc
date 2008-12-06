@@ -1,0 +1,48 @@
+#+
+# crs.ca
+#
+# Channel access configuration file for crs subsystem commands.
+#
+# D Terrett 11 October 2003
+#
+# Copyright CCLRC
+#-
+
+command rotStop tcsApply Stop rotator
+{
+   dummy tcs:rotStop.A
+   brakes tcs:rotStop.B Apply brakes
+}
+
+command rotPark	tcsApply Park rotator
+{
+   dummy tcs:rotPark.A
+}
+
+command rotDatum tcsApply Datum rotator
+{
+   dummy tcs:rotDatum.A
+   device tcs:rotDatum.B device
+}
+
+command rotMove tcsApply Move rotator
+{
+   rma tcs:rotMove.A Mechanical angle
+}
+
+command rotConfig tcsApply Configure rotator encoders
+{
+   algorithm tcs:rotConfig.A Algorithm
+   headid    tcs:rotConfig.B Head ID
+}
+
+command rotTolerance tcsApply Set rotator tolerances
+{
+   posError tcs:rotTolerance.A Position error
+   velError tcs:rotTolerance.B Velocity error
+}
+
+command rotCentre tcsApply Center rotator wrap
+{
+   dummy tcs:rotCentre.A
+}

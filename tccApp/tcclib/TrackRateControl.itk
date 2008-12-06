@@ -1,0 +1,189 @@
+#+
+#  TrackRateControl <- ComponentControl
+#
+#  Implements the TrackRateControl widget.
+#
+#  Options:
+#           -component     The component that the control edits
+#
+#  D Terrett 10 May 2002
+#
+#  Copyright CCLRC
+#+
+
+itcl::class TrackRateControl {
+   inherit ComponentControl
+   constructor {args} {}
+   destructor {}
+   itk_option define -component component Component {}
+   public {
+      method load {name}
+      method save {name}
+      method reset {}
+   }
+   private {
+      method checkcosys {}
+      method newlist {n1 n2 op}
+      variable comp ""
+   }
+}
+
+itk::usual TrackRateControl {
+   keep -borderwidth -cursor -font -highlightthickness -insertborderwidth \
+         -insertofftime -insertontime -insertwidth -labelfont -popupcursor \
+         -selectborderwidth -textfont -title
+}
+
+itcl::body TrackRateControl::constructor args {
+
+   itk_component add frame {
+      frame $itk_interior.frame -borderwidth 2 -relief ridge
+   }
+   pack $itk_component(frame) -fill x -expand y
+   set w $itk_component(frame)
+
+# Epoch.
+   itk_component add t0 {
+      iwidgets::entryfield $w.t0 \
+            -labeltext [lindex [cs difTrSourceA info t0] 2]
+   }
+   pack $itk_component(t0) -anchor e -padx 4 -pady 4
+
+# Tabbed notebook for rate.
+   itk_component add notebook {
+      iwidgets::tabnotebook $w.notebook -width 180 -height 150
+   }
+   pack $itk_component(notebook) -expand yes -fill both -padx 4 -pady 4
+
+# Page for RA/Dec rates
+   set w [$itk_component(notebook) add -label "RA/Dec"]
+
+# Control for selecting a coordinate frame.
+   itk_component add cosys {
+      SubComponentSelector $w.cosys -labeltext "Coordinate system" \
+            -labelpos nw -selectioncommand [itcl::code $this checkcosys]
+   }
+   pack $itk_component(cosys) -anchor e -padx 4 -pady 4
+
+# Track rates.
+   itk_component add ra {
+      iwidgets::entryfield $w.ra -width 12 -labeltext "dRA cos(Dec) (arcsec/hr)"
+   }
+   itk_component add dec {
+      iwidgets::entryfield $w.dec -width 12 -labeltext "d(Dec)/dt (arcsec/hr)"
+   }
+   pack $itk_component(ra) $itk_component(dec) -anchor e -pady 4 -padx 4
+
+# Page for Az/El/Dec rates
+   set w [$itk_component(notebook) add -label "Az/El"]
+
+# Track rates.
+   itk_component add az {
+      iwidgets::entryfield $w.az -width 12 -labeltext "Az (arcsec/hr)"
+   }
+   itk_component add el {
+      iwidgets::entryfield $w.el -width 12 -labeltext "El (arcsec/hr)"
+   }
+   pack $itk_component(az) $itk_component(el) -padx 8 -pady 4
+
+# Select the RA/Dec page.
+  $itk_component(notebook) select RA/Dec
+
+# Set the object description.
+   set description "differential track rate"
+
+   eval itk_initialize $args
+}
+
+itcl::body TrackRateControl::destructor {} {
+   trace vdelete ::Config($comp,list) w [itcl::code $this newlist]
+}
+
+itcl::body TrackRateControl::reset {} {
+   $itk_component(t0) clear
+   $itk_component(ra) clear
+   $itk_component(dec) clear
+   $itk_component(az) clear
+   $itk_component(el) clear
+}
+
+itcl::body TrackRateControl::load {name} {
+   $itk_component(t0) insert end [$name cget -t0]
+   set cosys [$name cget -cosys]
+   if { [string equal $cosys AzEl] } {
+      $itk_component(notebook) select Az/El
+      set ::Config($itk_option(-component).cosys,value) Az/El
+      $itk_component(az) insert end [$name cget -c1Rate]
+      $itk_component(el) insert end [$name cget -c2Rate]
+   } else {
+      $itk_component(notebook) select RA/Dec
+      if { [string is space $cosys] } {
+         set ::Config($itk_option(-component).cosys,value) FK5/J2000
+      } else {
+         set ::Config($itk_option(-component).cosys,value) $cosys
+      }
+      $itk_component(ra) insert end [$name cget -c1Rate]
+      $itk_component(dec) insert end [$name cget -c2Rate]
+   }
+}
+
+itcl::body TrackRateControl::save {name} {
+   if { [string equal [lindex [$itk_component(notebook) pageconfigure \
+         [$itk_component(notebook) select select] -label] 4] Az/El] } {
+      $name configure \
+            -cosys AzEl \
+            -t0 [$itk_component(t0) get] \
+            -c1Rate [$itk_component(az) get] \
+            -c2Rate [$itk_component(el) get] \
+   } else {
+      $name configure \
+            -cosys [$itk_component(cosys) get] \
+            -t0 [$itk_component(t0) get] \
+            -c1Rate [$itk_component(ra) get] \
+            -c2Rate [$itk_component(dec) get] \
+   }
+}
+
+itcl::configbody TrackRateControl::component {
+
+# remove any existing trace.
+   trace vdelete ::Config($comp,list) w [itcl::code $this newlist]
+   set comp ""
+
+   if { $itk_option(-component) != "" } {
+
+# Record current component name.
+      set comp $itk_option(-component)
+
+      $itk_component(cosys) configure -component ${comp}.cosys
+
+# The list of targets changes when a new field is selected so we must
+# monitor the list name element of the config array.
+      trace variable ::Config($comp,list) w [itcl::code $this newlist]
+
+# Initialise with the current list name.
+      after idle [itcl::code $this newlist "" "" ""]
+   }
+}
+
+itcl::body TrackRateControl::checkcosys {} {
+   set cosys [$itk_component(cosys) get]
+   if { ![string equal $cosys ""] } {
+      set frame [CosysNames::$cosys cget -frame]
+      if { [string equal $frame AzEl] } {
+         $itk_component(notebook) select Az/El
+      } else {
+         $itk_component(notebook) select RA/Dec
+      }
+   }
+}
+
+itcl::body TrackRateControl::newlist {n1 n2 op} {
+
+# Re-configure the control.
+  $itk_component(selector) configure -componentlist $::Config($comp,list)
+
+# Select the current component.
+  $itk_component(selector) select $::Config($comp,value)
+}
+

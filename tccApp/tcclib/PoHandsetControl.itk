@@ -1,0 +1,355 @@
+#+
+#  PoHandsetControl <- itk::Widget
+#
+#  A PoHandsetControl implements a software handset for adjusting
+#  pointing origin positions.
+#
+#
+#  Options:
+#           none
+#
+#  Methods:
+#           none
+#
+#  D Terrett 9 April 2003
+#
+#  Copyright CCLRC
+#+
+
+itcl::class PoHandsetControl {
+   inherit itk::Widget
+   constructor args {}
+   destructor {after cancel $refid; sa tcssad unproc gacqId ; destroy .gacq}
+   
+   private {
+      method setvt {}
+      method refresh {}
+      method update {}
+      method setlock {}
+      method copya {}
+      method reset {}
+      method gacq_monitor {name alarm time values}
+      method gacq_ack {}
+      method gacq_rej {}
+      method gacq_validate {}
+      variable vt
+      variable refid ""
+      variable lock 1
+   }
+}
+
+itk::usual PoHandsetControl {
+   keep -borderwidth -cursor -font -labelfont 
+}
+
+itcl::body PoHandsetControl::constructor args {
+
+   set w $itk_interior
+
+# Frame for the handset.
+   itk_component add hsframe {
+      frame $w.hsframe
+   }
+   pack $itk_component(hsframe)
+   set w $itk_component(hsframe)
+
+   itk_component add sel {
+      frame $w.sel -borderwidth 2 -relief groove
+   }
+   pack $itk_component(sel) -padx 5 -pady 5
+   set w $itk_component(sel)
+
+# Column headings.
+   itk_component add adjust {
+      label $w.adjust -text Adjust
+   }
+   itk_component add xy {
+      label $w.xy -text "X (arcsec) Y"
+   }
+   itk_component add offset {
+      label $w.offset -text offset
+   }
+
+# Radio buttons for selecting which offset to adjust.
+   itk_component add asel {
+      radiobutton $w.asel -variable [itcl::scope vt] -value sourceA \
+            -command [itcl::code $this setvt]
+   }
+   itk_component add bsel {
+      radiobutton $w.bsel -variable [itcl::scope vt] -value sourceB \
+            -command [itcl::code $this setvt]
+   }
+
+# Labels.
+   itk_component add alab {
+      label $w.alab -text "Chop A"
+   }
+   itk_component add blab {
+      label $w.blab -text "Chop B"
+   }
+
+# Display of positions and offsets.
+   itk_component add ax {
+      label $w.ax -width 8 -borderwidth 2 -relief groove
+   }
+   itk_component add ay {
+      label $w.ay -width 8 -borderwidth 2 -relief groove
+   }
+   itk_component add aoff1 {
+      label $w.aoff1 -width 8 -borderwidth 2 -relief groove
+   }
+   itk_component add aoff2 {
+      label $w.aoff2 -width 8 -borderwidth 2 -relief groove
+   }
+   itk_component add bx {
+      label $w.bx -width 8 -borderwidth 2 -relief groove
+   }
+   itk_component add by {
+      label $w.by -width 8 -borderwidth 2 -relief groove
+   }
+   itk_component add boff1 {
+      label $w.boff1 -width 8 -borderwidth 2 -relief groove
+   }
+   itk_component add boff2 {
+      label $w.boff2 -width 8 -borderwidth 2 -relief groove
+   }
+
+   grid $itk_component(adjust) - $itk_component(xy) - \
+         $itk_component(offset) -
+   grid $itk_component(alab) $itk_component(asel) $itk_component(ax) \
+         $itk_component(ay) $itk_component(aoff1) $itk_component(aoff2)
+   grid $itk_component(blab) $itk_component(bsel) $itk_component(bx) \
+         $itk_component(by) $itk_component(boff1) $itk_component(boff2)
+
+# Check button for locking the A & B origins together.
+   set w $itk_component(hsframe)
+   itk_component add lock {
+      checkbutton $w.lock -text "Lock B to A" -variable [itcl::scope lock] \
+            -command [itcl::code $this setlock]
+   }
+   pack $itk_component(lock)
+
+# Handset
+   itk_component add handset {
+      Handset $w.handset -adjust instr -cloop 1 -loopDef 1
+   }
+   pack $itk_component(handset)
+
+# Select the default virtual telescope.
+   set vt sourceA
+
+# Buttons for clearing and update the offsets.
+   itk_component add bot {
+      frame $w.bot
+   }
+   pack $itk_component(bot) -expand yes -fill x
+   set w $itk_component(bot)
+   itk_component add absorb {
+      LiveButton $w.update -text Absorb -width 8 \
+            -command [itcl::code $this update]
+   }
+   itk_component add reset {
+      LiveButton $w.reset -command [itcl::code $this reset] -text Reset \
+            -width 8
+   }
+
+   pack $itk_component(absorb) $itk_component(reset) -side left -expand y \
+         -pady 5
+
+# Pointing origin manager.
+   set w $itk_interior
+   itk_component add pomgr {
+      PoManager $w.pomgr -lock 1
+   }
+   pack $itk_component(pomgr) -pady 5
+
+   if { [catch {cs offsetPoB info}] } {
+      epics cs offsetPoB
+   }
+   if { [catch {cs offsetPoC info}] } {
+      epics cs offsetPoC
+   }
+   if { [catch {cs clearPoOffset info}] } {
+      epics cs clearPoOffset
+   }
+
+# Set lock state.
+   setlock
+
+   set refid [after 1000 [itcl::code $this refresh]]
+
+   sa tcssad proc gacqId [itcl::code $this gacq_monitor]
+
+   eval itk_initialize $args
+}
+
+itcl::body PoHandsetControl::reset {} {
+
+   $itk_component(handset) openloop
+
+   if {$lock} {
+      set source ALL
+   } else {
+      if {[string equal $vt sourceA]} {
+         set source "SOURCE A"
+      } else {
+         set source "SOURCE B"
+      }
+   }
+   cs clearPoOffset set vt [list $source]
+   cs clearPoOffset set index all
+   logger command clearPoOffset
+   if { [catch {cs tcsApply post} msg] } {
+      tk_messageBox -icon error -parent $itk_interior -message \
+            "Error posting pointing origin offset command: TCS reports \
+            \"$msg\""
+   }
+}
+
+
+itcl::body PoHandsetControl::gacq_ack {} {
+   # select the instrument offset
+   [$itk_component(handset) component orient] select instr
+
+   # send the IAA/IPA
+   cs rotator set iaa [sa tcssad get gacqIAA]
+   cs rotator set ipa [sa tcssad get gacqIPA]
+   logger command rotator
+   if { [catch {cs tcsApply post} msg] } {
+      tk_messageBox -icon error -parent $itk_interior -message \
+            "Error posting rotator ipa command: TCS reports \
+            \"$msg\""
+   }
+   logactions logmess "Applying GACQ Offset"
+
+   # send the P
+   $itk_component(handset) sendOffset instr [sa tcssad get gacqP] 90.0
+   
+   # send the Q
+   $itk_component(handset) sendOffset instr [sa tcssad get gacqQ] 180.0
+      
+   wm withdraw .gacq
+}
+
+itcl::body PoHandsetControl::gacq_rej {} {
+   wm withdraw .gacq
+}
+
+itcl::body PoHandsetControl::gacq_validate {} {
+   
+   if { ![winfo exists .gacq] } {
+      toplevel .gacq
+      wm title .gacq  "GACQ"
+      label .gacq.title -text "Apply GACQ offset?"
+      frame .gacq.f1
+      label .gacq.f1.p -text "P: [sa tcssad get gacqP]" -width 20
+      label .gacq.f1.q -text "Q: [sa tcssad get gacqQ]" -width 20
+      label .gacq.f1.iaa -text "IAA: [sa tcssad get gacqIAA]" -width 20
+      label .gacq.f1.ipa -text "IPA: [sa tcssad get gacqIPA]" -width 20
+      frame .gacq.f2
+      button .gacq.f2.ok -text OK -command [itcl::code $this gacq_ack] -width 10
+      button .gacq.f2.cancel -text Cancel -command [itcl::code $this gacq_rej] -width 10
+      pack .gacq.f1.p .gacq.f1.q .gacq.f1.iaa .gacq.f1.ipa
+      pack .gacq.f2.ok .gacq.f2.cancel -side left
+      pack .gacq.title .gacq.f1 .gacq.f2
+   } else {
+      .gacq.f1.p configure -text "P: [sa tcssad get gacqP]"
+      .gacq.f1.q configure -text "Q: [sa tcssad get gacqQ]"
+      .gacq.f1.iaa configure -text "IAA: [sa tcssad get gacqIAA]"
+      .gacq.f1.ipa configure -text "IPA: [sa tcssad get gacqIPA]"
+      wm deiconify .gacq
+      raise .gacq
+   }
+
+   logactions logmess "Received a GACQ Offset P: [sa tcssad get gacqP] Q: [sa tcssad get gacqQ] IAA: [sa tcssad get gacqIAA] IPA: [sa tcssad get gacqIPA]"
+
+   # wake up ssa   
+   bell
+   
+}
+   
+itcl::body PoHandsetControl::gacq_monitor {name alarm time values} {
+   after idle [itcl::code $this gacq_validate]
+}
+
+itcl::body PoHandsetControl::setvt {} {
+   if {$lock} {
+      $itk_component(handset) configure -vt {sourceA sourceB sourceC}
+   } else {
+      $itk_component(handset) configure -vt $vt
+   }
+}
+
+itcl::body PoHandsetControl::refresh {} {
+
+# Update the fields.
+   foreach {src w} {A a B b} {
+      set target [sa tcssad get target$src]
+      $itk_component(${w}x) configure \
+            -text [format %6.2f [expr {[lindex $target 4] / 0.62056151}]]
+      $itk_component(${w}y) configure \
+            -text [format %6.2f [expr {[lindex $target 5] / 0.62056151}]]
+      $itk_component(${w}off1) configure \
+            -text [format %6.2f [expr {[lindex $target 6] / 0.62056151}]]
+      $itk_component(${w}off2) configure \
+            -text [format %6.2f [expr {[lindex $target 7] / 0.62056151}]]
+   }
+
+   set refid [after 1000 [itcl::code $this refresh]]
+}
+
+itcl::body PoHandsetControl::update {} {
+   $itk_component(pomgr) update $vt
+   if {$lock} {
+      copya
+   }
+}
+
+itcl::body PoHandsetControl::setlock {} {
+
+   if {$lock} {
+
+# Select A and disable the B radio button.
+      set vt sourceA
+      $itk_component(bsel) configure -state disabled
+
+# Configure the handset to adjust all 3 pointing origins.
+      $itk_component(handset) configure -vt {sourceA sourceB sourceC}
+
+# Copy A to B & C.
+      copya
+   } else {
+
+# Enable the B radio button.
+      $itk_component(bsel) configure -state normal
+
+# Set the active origin
+      setvt
+   }
+
+# Configure the pointing origin manager.
+   $itk_component(pomgr) configure -lock $lock
+}
+
+itcl::body PoHandsetControl::copya {} {
+
+# Copy the current settings of A into B & C.
+   set target [sa tcssad get targetA]
+   cs poriginB set x value [lindex $target 4]
+   cs poriginB set y value [lindex $target 5]
+   logger command poriginB
+   cs offsetPoB set x value [lindex $target 6]
+   cs offsetPoB set y value [lindex $target 7]
+   logger command offsetPoB
+   cs poriginC set x value [lindex $target 4]
+   cs poriginC set y value [lindex $target 5]
+   logger command poriginC
+   cs offsetPoC set x value [lindex $target 6]
+   cs offsetPoC set y value [lindex $target 7]
+   logger command offsetPoC
+   if { [catch {cs tcsApply post} msg] } {
+      tk_messageBox -icon error -parent $itk_interior -message \
+            "Error posting pointing origin offset command: TCS reports \
+            \"$msg\""
+   }
+}

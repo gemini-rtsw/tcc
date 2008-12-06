@@ -1,0 +1,322 @@
+#+
+#  M1TuneWizard <- Wizard
+#
+#  A wizard for stepping through the procedure for tuning M1 with the
+#  HRWFS.
+#
+#  Methods:
+#
+#  D Terrett 20 January 2005
+#
+#  Copyright CCLRC
+#-
+
+itcl::class M1TuneWizard {
+   inherit Wizard
+   constructor {args} {}
+   destructor {}
+   private {
+      method tune {}
+      method stoptune {}
+      method step1 {}
+      method step2 {}
+      method backtostep1 {}
+      method test {}
+      method displaymodel {}
+      variable pid
+      variable dir
+      variable updateid ""
+   }
+}
+
+itk::usual M1TuneWizard {
+   keep -background -cursor -foreground -modality 
+}
+
+option add *M1TuneWizard.borderWidth 2 widgetDefault
+option add *M1TuneWizard.height 300 widgetDefault
+option add *M1TuneWizard.master "." widgetDefault
+option add *M1TuneWizard.width 650 widgetDefault
+option add *M1TuneWizard.title "M1 tuning wizard"
+
+itcl::body M1TuneWizard::constructor {args} {
+
+# Create the widgets for each step.
+   set w [childsite]
+   itk_component add obssetup {
+      frame $w.obssetup
+   }
+   set w $itk_component(obssetup)
+   itk_component add expose {
+      iwidgets::optionmenu $w.expose -labeltext "Exposure time (s)"
+   }
+   $itk_component(expose) insert end 30 60
+   itk_component add ndfilt {
+      iwidgets::optionmenu $w.ndfilt -labeltext "neutral density filter"
+   }
+   $itk_component(ndfilt) insert end nd100 nd1000 filt04 filt08 open
+   itk_component add test {
+      button $w.test -text "Take test exposure" \
+            -command [itcl::code $this test]
+   }
+   pack $itk_component(expose) $itk_component(ndfilt)
+   pack $itk_component(test) -pady 10
+
+   set w [childsite]
+   itk_component add tune {
+      frame $w.tune
+   }
+   set w $itk_component(tune)
+   itk_component add m1lab {
+      label $w.m1lab -text "M1 Model" -anchor w
+   }
+   itk_component add meslab {
+      label $w.meslab -text "WFS" -width 15
+   }
+   itk_component add lastlab {
+      label $w.lastlab -text "Last corr" -width 15
+   }
+   itk_component add totlab {
+      label $w.totlab -text "Total corr" -width 15
+   }
+   itk_component add z4lab {
+      label $w.z4lab -text "Z4 (0 astig)" -anchor w
+   }
+   itk_component add z5lab {
+      label $w.z5lab -text "Z5 (45 astig)" -anchor w
+   }
+   itk_component add z8lab {
+      label $w.z8lab -text "Z8 (spherical)" -anchor w
+   }
+   itk_component add z9lab {
+      label $w.z9lab -text "Z9 (x trefoil)" -anchor w
+   }
+   itk_component add z10lab {
+      label $w.z10lab -text "Z10 (y trefoil)" -anchor w
+   }
+   itk_component add z4mes {
+      label $w.z4mes -relief sunken
+   }
+   itk_component add z5mes {
+      label $w.z5mes -relief sunken
+   }
+   itk_component add z8mes {
+      label $w.z8mes -relief sunken
+   }
+   itk_component add z9mes {
+      label $w.z9mes -relief sunken
+   }
+   itk_component add z10mes {
+      label $w.z10mes -relief sunken
+   }
+   itk_component add z4last {
+      label $w.z4last -relief sunken
+   }
+   itk_component add z5last {
+      label $w.z5last -relief sunken
+   }
+   itk_component add z8last {
+      label $w.z8last -relief sunken
+   }
+   itk_component add z9last {
+      label $w.z9last -relief sunken
+   }
+   itk_component add z10last {
+      label $w.z10last -relief sunken
+   }
+   itk_component add z4tot {
+      label $w.z4tot -relief sunken
+   }
+   itk_component add z5tot {
+      label $w.z5tot -relief sunken
+   }
+   itk_component add z8tot {
+      label $w.z8tot -relief sunken
+   }
+   itk_component add z9tot {
+      label $w.z9tot -relief sunken
+   }
+   itk_component add z10tot {
+      label $w.z10tot -relief sunken
+   }
+   itk_component add m2 {
+      frame $w.m2
+   }
+   set w $itk_component(m2)
+   itk_component add m2lab {
+      label $w.m2lab -text "M2 correction"
+   }
+   itk_component add z6lab {
+      label $w.z6lab -text "Z6 (x coma)"
+   }
+   itk_component add z7lab {
+      label $w.z7lab -text "Z7 (y coma)"
+   }
+   itk_component add z6mes {
+      label $w.z6mes -relief sunken -width 15
+   }
+   itk_component add z7mes {
+      label $w.z7mes -relief sunken -width 15
+   }
+
+   grid $itk_component(m1lab) $itk_component(meslab) \
+         $itk_component(lastlab) $itk_component(totlab) -sticky ew
+   grid $itk_component(z4lab) $itk_component(z4mes) $itk_component(z4last) \
+         $itk_component(z4tot) -sticky ew
+   grid $itk_component(z5lab) $itk_component(z5mes) $itk_component(z5last) \
+         $itk_component(z5tot) -sticky ew
+   grid $itk_component(z8lab) $itk_component(z8mes) $itk_component(z8last) \
+         $itk_component(z8tot) -sticky ew
+   grid $itk_component(z9lab) $itk_component(z9mes) $itk_component(z9last) \
+         $itk_component(z9tot) -sticky ew
+   grid $itk_component(z10lab) $itk_component(z10mes) $itk_component(z10last) \
+         $itk_component(z10tot) -sticky ew
+   grid $itk_component(m2) - - -
+
+   grid $itk_component(m2lab) -
+   grid $itk_component(z6lab) $itk_component(z6mes)
+   grid $itk_component(z7lab) $itk_component(z7mes)
+
+# Create the status acceptor for monitoring the tuning progress.
+   if { [catch {sa m1model info}] } {
+      epics sa m1model
+   }
+
+# Call the first step to initialize the dialog box.
+   step1
+
+   eval itk_initialize $args
+}
+
+itcl::body M1TuneWizard::destructor {} {
+
+# Kill of the update process.
+   catch {stoptune}
+}
+
+itcl::body M1TuneWizard::step1 {} {
+   pack $itk_component(obssetup)
+   set instructions "Select exposure time and neutral density filter\
+      and press \"Take test exposure\" to take a test exposure. Press\
+      \"Next\" to start the tuning process"
+   set backproc ""
+   set nextproc [itcl::code $this step2]
+   set actionproc [itcl::code $this tune]
+}
+
+itcl::body M1TuneWizard::tune {} {
+
+# Set output destination.
+   set utc [split [tccTime utc]]
+   set date [lindex $utc end][string tolower [lindex $utc end-1]][lindex \
+         $utc end-2]
+   set dir [calparam cget -m1_tune_dir]
+
+# Copy the appropriate sky image.
+   set filt [$itk_component(ndfilt) get]
+   if { [string first filt $filt] != -1 } {
+      set filt [string range $filt 4 end]
+   }
+   set filename hrwfs_sky_red_${filt}_[$itk_component(expose) get].fits
+   file copy -force [file join [calparam cget -hrwfs_sky_dir] $filename] \
+         [file join $dir sky.fits]
+
+# Delete any existing output file.
+   file delete [file join $dir AO.dat]
+
+# Exec the analysis program.
+   set home [pwd]
+   cd $dir
+   set aoprog [calparam cget -hrwfs_ao_prog]
+   logger log $aoprog
+   catch {unset ::env(IDL_STARTUP)}
+   set pid [exec $aoprog &]
+   cd $home
+
+# Start the M1 tuning.
+   AO configure -comacorr 1 -m1source HRWFS \
+         -m1filename [file join $dir AO.dat]
+   AO enable
+}
+
+itcl::body M1TuneWizard::step2 {} {
+   pack $itk_component(tune)
+   set backproc [itcl::code $this backtostep1]
+   set nextproc ""
+   set finishproc [itcl::code $this stoptune]
+   set instructions "Press \"Finish\" when tuning is complete"
+   set updateid [after 1000 [itcl::code $this displaymodel]]
+}
+
+itcl::body M1TuneWizard::backtostep1 {} {
+   catch stoptune
+   step1
+}
+
+itcl::body M1TuneWizard::stoptune {} {
+   after cancel $updateid
+   AO configure -m1source "" -comacorr 0
+   AO enable
+   exec kill -9 $pid
+}
+
+itcl::body M1TuneWizard::test {} {
+
+# Set exposure time.
+   hrwfs expose [$itk_component(expose) get]
+
+# Set filters.
+   hrwfs ndsel [$itk_component(ndfilt) get]
+   hrwfs colsel R-red2
+
+# Insert lens
+   hrwfs lenssel HRWFS
+
+# Data destination.
+   hrwfs output DHS
+
+# Take an exposure.
+   hrwfs start 1
+}
+
+itcl::body M1TuneWizard::displaymodel {} {
+
+# Update display with model values.
+   $itk_component(z4mes) configure \
+         -text [format %.2f [sa m1model get averageZ4]]
+   $itk_component(z5mes) configure \
+         -text [format %.2f [sa m1model get averageZ5]]
+   $itk_component(z6mes) configure \
+         -text [format %.2f [sa m1model get averageZ6]]
+   $itk_component(z7mes) configure \
+         -text [format %.2f [sa m1model get averageZ7]]
+   $itk_component(z8mes) configure \
+         -text [format %.2f [sa m1model get averageZ8]]
+   $itk_component(z9mes) configure \
+         -text [format %.2f [sa m1model get averageZ9]]
+   $itk_component(z10mes) configure \
+         -text [format %.2f [sa m1model get averageZ10]]
+   $itk_component(z4last) configure \
+         -text [format %.2f [sa m1model get lastsentZ4]]
+   $itk_component(z5last) configure \
+         -text [format %.2f [sa m1model get lastsentZ5]]
+   $itk_component(z8last) configure \
+         -text [format %.2f [sa m1model get lastsentZ8]]
+   $itk_component(z9last) configure \
+         -text [format %.2f [sa m1model get lastsentZ9]]
+   $itk_component(z10last) configure \
+         -text [format %.2f [sa m1model get lastsentZ10]]
+   $itk_component(z4tot) configure \
+         -text [format %.2f [sa m1model get totalZ4]]
+   $itk_component(z5tot) configure \
+         -text [format %.2f [sa m1model get totalZ5]]
+   $itk_component(z8tot) configure \
+         -text [format %.2f [sa m1model get totalZ8]]
+   $itk_component(z9tot) configure \
+         -text [format %.2f [sa m1model get totalZ9]]
+   $itk_component(z10tot) configure \
+         -text [format %.2f [sa m1model get totalZ10]]
+
+# Schedule display.
+   set updateid [after 1000 [itcl::code $this displaymodel]]
+}

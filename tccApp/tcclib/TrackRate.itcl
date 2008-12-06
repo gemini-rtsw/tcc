@@ -1,0 +1,140 @@
+#+
+#  TrackRate <- Paramset
+#
+#  Implements the TrackRate class. A TrackRate object 
+#  stores all the parameters needed to specify a differential track rate.
+#
+#  Options:
+#           -cosys     The tracking rate coordinate frame.
+#
+#           -c1Rate    The track rate in RA or Azimuth.
+#
+#           -c2Rate    The track rate in Dec or Elevation.
+#
+#           -t0        The epoch of the track rates.
+#
+#  Methods:
+#           apply comp Applies the track rate definition to the TCS by setting 
+#                      the values of the command parameters for the virtual
+#                      telescope.
+#
+#           init       Sets the track rate object to its initial state.
+#
+#           preview vt The preview system does not support differential track 
+#                      rates so this method does nothing.
+#
+#           save node  Saves the values of the options to the xml node.
+#
+#  D Terrett 11 August 2003
+#
+#  Copyright CCLRC
+#+
+
+itcl::class TrackRate {
+   inherit Paramset
+   destructor {$this init}
+   public {
+      method apply {comp}
+      method init {}
+      method preview {view vt} {}
+      method save {node}
+      variable cosys {}
+      variable t0 {}
+      variable c1Rate {}
+      variable c2Rate {}
+   }
+   private {
+      variable current_cosys {}
+   }
+}
+
+itcl::body TrackRate::apply {comp} {
+
+# Determine command sender name.
+   switch $comp {
+      tcs.field.sciencetarget.trackrate {
+         set cs difTrSourceA
+      }
+      tcs.field.pwfs1target.trackrate {
+         set cs difTrPwfs1
+      }
+      tcs.field.pwfs2target.trackrate {
+         set cs difTrPwfs2
+      }
+      tcs.field.oiwfstarget.trackrate {
+         set cs difTrOiwfs
+      }
+      tcs.field.aowfstarget.trackrate {
+         set cs difTrPwfs2
+      }
+   }
+
+# Set all the parameters.
+   cs $cs set t0 [list $t0]
+
+# Convert c1 (ra or az)
+    if {[string is double $c1Rate] && [string length $c1Rate] > 0} {
+       if {[string equal $cosys AzEl]} {
+	   set newc1Rate [expr $c1Rate / 3600.0 ]
+       } else {
+	   set pi 3.14159265
+	   set dec [$::Config(tcs.field.sciencetarget,namespace)::$::Config(tcs.field.sciencetarget,value) cget -c2]
+	   set parts [split $dec " :"]
+	   #puts "dec parts: $parts"
+	   set num_dec [expr [lindex $parts 0] + [lindex $parts 1] / 60.0 + [lindex $parts 2] / 3600.0]
+	   #puts "changing c1Rate: $c1Rate aph dec: $dec or $num_dec"
+	   set newc1Rate [expr $c1Rate / (3600.0 * 15.0 * cos($num_dec * $pi / 180.0 ))]
+	   #puts "to $newc1Rate sps"
+       }
+   } else {
+        set newc1Rate $c1Rate
+   }
+# Convert c2 (dec or el)
+   if {[string is double $c2Rate] && [string length $c2Rate] > 0} {
+       if { [string equal $cosys AzEl]} {
+	   set newc2Rate [expr $c2Rate / 3600.0]
+       } else {   
+	   #puts "changing c2Rate from: $c2Rate aph"
+	   set newc2Rate [expr $c2Rate / 3600.0]
+	   #puts "to $newc2Rate aps"
+       }
+   } else {  
+        set newc2Rate $c2Rate
+   }
+   cs $cs set dtheta1 [list $newc1Rate]
+   cs $cs set dtheta2 [list $newc2Rate]
+   if { [string equal $cosys ""] } {
+      CosysNames::FK5/J2000 apply $comp.cosys
+   } else {
+      CosysNames::$cosys apply $comp.cosys
+   }
+}
+
+itcl::body TrackRate::init {} {
+   set t0 {}
+   set c1Rate {}
+   set c2Rate {}
+   $this configure -cosys {}
+}
+
+itcl::body TrackRate::save {node} {
+   set node [paramset $node trackrate]
+   param $node cosys $cosys
+   param $node t0 $t0
+   param $node c1Rate $c1Rate
+   param $node c2Rate $c2Rate
+}
+
+itcl::configbody TrackRate::cosys {
+   if { ! [string equal $current_cosys ""] } {
+      CosysNames::$current_cosys refdec
+   }
+   set current_cosys ""
+   if { ! [string equal $cosys ""] } {
+      if { [catch {CosysNames::$cosys refinc}] } {
+         error "Coordinate frame \"$cosys\" does not exist"
+      } else {
+         set current_cosys $cosys
+      }
+   }
+}

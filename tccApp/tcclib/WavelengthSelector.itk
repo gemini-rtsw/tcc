@@ -1,0 +1,137 @@
+#+
+#  WavelengthSelector <- itk::Widget
+#
+#  Implements the WavelengthSelector widget. A WavelengthSelector widget
+#  contains a SubComponentSelector widget to select a named wavelength and 
+#  an entry box for displaying and/or editing the wavelength. The wavelength i
+#  can only be edited if no named wavelength is selected in the 
+#  SubComponentSelector widget.
+#
+#  Methods:
+#           select item   Sets the wavelength to the wavelength component
+#                         item.
+#
+#           value value   Sets the wavelength to "value".
+#
+#           get item      Gets the value of "item"; either the value or
+#                         the name.
+#
+#       Returns the wavelength
+#
+#  D Terrett 24 October 2002
+#
+#  Copyright CCLRC
+#+
+
+itcl::class WavelengthSelector {
+   inherit itk::Widget
+   constructor args {}
+   destructor {}
+   itk_option define -component component Component {}
+   public {
+      method value {value}
+      method get {option}
+   }
+   private {
+      method selectioncommand {}
+      method newvalue {n1 n2 op}
+      variable comp ""
+   }
+}
+
+itk::usual WavelengthSelector {
+   keep -background -borderwidth -cursor -foreground -highlightcolor
+   keep -highlightthickness -insertbackground -insertborderwidth
+   keep -insertofftime -insertontime -insertwidth -labelfont -popupcursor
+   keep -selectbackground -selectborderwidth -selectforeground
+   keep -textbackground -textfont -font
+   keep -activebackground -activeforeground -disabledforeground
+}
+
+itcl::body WavelengthSelector::constructor args {
+
+   set w $itk_interior
+
+# SubComponentSelector.
+   itk_component add selector {
+      SubComponentSelector $w.selector -labeltext "Wavelength" \
+            -labelpos nw -selectioncommand [itcl::code $this selectioncommand]
+   } {
+      usual
+      keep -component -labeltext -labelpos
+   }
+#   pack $itk_component(selector) -padx 4 -pady 4 -anchor w
+
+# Label for the wavelength.
+   itk_component add wavelab {
+      label $w.wavelab -text "Wavel (um)" 
+   }
+   itk_component add wavel {
+      label $w.wavel -relief sunken -width 8
+   }
+
+#   pack $itk_component(wavelab) $itk_component(wavel) -anchor w -side left
+   pack $itk_component(selector) $itk_component(wavelab) $itk_component(wavel) -anchor w -side left
+
+   eval itk_initialize $args
+}
+
+itcl::body WavelengthSelector::destructor {} {
+
+# Remove variable trace.
+   trace vdelete ::Config($comp,value) w [itcl::code $this newvalue]
+}
+
+itcl::body WavelengthSelector::value value {
+   $itk_component(wavel) configure -text  $value
+}
+
+itcl::body WavelengthSelector::get option {
+   switch $option {
+      value {
+         return [$itk_component(wavel) cget -text]
+      }
+      name {
+         return [$itk_component(selector) get]
+      }
+      default {
+         error "unrecognised option, should be \n   $this get value\n   $this get name"
+      }
+   }
+}
+
+itcl::body WavelengthSelector::selectioncommand {} {
+#+
+# Copies the contents of the Wavelength object selected in the combobox
+# into the edit controls.
+#-
+   set name [$itk_component(selector) get]
+   if { [string equal $name ""] } {
+      $itk_component(wavel) configure -text ""
+   } else {
+      $itk_component(wavel) configure -text \
+            [$::Config($comp,namespace)::$name cget -wavel]
+   }
+}
+
+itcl::configbody WavelengthSelector::component {
+
+# remove existing trace.
+   trace vdelete ::Config($comp,value) w [itcl::code $this newvalue]
+
+# Set up a trace on the wavelength subcomponent name in order to detect
+# new wavelength definitions being stored.
+   set comp $itk_option(-component)
+   trace variable ::Config($comp,value) w [itcl::code $this newvalue]
+}
+
+itcl::body WavelengthSelector::newvalue {n1 n2 op} {
+
+   set name $::Config($comp,value)
+   if { $name == "" } {
+      $itk_component(wavel) configure -text ""
+   } else {
+      $itk_component(wavel) configure -text \
+            [$::Config($comp,namespace)::$name cget -wavel]
+   }
+}

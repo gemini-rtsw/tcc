@@ -1,0 +1,253 @@
+#+
+#  ISS
+#
+#  Implements the ISS class. An ISS object (of which only one is expected to
+#  exist) maps the observing mode (Sky, Calibration or TV) and AO
+#  configuration (in or out) into the necessary configuration of the fold
+#  mirrors in the instrument support structure. The "update" method actually
+#  moves the mirrors to the desired positions.
+#
+#  Options:
+#          -source The source of the light beam. SKY, AO, or GCAL.
+#
+#          -sink   The destination of the light beam. INSTR or HRWFS
+#
+#          -ao     The state of the AO fold mirror (IN or OUT).
+#
+#          -port   The ISS port on which the currently active instrument
+#                  is mounted (1-5). Port 1 is the upward looking port.
+#
+#          -instrument  The name of the instrument as known to the A&G.
+#
+#  Methods:
+#          update  Moves the science fold mirror, AO pickoff mirror and
+#                  HRWFS mirrors into the correct position to realise the
+#                  settings ofthe -mode, -ao and -port options.
+#
+#  D Terrett 8 October 2003
+#
+#  Copyright CCLRC
+#+
+
+itcl::class ISS {
+   public {
+      proc gpolwait {}
+      proc p2wait {}
+      method update {}
+      variable source SKY position
+      variable sink SKY position
+      variable ao OUT position
+      variable port 5 position
+      variable instrument "" position
+   }
+   private {
+      method position {}
+      method poshrwfs {}
+      method posaofold {}
+      common aowaitid ""
+      common hrwaitid ""
+      variable scfold ""
+      variable hwfold ""
+   }
+}
+
+itcl::body ISS::position {} {
+
+# Assume that we don't care about the position of the HWRFS fold.
+   set hwfold ""
+
+# The pseudo port AC is a special case where the Acquisition Camera is
+# being treaded as a instrument so the HRWFS fold must be in.
+   if { [string equal $port AC] || [string equal $sink HRWFS] } {
+      set hr 1
+      set hwfold IN
+   } else {
+
+# If the instrument is on port 1 the HRWFS fold must be out.
+      set hr 0
+      if { $port == 1 } {
+         set upward 1
+         set hwfold OUT
+      }
+   }
+   switch $source {
+      SKY {
+ 
+# If the instrument is on port 1 or is the HRWFS then the science fold must
+# be out of the beam.
+         if { $hr || $port == 1 } {
+            set scfold OUT
+         } else {
+
+# Set the science fold according to the instrument and port names.
+            set scfold ${instrument}${port}
+         }
+      }
+      CAL {
+
+# Position the science fold.
+         if { $hr } {
+            set scfold gcal2ac
+         } else {
+            set scfold gcal2${instrument}${port}
+         }
+      }
+      AO {
+
+# Position the science fold.
+         if { $hr } {
+            set scfold ao2ac
+         } else {
+            set scfold ao2${instrument}${port}
+         }
+      }
+   }
+}
+
+itcl::body ISS::update {} {
+
+# Position hrwfs pickoff mirror.
+   if { ! [string equal $hwfold ""] } {
+      poshrwfs
+   }
+
+# Position AO fold mirror.
+# AWE will remove because new TCS will handle this
+   if { [string equal $ao ""] } {
+       set ao OUT
+   }
+   posaofold
+#   if { ![string equal $ao ""] } {
+#       posaofold
+#   }
+
+# Position science fold.
+   if { ! [string equal $scfold ""] } {
+      if { [string equal $scfold "OUT"] } {
+         cs scienceFoldPark set dummy value MARK
+         logger command scienceFoldPark
+      } else {
+         cs scienceFold set scfold value $scfold
+         logger command scienceFold
+      }
+   }
+}
+
+itcl::body ISS::poshrwfs {} {
+
+# Kill off any pending attempt to deploy the HRWFS pickoff mirror.
+   after cancel $hrwaitid
+
+# Position HRWFS pickoff mirror. Because of the way the mechanism works
+# we avoid sending it a command if it is already in the correct position.
+# Before moving it into the beam we must check that GPOL is parked.
+   switch $hwfold {
+      IN {
+         if { [sa agssad get hwName] != "IN" } {
+            if { [sa gpolsad get upperParkSwitch] == "OPEN" ||
+                  [sa gpolsad get middleParkSwitch] == "OPEN" ||
+                  [sa gpolsad get lowerParkSwitch] == "OPEN" } {
+
+# Park GPOL. This takes a long time and we can't move the HRWFS mirror
+# until it is ready.
+               cs gpolPark set dummy value MARK
+               logger command gpolPark
+
+# Start a background task that polls GPOL until it is parked.
+               set hrwaitid [after 1000 ISS::gpolwait]
+            } else {
+               cs hrwfs set hwfold value IN
+               logger command hrwfs
+            }
+         }
+      }
+      OUT {
+         if { [sa agssad get hwName] != "PARK" } {
+	    # AWE temporarily send to OUT position rather than park.
+            #cs hrwfsPark set dummy value MARK
+            #logger command hrwfsPark
+	    cs hrwfs set hwfold value OUT
+	    logger command hrwfs
+         }
+      }
+   }
+}
+
+itcl::body ISS::posaofold {} {
+
+# Kill off any pending attempt to deploy the AO fold mirror.
+   after cancel $aowaitid
+
+# Position AO fold mirror. Because of the way the mechanism works
+# we avoid sending it a command if it is already in the correct position.
+# Before moving it into the beam we must check that P2 is parked.
+   switch $ao {
+      IN {
+         if { [sa agssad get aoName] != "IN" } {
+            if { [sa agssad get p2Parked] != "1" } {
+
+# Park P2. This takes a long time and we can't move the AO mirror
+# until it is ready.
+               cs pwfs2Park set dummy value MARK
+               logger command pwfs2Park
+
+# Start a background task that polls P2 until it is parked.
+               set aowaitid [after 1000 ISS::p2wait]
+            } else {
+               cs aoFold set aofold value IN
+               # turn off ag inpos override
+	       # AWE will remove because new TCS will handle this
+	       #cs agInPosOver set override value 0
+               logger command aoFold
+            }
+         }
+      }
+      OUT {
+         if { [sa agssad get aoName] != "park-pos." } {
+            cs aoFoldPark set dummy value MARK
+            # turn on ag inpos override
+	    # AWE will remove because new TCS will handle this
+	    #cs agInPosOver set override value 1
+            logger command aoFoldPark
+         }
+      }
+   }
+}
+
+itcl::body ISS::p2wait {} {
+   if { [sa agssad get p2Parked] != "1" } {
+
+# Not ready yet so try again later.
+     set aowaitid [after 1000 ISS::p2wait]
+   } else {
+
+# P2 is parked so we can put the AO fold in.
+      cs aoFold set aofold value IN
+      # turn off ag inpos override
+      #cs agInPosOver set override value 0
+      logger command aoFold
+      if { [catch {cs hrwfs post} msg] } {
+         tk_messageBox -icon error -message \
+               "Error posting commands: TCS reports \"$msg\""
+      }
+   }
+}
+
+itcl::body ISS::gpolwait {} {
+   if { [sa gpolsad get upperParkSwitch] == "OPEN" ||
+        [sa gpolsad get middleParkSwitch] == "OPEN" ||
+        [sa gpolsad get lowerParkSwitch] == "OPEN" } {
+
+# Not ready yet so try again later.
+     set hrwaitid [after 1000 ISS::gpolwait]
+   } else {
+
+# GPOL is parked so we can put the HRWFS fold in.
+      cs hrwfs set hwfold value IN
+      logger command hrwfs
+      if { [catch {cs hrwfs post} msg] } {
+         tk_messageBox -icon error -message \
+               "Error posting commands: TCS reports \"$msg\""
+      }
+   }
+}

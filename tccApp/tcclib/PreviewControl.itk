@@ -1,0 +1,604 @@
+#+
+#  PreviewControl <- itk::Widget
+#
+#  An PreviewControl widget displays the results of a preview.
+#
+#  Options:
+#           none
+#
+#  Methods:
+#           update      Causes the preview configuration to be calculated 
+#                       and displayed.
+#
+#  D Terrett 5 December 2003
+#
+#  Copyright CCLRC
+#+
+
+itcl::class PreviewControl {
+   inherit itk::Widget
+   constructor args {}
+   destructor {}
+   public {
+      method update {}
+   }
+   private {
+      method countdown {}
+      method plot {}
+      variable view ""
+   }
+}
+
+itk::usual PreviewControl {
+    keep -background -cursor -foreground -font -highlightcolor \
+          -highlightthickness
+}
+
+itcl::body PreviewControl::constructor args {
+
+   set w $itk_interior
+
+   itk_component add radec {
+      label $w.radec
+   }
+   pack $itk_component(radec)
+
+   itk_component add timef {
+     frame $w.ft
+   }
+   pack $itk_component(timef) -pady 4 -padx 4
+   set w $itk_component(timef)
+   itk_component add conf {
+      label $w.conf -text "Configuration at" 
+   }
+   pack $itk_component(conf) -side left
+   itk_component add time {
+      label $w.time -width 10 -bd 2 -relief groove
+   }
+   pack $itk_component(time) -side left -padx 10
+   itk_component add utc {
+      label $w.utc -text UTC
+   }
+   pack $itk_component(utc) -side left
+
+   set w $itk_interior
+   itk_component add ftel {
+      frame $w.ftel
+   }
+   pack $itk_component(ftel) -side top -fill x -expand y -pady 4 -padx 4
+   set w $itk_component(ftel)
+   itk_component add az {
+      frame $w.az -bd 2 -relief groove
+   }
+   pack $itk_component(az)
+   set w $itk_component(az)
+   itk_component add az1 {
+      label $w.az1 -width 10 -anchor e
+   }
+   itk_component add az2 {
+      label $w.az2 -width 10 -anchor e
+   }
+   pack $itk_component(az1) $itk_component(az2) -expand y -fill x
+
+   set w $itk_component(ftel)
+   itk_component add el {
+      AlarmLabel $w.el -width 10 -borderwidth 2 -relief groove -anchor e
+   }
+   itk_component add azl {
+      label $w.azl -text "Azimuth:" -anchor e
+   }
+   itk_component add ell {
+      label $w.ell -text " Elevation:" -anchor e
+   }
+   grid $itk_component(azl) $itk_component(az) $itk_component(ell) \
+         $itk_component(el) -sticky ew -pady 4
+
+   itk_component add rma {
+     frame $w.rma -bd 2 -relief groove
+   }
+   pack $itk_component(rma)
+   set w $itk_component(rma)
+   itk_component add rma1 {
+      label $w.rma1 -bd 2 -anchor e
+   }
+   itk_component add rma2 {
+      label $w.rma2 -bd 2 -anchor e
+   }
+   pack $itk_component(rma1) $itk_component(rma2) -expand y -fill x
+
+   set w $itk_component(ftel)
+   itk_component add rmal {
+      label $w.rmal -text "Rotator mechanical angle:" -anchor e
+   }
+   grid $itk_component(rmal) - - $itk_component(rma) -sticky ew -pady 4
+
+   itk_component add ha {
+      label $w.ha -bd 2 -relief groove -anchor e
+   }
+   itk_component add am {
+      label $w.am -bd 2 -relief groove -anchor e
+   }
+   itk_component add hal {
+      label $w.hal -text "Hour angle:" -anchor e
+   }
+   itk_component add aml {
+      label $w.aml -text "Airmass:" -anchor e
+   }
+   grid $itk_component(hal) $itk_component(ha) $itk_component(aml) \
+         $itk_component(am) -sticky ew -pady 4
+
+   itk_component add zd {
+      label $w.zd -bd 2 -relief groove -anchor e
+   }
+   itk_component add zdl {
+      label $w.zdl -text "Zenith Distance (deg):" -anchor e
+   }
+   itk_component add moond {
+      label $w.moond -bd 2 -relief groove -anchor e
+   }
+   itk_component add moondl {
+      label $w.moondl -text "Distance from Moon (deg):" -anchor e
+   }
+   grid $itk_component(zdl) - - $itk_component(zd) -sticky ew -pady 4
+   grid $itk_component(moondl) - - $itk_component(moond) -sticky ew -pady 4
+
+   set w $itk_interior
+   itk_component add bot {
+      frame $w.bot
+   }
+   pack $itk_component(bot) -side top -fill x
+   set w $itk_component(bot)
+   itk_component add fwfs {
+      frame $w.fwfs -bd 2 -relief groove
+   }
+   pack $itk_component(fwfs) -pady 4 -padx 4 -anchor w
+   set w $itk_component(fwfs)
+   itk_component add pwfs1x {
+      AlarmLabel $w.pwfs1x -width 8 -borderwidth 2 -relief groove -anchor e
+   }
+   itk_component add pwfs1y {
+      AlarmLabel $w.pwfs1y -width 8 -borderwidth 2 -relief groove -anchor e
+   }
+   itk_component add pwfs1r {
+      AlarmLabel $w.pwfs1r -width 8 -borderwidth 2 -relief groove -anchor e
+   }
+   itk_component add pwfs2x {
+      AlarmLabel $w.pwfs2x -width 8 -borderwidth 2 -relief groove -anchor e
+   }
+   itk_component add pwfs2y {
+      AlarmLabel $w.pwfs2y -width 8 -borderwidth 2 -relief groove -anchor e
+   }
+   itk_component add pwfs2r {
+      AlarmLabel $w.pwfs2r -width 8 -borderwidth 2 -relief groove -anchor e
+   }
+   itk_component add oiwfsx {
+      AlarmLabel $w.oiwfsx -width 8 -borderwidth 2 -relief groove -anchor e
+   }
+   itk_component add oiwfsy {
+      AlarmLabel $w.oiwfsy -width 8 -borderwidth 2 -relief groove -anchor e
+   }
+   itk_component add oiwfsr {
+      AlarmLabel $w.oiwfsr -width 8 -borderwidth 2 -relief groove -anchor e
+   }
+ 
+   itk_component add x {
+      label $w.x -text "X (mm)"
+   }
+   itk_component add y {
+      label $w.y -text "Y (mm)"
+   }
+   itk_component add r {
+      label $w.r -text "R (arcm)"
+   }
+   grid x $itk_component(x) $itk_component(y) $itk_component(r)
+   itk_component add l1 {
+      label $w.l1 -text "Peripheral WFS 1"
+   }
+   itk_component add l2 {
+      label $w.l2 -text "PWFS2 / AOWFS"
+   }
+   itk_component add lo {
+      label $w.lo -text "On-instrument WFS"
+   }
+   grid $itk_component(l1) $itk_component(pwfs1x) $itk_component(pwfs1y) \
+         $itk_component(pwfs1r) -sticky e
+   grid $itk_component(l2) $itk_component(pwfs2x) $itk_component(pwfs2y) \
+         $itk_component(pwfs2r) -sticky e
+   grid $itk_component(lo) $itk_component(oiwfsx) $itk_component(oiwfsy) \
+         $itk_component(oiwfsr) -sticky e
+
+   set w $itk_component(bot)
+   itk_component add left {
+      frame $w.left
+   }
+   pack $itk_component(left) -side left
+   set w $itk_component(left)
+   itk_component add lims {
+      frame $w.lims -bd 2 -relief groove
+   }
+   pack $itk_component(lims) -pady 4 -padx 4 -anchor w
+   set w $itk_component(lims)
+   itk_component add ellim {
+      AlarmLabel $w.ellim -width 32
+   }
+   pack $itk_component(ellim) -fill x -expand y
+   itk_component add wrap {
+      frame $w.wrap -relief groove
+   }
+   pack $itk_component(wrap) -side left
+   set w $itk_component(wrap)
+   itk_component add wrapl {
+      label $w.wrapl -text "Wrap state" -anchor e
+   }
+   itk_component add min {
+      label $w.min -text -
+   }
+   itk_component add plus {
+      label $w.plus -text +
+   }
+   grid  $itk_component(wrapl) $itk_component(min) $itk_component(plus)
+   grid configure $itk_component(wrapl) -sticky e
+   itk_component add rot1lim {
+      label $w.rot1lim -width 5 -bd 2 -relief groove
+   }
+   itk_component add rot2lim {
+      label $w.rot2lim -width 5 -bd 2 -relief groove
+   }
+   itk_component add rotlimlab {
+      label $w.rotlimlab -text "Rotator wrap limit in" -anchor e
+   }
+   grid $itk_component(rotlimlab) $itk_component(rot1lim) \
+         $itk_component(rot2lim)
+   itk_component add az1lim {
+      label $w.az1lim -width 5 -bd 2 -relief groove
+   }
+   itk_component add az2lim {
+      label $w.az2lim -width 5 -bd 2 -relief groove
+   }
+   itk_component add azlimlab {
+      label $w.azlimlab -text "Azimuth wrap limit in" -anchor e
+   }
+   grid $itk_component(azlimlab) $itk_component(az1lim) $itk_component(az2lim)
+
+   set w $itk_component(bot)
+   itk_component add plot {
+      button $w.plot -text Plot -command [itcl::code $this plot]
+   }
+   itk_component add update {
+      button $w.update -text Update -command {
+         tcsConfigPanel map
+         [tcsConfigPanel cget -name] preview
+      }
+   }
+   itk_component add delta {
+      iwidgets::spinint $w.delta -range {0 1440} -labeltext min -wrap 0 \
+            -width 4
+   }
+   pack $itk_component(delta) $itk_component(update) $itk_component(plot) \
+         -pady 5 -side bottom
+
+# Schedule the countdown method for 1 minute in the future.
+   after 60000 [itcl::code $this countdown]
+
+   eval itk_initialize $args
+}
+
+itcl::body PreviewControl::destructor {} {
+
+# Cancel the coundown "after" procedure.
+   after cancel [itcl::code $this countdown]
+
+# delete the preview object.
+   if { $view != "" } {
+      itcl::delete object $view
+   }
+}
+
+itcl::body PreviewControl::update {} {
+
+# Reset the azimuth and rotator display reliefs
+   $itk_component(az1) configure -relief flat
+   $itk_component(az2) configure -relief flat
+   $itk_component(rma1) configure -relief flat
+   $itk_component(rma2) configure -relief flat
+   $itk_component(az1lim) configure -text "" -relief groove
+   $itk_component(az2lim) configure -text "" -relief groove
+   $itk_component(rot1lim) configure -text "" -relief groove
+   $itk_component(rot2lim) configure -text "" -relief groove
+
+# Create or re-create the preview object
+   if { $view != "" } {
+      itcl::delete object $view
+   }
+   set view [Preview ::#auto]
+
+# Load the preview with the current configuration.
+   if { [catch {$::Config(tcs,anon) preview $view} msg] } {
+      tk_messageBox -icon error -message $msg -parent $itk_interior
+   } else {
+
+# "Slew" the preview.
+      if { [catch {$view slew [expr [$itk_component(delta) get] * 60]} msg] } {
+         tk_messageBox -icon error -parent $itk_interior -message \
+               "Error generating preview \"$msg\""
+         set target ""
+      } else {
+
+# Determine the current wrap states of the azimuth and rotator axes.
+         set curaz [sa tcssad get demandAz value]
+         set curaz [lindex [split $curaz " :"] 0]
+         if { $curaz > 90.0 } {
+            set azwrap 1
+         } else {
+            set azwrap -1
+         }
+         set currma [sa tcssad get demandRma value]
+         set currma [lindex [split $currma " :"] 0]
+         if { $currma > 0.0 } {
+            set rotwrap 1
+         } else {
+            set rotwrap -1
+         }
+
+# Display the source position.
+         set target [$view cget -target]
+         set ra [lindex $target 0]
+         set dec [lindex $target 1]
+         $itk_component(radec) configure -text "$ra $dec FK5 J2000"
+
+# Display the time of the preview.
+         $itk_component(time) configure -text [$view cget -utc]
+
+# Display the preview values of the mechanisms.
+         set vis [$view cget -visible]
+         set az1 [$view cget -az1]
+         set az2 [$view cget -az2]
+         set el [$view cget -el]
+         $itk_component(az1) configure -text $az1
+         $itk_component(az2) configure -text $az2
+         $itk_component(el) configure -text $el
+         if { [string compare $az1 $az2] } {
+            if { $azwrap == 1 } {
+               $itk_component(az2) configure -relief raised
+            } else {
+               $itk_component(az1) configure -relief raised
+            }
+         } else {
+           set azwrap 0
+         }
+         set rma1 [$view cget -rma1]
+         set rma2 [$view cget -rma2]
+         $itk_component(rma1) configure -text [format %.1f $rma1]
+         $itk_component(rma2) configure -text [format %.1f $rma2]
+         if { [string compare $rma1 $rma2] } {
+            if { $rotwrap == 1 } {
+               $itk_component(rma2) configure -relief raised
+            } else {
+               $itk_component(rma1) configure -relief raised
+            }
+         } else {
+           set rotwrap 0
+         }
+         set ha [$view cget -ha]
+         set zd [$view cget -zd]
+         set am [$view cget -am]
+         $itk_component(ha) configure -text $ha
+         $itk_component(zd) configure -text [format %.1f $zd]
+         $itk_component(am) configure -text [format %.2f $am]
+         $itk_component(moond) configure \
+               -text [format %.2f [$view cget -moonSep]]
+
+# Set the alarm state of the widgets depend on the visibility.
+         if { $vis } {
+            $itk_component(ellim) configure -state normal
+            $itk_component(el) configure -state normal
+         } else {
+            $itk_component(ellim) configure -state alarm
+            $itk_component(el) configure -state alarm
+         }
+
+         set pwfs1 [$view cget -p1xy]
+         if { ! [string equal $pwfs1 ""] } {
+            set x [lindex $pwfs1 0]
+            set y [lindex $pwfs1 1]
+            $itk_component(pwfs1x) configure -text [format "%.1f" $x]
+            $itk_component(pwfs1y) configure -text [format "%.1f" $y]
+            set r2 [expr $x * $x + $y * $y]
+            $itk_component(pwfs1r) configure -text \
+                  [format "%.2f" [expr {sqrt($r2) * 0.0268573967}]]
+            set rmax [sa tcssad get pwfs1Rmax]
+            set rmin [sa tcssad get pwfs1Rmin]
+            if { ($r2 > $rmax * $rmax) || ($r2 < $rmin * $rmin) } {
+               $itk_component(pwfs1x) configure -state alarm
+               $itk_component(pwfs1y) configure -state alarm
+               $itk_component(pwfs1r) configure -state alarm
+            } else {
+               $itk_component(pwfs1x) configure -state normal
+               $itk_component(pwfs1y) configure -state normal
+               $itk_component(pwfs1r) configure -state normal
+            }
+         } else {
+            $itk_component(pwfs1x) configure -text "" -state normal
+            $itk_component(pwfs1y) configure -text "" -state normal
+            $itk_component(pwfs1r) configure -text "" -state normal
+         }
+         set pwfs2 [$view cget -p2xy]
+         if { ! [string equal $pwfs2 ""] } {
+            set x [lindex $pwfs2 0]
+            set y [lindex $pwfs2 1]
+            $itk_component(pwfs2x) configure -text [format "%.1f" $x]
+            $itk_component(pwfs2y) configure -text [format "%.1f" $y]
+            set r2 [expr $x * $x + $y * $y]
+            $itk_component(pwfs2r) configure -text \
+                  [format "%.2f" [expr {sqrt($r2) * 0.0268573967}]]
+            set rmax [sa tcssad get pwfs2Rmax]
+            set rmin [sa tcssad get pwfs2Rmin]
+            if { ($r2 > $rmax * $rmax) || ($r2 < $rmin * $rmin) } {
+               $itk_component(pwfs2x) configure -state alarm
+               $itk_component(pwfs2y) configure -state alarm
+               $itk_component(pwfs2r) configure -state alarm
+            } else {
+               $itk_component(pwfs2x) configure -state normal
+               $itk_component(pwfs2y) configure -state normal
+               $itk_component(pwfs2r) configure -state normal
+            }
+         } else {
+            $itk_component(pwfs2x) configure -text "" -state normal
+            $itk_component(pwfs2y) configure -text "" -state normal
+            $itk_component(pwfs2r) configure -text "" -state normal
+         }
+         set oiwfs [$view cget -oixy]
+         if { ! [string equal $oiwfs ""] } {
+            set x [lindex $oiwfs 0]
+            set y [lindex $oiwfs 1]
+            $itk_component(oiwfsx) configure -text [format "%.1f" $x]
+            $itk_component(oiwfsy) configure -text [format "%.1f" $y]
+            set r2 [expr $x * $x + $y * $y]
+            $itk_component(oiwfsr) configure -text \
+                  [format "%.2f" [expr {sqrt($r2) * 0.0268573967}]]
+            set inlimit 0
+            if { [sa tcssad get oiwfsLimitType] } {
+               set rmax [sa tcssad get oiwfsRmax]
+               set rmin [sa tcssad get oiwfsRmin]
+               if { ($r2 > $rmax * $rmax) || ($r2 < $rmin * $rmin) } {
+                  set inlimit 1
+               }
+            } else {
+
+# The OIWFS x,y limits are in the OIWFS coordinate system so the predicted
+# x,y has to be transformed from the tcs x,y before doing the check.
+# This means that the preview is only valid for the current instrument
+               set xmax [sa tcssad get oiwfsXmax]
+               set xmin [sa tcssad get oiwfsXmin]
+               set ymax [sa tcssad get oiwfsYmax]
+               set ymin [sa tcssad get oiwfsYmin]
+               set coeffs [sa agssad get oiwfsCoeffs]
+               set oix [expr { [lindex $coeffs 0] + [lindex $coeffs 1] * $x + \
+                     [lindex $coeffs 2] * $y} ]
+               set oiy [expr { [lindex $coeffs 3] + [lindex $coeffs 4] * $x + \
+                     [lindex $coeffs 5] * $y} ]
+               if { $oix > $xmax || $oix < $xmin || $oiy > $ymax || \
+                     $oiy < $ymin } {
+                  set inlimit 1
+               }
+            }
+            if { $inlimit } {
+               $itk_component(oiwfsx) configure -state alarm
+               $itk_component(oiwfsy) configure -state alarm
+               $itk_component(oiwfsr) configure -state alarm
+            } else {
+               $itk_component(oiwfsx) configure -state normal
+               $itk_component(oiwfsy) configure -state normal
+               $itk_component(oiwfsr) configure -state normal
+            }
+         } else {
+            $itk_component(oiwfsx) configure -text "" -state normal
+            $itk_component(oiwfsy) configure -text "" -state normal
+            $itk_component(oiwfsr) configure -text "" -state normal
+         }
+         set az1time [$view cget -azttl1]
+         set az2time [$view cget -azttl2]
+         set eltime [$view cget -elttl]
+         set rot1time [$view cget -rotttl1]
+         set rot2time [$view cget -rotttl2]
+
+# Set message about time to elevation limit.
+         if { $vis } {
+            if { [string length $eltime] } {
+               set h [expr {int($eltime / 60.0)}]
+               set m [expr {int($eltime) - $h * 60}]
+               if { $h > 0 } {
+                  set message "Elevation limit in $h hr $m min"
+               } else {
+                  if { $m > 0 } {
+                     set message "Elevation limit in $m minutes"
+                  } else {
+                     set message "Elevation limit in the next minute"
+                  }
+               }
+               $itk_component(ellim) configure -text "$message"
+            } else {
+               $itk_component(ellim) configure -text ""
+            }
+         } else {
+            if { ! [string equal $eltime ""] } {
+               if { $eltime >= 1.0 } {
+                  $itk_component(ellim) configure \
+                     -text "Source rises in [expr {int($eltime)}] minutes"
+               } else {
+                  $itk_component(ellim) configure \
+                     -text "Source rises in the next minute"
+               }
+            } else {
+               $itk_component(ellim) configure -text "Source never rises"
+            }
+         }
+
+# Set times to azimuth and rotator limits only if 1) source is above
+# elevation limit 2) time to limit is less than time to elevation limit.
+         if { [string equal $az1time ""] } {set az1time 99999.0}
+         if { [string equal $az2time ""] } {set az2time 99999.0}
+         if { [string equal $rot1time ""] } {set rot1time 99999.0}
+         if { [string equal $rot2time ""] } {set rot2time 99999.0}
+         if { $vis } {
+            if { [string equal $eltime ""] } {set eltime 99999.0}
+            if { $az1time < $eltime } {
+               $itk_component(az1lim) configure -text [expr {int($az1time)}]
+               if { $azwrap == -1 } {
+                  $itk_component(az1lim) configure -relief raised
+               }
+            }
+            if { $az2time < $eltime } {
+               $itk_component(az2lim) configure -text [expr {int($az2time)}]
+               if { $azwrap == 1 } {
+                  $itk_component(az2lim) configure -relief raised
+               }
+            }
+            if { $rot1time < $eltime } {
+               $itk_component(rot1lim) configure -text [expr {int($rot1time)}]
+               if { $rotwrap == -1 } {
+                  $itk_component(rot1lim) configure -relief raised
+               }
+            }
+            if { $rot2time < $eltime } {
+               $itk_component(rot2lim) configure -text [expr {int($rot2time)}]
+               if { $rotwrap == 1 } {
+                  $itk_component(rot2lim) configure -relief raised
+               }
+            }
+         }
+      }
+   }
+}
+
+itcl::body PreviewControl::countdown {} {
+#+
+# Decrements the "time in the future" widget and reschedules itself for 1
+# minutes time so that the time that the preview is calculated for remains
+# the same.
+#-
+   set c [$itk_component(delta) get]
+   if { $c > 0 } {
+      $itk_component(delta) clear
+      $itk_component(delta) insert end [incr c -1]
+   }
+   after 60000 [itcl::code $this countdown]
+}
+
+itcl::body PreviewControl::plot {} {
+
+# Map skycat
+   if { [skycatPanel map] ne "" } {
+
+# Get the target coordinates.
+      set target [$view cget -target]
+
+# Plot the target position.
+      if { [llength $target] > 0 } {
+         send -async -displayof .skycatPanel \
+               [[skycatPanel cget -name] cget -skycat] tccDisplayField \
+               [list [lindex $target 0] [lindex $target 1] \
+               [$view cget -p1xy] [$view cget -p2xy] [$view cget -oixy]]
+      }
+   }
+}

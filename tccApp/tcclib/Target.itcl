@@ -1,0 +1,941 @@
+#+
+#  Target <- Paramset
+#
+#  Implements the Target class. A Target object stores all#  the parameters needed to specify a target.
+#
+#  Options:
+#
+#           -brightness    The object brightness (can be any character string
+#                          as the tcc doesn't do anyting with it except 
+#                          display it.)
+#
+#           -objname       The object name
+#
+#           -type          The type of the coordinate (hmsdegTarget, 
+#                          degdegTarget namedTarget or conicTarget).
+#
+#           The following options apply when -type is hmsdegTarget.
+#
+#              -cosys         The target coordinate system.
+#
+#              -epoch         The epoch of the position.
+#
+#              -parallax      The parallax.
+#
+#              -c1            Right ascension.
+#
+#              -c2            Declination.
+#
+#              -pmunits       The units of the proper motions.
+#
+#              -pm1           Proper motion in ra.
+#
+#              -pm2           Proper motion in dec.
+#
+#              -rv            Radial velocity.
+#
+#           The following options apply when -type is degdegTarget.
+#
+#              -c1            Azimuth.
+#
+#              -c2            Elevation.
+#
+#           The following options apply when -type is namedTarget.
+#
+#              -object        The planet name.
+#
+#           The following options apply when -type is conicTarget.
+#
+#              -format        The element format
+#
+#              -epochofel     Epoch of elements.
+#
+#              -orbinc        Orbital inclination.
+#
+#              -longascnode   Longitude of ascending node.
+#
+#              -longofperi    Longitude of perihelion.
+#
+#              -argofperi     Argument of perihelion.
+#
+#              -meandist      Mean distance.
+#
+#              -peridist      Perihelion distance.
+#
+#              -eccentricity  Orbital eccentricity.
+#
+#              -meanlong      Mean longitude.
+#
+#              -meananom      Mean anomaly.
+#
+#              -epochofperi   Epoch of perihelion.
+#
+#              -dailymot      Daily motion.
+#
+#  Methods:
+#           apply comp    Applies the target definition to the TCS by 
+#                         setting the values of the command parameters
+#                         for appropriate virtual telescope.
+#
+#           grab comp     Grabs the current tracking position of the
+#                         appropriate virtual telescope.
+#
+#           init          Returns the rotator object to its initial state.
+#
+#           preview item  Sets the preview target for "item".
+#
+#           save node     Saves the values of the target options to the
+#                         xml node.
+#
+#  D Terrett 10 September 2004
+#
+#  Copyright CCLRC
+#+
+
+itcl::class Target {
+   inherit Paramset
+   constructor {args} {}
+   destructor {$this init}
+   public {
+      method apply {comp}
+      method grab {comp}
+      method init {}
+      method preview {view vt}
+      method save {node}
+      variable type {}
+      variable objname {}
+      variable brightness {}
+      variable cosys {}
+      variable epoch {}
+      variable parallax {}
+      variable pmunits {}
+      variable pm1 {}
+      variable pm2 {}
+      variable rv {}
+# Synonym for cosys
+      variable system {}
+      variable c1 {}
+      variable c2 {}
+      variable object {}
+      variable format {}
+      variable epochofel {}
+      variable orbinc {}
+      variable longascnode {}
+      variable longofperi {}
+      variable argofperi {}
+      variable meandist {}
+      variable peridist {}
+      variable eccentricity {}
+      variable meanlong {}
+      variable meananom {}
+      variable epochofperi {}
+      variable dailymot {}
+      variable trackrate {}
+      variable trackratens
+   }
+   private {
+      method pmconvert {c1 c2 pm1 pm2 pmunits}
+      variable current_cosys {}
+      variable current_trackrate {}
+   }
+}
+
+itcl::body Target::constructor {args} {
+
+# Initialise the trackrate namespace from the target namespace.
+   set targetns [namespace qualifier ${this}]
+   set i [string last TargetName ${targetns}]
+   if { $i > 0 } {
+      set trackratens [string range ${targetns} 0 [incr i -1]]
+      append trackratens TrackRateNames
+   }
+
+   eval configure $args
+}
+
+itcl::body Target::apply {comp} {
+
+   switch $comp {
+      tcs.field.sciencetarget {
+         set vt sourceA
+      }
+      tcs.field.pwfs1target {
+         set vt pwfs1
+      }
+      tcs.field.pwfs2target {
+         set vt pwfs2
+      }
+      tcs.field.oiwfstarget {
+         set vt oiwfs
+      }
+      tcs.field.aowfstarget {
+         set vt pwfs2
+      }
+   }
+
+   switch $type {
+      hmsdegTarget {
+         cs $vt set objName [list $objname]
+         cs $vt set theta1 [list $c1]
+         cs $vt set theta2 [list $c2]
+         cs $vt set epoch [list $epoch]
+         cs $vt set parallax [list $parallax]
+         if { [catch {set pm [pmconvert $c1 $c2 $pm1 $pm2 $pmunits]} ] } {
+            error "Unable to convert proper motions to secs & arcsecs/year"
+         }
+         cs $vt set dtheta1 [list [lindex $pm 0]]
+         cs $vt set dtheta2 [list [lindex $pm 1]]
+         cs $vt set rv [list $rv]
+         cs $vt set mag [list $brightness]
+         if { [string equal $cosys ""] } {
+            cs $vt set system FK5
+            cs $vt set equinox J2000
+            logger command $vt
+         } else {
+            CosysNames::$cosys apply $comp.cosys
+         }
+      }
+      degdegTarget {
+         cs $vt set objName [list $objname]
+         cs $vt set system AZEL_TOPO
+         cs $vt set equinox ""
+         cs $vt set theta1 [list $c1]
+         cs $vt set theta2 [list $c2]
+         cs $vt set epoch ""
+         cs $vt set parallax ""
+         cs $vt set dtheta1 ""
+         cs $vt set dtheta2 ""
+         cs $vt set rv ""
+         cs $vt set mag [list $brightness]
+         logger command $vt
+      }
+      namedTarget {
+         if { [string equal $vt sourceA] } {
+            cs planet set object $object
+            logger command planet
+         }
+      }
+      conicTarget {
+	 switch $vt {
+	     sourceA {set csname orbit}
+	     pwfs1   {set csname pwfs1orbit}
+	     pwfs2   {set csname pwfs2orbit}
+	     oiwfs   {set csname oiwfsorbit}
+	 }
+	 cs $csname set objName [list $objname]
+	 switch $format {
+	     "AsA major planet" {
+		 cs $csname set eltype 1
+		 cs $csname set epoch [list $epochofel]
+		 cs $csname set inclination [list $orbinc]
+		 cs $csname set anode [list $longascnode]
+		 cs $csname set perihelion [list $longofperi]
+		 cs $csname set aorq [list $meandist]
+		 cs $csname set LorM [list $meanlong]
+		 cs $csname set e [list $eccentricity]
+		 cs $csname set n [list $dailymot]
+	     }
+	     "JPL major planet" {
+		 if { ! [string is double -strict $longascnode] } {
+                     error "expecting floating point number but got
+                           \"$longascnode\""
+		 }
+		 if { ! [string is double -strict $argofperi] } {
+                     error "expecting floating point number but got
+                           \"$argofperi\""
+		 }
+		 if { ! [string is double -strict $meananom] } {
+                     error "expecting floating point number but got
+                           \"$longascnode\""
+		 }
+		 cs $csname set eltype 1
+		 cs $csname set epoch [list $epochofel]
+		 cs $csname set inclination [list $orbinc]
+		 cs $csname set anode [list $longascnode]
+		 cs $csname set perihelion [expr { $longascnode + $argofperi }]
+		 cs $csname set aorq [list $meandist]
+		 cs $csname set LorM \
+		     [expr { $longascnode + $argofperi + $meananom }]
+		 cs $csname set e [list $eccentricity]
+		 cs $csname set n [list $dailymot]
+	     }
+	     "AsA minor planet" -
+	     "MPC minor planet" {
+		 foreach {epoch1 inclination1 anode1 perihelion1 a1 e1 M1} \
+		     [slaPertel 2 $epochofel $epochofel $orbinc \
+			  $longascnode $argofperi $meandist $eccentricity \
+			  $meananom] {}
+		 cs $csname set eltype 2
+		 cs $csname set epoch $epoch1
+		 cs $csname set inclination $inclination1
+		 cs $csname set anode $anode1
+		 cs $csname set perihelion $perihelion1
+		 cs $csname set aorq $a1
+		 cs $csname set LorM $M1
+		 cs $csname set e $e1
+		 cs $csname set n ""
+	     }
+	     "AsA comet" -
+	     "JPL minor body" -
+	     "MPC comet" {
+		 foreach {epoch1 inclination1 anode1 perihelion1 q1 e1} \
+		     [slaPertel 3 $epochofel $epochofperi $orbinc \
+			  $longascnode $argofperi $peridist \
+			  $eccentricity] {}
+		 cs $csname set eltype 3
+		 cs $csname set epoch $epoch1
+		 cs $csname set inclination $inclination1
+		 cs $csname set anode $anode1
+		 cs $csname set perihelion $perihelion1
+		 cs $csname set aorq $q1
+		 cs $csname set e $e1
+		 cs $csname set LorM ""
+		 cs $csname set n ""
+	     }
+	 }
+	  logger command $csname
+      }
+   }
+   if { ! [string equal $trackrate ""] } {
+      ${trackratens}::$trackrate apply $comp.trackrate
+   }
+}
+
+itcl::body Target::init {} {
+
+   set type {}
+   set objname {}
+   $this configure -cosys {}
+   set epoch {}
+   set parallax 0
+   set pm1 {}
+   set pm2 {}
+   set rv 0
+   set c1 {}
+   set c2 {}
+   $this configure -trackrate {}
+   set object {}
+   set format {}
+   set epochofel {}
+   set orbinc {}
+   set longascnode {}
+   set perihlion {}
+   set meandist {}
+   set peridist {}
+   set eccentricity {}
+   set meanlong {}
+   set meananom {}
+   set epochofperi {}
+   set dailymot {}
+   set brightness {}
+}
+
+itcl::body Target::preview {view vt} {
+   if { [string equal $vt aowfs] } {
+      set vt pwfs2
+   }
+   if { [string equal $cosys ""] } {
+      set system FK5
+      set equinox J2000
+   } else {
+      set system [CosysNames::$cosys cget -frame]
+      set equinox [CosysNames::$cosys cget -equinox]
+   }
+   switch $type {
+      hmsdegTarget {
+         if { [catch {set pm [pmconvert $c1 $c2 $pm1 $pm2 $pmunits]} ] } {
+            error "Unable to convert proper motions to secs & arcsecs/year"
+         }
+         switch $vt {
+            sourceA {
+               $view target $type $c1 $c2 $system $equinox $epoch \
+                     [lindex $pm 0] [lindex $pm 1] $parallax $rv
+            }
+            pwfs1 {
+               $view configure -p1Target [list $type $c1 $c2 $system \
+                     $equinox $epoch [lindex $pm 0] [lindex $pm 1] \
+                     $parallax $rv]
+            }
+            pwfs2 {
+               $view configure -p2Target [list $type $c1 $c2 $system \
+                     $equinox $epoch [lindex $pm 0] [lindex $pm 1] \
+                     $parallax $rv]
+            }
+            oiwfs {
+               $view configure -oiTarget [list $type $c1 $c2 $system \
+                     $equinox $epoch [lindex $pm 0] [lindex $pm 1] \
+                     $parallax $rv]
+            }
+         }
+      }
+      degdegTarget {
+         switch $vt {
+            sourceA {
+               $view target $type AZEL $c1 $c2
+            }
+            pwfs1 {
+               $view configure -p1Target [list $type AZEL $c1 $c2]
+            }
+            pwfs2 {
+               $view configure -p2Target [list $type AZEL $c1 $c2]
+            }
+            oiwfs {
+               $view configure -oiTarget [list $type AZEL $c1 $c2]
+            }
+         }
+      }
+      conicTarget {
+         switch $vt {
+	     sourceA {
+		 switch $format {
+		     "AsA major planet" {
+			 $view target $type 1 $epochofel $orbinc $longascnode \
+			     $longofperi $meandist $eccentricity $meanlong $dailymot
+		     }
+		     "JPL major planet" {
+			 if { ! [string is double -strict $longascnode] } {
+			     error "expecting floating point number but got
+                           \"$longascnode\""
+			 }
+			 if { ! [string is double -strict $argofperi] } {
+			     error "expecting floating point number but got
+                           \"$argofperi\""
+			 }
+			 if { ! [string is double -strict $meananom] } {
+			     error "expecting floating point number but got
+                           \"$longascnode\""
+			 }
+			 $view target $type 1 $epochofel $orbinc $longascnode \
+			     [expr { $longascnode + $argofperi }] $meandist \
+			     $eccentricity  \
+			     [expr { $longascnode + $argofperi + $meananom }] \
+			     $dailymot
+		     }
+		     "AsA minor planet" -
+		     "MPC minor planet" {
+			 foreach {epoch1 inclination1 anode1 perihelion1 a1 e1 M1} \
+			     [slaPertel 2 $epochofel $epochofel $orbinc \
+				  $longascnode $argofperi $meandist $eccentricity \
+				  $meananom] {}
+			 $view target $type 2 $epoch1 $inclination1 $anode1 \
+			     $perihelion1 $a1 $e1 $M1
+		     }
+		     "AsA comet" -
+		     "JPL minor body" -
+		     "MPC comet" {
+			 foreach {epoch1 inclination1 anode1 perihelion1 q1 e1} \
+			     [slaPertel 3 $epochofel $epochofperi $orbinc \
+				  $longascnode $argofperi $peridist \
+				  $eccentricity] {}
+			 $view target $type 3 $epoch1 $inclination1 $anode1 \
+			     $perihelion1 $q1 $e1
+		     }
+		 }
+	     }
+	     pwfs1 {
+		 switch $format {
+		     "AsA major planet" {
+			 $view configure -p1Target [list $type 1 $epochofel $orbinc $longascnode \
+							$longofperi $meandist $eccentricity $meanlong $dailymot]
+		     }
+		     "JPL major planet" {
+			 if { ! [string is double -strict $longascnode] } {
+			     error "expecting floating point number but got
+                           \"$longascnode\""
+			 }
+			 if { ! [string is double -strict $argofperi] } {
+			     error "expecting floating point number but got
+                           \"$argofperi\""
+			 }
+			 if { ! [string is double -strict $meananom] } {
+			     error "expecting floating point number but got
+                           \"$longascnode\""
+			 }
+			 $view configure -p1Target [list $type 1  $epochofel $orbinc $longascnode \
+			     [expr { $longascnode + $argofperi }] $meandist \
+			     $eccentricity \
+			     [expr { $longascnode + $argofperi + $meananom }] \
+			     $dailymot]
+		     }
+		     "AsA minor planet" -
+		     "MPC minor planet" {
+			 foreach {epoch1 inclination1 anode1 perihelion1 a1 e1 M1} \
+			     [slaPertel 2 $epochofel $epochofel $orbinc \
+				  $longascnode $argofperi $meandist $eccentricity \
+				  $meananom] {}
+			 $view configure -p1Target [list $type 2 $epoch1 $inclination1 $anode1 $perihelion1 $a1 $e1 $M1]
+		     }
+		     "AsA comet" -
+		     "JPL minor body" -
+		     "MPC comet" {
+			 foreach {epoch1 inclination1 anode1 perihelion1 q1 e1} \
+			     [slaPertel 3 $epochofel $epochofperi $orbinc \
+				  $longascnode $argofperi $peridist \
+				  $eccentricity] {}
+			 $view configure -p1Target [list $type 3 $epoch1 $inclination1 $anode1 $perihelion1 $q1 $e1]
+		     }
+		 }
+	     }
+	     pwfs2 {
+		 switch $format {
+		     "AsA major planet" {
+			 $view configure -p2Target [list $type 1 $epochofel $orbinc $longascnode \
+							$longofperi $meandist $eccentricity $meanlong $dailymot]
+		     }
+		     "JPL major planet" {
+			 if { ! [string is double -strict $longascnode] } {
+			     error "expecting floating point number but got
+                           \"$longascnode\""
+			 }
+			 if { ! [string is double -strict $argofperi] } {
+			     error "expecting floating point number but got
+                           \"$argofperi\""
+			 }
+			 if { ! [string is double -strict $meananom] } {
+			     error "expecting floating point number but got
+                           \"$longascnode\""
+			 }
+			 $view configure -p2Target [list $type 1  $epochofel $orbinc $longascnode \
+			     [expr { $longascnode + $argofperi }] $meandist \
+			     $eccentricity \
+			     [expr { $longascnode + $argofperi + $meananom }] \
+			     $dailymot]
+		     }
+		     "AsA minor planet" -
+		     "MPC minor planet" {
+			 foreach {epoch1 inclination1 anode1 perihelion1 a1 e1 M1} \
+			     [slaPertel 2 $epochofel $epochofel $orbinc \
+				  $longascnode $argofperi $meandist $eccentricity \
+				  $meananom] {}
+			 $view configure -p2Target [list $type 2 $epoch1 $inclination1 $anode1 $perihelion1 $a1 $e1 $M1]
+		     }
+		     "AsA comet" -
+		     "JPL minor body" -
+		     "MPC comet" {
+			 foreach {epoch1 inclination1 anode1 perihelion1 q1 e1} \
+			     [slaPertel 3 $epochofel $epochofperi $orbinc \
+				  $longascnode $argofperi $peridist \
+				  $eccentricity] {}
+			 $view configure -p2Target [list $type 3 $epoch1 $inclination1 $anode1 $perihelion1 $q1 $e1]
+		     }
+		 }
+	     }
+	     oiwfs {
+		 switch $format {
+		     "AsA major planet" {
+			 $view configure -oiTarget [list $type 1 $epochofel $orbinc $longascnode \
+							$longofperi $meandist $eccentricity $meanlong $dailymot]
+		     }
+		     "JPL major planet" {
+			 if { ! [string is double -strict $longascnode] } {
+			     error "expecting floating point number but got
+                           \"$longascnode\""
+			 }
+			 if { ! [string is double -strict $argofperi] } {
+			     error "expecting floating point number but got
+                           \"$argofperi\""
+			 }
+			 if { ! [string is double -strict $meananom] } {
+			     error "expecting floating point number but got
+                           \"$longascnode\""
+			 }
+			 $view configure -oiTarget [list $type 1  $epochofel $orbinc $longascnode \
+			     [expr { $longascnode + $argofperi }] $meandist \
+			     $eccentricity \
+			     [expr { $longascnode + $argofperi + $meananom }] \
+			     $dailymot]
+		     }
+		     "AsA minor planet" -
+		     "MPC minor planet" {
+			 foreach {epoch1 inclination1 anode1 perihelion1 a1 e1 M1} \
+			     [slaPertel 2 $epochofel $epochofel $orbinc \
+				  $longascnode $argofperi $meandist $eccentricity \
+				  $meananom] {}
+			 $view configure -oiTarget [list $type 2 $epoch1 $inclination1 $anode1 $perihelion1 $a1 $e1 $M1]
+		     }
+		     "AsA comet" -
+		     "JPL minor body" -
+		     "MPC comet" {
+			 foreach {epoch1 inclination1 anode1 perihelion1 q1 e1} \
+			     [slaPertel 3 $epochofel $epochofperi $orbinc \
+				  $longascnode $argofperi $peridist \
+				  $eccentricity] {}
+			 $view configure -oiTarget [list $type 3 $epoch1 $inclination1 $anode1 $perihelion1 $q1 $e1]
+		     }
+		 }
+	     }
+	 }
+      }
+   }
+   if { ! [string equal $trackrate ""] } {
+      ${trackratens}::$trackrate preview $view $vt
+   }
+}
+
+itcl::body Target::save {node} {
+   switch $type {
+      hmsdegTarget {
+          set node [paramset $node hmsdegTarget]
+          param $node cosys $cosys
+          param $node c1 $c1
+          param $node c2 $c2
+          set node1 [paramset $node properMotion]
+          param $node1 pmunits $pmunits
+          param $node1 epoch $epoch
+          param $node1 parallax $parallax
+          param $node1 pm1 $pm1
+          param $node1 pm2 $pm2
+          param $node1 rv $rv
+          param $node trackrate $trackrate
+      }
+      degdegTarget {
+         set node [paramset $node degdegTarget]
+         param $node c1 $c1
+         param $node c2 $c2
+      }
+      namedTarget {
+         set node [paramset $node namedTarget]
+         param $node object $object
+      }
+      conicTarget {
+         set node [paramset $node conicTarget]
+         switch $format {
+            "AsA major planet" -
+            "MPC major planet" {
+               param $node format $format
+               param $node epochofel $epochofel
+               param $node orbinc $orbinc
+               param $node longascnode $longascnode
+               param $node longofperi $longofperi
+               param $node meandist $meandist
+               param $node eccentricity $eccentricity
+               param $node meanlong $meanlong
+               param $node dailymot $dailymot
+            }
+            "JPL major planet" {
+               param $node format $format
+               param $node epochofel $epochofel
+               param $node orbinc $orbinc
+               param $node longascnode $longascnode
+               param $node argofperi $argofperi
+               param $node meandist $meandist
+               param $node eccentricity $eccentricity
+               param $node meananom $meananom
+               param $node dailymot $dailymot
+            }
+            "AsA minor planet" -
+            "MPC minor planet" {
+               param $node format $format
+               param $node epochofel $epochofel
+               param $node orbinc $orbinc
+               param $node longascnode $longascnode
+               param $node argofperi $argofperi
+               param $node meandist $meandist
+               param $node eccentricity $eccentricity
+               param $node meananom $meananom
+            }
+            "AsA comet" -
+            "JPL minor body" -
+            "MPC comet" {
+               param $node format $format
+               param $node epochofel $epochofel
+               param $node orbinc $orbinc
+               param $node longascnode $longascnode
+               param $node peridist $peridist
+               param $node argofperi $argofperi
+               param $node eccentricity $eccentricity
+               param $node epochofperi $epochofperi
+            }
+         }
+      }
+   }
+   param $node objname $objname
+   param $node brightness $brightness
+}
+
+itcl::body Target::grab {comp} {
+
+# Determine name of the virtual telescope.
+   switch $comp {
+      tcs.field.sciencetarget {
+         set vt sourceA
+      }
+      tcs.field.pwfs1target {
+         set vt pwfs1
+      }
+      tcs.field.pwfs2target {
+         set vt pwfs2
+      }
+      tcs.field.oiwfstarget {
+         set vt oiwfs
+      }
+      tcs.field.aowfstarget {
+         set vt pwfs2
+      }
+   }
+
+
+# Clear current state.
+   init
+
+# Get the target position.
+   switch $vt {
+      sourceA {set target [sa tcssad get targetA]}
+      sourceB {set target [sa tcssad get targetB]}
+      sourceC {set target [sa tcssad get targetC]}
+      pwfs1 {set target [sa tcssad get targetPwfs1]}
+      pwfs2 {set target [sa tcssad get targetPwfs2]}
+      oiwfs {set target [sa tcssad get targetOiwfs]}
+      mount {set target [sa tcssad get targetMount]}
+   }
+
+# Get frame.
+   set frame [sa tcssad get ${vt}TrackFrame]
+   if { [string is space $frame] } {
+      set frame FK5
+   }
+
+# Set coordinate system.
+   if { $frame == "FK5" || $frame == "FK4" } {
+      set eqx [formatEpoch $frame [sa tcssad get ${vt}TrackEq]]
+      createCosys ${frame}/$eqx -frame $frame -equinox $eqx
+      set cosys ${frame}/$eqx
+   } elseif { $frame == "APPT" } {
+      set cosys Apparent
+   } else {
+      set cosys AzEl
+   }
+    
+      
+   if { $frame == "AZEL_TOPO" } {
+      set type degdegTarget
+      set az [slaDr2af 2 [lindex $target 0]]
+      set el [slaDr2af 2 [lindex $target 1]]
+      set c1 [list \
+            [format "%02d:%02d:%02d.%03d" [lindex $az 1] [lindex $az 2] \
+            [lindex $az 3] [lindex $az 4]]]
+      set c2 [list \
+            [format "%s%02d:%02d:%02d.%02d" [lindex $el 0] [lindex $el 1] \
+            [lindex $el 2] [lindex $el 3] [lindex $el 4]]]
+   } else {
+      set type hmsdegTarget
+      set ra [slaDr2tf 3 [lindex $target 0]]
+      set dec [slaDr2af 2 [lindex $target 1]]
+      set c1 [list \
+            [format "%02d:%02d:%02d.%03d" [lindex $ra 1] [lindex $ra 2] \
+            [lindex $ra 3] [lindex $ra 4]]]
+      set c2 [list\
+            [format "%s%02d:%02d:%02d.%02d" [lindex $dec 0] [lindex $dec 1] \
+            [lindex $dec 2] [lindex $dec 3] [lindex $dec 4]]]
+   }
+   set epoch ""
+   set pmunits ""
+   set pm1 ""
+   set pm2 ""
+   set rv ""
+   set parallax ""
+   set trackrate ""
+}
+
+itcl::configbody Target::cosys {
+   if { ! [string equal $current_cosys ""] } {
+      CosysNames::$current_cosys refdec
+   }
+   set current_cosys ""
+   if { ! [string equal $cosys ""] } {
+      if { [catch {CosysNames::$cosys refinc}] } {
+         error "Coordinate frame \"$cosys\" does not exist"
+      } else {
+         set current_cosys $cosys
+      }
+   }
+}
+
+itcl::configbody Target::object {
+#    puts "have a named target: $object, type: $type, objname: $objname"
+
+}
+
+itcl::configbody Target::trackrate {
+
+   set targetns [namespace qualifier ${this}]
+
+   if { ! [string equal $current_trackrate ""] } {
+      ${trackratens}::$current_trackrate refdec
+   }
+   set current_trackrate ""
+   if { ! [string equal $trackrate ""] } {
+      # AWE if the Target was stored before Field, the wrong trackratens will be referenced ...
+      # detect an invalid trackratens and substitute the correct one.
+      set i [string last FieldName ${trackratens}]
+      if { $i < 0 } {
+	  #puts "AWE trackratens is wrong ... fixing"
+	  set trackratens [string replace ${targetns} [string last TargetNames ${targetns}] end TrackRateNames]
+      }
+
+      if { [catch {${trackratens}::$trackrate refinc}] } {
+         error "Differential track rate \"$trackrate\" does not exist"
+      } else {
+         set current_trackrate $trackrate
+      }
+   }
+}
+
+itcl::configbody Target::pm1 {
+   if { ! [string is double $pm1 ] } {
+      error "Proper motion not a number"
+   }
+}
+
+itcl::configbody Target::pm2 {
+   if { ! [string is double $pm2 ] } {
+     error "Proper motion not a number"
+   }
+}
+
+itcl::configbody Target::pmunits {
+   if { [lsearch -exact [list mas/year mas/century arcsecs/year \
+         arcsecs/century sec-arcsecs/year sec-arcsecs/century ""] $pmunits] == \
+         -1 } {
+      error "invalid proper motion units"
+   }
+}
+
+# The system config body sets the cosys option, creating the cosys component
+# if there isn't one that matches the system definition.
+itcl::configbody Target::system {
+
+# Do nothing if system is empty.
+   if { ! [string is space $system] } {
+
+# Construct the cosys component name.
+      set system [string trim $system]
+      switch $system {
+         apparent {
+            set cosysname Apparent
+         }
+         polarMount {
+            set cosysname AzEl
+         }
+         default {
+            switch [string index $system 0] {
+               j -
+               J {
+                  set cosysname FK5/${system}
+               }
+               b -
+               B {
+                  set cosysname FK4/${system}
+               }
+               default {
+                  if { [string is double $system] } {
+                     if { $system > 1984.0 } {
+                        set cosysname FK5/${system}
+                     } else {
+                        set cosysname FK4/${system}
+                     }
+                  } else {
+                     error "\"$system\" is not a valid coordinate system"
+                  }
+               }
+            }
+         }
+      }
+   
+# See if it already exists.
+      if { [lsearch -exact [itcl::find objects -class CosysComponent] \
+            ::CosysNames::$cosysname] < 0 } {
+
+# Create it.
+         switch $cosysname {
+            Apparent {
+               CosysComponent ::CosysNames::Apparent -frame Appt
+            }
+            AzEl {
+               CosysComponent ::CosysNames::AzEl -frame AzEl
+            }
+            default {
+               foreach {frame equinox} [split $cosysname /] {}
+               CosysComponent ::CosysNames::$cosysname ::CosysList \
+                     -frame $frame -equinox $equinox
+            }
+         }
+      }
+   
+# Set the cosys option.
+      $this configure -cosys $cosysname
+   }
+}
+
+itcl::configbody Target::type {
+   if { [lsearch -exact {hmsdegTarget degdegTarget conicTarget namedTarget} \
+        $type] == -1 } {
+      error "\"$type\" is not a recognised target type"
+   }
+}
+
+itcl::body Target::pmconvert {c1 c2 pm1 pm2 pmunits} {
+
+# Returns the proper motions in seconds and arcsecs per year (the units used 
+# by the TCS).
+
+# If both strings are blank then don't bother.
+   if { [string is space $pm1] && [string is space $pm2] } {
+      return [list "" ""]
+   } else {
+
+# Convert to per year.
+      switch $pmunits {
+         arcsecs/century -
+         mas/century -
+         sec-arcsecs/century {
+            if { [string is double -strict $pm1] } {
+               set pm1 [expr {$pm1 / 100.0}]
+            }
+            if { [string is double -strict $pm2] } {
+               set pm2 [expr {$pm2 / 100.0}]
+            }
+         }
+      }
+   
+   # Convert mas to arcsec.
+      switch $pmunits {
+         mas/year -
+         mas/century {
+            if { [string is double -strict $pm1] } {
+               set pm1 [expr {$pm1 / 1000.0}]
+            }
+            if { [string is double -strict $pm2] } {
+               set pm2 [expr {$pm2 / 1000.0}]
+            }
+         }
+      }
+
+# Convert arcsec to seconds of RA.
+      switch $pmunits {
+         mas/year -
+         mas/century -
+         arcsecs/year -
+         arcsecs/century {
+            set AS2R 0.0000048481368111
+            set raz [expr {[slaDafin $c1] * 15.0}]
+            set decz [slaDafin $c2]
+#	    set cdecz [expr cos ($decz)]
+#puts "pm1=$pm1, pm2=$pm2, raz=$raz, decz=$decz, cdecz=$cdecz"
+#	    if {[expr abs ($decz) - 1.57] < 0} {
+#		set pm1 [expr {$pm1 / $cdecz}]
+#	    }
+            set radec [slaDtp2s [expr {$pm1* $AS2R}] [expr {$pm2 * $AS2R}] \
+                  $raz $decz]
+#puts "radec=$radec"
+            set pm1 [expr { ([lindex $radec 0] - $raz) / $AS2R / 15.0 }]
+            if { $pm1 > 43200.0 } {
+               set pm1 [expr { $pm1 - 86400.0 }]
+            }
+            set pm2 [expr { ([lindex $radec 1] - $decz) / $AS2R }]
+#puts "pm1=$pm1, pm2=$pm2"
+         }
+      }
+      return [list $pm1 $pm2]
+   }
+}

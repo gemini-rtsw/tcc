@@ -1,0 +1,62 @@
+#+
+#  ImportDialog <- iwidgets::FileSelectionDialog
+#
+#  An ImportDialog widget is a file selection dialog with 
+#  a disjoint list box for selecting which components should be purged
+#  before loading the file.
+#
+#  Options:
+#           none
+#
+#  Methods:
+#           none
+#
+#  D Terrett 13 May 2003
+#
+#  Copyright CCLRC
+#-
+
+itcl::class ImportDialog {
+   inherit iwidgets::Fileselectiondialog
+   constructor args {}
+}
+
+itk::usual ImportDialog {
+   keep -activebackground -activerelief -background -borderwidth -cursor \
+         -elementborderwidth -foreground -highlightcolor -highlightthickness \
+         -insertbackground -insertborderwidth -insertofftime -insertontime \
+         -insertwidth -jump -labelfont -modality -selectbackground \
+         -selectborderwidth -textbackground -textfont 
+}
+
+option add *ImportDialog.borderWidth 2 widgetDefault
+option add *ImportDialog.height 600 widgetDefault
+option add *ImportDialog.master "." widgetDefault
+option add *ImportDialog.width 500 widgetDefault
+option add *ImportDialog.title "File Selection Dialog" widgetDefault
+
+itcl::body ImportDialog::constructor args {
+
+   set w $itk_interior
+   itk_component add select {
+      iwidgets::disjointlistbox $w.select -lhslabeltext "Not purged" \
+            -rhslabeltext Purged -buttonplacement center
+   }
+   $itk_component(select) insertlhs [list \
+         Configurations \
+         "Guide configurations" \
+         "Field orientations" \
+         "Field definitions" \
+         "Instrument origins" \
+         "Slew options" \
+         Wavelengths \
+         "Tracking frames" \
+         "Chop configurations" \
+         "GAOS configurations" \
+         "Instrument configurations" \
+         "Coordinate frames"]
+
+   pack $itk_component(select) -fill x -expand yes
+
+   eval itk_initialize $args
+}

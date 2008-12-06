@@ -1,0 +1,259 @@
+#+
+#  PointUpdateControl.itk
+#
+#  Implements the PointUpdateControl widget.
+#
+#  D Terrett 30 Novemeber 2001
+#
+#  Copyright CCLRC
+#-
+
+itcl::class PointUpdateControl {
+   inherit itk::Widget
+   constructor args {}
+   destructor {}
+   itk_option define -ia ia Ia 0
+   public {
+      method purge {}
+   }
+   private {
+      method take1 {}
+      method take2 {mon status info}
+      method fit {args}
+      method commit {}
+      method setia {}
+   }
+}
+
+itk::usual PointUpdateControl {
+}
+
+itcl::body PointUpdateControl::constructor args {
+
+# SelectGrid for observations.
+   itk_component add obsframe {
+      frame $itk_interior.frame -height 200 -borderwidth 2 \
+            -relief ridge
+   }
+   pack $itk_component(obsframe) -expand yes -fill x
+   pack propagate $itk_component(obsframe) 0 
+
+   itk_component add obs {
+      SelectGrid $itk_component(obsframe).obs \
+            -selectcommand [itcl::code $this fit] -columnhead \
+           {"  RA  " "  Dec  " "   Az   " " El " " dCA " " dCE " " dR "}
+   }
+   pack $itk_component(obs) -expand yes -fill x -anchor n
+
+# Labels for the results of the fit.
+   itk_component add results {
+      frame $itk_interior.results 
+   }
+   pack $itk_component(results) -fill x -expand y
+   itk_component add ca {
+      label $itk_component(results).ca -text "Model CA:" -anchor e
+   }
+   itk_component add caval {
+      label $itk_component(results).caval -width 8 -borderwidth 2 \
+            -relief sunken -anchor e
+   }
+   itk_component add ce {
+      label $itk_component(results).ce -text CE: -anchor e
+   }
+   itk_component add ceval {
+      label $itk_component(results).ceval -width 8 -borderwidth 2 \
+            -relief sunken -anchor e
+   }
+   itk_component add ia {
+      label $itk_component(results).ia -text dIA: -anchor e
+   }
+   itk_component add iaval {
+      label $itk_component(results).iaval -width 8 -borderwidth 2 \
+            -relief sunken -anchor e
+   }
+   grid $itk_component(ca) $itk_component(caval) $itk_component(ce) \
+         $itk_component(ceval)  $itk_component(ia) $itk_component(iaval) \
+         -pady 3
+
+# Labels for the errors in the the fit.
+   itk_component add sca {
+      label $itk_component(results).dca -text "Sigma CA:" -anchor e
+   }
+   itk_component add scaval {
+      label $itk_component(results).scaval -width 8 -borderwidth 2 \
+            -relief sunken -anchor e
+   }
+   itk_component add sce {
+      label $itk_component(results).sce -text CE: -anchor e
+   }
+   itk_component add sceval {
+      label $itk_component(results).sceval -width 8 -borderwidth 2 \
+            -relief sunken -anchor e
+   }
+   itk_component add sr {
+      label $itk_component(results).sr -text R: -anchor e
+   }
+   itk_component add srval {
+      label $itk_component(results).srval -width 8 -borderwidth 2 \
+            -relief sunken -anchor e
+   }
+   grid $itk_component(sca) $itk_component(scaval) $itk_component(sce) \
+         $itk_component(sceval) $itk_component(sr) $itk_component(srval) \
+         -pady 3
+
+   itk_component add buttons {
+      frame $itk_interior.buttons
+   }
+
+# Buttons for "taking" a star and updating the pointing model.
+   pack $itk_component(buttons) -fill x -expand yes
+   itk_component add take {
+      button $itk_component(buttons).take -text Take \
+            -command [itcl::code $this take1]
+   }
+   itk_component add update {
+      button $itk_component(buttons).update -text "Update Model" \
+            -command [itcl::code $this commit]
+   }
+
+# Checkbutton for including IA in the fit.
+   itk_component add iainfit {
+      checkbutton $itk_component(buttons).iainfit -text "Include IA in fit" \
+            -variable $itk_interior._ia \
+            -command [itcl::code $this setia]
+   }
+
+   pack $itk_component(take) $itk_component(update) $itk_component(iainfit) \
+         -side left -expand yes -pady 5
+
+# Create command senders and status acceptors.
+   if {[catch {cs pointLog info}]} {
+      epics cs pointLog
+   }
+   if {[catch {cs pointParam info}]} {
+      epics cs pointParam
+   }
+   if {[catch {cs zeroGuide info}]} {
+      epics cs zeroGuide
+   }
+   if {[catch {sa net info}]} {
+      epics sa net
+   }
+   if {[catch {sa guide info}]} {
+      epics sa guide
+   }
+   if {[catch {sa session info}]} {
+      epics sa session
+   }
+   if {[catch {sa permanent info}]} {
+      epics sa permanent
+   }
+
+   eval itk_initialize $args
+}
+
+itcl::body PointUpdateControl::destructor {} {
+
+# Delete all PtWeak objects.
+   foreach obs [itcl::find objects -class Ptweak] {
+      itcl::delete object $obs
+   }
+}
+
+itcl::body PointUpdateControl::purge {} {
+#+
+# Deletes all disabled Ptweak objects and reloads the selectgrid.
+#-
+
+# Clear the selectgrid.
+   $itk_component(obs) clear
+
+# For each of the Ptweak objects either delete it or add it to the selectgrid.
+   foreach ptweak [itcl::find objects -class Ptweak] {
+      if { [$ptweak cget -enable] } {
+         eval $itk_component(obs) add $ptweak [$ptweak display]
+      } else {
+         itcl::delete object $ptweak
+      }
+   }
+}
+
+itcl::body PointUpdateControl::take1 {} {
+#+
+# Sends a pointlog command to the tcs with take2 as the callback routine.
+#-
+
+   cs pointLog set log 0
+   logger log pointlog
+   if { [catch {cs pointLog postCallback [itcl::code $this take2]}] } {
+      set info [sa apply get mess value]
+      tk_messageBox -icon error -message "Pointlog command failed: \"$info\"" \
+            -parent $itk_interior
+   }
+}
+
+itcl::body PointUpdateControl::take2 {mon status info} {
+#+
+# Creates a Pteak object and adds it to the SelectGrid.
+#-
+
+   if { ! [string equal $status "idle"] } return
+
+# Create the new Ptweak object.
+   set new [uplevel #0 Ptweak #auto]
+
+# Add it to the SelectGrid.
+   eval $itk_component(obs) add ::$new [$new display]
+
+# Generate the new fit.
+   fit
+}
+
+itcl::body PointUpdateControl::fit args {
+#+
+# Generates a new fit and then rewrites the contents of the SelectGrid.
+#-
+
+# Update the enable/disable state of the Ptweak object that was selected
+# or deselected.
+   if { [llength $args] == 2 } {
+      [lindex $args 0] configure -enable [lindex $args 1]
+   }
+
+# Generate the new fit.
+   set result [Ptweak::fit $itk_option(-ia)]
+
+# Insert the result of the fit into the labels.
+   $itk_component(caval) configure -text [lindex $result 0]
+   $itk_component(ceval) configure -text [lindex $result 1]
+   $itk_component(iaval) configure -text [lindex $result 2]
+   $itk_component(scaval) configure -text [lindex $result 3]
+   $itk_component(sceval) configure -text [lindex $result 4]
+   $itk_component(srval) configure -text [lindex $result 5]
+
+# Rewrite the SelectGrid contents.
+   foreach ptweak [itcl::find objects -class Ptweak] {
+      eval $itk_component(obs) replace $ptweak [$ptweak display]
+   }
+}
+
+itcl::body PointUpdateControl::commit {} {
+
+# Commit the current fit to the session parameters.
+   if { [catch {Ptweak::commit $itk_interior $itk_option(-ia)} info] } {
+      tk_messageBox -icon error -message $info -parent $itk_interior
+      return
+   }
+}
+
+itcl::configbody PointUpdateControl::ia {
+
+# If the include IA flag is changed we need to re-compute the fit.
+   fit
+}
+
+itcl::body PointUpdateControl::setia {} {
+
+   upvar #0 [$itk_component(iainfit) cget -variable] infit
+   $this configure -ia $infit
+}

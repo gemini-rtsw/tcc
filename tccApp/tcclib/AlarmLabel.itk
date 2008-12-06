@@ -1,0 +1,117 @@
+#+
+#  AlarmLabel <- itk::Widget
+#
+#  An AlarmLabel widget is a label widget that can display an alarm status. 
+#  This is done by setting the label's background and foreground colours.
+#
+#  Options:
+#           -alarmbackground The backeground colour when the widget is in the
+#                           alarm state.
+#
+#           -alarmforeground The foreground colour when the widget is in the
+#                           alarm state.
+#
+#           -background     The backeground colour when the widget is in the
+#                           alarm state.
+#
+#           -foreground     The foreground colour when the widget is in the
+#                           normal state.
+#
+#           -state          The widget state, either "normal" or "alarm".
+#
+#  Methods:
+#           none
+#
+#  Notes:
+#        o It is necessary to avoid trying to set the label widget colours 
+#          to empty strings during initialisation before the widget options
+#          have been assigned values.
+#
+#  D Terrett  24 November 1999
+#
+#  Copyright CCLRC
+#+
+
+itcl::class AlarmLabel {
+   inherit itk::Widget
+   constructor args {}
+   itk_option define -alarmforeground alarmForeground AlarmForeground white
+   itk_option define -alarmbackground alarmBackground AlarmBackground red
+   itk_option define -foreground foreground Foreground ""
+   itk_option define -background background Background ""
+   itk_option define -state state State normal
+}
+
+itk::usual AlarmLabel {
+   keep -alarmbackground -alarmforeground -background -cursor \
+         -font -foreground -highlightcolor -highlightthickness
+}
+
+itcl::body AlarmLabel::constructor args {
+
+   itk_component add label {
+      label $itk_interior.label
+   } {
+      usual
+      ignore -foreground -background
+      keep -anchor -borderwidth -font -relief -text -width
+   }
+
+   pack $itk_component(label) -fill both -expand y
+
+   eval itk_initialize $args
+}
+
+itcl::configbody AlarmLabel::alarmbackground {
+   if { [string equal $itk_option(-state) "alarm"] } {
+      $itk_component(label) configure -background $itk_option(-alarmbackground)
+   }
+}
+
+itcl::configbody AlarmLabel::alarmforeground {
+   if { [string equal $itk_option(-state) "alarm"] } {
+      $itk_component(label) configure -foreground $itk_option(-alarmforeground)
+   }
+}
+
+itcl::configbody AlarmLabel::background {
+   if { [string equal $itk_option(-state) "normal"] } {
+      if { [string equal $itk_option(-background) ""] } {
+         set itk_option(-background) [$itk_component(label) cget -background]
+      } else {
+         $itk_component(label) configure -background $itk_option(-background) 
+      }
+   }
+}
+
+itcl::configbody AlarmLabel::foreground {
+   if { [string equal $itk_option(-state) "normal"] } {
+      if { [string equal $itk_option(-foreground) ""] } {
+         set itk_option(-foreground) [$itk_component(label) cget -foreground]
+      } else {
+         $itk_component(label) configure -foreground $itk_option(-foreground) 
+      }
+   }
+}
+
+itcl::configbody AlarmLabel::state {
+   switch -- $itk_option(-state) {
+      normal {
+         if { ! [string equal $itk_option(-foreground) ""] } {
+            $itk_component(label) configure -foreground $itk_option(-foreground)
+         }
+         if { ! [string equal $itk_option(-background) ""] } {
+            $itk_component(label) configure -background $itk_option(-background)
+         }
+      }
+      alarm {
+         $itk_component(label) configure \
+               -foreground $itk_option(-alarmforeground) \
+               -background $itk_option(-alarmbackground)
+      }
+      default {
+         error "bad state value \"$itk_option(-state)\":\
+               must be normal or alarm"
+      }
+   }
+}

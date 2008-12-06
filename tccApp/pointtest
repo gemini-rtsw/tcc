@@ -1,0 +1,84 @@
+#!/bin/sh
+# the next line restarts using ocssh \
+exec $HLPG_INSTALL_BASE/bin/ocssh "$0" "$@"
+
+#  FILENAME
+#  pointtest
+#
+#+
+#  Purpose:
+#  Utility to run a pointing test
+#
+#  Description:
+#  This utility executes a series of pointing observations on a set of
+#  star positions stored in a file and writes a log that can be processed
+#  into a TPOINT data file.
+#
+#  D Terrett 23 May 2003
+#
+#  Copyright CCLRC
+#-
+if { [string compare [exec uname] "Linux"] == 0 } {
+# extent search path for packages so that package Seq can be found
+lappend auto_path [file join $::env(GEMINI_TOP) opt seqexec lib]
+}
+
+# Load required packages
+package require Tcl 8.4
+package require Tk
+package require Itcl
+package require Itk
+package require Iwidgets
+package require Ocspkg
+package require Seq
+
+# Set precision for real number output.
+set tcl_precision 14
+
+# Define the root directory for locating libraries.
+global ROOT
+set ROOT [file dirname [info script]]
+if { [string compare [file pathtype $ROOT] relative] == 0 } {
+   set ROOT [file join [pwd] $ROOT]
+}
+
+lappend auto_path [file join $ROOT lib]
+
+# Define the default location for catalogue file.
+global CATALOG_DIR
+set CATALOG_DIR [file join $ROOT pointcats]
+
+# Define the default location for storing pointing test results.
+global SAVE_FILE_DIR
+set SAVE_FILE_DIR [file join /gemini files]
+
+# The pointtest application procedures live in the pointlib subdirectory.
+lappend auto_path [file join $ROOT pointlib]
+
+# Load the tcctime and sla extensions to tcl.
+load [file join $ROOT lib $::env(HOST_ARCH) tcctime.so]
+load [file join $ROOT tcclib $::env(HOST_ARCH) tccext.so]
+load [file join $ROOT lib $::env(HOST_ARCH) slaext.so]
+
+# Set the name of the epics service configuration file.
+if { [info exists env(TCC_TCSNAME)] && \
+         ( ! [string equal $env(TCC_TCSNAME) tcs] ) } {
+   puts "Using $env(TCC_TCSNAME)"
+   set ext .$env(TCC_TCSNAME)
+} else {
+   set ext ""
+}
+appData add configPath [file join $ROOT ca_config$ext]
+appData add configFile pointtest.ca
+
+appData add appKind Tcs
+appData add appName pointTest
+
+service epics
+
+# Set application title
+wm title . "Gemini pointing test"
+wm iconname . "Gemini pointing test"
+wm resizable . 1 1
+
+pointTestMain {}

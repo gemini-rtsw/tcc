@@ -1,0 +1,123 @@
+#+
+#  TrackFrame <- Paramset
+#
+#  Implements the TrackFrame class. A TrackFrame object 
+#  stores all the parameters needed to specify the tracking frame for
+#  all the virtual telescopes.
+#
+#  Options:
+#           -mountCosys     The mount tracking frame
+#
+#           -sourceACosys   The source A tracking frame
+#
+#           -sourceBCosys   The source B tracking frame
+#
+#           -sourceCCosys   The source C tracking frame
+#
+#           -pwfs1Cosys     The pwfs1 tracking frame
+#
+#           -pwfs2Cosys     The pwfs2 tracking frame
+#
+#           -oiwfsCosys     The oiwfs tracking frame
+#
+#  Methods:
+#           apply comp   Applies the track frame definition to the TCS by 
+#                        setting the values of the TrackFrame command 
+#                        parameters.
+#
+#           init         Sets the track frame object to its initial state.
+#
+#           preview      The tracking frame does not effect the preview 
+#                        system so this method does nothing.
+#
+#           save node    Saves the values of the options to the xml node.
+#
+#  D Terrett 21 February 2003
+#
+#  Copyright CCLRC
+#+
+
+itcl::class TrackFrame {
+   inherit Paramset
+   constructor {} {}
+   destructor {$this init}
+   public {
+      method apply {comp}
+      method init {}
+      method preview {view} {}
+      method save {node}
+      variable mountCosys {} {newCosys mount $mountCosys}
+      variable sourceACosys {} {newCosys sourceA $sourceACosys}
+      variable sourceBCosys {} {newCosys sourceB $sourceBCosys}
+      variable sourceCCosys {} {newCosys sourceC $sourceCCosys}
+      variable pwfs1Cosys {} {newCosys pwfs1 $pwfs1Cosys}
+      variable pwfs2Cosys {} {newCosys pwfs2 $pwfs2Cosys}
+      variable oiwfsCosys {} {newCosys oiwfs $oiwfsCosys}
+   }
+   private {
+      method newCosys {vt name}
+      variable current_cosys
+   }
+}
+
+itcl::body TrackFrame::constructor {} {
+   set current_cosys(sourceA) ""
+   set current_cosys(sourceB) ""
+   set current_cosys(sourceC) ""
+   set current_cosys(mount) ""
+   set current_cosys(pwfs1) ""
+   set current_cosys(pwfs2) ""
+   set current_cosys(oiwfs) ""
+}
+
+itcl::body TrackFrame::apply {comp} {
+
+# Set all the parameters.
+   foreach cs {trackMount trackSourceA trackSourceB trackSourceC \
+         trackPwfs1 trackPwfs2 trackOiwfs} \
+         vt {mount sourceA sourceB sourceC pwfs1 pwfs2 oiwfs} {
+      set cosys [set ${vt}Cosys]
+      if { [string is space $cosys] } {
+         cs $cs set system FK5
+         cs $cs set equinox J2000
+      } else {
+         CosysNames::$cosys apply $comp.${vt}cosys
+      }
+      logger command $cs
+   }
+}
+
+itcl::body TrackFrame::save {node} {
+   set node [paramset $node tracking_frame]
+   param $node mountCosys $mountCosys
+   param $node sourceACosys $sourceACosys
+   param $node sourceBCosys $sourceBCosys
+   param $node sourceCCosys $sourceCCosys
+   param $node pwfs1Cosys $pwfs1Cosys
+   param $node pwfs2Cosys $pwfs2Cosys
+   param $node oiwfsCosys $oiwfsCosys
+}
+
+itcl::body TrackFrame::init {} {
+   $this configure -sourceACosys ""
+   $this configure -sourceBCosys ""
+   $this configure -sourceCCosys ""
+   $this configure -mountCosys ""
+   $this configure -pwfs1Cosys ""
+   $this configure -pwfs2Cosys ""
+   $this configure -oiwfsCosys ""
+}
+
+itcl::body TrackFrame::newCosys {vt name} {
+   if { ! [string equal $current_cosys($vt) ""] } {
+      CosysNames::$current_cosys($vt) refdec
+   }
+   set current_cosys($vt) ""
+   if { ! [string equal $name ""] } {
+      if { [catch {CosysNames::$name refinc}] } {
+         error "Coordinate system \"$name\" does not exist"
+      } else {
+         set current_cosys($vt) $name
+      }
+   }
+}

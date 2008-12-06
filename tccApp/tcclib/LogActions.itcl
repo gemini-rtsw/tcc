@@ -1,0 +1,103 @@
+#+
+#  LogActions.itcl
+#
+#  LogActions adds bindings to log all actions performed by the user.
+#
+# A Ebbers Sept 2005
+#
+#-
+
+itcl::class LogActions {
+    constructor {} {}
+    destructor {}
+   public {
+      method logwin {path}
+      method logmess {text}
+   }
+}
+
+itcl::body LogActions::constructor {} {
+    global env logfid
+    if { [string compare [exec uname] "Linux"] == 0 } {
+	if {$env(TCC_TCSNAME) == "tcs"} {
+	        set log "/usr/tmp/tcc/log/[exec date +%Y_%m_%d]"
+        } else {
+        	set log "/usr/tmp/tc1/log/[exec date +%Y_%m_%d]"
+        }
+    } else { 
+	    if {$env(TCC_TCSNAME) == "tcs"} {
+		set log "/gemini/tcc/log/[exec date +%Y_%m_%d]"
+	    } else {
+		set log [string trimright $::ROOT "/."]/log/[exec date +%Y_%m_%d]
+	    }
+    }
+    #puts "ext: [exec date +%H_%M] log dir:  $log"
+    puts [exec mkdir -m777 -p $log]
+    set file $log/tcclog.[exec date +%H_%M]
+    #puts "file: $file"
+    set logfid [open $file "CREAT WRONLY APPEND"]
+    #puts "fid: $logfid"
+}
+
+itcl::body LogActions::destructor {} {
+    #puts "LogActions::destructor"
+    global logfid
+    close $logfid
+}
+
+itcl::body LogActions::logmess {text} {
+    global logfid
+    puts $logfid "[clock format [clock seconds]] Logger: $text"
+    flush $logfid 
+}
+
+itcl::body LogActions::logwin {path} {
+    global logfid
+
+    #puts "adding logging to $path"
+    bind $path <ButtonPress-1> {
+	if {[catch {set name [%W cget -text]}]} {
+	    if {[catch {set name [%W cget -label]}]} {
+		set name "no info"
+		break
+	    } 
+	}
+	if {$name == ""} {
+	    set name %W
+	}
+	set info ""
+	#puts "have event in %W"
+	if [catch {set class [winfo class %W]}] {break}
+	switch $class {
+	    Menubutton {
+		#puts "Menubutton %W opens menu: [%W cget -menu]"
+		break
+	    }
+	    Button { 
+		set command [%W cget -command]
+		#puts "Button command: $command"
+		if {[string first "map" $command] > 0} { break }
+		if {[string first "_toggleList" $command] > 0} { break }
+		if {[string first "OnOffButton" $command] > 0} {
+		    set class OnOffButton
+		    set start [string first "pressed" $command]
+		    set info "prev state=[[string replace $command $start [expr [string wordend $command $start]-1] get]]"
+		} 
+	    }
+	    Checkbutton { set info "value: [set [%W cget -variable]]" }
+	    Scale { set info "value: [%W get]"}
+	    Entry {
+		bind %W <KeyRelease-Return> {
+		    if [catch {set top [winfo toplevel %W]}] {break}
+		    puts $logfid "[clock format [clock seconds]]  [wm title $top] $name $class value [%W get]"
+		    flush $logfid
+		}
+		break
+	    }
+	}
+	puts $logfid "[clock format [clock seconds]]  [wm title [winfo toplevel %W]]  $name  $class  $info"
+	flush $logfid
+    }
+}
+
+

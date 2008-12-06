@@ -1,0 +1,198 @@
+#+
+# tcsGuide.ca
+#
+# Channel access configuration file for tcs guiding and chopping related 
+# commands.
+#
+# D Terrett 18 Janaury 2004
+#
+# Copyright CCLRC
+#-
+
+command m1Guide tcsApply M1 guiding
+{
+   mode       tcs:m1GuideMode.A Mode
+}
+
+command m1GuideConfig tcsApply Define M1 guiding
+{
+   weighting  tcs:m1GuideConfig.A Weighting
+   source     tcs:m1GuideConfig.B Signal source
+   frames     tcs:m1GuideConfig.C Frames to average
+   filename   tcs:m1GuideConfig.D Filename for HRWFS
+}
+
+command mountGuide tcsApply Define mount guiding
+{
+   mode       tcs:mountGuideMode.A Mode
+   source     tcs:mountGuideMode.B Guide Source
+   p1weight   tcs:mountGuideMode.C P1 weight
+   p2weight   tcs:mountGuideMode.D P2 weight
+}
+
+command m2Guide tcsApply M2 Guiding
+{
+   state      tcs:m2GuideControl.A State
+}
+
+command m2GuideMode tcsApply M2 GuideMode
+{
+   coma      tcs:m2GuideMode.B Coma correction
+}
+
+command m2GuideConfig tcsApply Define M2 guiding
+{
+   source     tcs:m2GuideConfig.A Guiding source
+   samplefreq tcs:m2GuideConfig.B Sample frequency
+   filter     tcs:m2GuideConfig.C Filter type
+   freq1      tcs:m2GuideConfig.D Frequency 1
+   freq2      tcs:m2GuideConfig.E Frequency 2
+   beam       tcs:m2GuideConfig.F Beam
+   reset      tcs:m2GuideConfig.G reset
+}
+
+command m2GuideReset tcsApply Reset M2 guide configuration
+{
+   dummy      tcs:m2GuideReset.A
+}
+
+command wfsGuideMode tcsApply WFS Guide Mode
+{
+   state      tcs:wfsGuideMode.A State
+   from       tcs:wfsGuideMode.B From Probe
+   to         tcs:wfsGuideMode.C To Probe
+}
+
+command pwfs1Observe tcsApply Start P1
+{
+   noexp      tcs:pwfs1Observe.A      Exposures
+   int        tcs:pwfs1Observe.B      interval
+   outopt     tcs:pwfs1Observe.C      Output options
+   label      tcs:pwfs1Observe.D      DHS label
+   output     tcs:pwfs1Observe.E      DHS output
+   path       tcs:pwfs1Observe.F      Path
+   name       tcs:pwfs1Observe.G      Filename
+}
+
+command pwfs1StopObserve tcsApply Stop P1
+{
+   dummy      tcs:pwfs1StopObserve.A
+}
+
+command p1DetSigInit tcsApply Setup P1 signal processing
+{
+   filename   tcs:p1DetSigInit.A     Dark filename
+}
+
+command p1SeqDark tcsApply Take P1 dark frame
+{
+   filename   tcs:p1SeqDark.A     Dark filename
+}
+
+command p1Seq tcsApply P1 Sequence Closed Loop
+{
+   global     tcs:p1Seq.A         Time to global guide
+   ave        tcs:p1Seq.B         Frame to average
+   z2m2       tcs:p1Seq.C         Send Zernikies to M2
+   mult       tcs:p1Seq.D         Multiplication coefficient
+}
+
+command pwfs2Observe tcsApply Start P2
+{
+   noexp      tcs:pwfs2Observe.A      Exposures
+   int        tcs:pwfs2Observe.B      Interval
+   outopt     tcs:pwfs2Observe.C      Output options
+   label      tcs:pwfs2Observe.D      DHS label
+   output     tcs:pwfs2Observe.E      DHS output
+   path       tcs:pwfs2Observe.F      Path
+   name       tcs:pwfs2Observe.G      Filename
+}
+
+command pwfs2StopObserve tcsApply Stop P2
+{
+   dummy      tcs:pwfs2StopObserve.A
+}
+
+command p2DetSigInit tcsApply Setup P2 signal processing
+{
+   filename   tcs:p2detSigInit.A     Dark filename
+}
+
+command p2SeqDark tcsApply Take P2 dark frame
+{
+   filename   tcs:p2SeqDark.A     Dark filename
+}
+
+command p2Seq tcsApply P2 Sequence Closed Loop
+{
+   global     tcs:p2Seq.A         Time to global guide
+   ave        tcs:p2Seq.B         Frame to average
+   z2m2       tcs:p2Seq.C         Send Zernikies to M2
+   mult       tcs:p2Seq.D         Multiplication coefficient
+}
+
+command oiwfsObserve tcsApply Start OIWFS
+{
+   noexp      tcs:oiwfsObserve.A      Exposures
+   int        tcs:oiwfsObserve.B      Interval
+   outopt     tcs:oiwfsObserve.C      Output options
+   label      tcs:oiwfsObserve.D      DHS label
+   output     tcs:oiwfsObserve.E      DHS output
+   path       tcs:oiwfsObserve.F      Path
+   name       tcs:oiwfsObserve.G      Filename
+}
+
+command oiwfsStopObserve tcsApply Stop OIWFS
+{
+   dummy      tcs:oiwfsStopObserve.A
+}
+
+command oiDetSigInit tcsApply Setup OI signal processing
+{
+   filename   tcs:oiDetSigInit.A     Dark filename
+}
+
+command oiSeqDark tcsApply Take OI dark frame
+{
+   filename   tcs:oiSeqDark.A     Dark filename
+}
+
+command oiSeq tcsApply OI Sequence Closed Loop
+{
+   global     tcs:oiSeq.A         Time to global guide
+   ave        tcs:oiSeq.B         Frame to average
+   z2m2       tcs:oiSeq.C         Send Zernikies to M2
+   mult       tcs:oiSeq.D         Multiplication coefficient
+}
+
+command gaosObserve tcsApply Start GAOS currently bypasses tcs
+{
+  dir	      ao:wfcs:display.DIR  Display directive (MARK/START/STOP)
+}
+
+command m2beam tcsApply M2 beam
+{
+   m2Beam     tcs:m2Beam.A           Beam
+}
+
+command chop tcsApply Chop
+{
+   chop       tcs:chop.A             State
+   decs       tcs:chop.B             DECS
+}
+
+command nod tcsApply Nod
+{
+   nod        tcs:nod.A              State
+}
+
+command zeroComaCorr tcsApply Zero Coma Corrections
+{
+   dummy      tcs:zeroComaCorr.A
+}
+
+command clearGuideFocus tcsApply Clear Guide Focus
+{
+   dummy      tcs:clearGuideFocus.A
+}
+

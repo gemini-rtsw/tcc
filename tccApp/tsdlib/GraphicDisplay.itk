@@ -1,0 +1,508 @@
+#+
+#  GraphicDisplay <- itk:Widget
+#
+#  Plots a view state of the telescope.
+#
+#  Options:
+#           none
+#
+#  Methods:
+#           update          Updates the view with the current state of the
+#                           telescope.
+#
+#  D Terrett 15 April 2004
+#
+#  Copyright CCLRC
+#-
+
+itcl::class GraphicDisplay {
+   inherit itk::Widget
+   constructor args {}
+   public {
+      method update {}
+   }
+   private {
+      variable Vignette 0
+      variable flash 0
+   }
+}
+
+itk::usual GraphicDisplay {
+   keep -background -cursor -foreground -font -highlightcolor \
+        -highlightthickness -highlightcolor -highlightthickness \
+        -insertbackground -insertborderwidth -insertwidth -insertontime \
+        -insertofftime -selectbackground -selectborderwidth -selectforeground
+}
+
+itcl::body GraphicDisplay::constructor args {
+
+# Divide the window into 3 vertically
+   itk_component add col1 {
+      frame $itk_interior.col1
+   }
+   itk_component add col2 {
+      frame $itk_interior.col2
+   }
+   itk_component add col3 {
+      frame $itk_interior.col3
+   }
+   itk_component add col4 {
+      frame $itk_interior.col4
+   }
+   pack $itk_component(col1) $itk_component(col2) $itk_component(col3) \
+         $itk_component(col4) -side left -fill both -expand y -anchor n
+
+# Put the dome view and the elevation view in the left column.
+   set w $itk_component(col1)
+   itk_component add domeview {
+      DomeView $w.domeview
+   }
+   itk_component add elview {
+      ElevationView $w.elview
+   }
+   pack $itk_component(domeview) $itk_component(elview) -expand y
+
+# Put the wrap view in the middle.
+   set w $itk_component(col2)
+   itk_component add wrapview {
+      WrapView $w.wrapview
+   }
+   pack $itk_component(wrapview) -expand y
+
+# Put the optics view to the right.
+   set w $itk_component(col3)
+   itk_component add opticsview {
+      OpticsView $w.opticsview
+   }
+   pack $itk_component(opticsview) -expand y
+
+# ao setup and probe views in the last column.
+   set w $itk_component(col4)
+   itk_component add aosetup {
+      AoConfig $w.aosetup
+   }
+
+# OIWFS
+   set w $itk_component(col4)
+   itk_component add oiwfs {
+      frame $w.oiwfs -borderwidth 2 -relief ridge
+   }
+   set w $itk_component(oiwfs)
+   itk_component add oiname {
+      label $w.oiname
+   }
+   itk_component add oilabel {
+      label $w.oilabel -text "OIWFS"
+   }
+   itk_component add oiview {
+      OiwfsView $w.oiview
+   }
+   itk_component add oixy {
+      ProbePos $w.oixy -probe oi
+   }
+   itk_component add oiwavel {
+      label $w.oiwavel
+   }
+   pack $itk_component(oiname) $itk_component(oilabel) $itk_component(oiview) \
+         $itk_component(oixy) $itk_component(oiwavel) -padx 5
+
+# AO WFS.
+   set w $itk_component(col4)
+   itk_component add aowfs {
+      frame $w.aowfs -borderwidth 2 -relief ridge
+   }
+   set w $itk_component(aowfs)
+   itk_component add aolabel {
+      label $w.aolabel -text AOWFS
+   }
+   itk_component add aoview {
+      AowfsView $w.aoview
+   }
+   itk_component add aoxy {
+      ProbePos $w.aoxy -probe ao
+   }
+   itk_component add aowavel {
+      label $w.aowavel
+   }
+   pack $itk_component(aolabel) -padx 5
+   pack $itk_component(aowavel) $itk_component(aoxy) $itk_component(aoview) \
+         -padx 5 -side bottom
+
+# PWFS1.
+   set w $itk_component(col4)
+   itk_component add pwfs1 {
+      frame $w.pwfs1 -borderwidth 2 -relief ridge
+   }
+   set w $itk_component(pwfs1)
+   itk_component add probe1 {
+      ProbeView $w.probe1 -probe p1
+   }
+   itk_component add p1label {
+      label $w.p1label -text "PWFS1"
+   }
+   itk_component add p1wavel {
+      label $w.p1wavel
+   }
+   itk_component add p1WrapLine1 {
+      label $w.p1WrapLine1 -foreground white
+   } {
+     usual
+     ignore -foreground
+   }
+   itk_component add p1WrapLine2 {
+      label $w.p1WrapLine2 -foreground white
+   } {
+     usual
+     ignore -foreground
+   }
+
+   pack $itk_component(p1label) $itk_component(probe1) $itk_component(p1wavel) $itk_component(p1WrapLine1) $itk_component(p1WrapLine2)
+
+# PWFS2.
+   set w $itk_component(col4)
+   itk_component add pwfs2 {
+      frame $w.pwfs2 -borderwidth 2 -relief ridge
+   }
+   set w $itk_component(pwfs2)
+   itk_component add probe2 {
+      ProbeView $w.probe2 -probe p2
+   }
+   itk_component add p2label {
+      label $w.p2label -text "PWFS2"
+   }
+   itk_component add p2wavel {
+      label $w.p2wavel
+   }
+   itk_component add p2WrapLine1 {
+      label $w.p2WrapLine1 -foreground white
+   } {
+     usual
+     ignore -foreground
+   }
+   itk_component add p2WrapLine2 {
+      label $w.p2WrapLine2 -foreground white
+   } {
+     usual
+     ignore -foreground
+   }
+   pack $itk_component(p2label) $itk_component(probe2) $itk_component(p2wavel) $itk_component(p2WrapLine1) $itk_component(p2WrapLine2)
+
+   grid $itk_component(aosetup) - -sticky ew -padx 5 -pady 2
+   grid $itk_component(oiwfs) $itk_component(aowfs) -padx 5 -pady 2 -sticky ns
+   grid $itk_component(pwfs1) $itk_component(pwfs2) -padx 5 -pady 2
+
+# Configure the ISS port numbers and AO.
+   $itk_component(opticsview) configure -portAnumber 1 
+   switch [sa tcssad get name] {
+      Gemini-North {
+         $itk_component(opticsview) configure -portBnumber 4
+         $itk_component(opticsview) configure -portCnumber 3
+         $itk_component(opticsview) configure -portDnumber 2
+         $itk_component(opticsview) configure -portEnumber 5
+         $itk_component(opticsview) configure -aopresent 1
+      }
+      Gemini-South {
+         $itk_component(opticsview) configure -portBnumber 4
+         $itk_component(opticsview) configure -portCnumber 3
+         $itk_component(opticsview) configure -portDnumber 2
+         $itk_component(opticsview) configure -portEnumber 5
+      }
+   }
+
+   eval itk_initialize $args
+}
+
+itcl::body GraphicDisplay::update {} {
+#+
+#  Updates the display items.
+#-
+   set flash [expr { $flash ? 0 : 1 }]
+
+# Update the widgets.
+   $itk_component(domeview) update
+   $itk_component(elview) update
+   $itk_component(wrapview) update
+   $itk_component(oiview) update
+   $itk_component(oixy) update
+   $itk_component(aoview) update
+   $itk_component(aoxy) update
+   $itk_component(probe1) update
+   $itk_component(probe2) update
+
+# Determine whether there is any vignetting from the enclosure.
+   set v [sadVal tcssad domeVignette -1]
+   if { $v > 0.0 && $Vignette == 0 } {
+      $itk_component(opticsview) configure -vignette 1
+      set Vignette 1
+   } elseif { $v == 0 && $Vignette == 1 } {
+      $itk_component(opticsview) configure -vignette 0
+      set Vignette 0
+   }
+
+# Determine the status of M2.
+   set m2sfollow [isFollowing m2ssad followS]
+   set m2sinpos [isInPosition m2ssad inPosition]
+
+   if { $m2sfollow } {
+      if { $m2sinpos } {
+         $itk_component(opticsview) configure -m2sstate INPOSITION
+      } else {
+         $itk_component(opticsview) configure -m2sstate FOLLOWING
+      }
+   } else {
+      $itk_component(opticsview) configure -m2sstate OFF
+   }
+
+# Determine if the laser is propogating
+   if {[string equal [sa aossad get laserProp] "SKY"]} {
+       $itk_component(opticsview) configure -laserProp ON
+   } else {
+       $itk_component(opticsview) configure -laserProp OFF
+   }
+
+# Determine the state of M1.
+   if { [string equal [sa pcssad get apssMsg] "APSS inflated"] && \
+         [string equal [sa pcssad get aosMsg] "aO sub-system is ON"] && \
+         [string equal [sa pcssad get pssInPosn] TRUE] && \
+         [string equal [sa pcssad get pssOn] ON]  && \
+         [string equal [sa tcssad get m1FigUpdatesFlag] On] } {
+      if { [sa pcssad get aoMoving] < 10.0 } {
+         $itk_component(opticsview) configure -pcsstate OK
+      } else {
+         $itk_component(opticsview) configure -pcsstate MOVING
+      }
+   } else {
+      $itk_component(opticsview) configure -pcsstate OFF
+   }
+
+# Configure the science fold position.
+   set sfmoving 0
+   set lin [sadVal agssad sfLin 1000.0]
+   if { ([sa agssad get sfParked] == 1) && ([sa agssad get sfBusy]=="IDLE") } {
+       $itk_component(opticsview) configure -scfold PARK
+   } elseif {$lin == 1000.0} {
+       $itk_component(opticsview) configure -scfold UNKNOWN
+   } else {
+       if {[sadVal agssad sfInPosition 0] && ([sa agssad get sfBusy]=="IDLE") } {
+	   set sfmoving 0
+       } else {
+	   set sfmoving 1
+       }
+       set tilt [sadVal agssad sfTilt 0.0]
+       set rot [sadVal agssad sfRot 0.0]
+       if { $tilt < 20.0 && $tilt > -20.0 } {
+	   if { $rot > 90.0 } {
+	       set sfpos DE
+	   } elseif { $rot > 0.0 } {
+	       set sfpos CD
+	   } elseif { $rot > -90.0 } {
+	       set sfpos CB
+	   } else {
+	       set sfpos BE
+	   }
+       } else {
+	   if { $tilt > 20.0 } {
+	       set sfpos U
+	   } else {
+	   set sfpos A
+	   }
+	   if { $rot > 135.0 } {
+	       append sfpos E
+	   } elseif { $rot > 45.0 } {
+	       append sfpos D
+	   } elseif { $rot > -45.0 } {
+	       append sfpos C
+	   } elseif { $rot > -135.0 } {
+	       append sfpos B
+	   } else {
+	       append sfpos E
+	   }
+       }
+
+       if { $sfmoving } {
+	   if { $flash } {
+	       $itk_component(opticsview) configure -scfold MOVING
+	   } else {
+	       $itk_component(opticsview) configure -scfold $sfpos
+	   }
+       } else {
+	   $itk_component(opticsview) configure -scfold $sfpos
+       }
+   }
+   
+# Determine if there is light from GCAL.
+   set calunit [expr { [sa gcalsad get shutter value] == "OPEN" ||
+         [sa gcalsad get ArLampState value] == "ON" ||
+         [sa gcalsad get KrLampState value] == "ON" ||
+         [sa gcalsad get CuArLampState value] == "ON" ||
+         [sa gcalsad get ThArLampState value] == "ON" ||
+         [sa gcalsad get XeLampState value] == "ON" ||
+         [sa gcalsad get QHLampState value] == "ON" }]
+
+# Configure GPOL
+   if { [sa gpolsad get upperParkSwitch] == "OPEN" } {
+      if { [sa gpolsad get upperBeamSwitch] == "CLOSED" } {
+         $itk_component(opticsview) configure -gpolustate IN
+      } else {
+         if { $flash } {
+            $itk_component(opticsview) configure -gpolustate IN
+         } else {
+            $itk_component(opticsview) configure -gpolustate OUT
+         }
+      }
+   } else {
+      $itk_component(opticsview) configure -gpolustate OUT
+   }
+   if { [sa gpolsad get middleParkSwitch] == "OPEN" } {
+      if { [sa gpolsad get middleBeamSwitch] == "CLOSED" } {
+         $itk_component(opticsview) configure -gpolmstate IN
+      } else {
+         if { $flash } {
+            $itk_component(opticsview) configure -gpolmstate IN
+         } else {
+            $itk_component(opticsview) configure -gpolmstate OUT
+         }
+      }
+   } else {
+      $itk_component(opticsview) configure -gpolmstate OUT
+   }
+   if { [sa gpolsad get lowerParkSwitch] == "OPEN" } {
+      if { [sa gpolsad get lowerBeamSwitch] == "CLOSED" } {
+         $itk_component(opticsview) configure -gpollstate IN
+      } else {
+         if { $flash } {
+            $itk_component(opticsview) configure -gpollstate IN
+         } else {
+            $itk_component(opticsview) configure -gpollstate OUT
+         }
+      }
+   } else {
+      $itk_component(opticsview) configure -gpollstate OUT
+   }
+
+# Configure the light path.
+   $itk_component(opticsview) configure \
+         -deployablebaffle [sa m2ssad get deployBafflePos value] \
+         -centralbaffle [sa m2ssad get centralBafflePos value] \
+         -aofold [sa agssad get aoName value] \
+         -aofoldhealth [sa agssad get aoHealth value] \
+         -scfoldhealth [sa agssad get sfHealth value] \
+         -hrwfshealth [sa agssad get hwHealth value] \
+         -aoentrance [sa aossad get entShutterOpen value] \
+         -aoexit [sa aossad get exitShutterOpen value] \
+         -hrwfs [sa agssad get hwName value] \
+         -m1cover [sa gissad get m1cover value] \
+         -holecover [sa gissad get m1inst value] \
+         -calunit $calunit
+   $itk_component(opticsview) update
+
+# Update the ao configuration.
+   $itk_component(aosetup) update
+
+# Update the OIWFS name.
+   $itk_component(oiname) configure -text [sa agssad get oiwfsName]
+
+# Update the guiding wavelengths.
+   set wavel [sadVal tcssad pwfs1Wavelength ""]
+   if { $wavel != "" } {
+      $itk_component(p1wavel) configure -text "[expr {$wavel / 10000.0}] mu"
+   }
+   set wavel [sadVal tcssad pwfs2Wavelength ""]
+   if { $wavel != "" } {
+      $itk_component(p2wavel) configure -text "[expr {$wavel / 10000.0}] mu"
+   }
+   if { $wavel != "" } {
+      $itk_component(aowavel) configure -text "[expr {$wavel / 10000.0}] mu"
+   }
+   set wavel [sadVal tcssad oiwfsWavelength ""]
+   if { $wavel != "" } {
+      $itk_component(oiwavel) configure -text "[expr {$wavel / 10000.0}] mu"
+   }
+
+
+# Set the ISS port labels.
+   $itk_component(opticsview) configure \
+         -portAlabel [sa agssad get port1Label]
+
+   switch [sa tcssad get name] {
+      Gemini-North {
+         $itk_component(opticsview) configure \
+               -portBlabel [sa agssad get port4Label] \
+               -portClabel [sa agssad get port3Label] \
+               -portDlabel [sa agssad get port2Label] \
+               -portElabel [sa agssad get port5Label] 
+      }
+      Gemini-South {
+         $itk_component(opticsview) configure \
+               -portBlabel [sa agssad get port4Label] \
+               -portClabel [sa agssad get port3Label] \
+               -portDlabel [sa agssad get port2Label] \
+               -portElabel [sa agssad get port5Label] 
+      }
+   }
+# Check time for P1 wrap Limit
+
+set elttl [sadVal tcssad currentTimeToSet ""]
+   if { $elttl == "" } {
+      set elttl 99999999
+   }
+
+set p1ttl [sadVal tcssad timeToP1lim ""]
+   $itk_component(p1WrapLine1) configure -text "" \
+         -background [$itk_interior cget -background]
+   $itk_component(p1WrapLine2) configure -text "" \
+         -background [$itk_interior cget -background]
+   if { $p1ttl != "" && $p1ttl != -999.0 } {
+      if { $p1ttl < $elttl } {
+         set h [expr int($p1ttl / 60.0)]
+         set m [expr int($p1ttl - ( $h * 60.0 ))]
+         if { $h > 0 } {
+            $itk_component(p1WrapLine1) configure \
+                  -text "${h}hr ${m}min"
+            $itk_component(p1WrapLine2) configure \
+                  -text  "to wrap limit"
+         } else {
+            if { $m > 0 } {
+               $itk_component(p1WrapLine1) configure -text "${m}min"
+               $itk_component(p1WrapLine2) configure -text "to wrap limit"
+            } else {
+               $itk_component(p1WrapLine1) configure -text "Wrap limit in"
+               $itk_component(p1WrapLine2) configure -text "the next minute"
+            }
+         }
+         $itk_component(p1WrapLine1) configure -background red
+         $itk_component(p1WrapLine2) configure -background red
+
+      }
+   }
+
+set p2ttl [sadVal tcssad timeToP2lim ""]
+   $itk_component(p2WrapLine1) configure -text "" \
+         -background [$itk_interior cget -background]
+   $itk_component(p2WrapLine2) configure -text "" \
+         -background [$itk_interior cget -background]
+   if { $p2ttl != "" && $p2ttl != -999.0 } {
+      if { $p2ttl < $elttl } {
+         set h [expr int($p2ttl / 60.0)]
+         set m [expr int($p2ttl - ( $h * 60.0 ))]
+         if { $h > 0 } {
+            $itk_component(p2WrapLine1) configure \
+                  -text "${h}hr ${m}min"
+            $itk_component(p2WrapLine2) configure \
+                  -text  "to wrap limit"
+         } else {
+            if { $m > 0 } {
+               $itk_component(p2WrapLine1) configure -text "${m}min"
+               $itk_component(p2WrapLine2) configure -text "to wrap limit"
+            } else {
+               $itk_component(p2WrapLine1) configure -text "Wrap limit in"
+               $itk_component(p2WrapLine2) configure -text "the next minute"
+            }
+         }
+         $itk_component(p2WrapLine1) configure -background red
+         $itk_component(p2WrapLine2) configure -background red
+
+      }
+   }
+
+}

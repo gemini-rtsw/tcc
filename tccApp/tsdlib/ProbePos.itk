@@ -1,0 +1,145 @@
+#+
+#  ProbePos <- itk::Widget
+#
+#  Implements the ProbePos widget which displays the X/Y of a WFS probe
+#  along with its follow and in position states.
+#
+#  Options:
+#           -probe       The probe being displayed (oi or ao).
+#
+#  Methods:
+#           update       Updates the display.
+#
+# D Terrett 15 April 2004
+#
+#  Copyright CCLRC
+#-
+
+itcl::class ProbePos {
+   inherit itk::Widget
+   constructor args {}
+   itk_option define -probe probe Probe ""
+   public {
+      method update {}
+   }
+   private {
+      variable follow
+      variable inpos
+      variable probename
+      variable sad
+      variable xpos
+      variable ypos
+   }
+}
+
+itk::usual ProbePos {
+   keep -background -cursor -highlightcolor -highlightthickness \
+         -insertbackground -insertborderwidth -insertwidth \
+         -insertontime -insertofftime -selectbackground \
+         -selectborderwidth -selectforeground
+}
+
+itcl::body ProbePos::constructor args {
+
+# Create status acceptors.
+   if { [catch {sa pwfs1Guide info}] } {
+      epics sa oiwfsGuide
+   }
+   if { [catch {sa pwfs2Guide info}] } {
+      epics sa pwfs2Guide
+   }
+
+# Canvases for X/Y.
+   itk_component add canx {
+      canvas $itk_interior.canx -width 50 -height 14 -borderwidth 2 \
+            -relief ridge
+   }
+   itk_component add cany {
+      canvas $itk_interior.cany -width 50 -height 14 -borderwidth 2 \
+            -relief ridge
+   }
+   grid $itk_component(canx) $itk_component(cany) -padx 1
+
+# Rectangle for background.
+   $itk_component(canx) create rectangle 2 2 54 18 -tags bg
+   $itk_component(cany) create rectangle 2 2 54 18 -tags bg
+
+# X and Y.
+   $itk_component(canx) create text 50 11 -tags x -anchor e
+   $itk_component(cany) create text 50 11 -tags y -anchor e
+
+   eval itk_initialize $args
+}
+
+
+itcl::body ProbePos::update {} {
+
+# Update the coordinates of the arms according to the x/y of the wfs.
+   set x [sadVal $sad $xpos ""]
+   if { $x ne "" } {
+      set x [format %.2f $x]
+   }
+   set y [sadVal $sad $ypos ""]
+   if { $y ne "" } {
+      set y [format %.2f $y]
+   }
+   $itk_component(canx) itemconfigure x -text $x
+   $itk_component(cany) itemconfigure y -text $y
+
+# Set the colour according to the follow and in position state.
+   if { [isFollowing $sad $follow] } {
+      if { [isInPosition $sad $inpos] } {
+         $itk_component(canx) itemconfigure bg -fill green
+         $itk_component(cany) itemconfigure bg -fill green
+      } else {
+         $itk_component(canx) itemconfigure bg -fill yellow
+         $itk_component(cany) itemconfigure bg -fill yellow
+      }
+      switch [sa tcssad get nodState] {
+         A {
+            if { [string equal [sa ${probename}Guide get nodachopa] On] ||
+                  [string equal [sa ${probename}Guide get nodachopb] On] } {
+               $itk_component(canx) itemconfigure bg -stipple ""
+               $itk_component(cany) itemconfigure bg -stipple ""
+            } else {
+               $itk_component(canx) itemconfigure bg -stipple gray50
+               $itk_component(cany) itemconfigure bg -stipple gray50
+            }
+         }
+         B {
+            if { [string equal [sa ${probename}Guide get nodbchopa] On] ||
+                  [string equal [sa ${probename}Guide get nodbchopb] On] } {
+               $itk_component(canx) itemconfigure bg -stipple ""
+               $itk_component(cany) itemconfigure bg -stipple ""
+            } else {
+               $itk_component(canx) itemconfigure bg -stipple gray50
+               $itk_component(cany) itemconfigure bg -stipple gray50
+            }
+         }
+      }
+   } else {
+      $itk_component(canx) itemconfigure bg -fill red -stipple ""
+      $itk_component(cany) itemconfigure bg -fill red -stipple ""
+   }
+}
+
+itcl::configbody ProbePos::probe {
+   switch $itk_option(-probe) {
+      oi {
+         set follow oiFollowS
+         set inpos oiInPosition
+         set probename oiwfs
+         set sad agssad
+         set xpos oiX
+         set ypos oiY
+      }
+      ao {
+         set follow followS
+         set inpos inPosition
+         set probename pwfs2
+         set sad aossad
+         set xpos wfsXPosition
+         set ypos wfsYPosition
+      }
+   }
+}

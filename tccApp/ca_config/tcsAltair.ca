@@ -1,0 +1,214 @@
+#+
+# tcsAltair.ca
+#
+# Channel access configuration file for tcs ALTAIR related commands.
+#
+# D Terrett 16 December 2002
+#
+# Copyright CCLRC
+#-
+
+command configForAO tcsApply Tell the TCS whether we're using AO
+{
+   useAO     tcs:configureForAO.A  Yes or No
+}
+
+command aoDeployAdc tcsApply Deploy ALTAIR ADC
+{
+   position  tcs:aoDeployAdc.A position
+}
+
+command aoMoveAdc tcsApply Move ALTAIR ADC
+{
+   rotpos    tcs:aoMoveAdc.A Cass rotator position
+   zd        tcs:aoMoveAdc.B Zenith distance
+   wavel     tcs:aoMoveAdc.C Central wavelength
+   adjust    tcs:aoMoveAdc.D Adjust
+}
+
+command aoPrepareCm tcsApply Prepare ALTAIR control matrix
+{
+   x         tcs:aoPrepareCm.A Guide star x position
+   y         tcs:aoPrepareCm.B Guide star y position
+   seeing    tcs:aoPrepareCm.C Seeing estimate
+   gsmag     tcs:aoPrepareCm.D Guide star magnitude
+   windspeed tcs:aoPrepareCm.E Windspeed
+   flens     tcs:aoPrepareCm.F Use Field Lens 0/1
+}
+
+command aoFlatten tcsApply Flatten ALTAIR science path.
+{
+   dummy     tcs:aoFlatten.A 
+}
+
+command aoFollow tcsApply ALTAIR stage follow
+{
+   followState tcs:aoFollow.A Follow state
+}
+
+command aoCentreWfs tcsApply Centre ALTAIR Wfs
+{
+   retain     tcs:aoCentreWfs.A Retain offsets
+}
+
+command aoCorrect tcsApply ALTAIR Image correction
+{
+   correct    tcs:aoCorrect.A Correction On/OFF
+   matrix     tcs:aoCorrect.B Matrix ID
+   gains      tcs:aoCorrect.C Reuse gains
+}
+
+command aoEntShutter tcsApply ALTAIR Entrance shutter
+{
+   state     tcs:aoEntShutter.A Shutter state
+}
+
+command aoExitShutter tcsApply ALTAIR Exit shutter
+{
+   state     tcs:aoExitShutter.A Shutter state
+}
+
+command aoDmVolt tcsApply ALTAIR Dm Voltage Control
+{
+   dir       ao:dmVolt.DIR Mark (0) then Start(3) for on Stop (4) for off
+}
+
+command aoDatum tcsApply ALTAIR datum
+{
+   dummy     tcs:aoDatum.A
+}
+
+command aoPark tcsApply ALTAIR park
+{
+   dummy     tcs:aoPark.A
+}
+
+command aoOiwfsSource tcsApply ALTAIR OIWFS source
+{
+   state     tcs:aoOiwfsSource.A   State
+   bandwidth tcs:aoOiwfsSource.B   Bandwidth
+}
+
+command aoUseLwfs tcsApply GAOS LGS ON?
+{
+# AWE for now, control directly in Altair
+#   state     tcs:aoUseLwfs.A       State (ON/OFF)
+   state     ao:useLwfs.A       State (ON/OFF)
+   dir       ao:useLwfs.DIR     Directive
+   disTrack  ao:useLwfs.VALE    Set to -1 to disable tracking
+   zoomDir   ao:cc:lgszoomAssembly.DIR  Use to stop tracking (MARK:0, STOP:4)
+}
+
+command aoInitWfs tcsApply GAOS Init WFS
+{
+   wfs       ao:wfcs:wfsInit.A    WFS (0:NGS, 1:LGS)
+   dir       ao:wfcs:wfsInit.DIR  Directive
+}
+
+command aoGimOffsets tcsApply ALTAIR Gimbal Offsets
+{
+   xoff      ao:wfcs:xOffset.VAL   X Offset
+   yoff      ao:wfcs:yOffset.VAL   Y Offset
+   zoff      ao:wfcs:zOffset.VAL   Z Offset
+}
+
+command aoTTGSiris tcsApply ALTAIR TTGS iris Position
+{
+   pos       ao:cc:lgsirisAssembly.A      Demanded position
+   mode      ao:cc:lgsirisAssembly.MODE   Mode
+   dir       ao:cc:lgsirisAssembly.DIR    Directive
+}
+
+command aongsNDFilter tcsApply ALTAIR ND Filter Position
+{
+   pos       ao:cc:ngsNDfiltAssembly.A      Demanded position
+   mode      ao:cc:ngsNDfiltAssembly.MODE   Mode
+   dir       ao:cc:ngsNDfiltAssembly.DIR    Directive
+}
+
+command aolgsNDFilter tcsApply ALTAIR ND Filter Position
+{
+   pos       ao:cc:lgsNDfiltAssembly.A      Demanded position
+   mode      ao:cc:lgsNDfiltAssembly.MODE   Mode
+   dir       ao:cc:lgsNDfiltAssembly.DIR    Directive
+}
+
+command aoCalSource tcsApply ALTAIR CalSource Control
+{
+  dmd	     ao:selectCalMode.A         Demanded State (ON/OFF)
+  mode       ao:selectCalMode.MODE      Mode
+  dir        ao:selectCalMode.DIR       Directive
+}
+
+command aoFLens tcsApply ALTAIR Field Lens Position
+{
+   pos       tcs:aoMoveAStar.A		Demanded position (FLENS/PARK)
+   flens     tcs:aoPrepareCm.F          Use Field Lens 0/1
+}
+
+command aoLgsPark tcsApply ALTAIR park
+{
+   dir       ao:lgs:park.DIR            LGS IS Park directive
+}
+
+command aoFlex tcsApply ALTAIR flexture model
+{
+   ncpa      ao:ncpa.A      NCPA filename
+   flex      ao:ncpa.B      Flexure filename
+   dir       ao:ncpa.DIR    Directive
+}
+
+command aoSFOdefocus tcsApply ALTAIR SFO Defocus offset
+{
+   offset   ao:cc:SfoDefocus       SFO Defocus Offset
+}
+
+command ttgsloop tcsApply GAOS TTGS Correct Control
+{
+   dem       ao:wfcs:strapCorrCtl.A   Demanded state (0/1)
+   dir 	     ao:wfcs:strapCorrCtl.DIR Directive
+}
+
+command sfoloop tcsApply GAOS SFO Correct Control
+{
+   dem       ao:cc:lgszoomSfoLoop   Demanded state (0/1)
+}
+
+command gaosTTGS tcsApply GAOS TTGS integrating
+{
+   exp       ao:wfcs:strapSEX.A     Exposure Time (msec)
+   expDIR    ao:wfcs:strapSEX.DIR   Exposure Time Directive (START=3)
+   flux      ao:wfcs:strapSFX.A     Flux Mode (low=0/hi=1)
+   fluxDIR   ao:wfcs:strapSFX.DIR   Flux Mode Directive (START=3)
+   rtCtl     ao:wfcs:strapRTCtl.A   RT Ctl (0/1)
+   rtDIR     ao:wfcs:strapRTCtl.DIR RT Directive (START=3)
+   tempCtl   ao:wfcs:strapTPCtl.A   Temp Ctl (0/1)
+   tempDIR   ao:wfcs:strapTPCtl.DIR Temp Directive (START=3)
+   hvCtl     ao:wfcs:strapHVCtl.A   HVolt Ctl (0/1)
+   hvDIR     ao:wfcs:strapHVCtl.DIR HVolt Directive (START=3)
+   dem       ao:wfcs:strapGtCtl.A   Demanded state (0/1)
+   dir 	     ao:wfcs:strapGtCtl.DIR Directive
+}
+
+command gaosSFO tcsApply GAOS SFO integrating
+{
+   exp       sfo:setExpTime.A       Set Exposure Time (sec)
+   startDIR  sfo:observe.DIR 	    Start Directive (MARK)
+   stopDIR   sfo:endObserve.DIR     Stop Directive (MARK)
+   apply     sfo:apply.DIR	    Apply (START)
+}
+
+command gaosBTO tcsApply GAOS BTO loop closed
+{
+   dem       bto:FSALoopCtrl.A      Demanded State (On/Off)
+   dir       bto:apply.DIR          Directive (START)
+   clr       bto:FSAZeroRTC.A       Zero the intefrated corrections (write On, then apply)
+   fsaTip    bto:FSAMove.A          Set the FSA Tip Demand
+   fsaTilt   bto:FSAMove.B          Set the FSA Tilt Demand
+}
+
+command m2deadband tcsApply M2 XY Deadband
+{
+   dem       m2:tolerance.F         Demanded Deadband (NGS: 50.0, LGS:100.0)
+   dir       m2:tolerance.DIR       Directive (MARK,START)
+}

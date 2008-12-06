@@ -1,0 +1,109 @@
+#+
+#  Rotator <- Paramset
+#
+#  Implements the Rotator class. A Rotator object stores the configuration 
+#  of the cass rotator.
+#
+#  Options:
+#          -cosys        The rotator tracking frame.
+#
+#          -ipa          The instrument position angle.
+#
+#  Methods:
+#          apply comp    Applies the rotator configuration to the TCS by 
+#                        setting the values of the command parameters. 
+#
+#          init          Returns the rotator object to its initial state.
+#
+#          preview       Sets the rotator configuration in the preview.
+#
+#          save node     Saves the values of the rotator configuration
+#                        to the xml node.
+#
+#  D Terrett 14 May 2003
+#
+#  Copyright CCLRC
+#+
+
+itcl::class Rotator {
+   inherit Paramset
+   destructor {$this init}
+   public {
+      method apply {comp}
+      method init {}
+      method preview {view}
+      method save {node}
+      variable ipa {}
+      variable cosys {}
+   }
+   private {
+      variable current_cosys {}
+   }
+}
+
+itcl::body Rotator::apply {comp} {
+   if { [string equal $cosys fixed] } {
+      cs rotMove set rma $ipa
+      if { [catch {cs rotMove post} msg] } {
+	  tk_messageBox -icon error -parent $itk_interior -message \
+	      "Error posting CR move command: TCS reports \
+            \"$msg\""
+      }
+   }
+   cs rotator set ipa [list $ipa]
+   if { [string equal $cosys ""] } {
+      cs rotator set system FK5
+      cs rotator set equinox J2000
+      logger command rotator
+   } else {
+      CosysNames::$cosys apply $comp.cosys
+   }
+   set curr_rot_config ${::Config(tcs.field.rotator,value)}
+   if {$curr_rot_config == "AltairFixed"} {
+       tk_messageBox -icon warning \
+	   -message "Altair Fixed Mode ... unfollow CRCS after move."
+   }
+}
+
+itcl::body Rotator::preview {view} {
+   if { [string equal $cosys ""] } {
+      set frame FK5
+      set equinox J2000
+   } else {
+      set frame [CosysNames::$cosys cget -frame]
+      set equinox [CosysNames::$cosys cget -equinox]
+   }
+   if { [string equal $ipa ""] } {
+      set a 0.0
+   } else {
+      set a $ipa
+   }
+   $view configure -ipa $a 
+   $view configure -rotSystem $frame
+   $view configure -rotEquinox $equinox
+}
+
+itcl::body Rotator::save {node} {
+   set node [paramset $node rotator]
+   param $node ipa $ipa
+   param $node cosys $cosys
+}
+
+itcl::body Rotator::init {} {
+   set ipa ""
+   $this configure -cosys ""
+}
+
+itcl::configbody Rotator::cosys {
+   if { ! [string equal $current_cosys ""] } {
+      CosysNames::$current_cosys refdec
+   }
+   set current_cosys ""
+   if { ! [string equal $cosys ""] } {
+      if { [catch {CosysNames::$cosys refinc}] } {
+         error "Coordinate frame \"$cosys\" does not exist"
+      } else {
+         set current_cosys $cosys
+      }
+   }
+}

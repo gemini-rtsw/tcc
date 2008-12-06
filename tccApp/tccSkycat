@@ -1,0 +1,42 @@
+#!/bin/sh
+# the next line restarts using ocssh \
+exec $HLPG_INSTALL_BASE/bin/ocssh "$0" "$@"
+
+#+
+#  tccSkycat
+#
+#  This script starts the Gemini telescope control console version of skycat.
+#  It contains all the messy stuff involved in finding the tcl packages and 
+#  libraries that the tcc skycat uses. It is probably installation dependent 
+#  and will need to be hacked to get it to work.
+#
+#  D Terrett 27 February 2003
+#
+#  Copyright CCLRC
+#-
+
+# Load all the packages required by skycat.
+package require Tcl
+package require Tk
+package require Tclx
+package require Itcl
+package require Itk
+if { [string compare [exec uname] "Linux"] != 0 } {
+# package already loaded in Linux, namespace blt:: exists therefore
+package require BLT
+}
+package require Skycat
+
+# The tcc library files live in subdirectores of the directory containing
+# this script.
+lappend auto_path [file dirname [info script]]/lib
+lappend auto_path [file dirname [info script]]/skycat_plugin
+
+# define the location of the plugins.
+set ::env(SKYCAT_PLUGIN) \
+   [file dirname [info script]]/plugins/tccSkyCatPlugin.tcl
+set ::env(SKYSEARCH_PLUGIN) \
+   [file dirname [info script]]/plugins/tccSkySearchPlugin.tcl
+
+# Start skycat.
+skycat::SkyCat::startSkyCat

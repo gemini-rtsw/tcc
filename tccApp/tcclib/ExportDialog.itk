@@ -1,0 +1,61 @@
+#+
+#  ExportDialog <- iwidgets::FileSelectionDialog
+#
+#  An ExportDialog widget is a file selection dialog with 
+#  a disjoint list box for selecting which components are saved.
+#
+#  Options:
+#           none
+#
+#  Methods:
+#           none
+#
+#  D Terrett 13 May 2003
+#
+#  Copyright CCLRC
+#-
+
+itcl::class ExportDialog {
+   inherit iwidgets::Fileselectiondialog
+   constructor args {}
+}
+
+itk::usual ExportDialog {
+   keep -activebackground -activerelief -background -borderwidth -cursor \
+         -elementborderwidth -foreground -highlightcolor -highlightthickness \
+         -insertbackground -insertborderwidth -insertofftime -insertontime \
+         -insertwidth -jump -labelfont -modality -selectbackground \
+         -selectborderwidth -textbackground -textfont 
+}
+
+option add *ExportDialog.borderWidth 2 widgetDefault
+option add *ExportDialog.height 600 widgetDefault
+option add *ExportDialog.master "." widgetDefault
+option add *ExportDialog.width 500 widgetDefault
+option add *ExportDialog.title "File Selection Dialog" widgetDefault
+
+itcl::body ExportDialog::constructor args {
+
+   set w $itk_interior
+   itk_component add select {
+      iwidgets::disjointlistbox $w.select -lhslabeltext "Not exported" \
+            -rhslabeltext Exported -buttonplacement center
+   }
+   $itk_component(select) insertlhs [list \
+         Configurations \
+         "Guide configurations" \
+         "Field definitions" \
+         "Field orientations" \
+         "Instrument origins" \
+         "Slew options" \
+         Wavelengths \
+         "Tracking frames" \
+         "Chop configurations" \
+         "GAOS configurations" \
+         "Instrument configurations" \
+         "Coordinate frames"]
+
+   pack $itk_component(select) -fill x -expand yes
+
+   eval itk_initialize $args
+}

@@ -1,0 +1,118 @@
+#+
+#  GuideControl <- ComponentControl
+#
+#  A GuideControl is a ComponentControl widget with widgets for the target 
+#  name and chop and node states for each of the wavefront sensors.
+#
+#  Options:
+#
+#  D Terrett 5 December 2003
+#
+#  Copyright CCLRC
+#+
+
+itcl::class GuideControl {
+   inherit ComponentControl
+   constructor {args} {}
+   itk_option define -component component Component {}
+   public {
+      method load {name}
+      method save {name}
+   }
+}
+
+itk::usual GuideControl {
+   keep -borderwidth -cursor -font -highlightthickness -insertborderwidth \
+         -insertofftime -insertontime -insertwidth -labelfont -popupcursor \
+         -selectborderwidth -textfont -title
+}
+
+itcl::body GuideControl::constructor {args} {
+
+# Create 3 panels, one for each of the wave front sensors.
+   set w $itk_interior
+   foreach wfs {pwfs1 pwfs2 oiwfs} {
+      itk_component add $wfs {
+         frame $w.$wfs -bd 2 -relief sunken
+      }
+   }
+   pack $itk_component(pwfs1) $itk_component(pwfs2) $itk_component(oiwfs)
+
+   foreach wfs {pwfs1 pwfs2 oiwfs} label {PWFS1 P2/AO OIWFS} {
+      set w $itk_component($wfs)
+
+# Chop state
+      itk_component add ${wfs}chop {
+         iwidgets::optionmenu $w.chop \
+               -labeltext "$label probe follows star" \
+               -labelpos nw
+      }
+      [$itk_component(${wfs}chop) component menuBtn] configure -anchor w
+      $itk_component(${wfs}chop) insert end \
+            "when in chop beam A" \
+            "when in chop beam B" \
+            "when chop beam matches nod" \
+            "when chop beam doesn't match nod" \
+            "never"
+
+# Nod setting
+      itk_component add ${wfs}nod {
+         iwidgets::optionmenu $w.nod -labeltext "and in"
+      }
+      [$itk_component(${wfs}nod) component menuBtn] configure -anchor w
+      $itk_component(${wfs}nod) insert end \
+            "nod state A only" "nod state B only" "both nod states"
+      pack $itk_component(${wfs}chop) $itk_component(${wfs}nod) \
+            -padx 5 -pady 2 -anchor w
+
+   }
+# Define the object description.
+   set description "guide configuration"
+
+   eval itk_initialize $args
+}
+
+itcl::body GuideControl::save {name} {
+#+
+# Updates the named guide object.
+#-
+   foreach wfs {pwfs1 pwfs2 oiwfs} {
+      switch [$itk_component(${wfs}nod) index \
+            [$itk_component(${wfs}nod) get]] {
+         0 {set nod A}
+         1 {set nod B}
+         2 {set nod AB}
+      }
+      switch [$itk_component(${wfs}chop) index \
+            [$itk_component(${wfs}chop) get]] {
+         0 {set chop A}
+         1 {set chop B}
+         2 {set chop Nod}
+         3 {set chop antiNod}
+         4 {set chop never}
+      }
+      $name configure -${wfs}Active $chop -${wfs}NodState $nod
+   }
+}
+
+itcl::body GuideControl::load {name} {
+puts "GuideControl::load name: $name"
+# Copy the contents of the guide object selected in the combobox
+# into the edit control.
+   foreach wfs {pwfs1 pwfs2 oiwfs} {
+puts "${wfs}Active: [$name cget -${wfs}Active]"
+      switch [$name cget -${wfs}Active] {
+         A {$itk_component(${wfs}chop) select 0}
+         B {$itk_component(${wfs}chop) select 1}
+         Nod {$itk_component(${wfs}chop) select 2}
+         antiNod {$itk_component(${wfs}chop) select 3}
+         default {$itk_component(${wfs}chop) select 4}
+      }
+puts "${wfs}NodState: [$name cget -${wfs}NodState]"
+      switch [$name cget -${wfs}NodState] {
+         A {$itk_component(${wfs}nod) select 0}
+         B {$itk_component(${wfs}nod) select 1}
+         AB {$itk_component(${wfs}nod) select 2}
+      }
+   }
+}

@@ -1,0 +1,41 @@
+
+#  N.B. the previous line should be blank.
+#
+#  This shell script generated the channel access configuration files
+#  needed to control a version of the tcs with something other than "tcs"
+#  as the root of the EPICS process variable names.
+#
+#  The name of the first component of the PV names (without the colon) is
+#  required as an argument and a directory ca_config with the name as
+#  the file extension is then created and populated with appropriately
+#  editied copies of the files in ca_config.
+#
+#  If the new version of the tcs is controlling a different combination
+#  real an internally simulated subsystems then the new sad.ca file will
+#  need to be edited to change:
+#
+#       #include <simxxxsad.ca>
+#  to
+#       #include <xxxsad.ca>
+#
+#  or vice-versa as apppropriate.
+#
+#  D Terrett 20 January 1999
+#
+#  Copyright CCLRC
+
+if test "$1"
+then
+
+# Create a directory for the new tcs
+   mkdir ca_config.$1
+
+# Generate new files from all those in ca_config
+   cd ca_config
+   for file in *.ca 
+   do
+      sed -e s/tcs:/$1:/g $file > ../ca_config.$1/$file
+   done
+else
+   echo "You must give a name for the new tcs"
+fi

@@ -1,0 +1,204 @@
+#+
+#  OcsSession
+#
+#  Represents an OCS session with methods for retrieving the observations
+#  in the queue, fetching coordinate information associated with an
+#  observation and updating the state of an observation.
+#
+#  Options:
+#
+#  Methods:
+#          listObs   Returns a list of the observation ids currently in the
+#                   session.
+#
+#          getField  Returns the field definition associated with an
+#                    observation as an XML string.
+#
+#          getSequence   Returns the sequence definition associated with an
+#                   observation as an XML string.
+#
+#          idleReason Set the reason for the session being idle.
+#
+#          obsEnd    Informs the session that an observation has ended.
+#
+#          obsStart  Informs the session that an observation has started.
+#
+#          obsAbort  Informs the session that an observation has been
+#                    abandoned.
+#
+#          seqEnd    Informs the session that a sequence has ended.
+#
+#          seqStart  Informs the session that a sequence has started.
+#
+#          logInit   Initialises the observing log.
+#
+#          logAutoConfigure  Configures the automatic writing of the
+#                            obseriving log.
+#
+#          logObservation    Logs an observation in the observing log.
+#
+#  D Terrett 9 May 2003
+#
+#  Copyright CCLRC
+#+
+
+package require XMLRPC
+
+itcl::class OcsSessionXmlRpc {
+   constructor {name} {}
+   public {
+      method datComplete {obsid datasetid fileid}
+      method getField {obsid}
+      method getSequence {obsid}
+      method listObs {}
+      method obsStart {obsid}
+      method obsEnd {obsid}
+      method idleReason {reason comment}
+      method obsAbort {obsid reason}
+      method seqEnd {obsid}
+      method seqStart {obsid fileid}
+      method logInit {}
+      method logAutoConfigure {on}
+      method logObservation {obsid}
+   }
+   private {
+      variable sessionName
+      variable sessionUri urn:gemini/session
+      variable tccUri urn:gemini/Tcc
+      variable execUri urn:gemini/Exec
+   }
+
+}
+
+itcl::body OcsSessionXmlRpc::constructor {name} {
+
+# Store the session name.
+   set sessionName $name
+
+# Get the name of the server hosting the SOAP services.
+   set proxy [calparam cget -ocs_proxy]
+   if { [string equal $proxy <undefined>] } {
+      error "Ocs service proxy not defined"
+   }
+
+# Construct the proxy and Uri names.
+   set sessionProxy $proxy/WDBA_Session
+   set tccProxy $proxy/WDBA_Tcc
+   set execProxy $proxy/WDBA_Exec
+   set sessionUri urn:gemini/session
+   set tccUri urn:gemini/Tcc
+   set execUri urn:gemini/Exec
+
+# Create a namespace for the SOAP methods.
+   namespace eval ocs {}
+
+# Create the soap methods.
+  if { [llength [info commands ::OcsSessionXmlRpc::_datasetComplete]] == 0 } {
+      XMLRPC::create _datasetComplete -proxy $sessionProxy \
+            -params {sessionid string obsid string datasetid string \
+            fileid string} -name WDBA_Session.datasetComplete 
+   }
+   if { [llength [info commands ::OcsSessionXmlRpc::_getCoordinates]] == 0 } {
+      XMLRPC::create _getCoordinates -proxy $tccProxy \
+            -params {obsid string} -name WDBA_Tcc.getCoordinates
+   }
+ if { [llength [info commands ::OcsSessionXmlRpc::_getSequence]] == 0 } {
+      XMLRPC::create _getSequence -proxy $execProxy \
+            -params {obsid string} -name WDBA_Exec.getSequence
+   }
+   if { [llength [info commands ::OcsSessionXmlRpc::_getObservations]] == 0 } {
+      XMLRPC::create _getObservations -proxy $sessionProxy \
+            -params {sessionId string} -name WDBA_Session.getObservations \
+   }
+   if { [llength [info commands ::OcsSessionXmlRpc::_observationEnd]] == 0 } {
+      XMLRPC::create _observationEnd -proxy $sessionProxy \
+            -params {sessionid string obsid string} -name WDBA_Session.observationEnd 
+   }
+   if { [llength [info commands ::OcsSessionXmlRpc::_observationStart]] == 0 } {
+      XMLRPC::create _observationStart -proxy $sessionProxy \
+            -params {sessionid string obsid string} -name WDBA_Session.observationStart 
+  }
+   if { [llength [info commands ::OcsSessionXmlRpc::_observationAbort]] == 0 } {
+      XMLRPC::create _observationAbort -proxy $sessionProxy \
+            -params {sessionid string obsid string reason string} \
+            -name WDBA_Session.observationAbort
+   }
+    if { [llength [info commands ::OcsSessionXmlRpc::_sequenceEnd]] == 0 } {
+      XMLRPC::create _sequenceEnd -proxy $sessionProxy \
+            -params {sessionid string obsid string} -name WDBA_Session.sequenceEnd
+   }
+   if { [llength [info commands ::OcsSessionXmlRpc::_sequenceStart]] == 0 } {
+      XMLRPC::create _sequenceStart -proxy $sessionProxy \
+            -params {sessionid string obsid string fileid string} \
+            -name WDBA_Session.sequenceStart 
+   }
+   if { [llength [info commands ::OcsSessionXmlRpc::_setIdleCause]] == 0 } {
+      XMLRPC::create _setIdleCause -proxy $sessionProxy \
+            -params {sessionid string catagory string comment string} \
+            -name WDBA_Session.setIdleCause
+   }
+   if { [llength [info commands ::OcsSessionXmlRpc::_logInit]] == 0 } {
+      XMLRPC::create _logInit -proxy $sessionProxy \
+            -params {sessionid string} -name WDBA_Session.logInit
+   }
+   if { [llength [info commands ::OcsSessionXmlRpc::_logAutoConfigure]] == 0 } {
+      XMLRPC::create _logAutoConfigure -proxy $sessionProxy \
+            -params {on boolean} -name WDBA_Session.logAutoConfigure 
+   }
+   if { [llength [info commands ::OcsSessionXmlRpc::_logObservation]] == 0 } {
+      XMLRPC::create _logObservation -proxy $sessionProxy \
+            -params {sessionid string obsid string} -name WDBA_Session.logObservation
+    }
+}
+
+itcl::body OcsSessionXmlRpc::datComplete {obsid datasetid fileid} {
+   _datasetComplete $sessionName $obsid $datasetid $fileid
+}
+
+itcl::body OcsSessionXmlRpc::getField {obsid} {
+   return [_getCoordinates $obsid]
+}
+
+itcl::body OcsSessionXmlRpc::getSequence {obsid} {
+   return [_getSequence $obsid]
+}
+
+itcl::body OcsSessionXmlRpc::listObs {} {
+   return [_getObservations $sessionName]
+}
+
+itcl::body OcsSessionXmlRpc::obsEnd {obsid} {
+   _observationEnd $sessionName $obsid
+}
+
+itcl::body OcsSessionXmlRpc::obsStart {obsid} {
+   _observationStart $sessionName $obsid
+}
+
+itcl::body OcsSessionXmlRpc::idleReason {reason comment} {
+   _setIdleCause $sessionName $reason $comment
+}
+
+itcl::body OcsSessionXmlRpc::obsAbort {obsid reason} {
+   _observationAbort $sessionName $obsid $reason
+}
+
+itcl::body OcsSessionXmlRpc::seqEnd {obsid} {
+   _sequenceEnd $sessionName $obsid
+}
+
+itcl::body OcsSessionXmlRpc::seqStart {obsid fileid} {
+   _sequenceStart $sessionName $obsid $fileid
+}
+
+itcl::body OcsSessionXmlRpc::logInit {} {
+   _logInit $sessionName
+}
+
+itcl::body OcsSessionXmlRpc::logAutoConfigure {on} {
+   _logAutoConfigure $on
+}
+
+itcl::body OcsSessionXmlRpc::logObservation {obsid} {
+   _logObservation $sessionName $obsid
+}

@@ -1,0 +1,434 @@
+#+
+#  Gaos <- Paramset
+#
+#  Implements the Gaos class. A Gaos object stores various parameters
+#  that are needed for the initial setup of GAOS when the telescope is
+#  slewed.
+#
+#  Options:
+#
+#          -ndFilter     Neutral Density Filter position
+#
+#          -fldLens      Field Lens Position
+#
+#          -deployAdc    ADC position
+#
+#          -adjustAdc    Adjust ADC during exposure.
+#
+#          -gsmag        Guide star magnitude
+#
+#          -seeing       Seeing estimate.
+#
+#          -windspeed    Wind speed aloft.
+#
+#          -lgs          LGS/NGS mode
+#
+#  Methods:
+#          apply comp    Applies the Gaos configuration to the TCS by 
+#                        setting the values of the command parameters.
+#                        The argument is ignored.
+#
+#          init          Returns the Gaos object to its initial state.
+#
+#          save node     Saves the values of the Gaos configuration
+#                        to the xml node
+#
+#  D Terrett 15 May 2003
+#
+#  Copyright CCLRC
+#+
+
+itcl::class Gaos {
+   inherit Paramset
+   destructor {$this init}
+   public {
+      method apply {comp}
+      method init {}
+      method save {node}
+      variable adjustAdc {}
+      variable deployAdc {}
+      variable ndFilter {} {
+	  # update the GAOS Config screen if it exists
+	  #puts "setting ndFilter to $ndFilter"
+	  if { [winfo exists .tcsGaosPanel.frame.control] } {
+	      .tcsGaosPanel.frame.control configure -ndFilter $ndFilter
+	  }
+      }
+      variable fldLens {} {
+	  # update the GAOS Config screen if it exists
+	  #puts "setting fldLens to $fldLens"
+	  if { [winfo exists .tcsGaosPanel.frame.control] } {
+	      .tcsGaosPanel.frame.control configure -fldLens $fldLens
+	  }
+      }
+      variable gsmag {} {
+	  # update the gsmag entry if it exists
+	  if { [winfo exists .tcsGaosPanel.frame.control.chop.gsmag] } {
+	      .tcsGaosPanel.frame.control.chop.gsmag clear
+	      .tcsGaosPanel.frame.control.chop.gsmag insert end $gsmag
+	  }
+      }
+      variable lgs {}
+      variable seeing {}
+      variable windspeed {}
+      variable force {}
+   }
+   private {
+      common waitvar 0
+      method setUseLwfs {}
+      method initWfs {}
+   }
+}
+
+itcl::body Gaos::apply {comp} {
+    global AOreuseGains AOtryingToReuseGain
+#puts "Gaos::apply comp: $comp name: $::Config($comp,value)"
+
+# recolour the A&G screen because the Adaptive Optics Mode could effect available options
+    if [winfo exists .observePanel] {
+	::.observePanel.frame.control.guideloop recolour
+    }
+
+# set the m2 xy deadband
+    if {$::Config($comp,value) == "LGS+TTGS"} {
+	cs m2deadband set dem 100.0
+	logactions logmess "Gaos::Apply, setting m2 XY deadband to 100.0"
+    } else {
+	cs m2deadband set dem 50.0
+	logactions logmess "Gaos::Apply, setting m2 XY deadband to 50.0"
+    }	
+    cs m2deadband set dir 0
+    cs m2deadband set dir 3
+
+
+    logactions logmess "Gaos::Apply, TCS useAO is: [sa aossad get useAO], config is $::Config($comp,value)"
+
+# If empty or "No AO" stop the lgs zoom from tracking (we could send it into a limit while not using Altair)
+    if { ($::Config($comp,value) == "") || ($::Config($comp,value) == "No AO") } {
+	if { ![catch {cs aoUseLwfs info}] } {
+	    cs aoUseLwfs set disTrack -1
+	    cs aoUseLwfs set zoomDir 0
+	    cs aoUseLwfs set zoomDir 4
+	}
+	return
+    }
+
+#  Start switching between WFS
+   if {[$this setUseLwfs]} {
+       return
+   }
+
+# In order to configure GAOS we need know the Cass rotator position and
+# guide star X/Y. If we are being called as part of an overall TCS
+# configuration then we must predict what these are going to be using the
+# Preview functions. If not, we use the current values from the telescope.
+# AWE the TCS is calculating these in advance now ... never use the preview 
+
+   set rotpos [sa tcssad get demandRma]
+   scan [sa tcssad get demandEl] "%d:%d:%f" d m s
+   set el [expr { $d + $m / 60.0 + $s / 3600 }]
+   set zd [expr { 90.0 - $el }]
+   set x [sa tcssad get aoDemandx]
+   set y [sa tcssad get aoDemandy]
+   logactions logmess "Gaos::apply using tcs to determine zd: $zd rotpos: $rotpos x: $x y: $y"
+
+# set loop to use default gains
+   set AOreuseGains 0
+   set AOtryingToReuseGain 0
+
+# Turn off Cal Source Lamps ... just in case someone left them on
+   cs aoCalSource set dmd OFF
+   cs aoCalSource set mode 1
+   cs aoCalSource set dir 3
+
+# Select GAOS ND filter IN/OUT 
+# this writes directly to Altair ... will be replaced by tcs interface
+# Update the WfsConfig in the A&G screen at the same time, if it exists
+   if {[winfo exists .observePanel.frame.control.botframe.wfsconfig.tabs.canvas.notebook.cs.page5.cs.aowfs.nd] && 
+       [winfo ismapped .observePanel.frame.control.botframe.wfsconfig.tabs.canvas.notebook.cs.page5.cs.aowfs.nd]} {
+       .observePanel.frame.control.botframe.wfsconfig.tabs.canvas.notebook.cs.page5.cs.aowfs.nd select ""
+       .observePanel.frame.control.botframe.wfsconfig.tabs.canvas.notebook.cs.page5.cs.aowfs.nd select $ndFilter
+   } else {
+       if {[AO state useLwfs]} {
+	   #puts "Gaos::apply setting ndfilter to $ndFilter"
+	   set mess "Gaos::apply moving lgs ND Filter to $ndFilter"
+	   logactions logmess $mess
+	   cs aolgsNDFilter set pos $ndFilter
+	   cs aolgsNDFilter set mode 1
+	   cs aolgsNDFilter set dir 3
+       } else {
+	   #puts "Gaos::apply setting ndfilter to $ndFilter"
+	   set mess "Gaos::apply moving ngs ND Filter to $ndFilter"
+	   logactions logmess $mess
+	   cs aongsNDFilter set pos $ndFilter
+	   cs aongsNDFilter set mode 1
+	   cs aongsNDFilter set dir 3
+       }
+   }
+
+# Select GAOS Field Lens IN/OUT
+# this writes directly to Altair ... will be replaced by tcs interface
+# Update the WfsConfig in the A&G screen at the same time, if it exists
+
+   if {[winfo exists .observePanel.frame.control.botframe.wfsconfig.tabs.canvas.notebook.cs.page5.cs.aowfs.flens] && 
+       [winfo ismapped .observePanel.frame.control.botframe.wfsconfig.tabs.canvas.notebook.cs.page5.cs.aowfs.flens]} {
+       .observePanel.frame.control.botframe.wfsconfig.tabs.canvas.notebook.cs.page5.cs.aowfs.flens select $fldLens
+   }
+    #puts "Gaos::apply setting fldlens to $fldLens"
+    logactions logmess "Gaos::apply setting fldlens to $fldLens"
+    switch $fldLens {
+	IN {
+	    cs aoFLens set pos FLENS
+	    cs aoPrepareCm set flens 1
+	}
+	OUT {
+	    cs aoFLens set pos PARK
+	    cs aoPrepareCm set flens 0
+	}
+    }
+    logger command aoFLens
+
+# Deploy (or not) the ADC.
+   cs aoDeployAdc set position $deployAdc
+   logger command aoDeployAdc
+
+# Configure ADC.
+   cs aoMoveAdc set rotpos [expr { $rotpos < 0.0 ? $rotpos + 360.0 : $rotpos }]
+   cs aoMoveAdc set zd $zd
+   cs aoMoveAdc set adjust $adjustAdc
+
+# Assume that the central wavelength is always the same as the sourceA
+# wavelength.
+   set wavel [cs wavelSourceA get wavel]
+   if { ! ( [string equal $wavel "No Value"] || [string equal $wavel ""] ) } {
+      cs aoMoveAdc wavel [expr { $wavel * 1000.0 }]
+   }
+   logger command aoMoveAdc
+
+# Prepare control matrix.
+   cs aoPrepareCm set x $x
+   cs aoPrepareCm set y $y
+   cs aoPrepareCm set gsmag $gsmag
+   cs aoPrepareCm set seeing $seeing
+   cs aoPrepareCm set windspeed $windspeed
+   logger command aoPrepareCm
+
+# Apply preparing the CM
+   if { [catch {cs tcsApply post} msg] } {
+      tk_messageBox -icon error -message \
+            "Error posting GAOS commands: TCS reports \
+           \"$msg\""
+      return
+   }
+
+# write the exposure time to the A&G screen if it exists
+   switch $gsmag {
+       11 -
+       11.0 { set exp 0.001}
+       12 -
+       12.0 { set exp 0.002}
+       13 -
+       13.0 { set exp 0.005}
+       14 -
+       14.0 { set exp 0.01}
+       15 -
+       15.0 { set exp 0.02}
+       default { set exp 0.001}
+   }
+   if [winfo exists .observePanel] {
+       #puts "have exp: $exp"
+       .observePanel.frame.control.guideloop.canv.gaos_ex clear entry
+       .observePanel.frame.control.guideloop.canv.gaos_ex insert entry end $exp
+   }
+   AO configure -gaosExpose $exp
+
+# Flatten the mirror.
+   cs aoFlatten dummy 1
+   logger command aoFlatten
+
+# Set filter 1 to limit the speed of offsets.
+   cs filter1 set shortCircuit Open
+   cs filter1 set bandwidth 200
+   cs filter1 set grab 0.1
+   cs filter1 set maxv 2.0
+   logger command filter1
+
+# Apply Commands
+   if { [catch {cs tcsApply post} msg] } {
+      tk_messageBox -icon error -message \
+            "Error posting GAOS commands: TCS reports \
+           \"$msg\""
+      return
+   }
+}
+
+itcl::body Gaos::save {node} {
+   set node [paramset $node gaos]
+   param $node adjustAdc $adjustAdc
+   param $node deployAdc $deployAdc
+   param $node ndFilter $ndFilter
+   param $node fldLens $fldLens
+   param $node lgs $lgs
+   param $node gsmag $gsmag
+   param $node seeing $seeing
+   param $node windspeed $windspeed
+}
+
+itcl::body Gaos::init {} {
+   set adjustAdc ""
+   set deployAdc ""
+   set gsmag ""
+   set seeing ""
+   set lgs ""
+   set windspeed ""
+   set ndFilter ""
+   set fldLens ""
+}
+
+itcl::body Gaos::setUseLwfs {} {
+
+# Open/Reset the loops
+   if [winfo exists .observePanel] {
+       .observePanel.frame.control.guideloop reset
+   }
+
+# disable follow for all wfs
+   .tcsPanel.frame.control.row1.f2.p1 select Off
+   .tcsPanel.frame.control.row1.f2.p2 select Off
+   .tcsPanel.frame.control.row1.f2.oiwfs select Off
+   .tcsPanel.frame.control.row1.f2.gaos select Off
+
+# check to see if the IRIS is open when requesting LGS mode
+# if not, prompt with the option to open it.
+
+   if {$lgs && ![string equal [sa aossad get ttgsIrisPos] "open" ]} {
+       if {[tk_messageBox -icon  question -type yesno -default yes -message \
+		"The STRAP Iris is not Open, Open it?"] == "yes"} {
+	   cs aoTTGSiris set pos "open"
+	   cs aoTTGSiris set mode 1
+	   cs aoTTGSiris set dir 3
+       }
+   }
+
+# Turn on aoUseLwfs if neccesary
+# AWE add some addional sanity checks here ... ustage, lgszoom.
+#puts "checking useLwfs: ustage:[sa aossad get ustage] zoomMode: [sa aossad get zoomMode] zoomBusy: [sa aossad get zoomBusy] zoomInPos: [sa aossad get zoomInPos]\n"
+   if {$lgs && [expr {![AO state useLwfs] || [string equal $force "ON"] ||
+		      [string equal [sa aossad get ustage] "OUT"] || ![string equal [sa aossad get zoomMode] "TRACK"] ||
+		      ![string equal [sa aossad get zoomBusy] "BUSY"] || [expr {[sa aossad get zoomInPos] == 0}]}]} {
+       logactions logmess "Gaos::apply Configuring NGS/LGS lgs: $lgs"
+       cs aoUseLwfs set state ON
+   } elseif {!$lgs && [expr {[AO state useLwfs] || [string equal $force "ON"] ||
+			     [string equal [sa aossad get ustage] "IN"] || ![string equal [sa aossad get zoomBusy] "IDLE"] }]} {
+       logactions logmess "Gaos::apply Configuring NGS/LGS lgs: $lgs"
+       cs aoUseLwfs set state OFF
+   } else {
+       return 0
+   }
+
+   cs aoUseLwfs set dir 3
+#  logger command aoUseLwfs
+
+# wait for useLwfsBusy to be not BUSY ... this needs to run in the background and let other events continue
+   after 500
+#timeout in seconds
+   set timeout 90
+   set waitvar 0
+   for { set i 0 } { $i < $timeout } { incr i } {
+      if { [string equal [sa aossad get useLwfsBusy] "BUSY"] } {
+         after 1000 "set [itcl::scope waitvar] 1"
+         vwait [itcl::scope waitvar]
+      } else {
+	  switch [sa aossad get useLwfsBusy] {
+	      IDLE {
+		  logactions logmess "useLwfs completed successfully after time: $i seconds"
+		  # start initWfs
+		  $this initWfs
+		  break
+	      }
+	      ERR {
+		  logactions logmess "GAOS failed to configure, useLwfs ended with Error: [sa aossad get useLwfsMess] Aborting GAOS config"
+		  tk_messageBox -icon error \
+		      -message "GAOS failed to configure, useLwfs ended with Error: \n[sa aossad get useLwfsMess]\nAborting GAOS config"
+		  if [winfo exists .tcsGaosPanel] {
+		      .tcsGaosPanel.frame.control.chop.forceMode select
+		  } else {
+		      set force "ON"
+		  }
+		  return 1
+	      }
+	  }  
+	 break
+      }
+   }
+   if { $i == $timeout } {
+       logactions logmess "GAOS failed to configure, useLwfs timed out after $timeout seconds Aborting GAOS config"
+       tk_messageBox -icon error \
+	   -message "GAOS failed to configure, useLwfs timed out after $timeout seconds\nAborting GAOS config"
+       if [winfo exists .tcsGaosPanel] {
+	   .tcsGaosPanel.frame.control.chop.forceMode select
+       } else {
+	   set force "ON"
+       }
+       return 1
+   }
+   if [winfo exists .tcsGaosPanel] {
+       .tcsGaosPanel.frame.control.chop.forceMode deselect
+   } else {
+       set force "OFF"
+   }
+   return 0
+}
+
+itcl::body Gaos::initWfs {} {
+
+# Initialize the appropriate WFS
+   logactions logmess "Gaos::apply Initializing the NGS/LGS WFS lgs: $lgs"
+
+   if {$lgs} {
+       cs aoInitWfs set wfs 1
+   } else {
+       cs aoInitWfs set wfs 0
+   }
+   cs aoInitWfs set dir 3
+
+# wait for wfsInit to be not BUSY ... this needs to run in the background and let other events continue
+   after 500
+#timeout in seconds
+   set timeout 20
+   set waitvar 0
+   for { set i 0 } { $i < $timeout } { incr i } {
+      if { [string equal [sa aossad get initWfsBusy] "BUSY"] } {
+         after 1000 "set [itcl::scope waitvar] 1"
+         vwait [itcl::scope waitvar]
+      } else {
+	  switch [sa aossad get initWfsBusy] {
+	      IDLE {
+		  logactions logmess "GAOS Init WFS completed successfully after time: $i seconds"
+		  return 0
+	      }
+	      ERR {
+		  logactions logmess "GAOS Init WFS ended with Error: [sa aossad get initWfsMess] GAOS config continuing"
+		  tk_messageBox -icon error \
+		      -message "GAOS Init WFS ended with Error: \n[sa aossad get initWfsMess] \nGAOS config continuing"
+		  if [winfo exists .tcsGaosPanel] {
+		      .tcsGaosPanel.frame.control.chop.forceMode select
+		  } else {
+		      set force "ON"
+		  }
+		  return 0
+	      }
+	  }  
+      }
+   }
+   if { $i == $timeout } {
+       tk_messageBox -icon error \
+	   -message "GAOS Init WFS timed out after $timeout seconds"
+       if [winfo exists .tcsGaosPanel] {
+	   .tcsGaosPanel.frame.control.chop.forceMode select
+       } else {
+	   set force "ON"
+       }
+       return 0
+   }      
+}

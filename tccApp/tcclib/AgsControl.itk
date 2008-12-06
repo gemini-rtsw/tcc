@@ -1,0 +1,55 @@
+#+
+#  AgsControl <- itk::Widget
+#
+#  An AgsControl widget contains various widget for controlling the 
+#  primary mirror control system.
+#
+#  Options:
+#           none
+#
+#  Methods:
+#           none
+#
+#  A Ebbers April, 2005
+#
+#+
+
+itcl::class AgsControl {
+   inherit itk::Widget
+   constructor args {}
+}
+
+itk::usual AgsControl {
+   keep -cursor -font -highlightthickness
+}
+
+itcl::body AgsControl::constructor args {
+
+   set w $itk_interior
+   itk_component add top {
+      frame $w.top -borderwidth 2 -relief ridge
+   }
+   set w $itk_component(top)
+
+   itk_component add p1lab {
+      label $w.p1lab -text "P1 probe"
+   }
+   itk_component add p1unwrap {
+      ApplyButton $w.p1unwrap -command pwfs1Unwrap -text Unwrap
+   }
+
+   itk_component add p2lab {
+      label $w.p2lab -text "P2 probe"
+   }
+
+   itk_component add p2unwrap {
+      ApplyButton $w.p2unwrap -command pwfs2Unwrap -text Unwrap
+   }
+
+   grid $w.p1lab $w.p1unwrap -sticky news -padx 3 -pady 3
+   grid $w.p2lab $w.p2unwrap -sticky news -padx 3 -pady 3
+
+   pack $w
+
+   eval itk_initialize $args
+}

@@ -1,0 +1,96 @@
+#+
+#  Instrument <- Paramset
+#
+#  Implements the Instrument class. An Instrument object stores an 
+#  instrument alignment angle.
+#
+#  Options:
+#
+#          -focusOffset       The focus offset to apply.
+#
+#          -iaa               The instrument alignment angle.
+#
+#          -issPort           The ISS port on which the instrument is 
+#                             mounted.
+#
+#          -name              The name of the instrument (as know to the A&G).
+#
+#  Methods:
+#          apply comp  Applies the iaa to the TCS by setting the values of 
+#                      the command parameters. 
+#
+#          init        Returns the instrument object to its initial state.
+#
+#          preview     Sets the preview instrument configuration.
+#
+#          node        Saves the values of the options to the xml node. 
+#
+#  D Terrett 21 February 2003
+#
+#  Copyright CCLRC
+#+
+
+itcl::class Instrument {
+   inherit Paramset
+   public {
+      method apply {comp}
+      method init {}
+      method preview {view}
+      method save {node}
+      variable iaa ""
+      variable issPort 1
+      variable focusOffset ""
+      variable name ""
+   }
+}
+
+itcl::body Instrument::apply {comp} {
+
+# Set iaa and focus.
+   if { ![string is space $iaa] } {
+      cs rotator set iaa [list $iaa]
+      logger command rotator
+   }
+   if { ![string is space $focusOffset] } {
+      cs dtelFocus set focusOffset [list $focusOffset]
+      logger command dtelFocus
+   }
+
+# Configure ISS object.
+   iss configure -port $issPort -instrument $name
+
+# Update ISS with new configuration.
+   iss update
+
+# Enable the Science Fold selection buttons
+   .observePanel.frame.control.botframe.mirrors.lpath setState {0 1 2} normal
+
+# recolour the A&G screen because the current instrument (if NICI) could effect available options
+    if [winfo exists .observePanel] {
+	::.observePanel.frame.control.guideloop recolour
+    }
+
+}
+
+itcl::body Instrument::init {} {
+   set iaa 0
+   set issFace 1
+   set focusOffset 0
+   set name ""
+}
+
+itcl::body Instrument::preview {view} {
+   if { [string length $iaa] } {
+      $view configure -iaa $iaa
+   } else {
+      $view configure -iaa 0.0
+   }
+}
+
+itcl::body Instrument::save {node} {
+   set node [paramset $node instrument]
+   param $node iaa $iaa
+   param $node issPort $issPort
+   param $node focusOffset $focusOffset
+   param $node name $name
+}

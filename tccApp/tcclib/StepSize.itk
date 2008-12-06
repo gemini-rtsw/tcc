@@ -1,0 +1,119 @@
+#+
+#  StepSize <- itk::Widget
+#
+#  Implements the StepSize widget. A row of buttons that select a
+#  handset step size.
+#
+#  Options:
+#          none
+#
+#  Methods:
+#          get      Returns the current step size.
+#
+#  D Terrett 12 June 2000
+#
+#  Copyright CCLRC
+#-
+
+itcl::class StepSize {
+   inherit itk::Widget
+   constructor args {}
+   destructor {}
+   public {
+      method get {} {return [$selected cget -text]}
+   }
+   private {
+      method push {w}
+      method highlight {w state}
+      variable custom1 10
+      variable custom2 20
+      variable selected
+   }
+   itk_option define -activebackground activeBackground Foreground #ececec
+}
+
+itk::usual StepSize {
+   keep -background -borderwidth -cursor -foreground -font \
+         -highlightcolor  -highlightthickness -insertbackground \
+         -insertborderwidth  -insertofftime -insertontime -insertwidth \
+         -labelfont  -selectbackground -selectborderwidth -selectforeground  \
+         -textbackground -textfont
+}
+
+itcl::body StepSize::constructor args {
+
+# Create row of buttons.
+   set lablist {0.1 0.2 0.5 1.0 2.0 5.0 0 0}
+   itk_component add buttons {
+      frame $itk_interior.buttons
+   }
+   pack $itk_component(buttons)
+
+   for { set i 0 } { $i < 8 } { incr i } {
+      itk_component add step$i {
+         label $itk_component(buttons).step$i -relief raised -bd 2 -width 6 \
+            -text [lindex $lablist $i]
+      }
+      pack $itk_component(step$i) -side left -ipady 2
+      bind  $itk_component(step$i)  <Button-1> [itcl::code $this push %W]
+      bind  $itk_component(step$i)  <Enter> [itcl::code $this highlight %W on]
+      bind  $itk_component(step$i)  <Leave> [itcl::code $this highlight %W off]
+   }
+
+# Create label.
+   itk_component add label {
+      label $itk_interior.label
+   } {
+      usual
+      keep -text
+   }
+   pack $itk_component(label) -side left -fill x -expand yes
+
+# Entry widget for setting the custom step sizes.
+   itk_component add custom1 {
+      iwidgets::entryfield $itk_interior.custom1 -width 6 \
+            -textvariable [itcl::scope custom1] -validate real
+   }
+   $itk_component(step6) configure -textvariable [itcl::scope custom1]
+   itk_component add custom2 {
+      iwidgets::entryfield $itk_interior.custom2 -width 6 \
+            -textvariable [itcl::scope custom2] -validate real
+   }
+   $itk_component(step7) configure -textvariable [itcl::scope custom2]
+   pack $itk_component(custom1) $itk_component(custom2) -side left
+
+# bindings to disable the arrow key (offset telescope) shortcuts when using the entry fields
+
+   foreach key {<Up> <Down> <Left> <Right>} {
+       bind [$itk_component(custom1) component entry] $key "[bind Entry $key]; break"
+       bind [$itk_component(custom2) component entry] $key "[bind Entry $key]; break"
+   }
+
+# Select the 1 button.
+   push $itk_component(step3)
+
+   eval itk_initialize $args
+}
+
+itcl::body StepSize::push {w} {
+
+# Make the buttons sink when pressed and the other buttons pop up.
+   for { set i 0 } { $i < 8 } { incr i } {
+      $itk_component(step$i) configure -relief raised
+   }
+   $w configure -relief sunken
+
+# Record the selection.
+   set selected $w
+}
+
+itcl::body StepSize::highlight {w state} {
+   switch $state {
+      on {
+         $w configure -background $itk_option(-activebackground)
+      }
+      off {
+         $w configure -background $itk_option(-background)
+      }
+   }
+}

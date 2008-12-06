@@ -1,0 +1,508 @@
+#+
+#  AzElPlot.itk
+#
+#  Implements the AzElPlot widget. A canvas with stars and the current
+#  telescope position plotted in Az/El.
+#
+#  D Terrett 21 January 2004
+#
+#  Copyright CCLRC
+#+
+
+itcl::class AzElPlot {
+   inherit itk::Widget
+   constructor {args} {}
+   itk_option define -markcolor markColor Color red
+   itk_option define -selectioncommand selectionCommand Command {}
+   itk_option define -hitcommand hitCommand Command {}
+   itk_option define -bias bias Bias 1
+   itk_option define -ellimit elLimit Limit 15.0
+   itk_option define -azlolimit azloLimit Limit -160.0
+   itk_option define -azhilimit azhiLimit Limit 340.0
+   public {
+      method register {cat colour}
+      method add {cat tag ra dec}
+      method remove {cat {tag ""}}
+      method select {cat tag}
+      method mark {cat tag}
+      method unmark {cat tag}
+      method next {mode}
+   }
+   private {
+      method el2r {el}
+      method r2el {r}
+      method radectoazel {ra dec}
+      method replot {}
+      method displayradec {x y}
+      variable Slat
+      variable Clat
+      variable Xc
+      variable Yc
+      variable Size
+      variable CatColours
+      variable CurrSelection {}
+      variable StarsRa
+      variable StarsDec
+      variable StarsAz
+      variable StarsEl
+      variable StarsState
+      variable TelAz 0.0
+      variable TelEl 90.0
+      variable St 0.0
+      variable NextPlot 0
+      variable D2R 0.01745329251994
+      variable 2PI 6.28318530717959
+   }
+}
+
+itk::usual AzElPlot {
+   keep -background
+}
+
+itcl::body AzElPlot::constructor {args} {
+
+   if { [string is double -strict [lindex $args 0]] } {
+      set Size [lindex $args 0]
+      set args [lreplace $args 0 0]
+   } else {
+      set Size 420
+   }
+   set Xc [expr $Size / 2.0]
+   set Yc [expr $Size / 2.0]
+
+# Canvas for the plot.
+   itk_component add canvas {
+      canvas $itk_interior.canvas -width $Size -height $Size -borderwidth 2 \
+         -relief sunken
+   }
+   pack $itk_component(canvas)
+
+# Circle at horizon. 
+   set r [el2r [expr {15.0 * $D2R}]]
+   $itk_component(canvas) create oval [expr {$Xc - $r}] [expr {$Yc - $r}] \
+         [expr {$Xc + $r}] [expr {$Yc + $r}] -outline black \
+          -fill darkblue -tags sky
+
+#  30 degree grid in azimuth.
+   foreach d {0 30 60 90 120 150} {
+      set x [expr $r * cos($d * $D2R)]
+      set y [expr $r * sin($d * $D2R)]
+      $itk_component(canvas) create line [expr {$Xc - $x}] [expr {$Yc - $y}] \
+            [expr {$Xc + $x}] [expr {$Yc + $y}] -fill black -tags sky
+   }
+
+#  20 degree grid in elevation from the pole.
+   foreach d {70 50 30} {
+      set r [el2r [expr {$d * $D2R}]]
+      $itk_component(canvas) create oval [expr {$Xc - $r}] [expr {$Yc - $r}] \
+            [expr {$Xc + $r}] [expr {$Yc + $r}] -outline black -tags sky
+   }
+
+# circle at elevation limit. 
+   set r [el2r [expr {15.0 * $D2R}]]
+   $itk_component(canvas) create oval [expr {$Xc - $r}] [expr {$Yc - $r}] \
+          [expr {$Xc + $r}] [expr {$Yc + $r}] -tags {sky ellim}
+
+# Binding to display RA/Dec when mouse button 1 is pressed.
+   $itk_component(canvas) bind sky <ButtonPress-1> \
+         [itcl::code $this displayradec %x %y]
+
+# Labels.
+   $itk_component(canvas) create text $Xc 10 -text N -anchor c
+   $itk_component(canvas) create text 10 $Yc -text W -anchor c
+
+# Telescope position.
+   $itk_component(canvas) create oval [expr {$Xc - 5}] [expr {$Yc - 5}] \
+         [expr {$Xc + 5}] [expr {$Yc + 5}] -fill orange -outline "" -tags tel
+
+# Store sin and cos of latitude.
+   set lat [expr {[sa tcssad get tlatm value] * $D2R}]
+   set Clat [expr cos($lat)]
+   set Slat [expr sin($lat)]
+
+# Start the replot process.
+   after 1000 "catch [list [itcl::code $this replot]]"
+
+   eval itk_initialize $args
+}
+
+itcl::body AzElPlot::register {cat colour} {
+   set CatColours($cat) $colour
+}
+
+itcl::body AzElPlot::add {cat tag ra dec} {
+#+
+# Adds a star to the list.
+#-
+
+# Store RA and Dec.
+   set StarsRa($cat,$tag) $ra
+   set StarsDec($cat,$tag) $dec
+
+# Compute Az/El.
+   set azel [radectoazel $ra $dec]
+   set StarsAz($cat,$tag) [lindex $azel 0]
+   set StarsEl($cat,$tag) [lindex $azel 1]
+
+# Set its state to normal and create it.
+   set StarsState($cat,$tag) ""
+   if { $StarsEl($cat,$tag) >= 15.0 * $D2R } {
+
+# Star is above horizon.
+      set r [el2r $StarsEl($cat,$tag)]
+      set x [expr $r * sin($StarsAz($cat,$tag)) + $Xc]
+      set y [expr -$r * cos($StarsAz($cat,$tag)) + $Yc]
+      $itk_component(canvas) create rectangle [expr $x+2] [expr $y+2] \
+            [expr $x-2] [expr $y-2] -tags "Star$cat,$tag stars" \
+            -fill $CatColours($cat) -outline "" -width 2
+   } else {
+
+# Star is below horizon.
+      $itk_component(canvas) create rectangle -1 -1 -1 -1 \
+            -tags "Star$cat,$tag stars" \
+            -fill $CatColours($cat) -outline ""
+   }
+
+# Create bindings to select (button 1) and unmark (button 3) stars.
+   $itk_component(canvas) bind Star$cat,$tag <ButtonPress-1> \
+         [itcl::code $this select $cat $tag]
+   $itk_component(canvas) bind Star$cat,$tag <ButtonPress-3> \
+         [itcl::code $this unmark $cat $tag]
+}
+
+itcl::body AzElPlot::el2r el {
+#+
+#  Converts an elevation (in radians) to a radius in pixels.
+#-
+   set r [expr 1.5707963268 - $el]
+   return [expr $Size / 2.0 * sin($r) / sqrt( 1.0 + cos($r) )]
+}
+
+itcl::body AzElPlot::r2el r {
+#+
+#  Converts a radius in pixels to an elevation (in radians).
+#-
+   return [expr 1.5707963268 - 2 * asin( $r / 311.1269837)]
+}
+
+itcl::body AzElPlot::radectoazel {ra dec} {
+#+
+#  Computes the Az/El of a given RA/Dec. (See PTW/1)
+#-
+
+   set ha [expr $St - $ra]
+   set cdec [expr cos($dec)]
+   set sdec [expr sin($dec)]
+   set x [expr - cos($ha) * $cdec * $Slat + $sdec * $Clat]
+   set y [expr - sin($ha) * $cdec]
+   set z [expr cos($ha) * $cdec * $Clat + $sdec * $Slat]
+   set r [expr sqrt( $x * $x + $y * $y)]
+   set az [expr atan2( $y, $x )]
+   set el [expr atan2( $z, $r )]
+
+   return [list $az $el]
+}
+
+itcl::body AzElPlot::select {cat tag} {
+#+
+#  Select star $tag from catalogue $cat and call the selectioncommand option.
+#-
+
+# Set the current selection back to its correct state.
+   if { [info exists StarsState($CurrSelection)] } {
+      $itk_component(canvas) itemconfigure Star$CurrSelection -outline ""
+   }
+   set CurrSelection $cat,$tag
+   if { ! [string equal $tag ""] } {
+      if { [string equal $StarsState($CurrSelection) mark] } {
+         $itk_component(canvas) itemconfigure Star$cat,$tag \
+               -outline $itk_option(-markcolor)
+      } else {
+         $itk_component(canvas) itemconfigure Star$cat,$tag \
+               -outline $CatColours($cat)
+      }
+      if { ! [string equal $itk_option(-selectioncommand) ""] } {
+         uplevel #0 $itk_option(-selectioncommand) $cat $tag
+      }
+   }
+}
+
+itcl::body AzElPlot::mark {cat tag} {
+#+
+# Marks the star $tag from catalogue $cat.
+#-
+   $itk_component(canvas) itemconfigure Star$cat,$tag \
+         -fill $itk_option(-markcolor)
+   if { [string equal $CurrSelection $cat,$tag] } {
+      $itk_component(canvas) itemconfigure Star$cat,$tag \
+            -outline $itk_option(-markcolor)
+   }
+   set StarsState($cat,$tag) mark
+}
+
+itcl::body AzElPlot::unmark {cat tag} {
+#+
+# Unmarks the star $tag from catalog $cat.
+#-
+   $itk_component(canvas) itemconfigure Star$cat,$tag -fill $CatColours($cat)
+   if { [string equal $CurrSelection $cat,$tag] } {
+      $itk_component(canvas) itemconfigure Star$cat,$tag \
+            -outline $CatColours($cat)
+   }
+   set StarsState($cat,$tag) ""
+}
+
+itcl::body AzElPlot::replot {} {
+#+
+# Updates the telescope position end the position of one star every second
+#-
+
+# Get and decode the current siderial time.
+   regsub : [sa tcssad get LST value] , st
+   set St [expr [slaDafin $st] * 15.0]
+
+# Get and decode the current current telescope azimuth.
+   set az [split [sa tcssad get currentAz value] :]
+   if { [string equal [string index $az 0] -] } {
+      set neg 1
+      set az [string trimleft $az -]
+   } elseif { [string equal [string index $az 0] +] } {
+      set neg 0
+      set az [string trimleft $az +]
+   } else {
+      set neg 0
+   }
+   set azh [string trimleft [lindex $az 0] 0]
+   if { [string equal [string trim $azh] ""] } {set azh 0}
+   set azm [string trimleft [lindex $az 1] 0]
+   if { [string equal [string trim $azm] ""] } {set azm 0}
+   set azs [string trimleft [lindex $az 2] 0]
+   if { [string equal [string trim $azs] ""] } {set azs 0}
+   set TelAz [expr (($azh * 60.0 + $azm) * 60.0 + $azs) / 206264.8]
+   if { $neg } {
+      set TelAz [expr -$TelAz]
+   }
+
+# Get and decode the current current telescope elevation.
+   set el [split [sa tcssad get currentEl value] :]
+   set elh [string trimleft [lindex $el 0] 0]
+   if { [string equal [string trim $elh] ""] } {set elh 0}
+   set elm [string trimleft [lindex $el 1] 0]
+   if { [string equal [string trim $elm] ""] } {set elm 0}
+   set els [string trimleft [lindex $el 2] 0]
+   if { [string equal [string trim $els] ""] } {set els 0}
+   set TelEl [expr (($elh * 60.0 + $elm) * 60.0 + $els) / 206264.8]
+   if { $TelEl < 15.0 } {
+      set telEl 15.0
+   }
+
+# Set X/Y position of telescope.
+   set r [el2r $TelEl]
+   set x [expr $r * sin($TelAz) + $Xc]
+   set y [expr -$r * cos($TelAz) + $Yc]
+   $itk_component(canvas) coords tel [expr $x + 5] [expr $y + 5] \
+         [expr $x - 5] [expr $y - 5]
+
+# Each time recompute one star position.
+   set tag [lindex [array names StarsEl] $NextPlot]
+   if { [string is space $tag] } {
+      set NextPlot 0
+   } else {
+      set azel [radectoazel $StarsRa($tag) $StarsDec($tag)]
+      set StarsAz($tag) [lindex $azel 0]
+      set StarsEl($tag) [lindex $azel 1]
+      if { $StarsEl($tag) >= 15.0 * $D2R } {
+         set r [el2r $StarsEl($tag)]
+         set x [expr $r * sin($StarsAz($tag)) + $Xc]
+         set y [expr -$r * cos($StarsAz($tag)) + $Yc]
+         $itk_component(canvas) coords Star$tag [expr $x+2] [expr $y+2] \
+               [expr $x-2] [expr $y-2]
+      } else {
+        $itk_component(canvas) coords Star$tag -1 -1 -1 -1
+      }
+      incr NextPlot
+   }
+
+# Reschedule in one seconds time.
+   after 1000 "catch [list [itcl::code $this replot]]"
+}
+
+itcl::body AzElPlot::next {mode} {
+#+
+#  Returns the tag of the "next" unmarked star (or nothing if there are none
+#  left.
+#-
+
+# Get the current catalogue and tag.
+   foreach {cat tag} [split $CurrSelection ,] {}
+
+# Get the next in the list.
+   switch $mode {
+      catorder {
+         if { [string is space $tag] } {
+            set tag 0
+         } else {
+            incr tag
+         }
+         while { [info exists StarsAz($cat,$tag)] } {
+            if { [string equal $StarsState($cat,$tag) ""] && \
+                  $StarsEl($cat,$tag) > $itk_option(-ellimit) * $D2R } {
+               return $tag
+            }
+            incr tag
+         }
+         return ""
+      }
+      minslew {
+      
+# Selection is based on time to slew in one or both axes.
+         set tag 0
+         set besttag ""
+         while { [info exists StarsAz($cat,$tag)] } {
+
+# Ignore stars below the elevation limit.
+            if { [string equal $StarsState($cat,$tag) ""] && \
+                   $StarsEl($cat,$tag) > $itk_option(-ellimit) * $D2R } {
+
+# Distance to this star in elevation.
+               set eldist [expr {abs( $StarsEl($cat,$tag) - $TelEl) / \
+                     $itk_option(-bias)}]
+
+# If the star's azimuth is less than the az low limit add 2 PI.
+               if { $StarsAz($cat,$tag) < $itk_option(-azlolimit) * $D2R } {
+                  set staraz [expr {$StarsAz($cat,$tag) + $2PI}]
+               } else {
+                  set staraz $StarsAz($cat,$tag)
+               }
+
+# Distance to star in azimuth.
+               set azdist [expr {abs( $staraz - $TelAz)}]
+
+# If the star is accessible on the positive wrap then check this distance too.
+               if { $staraz + $2PI < $itk_option(-azhilimit) * $D2R } {
+                  set azdist2 [expr {abs( $staraz + $2PI - $TelAz)}]
+                  set azdist [expr {$azdist2 < $azdist ? $azdist2 : $azdist}]
+               }
+
+# Distance we have to slew to each this star.
+               set slewdist [expr {$eldist > $azdist ? $eldist : $azdist}]
+
+# First star is always the best choice found so far.
+               if { [string equal $besttag ""] } {
+                  set besttag $tag
+                  set bestaz $azdist
+                  set bestel $eldist
+                  set bestslew $slewdist
+               } else {
+                  switch $mode {
+                     minslew {
+
+# Replace the best choice with the current star it is closer than the best
+# found so far.
+                        if { $slewdist < $bestslew } {
+                           set bestslew $slewdist
+                           set besttag $tag
+                        }
+                     }
+                  }
+               }
+            }
+            incr tag
+         }
+         return $besttag
+      }
+      random {
+
+# Picks a star above the horizon limit at random.
+         set tag 0
+         set taglist [list]
+         while { [info exists StarsAz($cat,$tag)] } {
+
+# Build a list of all the stars that aren't marked are above the elevation 
+# limit.
+            if { [string equal $StarsState($cat,$tag) ""] && \
+                   $StarsEl($cat,$tag) > $itk_option(-ellimit) * $D2R } {
+               lappend taglist $tag
+            }
+            incr tag
+         }
+
+   # Select one of the tags at random.
+         if { [llength $taglist] } {
+            set n [expr { int(rand() * [llength $taglist]) }]
+            return [lindex $taglist $n]
+         } else {
+            return ""
+         }
+      }
+   }
+}
+      
+itcl::body AzElPlot::remove {cat {tag ""}} {
+#+
+# Removes a star or a complete catalogue.
+#-
+   if { [string is space $tag] } {
+      foreach el [array names StarsState $cat,*] {
+         $itk_component(canvas) delete Star$el
+         if { [string equal $el $CurrSelection] } {
+            set CurrSelection ","
+         }
+      }
+      array unset StarsState $cat,* 
+      array unset StarsAz $cat,* 
+      array unset StarsEl $cat,* 
+      array unset StarsRa $cat,* 
+      array unset StarsDec $cat,* 
+   } else {
+      $itk_component(canvas) delete Star$cat,$tag
+      unset StarsState($cat,$tag)
+      unset StarsAz($cat,$tag)
+      unset StarsEl($cat,$tag)
+      unset StarsRa($cat,$tag)
+      unset StarsDec($cat,$tag)
+      if { [string equal $cat,$tag $CurrSelection] } {
+         set CurrSelection $cat,
+      }
+   }
+}
+
+itcl::body AzElPlot::displayradec {x y} {
+#+
+# Computes the RA/Dec of the point x,y and evalutates the -hitcommand 
+# option.
+#-
+
+# Convert x,y to Az/El.
+   set x [expr $x - $Xc]
+   set y [expr $y - $Yc]
+   set el [r2el [expr sqrt($x * $x + $y * $y)]]
+   set az [expr atan2($x,-$y)]
+
+# Convert Az/El to RA/Dec (see PTW/1).
+   set cosa [expr cos($az)]
+   set sina [expr sin($az)]
+   set cose [expr cos($el)]
+   set sine [expr sin($el)]
+   set x [expr - $cosa * $cose * $Slat + $sine * $Clat]
+   set y [expr - $sina * $cose]
+   set z [expr $cosa * $cose * $Clat + $sine * $Slat]
+   set r [expr sqrt($x * $x + $y * $y)]
+   set ra [expr fmod($St - atan2($y,$x),6.283185307)]
+   set dec [expr atan2($z,$r)]
+
+   if { ! [string equal $itk_option(-hitcommand) ""] } {
+      uplevel #0 $itk_option(-hitcommand) $ra $dec
+   }
+}
+
+itcl::configbody AzElPlot::ellimit {
+   if { $itk_option(-ellimit) > 15.0 } {
+      set r [el2r [expr {$itk_option(-ellimit) * $D2R}]]
+      $itk_component(canvas) coords ellim [expr {$Xc - $r}] \
+            [expr {$Yc - $r}] [expr {$Xc + $r}] [expr {$Yc + $r}]
+      $itk_component(canvas) itemconfigure ellim -outline red
+   } else {
+      $itk_component(canvas) itemconfigure ellim -outline ""
+   }
+}

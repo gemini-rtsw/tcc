@@ -1,0 +1,61 @@
+#!/bin/sh
+# the next line restarts using ocssh \
+exec $HLPG_INSTALL_BASE/bin/ocssh "$0" "$@"
+
+#+
+#  probecal
+#
+#  D Terrett 30 September 2000
+#
+#  Copyright CCLRC
+#-
+
+if { [string compare [exec uname] "Linux"] == 0 } {
+# extent search path for packages so that package Seq can be found
+lappend auto_path [file join $::env(GEMINI_TOP) opt seqexec lib]
+}
+
+# Load required packages
+package require Tcl 8.4
+package require Tk
+package require Itcl
+package require Itk
+package require Iwidgets
+package require Ocspkg
+package require Seq
+
+# Set precision of real number output.
+set tcl_precision 14
+
+# Define the root directory for locating libraries.
+global ROOT
+set ROOT [file dirname [info script]]
+if { [string compare [file pathtype $ROOT] relative] == 0 } {
+   set ROOT [pwd]/$ROOT
+}
+lappend auto_path $ROOT/lib
+
+# The probecal application procedures live in the pointlib subdirectory.
+lappend auto_path $ROOT/pointlib
+
+# Set the name of the epics service configuration file.
+if { [info exists env(TCC_TCSNAME)] } {
+   puts "Using $env(TCC_TCSNAME)"
+   set ext .$env(TCC_TCSNAME)
+} else {
+   set ext ""
+}
+appData add configPath $ROOT/ca_config$ext
+appData add configFile probecal.ca
+
+appData add appKind Tcs
+appData add appName probecal
+
+service epics
+
+# Set application title
+wm title . "Gemini probe calibrator"
+wm iconname . "Gemini probe calibrator"
+wm resizable . 1 1
+
+probeCalMain {}

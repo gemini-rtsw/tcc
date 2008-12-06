@@ -1,0 +1,68 @@
+#+
+# mcs.ca
+#
+# Channel access configuration file for mcs subsystem commands.
+#
+# D Terrett 6 June 2000
+#
+# Copyright CCLRC
+#-
+
+command telstop tcsApply Stop mount
+{
+   stopAxis tc1:telstop.A Axis
+   azBrakes tc1:telstop.B Az brake
+   elBrakes tc1:telstop.C El brake
+}
+
+command telpark	tcsApply Park mount
+{
+   dummy tc1:telpark.A
+}
+
+command mountDatum tcsApply Datum mount
+{
+   datumAxis  tc1:mountDatum.A Axis
+   azDevice   tc1:mountDatum.B Az device
+   elDevice   tc1:mountDatum.C El device
+}
+
+command elevation tcsApply Set mount elevation
+{
+   el tc1:elevation.A Position
+}
+
+command azimuth tcsApply Set mount azimuth
+{
+   az tc1:azimuth.A Position
+}
+
+command azel tcsApply Move mount
+{
+   az tc1:azel.A Azimuth
+   el tc1:azel.B Elevation
+}
+
+command azConfig tcsApply Configure azimuth encoders
+{
+   azAlgorithm tc1:azConfig.A Algorithm
+}
+
+command elConfig tcsApply Configure elevation encoders
+{
+   elAlgorithm tc1:elConfig.A Algorithm
+}
+
+command mountLog tcsApply Set MCS fast data logging
+{
+   sampFreq tc1:mountLog.B Sampling Frequency (Hz)
+   switch tc1:mountLog.C state
+}
+
+command mountTolerance tcsApply Set mount tolerances
+{
+   azPosError tc1:mountTolerance.A Azimuth position error
+   azVelError tc1:mountTolerance.B Azimuth velocity error
+   elPosError tc1:mountTolerance.C Elevation position error
+   elVelError tc1:mountTolerance.D Elevation velocity error
+}

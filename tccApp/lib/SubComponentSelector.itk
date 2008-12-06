@@ -1,0 +1,135 @@
+#+
+#  Subcomponentselector <- itk::Widget
+#
+#  Implements the SubComponentSelector widget.
+#
+#  Options:
+#           -component         The name of the subcomponent.
+#
+#           -selectioncommand  Command to be executed when a new component
+#                              is selected.
+#
+#  Methods:
+#           select item      Selects "item" into the list manager.
+#
+#  D Terrett  18 August 2003
+#
+#  Copyright CCLRC
+#+
+
+itcl::class SubComponentSelector {
+   inherit itk::Widget
+   constructor args {}
+   destructor {}
+   itk_option define -component component Component {}
+   itk_option define -selectioncommand selectionCommand Command {}
+   public {
+      method get {}
+   }
+   private {
+      method selectioncommand {}
+      method newname {n1 n2 op}
+      variable comp ""
+   }
+}
+
+# Create the bitmap for the edit button.
+image create bitmap images::edit -data {
+   #define edit_width 30
+   #define edit_height 15
+   static unsigned char edit_bits[] = {
+      0x00, 0x00, 0x00, 0x00, 0x00, 0x38, 0x00, 0x00, 0x00, 0x70, 0x00, 0x00,
+      0x00, 0xe0, 0x00, 0x00, 0x00, 0xc0, 0x01, 0x00, 0x00, 0x80, 0x03, 0x00,
+      0xfc, 0xff, 0x07, 0x00, 0xfc, 0xff, 0x07, 0x00, 0x00, 0x80, 0x03, 0x00,
+      0x00, 0xc0, 0x01, 0x00, 0x00, 0xe0, 0x00, 0x00, 0x00, 0x70, 0x98, 0x19,
+      0x00, 0x38, 0x98, 0x19, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+}
+
+itk::usual SubComponentSelector {
+   keep -background -borderwidth -cursor -foreground -highlightcolor
+   keep -highlightthickness -insertbackground -insertborderwidth
+   keep -insertofftime -insertontime -insertwidth -labelfont -popupcursor
+   keep -selectbackground -selectborderwidth -selectforeground
+   keep -textbackground -textfont -font
+   keep -activebackground -activeforeground -disabledforeground
+}
+
+itcl::body SubComponentSelector::constructor args {
+
+   set w $itk_interior
+
+   itk_component add selector {
+      ListManager $w.selector -editable 0 \
+            -selectioncommand [itcl::code $this selectioncommand]
+   } {
+      usual
+      keep -labeltext -labelpos -componentlist -state -width
+   }
+   itk_component add edit {
+      EditButton $w.edit -image images::edit \
+            -selector $itk_component(selector)
+   } {
+      usual
+      keep -state
+   }
+
+   pack $itk_component(selector) -side left
+   pack $itk_component(edit) -side bottom
+
+   $itk_component(edit) configure \
+         -activebackground [$itk_component(edit) cget -background] \
+         -activeforeground [$itk_component(edit) cget -foreground]
+
+   eval itk_initialize $args
+}
+
+itcl::body SubComponentSelector::destructor {} {
+
+# remove trace.
+      trace vdelete ::Config($comp,value) w [itcl::code $this newname]
+}
+
+itcl::body SubComponentSelector::get {} {
+   return [$itk_component(selector) get]
+}
+
+itcl::body SubComponentSelector::selectioncommand {} {
+#-
+#  Updates the config array with the new subcomponent object name.
+#-
+   set name [$itk_component(selector) get]
+   set ::Config($comp,value) $name
+   if { ! [string equal $itk_option(-selectioncommand) ""] } {
+      uplevel 0 $itk_option(-selectioncommand)
+   }
+
+   logactions logmess "Selected **** $name **** for $comp"
+
+}
+
+itcl::configbody SubComponentSelector::component {
+
+# Remove existing trace.
+   trace vdelete ::Config($comp,value) w [itcl::code $this newname]
+   set comp ""
+
+   if { $itk_option(-component) != "" } {
+
+# Save the new component name.
+      set comp $itk_option(-component)
+
+# Configure the -componentlist and -panel options of the selector.
+      $itk_component(selector) configure -componentlist $::Config($comp,list)
+      $itk_component(edit) configure -panel $::Config($comp,panel)
+
+# Select the current value.
+      $itk_component(selector) select $::Config($comp,value)
+
+# Trace changes to the component value.
+      trace variable ::Config($comp,value) w [itcl::code $this newname]
+   }
+}
+
+itcl::body SubComponentSelector::newname {n1 n2 op} {
+   $itk_component(selector) select $::Config($comp,value)
+}

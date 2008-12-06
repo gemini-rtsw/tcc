@@ -1,0 +1,112 @@
+#+
+#  SkycatPanel <- itk::Toplevel
+#
+#  Implements the SkycatPanel widget. Skycat is run as a separate application
+#  but in order to communicate with it with "send" we need a window on the
+#  same screen. The Skycat panel is therefore just an empty top level window
+#  which is withdrawn from the display.
+#
+#  The windows and panel options exist in order to be compatible with the
+#  other panel objects and have no function.
+#
+#  D Terrett 22 January 2004
+#
+#  Copyright CCLRC
+#+
+
+itcl::class SkycatPanel {
+   inherit itk::Toplevel
+   constructor args {}
+   public {
+      method show {component} {}
+      variable panelmgr
+      variable windows
+      variable skycat
+   }
+   private {
+      method map {}
+      method findskycat {}
+   }
+}
+
+itk::usual SkycatPanel {
+}
+
+itcl::body SkycatPanel::constructor args {
+
+# Withdraw the top level window.
+   wm withdraw [winfo toplevel $itk_interior]
+
+# Create a skycat application.
+   $this map
+
+# Bind a procedure to map events that maps skycat and withdraws the
+# "shadow" window.
+
+   bind [winfo toplevel $itk_interior] <Map> "
+      [itcl::code $this map]
+      wm withdraw [winfo toplevel $itk_interior]
+   "
+
+   eval itk_initialize $args
+}
+
+itcl::body SkycatPanel::map {} {
+
+# Get the interpreter name of a runnig skycat.
+   set skycat [findskycat]
+
+# Didn't find one so start skycat.
+   if { $skycat eq "" } {
+      exec $::ROOT/tccSkycat -display [winfo screen $itk_interior] \
+         -with_grid true &
+
+# Wait for it to appear as a tcl interpreter.
+      for {set i 0} {$i < 30} {incr i} {
+         set skycat [findskycat]
+         if { $skycat ne "" } {
+            break
+         }
+         after 1000
+      }
+      if { $i == 30 } {
+         tk_messageBox -icon error -parent $itk_interior \
+               -message "Skycat failed to start after 30 seconds"
+         return ""
+      }
+
+# Wait for skycat to accept the command that sets the name of the interpreter
+# that skycat should talk to.
+      for {set i 0} {$i < 20} {incr i} {
+         if { ! [catch {send $skycat tccSetTcc \"[tk appname]\"} ] } {
+            break
+         }
+         after 1000
+      }
+      if { $i == 10 } {
+         tk_messageBox -icon error -parent $itk_interior \
+            -message "Skycat failed to appear after 10 seconds"
+         return ""
+      }
+   } {
+
+# A skycat already exists so map it onto the screen.
+      send $skycat wm deiconify \[winfo children .\]
+      send $skycat raise \[winfo children .\]
+   }
+   return $skycat
+}
+
+itcl::body SkycatPanel::findskycat {} {
+
+# Look for copies of skycat running on the screen.
+   foreach interp [winfo interps -displayof $itk_interior] {
+      if { $interp eq "tccSkycat" || [regexp {^tccSkycat #[0-9]+$} $interp] } {
+
+# Check that it is responding to commands.
+         if { ! [catch {send $interp info tclversion}] } {
+            return $interp
+         }
+      }
+   }
+}

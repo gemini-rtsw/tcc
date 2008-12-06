@@ -1,0 +1,42 @@
+#+
+#  ObservePanel <- Panel
+#
+#  Implements the ObservePanel widget. A Panel widget with a ObserveControl
+#  widget packed into its interior
+#
+#  Options:
+#          none
+#
+#  Methods:
+#          none
+#
+#  D Terrett 16 January 2004
+#
+#  Copyright CCLRC
+#+
+
+itcl::class ObservePanel {
+   inherit Panel
+   constructor args {}
+   public {
+      method reset {} {$itk_component(control) reset}
+   }
+}
+
+itk::usual ObservePanel {
+   keep -background -cursor
+}
+
+itcl::body ObservePanel::constructor args {
+
+   setWidgetColors $itk_interior \
+         $itk_option(-background) $itk_option(-foreground)
+
+   itk_component add control {
+      ObserveControl $itk_interior.control
+   }
+
+   pack $itk_component(control) -fill both -expand y
+
+   eval itk_initialize $args
+}

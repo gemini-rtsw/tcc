@@ -1,0 +1,91 @@
+#!/bin/sh
+# the next line restarts using ocssh \
+exec $HLPG_INSTALL_BASE/bin/ocssh "$0" "$@"
+
+#+
+#  tcc
+#
+#  This script starts the Gemini telescope control console. It contains all
+#  the messy stuff involved in finding the tcl packages and libraries that
+#  the tcc uses. It is probably installation dependent and will need to be
+#  hacked to get it to work.
+#
+#  D Terrett 23 May 2003
+#
+#  Copyright CCLRC
+#-
+
+# Load all the packages required by the tcc.
+package require Tcl 8.4
+package require Tk
+package require Itcl
+package require Itk
+package require Iwidgets
+package require dom
+package require dom::libxml2
+
+if { [string compare [exec uname] "Linux"] == 0 } {
+	# Define the root directory for locating libraries and applications.
+	set ::ROOT [file dirname [info script]]
+	if { [string compare [file pathtype $::ROOT] relative] == 0 } {
+	   set ::ROOT [file join [pwd] $::ROOT]
+	}
+	 
+	# The tcc library files live in the lib subdirectory.
+	lappend auto_path [file join $::ROOT lib]
+	lappend auto_path [file join $::ROOT tcclib]
+	 
+	lappend auto_path [file join $::env(GEMINI_TOP) opt seqexec lib] 
+	lappend auto_path [file join $::env(GEMINI_TOP) opt ocswish lib]
+
+	package require Ocspkg
+	package require Seq
+} else {
+	package require Ocspkg
+	package require Seq
+
+	# Define the root directory for locating libraries and applications.
+	set ::ROOT [file dirname [info script]]
+	if { [string compare [file pathtype $::ROOT] relative] == 0 } {
+	   set ::ROOT [file join [pwd] $::ROOT]
+	}
+
+	# Define the location of the star catalogue files.
+	set ::CATALOG_DIR [file join $::ROOT pointcats]
+
+	# The tcc library files live in the lib subdirectory.
+	lappend auto_path [file join $::ROOT lib]
+	lappend auto_path [file join $::ROOT tcclib]
+}
+
+# Load the time and tcc extensions to tcl.
+load [file join $::ROOT lib $::env(HOST_ARCH) tcctime.so]
+load [file join $::ROOT tcclib $::env(HOST_ARCH) tccext.so]
+load [file join $::ROOT lib $::env(HOST_ARCH) slaext.so]
+
+# Define the default directory for writing files.
+set SaveFileDirectory /gemini/files
+
+# Set the name of the epics service configuration file.
+if { [info exists env(TCC_TCSNAME)] } {
+   puts "Using $env(TCC_TCSNAME)"
+   set ext .$env(TCC_TCSNAME)
+} else {
+   set ext ""
+   set env(TCC_TCSNAME) tcs
+}
+appData add configPath [file join $::ROOT ca_config$ext]
+appData add configFile tcc.ca
+
+#appData add debuglevel information
+
+if { [string compare [exec uname] "Linux"] == 0 } {
+# Read the options configuration file.
+option readfile [file join $::ROOT options.$::env(GEMINI_SITE)] userDefault
+} else {
+# Read the options configuration file.
+option readfile [file join $::ROOT options] userDefault
+}
+
+# Start the tcc (eval is used to expand $argv into a list of arguments).
+eval tccMain $argv

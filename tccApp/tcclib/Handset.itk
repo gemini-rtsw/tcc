@@ -1,0 +1,660 @@
+#+
+#  Handset <- itk::Widget
+#
+#  Implements a (new style) handset.
+#
+#  Options:
+#          -adjust    The entity that the handset adjusts (target, pointing
+#                     or instrument)
+#
+#          -vt        The virtual telescopes being adjusted (target and 
+#                     instrument only
+#
+#  Notes:
+#       o Arrow keypress events in the widgets top level window are bound to
+#         the four -command options. This means that it is only possible
+#         to have one HandPaddleButtons widget in a window and have the
+#         arrow keys behave sensibly.
+#
+#       o When the mouse pointer is inside the widget's top level window
+#         keyboard autorepeat is turned off to avoid "flywheeling". If the
+#         tcc application is destroyed while the pointer is in the window
+#         the keyboard will be left with autorepeat disabled.
+#
+#  D Terrett 23 July 2004
+#
+#  Copyright CCLRC
+#-
+
+itcl::class Handset {
+   inherit itk::Widget
+   constructor args {}
+   destructor {}
+   common mon_inpos 0
+   common need_to_close_loop 0
+   itk_option define -adjust adjust Adjust ""
+   itk_option define -vt vt Vt sourceA
+   itk_option define -cloop cloop Cloop 0 {}
+   itk_option define -loopDef loopDef LoopDef 1 {}
+   public {
+      method updateProc { name alarm time values }
+      method timeout {}
+      method openloop {}
+      method sendOffset {frame stepsize angle}
+      variable oiAngle 138.94
+   }
+   private {
+      method push {button}
+      method rot {dir}
+      method hflip {}
+      method vflip {}
+      method reset {}
+      method relabel {}
+      method initlabels {}
+      variable cs ""
+      variable angles
+      variable labels
+      variable control_loop 0
+   }
+}
+
+# Create custom bitmaps.
+
+image create bitmap images::rotate -data {
+   #define rotate_width 20
+   #define rotate_height 20
+   static unsigned char rotate_bits[] = {
+      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x78, 0x00, 0x00,
+      0xf8, 0x03, 0x00, 0x00, 0x0e, 0x00, 0x00, 0x18, 0x00, 0x00, 0x10, 0x00,
+      0x00, 0x30, 0x00, 0x00, 0x20, 0x00, 0x00, 0x60, 0x00, 0x00, 0x60, 0x00,
+      0x00, 0x60, 0x00, 0x00, 0xf8, 0x01, 0x00, 0xf0, 0x00, 0x00, 0x60, 0x00,
+      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+}
+
+image create bitmap images::arotate -data {
+   #define arotate_width 20
+   #define arotate_height 20
+   static unsigned char arotate_bits[] = {
+      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xe0, 0x01,
+      0x00, 0xfc, 0x01, 0x00, 0x07, 0x00, 0x80, 0x01, 0x00, 0x80, 0x00, 0x00,
+      0xc0, 0x00, 0x00, 0x40, 0x00, 0x00, 0x60, 0x00, 0x00, 0x60, 0x00, 0x00,
+      0x60, 0x00, 0x00, 0xf8, 0x01, 0x00, 0xf0, 0x00, 0x00, 0x60, 0x00, 0x00,
+      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+}
+
+image create bitmap images::reset -data {
+   #define reset_width 20
+   #define reset_height 20
+   static unsigned char reset_bits[] = {
+      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x06, 0x00, 0x00, 0x0f, 0x00,
+      0xc0, 0x30, 0x00, 0x30, 0xc0, 0x00, 0x0c, 0x00, 0x03, 0xfe, 0xff, 0x07,
+      0x04, 0x00, 0x02, 0x04, 0x02, 0x02, 0x84, 0x0d, 0x02, 0xc4, 0x1f, 0x02,
+      0x84, 0xe8, 0x02, 0x84, 0xa8, 0x02, 0x84, 0xe8, 0x02, 0x84, 0x08, 0x02,
+      0x84, 0x08, 0x02, 0xfc, 0xff, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+}
+
+image create bitmap images::hflip -data {
+   #define hflip_width 20
+   #define hflip_height 20
+   static unsigned char hflip_bits[] = {
+      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x80, 0x00,
+      0x18, 0x80, 0x01, 0xfc, 0xff, 0x03, 0xfc, 0xff, 0x03, 0x18, 0x80, 0x01,
+      0x10, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+}
+
+image create bitmap images::vflip -data {
+   #define vflip_width 20
+   #define vflip_height 20
+   static unsigned char vflip_bits[] = {
+      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x06, 0x00, 0x00, 0x0f, 0x00,
+      0x80, 0x1f, 0x00, 0x00, 0x06, 0x00, 0x00, 0x06, 0x00, 0x00, 0x06, 0x00,
+      0x00, 0x06, 0x00, 0x00, 0x06, 0x00, 0x00, 0x06, 0x00, 0x00, 0x06, 0x00,
+      0x00, 0x06, 0x00, 0x00, 0x06, 0x00, 0x00, 0x06, 0x00, 0x80, 0x1f, 0x00,
+      0x00, 0x0f, 0x00, 0x00, 0x06, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+}
+
+itk::usual Handset {
+    keep -background -cursor -foreground -font \
+          -activebackground -activeforeground -disabledforeground \
+          -highlightcolor -highlightthickness \
+          -borderwidth -labelfont -selectcolor
+}
+
+itcl::body Handset::constructor {args} {
+#puts "creating Handset with args: $args"
+    global tid
+    set tid 0
+
+# Fill out the table of button labels.
+   initlabels
+
+   set w $itk_interior
+
+# frame for loop control checkbutton
+
+   itk_component add loopframe {
+      frame $w.loopframe
+   }
+   pack $itk_component(loopframe)    
+
+# Step size widget for setting the step size.
+   itk_component add stepsize {
+      StepSize $w.stepsize
+   }
+   pack $itk_component(stepsize) -pady 5
+
+# Frame for buttons etc.
+   itk_component add frame {
+      frame $w.frame
+   }
+   pack $itk_component(frame) 
+   set w $itk_component(frame)
+
+# Frame for the buttons.
+   itk_component add bframe {
+      frame $w.bframe
+   }
+   pack $itk_component(bframe) -side left
+
+# The push buttons
+   set w $itk_component(bframe)
+   itk_component add u {
+      button $w.u -command [itcl::code $this push u] -background gray
+   } {
+      usual
+      ignore -background
+   }
+   itk_component add d {
+      button $w.d -command [itcl::code $this push d] -background grey
+   } {
+      usual
+      ignore -background
+   }
+   itk_component add l {
+      button $w.l -command [itcl::code $this push l] -background grey
+   } {
+      usual
+      ignore -background
+   }
+   itk_component add r {
+      button $w.r -command [itcl::code $this push r] -background grey
+   } {
+      usual
+      ignore -background
+   }
+
+# Reset button.
+   itk_component add reset {
+      button $w.reset -image images::reset -command [itcl::code $this reset]
+   }
+   grid x $itk_component(u) -sticky nsew
+   grid $itk_component(l) $itk_component(reset) $itk_component(r)
+   grid configure $itk_component(l) $itk_component(r) -sticky nsew
+   grid x $itk_component(d) -sticky nsew
+   grid columnconfigure $w {0 1 2} -minsize 50
+   grid rowconfigure $w {0 1 2} -minsize 50
+
+# frame for orientation.
+   set w $itk_component(frame)
+   itk_component add aframe {
+      frame $w.aframe
+   }
+   pack $itk_component(aframe) -side left -pady 5
+
+# temporary, entry for OIWFS offset angle
+   itk_component add oframe {
+      frame $w.oframe
+   }
+   set w $itk_component(oframe)
+   pack $itk_component(oframe) -side left -pady 5
+
+   itk_component add offlab {
+      label $w.offlab -text "OIWFS \nangle:"
+   }
+   itk_component add offent {
+       entry $w.offent -textvariable [itcl::scope oiAngle] -width 6
+   }
+
+   grid $itk_component(offlab) 
+   grid $itk_component(offent)
+
+   set w $itk_component(aframe)
+   itk_component add orient {
+      iwidgets::radiobox $w.orient -labeltext "Alignment"
+   }
+   $itk_component(orient) add tracking -text RA/Dec
+   $itk_component(orient) add xy -text "Acq Cam"
+   $itk_component(orient) add azel -text Az/El
+   $itk_component(orient) add instr -text Instr
+   $itk_component(orient) add pwfs1 -text PWFS1
+   $itk_component(orient) add pwfs2 -text PWFS2
+   $itk_component(orient) add oiwfs -text OIWFS
+   $itk_component(orient) configure -command [itcl::code $this relabel]
+
+# buttons for rotating and flipping.
+   itk_component add rot {
+      button $w.rot -image images::rotate -command [itcl::code $this rot clock]
+   }
+   itk_component add arot {
+      button $w.arot -image images::arotate \
+            -command [itcl::code $this rot anticlock]
+   }
+   itk_component add hflip {
+      button $w.hflip -image images::hflip -command [itcl::code $this hflip]
+   }
+   itk_component add vflip {
+      button $w.vflip -image images::vflip -command [itcl::code $this vflip]
+   }
+   grid $itk_component(orient) - - - 
+   grid $itk_component(rot) $itk_component(arot) $itk_component(hflip) \
+         $itk_component(vflip) -
+
+# Title
+   set w $itk_interior
+   itk_component add title1 {
+      label $w.title1
+   } {
+      usual
+      rename -font -majorfont majorFont Font
+      ignore -foreground
+   }
+   itk_component add title2 {
+      label $w.title2
+   } {
+      usual
+      rename -font -majorfont majorFont Font
+      ignore -foreground
+   }
+   itk_component add title3 {
+      label $w.title3
+   } {
+      usual
+      rename -font -majorfont majorFont Font
+      ignore -foreground
+   }
+   pack $itk_component(title1) $itk_component(title2) $itk_component(title3) \
+         -anchor w
+
+# Fill in the table of angles (xy is last in the list so that it becomes
+# the default selection).
+   foreach frame {tracking azel instr pwfs1 pwfs2 oiwfs xy} {
+      $itk_component(orient) select $frame
+      reset
+   }
+   
+# Create bindings on the top-level window for the arrow keys (this assumes
+# that there is only one HandPaddleButtons widget in the window).
+   set top [winfo toplevel $itk_interior]
+   foreach key {<Up> <Down> <Left> <Right>} button {u d l r} {
+      bind $top $key "$itk_component($button) invoke"
+   }
+
+# Bind to focus in and focus out events to turning off auto-repeat.
+   bind $top <FocusIn> autoRepeatOff
+   bind $top <FocusOut> autoRepeatOn
+   bind $top <Destroy> autoRepeatOn
+
+# Initialise the button labels.
+   relabel
+
+   eval itk_initialize $args
+
+# checkbutton for opening loop
+   if {$itk_option(-cloop)} {
+       set control_loop $itk_option(-loopDef)
+       itk_component add loopControl {
+	   checkbutton $itk_component(loopframe).loopControl -variable [itcl::scope control_loop] \
+	       -onvalue 1 -offvalue 0 \
+	       -text "Open guide loop while offsetting?"
+       }
+       pack $itk_component(loopControl) -pady 5
+       
+       # Monior TCS inPosition Flag
+       if {! $mon_inpos} {
+	   set mon_inpos 1
+	   global INPOS FOLLOW
+	   set INPOS ""
+	   set FOLLOW ""
+
+	   sa tcssad proc inPosition2 "$this updateProc"
+	   sa mcssad proc followS2 "$this updateProc"
+	   
+	   #initial value
+	   updateProc tcssad.inPosition2 alarm time [sa tcssad get inPosition2]
+	   updateProc mcssad.followS2 alarm time [sa mcssad get followS2]
+       }
+   }
+}
+
+
+itcl::body Handset::destructor {} {
+    global tid
+
+    after cancel $tid
+    if {$mon_inpos} {
+	sa tcssad unproc inPosition2 "$this updateProc"
+	sa mcssad unproc followS2 "$this updateProc"
+    }
+}
+
+itcl::configbody Handset::adjust {
+
+# Create the command sender if necessary.
+   switch $itk_option(-adjust) {
+      target {
+         set cs targetAdjust
+      }
+      instr {
+         set cs poAdjust
+      }
+      pointing {
+         set cs collAdjust
+      }
+      default {
+         set cs ""
+      }
+   }
+   if { ! [string equal $cs ""] } {
+      if { [catch {cs $cs info}] } {
+         epics cs $cs
+      }
+   }
+
+   switch $itk_option(-adjust) {
+      pointing {
+         $itk_component(title1) configure -foreground red \
+               -text "Adjusts telescope pointing"
+         $itk_component(title2) configure -foreground PeachPuff3 \
+               -text "Does not adjust target position"
+         $itk_component(title3) configure -foreground PeachPuff3 \
+               -text "Does not adjust instrument origin"
+      }
+      target {
+         $itk_component(title1) configure -foreground PeachPuff3 \
+               -text "Does not adjust telescope pointing"
+         $itk_component(title2) configure -foreground red \
+               -text "Adjusts target position"
+         $itk_component(title3) configure -foreground PeachPuff3 \
+               -text "Does not adjust instrument origin"
+      }
+      instr {
+         $itk_component(title1) configure -foreground PeachPuff3 \
+	     -text "Does not adjust telescope pointing"
+         $itk_component(title2) configure -foreground PeachPuff3 \
+               -text "Does not adjust target position"
+         $itk_component(title3) configure -foreground red \
+               -text "adjusts instrument origin"
+      }
+   }
+}
+
+itcl::body Handset::push {dir} {
+
+# Called whenever one of the handset buttons is pressed.
+   if { ! [string equal $cs ""] } {
+      set frame [$itk_component(orient) get]
+# Set the step size.
+      set stepsize [$itk_component(stepsize) get]
+
+# Set the angle. For the pwfs the arm and table angles have to be added.
+      switch $frame {
+         pwfs1 {
+            set angle [expr {$angles($frame,$dir) + \
+                  [sa agssad get p1TableAngle] + \
+                  [sa agssad get p1ArmAngle]}]
+         }
+         pwfs2 {
+            set angle [expr {$angles($frame,$dir) + \
+                  [sa agssad get p2TableAngle] + \
+                  [sa agssad get p2ArmAngle]}]
+         }
+         oiwfs {
+	    #puts "oiwfs frame, angle is $angles($frame,$dir) + $oiAngle"
+            set angle [expr {$angles($frame,$dir) + $oiAngle}]
+         }
+         default {
+            set angle $angles($frame,$dir)
+         }
+      }
+      sendOffset $frame $stepsize $angle
+   }
+}
+
+itcl::body Handset::sendOffset { frame stepsize angle } {
+   openloop
+   if { ! [string equal $cs ""] } {
+      set frameid [lsearch -exact {azel xy instr tracking pwfs1 pwfs2 oiwfs} $frame]
+      if { $frameid > 3 } {
+         set frameid 1
+      }
+      cs $cs set frame $frameid
+# Set the step size.
+      cs $cs set size $stepsize
+# Set the angle.
+      cs $cs set angle $angle
+# Set the virtual telescope.
+      if { ![string equal $itk_option(-adjust) pointing] } {
+         set mask 0
+         foreach vt $itk_option(-vt) {
+            set i [lsearch -exact \
+                  {mount sourceA sourceB sourceC pwfs1 pwfs2 oiwfs} $vt]
+            set mask [expr { $mask | ( 1 << $i ) }]
+         }
+         cs $cs set vt [expr { - $mask }]
+      }
+      logger command $cs
+      if { [catch {cs tcsApply post} msg] } {
+         tk_messageBox -icon error -parent $itk_interior -message \
+               "Error setting local pointing model: TCS reports \"$msg\""
+      }
+   }
+}
+
+itcl::body Handset::rot {dir} {
+   set frame [$itk_component(orient) get]
+   set uplab $labels($frame,u)
+   switch $dir {
+      clock {
+         set theta -90.0
+         set labels($frame,u) $labels($frame,l)
+         set labels($frame,l) $labels($frame,d)
+         set labels($frame,d) $labels($frame,r)
+         set labels($frame,r) $uplab
+      }
+      anticlock {
+         set theta 90.0
+         set labels($frame,u) $labels($frame,r)
+         set labels($frame,r) $labels($frame,d)
+         set labels($frame,d) $labels($frame,l)
+         set labels($frame,l) $uplab
+      }
+   }
+   relabel
+   foreach button {u l d r} {
+      set angles($frame,$button) [expr {$angles($frame,$button) + $theta}]
+   }
+}
+
+itcl::body Handset::hflip {} {
+   set frame [$itk_component(orient) get]
+   set angles($frame,l) [expr {$angles($frame,l) + 180}]
+   set angles($frame,r) [expr {$angles($frame,r) - 180}]
+   set leftlab $labels($frame,l)
+   set labels($frame,l) $labels($frame,r)
+   set labels($frame,r) $leftlab
+   relabel
+}
+
+itcl::body Handset::vflip {} {
+   set frame [$itk_component(orient) get]
+   set angles($frame,u) [expr {$angles($frame,u) + 180}]
+   set angles($frame,d) [expr {$angles($frame,d) - 180}]
+   set uplab $labels($frame,u)
+   set labels($frame,u) $labels($frame,d)
+   set labels($frame,d) $uplab
+   relabel
+}
+
+itcl::body Handset::reset {} {
+
+# Set all the button labels and angles to their defaults.
+   set frame [$itk_component(orient) get]
+   switch $frame {
+      azel -
+      tracking {
+         set angles($frame,u) 0.0
+         set angles($frame,r) 90.0
+         set angles($frame,d) 180.0
+         set angles($frame,l) 270.0
+      }
+      pwfs1  {
+         set angles($frame,l) 0.0
+         set angles($frame,d) 90.0
+         set angles($frame,r) 180.0
+         set angles($frame,u) 270.0
+      }
+      xy -
+      pwfs2 {
+         set angles($frame,r) 0.0
+         set angles($frame,u) 90.0
+         set angles($frame,l) 180.0
+         set angles($frame,d) 270.0
+      }
+      oiwfs -
+      instr {
+         set angles($frame,u) 0.0
+         set angles($frame,r) 90.0
+         set angles($frame,d) 180.0
+         set angles($frame,l) 270.0
+      }
+   }
+
+# Set all the button labels to their defaults.
+   initlabels
+   relabel
+}
+
+itcl::body Handset::relabel {} {
+   set frame [$itk_component(orient) get]
+   $itk_component(u) configure -text $labels($frame,u)
+   $itk_component(d) configure -text $labels($frame,d)
+   $itk_component(l) configure -text $labels($frame,l)
+   $itk_component(r) configure -text $labels($frame,r)
+}
+
+itcl::body Handset::initlabels {} {
+
+# Fill in the table of labels with their default values.
+   foreach frame {tracking xy azel instr pwfs1 pwfs2 oiwfs} {
+      switch $frame {
+         xy {
+#            set labels($frame,u) +y
+#            set labels($frame,d) -y
+#            set labels($frame,l) -x
+#            set labels($frame,r) +x
+            set labels($frame,u) -x
+            set labels($frame,d) x
+            set labels($frame,l) -y
+            set labels($frame,r) +y
+         }
+	 azel {
+            set labels($frame,u) +El
+            set labels($frame,d) -El
+            set labels($frame,l) -Az
+            set labels($frame,r) +Az
+         }
+	 tracking {
+            set labels($frame,u) N
+            set labels($frame,d) S
+            set labels($frame,l) E
+            set labels($frame,r) W
+	 }
+	 instr {
+	   set labels($frame,u) -Q
+	   set labels($frame,d) +Q
+	   set labels($frame,l) -P
+	   set labels($frame,r) +P
+         }
+	 oiwfs -
+	 pwfs2 -
+	 pwfs1 {
+            set labels($frame,u) ""
+            set labels($frame,d) ""
+            set labels($frame,l) ""
+            set labels($frame,r) ""
+         }
+      }
+   }
+}
+
+itcl::body Handset::updateProc {name alarm time values} {
+    global INPOS FOLLOW tid
+    
+    logactions logmess [format "updateProc: %s %-20s\n%s\n" $time $name $values]
+    set tname [lrange [split $name "." ] 1 1 ]
+
+   switch $tname {
+       inPosition2 { 
+	   logactions logmess "setting INPOS"
+	   set INPOS $values
+       }
+       followS2 {
+	   logactions logmess "setting FOLLOW"
+	   set FOLLOW $values
+       }
+   }
+   logactions logmess "INPOS: $INPOS   FOLLOW: $FOLLOW"
+
+   if { $need_to_close_loop} {
+       if {[string match TRUE $INPOS] && [string match ON $FOLLOW]} {
+	   logactions logmess "automatically closing loop"
+	   if {[AO state useLwfs]} {
+	       AO enableLgs
+	   } else {
+	       AO enable
+	   }
+	   set need_to_close_loop 0
+       }  else {
+	   # the telescope is not in position, cancel the timeout
+	   logactions logmess "not in position, cancelling timeout $tid"
+	   after cancel $tid
+       }
+   }
+}
+
+itcl::body Handset::timeout {} {
+    #puts "timeout callback"
+    # will get here if the telescope did not go out of position
+    # assume the move was too fast, close the loop
+   if { $need_to_close_loop } {
+       logactions logmess "timed out: automatically closing loop"
+       if {[AO state useLwfs]} {
+	   AO enableLgs
+       } else {
+	   AO enable
+       }
+       set need_to_close_loop 0
+   }
+}
+
+
+itcl::body Handset::openloop {} {
+    global tid INPOS
+# Open loop if neccesary
+    if {$control_loop && [AO cget -enabled]} {
+	logactions logmess "automatically opening loop"
+	if {[AO state useLwfs]} {
+	    AO disableLgs
+	} else {
+	    AO disable
+	}
+	set need_to_close_loop 1
+	# start timeout process
+	if {[string match TRUE $INPOS]} {
+	    set tid [after 5000 "$this timeout"]
+	}
+	#puts "tid: $tid"
+    }
+}

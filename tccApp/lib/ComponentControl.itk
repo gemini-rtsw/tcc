@@ -1,0 +1,339 @@
+#+
+#  ComponentControl <- itk::Widget
+#
+#  A ComponentControl widget is a widget with controls for selecting a 
+#  configuration component. This class is intended to be inherited by the 
+#  panels for specific components.
+#
+#  Options:
+#           -apply          The name of the apply record to post to when the
+#                           apply button is pressed.
+#
+#           -component      The name of the component that the control edits.
+#
+#           -system         The name of the system being controlled (for
+#                           error messages).
+#
+#  Methods:
+#           select name     Selects the component "name".
+#
+#           sync name       Syncronises the window contents with the named
+#                           object
+#
+#  Derived classes also need to supply implementations of the following
+#  public methods:
+#
+#           load object     Load the control with the definition of object.
+#
+#           reset           Reset the control to its default state as if
+#                           no object has been selected.
+#
+#           save object     Save the contents of the controls in the object.
+#
+#  D Terrett  18 August 2003
+#
+#  Copyright CCLRC
+#+
+
+itcl::class ComponentControl {
+   inherit itk::Widget
+   constructor args {}
+   destructor {}
+   itk_option define -apply apply Apply tcsApply
+   itk_option define -system system System TCS
+   itk_option define -component component Component {}
+   public {
+      method load {object} {}
+      method reset {} {}
+      method save {object} {}
+      method sync {name}
+   }
+   protected {
+      method applycmd {}
+      method select {}
+      method store {name}
+      method delselected {}
+      variable description
+   }
+   private {
+      method returncmd {}
+      method lock {}
+      method newname {n1 n2 op}
+      variable cursel {}
+      variable lockstate
+      variable comp ""
+   }
+}
+
+# Create bitmap for the delete button.
+image create bitmap images::delete -data {
+   #define delete_width 18
+   #define delete_height 18
+   static unsigned char delete_bits[] = {
+      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x18, 0x60, 0x00,
+      0x38, 0x70, 0x00, 0x70, 0x38, 0x00, 0xe0, 0x1c, 0x00, 0xc0, 0x0f, 0x00,
+      0x80, 0x07, 0x00, 0x80, 0x07, 0x00, 0xc0, 0x0f, 0x00, 0xe0, 0x1c, 0x00,
+      0x70, 0x38, 0x00, 0x38, 0x70, 0x00, 0x18, 0x60, 0x00, 0x00, 0x00, 0x00,
+      0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+}
+
+itk::usual ComponentControl {
+   keep -activebackground -activeforeground -background -borderwidth \
+         -cursor -disabledforeground -font -foreground -highlightcolor \
+         -highlightthickness -insertbackground -insertborderwidth \
+         -insertofftime -insertontime -insertwidth -labelfont -popupcursor \
+         -selectbackground -selectborderwidth -selectforeground \
+         -textbackground -textfont -title
+}
+
+itcl::body ComponentControl::constructor args {
+
+   itk_component add top {
+      frame $itk_interior.top
+   }
+   pack $itk_component(top) -fill x -expand y
+   set w $itk_component(top)
+
+   itk_component add label {
+      label $w.label -width 1
+   } {
+      usual
+      rename -text -title title Title
+   }
+   bind $itk_component(label) <Configure> {%W configure -wraplength %w}
+   pack $itk_component(label) -fill x -expand yes
+
+   itk_component add delete {
+      button $w.delete -image images::delete \
+            -command [itcl::code $this delselected]
+   }
+   itk_component add selector {
+      ListManager $w.selector \
+            -returncommand [itcl::code $this returncmd] \
+            -selectioncommand [itcl::code $this select]
+   }
+   pack $itk_component(delete) $itk_component(selector) -side left
+
+# Store and apply buttons at the bottom of the window.
+   itk_component add bottom {
+      frame $itk_interior.bottom
+   }
+   set w $itk_component(bottom)
+   pack $itk_component(bottom) -fill x -expand y -side bottom
+   itk_component add store {
+      StoreButton $w.store -command [itcl::code $this store] \
+            -combobox $itk_component(selector) -text Store -width 6
+   }
+   itk_component add aframe {
+      frame $w.aframe
+   }
+   set w $itk_component(aframe)
+   itk_component add lock {
+      checkbutton $w.lock -command [itcl::code $this lock] \
+            -variable [itcl::scope lockstate]
+   }
+   set lockstate 0
+   itk_component add apply {
+      LiveButton $w.apply -text Apply -width 6 \
+            -command [itcl::code $this applycmd] -state disabled
+   }
+   pack $itk_component(lock) $itk_component(apply) -side left
+   pack $itk_component(aframe) $itk_component(store) -side left -pady 4 \
+         -expand y
+
+   eval itk_initialize $args
+}
+
+itcl::body ComponentControl::destructor {} {
+
+# Remove variable trace.
+   trace vdelete ::Config($comp,value) w [itcl::code $this newname]
+}
+
+itcl::body ComponentControl::lock {} {
+   if { $lockstate } {
+      $itk_component(apply) configure -state normal
+   } else {
+      $itk_component(apply) configure -state disabled
+   }
+}
+
+itcl::body ComponentControl::store {name} {
+
+# Determine the full name of the object to be updated.
+   if { [string equal $name ""] } {
+      set fullname $::Config($comp,anon)
+   } else {
+      set fullname $::Config($comp,namespace)::$name
+   }
+
+# If the object doesn't exist.
+   if { [lsearch -exact [itcl::find objects -class $::Config($comp,class)] \
+         $fullname] < 0 && ( ! [string equal $name ""] ) } {
+
+# Create it.
+      $::Config($comp,class) $fullname $::Config($comp,list)
+
+# Update the object with the contents of the widget, catching any errors
+# due to invalid data.
+      if { [catch {$this save $fullname} msg] } {
+
+# Delete the bad object and report the error.
+         itcl::delete object $fullname
+         $itk_component(selector) insert $name
+         tk_messageBox -icon error -parent $itk_interior -message \
+               "Error creating $description \"$name\": $msg"
+         return 0
+      } else {
+
+# Update the global config array with the new name.
+         set ::Config($comp,value) $name
+      }
+   } else {
+
+# Update the existing object with data from the widget.
+      if { [catch {$this save $fullname} msg] } {
+         if { [string equal $name ""] } {
+            tk_messageBox -icon error -parent $itk_interior -message \
+                  "Error updating $description: $msg"
+            return 0
+         } else {
+            tk_messageBox -icon error -parent $itk_interior -message \
+                  "Error updating $description \"$name\": $msg"
+            return 0
+         }
+      }
+
+# Update the global config array name - although the name hasn't changed
+# this enables other parts of the system to watch for changes in
+# component definitions. Only do this if the name isn't blank.
+      if { $name != "" } {
+         set ::Config($comp,value) $name
+      }
+   } 
+   return 1
+}
+
+itcl::body ComponentControl::applycmd {} {
+
+# Store the window contents.
+   if { [store [$itk_component(selector) get]] } {
+
+# Send a sync to the panel managers of all the subcomponents that have
+# values.
+      foreach subcomp $::Config($comp,subcomp) {
+         if { $::Config($comp.$subcomp,value) != "" } {
+            $::Config($comp.$subcomp,panel) sync $comp.$subcomp 
+         }
+      }
+
+# Apply the object.
+      if { [string equal $::Config($comp,value) ""] } {
+         $::Config($comp,anon) apply $itk_option(-component)
+
+# Return the scratch object to its initial state so that it doesn't prevent
+# the deletion of any of its subcomponents.
+         $::Config($comp,anon) init
+      } else {
+         $::Config($comp,namespace)::$::Config($comp,value) apply \
+               $itk_option(-component)
+      }
+
+# Post the command.
+      if [catch {cs $itk_option(-apply) post} msg] {
+           tk_messageBox -icon error -parent $itk_interior -message \
+               "Error posting command: $itk_option(-system) reports \"$msg\""
+      }
+   }
+}
+
+itcl::body ComponentControl::delselected {} {
+#+
+# Deletes the currently selected component object.
+#-
+   set name [$itk_component(selector) get]
+   if { ! [string equal $name ""] } {
+      set ::Config($comp,value) ""
+      set fullname ::$::Config($comp,namespace)::$name
+      if { [catch {itcl::delete object $fullname} msg] } {
+         tk_messageBox -icon error -message $msg \
+               -parent $itk_interior -title "Component delete error"
+         set ::Config($comp,value) $name
+      }
+   }
+}
+
+itcl::body ComponentControl::select {} {
+#+
+#  Called when a name is selected in the ListManager.
+#-
+
+# Check that the selected item is in the list.
+   set value [$itk_component(selector) get]
+   if { [[$itk_component(selector) cget -componentlist] index $value] >= 0 } {
+
+# Update the global config array.
+      set ::Config($comp,value) $value
+
+# Log the selection
+
+      logactions logmess "Selected **** $value **** for $comp"
+   }
+}
+
+itcl::body ComponentControl::returncmd {} {
+
+# If there is something entered in the selection box then invoke the
+# store button.
+   set name [$itk_component(selector) get]
+   if { $name != "" } {
+      $itk_component(store) invoke
+   }
+}
+
+itcl::configbody ComponentControl::component {
+
+# Remove any existing trace
+   trace vdelete ::Config($comp,value) w [itcl::code $this newname]
+   set comp ""
+
+   if { $itk_option(-component) != "" } {
+
+# Record current component name.
+      set comp $itk_option(-component)
+
+# Configure the -componentlist option of the selector.
+      $itk_component(selector) configure -componentlist $::Config($comp,list)
+
+# Trace changes to the component value.
+      trace variable ::Config($comp,value) w [itcl::code $this newname]
+
+# Initialise with the current name.
+      after idle [itcl::code $this newname "" "" ""]
+   }
+}
+
+itcl::body ComponentControl::newname {n1 n2 op} {
+   $itk_component(selector) select $::Config($comp,value)
+
+# Determine the full name of the new object.
+   if { ! [string equal $::Config($comp,value) ""] } {
+      set fullname $::Config($comp,namespace)::$::Config($comp,value)
+
+# Load the new object.
+      $this reset
+      $this load $fullname
+   } else {
+
+# Clear the control.
+      $this reset
+   }
+}
+
+itcl::body ComponentControl::sync {name} {
+
+# Check that the name matches the selection combobox.
+   if { [string equal [namespace tail $name] [$itk_component(selector) get]] } {
+      $this save $name
+   }
+}

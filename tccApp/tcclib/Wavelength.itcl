@@ -1,0 +1,144 @@
+#+
+#  Wavelength <- Paramset
+#
+#  Implements the Wavelength class. A Wavelength object stores an effective 
+#  wavelength.
+#
+#  Options:
+#          -wavel      The wavelength.
+#
+#          -centralBaffle     The position of the M2 central baffle ("open"
+#                             "closed" or "").
+#
+#          -deployableBaffle  The position of the M2 deployable baffle
+#                             ("thermal IR", "near IR", "visible",
+#                             "extended" or "").
+#
+#  Methods:
+#          apply comp  Applies the wavelength to the TCS by setting the 
+#                      values of the command parameters for the virtual
+#                      telescope.
+#
+#          init          Returns the wavelength object to its initial state.
+#
+#          preview comp  Sets the preview wavelength for the virtual
+#                        telescope".
+#
+#          save node   Writes the values of the options to the xml node.
+#
+#  D Terrett 21 February 2003
+#
+#  Copyright CCLRC
+#+
+
+itcl::class Wavelength {
+   inherit Paramset
+   public {
+      method apply {comp}
+      method init {}
+      method preview {view comp}
+      method save {node}
+      variable wavel {} {set wavel [valWavelength $wavel]}
+      variable set_baffles 1
+      variable centralBaffle ""
+      variable deployableBaffle ""
+   }
+}
+
+itcl::body Wavelength::apply {comp} {
+   switch $comp {
+      tcs.field.wavelength {
+	  set fieldObj ${::Config(tcs.field,namespace)}::${::Config(tcs.field,value)}
+	  #set name ${::Config(tcs.field.wavelength,value)}
+	  set name [string range $this [expr [string last "::" $this] +2] end] 
+	  # [$fieldObj cget -wavelength]
+	  #puts "Wavelength::apply wavel: $wavel, name: $name, this: $this"
+	  if {[string match "*Acq Cam*" $name]} {
+	      set loc_set_baffles 0
+	  } else {
+	      set loc_set_baffles $set_baffles
+	  }
+
+	  #puts "Wavelength apply comp: $comp, wavel: $wavel centralBaffle: $centralBaffle deployableBaffle: $deployableBaffle set_baffles: $set_baffles loc_set_baffles: $loc_set_baffles"
+	  
+#  the following sets up the baffle values when a configuration is loaded and applied without the Wavelength panel being open
+#  removed this ... decided to not set the baffle at all unless its explicitly configured.
+  	 if {($centralBaffle == ""  || $deployableBaffle == "") && $loc_set_baffles } {
+ 	     if {$wavel <= [calparam cget -baffle_visible]} {
+ 		 set centralBaffle closed
+ 		 set deployableBaffle visible
+ 	     } elseif {$wavel < [calparam cget -baffle_nearir]} {
+ 		 set centralBaffle open
+ 		 set deployableBaffle "near IR"
+ 	     } else {
+ 		 set centralBaffle open
+ 		 set deployableBaffle "thermal IR"
+ 	     }
+ 	 }
+
+# for GS Engineering: Override baffles to retracted and closed when inst is HR
+	 set inst $::Config(tcs.instrument,value)
+	 #puts "Wavelength apply, inst: $inst"
+	 if { $inst == "HRWFS"} {
+	      set loc_set_baffles 1
+	      set centralBaffle closed
+	      set deployableBaffle "thermal IR"
+	 }
+
+	 cs wavelSourceA set wavel $wavel
+         logger command wavelSourceA
+         if { ! [string is space $centralBaffle] && $loc_set_baffles} {
+	     switch $centralBaffle {
+		 closed {cs m2Baffle set centralBaffle Closed}
+		 open {cs m2Baffle set centralBaffle Open}
+	     }
+	 }
+         if { ! [string is space $deployableBaffle] && $loc_set_baffles} {
+	     switch $deployableBaffle {
+		 "thermal IR" {cs m2Baffle set deployBaffle Retracted}
+		 "near IR" {cs m2Baffle set deployBaffle [list "Near IR"]}
+		 visible {cs m2Baffle set deployBaffle Visible}
+		 extended {cs m2Baffle set deployBaffle Extended}
+	     }
+	 }
+         if { !( [string is space $centralBaffle] && \
+		     [string is space $deployableBaffle] ) && $loc_set_baffles} {
+	     logger command m2Baffle
+         }
+      }
+      tcs.field.guide.oiwfswavelength {
+         cs wavelOiwfs set wavel $wavel
+         logger command wavelOiwfs
+      }
+      tcs.field.guide.aowfswavelength {
+	 cs wavelPwfs2 set wavel $wavel
+	 logger command wavelPwfs2
+      }
+   }
+}
+
+itcl::body Wavelength::init {} {
+   set wavel {}
+   set centralBaffle ""
+   set deployableBaffle ""
+}
+
+itcl::body Wavelength::preview {view comp} {
+   if { ! [string equal $wavel ""] } {
+      switch $comp {
+         science {
+            $view configure -wavel $wavel
+         }
+         oiwfs {
+            $view configure -oiWavel $wavel
+         }
+      }
+   }
+}
+
+itcl::body Wavelength::save {node} {
+   set node [paramset $node wavelength]
+   param $node wavel $wavel
+   param $node centralBaffle $centralBaffle
+   param $node deployableBaffle $deployableBaffle
+}

@@ -1,0 +1,150 @@
+#+
+#  AoConfig <- itk::Widget
+#
+#  Implements the AoConfig widget that displays a summary of the state of
+#  the acitve optics.
+#
+#  Methods:
+#           update       Updates the display.
+#
+# D Terrett 21 January 2003
+#
+#  Copyright CCLRC
+#-
+
+itcl::class AoConfig {
+   inherit itk::Widget
+   constructor args {}
+   public {
+      method update {}
+   }
+}
+
+itk::usual AoConfig {
+   keep -background -cursor -font 
+}
+
+itcl::body AoConfig::constructor args {
+
+# Create status acceptors.
+   if { [catch {sa guideConfig info}] } {
+      epics sa guideConfig
+   }
+
+# Frame for border.
+   itk_component add frame {
+      frame $itk_interior.frame -borderwidth 2 -relief ridge
+   }
+   set w $itk_component(frame)
+
+# M1 figure.
+   itk_component add m1fig {
+      label $w.m1fig -borderwidth 2 -relief groove
+   }
+
+# Mount absorb tip/tilt
+   itk_component add mtabs {
+      label $w.mtabs -borderwidth 2 -relief groove
+   }
+
+# M2 configuration in both chop states
+   itk_component add m2chopa {
+      label $w.m2chopa -borderwidth 2 -relief groove
+   }
+   itk_component add m2chopb {
+      label $w.m2chopb -borderwidth 2 -relief groove
+   }
+
+# Coma correction.   
+   itk_component add coma {
+      label $w.m2coma -borderwidth 2 -relief groove
+   }
+
+   pack $itk_component(m2chopa) -fill x -expand y -padx 2 -pady 1
+   pack $itk_component(m2chopb) -fill x -expand y -padx 2 -pady 1
+   pack $itk_component(m1fig) -fill x -expand y -padx 2 -pady 1
+   pack $itk_component(coma) -fill x -expand y -padx 2 -pady 1
+   pack $itk_component(m1fig) -fill x -expand y -padx 2 -pady 1
+   pack $itk_component(mtabs) -fill x -expand y -padx 2 -pady 1
+   pack $itk_component(frame) -fill x -expand y -expand y
+
+   eval itk_initialize $args
+}
+
+
+itcl::body AoConfig::update {} {
+
+   if { [sa guideConfig get m1state value] == "On" } {
+      $itk_component(m1fig) configure \
+            -text "M1 figure from [sa guideConfig get m1GuideSource]"
+   } else {
+      $itk_component(m1fig) configure -text "No M1 figure updates"
+   }
+
+   switch [sa guideConfig get absorbtilt] {
+      0 {
+         $itk_component(mtabs) configure -text "No mount guiding"
+      }
+      3 {
+         $itk_component(mtabs) configure -text "Mount guiding from M2"
+      }
+      4 {
+         $itk_component(mtabs) configure -text "Mount guiding from PWFS"
+      }
+      default {
+         $itk_component(mtabs) configure -text ""
+      }
+   }
+
+   set p1guide [sa m2ssad get p1GuideConfig]
+   set p2guide [sa m2ssad get p2GuideConfig]
+   set oiguide [sa m2ssad get oiGuideConfig]
+   set aoguide [sa m2ssad get aoGuideConfig]
+
+   set source ""
+   if { [string match *A-AUTO* $p1guide] } {
+      append source " P1"
+   }
+   if { [string match *A-AUTO* $p2guide] } {
+      append source " P2"
+   }
+   if { [string match *A-AUTO* $oiguide] } {
+      append source " OI"
+   }
+   if { [string match *A-AUTO* $aoguide] } {
+      append source " AO"
+   }
+   if { $source eq "" } {
+      $itk_component(m2chopa) configure -text "No M2 guiding in chop A"
+   } else {
+      $itk_component(m2chopa) configure -text "M2 ttf from$source in chop A"
+   }
+
+   set source ""
+   if { [string match *B-AUTO* $p1guide] } {
+      append source " P1"
+   }
+   if { [string match *B-AUTO* $p2guide] } {
+      append source " P2"
+   }
+   if { [string match *B-AUTO* $oiguide] } {
+      append source " OI"
+   }
+   if { [string match *B-AUTO* $aoguide] } {
+      append source " AO"
+   }
+   if { $source eq "" } {
+      $itk_component(m2chopb) configure -text "No M2 guiding in chop B"
+   } else {
+      $itk_component(m2chopb) configure -text "M2 ttf from$source in chop B"
+   }
+  
+   set coma_status [sa guideConfig get coma]
+
+   if { $coma_status eq "On" } {
+      $itk_component(coma) configure -text "Coma correction on"
+   } else {
+      $itk_component(coma) configure -text "Coma correction off"
+   }
+}
+

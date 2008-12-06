@@ -1,0 +1,101 @@
+#+
+# hrwfs.ca
+#
+# Channel access configuration file for the Acquisition Camera package
+#
+# D Terrett 27 October 2001
+#
+# Copyright CCLRC
+#-
+
+apply hrwfs::apply hrwfs:apply hrwfs:applyC Primary Apply Record
+
+status hrwfs::apply Acquisition Camera apply status
+{
+   mess       hrwfs:apply.MESS     0    Apply message
+   val        hrwfs:apply.VAL      0    Apply status
+}
+
+status hrwfs::applyC Acquisition Camera status
+{
+  val hrwfs:applyC.VAL 0 Value
+  clid hrwfs:applyC.CLID 0 Client ID
+}
+
+status hrwfs::observeC Acquisition Camera observe status
+{
+   observe    hrwfs:observeC.VAL   0    Observe status
+}
+
+command hrwfs::lensSel hrwfs::apply Set lens position
+{
+   name       hrwfs:lensSel.A  Filter name
+}
+
+command hrwfs::ndfilterSel hrwfs::apply Set ND filter position
+{
+   name       hrwfs:ndfilterSel.A  Filter name
+}
+
+status hrwfs::currStatus
+{
+   colfilt       hrwfs:clfilterName.VAL  0   Current Col Filter
+   lens          hrwfs:lensName.VAL      0   Current Lens
+   ndfilt        hrwfs:ndfilterName.VAL  0   Current ND Filter
+}
+
+command hrwfs::clfilterSel hrwfs::apply Set ND filter position
+{
+   name       hrwfs:clfilterSel.A  Filter name
+}
+
+command hrwfs::detExposure hrwfs::apply Set exposure parameters
+{
+   nframe     hrwfs:dc:detExposure.A  Number of frames
+   exposure   hrwfs:dc:detExposure.B  Exposure interval
+}
+
+command hrwfs::setObserve hrwfs::apply Set observe parameters
+{
+   output     hrwfs:dc:setObserve.A  Output
+   dir        hrwfs:dc:setObserve.B  Directory
+   file       hrwfs:dc:setObserve.C  File name
+   simfile    hrwfs:dc:setObserve.D  Simulation file name
+}
+
+command hrwfs::setDhsInfo hrwfs::apply Set exposure parameters
+{
+   stream     hrwfs:dc:setDhsInfo.A  Quick look stream
+   option     hrwfs:dc:setDhsInfo.B  DHS option
+}
+
+command hrwfs::detObstype hrwfs::apply Set observation type
+{
+   type       hrwfs:dc:detObstype.A   Observation type
+}
+
+command hrwfs::detFrameSize hrwfs::apply Set frame size
+{
+   binning    hrwfs:dc:detFrameSize.A Binning
+   windowing  hrwfs:dc:detFrameSize.B Windowing
+   x          hrwfs:dc:detFrameSize.C X center
+   y          hrwfs:dc:detFrameSize.D Y center
+   width      hrwfs:dc:detFrameSize.E Width
+   height     hrwfs:dc:detFrameSize.F Height
+}
+
+command hrwfs::observe hrwfs::apply Observe
+{
+   label      hrwfs:observe.A        DHS data label
+   dummy      hrwfs:observe.B
+}
+
+command hrwfs::stop hrwfs::apply Stop observation
+{
+   dummy      hrwfs:stop.A
+}
+
+command hrwfs::abort hrwfs::apply Abort observation
+{
+   dummy      hrwfs:abort.A
+}

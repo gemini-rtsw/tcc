@@ -1,0 +1,713 @@
+#+
+#  Tcsconfigcontrol <- ComponentControl
+#
+#  Implements the TcsConfigControl widget.
+#
+#  D Terrett 3 June 2003
+#
+#  Copyright CCLRC
+#+
+
+itcl::class TcsConfigControl {
+   inherit ComponentControl
+   constructor {args} {}
+   destructor {}
+   public {
+      method load {name}
+      method preview {}
+      method save {name}
+   }
+   private {
+      method apply {}
+      method newfield {n1 n2 op}
+      method sesidle {}
+      method wrap {par}
+      method applyP1M2Gains {instName wfs}
+      method applyP2M2Gains {instName wfs}
+      variable components {
+         field pointOrig slewOptions chop gaos trackFrame instrument
+      }
+      variable options {
+         -field -pointOrig -slewOptions -chop -gaos -trackFrame -instrument
+      }
+      variable fieldcomponents {
+         field.guide field.rotator field.wavelength field.sciencetarget field.pwfs1target field.pwfs2target field.oiwfstarget field.aowfstarget
+      }
+      variable fieldoptions {
+         -guide -rotator -wavelength -sciencetarget -pwfs1target -pwfs2target -oiwfstarget -aowfstarget
+      }
+      variable view ""
+   }
+}
+
+itk::usual TcsConfigControl {
+   keep -borderwidth -cursor -font -highlightthickness -insertborderwidth \
+         -insertofftime -insertontime -insertwidth -labelfont -popupcursor \
+         -selectborderwidth -textfont -title -component
+}
+
+itcl::body TcsConfigControl::constructor {args} {
+
+   if { [catch {cs aoGimOffsets info}] } {
+     epics cs aoGimOffsets
+   }
+
+   if { [catch {cs pwfs1m2Gain info}] } {
+      epics cs pwfs1m2Gain
+   }
+
+   if { [catch {cs pwfs2m2Gain info}] } {
+      epics cs pwfs2m2Gain
+   }
+
+# Expand the component selector.
+   $itk_component(selector) configure -width 43
+
+# Divide the window into 4 vertically.
+   itk_component add row1 {
+      frame $itk_interior.row1 -relief ridge -bd 2
+   }
+   itk_component add row2 {
+      iwidgets::labeledframe $itk_interior.row2 -relief ridge \
+            -labeltext "Session Control" -labelpos nw
+   }
+   itk_component add row3 {
+      iwidgets::labeledframe $itk_interior.row3 -relief ridge \
+            -labeltext "Wrap Control" -labelpos nw
+   }
+   itk_component add row4 {
+      frame $itk_interior.row4
+   }
+   pack $itk_component(row1) $itk_component(row2) $itk_component(row3) \
+         $itk_component(row4) -expand y -fill x
+
+# Configuration component selectors.
+   set w $itk_component(row1)
+   itk_component add field {
+      ComponentSelector $w.field -labeltext "Target Field" \
+            -component tcs.field \
+            -active 1 
+   } {
+      usual
+      rename -textfont -majorfont majorFont Font
+      rename -labelfont -majorfont majorFont Font
+   }
+   itk_component add pointOrig {
+      ComponentSelector $w.pointOrig -labeltext "Instrument Origin" \
+            -component tcs.pointorig \
+            -active 1 
+   } {
+      usual
+      rename -textfont -majorfont majorFont Font
+      rename -labelfont -majorfont majorFont Font
+   }
+   itk_component add chop {
+      ComponentSelector $w.chop -labeltext "Chop Configuration" \
+            -component tcs.chop \
+            -active 1 
+   } {
+      usual
+      rename -textfont -majorfont majorFont Font
+      rename -labelfont -majorfont majorFont Font
+   }
+   itk_component add gaos {
+      ComponentSelector $w.gaos -labeltext "Adaptive Optics" \
+            -component tcs.gaos \
+            -active 1 
+   } {
+      usual
+      rename -textfont -majorfont majorFont Font
+      rename -labelfont -majorfont majorFont Font
+   }
+   itk_component add slewOptions {
+      ComponentSelector $w.slewOptions -labeltext "Slew Options" \
+            -component tcs.slewoptions \
+            -active 1 
+   } {
+      usual
+      rename -textfont -majorfont majorFont Font
+      rename -labelfont -majorfont majorFont Font
+   }
+   itk_component add trackFrame {
+      ComponentSelector $w.trackFrame -labeltext "Tracking Frames" \
+            -component tcs.trackframe \
+            -active 1 
+   } {
+      usual
+      rename -textfont -majorfont majorFont Font
+      rename -labelfont -majorfont majorFont Font
+   }
+   itk_component add instrument {
+      ComponentSelector $w.instrument -labeltext "Instrument" \
+            -component tcs.instrument \
+            -active 1 
+   } {
+      usual
+      rename -textfont -majorfont majorFont Font
+      rename -labelfont -majorfont majorFont Font
+   }
+
+   pack $itk_component(field) $itk_component(pointOrig) \
+         $itk_component(chop) $itk_component(gaos) \
+         $itk_component(slewOptions) $itk_component(instrument) -fill x -pady 1
+
+# Session control
+   set w [$itk_component(row2) childsite]
+   itk_component add idle {
+      button $w.idle -text "Set Idle reason" \
+            -command [itcl::code $this sesidle]
+   }
+   itk_component add obsidf {
+      frame $w.obsidf
+   }
+   set w $itk_component(obsidf)
+   itk_component add obsidlab {
+      label $w.obsidlab -text "Observation id:"
+   }
+   itk_component add obsid {
+      label $w.obsid -width 40 -relief sunken -anchor w
+   }
+   pack $itk_component(obsidlab) $itk_component(obsid) -side left
+   pack $itk_component(obsidf) $itk_component(idle) -side left -pady 3 -padx 2
+
+# Wrap control
+   set w [$itk_component(row3) childsite]
+   itk_component add azwrap {
+      iwidgets::optionmenu $w.azwrap -labeltext Azimuth
+   }
+   $itk_component(azwrap) insert end + "" -
+   itk_component add rotwrap {
+      iwidgets::optionmenu $w.rotwrap -labeltext Rotator
+   }
+   $itk_component(rotwrap) insert end + "" -
+   itk_component add wrapapply {
+      ApplyButton $w.wrapapply -command wrap -text Apply \
+            -parcommand [itcl::code $this wrap]
+   }
+
+   pack $itk_component(wrapapply) $itk_component(rotwrap) \
+      $itk_component(azwrap) -side right -pady 3 -padx 20
+
+# Trace changes in the selected field.
+   trace variable ::Config(tcs.field,value) w [itcl::code $this newfield]
+
+# Replace the apply button with Slew/Set and Preview buttons.
+   destroy $itk_component(store) $itk_component(aframe)
+
+   set w $itk_component(row4)
+   itk_component add setslew {
+      LiveButton $w.setslew -text "Set/Slew" \
+            -command [itcl::code $this apply] -width 8
+   }
+   itk_component add store {
+      StoreButton $itk_interior.store -text Store -width 6 \
+             -command [itcl::code $this store] \
+             -combobox $itk_component(selector)
+   }
+   itk_component add preview {
+      button $w.preview -text Preview \
+            -command [itcl::code $this preview] -width 8
+   }
+   pack $itk_component(setslew) $itk_component(store) $itk_component(preview) \
+         -side left -expand y -pady 4 -in $itk_component(row4)
+
+# Set the object description.
+   set description configuration
+
+   eval itk_initialize $args
+}
+
+itcl::body TcsConfigControl::destructor {} {
+   trace vdelete ::Config(tcs.field,value) w [itcl::code $this newfield]
+}
+
+itcl::body TcsConfigControl::apply {} {
+    global instPO
+
+    logactions logmess "Starting a Slew"
+#+
+# Called when the apply button is pressed.
+#-
+# First check to make sure that the laser isn't propogating!
+    if {[string equal [sa aossad get laserProp] "SKY"]} {
+        logactions logmess "Warning The laser is propogating, aborting slew"
+	tk_messageBox -icon error \
+	    -message "You cannot SLEW while the laser is propogating"
+	return
+    }
+
+# Ensure that the STRAP is off
+    if {[AO state gaosTTGS]} {
+        logactions logmess "Warning The STRAP Detector is On, aborting slew"
+	tk_messageBox -icon error \
+	    -message "Warning The STRAP Detector is On"
+	return
+    }
+
+# If we're using NICI, send the Star Magnitude to NICI
+    set inst $::Config(tcs.instrument,value)
+    set oiName [sa agssad get oiwfsName]
+    if { [string match "*NICI*" $inst] } {
+	set target $::Config(tcs.field.sciencetarget,value)
+	logactions logmess "Science Target: $target"
+	set magnitude [$::Config(tcs.field.oiwfstarget,namespace)::$target cget -brightness]
+	set magparts [split $magnitude " "]
+	set magnitude [lindex $magparts 0]
+	if {[string is double -strict $magnitude]} {
+	    if { ![catch {cs niciMag info}] } {
+		logactions logmess "writing magnitude $magnitude to NICI"
+		cs niciMag set mag $magnitude
+		cs niciMag set mode Auto
+		cs niciMag set conf config
+		cs niciMag set dir 0
+		after 100
+		cs niciMag set dir 3
+	    }
+	} else {
+	    tk_messageBox -icon error \
+		-message "Attempting to send invalid Magnitude to NICI"
+	    return
+	}
+    }
+
+# If we're using NICI, make sure that the filter is set to block ([string match "*NICI*" $inst] ||[string match "NICI" $oiName])
+# rather, if NICI is on the telescope
+
+    if {([sa agssad get portNici] != "No Value") && ([sa agssad get portNici] > 0) } {
+	if { ![catch {sa nici info}] } {
+	    set niciFilter [sa nici get ndfilt]
+	    puts "NICI ndfilter is set to $niciFilter"
+	    if {![string match "*Block*" $niciFilter]} {
+		tk_messageBox -icon error \
+		    -message "Warning The NICI ndFilter is not set to Block"
+		return
+	    }
+	}
+    }
+
+
+# If this is an AO target and we're using the Laser, check for a collision
+    set slewoptions $::Config(tcs.slewoptions,value)
+    #puts "ltcscheck is [::SlewOptionsNames::$slewoptions cget -ltcscheck]" 
+    if {([string match "*LGS*" $::Config(tcs.gaos,value)]) && [::SlewOptionsNames::$slewoptions cget -ltcscheck]} {
+	logactions logmess "LGS target ... checking for collisions"
+	logactions logmess "have target: $::Config(tcs.field.sciencetarget,value)"
+	set laserTarget ${::Config(tcs.field.sciencetarget,namespace)}::${::Config(tcs.field.sciencetarget,value)}
+	set ra [$laserTarget cget -c1]
+	set ra [string trim $ra " "]
+	set dec [$laserTarget cget -c2]
+	set dec [string trim $dec " "]
+	set epoch [$laserTarget cget -cosys]
+	set epoch [string trimleft $epoch "FK54/JB"]
+	# fov is in the range 1 to 1.67
+	set fov 1.67 
+	# convert ra and dec to the format needed by the script
+	set found [string first " " $ra]
+	while {$found != -1} {
+	    set ra [string replace $ra $found $found ":"]
+	    set found [string first " " $ra]
+	}
+	set found [string first " " $dec]
+	while {$found != -1} {
+	    set dec [string replace $dec $found $found ":"]
+	    set found [string first " " $dec]
+	}
+	logactions logmess "sending: ltcsQuery $ra $dec $epoch $fov"
+	if { [catch {exec ltcsQuery $ra $dec $epoch $fov} result ] } {
+	    set choice [tk_messageBox -icon warning \
+			    -message "Checking for a collision using: ltcsQuery $ra $dec $epoch $fov\nReturned error: $result\nContinue with slew anyway?" \
+			    -type yesno -default yes ]
+	    if {$choice == "no"} {
+		return
+	    }
+	} else {
+	    logactions logmess "ltcsQuery returned: $result"
+	    #set result { { "UH2.2M" "Wed Jan 24 11:24:17 2007" "Wed Jan 24 14:26:32 2007" "03:02:15" } }
+	    #puts "result: $result"
+	    set result [string trim $result " {}"]
+	    if {[llength $result] > 0} {
+		#we have a collision
+		set telescope [lindex $result 0]
+		set start [lindex $result 1]
+		set end [lindex $result 2]
+		set duration [lindex $result 3]
+		set choice [tk_messageBox -icon warning \
+				-message "Collision detected with $telescope from $start until $end for $duration\nContinue with slew anyway?" \
+				-type yesno -default no ]
+		if {$choice == "no"} {
+		    return
+		}
+	    }
+	}
+    }
+
+# Configure UseAO flag in the TCS
+
+    if { ![catch {cs configForAO info}] } {
+	if {[string match "No AO" $::Config(tcs.gaos,value)] || [string match "" $::Config(tcs.gaos,value)]} {
+	    cs configForAO set useAO "No"
+	    logger command configForAO
+	    logactions logmess "Applying configForAO No"
+	    iss configure -source SKY -ao OUT
+	    if { [catch {cs tcsApply post} msg] } {
+		tk_messageBox -icon error -message $msg
+		return
+	    }
+	} else {
+	    cs configForAO set useAO "Yes"
+	    logger command configForAO
+	    logactions logmess "Applying configForAO Yes"
+	    iss configure -source AO -ao IN
+	    if { [catch {cs tcsApply post} msg] } {
+		tk_messageBox -icon error -message $msg
+		return
+	    }
+	}
+    }
+
+# Try setting Guide mode (chop states) first here to see if the P2>P2 MAx prob goes away
+    #apply guide config (nod states) before point origin
+    set fieldObj ${::Config(tcs.field,namespace)}::${::Config(tcs.field,value)}
+    set guide "No guiding"
+    #puts "guide: $guide"
+    set guideObj ::GuideNames::$guide
+    #puts "guideObj: $guideObj"
+    $guideObj apply tcs.field.guide
+
+# Set OIWFS mode in the TCS
+   set guide $::Config(tcs.field.guide,value)
+   if { ! [string equal $guide ""] } {
+       set inst $::Config(tcs.instrument,value)
+       if {([string equal $guide "AO-OI"]) && [string match "*NIFS*" $inst]} {
+	   set oiwfstarget $::Config(tcs.field.oiwfstarget,value)
+	   #puts "oiwfs target: $oiwfstarget"
+	   if {! [string equal $oiwfstarget ""]} {
+	       #puts "found NIFS (Aowfs/OI)"
+	       cs oiwfsSelect set oiwfs NIFS
+               cs oiwfsSelect set output WFS
+	       logger command oiwfsSelect
+	   } else {
+	       #puts "no OIWFS"
+	       cs oiwfsSelect set oiwfs None
+               cs oiwfsSelect set output WFS
+	       logger command oiwfsSelect
+	   }   
+       } elseif {[string match "*OI*" $guide]} {
+	   #puts "OIWFS config, choosing oiwfs based on instrument: $inst"
+	   if {[string match "*GMOS*" $inst]} {
+	       #puts "found GMOS"
+	       cs oiwfsSelect set oiwfs GMOS
+               cs oiwfsSelect set output WFS
+	       logger command oiwfsSelect
+	   } elseif {[string match "*NIFS*" $inst]} {
+	       #puts "found NIFS"
+	       cs oiwfsSelect set oiwfs NIFS
+               cs oiwfsSelect set output WFS
+	       logger command oiwfsSelect
+	   } elseif {[string match "*GNIRS*" $inst]} {
+	       #puts "found GNIRS"
+	       cs oiwfsSelect set oiwfs GNIRS
+               cs oiwfsSelect set output WFS
+	       logger command oiwfsSelect
+	   } elseif {[string match "*NIRI*" $inst]} {
+	       #puts "found NIRI"
+	       cs oiwfsSelect set oiwfs NIRI
+               cs oiwfsSelect set output WFS
+	       logger command oiwfsSelect
+	   } elseif {[string match "*NICI*" $inst]} {
+	       #puts "found NICI"
+	       cs oiwfsSelect set oiwfs NICI
+               cs oiwfsSelect set output WFS
+	       logger command oiwfsSelect
+	   } elseif {[string match "*BHROS*" $inst]} {
+	       #puts "found BHROS"
+	       cs oiwfsSelect set oiwfs BHROS
+               cs oiwfsSelect set output WFS
+	       logger command oiwfsSelect
+	   } else {
+	       #puts "no OIWFS"
+	       cs oiwfsSelect set oiwfs None
+               cs oiwfsSelect set output WFS
+	       logger command oiwfsSelect
+	   }
+       } else {
+	   #puts "no OIWFS"
+	   cs oiwfsSelect set oiwfs None
+           cs oiwfsSelect set output WFS
+	   logger command oiwfsSelect
+         }
+   }
+
+# Configure default filters, fieldstop for the WFS
+
+    if {[string match "*P1*" $guide]} {
+	pwfs filter pwfs1 "Red"
+#	pwfs fldstop pwfs1 "open1"
+    }
+    
+    if {[string match "*P2*" $guide]} {
+	pwfs filter pwfs2 "Red"
+#	pwfs fldstop pwfs2 "open1"
+    }
+
+    if {[string match "*OI*" $guide]} {
+	if {[string match "*GMOS*" $inst]} {
+	    set ::Config(tcs.field.guide.oiwfswavelength,value) "GMOS OIWFS"
+	} elseif {[string match "*NICI*" $inst]} {
+	    set ::Config(tcs.field.guide.oiwfswavelength,value) "NICI OIWFS"
+	} else {
+	    set ::Config(tcs.field.guide.oiwfswavelength,value) "K"
+	}
+    }
+
+#     set oiwlList $::Config(tcs.field.guide.oiwfswavelength,list)
+#     puts "OIWFS Wavelength List: $oiwlList inst: $inst"
+#     set inst [$::Config(tcs.instrument,namespace)::$inst cget -name]
+#     set inst [string toupper $inst]
+#     puts "OIWFS Wavelength List: $oiwlList inst: $inst"
+#     set oiwlName "$inst OIWFS K"
+#     puts "looking for name: $oiwlName"
+#     if {[$oiwlList index $oiwlName] > 0} {
+# 	puts "found OI wl $oiwlName"
+# 	set ::Config(tcs.field.guide.oiwfswavelength,value) $oiwlName
+#     }
+
+# Set the proper P2 gains for NICI, or the defaults otherwise.
+   switch -glob $inst {
+       *NICI* { set instName NICI }
+       default { set instName $inst }
+   }
+   if { [string match "*P1*" $guide] } {
+      applyP1M2Gains $instName $guide
+   }
+   if { [string match "*P2*" $guide] } {
+      applyP2M2Gains $instName $guide
+   }
+
+# Zero the offsets for the Gimbals if we're using aowfs and not LGS
+    if {[string match "*AO*" $guide] && ![AO state useLwfs]} {
+	if { ![catch {cs aoGimOffsets info}] } {
+	    cs aoGimOffsets set xoff 0
+	    cs aoGimOffsets set yoff 0
+	    cs aoGimOffsets set zoff 0
+	}
+    }
+
+# this is a slew ... reset wrap controls
+   $itk_component(azwrap) select 1
+   $itk_component(rotwrap) select 1
+
+# Process the wrap controls
+   switch -- [$itk_component(azwrap) get] {
+      + {cs wrap set azimuth 1}
+      "" {cs wrap set azimuth 0}
+      - {cs wrap set azimuth -1}
+   }
+   switch -- [$itk_component(rotwrap) get] {
+      + {cs wrap set rotator 1}
+      "" {cs wrap set rotator 0}
+      - {cs wrap set rotator -1}
+   }
+   logger command wrap
+
+# if the instrument origin is different from instPO (science fold on AC)
+# restore instPO before storing/slewing.  rotator_axis will be reapplied below
+
+   if { ($::Config(tcs.pointorig,value) == "rotator_axis") && ($instPO != "rotator_axis") } {
+       set ::Config(tcs.pointorig,value) $instPO
+   }
+
+# Call the normal apply function.
+   $this ComponentControl::applycmd
+
+# Configure default filters, fieldstop for the WFS, and AO Flexture Model
+    if {[string match "*AO*" $guide]} {
+	logactions logmess "Configuring for AO"
+	set ::Config(tcs.field.guide.aowfswavelength,value) "GAOS"
+#	pwfs filter pwfs2 "AOWFS"
+	# set the NCPA and Flexure config file names for altair
+	if {[AO state useLwfs]} {
+	    logactions logmess "using LGS"
+	    set wfs Lgs
+	} else {
+	    set wfs Ngs
+	}
+	set inst $::Config(tcs.instrument,value)
+	set instname [$::Config(tcs.instrument,namespace)::$inst cget -name]
+	set instr ""
+	set port 0
+	if {[string match "*NIRI*" $inst] || [string match "*niri*" $instname]} {
+	    set instr NIRI
+	    set port [sa agssad get portNiri]
+	    #set the deocus offset
+	    if { ![catch {cs aoSFOdefocus info}] } {
+		cs aoSFOdefocus set offset [calparam cget -niri_sfo_defocus]
+	    }
+	} elseif {[string match "*NIFS*" $inst]} {
+	    set instr NIFS
+	    set port [sa agssad get portNifs]
+	    #set the deocus offset
+	    if { ![catch {cs aoSFOdefocus info}] } {
+		cs aoSFOdefocus set offset [calparam cget -nifs_sfo_defocus]
+	    }
+	}
+	if {$port == 0} {
+	    tk_messageBox -icon error \
+		-message "The AGS has specified an invalid port (0) for $inst"
+	    return
+	}
+	set port "p$port"
+	if {[string length $inst] > 0} {
+	    if { ![catch {cs aoFlex info}] } {
+		set ncpafile "/aoBase/rel/input/aoNcpa${instr}${port}${wfs}.dat"
+		set flexfile "/aoBase/rel/data/aoFlex${instr}${port}${wfs}.dat"
+		logactions logmess "Setting ncpafile: $ncpafile"
+		logactions logmess "Setting flexfile: $flexfile"
+		#puts "ncpafile: $ncpafile"
+		#puts "flexfile: $flexfile"
+		cs aoFlex set ncpa $ncpafile
+		cs aoFlex set flex $flexfile
+		cs aoFlex set dir 3
+	    }
+	}
+    }
+
+# Reinvoke the sf to auto conf inst origin and wavelength
+   global sfPos
+   if {$sfPos != "empty"} {
+       ObserveControl::setfold $sfPos 0
+   }
+
+}
+
+itcl::body TcsConfigControl::save {name} {
+#+
+#  Updates the named configuration with the active components.
+#-
+   foreach component $components option $options {
+      if { [$itk_component($component) cget -active] } {
+         $name configure \
+                $option [[$itk_component($component) component selector] get]
+      } else {
+         $name configure $option ""
+      }
+   }
+}
+
+itcl::body TcsConfigControl::preview {} {
+#+
+#  Maps the preview window by calling the preview method for the
+#  config object followed by the update method of the previewControl.
+#-
+
+# Create or map the preview panel.
+   previewPanel map
+
+# Store the values in the temporary config object.
+   save $::Config(tcs,anon)
+
+# Call the preview panel's update method to generate and display the preview.
+   [[previewPanel cget -name] component control] update
+}
+
+itcl::body TcsConfigControl::load {name} {
+   if { ! [string equal [namespace tail $name] ""] } {
+      foreach component $components option $options {
+         if { [$itk_component($component) cget -active] } {
+            set comp [$name cget $option]
+            if { ! [string equal $comp ""] } {
+               set ::Config(tcs.[string tolower $component],value) $comp
+               $itk_component($component) configure \
+		   -source [namespace tail $name]
+		if {$component == "pointOrig"} {
+		    global instPO
+		    set instPO $comp
+		    #puts "set instPO to $instPO"
+		}
+            }
+         }
+      }
+      set name ::FieldNames::[$name cget -field]
+      foreach subcomponent $fieldcomponents suboption $fieldoptions {
+	  set comp [$name cget $suboption]
+	  if { ! [string equal $comp ""] } {
+	      set ::Config(tcs.[string tolower $subcomponent],value) $comp
+	  }
+      }
+   }
+}
+
+itcl::body TcsConfigControl::wrap par {
+   switch $par {
+      azimuth {
+         switch -- [$itk_component(azwrap) get] {
+            + {return 1}
+            "" {return 0}
+            - {return -1}
+         }
+      }
+      rotator {
+         switch -- [$itk_component(rotwrap) get] {
+            + {return 1}
+            "" {return 0}
+            - {return -1}
+         }
+      }
+   }
+}
+
+itcl::body TcsConfigControl::newfield {n1 n2 op} {
+   set name $::Config(tcs.field,value)
+   if { $name == "" } {
+      $itk_component(obsid) configure -text ""
+   } else {
+      $itk_component(obsid) configure -text \
+            [$::Config(tcs.field,namespace)::$name cget -observationid]
+   }
+}
+
+itcl::body TcsConfigControl::sesidle {} {
+   set dialog  $itk_interior.reason
+   if { ! [winfo exists $dialog] } {
+      set dialog [IdleReasonDialog $dialog -modality application \
+            -master $itk_interior]
+      $dialog center
+   }
+   if { [$dialog activate] } {
+      ocssession idleReason [$dialog get reason] [$dialog get comment]
+   }
+}
+
+itcl::body TcsConfigControl::applyP1M2Gains {instName wfs} {
+   set tipGain [calparam p1m2TipGain $instName $wfs]
+   set tiltGain [calparam p1m2TiltGain $instName $wfs]
+   set focusGain [calparam p1m2FocusGain $instName $wfs]
+   if { $tipGain != "<undefined>"  && $tiltGain != "<undefined>"  && \
+        $focusGain != "<undefined>"} {
+      cs pwfs1m2Gain tipGain $tipGain
+      cs pwfs1m2Gain tiltGain $tiltGain
+      cs pwfs1m2Gain focusGain $focusGain
+   } else {
+      cs pwfs1m2Gain resetDefaults 1
+   }
+   cs pwfs1m2Gain dir 0
+   after 100
+   cs pwfs1m2Gain dir 3
+}
+
+itcl::body TcsConfigControl::applyP2M2Gains {instName wfs} {
+   set tipGain [calparam p2m2TipGain $instName $wfs]
+   set tiltGain [calparam p2m2TiltGain $instName $wfs]
+   set focusGain [calparam p2m2FocusGain $instName $wfs]
+   if { $tipGain != "<undefined>"  && $tiltGain != "<undefined>"  && \
+        $focusGain != "<undefined>"} {
+      cs pwfs2m2Gain tipGain $tipGain
+      cs pwfs2m2Gain tiltGain $tiltGain
+      cs pwfs2m2Gain focusGain $focusGain
+   } else {
+      cs pwfs2m2Gain resetDefaults 1
+   }
+   cs pwfs2m2Gain dir 0
+   after 100
+   cs pwfs2m2Gain dir 3
+}

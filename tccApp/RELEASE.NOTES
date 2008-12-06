@@ -1,0 +1,663 @@
+New feature in version 2.0
+
+TCC
+---
+
+1) The science and guide targets are not contained within a component called
+   "field" and each field has its own list of targets.
+
+2) The rotator and guide components have moved from the tcs configuration
+   to the field.
+
+3) The airmass limit and Gemini program id have been moved from the science
+   target to the field.
+
+4) The observing and guiding wavelengths have been moved from the targets to
+   the field and guide components respectively.
+
+4) The targets now has a brightness component; all the TCC does with it is
+   to display it so it can be any character string you like.
+
+5) Multiple catalogues can be loaded into the sky plot (aka "radar screen")
+   and plotted with a selectable colour. Catalogues can also be unloaded.
+
+6) The guide component can set the peripheral wave-front sensor filters. A 
+   default wavelength is provided when the filter is selected.
+
+7) The "preview" window now displays the guide stars' distance from the field
+   center in arcmin.
+
+8) Files containing target and other component definitions imported and 
+   exported from the TCC are now in XML.
+
+9) The tracking frame component has been removed from the tcs configuration. 
+   manager window. They can still be set by opening the tracking frame
+   editing window from the Edit menu of the target selector window.
+
+10) OIWFS follow can be controlled from the Aquisition and Guiding screen.
+
+TSD
+---
+
+1) The state of the GPOL slides is now displayed on the TSD.
+
+2) The guider effective wavelengths are now displayed on the TSD.
+
+Changes since V2.0a1 released.
+
+1) Target objname defaults to target name.
+
+2) Faster XML parser.
+
+3) Bugs in the interpretation of catalogue epochs fixed.
+
+4) dedication and firstlight catalogues deleted.
+
+5) posAngle added to XML field definition that creates a rotator component with
+   cosys set to FK5/J2000.
+
+6) Zero instrument offsets option added to slew. (requires TCS V4-3).
+
+7) "extended" added to the M2 deployable baffle positions.
+
+Changes since V2.0a2 released.
+
+1) GPOL parked before attempting to insert the HRWFS pick-off mirror.
+
+Changes since V2.0a3 released.
+
+1) Fixed bug that cleared a control when applied with no name.
+
+2) Dependency on ocssupport/tcclib removed.
+
+3) Differential track rates are now specific to a field rather than being
+   global.
+
+4) Various bugs in track rate handling fixed.
+
+Changes since V2.0a4 released.
+
+1) Reading of catalogues by pointtest corrected.
+
+2) GUI is updated while XML files are bing parsed.
+
+Changes since V2.0a5 released.
+
+1) Orbital element input revised.
+
+2) Automatic generation of orbital element for major planets.
+
+3) Elements corrected for planetary perturbations.
+
+4) Modest improvement in speed of reading configuration files.
+
+Changes since V2-1a1 released.
+
+1) Orbital element parameter names revised.
+
+2) Limits for detecting science fold out of position relaxed.
+
+3) Output of proper motion units to XML file corrected.
+
+Changes since V2-1 released.
+
+1) Control of HR & AO pickoff mirrors improved to not attempt to move
+   the mirrors when already in the correct position.
+
+2) AO added to light path selection.
+
+3) M1 tuning tool.
+
+4) Proper motion units changed from arcsec to arcsecs to match the OT.
+
+Changes since V2-2 released.
+
+1) Support for ALTAIR.
+
+2) IPA & IAA displayed on TSD
+
+3) Faster loading of XML files
+
+4) Support for OCS-1
+
+5) Plot of selected field added to the field data entry window.
+
+6) Light path selected with buttons instead of an option menu.
+
+7) Instrument handset revised to avoid inadvertently setting different
+   instrument origins for the A & B chop states.
+
+8) Potential deadlock between the TCC and Skycat fixed.
+
+9) OIWFS name added to the TCC.
+
+10) The name of the proxy hosting the OCS SOAP services is now defined in
+    the site specific calibration parameters file.
+
+11) The target filter is disabled when offsetting to Sky and re-applied
+    when returning to Object.
+
+12) The target positions and rotator configurations are no logger logged
+    twice.
+
+Changes since V2-3 released.
+
+1) Source B wavelength is set to the same as the source A wavelength when
+   a Chop configuration is applied.
+
+2) Field plot now handles solar system objects.
+
+3) TCS configuration edit screen adjusted to allow for longer configuration
+   names and program id's.
+
+4) TSD now always displays the source A target position even when in nod state
+   B.
+
+5) Control for taking a single HRWFS/acquisition camera frame added to the
+   Acquisition & Guiding screen.
+
+6) The M1 tuning wizard displays the M1 model as it is updated.
+
+7) The DECS is turned on and off with chopping.
+
+8) "flashing chop lights" added to the TSD.
+
+9) M1 control panel added with commands to park/unpark and control the open
+   loop model.
+
+10) There is now the option of viewing the XML source of observations in the
+    queue.
+
+11) The position of the ALTAIR WFS in now displayed on the TSD.
+
+Changes since V2-4 released.
+
+1) A Bug in setting of HR pickoff mirror when using port 1 has been fixed.
+
+2) Handset buttons are labelled with x,y and p,q for acquisition camera
+   and instrument orientations respectively.
+
+3) The colours of the target entry and handset pages can be set with the
+   options file.
+
+4) The Cass Rotator control screen stop command can apply the brakes.
+
+5) The Cass Rotator control screen can select the head when datuming
+
+6) OIWFS selection added to Instrument configuration. *This feature has
+   been disabled because of conflicts between OIWFS names and science
+   fold position names.*
+
+7) The light from GCAL is always shown as white on the TSD and no longer
+   goes gray when the telescope beam is vignetted by the enclosure.
+
+8) The guide-loop screen has been revised to separate coma control from 
+   M2 tip/tilt and focus.
+
+9) The controls for M1 astigmatism correction and M2 coma correction have been
+   simplified.
+
+10) Control of the wave-front sensors for taking quick-look images has been
+    separated from the guide-loop control.
+
+11) The guide configuration now includes the field stop position.
+
+12) The check of OIWFS position against the limits in the preview has been
+    corrected.
+
+13) The OI an AO WFS demands and positions are now displayed graphically on 
+    the TSD.
+
+14) The rotator centre wrap button has been removed from the system control 
+    screen.
+
+15) The guide loop control screen has a reset button that disables all the
+    loops and resets all the configuration to OFF.
+
+16) Options to disable and/or reset the guide loop configuration added to the
+    slew options.
+
+17) The WFS processing mode is set to sequence closed loop when the guide
+    loops are closed.
+
+18) A buttons has been added to the acquisition and guiding screen to start
+    a WFS with the quick-look stream.
+
+19) A buttons has been added to the acquisition and guiding screen to stop
+    a WFS.
+
+20) A buttons has been added to the acquisition and guiding screen to offset
+    the probe, take a sky frame and restore the probe position.
+
+21) The last activated light path button now stays green (again).
+
+22) The catalog "radar screen" has been moved to its own top level window
+    making the target position entry window much smaller.
+
+23) The configuration of M2 is now deduced from the guide configuration.
+
+24) The Nod button now disables and re-enables guiding.
+
+25) The "Offset back to object" button now only re-enables guiding if it was
+    on when the "offset to sky" button was pressed.
+
+26) Buttons have been added to the system control screen for zeroing the
+    coma correction and clearing the guide focus.
+
+27) The alternating chop beam display on the TSD has been replaced with
+    a watchdog that detected when chopping is on but the beam has stopped
+    changing for more than 10 seconds.
+
+28) The layout of time and M2 information on the TSD has been reorganised.
+
+29) Seeing estimate from the WFS added to the TSD.
+
+30) M2 X/Y position added to the TSD.
+
+31) Summary of active optics configuration replaces the M2 configuration 
+    on the TSD.
+
+32) The pointtest application now has an option to select the next star
+    at random.
+
+33) The pointtest application now waits until fewer than seven M1 actuators
+    are moving before enabling guiding.
+
+34) The pointest application now enables guiding when the vignetting by the
+    dome falls below 10%.
+
+35) The display of local time in Chile now shows daylight saving time when
+    appropriate. *This feature depends on the skycalc program being installed
+    in /star/bin on the machine on which the TSD is started*.
+
+    When Chile moves from DST to CST or vice-versa the TSD must be restarted
+    in order to display the correct time.
+
+36) The plot function will start a new copy of skycat if there is an existing
+    one running that won't respond to messages.
+
+Changes since V2-5 released. (Release V2-5fix)
+	This is a variety of bug fixes ... no real changes)
+
+1)  Fixed Differential Track Rates by Dave Terrett.  Feature hadn't been used before.
+    in Target.itcl
+
+2)  Fixed bug where Altair Track Rate Panel stored changes in pwfs2.
+    in createPanels.tcl
+
+3)  Tweaked spacing in the GUI so button to open trackRates is visible.
+    in TargetControl.itcl
+
+4)  Increased Window height so there's enough room for the entry widgets. 
+    in TrackRateControl.itcl
+
+5)  Delay added by mbec in Dark.itcl
+
+6)  Changed field stop and filter options to match current luts in GuideControl.itk
+
+7)  Changed the backgrounds on the TrackRateControl screens to match the target with 
+    which it is associated (for GN only in options.MK)
+
+Changes since V2-5fix
+
+by Dave Terrett: 
+
+1)  correct manipulation of filter names.
+
+2)  Removed duplicate Switch Case.
+
+by AWE:
+
+3)  Added Monitoring of Shutter Drive Currents
+
+Changes since V2-6
+
+1)  by Dave Terrett: Implemented a p,q flip in Handset.itk
+
+2) by Dave Terrett: Fixed RA proper motions > 12 hrs
+
+3) by AWE: Changed Label of one Altair button from Datum to Unpark to correctly
+   reflect functionality.
+
+4) by AWE: Implemented "Swap Guide" to facilitate pointing tests.
+
+Changes since V2-7
+
+by Dave Terrett:
+
+1) Automatic Sky Exposures which offset the telescope rather than the guide probe.
+
+2) Implement the OIWFS automatic Sky exposures.
+
+by AWE:
+
+3) Added Guide Alarm to sound an alarm if guide counts drop below a threshhold.
+
+4) Improvements to Swap Guide
+
+5) Changed Altiar labels to AOWFS or GAOS
+
+6) Removed the weather Server
+
+7) Some cosmetic changes ... rearranging widgets etc.
+
+Changes since V2-8
+
+by AWE:
+
+1) Automatically disable Altair in the TCs when the AO Fold is Out
+
+2) Remove Probe Unwrap buttons from the A&G screen and add to new Ags Screen.
+
+3) Remove Mount Guide Option from the A&G screen
+
+4) Move the M2 Baffle controls to the observinf wavelength screen
+
+5) Automatically set the baffles based on the observing wavelength
+
+6) Add AOWFS Follow and Park buttons to the A&G screen
+
+7) Display P & Q on the TSD
+
+8) Modify the Guide Counts Alarm to also monitor the centrods and to only enable when the loop is closed
+
+Changes since V2-9
+
+by AWE:
+
+TCC:
+
+1) new Handset option to automatically open loop while offsetting (and close again when the move is complete)
+
+2) automatically configure instrument origin (hot spot) based on instrument when the science fold is moved
+
+3) changed track rates to be enterred and displayed in arcsec/hour
+
+4) automatically configure OIWFS settings in the TCS just before slewing
+
+5) removed disabling of altair in the TCS when the Science Fold is out ... new TCS version takes care of this
+
+6) automatically turn on air purge when altair is parked and off when altair is unparked
+
+7) load selections for field subcomponents into the global config variable when a config is loaded (even
+	if the Field Panel doesn't exist)
+
+8) automatically configure OIWFS source and destination in the TCS before a slew
+
+9) minor cosmetic changes like naming panel "Instrument Origin" rather than "Pointing Origin" and
+	change label from "M2 Central hole cover" to "Periscope"
+
+10) disabled all AO related features in options.CP
+
+TSD:
+
+10) TSD now displays AO seeing, and has a -eng option to display x,y : otherwise only p,q are displayed
+
+11) added -eng option to the TSD which displays X,Y as well as P,Q ... default is P,Q only
+
+Changes since V3-0
+
+by AWE:
+
+TCC:
+
+1) added OIWFS blending support for Altair
+
+2) added NIFS support (including OIWFS mode and Hotspot)
+
+TSD:
+
+1) correctly display GCAL Xe lamp
+
+
+Changes since V3-1
+
+by AWE:
+
+TCC:
+
+1) support new guide config names (P1, P1-P2, P2-OI etc)
+
+2) automatically configure wfs filter and fieldstop when slewing
+
+3) move filter and fieldstop controls to the A&G screen
+
+4) support OIWFS blending in Guide Loops (graphical display)
+
+5) clean up and reorganize A&G screen
+
+6) incorporate AO+M2 functionality into main loop enable command
+
+7) move detailed AO commands to a seperate GAOS screen
+
+8) disable new blending options in GS
+
+Changes since V3-2  (by AWE)
+
+1) Change all remaining references to Altair to be GAOS or AOWFS in
+   order to support different AO systems in GN and GS
+
+2) Fully integrate GAOS into the Guide Loop and aquisition and guide screens
+
+3) Additional control loops, sequencing and underlying xml code are added
+   to support LGS mode.
+
+4) Redesigned the Guide Loop screen to make it easier to read and use
+
+5) Reset in HAndset opens loops
+
+6) Selecting science Fold position Sky>Instrument opens loops
+
+7) MidIR defaults implemented (sequence closed loop and target to mount filter)
+
+8) Implement/Fix Gaos Park for both NGS and LGS modes
+
+9) Improve sequencing when closing the loop using GAOS (Check for Idle before continuing)
+
+10) Added button locks on the System Control screen to prevent accidental parking or indexing of subsystems
+
+Only in V3-3lgsdev (developed during lgs commissioning)
+
+11) Added monitoring of aoSettled to the A&G screen
+
+12) Only close STRAP loop if aoSettled is true
+
+13) implement reuse Gains in LgsMode.  Automatically configured and can be manually controlled from the GAOS subsystem screen
+
+14) Added SFO guide Alarm
+
+15) Implemented GAOS Unpark
+
+Changes since V3-3 (by AWE)
+
+1) The internal TCC useLwfs state (retrieved by [AO state useLwfs] now requires the external useLwfs to be ON and that the Adaptive Optics configuration is something other than "No AO" or "".  Additionally, applying an adaptive optics configuration now redraws the Guide Loop picture, as new options may be available.
+
+2) Added timeouts when opening and closing loops in the Aquisition and Guiding screen.  
+
+3) Added BUSY/IDLE functionality to enable/disable/reset implementation.  Prevent ew enable/disable/reset demand when busy.
+
+4) Many AO imrovements/refinements including: usage of altair's reues gain flag, monitoring loop settled status, handset offsets when using LGS only open/close the NGs portion of the loops, turn of Cal Source lamps when configuring, auto setting of NCPA and flexure filenames.
+
+5) Added support for probe offsetting (used by the new TCS version).
+
+6) Added gacq offset support: Popup generated upon receipt of offset demand and, if accepted, apply offsets.
+
+7) Added command locks to Index and Park columns in the System Control Screen.
+
+8) Implemented GAOS unpark, updated GAOS park.
+
+9) In TSD, changed seeing label to V rather than R.
+
+10) In the Handsets, override the arrow key offset bindings when editting the custom offset amounts.
+
+11) Specify a site specific path to find the skycalc executable in calparams.<site>  skycalc is used to determin whether Chile is on Daylight Savings Time.
+
+New Features in V3-5 (by AWE)
+
+TCC:
+
+1) Automatically sequence switching between NGS and LGS when using Altair
+
+2) Automatically configure STRAP and change flux mode if neccesary
+
+3) added a pulldown menu to configure SFO exp time based on star magnitude
+
+4) automatically configure STRAP exp time based on SFO
+
+5) added slew option to check for laser collisions
+
+6) Prevent slewing if the A&G Sequencer reports port 0 for an instrument
+
+TSD:
+
+1) rewrote the Science Fold inPosition and Parked logic to use inPosition, Parked and Busy flags.
+   Previously this had depended on hardcoded mechanism positions.
+
+
+New Features in V4-0 (by AWE)
+
+TCC
+
+1) This version has been modified to support the new releases of the TCS (V6-9 and newer).
+   It supports non-siderial guide targets and configures a new "configForAO" record which replaces the AOFold in the TCs for determining if we are using AO or not.
+
+2) There are improvements to the implementation of the STRAP sequencing.
+
+3) There is now a "force" configuration option in the GAOS screen which allows the user o reapply the config even if the TCC thinks that Altair is already in the correct mode.
+
+4) Added NICI support: - check that the NICI nd filter is set to block before slewing
+                       - configure NICI magnitude before slewing
+                       - configure pixel router for NICI
+
+TSD:
+
+1) Changed the color scheme for the WFS Probes.  Instead of using a Stipple to show that there is a probllem with the nod configuration, they now turn orange.  This is to make it easier to see if there is a problem at night at 14,000 feet :) See TCC-23 in JIRA
+
+
+New Features in V4-1 (by AWE)
+
+TCC
+
+1) Additional NICI support: - configure, start and monitor NICI automatic ND filter selection
+			    - Added NICI Guide Alarm
+			    - disable NICI specific options when not using NICI
+
+2) Support for Altair NGS ND Filter ... check LWFS mode and control NGS or LGS ND filters appropriately
+
+3) Fix small bug from V4-0 ... namedTarget Moon is now supported
+
+
+Branch for NICI run Feb 25 2008
+1) Added NDFW manual control in WfsConfig.itk
+
+NICI branch (V4-1-nici) merged into main trunk.
+
+
+New Features in V4-2 (by CUR).
+
+TCC
+1) Nici changes incorporated.
+
+TSD
+1) MCS and CRCS Inposition override flag added.
+
+V4-3
+Development of NICI branch (V4-1-nici) merged into main trunk:
+1) tcclib/GuideLoop.itk (GuideLoop::constructor): Added a RecordMonitor for niciAOloop.
+
+Branch V4-3-1nici
+
+TCC
+1) ca_config/pwfs2.ca: Created. It contains channel access definitions for controling PWFS2 (needed for auto-setting P2 gains for NICI).
+2) ca_config/tcc.ca: Included pwfs2.ca
+3) lib/CalParam.itcl (class CalParam): added variables for holding P2 gains (tip, tilt, focus). Each one is an array indexed by the instrument name.
+4) lib/CalParam.itcl (CalParam::constructor): Added default values for tip, tilt and focus gains.
+5) lib/CalParam.itcl (CalParam::p2m2TipGain, CalParam::p2m2TiltGain, CalParam::p2m2FocusGain): Created these methods for accessing the gains with the instrument name.
+6) tcclib/TcsConfigControl.itk (TcsConfigControl::apply): Added auto set of P2 gains, depending on the instrument.
+7) calparams.CP: added values for NICI P2 gains and defaults gains.
+
+20080527 Javier Luhrs
+TCC
+1) ca_config/pwfs1.ca: Created. It contains channel access definitions for controling PWFS1 (needed for auto-setting P1 gains for NICI).
+2) ca_config/tcc.ca: Included pwfs1.ca
+3) lib/CalParam.itcl (class CalParam): added variables for holding P1 gains (tip, tilt, focus). Those, and the ones for P2, now are indexed by the instrument name and guiding mode.
+4) lib/CalParam.itcl (CalParam::p2m2TipGain, CalParam::p2m2TiltGain, CalParam::p2m2FocusGain): Added the guiding mode as parameter.
+5) lib/CalParam.itcl (CalParam::p1m2TipGain, CalParam::p1m2TiltGain, CalParam::p1m2FocusGain): Created these methods for accessing the P1 gains.
+6) tcclib/TcsConfigControl.itk (TcsConfigControl::apply): Added auto set of P1 gains, depending on the instrument and guiding mode. Changed the implementation for P2 to add the guiding mode.
+7) tcclib/TcsConfigControl.itk Changed previous implementation for autosetting default M2 gains for P1/P2. Now it issues default command to P1/P2.
+8) calparams.CP: added values for NICI P1 gains.
+
+
+20080612 Javier Luhrs
+1) calparams.CP: Updated P2 to M2 gains for NICI, for guide mode P2-OI.
+
+20080613 Javier Luhrs
+1) ca_config.tc1/tsd.ca: added definition of systemoverride.
+2) tcc-tcsSim: New. Script to run tcc using tcs simulator.
+3) tsd-tcsSim: New. Script to run tsd using tcs simulator.
+4) ca_config.tc1/pwfs1.ca: Added missing file. Modified definitions, so they don't point to real pwfs1.
+4) ca_config.tc1/pwfs2.ca: Added missing file. Modified definitions, so they don't point to real pwfs2.
+5) ca_config.tc1/tcc.ca: Included pwfs1.ca and pwfs2.ca.
+
+
+V4-4
+20080731 Javier Luhrs
+   Branch V4-3-1nici merged into main trunk.
+
+V4-5 changes/new features by AWE
+1) added site (MK or CP) to calparams.  Made channel initialization site specific in tccMain (consolidated channels here)
+   added checks for the existence of sa or cs to many locations to prevent errors.  This reduces channel access load on all
+   RT systems because requests for dead (non-existent) channels causes a continuous sequence of UDP broadcasts.
+   There are still a few orphan channels (inside the sad sa for example) ... these need to be pulled out and seperated.
+2) Added automatic control of the M2 XY deadband.
+3) Provide the option to keep loops closed when there is a STRAP timeout.
+
+
+Branch V4-3-1nici
+
+20081010 Javier Luhrs
+default_components.xml: Added traking frame "fixed" for rotator. 
+ca_config/guidects.ca: Changed definition for NICI APD counts channel. 
+ca_config/sad.ca
+ca_config.tc1/sad.ca: Added definition for NICI APD activity channel.
+src/tccDecode.c: tccDcFrame(): Added case for frame "fixed".
+tcclib/ActiveOptics.itcl: Added APD status.
+tcclib/CosysControl.itk Added frame "fixed" into options.
+tcclib/GuideLoop.itk: Added monitoring for APD status.
+tcclib/RotatorControl.itk: Corrected case for frame "Fixed".
+tcclib/WfsConfig.itk: Added verification of AO loop state before moving NDFW for NICI.
+
+20081014 Javier Luhrs
+tcclib/WfsConfig.itk: Added verification of SP position before moving NDFW for NICI.
+ca_config/agssad.ca
+ca_config.tc1/simagssad.ca: added definition of sfName.
+ca_config.tc1/nici.ca: Corrected some definitions for command niciMag.
+
+
+V4-6
+20081017 Javier Luhrs
+ Last changes from branch V4-3-1nici merged into main trunk.
+
+V4-7
+20081103 AWE
+Altair/LGS Improvements for the TCC
+- FLENS control now goes through the TCS rather than directly to Altair
+- When a GAOS "No AO" config is applied, LGS Zoom tracking is stopped
+- When setting useLwfs mode, check UStage and LGSZoom to determine whether the mode needs to be reapplied
+- When an error occurs changing NGS/LGS modes, Force Config is automatically turned on. The next slew/GAOS Apply will automatically force the useLwfs mode apply and clear the Force Config switch. Any manual selection of "Force Config" will clear the "Force" flag after it is applied.
+- Changed GAOS Park implementation:
+          o No longer puts Altair into NGS mode.
+          o Stops Gimbal(wfspos) and FSM tracking
+          o Stops LGS Zoom tracking.
+	  o shut down STRAP
+          o Park mechanisms
+- When setting useLwfs mode to LGS, check if the STRAP IRIS is open, if not propt user with the option to open it.
+files changed:
+ca_config/aossad.ca
+ca_config/tcsAltair.ca
+ca_config.tc1/simaossad.ca
+ca_config.tc1/tcsAltair.ca
+tcclib/Altair.itcl
+tcclib/AoControl.itk
+tcclib/ObserveControl.itk
+tcclib/TcsControl.itk

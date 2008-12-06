@@ -1,0 +1,1179 @@
+#+
+#  GuideLoop <- itk::Widget
+#
+#  A GuideLoop is a diagram of the various guiding loops with control
+#  for setting them up and enabling them
+##  Options:
+#           none
+#
+#  Methods:
+#           none
+#
+#  D Terrett  29 April 2004
+#
+#  Copyright CCLRC
+#+
+
+itcl::class GuideLoop {
+   inherit itk::Widget
+   constructor args {}
+   destructor {}
+   public {
+      method reset {}
+      method recolour {args}
+   }
+   private {
+      method comacorr {val}
+      method gaos {val}
+      method gaosTTGS {val}
+      method gaosSFO {val}
+      method m2mode {probe val}
+      method mtmode {val}
+      method probefrom {val}
+      method probeto {val}
+      method probemode {val}
+      method wfsmode {wfs val}
+      method enable {}
+      method m1mode {state}
+      method oiblend {val}
+      method ttgsloop {val}
+      method sfoloop {val}
+      method configSfoEx {}
+      variable monids
+   }
+   itk_option define -wfsConfigObj wfsConfigObj WfsConfigObj "" {
+	#puts "wfsConfigObj: $itk_option(-wfsConfigObj)"
+   }
+}
+
+itk::usual GuideLoop {
+   keep -cursor -foreground -background
+}
+
+itcl::body GuideLoop::constructor args {
+# Create canvas.
+   itk_component add canv {
+#AWE      canvas $itk_interior.canv -width 630 -height 497 -borderwidth 2 
+      canvas $itk_interior.canv -width 630 -height 475 -borderwidth 2 \
+            -relief sunken
+   }
+   pack $itk_component(canv)
+   set w $itk_component(canv)
+   AO setCanvas $itk_component(canv)
+   bind $w <Button-2> {
+       puts "on canvas x: %x y: %y"
+   }
+
+# WFS boxes AWE ... seperating out the OIWFS
+   # rectangle to group pwfs1 and pwfs2
+   $w create rectangle 0 0 141 146 -fill white -tags "active pwfs1_bg pwfs2_bg pwfs_comb"
+
+   foreach sys {pwfs1 pwfs2} {
+      itk_component add $sys {
+         SelectButton $w.$sys -orient vertical \
+            -command [itcl::code $this wfsmode $sys]
+      } {
+         usual
+         rename -offbackground -background background Background
+      }
+      $w create window 32 24 -width 60 -window $w.$sys -tags $sys
+      $itk_component($sys) add ON -pady 0
+      $itk_component($sys) add OFF -pady 0
+      itk_component add ${sys}_label {
+         label $w.${sys}_label -text [string toupper $sys]
+      }
+      $w create rectangle 0 0 132 67 -fill white -tags "active ${sys} ${sys}_bg"
+
+# WFS controls.
+      itk_component add ${sys}_ex {
+         iwidgets::combobox $w.${sys}_ex -arrowrelief flat -width 5 \
+               -validate real -labeltext "exp(s)"
+      }
+      $w create window 62 55 -window $w.${sys}_ex -tag $sys
+      $w.${sys}_ex insert list end 1.0 0.5 0.1 0.05 0.02 0.01 0.005
+      $w.${sys}_ex insert entry end [AO cget -${sys}Expose]
+      [$w.${sys}_ex component list] configure -hscrollmode none \
+            -vscrollmode none
+   }
+
+# Find the name of the font used for the buttons and use it for all text.
+   set font [$w.pwfs1 cget -font]
+
+   foreach sys {pwfs1 pwfs2} label {PWFS1 PWFS2} {
+      $w create text 92 25 -text $label -tags $sys -font $font
+   }
+
+# OIWFS including an AO mode for NICI
+   itk_component add oiwfs {
+     SelectButton $w.oiwfs -orient vertical \
+        -command [itcl::code $this wfsmode oiwfs]
+   } {
+      usual
+      rename -offbackground -background background Background
+   }
+   $w create window 32 24 -width 60 -window $w.oiwfs -tags oiwfs
+   $itk_component(oiwfs) add ON -pady 0
+   $itk_component(oiwfs) add OFF -pady 0
+   itk_component add oiwfs_label {
+      label $w.oiwfs_label -text [string toupper oiwfs]
+   }
+   $w create rectangle 0 0 132 67 -fill white -tags "active oiwfs oiwfs_bg"
+   $w create rectangle 64 2 88 22 -fill white -tags "active oiwfs oiwfs_ao"
+   $w create rectangle 64 24 88 44 -fill white -tags "active oiwfs oiwfs_wfs"
+
+# WFS controls.
+   itk_component add oiwfs_ex {
+      iwidgets::combobox $w.oiwfs_ex -arrowrelief flat -width 5 \
+            -validate real -labeltext "exp(s)"
+   }
+
+   $w create window 62 55 -window $w.oiwfs_ex -tag oiwfs
+   $w.oiwfs_ex insert list end 1.0 0.5 0.1 0.05 0.02 0.01 0.005
+   $w.oiwfs_ex insert entry end [AO cget -oiwfsExpose]
+   [$w.oiwfs_ex component list] configure -hscrollmode none \
+         -vscrollmode none
+
+   $w create text 108 25 -text OI -tags oiwfs -font $font
+   $w create text 75 13 -text AO -tags "oiwfs oiwfs_aotxt" -font $font
+   $w create text 75 35 -text WFS -tags "oiwfs oiwfs_wfstxt" -font $font
+
+# GAOS
+#   $w create rectangle 0 0 140 137 -fill white -tags "active gaos gaos_bg"
+# display aoSettled state
+   $w create rectangle 0 0 100 20 -fill white -tags "settled aoSettled active"
+   $w create text 50 10 -text aoSettled -tags settled -font $font
+
+   $w create rectangle -2 -3 144 278 -fill white -tags "active gaos gaos_bg"
+   $w create text 96 23 -text GAOS -tags gaos -font $font
+
+   itk_component add gaoson {
+      SelectButton $w.gaoson -orient vertical -command [itcl::code $this gaos]
+   } {
+      usual
+      rename -offbackground -background background Background
+   }
+   $w create window 32 22 -width 60 -window $w.gaoson -tags gaos
+   $w.gaoson add ON -pady 0
+   $w.gaoson add OFF -pady 0
+
+   # exposure time
+   itk_component add gaos_ex {
+       iwidgets::combobox $w.gaos_ex -arrowrelief flat -width 5 \
+	   -validate real -labeltext "exp(s)"
+   }
+   $w create window 62 55 -window $w.gaos_ex -tag gaos
+   $w.gaos_ex insert list end 0.02 0.01 0.005 0.002 0.001
+   $w.gaos_ex insert entry end [AO cget -gaosExpose]
+   [$w.gaos_ex component list] configure -hscrollmode none \
+       -vscrollmode none
+
+   # TTGS loop closed
+   itk_component add ttao {
+      SelectButton $w.ttao -orient horizontal \
+            -command [itcl::code $this ttgsloop]
+   } {
+      usual
+      rename -offbackground -background background Background
+   }
+   $w create window 90 79 -width 100 -window $w.ttao -tags gaos
+   $w create text 16 79 -text TTGS -tags gaos -font $font
+   $itk_component(ttao) add ON -pady 0
+   $itk_component(ttao) add OFF -pady 0
+
+   # SFO loop closed
+   itk_component add sfao {
+      SelectButton $w.sfao -orient horizontal \
+            -command [itcl::code $this sfoloop]
+   } {
+      usual
+      rename -offbackground -background background Background
+   }
+   $w create window 90 100 -width 100 -window $w.sfao -tags gaos
+   $w create text 16 100 -text SFO -tags gaos -font $font
+   $itk_component(sfao) add ON -pady 0
+   $itk_component(sfao) add OFF -pady 0
+
+   # OI Blending
+   itk_component add oiao {
+      SelectButton $w.oiao -orient horizontal \
+            -command [itcl::code $this oiblend]
+   } {
+      usual
+      rename -offbackground -background background Background
+   }
+   $w create window 90 122 -width 100 -window $w.oiao -tags gaos
+   $w create text 16 122 -text OI -tags gaos -font $font
+   $itk_component(oiao) add ON -pady 0
+   $itk_component(oiao) add OFF -pady 0
+
+   # gaosTTGS
+   itk_component add aottgs {
+      SelectButton $w.aottgs -orient vertical \
+            -command [itcl::code $this gaosTTGS]
+   } {
+      usual
+      rename -offbackground -background background Background
+   }
+   $w create rectangle 4 136 136 203 -fill white -tags "active gaos gaos_ttgs"
+   $w create window 36 160 -width 60 -window $w.aottgs -tags gaos
+   $w create text 97 156 -text TTGS -tags gaos -font $font
+   $itk_component(aottgs) add ON -pady 0
+   $itk_component(aottgs) add OFF -pady 0
+   # TTGS exp
+   itk_component add ttgs_ex {
+       iwidgets::combobox $w.ttgs_ex -arrowrelief flat -width 11 -selectioncommand [itcl::code $this configSfoEx] \
+	   -listheight 320 -editable 1 -labeltext "Mag(exp)"
+   }
+   $w create window 66 191 -window $w.ttgs_ex -tags gaos
+   $w.ttgs_ex insert list end 19.0(0.05) 18.5(0.05) 18.0(0.05) 17.5(0.02) 17.0(0.01) 16.5(0.005) 16.0(0.005) \
+       15.5(0.002) 15.0(0.001) 14.5(0.001) 14.0(0.001) 13.5(0.001) 13.0(0.001) 12.5(0.001) 12.0(0.001) 11.5(0.001) \
+       11.0(0.001) 10.5(0.001) 10.0(0.001)
+#   $w.ttgs_ex insert list end 0.05 0.02 0.01 0.005 0.002 0.001
+   $w.ttgs_ex insert entry end 10.0(0.001)
+   [$w.ttgs_ex component list] configure -hscrollmode none \
+            -vscrollmode none
+
+   # gaosSFO
+   itk_component add aosfo {
+      SelectButton $w.aosfo -orient vertical \
+            -command [itcl::code $this gaosSFO]
+   } {
+      usual
+      rename -offbackground -background background Background
+   }
+   $w create rectangle 4 207 136 274 -fill white -tags "active gaos gaos_sfo"
+   $w create window 36 231 -width 60 -window $w.aosfo -tags gaos
+   $w create text 97 227 -text SFO -tags gaos -font $font
+   $itk_component(aosfo) add ON -pady 0
+   $itk_component(aosfo) add OFF -pady 0
+   # SFO exp
+   itk_component add sfo_ex {
+       iwidgets::combobox $w.sfo_ex -arrowrelief flat -width 5 \
+	   -validate real -labeltext "exp(s)"
+   }
+   $w create window 66 262 -window $w.sfo_ex -tags gaos
+   $w.sfo_ex insert list end 50.0 20.0 10.0 7.0 5.0 2.0 1.0
+   $w.sfo_ex insert entry end [AO cget -sfoExpose]
+   [$w.sfo_ex component list] configure -hscrollmode none \
+            -vscrollmode none
+
+# M1, M2 and Mount boxes.
+   $w create rectangle 0 0 200 89 -fill white -tags "active m2 m2_bg"
+   $w create text 168 15 -text M2 -tags m2 -font $font
+   $w create text 168 35 -text TIP/TILT -tags m2 -font $font
+   $w create text 168 55 -text FOCUS -tags m2 -font $font
+   $w create rectangle 0 0 84 89 -fill white -tags "active m2xy m2xy_bg"
+   $w create text 42 15 -text "M2 COMA" -tags m2xy -font $font
+   $w create rectangle 0 0 132 109 -fill white -tags "active m1 m1_bg"
+   $w create text 92 45 -text M1 -tags m1 -font $font
+   $w create text 92 65 -text FIGURE -tags m1 -font $font
+   $w create rectangle 0 23 132 66 -fill white -tags "active mount mount_bg"
+   $w create text 92 44 -text MOUNT -tags mount -font $font
+
+# Controls for M1.
+   itk_component add m1src {
+      SelectButton $w.m1src -orient vertical \
+            -command [itcl::code $this m1mode]
+   } {
+      usual
+      rename -offbackground -background background Background
+   }
+   $w create window 32 55 -width 60 -window $w.m1src -tags m1
+   $itk_component(m1src) add PWFS1 -pady 0
+   $itk_component(m1src) add PWFS2 -pady 0
+   $itk_component(m1src) add OIWFS -pady 0
+   $itk_component(m1src) add GAOS -pady 0
+   $itk_component(m1src) add OFF -pady 0
+
+# Controls for M2
+   itk_component add m2p1 {
+      SelectButton $w.m2p1 -orient horizontal \
+            -command [itcl::code $this m2mode p1]
+   } {
+      usual
+      rename -offbackground -background background Background
+   }
+   $w create text 12 12 -text P1 -tags m2 -font $font
+   $w create window 80 12 -width 110 -window $itk_component(m2p1) -tags m2
+   $itk_component(m2p1) add ON -pady 0 -padx 0
+   $itk_component(m2p1) add OFF -pady 0 -padx 0
+
+   itk_component add m2p2 {
+      SelectButton $w.m2p2 -orient horizontal \
+            -command [itcl::code $this m2mode p2]
+   } {
+      usual
+      rename -offbackground -background background Background
+   }
+   $w create text 12 34 -text P2 -tags m2 -font $font
+   $w create window 80 34 -width 110 -window $itk_component(m2p2) -tags m2
+   $itk_component(m2p2) add ON -pady 0 -padx 0
+   $itk_component(m2p2) add OFF -pady 0 -padx 0
+
+   itk_component add m2ao {
+      SelectButton $w.m2ao -orient horizontal \
+            -command [itcl::code $this m2mode ao]
+   } {
+      usual
+      rename -offbackground -background background Background
+   }
+   $w create text 12 56 -text AO -tags m2 -font $font
+   $w create window 80 56 -width 110 -window $itk_component(m2ao) -tags m2
+   $itk_component(m2ao) add ON -pady 0 -padx 0
+   $itk_component(m2ao) add OFF -pady 0 -padx 0
+
+   itk_component add m2oi {
+      SelectButton $w.m2oi -orient horizontal \
+            -command [itcl::code $this m2mode oi]
+   } {
+      usual
+      rename -offbackground -background background Background
+   }
+   $w create text 12 78 -text OI -tags m2 -font $font
+   $w create window 80 78 -width 110 -window $itk_component(m2oi) -tags m2
+   $itk_component(m2oi) add ON -pady 0 -padx 0
+   $itk_component(m2oi) add OFF -pady 0 -padx 0
+
+   itk_component add m2coma {
+      SelectButton $w.m2coma -orient vertical \
+            -command [itcl::code $this comacorr]
+   } {
+      usual
+      rename -offbackground -background background Background
+   }
+   $w create window 42 54 -width 60 -window $itk_component(m2coma) -tags m2xy
+   $itk_component(m2coma) add ON -pady 0
+   $itk_component(m2coma) add OFF -pady 0
+
+# Controls for Mount.
+   itk_component add mt {
+      SelectButton $w.mt -orient vertical \
+            -command [itcl::code $this mtmode]
+   } {
+      usual
+      rename -offbackground -background background Background
+   }
+   $w create window 32 45 -width 60 -window $itk_component(mt) -tags mount
+   $itk_component(mt) add M2 -pady 0
+   $itk_component(mt) add OFF -pady 0
+
+# Box for WFS probes.
+   $w create rectangle 0 0 132 87 -fill white -tags "active probes probes_bg"
+   $w create text 92 44 -text PROBES -tags probes -font $font
+
+# Controls for probes.
+   itk_component add prfrom {
+      SelectButton $w.prfrom -orient vertical \
+            -command [itcl::code $this probefrom]
+   } {
+      usual
+      rename -offbackground -background background Background
+   }
+   $w create window 17 34 -width 30 -window $w.prfrom -tags probes
+   $itk_component(prfrom) add P1 -pady 0
+   $itk_component(prfrom) add P2 -pady 0
+   $itk_component(prfrom) add OI -pady 0
+
+   itk_component add prto {
+      SelectButton $w.prto -orient vertical \
+            -command [itcl::code $this probeto]
+   } {
+      usual
+      rename -offbackground -background background Background
+   }
+   $w create window 47 34 -width 30 -window $w.prto -tags probes
+   $itk_component(prto) add P1 -pady 0
+   $itk_component(prto) add P2 -pady 0
+   $itk_component(prto) add OI -pady 0
+
+   itk_component add pron {
+      SelectButton $w.pron -orient vertical \
+            -command [itcl::code $this probemode]
+   } {
+      usual
+      rename -offbackground -background background Background
+   }
+   $w create window 32 76 -width 60 -window $w.pron -tags probes
+   $itk_component(pron) add OFF -pady 0
+   $itk_component(prto) setState "0 1 2" disabled
+
+# Move boxes into position.
+   $w move m2 100 10
+   $w move m2xy 300 10
+   $w move m1 250 115
+   $w move gaos 473 74
+   $w move settled 480 40
+   $w move oiwfs 250 342
+   $w move pwfs_comb 31 191
+   $w move pwfs1 35 195
+   $w move pwfs2 35 265
+   $w move probes 250 242
+   $w move mount 250 400
+
+# PWFS to M1
+   $w create line 100 191 100 140 252 140 -width 3 -fill white \
+         -tags {active pwfs1_m1 pwfs2_m2} -arrow last -arrowshape {20 20 7}
+
+   $w create line 251 370 215 370 215 200 251 200 -width 3 -fill white \
+         -tags {active oiwfs_m1} -arrow last -arrowshape {20 20 7}
+   $w create line 471 130 381 130 -width 3 -fill white \
+         -tags {active gaos_m1} -arrow last -arrowshape {20 20 7}
+
+   $w create line 381 382 407 382 407 196 473 196 -width 3 -fill white \
+         -tags {active oiwfs_gaos} -arrow last -arrowshape {20 20 7}
+
+# GAOS internal
+   $w create line 477 241 425 241 425 154 473 154 -width 3 -fill white \
+         -tags {active ttgs_gaos} -arrow last -arrowshape {20 20 7}
+   $w create line 477 316 440 316 440 175 473 175 -width 3 -fill white \
+         -tags {active sfo_gaos} -arrow last -arrowshape {20 20 7}
+
+# WFS to M2
+   $w create line 45 191 45 33 100 33 -width 3 -fill white \
+         -tags {active pwfs1_m2 pwfs2_m2} -arrow last -arrowshape {20 20 7}
+
+   $w create line 251 389 205 389 205 100 -width 3 -fill white \
+         -tags {active oiwfs_m2} -arrow last -arrowshape {20 20 7}
+   $w create line 471 85 382 85  -width 3 -fill white \
+         -tags {active gaos_m2} -arrow last -arrowshape {20 20 7}
+
+# WFS to Probes
+   $w create line 173 265 251 265 -width 3 -fill white \
+         -tags {active pwfs1_pr pwfs2_pr} -arrow last -arrowshape {20 20 7}
+
+
+   $w create line 251 351 225 351 225 321 251 321 -width 3 -fill white \
+         -tags {active oiwfs_pr} -arrow last -arrowshape {20 20 7}
+
+
+# M2 to mount
+   $w create line 100 60  20  60  20 432 251 432 -width 3 -fill white \
+         -tags {active m2_mt} -arrow last -arrowshape {20 20 7}
+
+# ENABLE/DISABLE/RESET buttons.
+# display loopProcessing state
+   $w create rectangle 0 0 100 20 -fill white -tags "processing processing_bg"
+   $w create text 50 10 -text IDLE -tags "processingText processing" -font $font
+   $w move processing 420 420
+
+   itk_component add on {
+      LiveButton $w.on -text Enable -command [itcl::code $this enable]
+   }
+   itk_component add off {
+       LiveButton $w.off -text Disable -command { AO disable }
+   }
+   itk_component add reset {
+      button $w.reset -text Reset -command [itcl::code $this reset]
+   }
+   $w create window 430 459 -window $itk_component(on)
+   $w create window 510 459 -window $itk_component(off)
+   $w create window 590 459 -window $itk_component(reset)
+
+# Monitor the guide states
+   foreach rec {p1state p2state oistate aostate m2state absorbtilt m1state \
+         m1source p1guide p2guide oiguide p1mweight p2mweight m2p1guide m2p2guide \
+         m2oiguide m2aoguide coma oiblend aoTTGS aoSFO ttgsloop sfoloop useLwfs niciAOloop niciAPD} {
+      if { [llength [itcl::find objects ::guideConfig.$rec]] == 0 } {
+         RecordMonitor ::guideConfig.$rec guideConfig $rec
+      }
+      lappend monids [::guideConfig.$rec add [itcl::code $this recolour]]
+   }
+
+# Schedule an update once the channels have connected.
+   after 1000 [itcl::code $this recolour]
+
+   eval itk_initialize $args
+}
+
+itcl::body GuideLoop::destructor {} {
+    puts "GuideLoop::destructor"
+   foreach rec {p1state p2state oistate aostate m2state absorbtilt m1state \
+         m1source p1guide p2guide oiguide p1mweight p2mweight m2p1guide m2p2guide \
+	 m2oiguide m2aoguide coma oiblend aoTTGS aoSFO ttgsloop sfoloop useLwfs niciAOloop niciAPD} mon $monids {
+	::guideConfig.$rec remove $mon
+    }
+}
+
+itcl::body GuideLoop::recolour args {
+    global AOtryingToReuseGain AOreuseGains
+   set w $itk_component(canv)
+
+# Disable LGS options unless useLwfs is true
+   if {[AO state useLwfs]} {
+       $itk_component(ttao) configure -state normal
+       $itk_component(sfao) configure -state normal
+       $itk_component(aosfo) configure -state normal
+       $itk_component(aottgs) configure -state normal
+       $itk_component(sfo_ex) configure -state normal
+       $itk_component(ttgs_ex) configure -state normal
+   } else {
+       $itk_component(ttao) select OFF
+       $itk_component(ttao) configure -state disabled
+       $itk_component(sfao) select OFF
+       $itk_component(sfao) configure -state disabled
+       $itk_component(aosfo) select OFF
+       $itk_component(aosfo) configure -state disabled
+       $itk_component(aottgs) select OFF
+       $itk_component(aottgs) configure -state disabled
+       $itk_component(sfo_ex) configure -state disabled
+       $itk_component(ttgs_ex) configure -state disabled
+   }
+
+# Assume no signal to mount
+   set mount 0
+
+# Set everything to white.
+   $w itemconfigure active -fill white
+
+# P1 signals.
+   if { [AO state pwfs1] } {
+      $w itemconfigure pwfs1_bg -fill green
+      if { [AO state m1] && [AO source m1 PWFS1] } {
+         $w itemconfigure pwfs1_m1 -fill green
+      } else {
+         $w itemconfigure pwfs1_m1 -fill yellow
+      }
+      if { [AO state m2] && ([AO source m2 PWFS1 A] || \
+            [AO source m2 PWFS1 B]) } {
+         $w itemconfigure pwfs1_m2 -fill green
+      } else {
+         $w itemconfigure pwfs1_m2 -fill yellow
+      }
+      if { [AO state coma] } {
+         $w itemconfigure pwfs1_m2 -fill green
+      } else {
+         $w itemconfigure pwfs1_m2 -fill yellow
+      }
+      if { [AO state p1guide] } {
+         $w itemconfigure pwfs1_pr -fill green
+      } else {
+         $w itemconfigure pwfs1_pr -fill yellow
+      }
+      if { [AO state mount] && [AO source mount PWFS1] } {
+         $w itemconfigure pwfs1_mt -fill green
+         set mount 1
+      } else {
+         $w itemconfigure pwfs1_mt -fill yellow
+      }
+   }
+
+# P2 signals
+   if { [AO state pwfs2] } {
+      $w itemconfigure pwfs2_bg -fill green
+      if { [AO state m1] && [AO source m1 PWFS2] } {
+         $w itemconfigure pwfs2_m1 -fill green
+      } else {
+         $w itemconfigure pwfs2_m1 -fill yellow
+      }
+      if { [AO state m2] && ([AO source m2 PWFS2 A] || \
+            [AO source m2 PWFS2 B]) } {
+         $w itemconfigure pwfs2_m2 -fill green
+      } else {
+         $w itemconfigure pwfs2_m2 -fill yellow
+      }
+      if { [AO state p2guide] } {
+         $w itemconfigure pwfs2_pr -fill green
+      } else {
+         $w itemconfigure pwfs2_pr -fill yellow
+      }
+      if { [AO state mount] && [AO source mount PWFS2] } {
+         $w itemconfigure pwfs2_mt -fill green
+         set mount 1
+      } else {
+         $w itemconfigure pwfs2_mt -fill yellow
+      }
+   }
+
+# OIWFS signals
+   # puts "recolour OI oiao: [AO state oiao], oiAPD: [AO state oiaoAPD],  oiaoLoop: [AO state oiaoLoop]"
+   if { [AO state oiao] } {
+      # disable the regular oiwfs guide alarm and enable the nici guide alarm
+      .observePanel.frame.control.alarm.fr.alloiwfsframe.oiwfsframe.lab configure -state disabled
+      .observePanel.frame.control.alarm.fr.alloiwfsframe.oiwfsframe.sil configure -state disabled
+      .observePanel.frame.control.alarm.fr.alloiwfsframe.oiwfsframe.clab configure -state disabled
+      .observePanel.frame.control.alarm.fr.alloiwfsframe.oiwfsframe.cnts configure -state disabled
+      .observePanel.frame.control.alarm.fr.alloiwfsframe.oiwfsframe.limlab configure -state disabled
+      .observePanel.frame.control.alarm.fr.alloiwfsframe.oiwfsframe.liment configure -state disabled
+      .observePanel.frame.control.alarm.fr.alloiwfsframe.oiwfsframe.cent configure -state disabled
+      .observePanel.frame.control.alarm.fr.alloiwfsframe.niciframe.lab configure -state normal
+      .observePanel.frame.control.alarm.fr.alloiwfsframe.niciframe.sil configure -state normal
+      .observePanel.frame.control.alarm.fr.alloiwfsframe.niciframe.clab configure -state normal
+      .observePanel.frame.control.alarm.fr.alloiwfsframe.niciframe.cnts configure -state normal
+      .observePanel.frame.control.alarm.fr.alloiwfsframe.niciframe.limlab configure -state normal
+      .observePanel.frame.control.alarm.fr.alloiwfsframe.niciframe.liment configure -state normal
+      .observePanel.frame.control.alarm.fr.alloiwfsframe.niciframe.cent configure -state normal
+      $w itemconfigure oiwfs_ao -outline black 
+      $w itemconfigure oiwfs_wfs -outline grey
+      $w itemconfigure oiwfs_aotxt -fill black 
+      $w itemconfigure oiwfs_wfstxt -fill grey
+      $itk_component(oiwfs_ex) configure -state disabled
+      $itk_option(-wfsConfigObj) niciState normal
+      if { [AO state oiaoAPD] } {
+         $w itemconfigure oiwfs_ao -fill green
+      }
+      if { [AO state oiaoLoop] } {
+         $w itemconfigure oiwfs_bg -fill green
+         if { [$itk_component(prfrom) get] == "OI" && [$itk_component(prto) get] == "P2" } {
+            $w itemconfigure oiwfs_pr -fill green
+         } else {
+            $w itemconfigure oiwfs_pr -fill yellow
+         }
+      }
+   } elseif { [AO state oiwfs] } {
+      # enable the regular oiwfs guide alarm and disable the nici guide alarm
+      .observePanel.frame.control.alarm.fr.alloiwfsframe.oiwfsframe.lab configure -state normal
+      .observePanel.frame.control.alarm.fr.alloiwfsframe.oiwfsframe.sil configure -state normal
+      .observePanel.frame.control.alarm.fr.alloiwfsframe.oiwfsframe.clab configure -state normal
+      .observePanel.frame.control.alarm.fr.alloiwfsframe.oiwfsframe.cnts configure -state normal
+      .observePanel.frame.control.alarm.fr.alloiwfsframe.oiwfsframe.limlab configure -state normal
+      .observePanel.frame.control.alarm.fr.alloiwfsframe.oiwfsframe.liment configure -state normal
+      .observePanel.frame.control.alarm.fr.alloiwfsframe.oiwfsframe.cent configure -state normal
+      .observePanel.frame.control.alarm.fr.alloiwfsframe.niciframe.lab configure -state disabled
+      .observePanel.frame.control.alarm.fr.alloiwfsframe.niciframe.sil configure -state disabled
+      .observePanel.frame.control.alarm.fr.alloiwfsframe.niciframe.clab configure -state disabled
+      .observePanel.frame.control.alarm.fr.alloiwfsframe.niciframe.cnts configure -state disabled
+      .observePanel.frame.control.alarm.fr.alloiwfsframe.niciframe.limlab configure -state disabled
+      .observePanel.frame.control.alarm.fr.alloiwfsframe.niciframe.liment configure -state disabled
+      .observePanel.frame.control.alarm.fr.alloiwfsframe.niciframe.cent configure -state disabled
+      $w itemconfigure oiwfs_bg -fill green
+      $w itemconfigure oiwfs_ao -outline grey
+      $w itemconfigure oiwfs_wfs -outline black
+      $w itemconfigure oiwfs_aotxt -fill grey 
+      $w itemconfigure oiwfs_wfstxt -fill black
+      $itk_component(oiwfs_ex) configure -state disabled
+      $itk_option(-wfsConfigObj) niciState normal
+      if { [AO state m1] && [AO source m1 OIWFS] } {
+         $w itemconfigure oiwfs_m1 -fill green
+      } else {
+         $w itemconfigure oiwfs_m1 -fill yellow
+      }
+      if { [AO state m2] && ([AO source m2 OIWFS A] || \
+            [AO source m2 OIWFS B]) } {
+         $w itemconfigure oiwfs_m2 -fill green
+      } else {
+         $w itemconfigure oiwfs_m2 -fill yellow
+      }
+      if { [AO state oiguide] } {
+         $w itemconfigure oiwfs_pr -fill green
+      } else {
+         $w itemconfigure oiwfs_pr -fill yellow
+      }
+      if { [AO state oiblend] } {
+         $w itemconfigure oiwfs_gaos -fill green
+      } else {
+         $w itemconfigure oiwfs_gaos -fill yellow
+      }	  
+   } else {
+      # enable the regular oiwfs guide alarm and disable the nici guide alarm
+      .observePanel.frame.control.alarm.fr.alloiwfsframe.oiwfsframe.lab configure -state normal
+      .observePanel.frame.control.alarm.fr.alloiwfsframe.oiwfsframe.sil configure -state normal
+      .observePanel.frame.control.alarm.fr.alloiwfsframe.oiwfsframe.clab configure -state normal
+      .observePanel.frame.control.alarm.fr.alloiwfsframe.oiwfsframe.cnts configure -state normal
+      .observePanel.frame.control.alarm.fr.alloiwfsframe.oiwfsframe.limlab configure -state normal
+      .observePanel.frame.control.alarm.fr.alloiwfsframe.oiwfsframe.liment configure -state normal
+      .observePanel.frame.control.alarm.fr.alloiwfsframe.oiwfsframe.cent configure -state normal
+      .observePanel.frame.control.alarm.fr.alloiwfsframe.niciframe.lab configure -state disabled
+      .observePanel.frame.control.alarm.fr.alloiwfsframe.niciframe.sil configure -state disabled
+      .observePanel.frame.control.alarm.fr.alloiwfsframe.niciframe.clab configure -state disabled
+      .observePanel.frame.control.alarm.fr.alloiwfsframe.niciframe.cnts configure -state disabled
+      .observePanel.frame.control.alarm.fr.alloiwfsframe.niciframe.limlab configure -state disabled
+      .observePanel.frame.control.alarm.fr.alloiwfsframe.niciframe.liment configure -state disabled
+      .observePanel.frame.control.alarm.fr.alloiwfsframe.niciframe.cent configure -state disabled
+      $w itemconfigure oiwfs_ao -outline grey
+      $w itemconfigure oiwfs_wfs -outline black
+      $w itemconfigure oiwfs_aotxt -fill grey 
+      $w itemconfigure oiwfs_wfstxt -fill black
+      $itk_component(oiwfs_ex) configure -state normal
+      $itk_option(-wfsConfigObj) niciState disabled
+   }
+
+# GAOS signals
+   if { [AO state gaos] } {
+      $w itemconfigure gaos_bg -fill green
+      # aoSettled
+      if { [AO state aoSettled] } {
+	  $w itemconfigure aoSettled -fill green
+	  if {$AOtryingToReuseGain} {
+	      set AOreuseGains 1
+	      set AOtryingToReuseGain 0
+	  }
+      } else {
+	  $w itemconfigure aoSettled -fill yellow
+      }
+      if { [AO state m1] && [AO source m1 Altair] } {
+         $w itemconfigure gaos_m1 -fill green
+      } else {
+         $w itemconfigure gaos_m1 -fill yellow
+      }
+      if { [AO state m2] && ([AO source m2 GAOS A] || \
+            [AO source m2 GAOS B]) } {
+         $w itemconfigure gaos_m2 -fill green
+      } else {
+         $w itemconfigure gaos_m2 -fill yellow
+      }
+      if { [AO state coma] } {
+         $w itemconfigure gaos_m2 -fill green
+      } else {
+         $w itemconfigure gaos_m2 -fill yellow
+      }
+   }
+   if { [AO state gaosTTGS] } {
+      $w itemconfigure gaos_ttgs -fill green
+      if { [AO state ttgsloop] } {
+	  $w itemconfigure ttgs_gaos -fill green
+      } else {
+	  $w itemconfigure ttgs_gaos -fill yellow
+      }
+   }
+   if { [AO state gaosSFO] } {
+       $w itemconfigure gaos_sfo -fill green
+      if { [AO state sfoloop] } {
+	  $w itemconfigure sfo_gaos -fill green
+      } else {
+	  $w itemconfigure sfo_gaos -fill yellow
+      }
+   }
+
+# M1
+   if { [AO state m1] } {
+      if { ( [AO source m1 PWFS1] && [AO state pwfs1] ) ||
+            ( [AO source m1 PWFS2] && [AO state pwfs2] ) ||
+            ( [AO source m1 OIWFS] && [AO state oiwfs] ) ||
+            ( [AO source m1 Altair] && [AO state gaos] ) } {
+         $w itemconfigure m1_bg -fill green
+      } else {
+         $w itemconfigure m1_bg -fill yellow
+      }
+   }
+
+# M2
+   if { [AO state m2] } {
+      if { (( [AO source m2 PWFS1 A] || [AO source m2 PWFS1 B] ) && \
+            [AO state pwfs1] ) || \
+            (( [AO source m2 PWFS2 A] || [AO source m2 PWFS2 B] ) && \
+            [AO state pwfs2] ) || \
+            (( [AO source m2 OIWFS A] || [AO source m2 OIWFS B] ) && \
+            [AO state oiwfs] ) || \
+            (( [AO source m2 GAOS A] || [AO source m2 GAOS B] ) && \
+            [AO state gaos] ) } {
+         $w itemconfigure m2_bg -fill green
+         if { [AO source mount M2] && [AO state mount] } {
+            $w itemconfigure m2_mt -fill green
+            set mount 1
+         } else {
+            $w itemconfigure m2_mt -fill yellow
+         }
+      } else {
+         $w itemconfigure m2_bg -fill yellow
+         $w itemconfigure m2_mt -fill yellow
+      }
+   }
+
+# M2 Coma
+   if { [AO state coma] } {
+      if { [AO state pwfs1] || [AO state gaos] } {
+         $w itemconfigure m2xy_bg -fill green
+      } else {
+         $w itemconfigure m2xy_bg -fill yellow
+      }
+   }
+
+# M2 guide source buttons.
+   if { [AO source m2 PWFS1] } {
+      $itk_component(m2p1) configure -background green
+   }
+   if { [AO source m2 PWFS2] } {
+      $itk_component(m2p2) configure -background green
+   }
+   if { [AO source m2 OIWFS] } {
+      $itk_component(m2oi) configure -background green
+   }
+   if { [AO source m2 GAOS] } {
+      $itk_component(m2ao) configure -background green
+   }
+
+# Mount
+   if { [AO state mount] } {
+      if { $mount } {
+         $w itemconfigure mount_bg -fill green
+      } else {
+         $w itemconfigure mount_bg -fill yellow
+      }
+   }
+
+# WFS probes
+    switch [$itk_component(prfrom) get] {
+	P1 {
+	    switch [$itk_component(prto) get] {
+		P1 {
+		    if {[AO state p1guide] && [AO state pwfs1]} {
+			$w itemconfigure probes_bg -fill green
+		    } elseif {[AO state p1guide]} {
+			$w itemconfigure probes_bg -fill yellow
+		    }
+		}
+	    }
+	}
+	P2 {
+	    switch [$itk_component(prto) get] {
+		P2 {
+		    if {[AO state p2guide] && [AO state pwfs2]} {
+			$w itemconfigure probes_bg -fill green
+		    } elseif {[AO state p2guide]} {
+			$w itemconfigure probes_bg -fill yellow
+		    }
+		}
+	    }
+	}
+	OI {
+	    switch [$itk_component(prto) get] {
+		P1 {
+		    if {[AO state p1guide] && [AO state pwfs1] && [AO state oiwfs]} {
+			$w itemconfigure probes_bg -fill green
+		    } elseif {[AO state p1guide]} {
+			$w itemconfigure probes_bg -fill yellow
+		    }
+		}
+		P2 {
+		    if {[AO state p2guide] && [AO state pwfs2] && [AO state oiwfs]} {
+			$w itemconfigure probes_bg -fill green
+		    } elseif {[AO state p2guide] && [AO state pwfs2] && [AO state oiao] && [AO state oiaoLoop]} {
+			$w itemconfigure probes_bg -fill green
+		    } elseif {[AO state p2guide]} {
+			$w itemconfigure probes_bg -fill yellow
+                    }
+		}
+		OI {
+		    set oiguideprint [AO state oiguide]
+		    set oiwfsprint [AO state oiwfs]
+
+		    puts "oiguideprint = $oiguideprint"
+		    puts "oiwfsprint = $oiwfsprint"
+
+		    if {[AO state oiguide] && [AO state oiwfs]} {
+			$w itemconfigure probes_bg -fill green
+		    } elseif {[AO state oiguide]} {
+			$w itemconfigure probes_bg -fill yellow
+		    }
+		}
+	    }
+	}
+    }
+
+#    if { ( [AO state p1guide] && [AO state pwfs1] ) ||
+#          ( [AO state p2guide] && [AO state pwfs2] ) ||
+#          ( [AO state oiguide] && [AO state oiwfs] ) } {
+#       $w itemconfigure probes_bg -fill green
+#    } elseif { [AO state p1guide] || [AO state p2guide] || [AO state oiguide]} {
+#       $w itemconfigure probes_bg -fill yellow
+#    }
+}
+
+itcl::body GuideLoop::comacorr {val} {
+   switch $val {
+      ON {
+         AO configure -comacorr 1
+      }
+      OFF {
+         AO configure -comacorr 0
+      }
+   }
+}
+
+itcl::body GuideLoop::gaos {val} {
+   
+   AO configure -useLwfs [AO  state useLwfs]
+   
+   switch $val {
+      ON {
+         AO configure -gaos 1
+      }
+      OFF {
+         AO configure -gaos 0
+      }
+   }
+}
+
+itcl::body GuideLoop::gaosTTGS {val} {
+   switch $val {
+      ON {
+         AO configure -gaosTTGS 1
+      }
+      OFF {
+         AO configure -gaosTTGS 0
+      }
+   }
+}
+
+itcl::body GuideLoop::ttgsloop {val} {
+   switch $val {
+      ON {
+         AO configure -ttgsloop 1
+      }
+      OFF {
+         AO configure -ttgsloop 0
+      }
+   }
+}
+
+itcl::body GuideLoop::gaosSFO {val} {
+   switch $val {
+      ON {
+         AO configure -gaosSFO 1
+      }
+      OFF {
+         AO configure -gaosSFO 0
+      }
+   }
+}
+
+itcl::body GuideLoop::sfoloop {val} {
+   switch $val {
+      ON {
+         AO configure -sfoloop 1
+      }
+      OFF {
+         AO configure -sfoloop 0
+      }
+   }
+}
+
+itcl::body GuideLoop::m2mode {probe val} {
+   if { $val eq "OFF"} {
+      AO configure -${probe}guide ""
+   } else {
+      AO configure -${probe}guide On
+   }
+}
+
+itcl::body GuideLoop::mtmode {val} {
+   switch $val {
+      P1 {
+         AO configure -mountguide PWFS1
+      }
+      P2 {
+         AO configure -mountguide PWFS2
+      }
+      M2 {
+         AO configure -mountguide SCS
+      }
+      OFF {
+         AO configure -mountguide none
+      }
+   }
+}
+
+itcl::body GuideLoop::oiblend {val} {
+   switch $val {
+      ON {
+          AO configure -oiblend 1
+      }
+      OFF {
+          AO configure -oiblend 0
+      }
+   }
+}
+
+itcl::body GuideLoop::probefrom {val} {
+   $itk_component(prto) clear
+   $itk_component(prto) setState "0 1 2" disabled
+   switch $val {
+      P1 {
+         AO configure -probefrom PWFS1
+	 $itk_component(prto) setState 0 normal
+      }
+      P2 {
+         AO configure -probefrom PWFS2
+	 $itk_component(prto) setState 1 normal
+      }
+      OI {
+         AO configure -probefrom OIWFS
+	 $itk_component(prto) setState "0 1 2" normal
+      }
+   }
+}
+
+itcl::body GuideLoop::probeto {val} {
+   switch $val {
+      P1 {
+         AO configure -probeto PWFS1
+      }
+      P2 {
+         AO configure -probeto PWFS2
+      }
+      OI {
+         AO configure -probeto OIWFS
+      }
+   }
+   AO configure -probeguide ON
+   $itk_component(pron) clear
+}
+
+itcl::body GuideLoop::probemode {val} {
+   switch $val {
+      ON {
+         AO configure -probeguide ON
+      }
+      OFF {
+         AO configure -probeguide OFF
+	 $itk_component(prfrom) clear
+	 $itk_component(prto) clear
+	 $itk_component(prto) setState "0 1 2" disabled
+      }
+   }
+}
+
+itcl::body GuideLoop::wfsmode {wfs val} {
+   #puts "GuideLoop::wfsmode oiao: [AO state oiao], wfs: $wfs, val: $val"
+   if { [AO state oiao] && $wfs == "oiwfs" } {
+      switch $val {
+         ON {
+            AO configure -oiaoLoop 1
+         }
+         OFF {
+            AO configure -oiaoLoop 0
+         }
+      }
+   } else {
+      switch $val {
+         ON {
+            AO configure -${wfs}Active 1
+         }
+         OFF {
+            AO configure -${wfs}Active 0
+         }
+      }
+   }
+}
+
+itcl::body GuideLoop::enable {} {
+   AO configure -pwfs1Expose [$itk_component(pwfs1_ex) get]
+   AO configure -pwfs2Expose [$itk_component(pwfs2_ex) get]
+   AO configure -oiwfsExpose [$itk_component(oiwfs_ex) get]
+   AO configure -gaosExpose [$itk_component(gaos_ex) get]
+
+   if { [string match "*LGS*" $::Config(tcs.gaos,value)] } {
+       set ttgsexp [$itk_component(ttgs_ex) get]
+       set ind [string first "(" $ttgsexp]
+       set ttgsmag [string range $ttgsexp 0 [expr $ind-1]]
+       set ttgsexp [string trim [string range $ttgsexp $ind end] "()"]
+
+       AO configure -ttgsExpose $ttgsexp
+       AO configure -sfoExpose [$itk_component(sfo_ex) get]
+
+       switch $ttgsmag {
+	   10.0 -
+	   10.5 -
+	   11.0 -
+	   11.5 -
+	   12.0 -
+	   12.5 {
+	       AO configure -ttgsGain 0.2
+	       AO configure -ttgsFlux 1
+	   }
+	   13.0 -
+	   13.5 -
+	   14.0 -
+	   14.5 -
+	   15.0 -
+	   15.5 -
+	   16.0 {
+	       AO configure -ttgsGain 0.2
+	       AO configure -ttgsFlux 0
+	   }
+	   16.5 {
+	       AO configure -ttgsGain 0.4
+	       AO configure -ttgsFlux 0
+	   }
+	   17.0 {
+	       AO configure -ttgsGain 0.7
+	       AO configure -ttgsFlux 0
+	   }
+	   17.5 {
+	       AO configure -ttgsGain 1.1
+	       AO configure -ttgsFlux 0
+	   }
+	   18.0 {
+	       AO configure -ttgsGain 1.6
+	       AO configure -ttgsFlux 0
+	   }
+	   18.5 {
+	       AO configure -ttgsGain 2.0
+	       AO configure -ttgsFlux 0
+	   }
+	   19.0 {
+	       AO configure -ttgsGain 2.6
+	       AO configure -ttgsFlux 0
+	   }
+       }
+   }
+   if { $::Config(tcs.gaos,value) != "" } {
+       switch [$itk_component(gaos_ex) get] {
+	   0.001 { $::Config(tcs.gaos,namespace)::$::Config(tcs.gaos,value) configure -gsmag 11 }
+	   0.002 { $::Config(tcs.gaos,namespace)::$::Config(tcs.gaos,value) configure -gsmag 12 }
+	   0.005 { $::Config(tcs.gaos,namespace)::$::Config(tcs.gaos,value) configure -gsmag 13 }
+	   0.01  { $::Config(tcs.gaos,namespace)::$::Config(tcs.gaos,value) configure -gsmag 14 }
+	   0.02  { $::Config(tcs.gaos,namespace)::$::Config(tcs.gaos,value) configure -gsmag 15 }
+	   default { $::Config(tcs.gaos,namespace)::$::Config(tcs.gaos,value) configure -gsmag 11 }
+       }
+   }
+   AO enable
+}
+
+itcl::body GuideLoop::configSfoEx {} {
+    #puts "configSfoEx"
+    set exp [$itk_component(ttgs_ex) get]
+    set exp [string trim [string range $exp [string first "(" $exp] end] "()"]
+    #puts "exp: $exp"
+    if {[string length $exp] > 0} {
+	set ttgsLimit [expr 1.65*$exp*1000]
+	.observePanel.frame.control.alarm configure -ttgsLimit $ttgsLimit
+    }
+    $itk_component(sfo_ex) clear entry
+    switch $exp {
+	0.001 {$itk_component(sfo_ex) insert entry end 1.0}
+	0.002 {$itk_component(sfo_ex) insert entry end 2.0}
+	0.005 {$itk_component(sfo_ex) insert entry end 5.0}
+	0.01  {$itk_component(sfo_ex) insert entry end 10.0}
+	0.02  {$itk_component(sfo_ex) insert entry end 20.0}
+	0.05  {$itk_component(sfo_ex) insert entry end 50.0}
+    }
+}
+
+itcl::body GuideLoop::m1mode {state} {
+   if { $state eq "OFF" } {
+      AO configure -m1source ""
+   } else {
+      AO configure -m1source $state
+   }
+}
+
+itcl::body GuideLoop::reset {} {
+
+# Disable
+   AO process IDLE
+   AO disable
+
+# Simulate pushing all the "off" buttons.
+   $itk_component(pwfs1) select OFF
+   $itk_component(pwfs2) select OFF
+   $itk_component(oiwfs) select OFF
+   $itk_component(m1src) select OFF
+   $itk_component(m2p1) select OFF
+   $itk_component(m2p2) select OFF
+   $itk_component(m2ao) select OFF
+   $itk_component(m2oi) select OFF
+   $itk_component(m2coma) select OFF
+   $itk_component(mt) select OFF
+   $itk_component(pron) select OFF
+   $itk_component(prfrom) clear
+   $itk_component(prto) clear
+   $itk_component(oiao) select OFF
+   $itk_component(gaoson) select OFF
+   $itk_component(ttao) select OFF
+   $itk_component(sfao) select OFF
+   $itk_component(aosfo) select OFF
+   $itk_component(aottgs) select OFF
+   $itk_component(prto) setState "0 1 2" disabled
+   AO configure -probeto ""
+}

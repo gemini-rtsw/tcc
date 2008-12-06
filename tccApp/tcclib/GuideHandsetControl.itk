@@ -1,0 +1,134 @@
+#+
+#  GuideHandsetControl <- itk::Widget
+#
+#  A GuideHandsetControl implements a software handset for guiding.
+#
+#  Options:
+#           none
+#
+#  Methods:
+#           none
+#
+#  D Terrett 30 January 2001
+#
+#  Copyright CCLRC
+#+
+
+itcl::class GuideHandsetControl {
+   inherit itk::Widget
+   constructor args {}
+   destructor {after cancel $refid}
+   private {
+      method refresh {}
+      method zerolocal {}
+      variable refid
+   }
+}
+
+itk::usual GuideHandsetControl {
+   keep -borderwidth -cursor -font -highlightthickness \
+         -labelfont
+}
+
+itcl::body GuideHandsetControl::constructor args {
+
+   set w $itk_interior
+
+# Handset
+   itk_component add handset {
+      Handset $w.handset -adjust pointing
+   }
+   pack $itk_component(handset)
+
+# Display of current adjustments.
+   itk_component add disp {
+      frame $w.disp -bd 10
+   }
+   pack $itk_component(disp)
+   set w $itk_component(disp)
+   itk_component add ca {
+      label $w.ca -text CA
+   }
+   itk_component add ce {
+      label $w.ce -text CE
+   }
+   itk_component add local {
+      label $w.local -text Local
+   }
+   itk_component add guide {
+      label $w.guide -text Guide
+   }
+   itk_component add calocal {
+      label $w.calocal -relief groove -bd 2 -width 8 -anchor e
+   }
+   itk_component add celocal {
+      label $w.celocal -relief groove -bd 2 -width 8 -anchor e
+   }
+   itk_component add caguide {
+      label $w.caguide -relief groove -bd 2 -width 8 -anchor e
+   }
+   itk_component add ceguide {
+      label $w.ceguide -relief groove -bd 2 -width 8 -anchor e
+   }
+
+# Buttons for zeroing guide adjustments.
+   itk_component add clearl {
+      LiveButton $w.clearl -command [itcl::code $this zerolocal] \
+            -text Clear
+   }
+   itk_component add clearg {
+      ApplyButton $w.clearg -command zeroGuide -text Clear
+   }
+   grid x $itk_component(ca) $itk_component(ce)
+   grid $itk_component(local) $itk_component(calocal) $itk_component(celocal) \
+         $itk_component(clearl) -sticky ns
+   grid $itk_component(guide) $itk_component(caguide) $itk_component(ceguide) \
+         $itk_component(clearg) -sticky ns
+   set w $itk_interior
+
+# Button for absorbing the guide adjustments.
+   itk_component add bot {
+      frame $w.bot
+   }
+   pack $itk_component(bot) -expand yes -fill x
+   set w $itk_component(bot)
+   itk_component add absorb {
+      ApplyButton $w.absorb -command absorbGuide \
+         -text "Absorb guide into local"
+   }
+   pack $itk_component(absorb) -pady 4
+
+# Schedule update of CA & CE displays.
+   set refid [after 1000 [itcl::code $this refresh]]
+
+   eval itk_initialize $args
+}
+
+itcl::body GuideHandsetControl::refresh {} {
+
+# Update the displays of CA and CE.
+   $itk_component(calocal) configure -text [sa tcssad get calocal value]
+   $itk_component(celocal) configure -text [sa tcssad get celocal value]
+   $itk_component(caguide) configure -text [sa tcssad get caguide value]
+   $itk_component(ceguide) configure -text [sa tcssad get ceguide value]
+
+# Reschedule
+   set refid [after 1000 [itcl::code $this refresh]]
+}
+
+itcl::body GuideHandsetControl::zerolocal {} {
+   cs pointParam set name CA
+   cs pointParam set level Local
+   cs pointParam set value 0
+   logger command pointParam
+   if { [catch {cs tcsApply post} msg] } {
+      tk_messageBox -icon error -parent $itk_interior -message \
+            "Error setting local pointing model: TCS reports \"$msg\""
+   }
+   cs pointParam set name CE
+   logger command pointParam
+   if { [catch {cs tcsApply post} msg] } {
+      tk_messageBox -icon error -parent $itk_interior -message \
+            "Error setting local pointing model: TCS reports \"$msg\""
+   }
+}

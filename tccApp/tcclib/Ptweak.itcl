@@ -1,0 +1,309 @@
+#+
+# Ptweak.itcl
+#
+# Implements the Ptweak class. A Ptweak object represents a single observation
+# of a pointing update run. The "fit" class method calculates a new estimate
+# of CE and CA and optionally IA from all the Ptweak objects that are enabled.
+#
+# D Terrett 30 November 2001
+#
+# Copyright CCLRC
+#+
+
+itcl::class Ptweak {
+   constructor {} {}
+   public {
+      proc fit {inclia}
+      proc commit {w inclia}
+      method display {}
+      variable enable 1
+      variable ca
+      variable ce
+      variable el
+   }
+   private {
+      proc postparam {}
+      proc getparam {name}
+      common fitca 0
+      common fitce 0
+      common fitia 0
+      common nfitted
+      variable pointobs
+   }
+}
+
+itcl::body Ptweak::constructor {} {
+
+# Grab the net and guide values of CA and CE from the TCS.
+   set ca [expr [sa net get ca] + [sa guide get ca]]
+   set ce [expr [sa net get ce] + [sa guide get ce]]
+
+# Grab the pointing observation data.
+   set pointobs [sa tcssad get pointObs]
+
+# Extract the elevation.
+   set el [lindex $pointobs 6]
+}
+
+itcl::body Ptweak::display {} {
+#+
+# Formats the contents of the Ptweak object in a form suitable for display
+# in the list box.
+#-
+
+# Format the RA/Dec as HH:MM and DD:MM.
+   set h [expr [lindex $pointobs 2] * 3.8197186342]
+   set m [expr round( ($h - int($h)) * 60)]
+   set h [expr int($h)]
+   set ra [format "%02d:%02d" $h $m]
+   set d [expr [lindex $pointobs 3] * 57.2957795131]
+   set m [expr round( abs( ($d - int($d)) * 60) )]
+   set d [expr int($d)]
+   set dec [format "%+03d:%02d" $d $m]
+
+# Compute deviation from current fit in azimuth and elevation.
+   set dce [expr $ce - $fitce]
+   set dca [expr $ca - ($fitca + $fitia * cos($el))]
+   return [format "%s %s %+6.1f %4.1f %+5.1f %+5.1f %5.1f" \
+         $ra $dec [expr [lindex $pointobs 5] * 57.2957795131] \
+         [expr [lindex $pointobs 6] * 57.2957795131] \
+         $dca $dce [expr sqrt( $dca * $dca + $dce * $dce )]]
+
+}
+
+itcl::body Ptweak::fit inclia {
+#+
+# Computes a new fit for all the enabled observations and returns a list
+# containg the mean values of ca, ce and ia and the rms of ca, ce and
+# radius.
+#-
+
+# Initialise count of enabled stars.
+   set nfitted 0
+
+# Initialise sums.
+   set sa 0.0
+   set se 0.0
+   set sa2 0.0
+   set se2 0.0
+   set scos2el 0.0
+   set scosel 0.0
+   set sacosel 0.0
+
+# For each enabled Ptweak object...
+   foreach obs [itcl::find objects -class Ptweak] {
+      if { [$obs cget -enable] } {
+
+# Keep a count of how many there are.
+         incr nfitted
+
+# Sum CA and CE.
+         set sa [expr $sa + [$obs cget -ca]]
+         set se [expr $se + [$obs cget -ce]]
+
+# If we are fiting IA as well...
+         if { $inclia } {
+
+# Sum cosine squared of elevation, cosine of elevation and CA times cosine
+# of elevation.
+            set cosel [expr cos([$obs cget -el])]
+            set scos2el [expr $scos2el + $cosel * $cosel]
+            set scosel [expr $scosel + $cosel]
+            set sacosel [expr $sacosel + [$obs cget -ca] * $cosel]
+         }
+      }
+   }
+   if { $inclia } {
+
+# Compute determinant.
+      set det [expr $nfitted * $scos2el - $scosel * $scosel]
+
+# If the determinant is too small to yield a reasonably accurate result
+# give up trying to compute IA.
+      if { [expr abs($det)] < 1.0e-10 } {
+         set inclia 0
+      }
+   }
+
+# If there is at least one star...
+   if { $nfitted > 0 } {
+
+# Compute mean CE.
+      set fitce [expr $se / $nfitted]
+      if { $inclia } {
+
+# Compute CA and IA...
+         set fitca [expr ( $scos2el * $sa - $scosel * $sacosel ) / $det]
+         set fitia [expr ( $nfitted * $sacosel - $sa * $scosel ) / $det]
+      } else {
+
+# or mean CA and set fitted IA to zero.
+         set fitca [expr $sa / $nfitted]
+         set fitia 0.0
+      }
+
+# Initialise sum of squared deviation from fitted CA and CE.
+      set sca2 0.0
+      set sce2 0.0
+      foreach obs [itcl::find objects -class Ptweak] {
+         if { [$obs cget -enable] } {
+
+# Deviation in elevation.
+            set dce [expr [$obs cget -ce] - $fitce]
+            set sce2 [expr $sce2 + $dce * $dce]
+
+# Deviation in azimuth.
+            set dca [expr [$obs cget -ca] - \
+                  ($fitca + $fitia * cos([$obs cget -el]))]
+            set sca2 [expr $sca2 + $dca * $dca]
+         }
+      }
+
+# Compute root mean squared deviation.
+      set rmsca [expr sqrt($sca2 / $nfitted)]
+      set rmsce [expr sqrt($sce2 / $nfitted)]
+      set rmsr [expr sqrt($rmsce * $rmsce + $rmsca * $rmsca)]
+
+# Return result of fit.
+      if { $inclia } {
+         return [format "%5.2f %5.2f %5.2f %5.2f %5.2f %5.2f" \
+               $fitca $fitce $fitia $rmsca $rmsce $rmsr]
+      } else {
+         return [format "%5.2f %5.2f {} %5.2f %5.2f %5.2f" \
+               $fitca $fitce $rmsca $rmsce $rmsr] 
+      }
+   } else {
+      return [list "" "" "" "" "" ""]
+   }
+}
+
+itcl::body Ptweak::commit {w inclia} {
+#+
+# Commits (i.e. modifies the TCS session pointing model) the fitted values
+# of CA and CE and, optionally, IA.
+#-
+
+# Get the current Session values of CA, CE and IA.
+   set curce [sa session get ce]
+   set curca [sa session get ca]
+   set curia [sa session get ia]
+
+# Create confirmation dialog box.
+   iwidgets::messagedialog $w.md -title "Commit Error" -bitmap error \
+         -modality application -text "No stars to fit" -master $w
+   $w.md hide Help
+   $w.md component message configure -wraplength 500 -justify left
+
+   if { $nfitted < 1 } {
+      $w.md center
+      $w.md hide Cancel
+      $w.md activate
+      destroy $w.md
+      return
+   }
+
+# Build a text string that displays the new model.
+   set text [format \
+         "At present the session adjustments to the pointing model are:\
+         CA = %.2f, CE = %.2f, IA = %.2f." $curca $curce $curia]
+   set text [format "%s if you confirm the update the new adjustments will\
+         become CA = %.2f, CE = %.2f"  $text $fitca $fitce]
+   if { $inclia } {
+      set text [format "%s, IA = %.2f." $text [expr $curia + $fitia]]
+   }
+   set text "$text Do you want to update the session pointing model?"
+
+   $w.md configure -title "Commit Confirmation" -bitmap questhead -text $text
+   $w.md buttonconfigure OK -text Yes 
+   $w.md buttonconfigure Cancel -text No 
+   $w.md center
+   if { ![$w.md activate] } {
+      destroy $w.md
+      return
+   }
+   if { abs($fitca - $curca) > 30.0 || abs($fitce - $curce) > 30.0 ||
+         ( $inclia && abs($fitia) > 30.0 ) } {
+      $w.md configure -text "The fit contains alarmingly large adjustments\
+         Do you want to apply the new values?" -bitmap warning
+      $w.md center
+      if { ![$w.md activate] } {
+         destroy $w.md
+         return
+      }
+   }
+
+# Set the parameter set to "Session".
+   cs pointParam set level Session
+
+# Set CE.
+   cs pointParam set name CE
+   cs pointParam set value $fitce
+   logger command pointParam
+   postparam
+
+# Set CA
+   cs pointParam set name CA
+   cs pointParam set value $fitca
+   logger command pointParam
+   postparam
+
+# Set IA if requested.
+   if { $inclia } {
+      cs pointParam set name IA
+      cs pointParam set value [expr $curia + $fitia]
+      logger command pointParam
+      postparam
+   }
+
+# Set the local CA & CE to zero.
+   cs pointParam set level Local
+   cs pointParam set name CE
+   cs pointParam set value 0.0
+   logger command pointParam
+   postparam
+   cs pointParam set name CA
+   logger command pointParam
+   postparam
+
+# Zero the guiding offsets.
+   cs zeroGuide set dummy mark
+   if { [catch {cs zeroGuide post}] } {
+      set info [sa apply get mess value]
+      error "zeroGuide command failed: \"$info\""
+   }
+   logger command zeroGuide
+
+# Get the permanent values and add the adjustments.
+   set ca [expr { [getparam CA] + $fitca }]
+   set ie [expr { [getparam IE] + $fitce }]
+   set ia [expr { [getparam IA] + $curia + $fitia }]
+
+   set text [format \
+         "Including the updated session adjustments, the net pointing\
+         coefficients are:\n\n    CA = %.2f, IE = %.2f, IA = %.2f
+         \n\nPlease record these in the night log." $ca $ie $ia]
+   $w.md configure -title "Updated Pointing Model" -bitmap info -text $text
+   $w.md buttonconfigure OK -text OK 
+   $w.md hide Cancel
+   $w.md center
+   $w.md activate
+   destroy $w.md
+}
+
+itcl::body Ptweak::postparam {} {
+   if [catch {cs pointParam post}] {
+      set info [sa apply get mess value]
+      error "pointParam command failed: \"$info\""
+   }
+}
+
+itcl::body Ptweak::getparam {name} {
+
+# Gets the value of a permanent model parameter.
+   for {set i 0} {$i < 30} {incr i} {
+      if { [string equal [sa permanent get par${i}name] $name] } {
+         return [sa permanent get par${i}value]
+      }
+   }
+   error "Invalid pointing parameter \"$name\""
+}

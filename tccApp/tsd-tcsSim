@@ -1,0 +1,101 @@
+#!/bin/sh
+# the next line restarts using ocssh \
+exec $HLPG_INSTALL_BASE/bin/ocssh "$0" "$@"
+
+#+
+#  tsd
+#
+#  This script starts the Gemini telescope status display. It contains all
+#  the messy stuff involved in finding the tcl packages and libraries that
+#  the tsd uses. It is probably installation dependent and will need to be
+#  hacked to get it to work.
+#
+#  D Terrett 22 January 2004
+#
+#  Copyright CCLRC
+#-
+
+# Load all the packages required by the tsd.
+package require Tcl 8.4
+package require Tk
+package require Itcl
+package require Itk
+package require Iwidgets
+package require Ocspkg
+
+set env(TCC_TCSNAME) tc1
+set env(EPICS_CA_ADDR_LIST) 172.16.2.22
+
+# Define the root directory for locating libraries and extensions.
+global ROOT
+set ROOT [file dirname [info script]]
+if { [string compare [file pathtype $ROOT] relative] == 0 } {
+   set ROOT [file join [pwd] $ROOT]
+}
+
+# The tsd library files live in the lib subdirectory of the directory 
+# containing this script.
+lappend auto_path [file join $ROOT lib]
+lappend auto_path [file join $ROOT tsdlib]
+
+# Load the tcctime, sla and tsd extensions to tcl.
+load [file join $ROOT lib $::env(HOST_ARCH) tcctime.so]
+load [file join $ROOT tsdlib $::env(HOST_ARCH) tsdext.so]
+load [file join $ROOT lib $::env(HOST_ARCH) slaext.so]
+
+# Define images.
+image create photo chile_flag -file [file join $ROOT lib chile_flag-small.gif]
+image create photo hawaii_flag -file [file join $ROOT lib hawaii_flag-small.gif]
+
+# Attempt to figure out whether Chile is currently using daylight saving time
+# by running the Starlink skycalc program. This is a bit dodgy so we protect
+# ourselves with catch.
+set plat [exec uname -s]
+if {$plat == "SunOS"} {
+    set dirname "bin"
+} else {
+    set dirname "bin.linux"
+}
+
+# Create the CalParam object.
+CalParam calparam
+
+set skycalc_path [calparam cget -skycalc_dir]
+puts "using skycalc path: $skycalc_path"
+
+if { [catch {set fid [open "|$skycalc_path/skycalc < lib/skycalc_input_file" r]}]} {
+   puts "Unable to determine whether Chile is using daylight saving time \
+         - assuming not. Please specify skycalc dir in calparams.<site>."
+   set ::CHILE_DAYLIGHT_SAVING 0
+} else {
+   set almanac [read $fid]
+   if { [string first CDT $almanac] == -1 } {
+      set ::CHILE_DAYLIGHT_SAVING 0
+   } else {
+      set ::CHILE_DAYLIGHT_SAVING 1
+   }
+}
+
+# Set the name of the epics service configuration file.
+if { [info exists ::env(TCC_TCSNAME)] } {
+   puts "Using $::env(TCC_TCSNAME)"
+   if {$::env(TCC_TCSNAME) == "tcs"} {
+       set ext ""
+   } else {
+       set ext .$::env(TCC_TCSNAME)
+   }
+} else {
+   set ext ""
+}
+
+appData add configPath [file join $ROOT ca_config$ext]
+appData add configFile tsd.ca
+
+# Load options database.
+option readfile [file join $ROOT options] userDefault
+
+# Set the display background.
+. configure -background wheat
+
+# Start the tsd
+tsdMain $argv

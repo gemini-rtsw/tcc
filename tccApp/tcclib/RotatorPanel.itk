@@ -1,0 +1,40 @@
+#+
+#  RotatorPanel <- Panel
+#
+#  Implements the RotatorPanel widget. A Panel widget with a 
+#  RotatorControl widget packed into its interior.
+#
+#  Methods:
+#           none
+#
+#  D Terrett 6 March 2002
+#
+#  Copyright CCLRC
+#+
+
+itcl::class RotatorPanel {
+   inherit Panel
+   constructor args {}
+   public {
+      method sync {component name} {$itk_component(control) sync $name}
+   }
+}
+
+itk::usual RotatorPanel {
+   keep -background -cursor
+}
+
+itcl::body RotatorPanel::constructor args {
+   itk_component add control {
+      RotatorControl $itk_interior.control
+   } {
+      usual
+      rename -component -components components Components
+   }
+   setWidgetColors "$itk_component(menubar) $itk_component(control)" \
+         $itk_option(-background) $itk_option(-foreground)
+
+   pack $itk_component(control) -fill both -expand y
+
+   eval itk_initialize $args
+}

@@ -1,0 +1,1269 @@
+#+
+# Activeoptics
+#
+# An ActiveOptics object controls the state of the active optics (M2 tip/tilt,
+# coma correction, M1 figure). 
+#
+# D Terrett  29 April 2004
+#
+# Copyright CLRC
+#+
+
+itcl::class ActiveOptics {
+   constructor {args} {}
+   public {
+      method enable {}
+      method disable {}
+      method enableLgs {}
+      method disableLgs {}
+      method state {component}
+      method source {component src {beam A}}
+      method setTimeout {chanStr value time incr reason}
+      method timeout {}
+      method setCanvas {canv}
+      method process {state}
+      method setTTGSFluxMode {}
+      variable processState IDLE
+      variable canvas ""
+      variable timeout 0
+      variable timeout_reason ""
+      variable tid 0
+      variable enabled 0
+      variable p1guide ""
+      variable p2guide ""
+      variable aoguide ""
+      variable oiguide ""
+      variable comacorr 0
+      variable m1source ""
+      variable m1filename ""
+      variable probefrom ""
+      variable probeto ""
+      variable probeguide OFF
+      variable mountguide none
+      variable gaos 0
+      variable useLwfs 0
+      variable oiblend 0
+      variable gaosTTGS 0
+      variable gaosSFO 0
+      variable ttgsloop 0
+      variable sfoloop 0
+      variable simgaosTTGS 0
+      variable simsfoloop 0
+      variable simttgsloop 0
+      variable pwfs1Expose 0.01
+      variable pwfs1Active 0
+      variable pwfs2Expose 0.005
+      variable pwfs2Active 0
+      variable oiwfsExpose 0.005
+      variable oiwfsActive 0
+      variable oiao 0
+      variable oiaoAPD 0
+      variable oiaoLoop 0
+      variable gaosExpose 0.001
+      variable ttgsExpose 0.001
+      variable ttgsFlux 0
+      variable ttgsGain 0.2
+      variable sfoExpose 1.0
+   }
+}
+
+itcl::body ActiveOptics::constructor {args} {
+
+# Create command senders.
+   if { [catch {cs m1Guide info}] } {
+      epics cs m1Guide
+   }
+   if { [catch {cs m1GuideConfig info}] } {
+      epics cs m1GuideConfig
+   }
+   if { [catch {cs mountGuide info}] } {
+      epics cs mountGuide
+   }
+   if { [catch {cs m2Guide info}] } {
+      epics cs m2Guide
+   }
+   if { [catch {cs m2GuideConfig info}] } {
+      epics cs m2GuideConfig
+   }
+   if { [catch {cs m2GuideReset info}] } {
+      epics cs m2GuideReset
+   }
+   if { [catch {cs m2GuideMode info}] } {
+      epics cs m2GuideMode
+   }
+   if { [catch {cs wfsGuideMode info}] } {
+      epics cs wfsGuideMode
+   }
+   if { [catch {cs oiwfsSelect info}] } {
+      epics cs oiwfsSelect
+   }
+   if { [catch {cs oiwfsOut info}] } {
+      epics cs oiwfsOut
+   }
+   if { [catch {sa guideConfig info}] } {
+      epics sa guideConfig
+   }
+
+   eval configure $args
+}
+
+itcl::body ActiveOptics::enableLgs {} {
+global env
+
+# this will be called by the handset to reclose the loop after an offset in LGS mode
+    if {[state useLwfs] && $enabled} {
+	if {$env(TCC_TCSNAME) == "tc1"} {
+	    #simulating ... but not yet simulated in the tcs
+	    set gaosTTGS $simgaosTTGS
+	    set sfoloop $simsfoloop
+	    set ttgsloop $simttgsloop
+	}
+	$this enable
+    }
+}
+
+itcl::body ActiveOptics::disableLgs {} {
+global env
+
+# this will be called by the handset to open the loop before an offset in LGS mode
+    process BUSY
+    if {[state useLwfs] && $enabled} {
+	if {$env(TCC_TCSNAME) == "tc1"} {
+	    #simulating ... but not yet simulated in the tcs
+	    if { $oiblend } {
+		Oiwfs stop
+	    }
+	    set simgaosTTGS $gaosTTGS
+	    set simsfoloop $sfoloop
+	    set simttgsloop $ttgsloop
+	    set gaosTTGS 0
+	    set sfoloop 0
+	    set ttgsloop 0
+	    ::.observePanel.frame.control.guideloop recolour
+	} else {
+	    if { $oiblend } {
+		Oiwfs stop
+	    }
+	    # turn off TTGS and SFO loops
+	    cs ttgsloop set dem 0
+	    cs ttgsloop set dir 3
+	    cs sfoloop set dem 0
+	    
+	    # turn off the TTGS
+	    cs gaosTTGS set dem 0
+	    cs gaosTTGS set dir 3
+	}
+
+	# wait for the TTGS (STRAP) to be off
+	if {[setTimeout "state gaosTTGS" 1 10000 200 "TTGS (Strap) gate to be 0"]} return
+
+    }
+    process IDLE
+}
+
+itcl::body ActiveOptics::enable {} {
+    global AOtryingToReuseGain AOreuseGains
+    set skip_strap 0
+
+    if {$processState == "BUSY"} {
+	logactions logmess "ActiveOptics::enable already busy, ignoring command"
+	return
+    } else {
+	process BUSY
+	logactions logmess  "ActiveOptics::enable"
+    }
+
+# check to make sure we're not using OI probe guiding with GMOS
+    if { ($probeto == "OIWFS") && [string match "*GMOS*" $::Config(tcs.instrument,value)]} {
+	tk_messageBox -icon error \
+	    -message "You cannot use OIWFS probe guiding with GMOS"
+	process IDLE
+	return
+    }
+
+# Set parameters according to the current state...
+# only have a possibility of OI Blending if we're actually using Altair
+    if {!($::Config(tcs.gaos,value) == "No AO") && !($::Config(tcs.gaos,value) == "")} {
+	# Configure OIWFS Blending in AO
+	if { $oiblend } {
+	    
+	    # first disable all loops if neccesary
+	    if {$enabled} {
+		process IDLE
+		$this disable
+		process BUSY
+	    }
+	    
+	    # make sure correctM is Idle
+	    if {[setTimeout "sa aossad get correctBusy" BUSY 10000 200 "Altair to stop correcting"]} return
+	    
+	    cs aoOiwfsSource set state ON
+	} else {
+	    # need to ensure that OIWFS Guide Output is set to SCS
+	    cs aoOiwfsSource set state OFF
+	    cs aoOiwfsSource set bandwidth -1
+	}
+	logger command aoOiwfsSource
+	
+	# Post the Blending Command.
+	# The blending command must be finished before the loops are closed.
+	if { [catch {cs tcsApply post} msg] } {
+	    tk_messageBox -icon error -message \
+		"Error posting guide commands: TCS reports \
+           \"$msg\""
+	    process IDLE
+	    return
+	}
+
+	# need to wait for aoOiwfsSource to go idle
+	
+	if {[setTimeout "sa aossad get oiblendBusy" BUSY 10000 200 "aoOiwfsSource to go idle"]} return
+    }
+
+# Start GAOS
+
+    # turn on the TTGS
+    if { ![catch {cs gaosTTGS info}] } {
+	if { $gaosTTGS && ![state gaosTTGS]} {
+	    # set the Gain
+	    set path "/gemini/altair/altair/bin/solaris/"
+	    #puts "sending cmd: $path/aoSunClient altairwfcs1x 35  aoStrapTTGains d${ttgsGain} 0 0 0 0"
+	    if [ catch {eval exec $path/aoSunClient altairwfcs1x 35  aoStrapTTGains d${ttgsGain} 0 0 0 0} result ] {
+		# 	    set stat [string match "*Return Val = -1*" $msg]
+		# 	    set index1 [string first "msg" $msg  ]
+		# 	    set index2 [string length $msg  ]
+		# 	    set statMsg [string range $msg $index1 $index2 ]
+		puts "aoStrapTTGains failed with mess: $result"
+	    }
+	    # set the flux mode (0:low, 1:high)
+	    # only set the flux mode if the requested mode is different from the current mode
+	    # also call the Flux Mode proc to attempt to turn TTGS on if any part of the 3 controlled components is off (red)
+	    if {([sa aossad get strapRTStat] == 0) || ([sa aossad get strapTPStat] == 0) || ([sa aossad get strapHVStat] == 0) || 
+		([sa aossad get strapSFXMode] != $ttgsFlux) } {
+		if {[$this setTTGSFluxMode]} {
+		    if {[tk_messageBox -icon  question -type yesno -default no -message \
+			     "There was an Error Configuring STRAP\nShould I open the Loops?"] == "yes"} {
+			process IDLE
+			$this disable 
+			return
+		    } else {
+			set skip_strap 1
+		    }
+		}
+	    }
+	    if {!$skip_strap} {
+		after 500
+		# set the exposure time
+		if {[expr [sa aossad get strapExpTime] / 1000] != $ttgsExpose} {
+		    cs gaosTTGS set exp [expr $ttgsExpose * 1000]
+		    cs gaosTTGS set expDIR 3
+		    # wait for the TTGS (STRAP SEX) to go IDLE
+		    after 500
+		    if {[setTimeout "sa aossad get strapSEXBusy" BUSY 10000 200 "Strap Set Exp time to be IDLE"]} return
+		    after 200
+		    if {[sa aossad get strapSEXBusy] == "ERR"} {
+			tk_messageBox -icon error -message \
+			    "Error Setting STRAP Exposure Time: MESS: [sa aossad get strapSEXMess]"
+			process IDLE
+			return
+		    }
+		}
+		cs gaosTTGS set dem 1
+		cs gaosTTGS set dir 3
+	    }
+	} elseif {!$gaosTTGS && [state gaosTTGS]} {
+	    cs gaosTTGS set dem 0
+	    cs gaosTTGS set dir 3
+	}
+    }
+
+    # turn on the SFO
+    if { ![catch {cs gaosSFO info}] } {
+	if { $gaosSFO && ![state gaosSFO]} {
+	    # set the exposure time
+	    cs gaosSFO set exp $sfoExpose
+	    
+	    cs gaosSFO set startDIR 0
+	    cs gaosSFO set apply 3
+	} elseif {!$gaosSFO && [state gaosSFO]} {
+	    cs gaosSFO set stopDIR 0
+	    cs gaosSFO set apply 3
+	}
+    }
+    
+    if { $useLwfs && !$skip_strap} {
+	# wait for the TTGS (STRAP) to go IDLE
+	if {[setTimeout "sa aossad get strapBusy" BUSY 10000 200 "TTGS (Strap) to go IDLE"]} return
+    }
+	
+    if { $gaos && ![state gaos]} {
+	#puts "turning GAOS On"
+	# first check if we have to update the gsmag (gaosExpose)
+	switch $gaosExpose {
+	    0.001 { set gsmag 11 }
+	    0.002 { set gsmag 12 }
+	    0.005 { set gsmag 13 }
+	    0.01  { set gsmag 14 }
+	    0.02  { set gsmag 15 }
+	    default { set gsmag 11 }
+	}
+	
+	#puts "current gsmag: [sa aossad get gsmag], new gsmag: $gsmag"
+	if {[sa aossad get gsmag] != $gsmag } {
+	    #write new gsmag and prepare control matrix
+	    cs aoPrepareCm set gsmag $gsmag
+	    logger command aoPrepareCm
+	    if { [catch {cs tcsApply post} msg] } {
+		tk_messageBox -icon error -parent $itk_interior -message $msg
+	    }
+	    
+	    #wait for prepareCm to go idle
+	    if {[setTimeout "sa aossad get prepareBusy" BUSY 10000 200 "prepareCm to go idle"]} return
+	}
+
+	# turn on the BTO when using LGS
+	if { ![catch {cs gaosBTO info}] } {
+	    if { $useLwfs} {
+		cs gaosBTO set dem On
+		cs gaosBTO set dir 3
+	    }
+	}
+	
+	# Disable guiding.
+	# Stop the wave-front sensors.
+	Pwfs1 stop
+	Pwfs2 stop
+	Oiwfs stop
+
+	# Flatten.
+	cs aoFlatten set dummy 1
+	logger command aoFlatten
+
+	# Turn off M2.
+	cs m2Guide set state Off
+	logger command m2Guide
+	cs m2GuideMode set coma Off
+	logger command m2GuideMode
+	
+	# Turn off probe guiding.
+	cs wfsGuideMode set state Off
+	logger command wfsGuideMode
+	
+	# Turn off mount guiding.
+	cs mountGuide set mode Off
+	logger command mountGuide
+	
+	# Turn off M1 AO
+	cs m1Guide set mode Off
+	logger command m1Guide
+	
+	# Post the command.
+	if { [catch {cs tcsApply post} msg] } {
+	    tk_messageBox -icon error -message \
+		"Error posting guide commands: TCS reports \
+            \"$msg\""
+	    process IDLE
+	    return
+	}
+
+	#wait for flatten to go idle
+	if {[setTimeout "sa aossad get flattenBusy" BUSY 15000 200 "flatten to go idle"]} return
+
+	# Post GAOS correct command.
+	logactions logmess "ActiveOptics::enable start correctin, reuseGains= $AOreuseGains"    
+	cs aoCorrect set correct ON
+	cs aoCorrect set matrix 0
+	cs aoCorrect set gains $AOreuseGains
+	logger command aoCorrect
+	if { [catch {cs tcsApply post} msg] } {
+            tk_messageBox -icon error -parent $itk_interior -message $msg
+	}
+	
+	#wait for gaos Loop to be on
+	if {[setTimeout "state gaos" 0 20000 200 "gaos Loop to be on"]} return
+
+	if { $useLwfs} {
+	    set AOtryingToReuseGain 1
+	} else {
+	    set AOreuseGains 0
+	    set AOtryingToReuseGain 0
+	}
+	    
+    } elseif { !$gaos && [state gaos] } {
+       #puts "turning GAOS off"
+       # turn off BTO when using LGS
+       if $useLwfs {
+	   cs gaosBTO set dem Off
+	   cs gaosBTO set clr On
+	   cs gaosBTO set fsaTip 0
+	   cs gaosBTO set fsaTilt 0
+	   cs gaosBTO set dir 3
+       }
+       # Post GAOS correct command.
+       cs aoCorrect set correct OFF
+       logger command aoCorrect
+       if { [catch {cs tcsApply post} msg] } {
+	   tk_messageBox -icon error -parent $itk_interior -message $msg
+       }
+       after 10
+       
+       # Flatten.
+       cs aoFlatten set dummy 1
+       logger command aoFlatten
+   }
+
+# The probe guide states can either be A, B, AB or on. If it is the latter
+# then we must first determine which chop states it will be active in
+# according to the probe chop/nod flags and modify the state accordingly.
+   foreach sa [list pwfs1Guide pwfs2Guide oiwfsGuide pwfs2Guide] \
+         statevar [list m2p1guide m2p2guide m2oiguide m2aoguide] \
+         state [list $p1guide $p2guide $oiguide $aoguide] {
+
+      set $statevar ""
+      if { $state eq "On" } {
+         switch [sa tcssad get nodState] {
+            A {
+               if { [sa $sa get nodachopa] eq "On" } {
+                  append $statevar A
+               } 
+               if { [sa $sa get nodachopb] eq "On" } {
+                  append $statevar B
+               } 
+            }
+            B {
+               if { [sa $sa get nodbchopa] eq "On" } {
+                  append $statevar A
+               } 
+               if { [sa $sa get nodbchopb] eq "On" } {
+                  append $statevar B
+               } 
+            }
+         }
+      }
+  }
+
+# M2 tip/tilt is on and we want it off.
+   if { $m2p1guide eq "" && $m2p2guide eq "" && $m2aoguide eq "" && \
+            $m2oiguide eq "" } {
+      if { [state m2] } {
+
+# Turn guiding off.
+         cs m2Guide set state Off
+         logger command m2Guide
+     }
+   } else { 
+
+# See if the current M2 source matches what we want.
+      set needreset 0
+      set addlist [list]
+      foreach source [list PWFS1 PWFS2 GAOS OIWFS] \
+            guide [list $m2p1guide $m2p2guide $m2aoguide $m2oiguide] {
+         foreach beam [list A B] {
+            if { [source m2 $source $beam] } {
+               if { $guide ne $beam } {
+                  set needreset 1
+               }
+            } else {
+               if { $guide eq $beam } {
+                  lappend addlist [list $source $beam]
+               }
+            }
+         }
+      }
+
+      if { $needreset || [llength $addlist] != 0 } {
+
+# We need to change the setup of M2. Turn it off first.
+         cs m2Guide set state Off
+         logger command m2Guide
+         if { [catch {cs m2Guide post} msg] } {
+            tk_messageBox -icon error -message \
+                  "Error posting m2Guide command: TCS reports \
+                  \"$msg\""
+	    process IDLE
+            return
+         }
+
+# Reset M2 if required.
+         if { $needreset } {
+            cs m2GuideReset set dummy 1
+            logger command m2GuideReset
+            if { [catch {cs m2GuideReset post} msg] } {
+               tk_messageBox -icon error -message \
+                     "Error posting m2GuideReset command: TCS reports \
+                     \"$msg\""
+	       process IDLE
+               return
+            }
+         }
+
+# Add the desired guide sources.
+         foreach source [list PWFS1 PWFS2 GAOS OIWFS] \
+                  beam [list $m2p1guide $m2p2guide $m2aoguide $m2oiguide] {
+            if {$source eq "GAOS" } {
+               if { $beam ne "" } {
+                 cs oiwfsSelect set output AO
+               } else {
+                 cs oiwfsSelect set output WFS
+               }
+               logger command oiwfsSelect
+               if { [catch { cs oiwfsSelect post} msg] } {
+                 tk_messageBox -icon error -message \
+                     "Error posting oiwfsSelect command: TCS reports \
+                     \"$msg\""
+		  process IDLE
+                  return
+               }
+            }
+            if { $beam ne "" } {
+puts "beam is $beam gonna wait for 1 second"
+               cs m2GuideConfig set reset Off
+               cs m2GuideConfig set samplefreq 200
+               cs m2GuideConfig set filter raw
+               cs m2GuideConfig set freq1 ""
+               cs m2GuideConfig set freq2 ""
+               cs m2GuideConfig set beam $beam
+               cs m2GuideConfig set source $source
+
+# A delay is needed here so that we don't over-write the inputs of the
+# m2guideConfig CAD before the previous command has executed.
+               after 1000
+               logger command m2GuideConfig
+               if { [catch {cs m2GuideConfig post} msg] } {
+                  tk_messageBox -icon error -message \
+                        "Error posting m2GuideConfig command: TCS reports \
+                        \"$msg\""
+		  process IDLE
+                  return
+               }
+            }
+	}
+
+# Turn guiding on.
+         cs m2Guide set state On
+         logger command m2Guide
+
+     } elseif { ! [state m2] } {
+
+# Just need to turn it on if it is off.
+         cs m2Guide set state On
+           logger command m2Guide
+     }
+  }
+
+# Coma correction.
+   if { [state coma] &&  ! $comacorr } {
+      cs m2GuideMode set coma Off
+      logger command m2GuideMode
+   } elseif {  ! [state coma] &&  $comacorr } {
+      cs m2GuideMode set coma On
+      logger command m2GuideMode
+   }
+
+# Mount guide mode.
+   if { [state mount] && $mountguide == "none" } {
+      cs mountGuide set mode Off
+      logger command mountGuide
+   } elseif { $mountguide != "none" } {
+      switch $mountguide {
+         SCS {
+             cs mountGuide set mode On
+             cs mountGuide set source SCS
+         }
+         PWFS1 {
+             cs mountGuide set mode On
+             cs mountGuide set source AG
+             cs mountGuide set p1weight 1.0
+             cs mountGuide set p2weight 0.0
+         }
+         PWFS2 {
+             cs mountGuide set mode On
+             cs mountGuide set source AG
+             cs mountGuide set p1weight 0.0
+             cs mountGuide set p2weight 1.0
+         }
+      }
+      logger command mountGuide
+   }
+
+# M1 figure.
+   if { [state m1] && $m1source eq "" } {
+      cs m1Guide set mode Off
+      logger command m1Guide
+   } elseif { $m1source ne "" } {
+      cs m1Guide set mode On
+      cs m1GuideConfig set weighting none
+      cs m1GuideConfig set frames 1
+      switch $m1source {
+         PWFS1 {
+             cs m1GuideConfig set source PWFS1
+         }
+         PWFS2 {
+             cs m1GuideConfig set source PWFS2
+         }
+         OIWFS {
+             cs m1GuideConfig set source OIWFS
+         }
+         GAOS {
+             cs m1GuideConfig set source Altair
+         }
+         HRWFS {
+             cs m1GuideConfig set source HRWFS
+             cs m1GuideConfig set filename $m1filename
+         }
+      }
+      logger command m1GuideConfig
+      logger command m1Guide
+   }
+
+# Post the commands.
+   if { [catch {cs tcsApply post} msg] } {
+      tk_messageBox -icon error -message \
+            "Error posting guide commands: TCS reports \
+            \"$msg\""
+      process IDLE
+      return
+   }
+
+   # turn on TTGS and SFO loops
+   if {[state gaos]} {
+       if {$ttgsloop && ![state ttgsloop] && !$skip_strap} {
+	   # wait for the main ALTAIR loop to be settled ... timeout 5 minutes ??
+	   if {[setTimeout "sa aossad get aoSettled" 0 300000 200 "the main ALTAIR loop to be settled"]} return
+
+	   cs ttgsloop set dem 1
+	   cs ttgsloop set dir 3
+       } elseif {!$ttgsloop && [state ttgsloop] && !$skip_strap } {
+	   cs ttgsloop set dem 0
+	   cs ttgsloop set dir 3
+       }
+       if {$sfoloop && ![state sfoloop]} {
+	   cs sfoloop set dem 1
+       } elseif {!$sfoloop && [state sfoloop]} {
+	   cs sfoloop set dem 0
+       }
+   }
+
+# Probe guiding.
+    if { $probeguide == "OFF" && ( [state p1guide] || [state p2guide] || [state oiguide]) } {
+      cs wfsGuideMode set state Off
+      logger command wfsGuideMode
+   } elseif { $probeguide != "OFF" } {
+      cs wfsGuideMode set state On
+      cs wfsGuideMode set from $probefrom
+      cs wfsGuideMode set to $probeto
+      logger command wfsGuideMode
+   }
+
+   if { $oiao && $oiaoLoop } {
+# Actually closing of the AO loop was moved to after the closing of P2
+
+#AWE is this neccesary? make sure oiwfsActive is false
+      set oiwfsActive 0
+   } else {
+#     puts "Turn OFF NICI OIAO Loop"
+       if { ![catch {cs niciAOLoop info}] } {
+	   cs niciAOLoop set dem open
+	   cs niciAOLoop set dir 0
+	   after 100
+	   cs niciAOLoop set dir 3
+       }
+   }
+
+   foreach wfs [list pwfs1 pwfs2 oiwfs] \
+         active [list $pwfs1Active $pwfs2Active $oiwfsActive] \
+         wfsobj [list Pwfs1 Pwfs2 Oiwfs] \
+         guide [list $m2p1guide $m2p2guide $m2oiguide] {
+
+# Stop the WFS we don't want.
+      if { [state $wfs] && ! $active } {
+         $wfsobj stop
+      }
+
+# Start all the active ones.
+      if { $active && ![state $wfs]} {
+
+# Determine which processing mode to set the WFS to depending on whether
+# or not it is being used for M2 tip/tilt & focus.
+         if { $guide eq "" } {
+            set mode seqnz
+         } else {
+            set mode seq
+         }
+         $wfsobj configure -exposetime [set ${wfs}Expose] \
+               -mode $mode -quicklook 0
+         $wfsobj start -1
+     }
+  }
+
+# Post the commands.
+   if { [catch {cs tcsApply post} msg] } {
+      tk_messageBox -icon error -message \
+            "Error posting guide commands: TCS reports \
+            \"$msg\""
+      process IDLE
+      return
+   }
+
+   if { $oiao && $oiaoLoop } {
+      puts "Turn ON NICI OIAO Loop"
+#We have to wait for P1 or P2  loop to be closed before closing NICI AO
+      if { $pwfs1Active } {
+          if { [setTimeout {expr "[AO state pwfs1] && [AO state m2] && [AO state mount]"} 0 30000 200 "P1 before activating NICI AO loop"] } return
+      }
+      if { $pwfs2Active } {
+          if { [setTimeout {expr "[AO state pwfs2] && [AO state m2] && [AO state mount]"} 0 30000 200 "P2 before activating NICI AO loop"] } return
+      }
+      if { ![catch {cs niciAOLoop info}] } {
+	  cs niciAOLoop set dem close
+	  cs niciAOLoop set dir 0
+	  after 100
+	  cs niciAOLoop set dir 3
+      }
+   }
+
+# Set the state to "enabled"
+   set enabled 1
+   process IDLE
+}
+
+itcl::body ActiveOptics::disable {} {
+#puts "ActiveOptics::disable"
+
+    if {$processState == "BUSY"} {
+	logactions logmess "ActiveOptics::disable already busy, ignoring command"
+	return
+    } else {
+	process BUSY
+	logactions logmess  "ActiveOptics::disable"
+    }
+
+# Stop the wave-front sensors.
+   Pwfs1 stop
+   Pwfs2 stop
+   if {$oiao} {
+       if { ![catch {cs niciAOLoop info}] } {
+	   puts "Turn off NICI OIAO Loop"
+	   cs niciAOLoop set dem open
+	   cs niciAOLoop set dir 0
+	   after 100
+	   cs niciAOLoop set dir 3
+	   #AWE manual recolour shouldn't be needed in the non-simulated version ... set the record to be monitored
+	   ::.observePanel.frame.control.guideloop recolour
+       }
+   } else {
+      Oiwfs stop
+   }
+
+# Turn off M2.
+   cs m2Guide set state Off
+   logger command m2Guide
+   cs m2GuideMode set coma Off
+   logger command m2GuideMode
+
+# Turn off probe guiding.
+   cs wfsGuideMode set state Off
+   logger command wfsGuideMode
+
+# Turn off mount guiding.
+   cs mountGuide set mode Off
+   logger command mountGuide
+
+# Turn off M1 AO
+   cs m1Guide set mode Off
+   logger command m1Guide
+
+# need to ensure that OIWFS Guide Output is set to SCS
+#    if {[sa aossad get oiOutGuide] == "AO"} {
+#        puts "changing OIWFS Output to SCS"
+#        cs oiwfsOut set detSigOutput 0
+#        cs oiwfsOut set detSigOutputDir 3
+#    }
+
+# Post the command.
+   if { [catch {cs tcsApply post} msg] } {
+      tk_messageBox -icon error -message \
+            "Error posting guide commands: TCS reports \
+            \"$msg\""
+      process IDLE
+      return
+   }
+
+    if { ![catch {cs gaosTTGS info}] } {
+	# turn off the TTGS
+	cs gaosTTGS set dem 0
+	cs gaosTTGS set dir 3
+    }
+
+    if { ![catch {cs gaosSFO info}] } {
+	# turn off the SFO
+	cs gaosSFO set stopDIR 0
+	cs gaosSFO set apply 3
+    }
+
+    if { ![catch {cs ttgsloop info}] } {
+	# turn off TTGS and SFO loops
+	cs ttgsloop set dem 0
+	cs ttgsloop set dir 3
+    }
+    if { ![catch {cs sfoloop info}] } {
+	cs sfoloop set dem 0
+    }
+
+# Stop GAOS
+   if { [state gaos] } {
+       #puts "turning GAOS off"
+
+       # turn off BTO when using LGS
+       if $useLwfs {
+	   cs gaosBTO set dem Off
+	   cs gaosBTO set clr On
+	   cs gaosBTO set fsaTip 0
+	   cs gaosBTO set fsaTilt 0
+	   cs gaosBTO set dir 3
+       }
+
+       # Post GAOS correct command.
+       cs aoCorrect set correct OFF
+       logger command aoCorrect
+       if { [catch {cs tcsApply post} msg] } {
+	   tk_messageBox -icon error -parent $itk_interior -message $msg
+       }
+       after 10
+       
+       # Flatten.
+       cs aoFlatten set dummy 1
+       logger command aoFlatten
+   }
+
+# Set the state to "disabled"
+   set enabled 0
+   process IDLE
+}
+
+itcl::body ActiveOptics::state {component} {
+global env
+# Returns the current state of a component.
+
+   switch $component {
+      processing {
+	  return $processing
+      }
+      pwfs1 {
+         if { [sa guideConfig get p1state value] == "Yes" } {
+            return 1
+         } else {
+            return 0
+         }
+      }
+      pwfs2 {
+         if { [sa guideConfig get p2state value] == "Yes" } {
+            return 1
+         } else {
+            return 0
+         }
+      }
+      oiwfs {
+         if { [sa guideConfig get oistate value] == "Yes" } {
+            return 1
+         } else {
+            return 0
+         }
+      }
+      oiao {
+	 # AWE for now, will assume oiao mode when NICI is the instrument
+	 set inst $::Config(tcs.instrument,value)
+         if { [string match "*NICI*" $inst] } {
+	    set oiao 1
+            return 1
+         } else {
+	    set oiao 0
+            return 0
+         }
+      }
+      oiaoAPD {
+	 # AWE will be checking a channel in NICI
+	  if { [catch {sa guideConfig get niciAPD} oiaoAPD ] } {
+		return 0
+	  }
+	  if { [string match "BUSY*" $oiaoAPD ] } {
+	      return 1
+	  } else {
+	      return 0
+	  }
+      }
+      oiaoLoop {
+         # AWE will be checking a channel in NICI
+	 set guiding [sa guideConfig get niciAOloop]
+#	 if {$env(TCC_TCSNAME) == "tc1"} {
+#            return $oiaoLoop
+#         } elseif { [sa guideConfig get niciAOloop] == "CLOSED" } {
+#	    return 1
+#         } else {
+#            return 0
+#         }
+         if { $guiding == "CLOSED" || $guiding == "feedback" } {
+	    return 1
+         } else {
+            return 0
+         }      
+      }
+      gaos {
+         if { [sa guideConfig get aostate] == "On" } {
+            return 1
+         } else {
+            return 0
+         }
+      }
+      useLwfs {
+         # changed to be taken from altair directly when not simulating
+	 # aditionally, should be always 0 if we're not using AO
+	 if {($::Config(tcs.gaos,value) == "No AO") || ($::Config(tcs.gaos,value) == "")} {
+	     return 0
+	 }
+	 if {$env(TCC_TCSNAME) == "tc1"} {
+	     if { [sa guideConfig get useLwfs] == "ON" } {
+		 return 1
+	     } else {
+		 return 0
+	     }
+	 } else {
+	     if { [sa guideConfig get useLwfs] == "1" } {
+		 return 1
+	     } elseif { [sa guideConfig get useLwfs] == "-1" } {
+		 return -1
+	     } else {
+		 return 0
+	     }
+	 }
+      }
+      aoSettled {
+         if { [sa aossad get aoSettled] == "1" } {
+            return 1
+         } else {
+            return 0
+         }
+      }
+      ttgs -
+      gaosTTGS {
+	 if {$env(TCC_TCSNAME) == "tc1" && [sa guideConfig get aoTTGS] == "No Value"} {
+	     return $gaosTTGS
+	 }
+         if { [sa guideConfig get aoTTGS] == "No Value" } {
+            return 0
+	 }
+         if { [sa guideConfig get aoTTGS] >= "1" } {
+            return 1
+         } else {
+            return 0
+         }
+      }
+      sfo -
+      gaosSFO {
+	 if {$env(TCC_TCSNAME) == "tc1" && [sa guideConfig get aoSFO] == "No Value"} {
+	     return $gaosSFO
+	 }
+         if { [sa guideConfig get aoSFO] == "1" } {
+            return 1
+         } else {
+            return 0
+         }
+      }
+      ttgsloop {
+	 if {$env(TCC_TCSNAME) == "tc1" && [sa guideConfig get ttgsloop] == "No Value"} {
+	     return $ttgsloop
+	 }
+         if { [sa guideConfig get ttgsloop] == "1" } {
+            return 1
+         } else {
+            return 0
+         }
+      }
+      sfoloop {
+	 if {$env(TCC_TCSNAME) == "tc1" && [sa guideConfig get sfoloop] == "No Value"} {
+	     return $sfoloop
+	 }
+         if { [sa guideConfig get sfoloop] == "enabled" } {
+            return 1
+         } else {
+            return 0
+         }
+      }
+      oiblend {
+	  if {( [sa guideConfig get oiblend] == "1") || ([sa guideConfig get oiblend] == "ON") } {
+            return 1
+         } else {
+            return 0
+         }
+      }
+      p1guide {
+         if { [sa guideConfig get p1guide value] == "1" } {
+            return 1
+         } else {
+            return 0
+         }
+      }
+      p2guide {
+         if { [sa guideConfig get p2guide value] == "1" } {
+            return 1
+         } else {
+            return 0
+         }
+      }
+      oiguide {
+         if { [sa guideConfig get oiguide value] == "1" } {
+            return 1
+         } else {
+            return 0
+         }
+      }
+      m1 {
+         if { [sa guideConfig get m1state value] == "On" } {
+            return 1
+         } else {
+            return 0
+         }
+      }
+      m2 {
+         if { [sa guideConfig get m2state value] == "On" } {
+            return 1
+         } else {
+            return 0
+         }
+      }
+      mount {
+         set flag [sa guideConfig get absorbtilt value]
+         if { [string is integer -strict $flag] } {
+            if { $flag > 0 } {
+               return 1
+            } else {
+               return 0
+            }
+         } else {
+            return 0
+         }
+      }
+      coma {
+         if { [sa guideConfig get coma value] eq "On" } {
+            return 1
+         } else {
+            return 0
+         }
+      }
+   }
+}
+
+itcl::body ActiveOptics::source {component src {beam A}} {
+
+# Returns the source of input signals for the specified component.
+
+   switch $component {
+      m1 {
+         if { [sa guideConfig get m1source value] == $src } {
+            return 1
+         }
+      }
+      m2 {
+         switch $src {
+            PWFS1 {
+               set guide [sa guideConfig get m2p1guide]
+               if { $guide ne "OFF" && \
+                     [lsearch -exact $guide ${beam}-AUTO] != -1 } {
+                  return 1
+               }
+            }
+            PWFS2 {
+               set guide [sa guideConfig get m2p2guide]
+               if { $guide ne "OFF" && \
+                     [lsearch -exact $guide ${beam}-AUTO] != -1 } {
+                  return 1
+               }
+            }
+            OIWFS {
+               set guide [sa guideConfig get m2oiguide]
+               if { $guide ne "OFF" && \
+                     [lsearch -exact $guide ${beam}-AUTO] != -1 } {
+                  return 1
+               }
+            }
+            GAOS {
+               set guide [sa guideConfig get m2aoguide]
+               if { $guide ne "OFF" && \
+                     [lsearch -exact $guide ${beam}-AUTO] != -1 } {
+                  return 1
+               }
+            }
+         }
+      }
+      mount {
+         switch [sa guideConfig get absorbtilt value] {
+            3 {
+               if { $src == "M2" } {
+                  return 1
+               }
+            }
+            4 {
+               set w [sa guideConfig get p1mweight value]
+               if { [string is double -strict $w] } {
+                  if { $w > 0.0 && $src == "PWFS1" } {
+                     return 1
+                  }
+               }
+               set w [sa guideConfig get p2mweight value]
+               if { [string is double -strict $w] } {
+                  if { $w > 0.0 && $src == "PWFS2" } {
+                     return 1
+                  }
+               }
+            }
+         }
+         return 0
+      }
+   }
+   return 0
+}
+
+itcl::body ActiveOptics::setTimeout {chanStr value time incr reason} {
+
+   logactions logmess "starting a timeout check for $reason"
+   logactions logmess "chanStr: $chanStr curr value: [eval $chanStr]  check value: $value"
+   if { [catch {logactions logmess "prev tid: $tid  tid info: [after info $tid]"} ret]} {
+       # logactions logmess "prev tid: $tid tid info: $ret"
+   }
+   set tid [after $time "$this timeout"]
+   set timeout_reason $reason
+   while {[eval $chanStr] == $value} {
+       if {$timeout} break
+       after $incr
+       update 
+   } 
+   if ($timeout) {
+       set timeout 0
+       #process IDLE
+       return 1
+   } else {
+       after cancel $tid
+       return 0
+   }
+}
+
+itcl::body ActiveOptics::timeout {} {
+    # only get here if we timeout waiting for a response or BUSY-IDLE transition
+    # raise a warning popup and open the loops.
+    puts "ActiveOptics::timeout"
+    logactions logmess "ActiveOptics::Timed out waiting for $timeout_reason. Opening loops"
+    tk_messageBox -icon error \
+	-message "Timed out waiting for $timeout_reason. Opening loops"
+
+    set timeout 1
+    if {[string match "*STRAP*" $timeout_reason]} {
+	logactions logmess "allowing the loop to potentially stay closed"
+	return
+    } else {
+	process IDLE
+	$this disable
+	return
+    }
+}
+
+itcl::body ActiveOptics::setCanvas {canv} {
+    set canvas $canv
+    return
+}
+
+itcl::body ActiveOptics::process {state} {
+
+    if {[string length $canvas] == 0} { return }
+
+    switch $state {
+	BUSY {
+	    set processState BUSY
+	    $canvas itemconfigure processing_bg -fill green
+	    $canvas itemconfigure processingText -text BUSY
+	    update
+	}
+	IDLE {
+	    set processState IDLE
+	    $canvas itemconfigure processing_bg -fill white
+	    $canvas itemconfigure processingText -text IDLE
+	    update
+	}
+    }
+    return
+}
+
+itcl::body ActiveOptics::setTTGSFluxMode {} {
+
+    # first turn off the Gate (should be already off ... being careful
+    cs gaosTTGS set dem 0
+    after 200
+    cs gaosTTGS set dir 3
+    after 500
+    if {[setTimeout "sa aossad get strapGTBusy" 1 10000 200 "STRAP GateCtl to turn off"]} {return 1}
+    after 500
+
+    #turn off HVolt Ctl
+    cs gaosTTGS set hvCtl 0
+    after 200
+    cs gaosTTGS set hvDIR 3
+    after 500
+    if {[setTimeout "sa aossad get strapHVStat" 1 10000 200 "STRAP HVStat to turn off"]} {return 1}
+    after 500
+
+    #turn off Temp Ctl
+    cs gaosTTGS set tempCtl 0
+    after 200
+    cs gaosTTGS set tempDIR 3
+    after 500
+    if {[setTimeout "sa aossad get strapTPStat" 1 10000 200 "STRAP TPStat to turn off"]} {return 1}
+    after 500
+
+    #turn off RT Ctl
+    cs gaosTTGS set rtCtl 0
+    after 200
+    cs gaosTTGS set rtDIR 3
+    after 500
+    if {[setTimeout "sa aossad get strapRTStat" 1 10000 200 "STRAP RTStat to turn off"]} {return 1}
+    after 500
+
+    #set Flux Mode
+    cs gaosTTGS set flux $ttgsFlux
+    after 200
+    cs gaosTTGS set fluxDIR 3
+    after 500
+    if {[setTimeout "sa aossad get strapSFXBusy" BUSY 10000 200 "STRAP SFXBusy to be IDLE"]} {return 1}
+    after 500
+    if {[sa aossad get strapSFXBusy] == "ERR"} {
+	tk_messageBox -icon error -message \
+	    "Error Setting STRAP Flux Mode: MESS: [sa aossad get strapSFXMess]"
+	return 1
+    }
+    after 500
+
+    #turn on Temp Ctl
+    cs gaosTTGS set tempCtl 1
+    after 200
+    cs gaosTTGS set tempDIR 3
+    after 500
+    if {[setTimeout "sa aossad get strapTPStat" 0 10000 200 "STRAP TPStat to turn on"]} {return 1}
+    after 500
+
+    #turn on HVolt Ctl
+    cs gaosTTGS set hvCtl 1
+    after 200
+    cs gaosTTGS set hvDIR 3
+    after 500
+    if {[setTimeout "sa aossad get strapHVStat" 0 30000 200 "STRAP HVStat to turn on"]} {return 1}
+    after 500
+
+    #turn on RT Ctl
+    cs gaosTTGS set rtCtl 1
+    after 200
+    cs gaosTTGS set rtDIR 3
+    after 500
+    if {[setTimeout "sa aossad get strapRTStat" 0 10000 200 "STRAP RTStat to turn on"]} {return 1}
+    after 200
+
+    return 0
+}
+

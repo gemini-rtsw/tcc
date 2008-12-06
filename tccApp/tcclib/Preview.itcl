@@ -1,0 +1,276 @@
+#+
+# Preview
+#
+# Computes a preview of the telescope and guide probe positions at some
+# specified time.
+#
+# Methods:
+#
+#    target hmsdegTarget a b system equinox epoch pm1 pm2 parallax rv
+#
+#    target degdegTarget a b
+#
+#    target conicTarget type epoch orbinc anode perih aorq e ?aorl dm?
+#
+#    slew time
+#
+# Options
+#
+#    -iaa           Instrument alignment angle
+#
+#    -poriginA      Source A pointing origin
+#
+#    -poriginB      Source B pointing origin
+#    
+# D Terrett  28 February 2003
+#
+# Copyright CLRC
+#+
+
+itcl::class Preview {
+   constructor {} {}
+   destructor {}
+   public {
+
+# Inputs.
+      method target {type args}
+      method slew {time}
+      variable pox 0.0 {$telsim configure -pox $pox}
+      variable poy 0.0 {$telsim configure -poy $poy}
+      variable iaa 0.0 {$telsim configure -iaa $iaa}
+      variable ipa 0.0 {$telsim configure -ipa $ipa}
+      variable rotSystem FK5 {$telsim configure -rotSystem $rotSystem}
+      variable rotEquinox J2000 {$telsim configure -rotEquinox $rotEquinox}
+      variable p1Target [list]
+      variable p2Target [list]
+      variable oiTarget [list]
+      variable wavel 0.5 {$telsim configure -wavelength $wavel}
+      variable p1Wavel 0.5
+      variable p2Wavel 0.5
+      variable oiWavel 0.5
+# Outputs.
+      variable utc
+      variable visible
+      variable target
+      variable az1
+      variable az2
+      variable el
+      variable rma1
+      variable rma2
+      variable ha
+      variable zd
+      variable am
+      variable moonSep
+      variable azttl1
+      variable azttl2
+      variable elttl
+      variable rotttl1
+      variable rotttl2
+      variable zttl
+      variable p1xy [list]
+      variable p2xy [list]
+      variable oixy [list]
+   }
+   private {
+      variable telsim
+   }
+}
+
+itcl::body Preview::constructor {} {
+
+# Create telescope simulation object.
+   set telsim [TelescopeSim #auto]
+
+}
+
+itcl::body Preview::destructor {} {
+   itcl::delete object $telsim
+}
+
+itcl::body Preview::target {type args} {
+   switch $type {
+      hmsdegTarget {
+         $telsim configure \
+               -targetType $type \
+               -theta1 [lindex $args 0] \
+               -theta2 [lindex $args 1] \
+               -system [lindex $args 2] \
+               -equinox [lindex $args 3] \
+               -epoch [lindex $args 4] \
+               -pm1 [lindex $args 5] \
+               -pm2 [lindex $args 6] \
+               -parallax [lindex $args 7] \
+               -rv [lindex $args 8]
+      }
+      degdegTarget {
+         $telsim configure \
+               -targetType $type \
+               -theta1 [lindex $args 1] \
+               -theta2 [lindex $args 2]
+      }
+      conicTarget {
+         $telsim configure \
+               -targetType $type \
+               -orbType [lindex $args 0] \
+               -orbElements [lrange $args 1 end]
+      }
+   }
+}
+
+itcl::body Preview::slew {time} {
+
+# Check that a science target has been defined.
+   if { [string equal [$telsim cget -targetType] <undefined>] } {
+      error "Preview must have a science target defined"
+   }
+
+# Update telescope context in the TelescopeSim object.
+   $telsim configure -delut [sa tcssad get delut value] \
+         -elongm [sa tcssad get tlongm value] \
+         -latm [sa tcssad get tlatm value] \
+         -hm [sa tcssad get height value] \
+         -xpm [sa tcssad get xpm value] \
+         -ypm [sa tcssad get ypm value] \
+         -tlr [sa tcssad get tlr value] \
+         -focalLength [sa tcssad get focalLength value] \
+         -an 0.0 \
+         -aw 0.0 \
+         -pnpae 0.0 \
+         -ca [sa tcssad get collErrAz value] \
+         -ce [sa tcssad get collErrEl value] \
+         -temperature [sa tcssad get currentExternalTemp value] \
+         -pressure [sa tcssad get currentAirPressure value] \
+         -humidity [sa tcssad get currentRH value]
+
+# Set mechanism limits.
+   $telsim configure -ellim [sa tcssad get ellimit] \
+         -azlolim [sa tcssad get azlolimit] \
+         -azhilim [sa tcssad get azhilimit] \
+         -rotlolim [sa tcssad get rotlolimit] \
+         -rothilim [sa tcssad get rothilimit] \
+         -zlim [sa tcssad get zlimit]
+
+# Slew the simulator.
+   $telsim slew 0.0 $time
+
+# Compute the WFS x/y positions.
+   if {[string length $p1Target]} {
+       set type [lindex $p1Target 0]
+       switch $type {
+	   hmsdegTarget {
+	       $telsim configure \
+		   -targetType $type \
+		   -theta1 [lindex $p1Target 1] \
+		   -theta2 [lindex $p1Target 2] \
+		   -system [lindex $p1Target 3] \
+		   -equinox [lindex $p1Target 4] \
+		   -epoch [lindex $p1Target 5] \
+		   -pm1 [lindex $p1Target 6] \
+		   -pm2 [lindex $p1Target 7] \
+		   -parallax [lindex $p1Target 8] \
+		   -rv [lindex $p1Target 9] \
+		   -wavelength $p1Wavel
+	   }
+	   degdegTarget {
+	       $telsim configure \
+		   -targetType $type \
+		   -theta1 [lindex $p1Target 2] \
+		   -theta2 [lindex $p1Target 3]
+	   }
+	   conicTarget {
+	       $telsim configure \
+		   -targetType $type \
+		   -orbType [lindex $p1Target 1] \
+		   -orbElements [lrange $args 2 end]
+	   }
+       }
+       set p1xy [$telsim getxy]   
+   }
+
+   if {[string length $p2Target]} {
+       set type [lindex $p2Target 0]
+       switch $type {
+	   hmsdegTarget {
+	       $telsim configure \
+		   -targetType $type \
+		   -theta1 [lindex $p2Target 1] \
+		   -theta2 [lindex $p2Target 2] \
+		   -system [lindex $p2Target 3] \
+		   -equinox [lindex $p2Target 4] \
+		   -epoch [lindex $p2Target 5] \
+		   -pm1 [lindex $p2Target 6] \
+		   -pm2 [lindex $p2Target 7] \
+		   -parallax [lindex $p2Target 8] \
+		   -rv [lindex $p2Target 9] \
+		   -wavelength $p2Wavel
+	   }
+	   degdegTarget {
+	       $telsim configure \
+		   -targetType $type \
+		   -theta1 [lindex $p2Target 2] \
+		   -theta2 [lindex $p2Target 3]
+	   }
+	   conicTarget {
+	       $telsim configure \
+		   -targetType $type \
+		   -orbType [lindex $p2Target 1] \
+		   -orbElements [lrange $p2Target 2 end]
+	   }
+       }
+       set p2xy [$telsim getxy]
+       puts "Preview: p2xy: $p2xy p2Target: $p2Target"
+   }
+
+   if {[string length $oiTarget]} {
+       set type [lindex $oiTarget 0]
+       switch $type {
+	   hmsdegTarget {
+	       $telsim configure \
+		   -targetType $type \
+		   -theta1 [lindex $oiTarget 1] \
+		   -theta2 [lindex $oiTarget 2] \
+		   -system [lindex $oiTarget 3] \
+		   -equinox [lindex $oiTarget 4] \
+		   -epoch [lindex $oiTarget 5] \
+		   -pm1 [lindex $oiTarget 6] \
+		   -pm2 [lindex $oiTarget 7] \
+		   -parallax [lindex $oiTarget 8] \
+		   -rv [lindex $oiTarget 9] \
+		   -wavelength $oiWavel
+	   }
+	   degdegTarget {
+	       $telsim configure \
+		   -targetType $type \
+		   -theta1 [lindex $oiTarget 2] \
+		   -theta2 [lindex $oiTarget 3]
+	   }
+	   conicTarget {
+	       $telsim configure \
+		   -targetType $type \
+		   -orbType [lindex $oiTarget 1] \
+		   -orbElements [lrange $oiTarget 2 end]
+	   }
+       }
+       set oixy [$telsim getxy]
+   }
+
+# Fetch the results.
+   set utc [$telsim cget -utc]
+   set visible [$telsim cget -visible]
+   set target [$telsim cget -target]
+   set az1 [$telsim cget -az1]
+   set az2 [$telsim cget -az2]
+   set el [$telsim cget -el]
+   set rma1 [$telsim cget -rma1]
+   set rma2 [$telsim cget -rma2]
+   set ha [$telsim cget -ha]
+   set zd [$telsim cget -zd]
+   set am [$telsim cget -am]
+   set moonSep [$telsim cget -moonSep]
+   set azttl1 [$telsim cget -azttl1]
+   set azttl2 [$telsim cget -azttl2]
+   set elttl [$telsim cget -elttl]
+   set azttl1 [$telsim cget -rotttl1]
+   set azttl2 [$telsim cget -rotttl2]
+   set zttl [$telsim cget -zttl]
+}

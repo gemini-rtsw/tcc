@@ -1,0 +1,149 @@
+#+
+#  Chop <- Paramset
+#
+#  Implements the Chop class. A Chop object stores a chop configuration.
+#
+#  Options:
+#
+#          -angle        The chop position angle.
+#
+#          -cosys        The chop tracking frame.
+#
+#          -dutycycle    The duty cycle.
+#
+#          -frequency    The chop frequency.
+#
+#          -source       The chop sync source.
+#
+#          -throw        The chop throw.
+#
+#          -average      Seq closed loop default
+#
+#          -mult         Seq closed loop default
+#
+#          -weight_a     Target to Mount Filter Weight A
+#
+#          -weight_b     Target to Mount Filter Weight B
+#
+#          -shortCircuit Target to Mount Filter short circuit
+#
+#  Methods:
+#          apply comp    Applies the chop configuration to the TCS by 
+#                        setting the values of the command parameters.
+#                        The argument is ignored.
+#
+#          init          Returns the chop object to its initial state.
+#
+#          save node     Saves the values of the chop configuration
+#                        to the xml node
+#
+#  D Terrett 10 June 2003
+#
+#  Copyright CCLRC
+#+
+
+itcl::class Chop {
+   inherit Paramset
+   destructor {$this init}
+   public {
+      method apply {comp}
+      method init {}
+      method save {node}
+      variable angle {}
+      variable cosys {}
+      variable dutycycle {}
+      variable frequency {}
+      variable source {}
+      variable throw {}
+      variable average {}
+      variable mult {}
+      variable weight_a {}
+      variable weight_b {}
+      variable shortCircuit {}
+   }
+   private {
+      variable current_cosys {}
+   }
+}
+
+itcl::body Chop::apply {comp} {
+
+# Set Sequence Closed Loop Parameters
+   cs p2Seq set ave $average
+   cs p2Seq set mult $mult
+   logger command p2Seq
+
+# Set Target to Mount Filter
+   cs filter2 set a $weight_a
+   cs filter2 set b $weight_b
+   cs filter2 set shortCircuit $shortCircuit
+   logger command filter2
+
+# Set relative chop parameters.
+   cs chopRelative set angle [list $angle]
+   cs chopRelative set throw [list $throw]
+   if { [string equal $cosys ""] } {
+      cs chopRelative set system FK5
+      cs chopRelative set equinox J2000
+      logger command chopRelative
+   } else {
+      CosysNames::$cosys apply $comp.cosys
+   }
+
+# Set chop configuration parameters.
+   cs chopConfig set type 2posn
+   cs chopConfig set source [list $source]
+   cs chopConfig set frequency [list $frequency]
+   cs chopConfig set dutycycle [list $dutycycle]
+   logger command chopConfig
+
+# Set the source B wavelength to the same as source A.
+   set wavel [cs wavelSourceA get wavel]
+   if { ! ( [string equal $wavel "No Value"] || [string equal $wavel ""] ) } {
+      cs wavelSourceB set wavel $wavel
+      logger command wavelSourceB
+   }
+}
+
+itcl::body Chop::save {node} {
+   set node [paramset $node chop]
+   param $node angle $angle
+   param $node cosys $cosys
+   param $node dutycycle $dutycycle
+   param $node frequency $frequency
+   param $node source $source
+   param $node throw $throw
+   param $node average $average
+   param $node mult $mult
+   param $node weight_a $weight_a
+   param $node weight_b $weight_b
+   param $node shortCircuit $shortCircuit
+}
+
+itcl::body Chop::init {} {
+   set angle ""
+   $this configure -cosys ""
+   set throw ""
+   set frequency ""
+   set dutycycle ""
+   set source ""
+   set average ""
+   set mult ""
+   set weight_a ""
+   set weight_b ""
+   set shortCircuit ""
+}
+
+itcl::configbody Chop::cosys {
+   if { ! [string equal $current_cosys ""] } {
+      CosysNames::$current_cosys refdec
+   }
+   set current_cosys ""
+   if { ! [string equal $cosys ""] } {
+      if { [catch {CosysNames::$cosys refinc}] } {
+         error "Coordinate frame \"$cosys\" does not exist"
+      } else {
+         set current_cosys $cosys
+      }
+   }
+}

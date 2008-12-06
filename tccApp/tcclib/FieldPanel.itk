@@ -1,0 +1,71 @@
+#+
+#  FieldPanel <- Panel
+#
+#  Implements the FieldPanel widget. A Panel widget with a 
+#  FieldControl widget packed into its interior.
+#
+#  Options:
+#           -components -    The -component options of the controls
+#
+#  Methods:
+#           none
+#
+#  D Terrett 16 January 2004
+#
+#  Copyright CCLRC
+#+
+
+itcl::class FieldPanel {
+   inherit Panel
+   constructor args {}
+   public {
+      method show {component}
+      method sync {component name} {
+         $itk_component(control) sync $component $name
+      }
+      method newtarget {args} {
+         eval $itk_component(control) newtarget $args
+      }
+   }
+}
+
+itk::usual FieldPanel {
+   keep -background -cursor
+}
+
+itcl::body FieldPanel::constructor args {
+
+   setWidgetColors $itk_interior \
+         $itk_option(-background) $itk_option(-foreground)
+
+# Field control.
+   itk_component add control {
+      FieldControl $itk_interior.field
+   } {
+      usual
+      rename -component -components components Components
+   }
+   pack $itk_component(control) -side left
+
+   eval itk_initialize $args
+}
+
+itcl::body FieldPanel::show {component} {
+   switch $component {
+      sciencetarget {
+         [$itk_component(control) component targets] select Science
+      }
+      pwfs1target {
+         [$itk_component(control) component targets] select PWFS1
+      }
+      pwfs2target {
+         [$itk_component(control) component targets] select PWFS2
+      }
+      oiwfstarget {
+         [$itk_component(control) component targets] select OIWFS
+      }
+      aowfstarget {
+         [$itk_component(control) component targets] select AOWFS
+      }
+   }
+}

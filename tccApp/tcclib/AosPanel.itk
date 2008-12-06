@@ -1,0 +1,46 @@
+#+
+#  AosPanel <- Panel
+#
+#  Implements the AosPanel widget. A Panel widget with a AosControl
+#  widget packed into its interior
+#
+#  Options:
+#          none
+#
+#  Methods:
+#          none
+#
+#  D Terrett 11 November 2002
+#
+#  Copyright CCLRC
+#+
+
+itcl::class AosPanel {
+   inherit Panel
+   constructor args {}
+}
+
+itk::usual AosPanel {
+   keep -background -cursor
+}
+
+itcl::body AosPanel::constructor args {
+
+# Withdraw the top level window so that we don't see geometry changes as
+# we wait for sa to connect.
+   set toplevel [winfo toplevel $itk_interior]
+   wm withdraw $toplevel
+
+   setWidgetColors $itk_interior \
+         $itk_option(-background) $itk_option(-foreground)
+
+   itk_component add control {
+      AoControl $itk_interior.control
+   }
+
+   pack $itk_component(control) -fill both -expand y
+
+   eval itk_initialize $args
+
+   wm deiconify $toplevel
+}

@@ -1,0 +1,741 @@
+#+
+#  OpticsView <- itk:Widget
+#
+#  Implements the OpticsView widget.
+#
+#  Options:
+#          -aoentrance        True if the AO entrance shutter is open.
+#
+#          -aoexit            True if the AO exit shutter is open.
+#
+#          -aofold            The position of the ao fold mirror (IN or OUT).
+#
+#          -aopresent         AO unit present (boolean).
+#
+#          -centralbaffle     The position of the central baffle (OPEN or
+#                             CLOSED).
+#
+#          -calunit           Calibration unit on (boolean)
+#
+#          -deployablebaffle  The postion of the deployable baffle (RETRACTED,
+#                             "NEAR IR", VISIBLE or EXTENDED).
+#
+#          -gpolustate        The state of the GPOL upper slide (IN or OUT)
+#
+#          -gpolmstate        The state of the GPOL middle slide (IN or OUT)
+#
+#          -gpollstate        The state of the GPOL lower slide (IN or OUT)
+#
+#          -holecover         The position of the M1 central hole cover (OPENED,
+#                             "MIDDLE POSITION" or CLOSED).
+#
+#          -hrwfs             The position of the HRWFS pickoff mirror (IN or
+#                             OUT).
+#
+#          -m1cover           The position of the M1 cover (OPENED,
+#                             "MIDDLE POSITION" or CLOSED).
+#
+#          -m2sstate          The follow/in position state of the m2
+#                             system (OFF FOLLOWING or INPOSITION).
+#
+#          -laserProp         Is the laser propogating (ON or OFF)
+#
+#          -portAlabel        The label for ISS port 1.
+#
+#          -portBlabel        The label for ISS port 2 or 4.
+#
+#          -portClabel        The label for ISS port 3 or 5.
+#
+#          -portDnumber       The label for ISS port 4 or 2.
+#
+#          -portEnumber       The label for ISS port 5 or 3.
+#
+#          -portAnumber       The number of port A
+#
+#          -portBnumber       The number of port B
+#
+#          -portCnumber       The number of port C
+#
+#          -portDnumber       The number of port D
+#
+#          -portEnumber       The number of port E
+#
+#          -pcsstate          The state of the PCS (OFF, MOVING or OK)..
+#
+#          -scfold            The current science fold position.
+#
+#          -vignette          The fraction of vignetting by the enclosure.
+#
+#  Methods:
+#          update             Redraws the active parts of the picture 
+#                             according to the state of the configuration
+#                             options.
+#
+#  D Terrett  15 October 2003
+#
+#  Copyright CCLRC
+#-
+
+itcl::class OpticsView {
+   inherit itk::Widget
+   constructor args {}
+   itk_option define -m1cover m1Cover M1Cover CLOSED 
+   itk_option define -holecover holeCover HoleCover CLOSED 
+   itk_option define -centralbaffle centralBaffle CentralBaffle "" 
+   itk_option define -deployablebaffle deployableBaffle DeployableBaffle 0 
+   itk_option define -aofold aoFold AoFold out 
+   itk_option define -aofoldhealth aoFoldHealth AoFoldHealth undefined 
+   itk_option define -aoentrance aoEntrance AoEntrance 0 
+   itk_option define -aoexit aoExit AoExit 0 
+   itk_option define -scfold scFold ScFold 0 
+   itk_option define -scfoldhealth scFoldHealth ScFoldHealth undefined 
+   itk_option define -hrwfs hrwfs Hrwfs in 
+   itk_option define -hrwfshealth hrwfsHealth HrwfsHealth undefined 
+   itk_option define -m2sstate m2sState M2sState OFF
+   itk_option define -laserProp laserProp LaserProp OFF
+   itk_option define -aopresent aoPresent AoPresent 0 {}
+   itk_option define -vignette vignette Vignette 0 
+   itk_option define -portAlabel portALabel Label "" "relabel A"
+   itk_option define -portBlabel portBLabel Label "" "relabel B"
+   itk_option define -portClabel portCLabel Label "" "relabel C"
+   itk_option define -portDlabel portDLabel Label "" "relabel D"
+   itk_option define -portElabel portELabel Label "" "relabel E"
+   itk_option define -portAnumber portANumber Number "" "renumber A"
+   itk_option define -portBnumber portBNumber Number "" "renumber B"
+   itk_option define -portCnumber portCNumber Number "" "renumber C"
+   itk_option define -portDnumber portDNumber Number "" "renumber D"
+   itk_option define -portEnumber portENumber Number "" "renumber E"
+   itk_option define -pcsstate pcsState PcsState OFF
+   itk_option define -calunit calUnit CalUnit 0
+   itk_option define -gpolustate gpolUState GpolUState 0
+   itk_option define -gpolmstate gpolMState GpolMState 0
+   itk_option define -gpollstate gpolLState GpolLState 0
+   public {
+      method update {}
+   }
+   private {
+      method relabel {port}
+      method renumber {port}
+   }
+}
+
+itk::usual OpticsView {
+   keep -background -cursor -highlightcolor -highlightthickness \
+      -insertbackground -insertborderwidth -insertwidth \
+      -insertontime -insertofftime -selectbackground \
+      -selectborderwidth -selectforeground
+}
+
+itcl::body OpticsView::constructor args {
+
+# The picture is drawn to a scale of about 25 pixels per metre. The canvas
+# is therefore 10m wide (8m + room for the AO box) and 20 meters high ( 4m 
+# behind the primary + 12m separation between M1 and M2 + a bit of space
+# above M2).
+#
+# Everything is created as if 0,0 was at the bottom left of the picture
+# and then scaled by -1 in y to flip it the right way up and moved down by
+# 570 pixels into their proper positions.
+
+   itk_component add canvas {
+      canvas $itk_interior.canvas -width 240 -height 570 -bg green
+   }
+   pack $itk_component(canvas)
+   set c $itk_component(canvas)
+
+# M1 cover open
+   $c create line -100 127 -100 150 -width 5 -tags M1coverOp
+   $c create line 100 127 100 150 -width 5 -tags M1coverOp
+
+# M1 cover closed
+   $c create line -100 127  -80 143  -60 127  -40 143  -20 127  0 143  20 127 \
+          40 143  60 127  80 143  100 127 -tags M1coverCl
+
+# Central hole cover open
+   $c create line -12 110  -12 122 -width 2 -tags holeCoverOp
+   $c create line 12 110  12 122 -width 2 -tags holeCoverOp
+
+# Central hole cover closed
+   $c create line -12 110  12 110 -width 2 -tags holeCoverCl
+
+# M2 deployable baffle in several positions
+   $c create line -15 399 -15 378 -width 2 -tags deployableBaffle0
+   $c create line 16 399 16 378 -width 2 -tags deployableBaffle0
+
+   $c create line -15 399 -25 383 -width 2 -tags deployableBaffle1
+   $c create line 16 399 26 383 -width 2 -tags deployableBaffle1
+
+   $c create line -15 399 -31 390 -width 2 -tags deployableBaffle2
+   $c create line 16 399 32 390 -width 2 -tags deployableBaffle2
+
+   $c create line -15 399 -33 399 -width 2 -tags deployableBaffle3
+   $c create line 16 399 34 399 -width 2 -tags deployableBaffle3
+
+# M2 central baffle closed
+   $c create line -9 405 9 410 -width 2 -tags centralBaffleCl
+
+# M2 central baffle open
+   $c create line -9 405 -9 427 -width 2 -tags centralBaffleOp
+
+# Laser Propogation Line
+   $c create line 0 400 0 430 -width 3 -arrow last -tags laserPropogate
+
+# M2 fixed stuff
+   $c create line -9 400 -9 405 -fill black -width 2
+   $c create line 9 400 9 410 -fill black -width 2
+   $c create rectangle -14 400 14 381 -outline black -tags m2s
+
+# Iss ports (shading of ao and cal unit ports removed for the moment).
+#   $c create oval 35 70 65 40 -outline black -tags aoport -fill gray \
+#         -stipple gray50
+   $c create oval 35 70 65 40 -outline black -tags aoport
+   $c create oval -35 70 -65 40 -outline black
+   $c create oval 35 20 65 -10 -outline black
+#   $c create oval -35 20 -65 -10 -outline black -fill gray -stipple gray50
+   $c create oval -35 20 -65 -10 -outline black
+   $c create oval -15 -85 15 -115 -outline black
+
+# Iss port labels
+   $c create text 0 -120 -anchor n -tags portAlabel
+   $c create text 40 95 -anchor w -tags portBlabel
+   $c create text -40 95 -anchor e -tags portClabel
+   $c create text -40 -35 -anchor e -tags portDlabel
+   $c create text 40 -35 -anchor w -tags portElabel
+
+# A&G outline
+   $c create arc -100 90 100 -30 -style arc -start -80 -extent 340 \
+         -outline black -tags ag
+
+# Aquisition TV / HRWFS
+   $c create rectangle  80 -50 100 -70 -outline black
+   $c create rectangle  75 -65 80 -55 -outline black
+   $c create text 85 -80 -text AC/HRWFS -anchor c
+
+# GPOL
+   $c create rectangle -30 -50 -60 -70 -outline black
+   $c create line -30 -65 -15 -65 -width 2
+   $c create line -30 -60 -15 -60 -width 2
+   $c create line -30 -55 -15 -55 -width 2
+   $c create line -15 -65  15 -65 -width 2 -tags gpoll -fill ""
+   $c create line -15 -60  15 -60 -width 2 -tags gpolm -fill ""
+   $c create line -15 -55  15 -55 -width 2 -tags gpolu -fill ""
+   $c create text -40 -80 -text GPOL -anchor c
+
+# Incoming light beams
+   $c create line -80 420 -80 143 -width 4 -tags SkyLight
+   $c create line 80 420 80 143 -width 4 -tags SkyLight
+
+# M1 to central hole cover
+   $c create line -80 143 -80 111 -width 4 -tags {Light M1Light}
+   $c create line 80 143 80 111 -width 4 -tags {Light M1Light}
+   $c create line -80 111 -4 378 -width 4 -tags {Light M1Light}
+   $c create line 80 111 4 378 -width 4 -tags {Light M1Light}
+   $c create line 0 378 0 111 -width 6 -tags {Light M1Light}
+
+# M2 to sky
+   $c create line 0 378 0 420 -width 4 -tags {Light M2Light}
+
+# Central hole cover to AO fold
+   $c create line 0 111 0 65 -width 6 -tags {Light CHLight}
+
+# AO to Science fold
+   $c create line 0 65  80 95 -width 6 -tags {Light AoLight}
+   $c lower [$c create line 80 95 80 70  50 55 -width 6 \
+         -tags {Light AoLightEnt}] aoport
+   $c create line 0 65  80 95  -width 6 -tags {Light AoLightNoAo}
+   $c create line 0 65  0 30 -width 6 -tags {Light NotAoLight}
+
+# Science fold to ISS face/HRWFS fold
+   $c create line 0 30 0 -60 -width 6 -tags {Light IssLightA}
+   $c create line 0 30 50 55 -width 6 -tags {Light IssLightB AoLightExit}
+   $c create line 0 30 -50 55 -width 6 -tags {Light IssLightC}
+   $c create line 0 30 -50 5 -width 6 -tags {Light IssLightD}
+   $c create line 0 30 50 5 -width 6 -tags {Light IssLightE}
+
+# HRWFS fold to ISS face
+   $c create line 0 -60 0 -100 -width 6 -tags {Light TvOutLight}
+
+# HRWFS fold to HRWFS
+   $c create line 0 -60 75 -60 -width 6 -tags {Light TvInLight}
+
+# M1 (in 2 pieces, one each side of the central hole)
+   $c create polygon \
+          -100 115  -100 115  -100 127  -100 127 -75 123  -50 121 \
+          -12 120  -12 120  -12 115  -12 115  \
+          -smooth 1 -fill white -tags M1left
+   $c create rectangle -12 110 -100 115 -outline black -tags {pcs pcsleft}
+
+# The other half is created by reflecting in x
+   eval $c create polygon [$c coords M1left] -smooth 1 -fill white -tags M1right
+   $c scale M1right 0 0 -1 1
+   eval $c create rectangle [$c coords pcsleft] -outline black \
+         -tags [list {pcs pcsright}]
+   $c scale pcsright 0 0 -1 1
+
+# M2
+   $c create arc -200 378 200 1380 -start 275 -extent -10 -style arc \
+         -outline white -width 3 -tags M2
+
+# AO fold
+   $c create line -9 74 9 54 -width 2 -tags AoFold
+   $c create polygon -11 72 7 52 4 49 -14 69 -tags AoFoldBck
+
+# Science fold in various positions
+   $c create line -20 29 20 29 -width 2 -tags {ScFold ScFoldCB ScFoldBC}
+   $c create polygon -20 27 20 27 20 23 -20 23 -tags {ScFoldBck ScFoldCBbck scFoldBCbck}
+
+   eval $c create line [$c coords ScFoldCB] -width 2 \
+         -tags [list {ScFold ScFoldED ScFoldDE}]
+   eval $c create polygon [$c coords ScFoldCBbck] \
+         -tags [list {ScFoldBck ScFoldEDbck ScFoldDEbck}]
+   $c scale ScFoldED 0 30 1 -1
+   $c scale ScFoldEDbck 0 30 1 -1
+
+   $c create line -1 10 -1 50 -width 2 -tags {ScFold ScFoldBE ScFoldEB}
+   $c create polygon -3 10 -3 50 -7 50 -7 10 -tags {ScFoldBck ScFoldBEbck ScFoldEBbck}
+
+   eval $c create line [$c coords ScFoldBE] -width 2 \
+         -tags [list {ScFold ScFoldCD ScFoldDC}]
+   eval $c create polygon [$c coords ScFoldBEbck] \
+         -tags [list {ScFoldBck ScFoldCDbck scFoldDCbck}]
+   $c scale ScFoldCD 0 30 -1 1
+   $c scale ScFoldCDbck 0 30 -1 1
+
+   $c create line -10 13 10 47 -width 2 -tags {ScFold ScFoldUD ScFoldDU}
+   $c create polygon -8 11 12 45 15 42 -5 8 -tags {ScFoldBck ScFoldUDbck ScFoldDUbck}
+
+   eval $c create line [$c coords ScFoldUD] -width 2 \
+         -tags [list {ScFold ScFoldUE ScFoldEU}]
+   eval $c create polygon [$c coords ScFoldUDbck] \
+         -tags [list {ScFoldBck ScFoldUEbck ScFoldEU}]
+   $c scale ScFoldUE 0 30 -1 1
+   $c scale ScFoldUEbck 0 30 -1 1
+
+   eval $c create line [$c coords ScFoldUD] -width 2 \
+         -tags [list {ScFold ScFoldCA ScFoldAC}]
+   eval $c create polygon [$c coords ScFoldUDbck] \
+         -tags [list {ScFoldBck ScFoldCAbck ScFoldACbck}]
+   $c scale ScFoldCA 0 30 1 -1
+   $c scale ScFoldCAbck 0 30 1 -1
+
+   eval $c create line [$c coords ScFoldCA] -width 2 \
+         -tags [list {ScFold ScFoldBA ScFoldAB}]
+   eval $c create polygon [$c coords ScFoldCAbck] \
+         -tags [list {ScFoldBck ScFoldBAbck ScFoldABbck}]
+   $c scale ScFoldBA 0 30 -1 1
+   $c scale ScFoldBAbck 0 30 -1 1
+
+   $c create line -17 20 17 40 -width 2 -tags {ScFold ScFoldUC ScFoldCU}
+   $c create polygon -15 18 19 38 22 35 -12 15 -tags {ScFoldBck ScFoldUCbck ScFoldCUbck}
+
+   eval $c create line [$c coords ScFoldUC] -width 2 \
+         -tags [list {ScFold ScFoldUB ScFoldBUbck}]
+   eval $c create polygon [$c coords ScFoldUCbck] \
+         -tags [list {ScFoldBck ScFoldUBbck ScFoldBU}]
+   $c scale ScFoldUB 0 30 -1 1
+   $c scale ScFoldUBbck 0 30 -1 1
+
+   eval $c create line [$c coords ScFoldUC] -width 2 \
+         -tags [list {ScFold ScFoldDA ScFoldAD}]
+   eval $c create polygon [$c coords ScFoldUCbck] \
+         -tags [list {ScFoldBck ScFoldDAbck ScFoldADbck}]
+   $c scale ScFoldDA 0 30 1 -1
+   $c scale ScFoldDAbck 0 30 1 -1
+
+   eval $c create line [$c coords ScFoldDA] -width 2 \
+         -tags [list {ScFold ScFoldEA ScFoldAE}]
+   eval $c create polygon [$c coords ScFoldDAbck] \
+         -tags [list {ScFoldBck ScFoldEAbck ScFoldAEbck}]
+   $c scale ScFoldEA 0 30 -1 1
+   $c scale ScFoldEAbck 0 30 -1 1
+
+# Science fold unknown
+   $c create bitmap 0 30 -anchor c -foreground black -tags ScFoldUnknown 
+
+# HRWFS fold when deployed
+   $c create line -9 -51 9 -69 -width 2 -tags HrwfsFoldIn
+   $c create polygon -11 -53 7 -71 4 -75 -14 -57 -outline "" -fill "" -tags HrwfsFoldInBck
+
+# HRWFS fold when retracted
+   $c create line  41 -51 59 -69 -width 2 -tags HrwfsFoldOut
+   $c create polygon 39 -53 57 -71 54 -75 36 -57 -outline "" -fill "" -tags HrwfsFoldOutBck
+
+# HRWFS fold unknown
+   $c create bitmap 0 -60 -anchor c -foreground black -tags HrwfsFoldUnknown 
+
+# ISS port numbers
+   $c create text 0 -100 -anchor c -tags portAnumber
+   $c create text 50 55 -anchor c -tags portBnumber
+   $c create text -50 55 -anchor c -tags portCnumber
+   $c create text -50 5 -anchor c -tags portDnumber
+   $c create text 50 5 -anchor c -tags portEnumber
+
+# Raise the a&g outline so that the front edge cuts the light beam.
+   $c raise ag
+
+# raise the laser
+   $c raise laserPropogate
+
+# Flip and move
+   $c scale all 0 0 1 -1
+   $c move all 120 430
+
+   eval itk_initialize $args
+}
+
+itcl::body OpticsView::update {} {
+
+# Set the visibiliy of elements of the drawing according to the state of
+# the configuration options.
+
+   set c $itk_component(canvas)
+
+# Configure the M1 cover
+   switch $itk_option(-m1cover) {
+      "CLOSED" {
+         $c itemconfigure M1coverCl -fill black
+         $c itemconfigure M1coverOp -fill ""
+      }
+      "MIDDLE POSITION" {
+         $c itemconfigure M1coverCl -fill grey
+         $c itemconfigure M1coverOp -fill ""
+      }
+      default {
+         $c itemconfigure M1coverCl -fill ""
+         $c itemconfigure M1coverOp -fill black
+      }
+   }
+
+# Configure central hole cover
+   switch $itk_option(-holecover) {
+      "CLOSED" {
+         $c itemconfigure holeCoverCl -fill black
+         $c itemconfigure holeCoverOp -fill ""
+      }
+      "MIDDLE POSITION" {
+         $c itemconfigure holeCoverCl -fill grey
+         $c itemconfigure holeCoverOp -fill ""
+      }
+      default {
+         $c itemconfigure holeCoverCl -fill ""
+         $c itemconfigure holeCoverOp -fill black
+      }
+   }
+
+# Configure the central baffle
+   $c itemconfigure centralBaffleOp -fill ""
+   $c itemconfigure centralBaffleCl -fill ""
+   if { $itk_option(-centralbaffle) == "CLOSED" } {
+      $c itemconfigure centralBaffleCl -fill black
+   } else {
+      if { $itk_option(-centralbaffle) == "OPEN" } {
+         $c itemconfigure centralBaffleOp -fill black
+      }
+   }
+
+# Configure the deployable baffle
+   $c itemconfigure deployableBaffle0 -fill ""
+   $c itemconfigure deployableBaffle1 -fill ""
+   $c itemconfigure deployableBaffle2 -fill ""
+   $c itemconfigure deployableBaffle3 -fill ""
+   if { $itk_option(-deployablebaffle) == "RETRACTED" } {
+      $c itemconfigure deployableBaffle0 -fill black
+   } elseif { $itk_option(-deployablebaffle) == "NEAR IR" } {
+      $c itemconfigure deployableBaffle1 -fill black
+   } elseif { $itk_option(-deployablebaffle) == "VISIBLE" } {
+      $c itemconfigure deployableBaffle2 -fill black
+   } elseif { $itk_option(-deployablebaffle) == "EXTENDED" } {
+      $c itemconfigure deployableBaffle3 -fill black
+   }
+
+# Configure the laser propogation display
+   switch $itk_option(-laserProp) {
+       "ON" {
+	   $c itemconfigure laserPropogate -fill red
+       }
+       "OFF" {
+	   $c itemconfigure laserPropogate -fill grey
+       }
+   }
+   
+# Set the M2 support colour.
+   switch $itk_option(-m2sstate) {
+      OFF {
+         $c itemconfigure m2s -fill red
+      }
+      FOLLOWING {
+         $c itemconfigure m2s -fill yellow
+      }
+      INPOSITION {
+         $c itemconfigure m2s -fill green
+      }
+   }
+
+# Set the PCS colour.
+   switch $itk_option(-pcsstate) {
+      OFF {
+         $c itemconfigure pcs -fill red
+      }
+      MOVING {
+         $c itemconfigure pcs -fill yellow
+      }
+      OK {
+         $c itemconfigure pcs -fill green
+      }
+   }
+
+# Configure the AO fold mirror
+   switch $itk_option(-aofoldhealth) {
+       GOOD {
+	   set AoFoldBckCol green
+       }
+       WARNING {
+	   set AoFoldBckCol red
+       }
+       BAD {
+	   set AoFoldBckCol red
+       }
+       default {
+	   set AoFoldBckCol ""
+       }
+   }
+
+   if { $itk_option(-aofold) == "IN" } {
+      $c itemconfigure AoFold -fill white
+      $c itemconfigure AoFoldBck -outline black -fill $AoFoldBckCol
+   } else {
+      $c itemconfigure AoFold -fill ""
+      $c itemconfigure AoFoldBck -outline "" -fill ""
+   }
+
+# Configure the science fold mirror
+   $c itemconfigure ScFold -fill ""
+   $c itemconfigure ScFoldBck -outline "" -fill ""
+   $c itemconfigure ScFoldUnknown -bitmap ""
+
+   switch $itk_option(-scfoldhealth) {
+       GOOD {
+	   set ScFoldBckCol green
+       }
+       WARNING {
+	   set ScFoldBckCol red
+       }
+       BAD {
+	   set ScFoldBckCol red
+       }
+       default {
+	   set ScFoldBckCol ""
+       }
+   }
+
+   if { $itk_option(-scfold) == "PARK" } {
+      set scfoldpos ""
+   } else {
+      set scfoldpos $itk_option(-scfold)
+      if { $itk_option(-scfold) == "UNKNOWN" } {
+         $c itemconfigure ScFoldUnknown -bitmap question
+      } elseif { $itk_option(-scfold) != "MOVING" } {
+         $c itemconfigure ScFold$itk_option(-scfold) -fill white
+         $c itemconfigure ScFold$itk_option(-scfold)bck -outline black -fill $ScFoldBckCol
+      }
+   }
+
+# Configure the HRWFS fold mirror
+   switch $itk_option(-hrwfshealth) {
+       GOOD {
+	   set HrwfsBckCol green
+       }
+       WARNING {
+	   set HrwfsBckCol red
+       }
+       BAD {
+	   set HrwfsBckCol red
+       }
+       default {
+	   set HrwfsBckCol ""
+       }
+   }
+
+   if { $itk_option(-hrwfs) == "IN" } {
+      $c itemconfigure HrwfsFoldUnknown -bitmap ""
+      $c itemconfigure HrwfsFoldIn -fill white
+      $c itemconfigure HrwfsFoldInBck -outline black
+      $c itemconfigure HrwfsFoldInBck -fill $HrwfsBckCol
+      $c itemconfigure HrwfsFoldOut -fill ""
+      $c itemconfigure HrwfsFoldOutBck -outline ""
+      $c itemconfigure HrwfsFoldOutBck -fill ""
+   } elseif { $itk_option(-hrwfs) == "OUT" || $itk_option(-hrwfs) == "park-pos."} {
+      $c itemconfigure HrwfsFoldUnknown -bitmap ""
+      $c itemconfigure HrwfsFoldIn -fill ""
+      $c itemconfigure HrwfsFoldInBck -outline ""
+      $c itemconfigure HrwfsFoldInBck -fill ""
+      $c itemconfigure HrwfsFoldOut -fill white
+      $c itemconfigure HrwfsFoldOutBck -outline black
+      $c itemconfigure HrwfsFoldOutBck -fill $HrwfsBckCol
+   } else {
+      $c itemconfigure HrwfsFoldUnknown -bitmap question
+      $c itemconfigure HrwfsFoldIn -fill ""
+      $c itemconfigure HrwfsFoldInBck -outline ""
+      $c itemconfigure HrwfsFoldInBck -fill ""
+      $c itemconfigure HrwfsFoldOut -fill ""
+      $c itemconfigure HrwfsFoldOutBck -outline ""
+      $c itemconfigure HrwfsFoldOutBck -fill ""
+   }
+
+# Configure the GPOL slides.
+   if { $itk_option(-gpolustate) == "IN" } {
+      $c itemconfigure gpolu -fill black
+   } else {
+      $c itemconfigure gpolu -fill ""
+   }
+
+   if { $itk_option(-gpolmstate) == "IN" } {
+      $c itemconfigure gpolm -fill black
+   } else {
+      $c itemconfigure gpolm -fill ""
+   }
+
+   if { $itk_option(-gpollstate) == "IN" } {
+      $c itemconfigure gpoll -fill black
+   } else {
+      $c itemconfigure gpoll -fill ""
+   }
+
+# Configure the light path
+   $c itemconfigure Light -fill ""
+   if { $itk_option(-vignette) == 0 } {
+      set l white
+   } else {
+      set l grey
+   }
+   $c itemconfigure SkyLight -fill $l
+
+# Configure light from M2 to sky
+   if { $itk_option(-centralbaffle) == "POSITION 2" } {
+      $c itemconfigure M2Light -fill $l
+   }
+
+# Assume no light emerging from the ISS.
+   set outport ""
+   set inport ""
+
+   if { $itk_option(-m1cover) == "OPENED" } {
+      $c itemconfigure M1Light -fill $l
+      if { $itk_option(-holecover) == "OPENED" } {
+         $c itemconfigure CHLight -fill $l
+
+# Deal with the AO fold mirror position
+         if { $itk_option(-aofold) != "IN" } {
+            $c itemconfigure NotAoLight -fill $l
+            set inport U
+         } else {
+            if { $itk_option(-aopresent) == 1 } {
+               $c itemconfigure AoLight -fill $l
+               if { $itk_option(-aoentrance) } {
+                  $c itemconfigure AoLightEnt -fill $l
+                  if { $itk_option(-aoexit) } {
+                     $c itemconfigure AoLightExit -fill $l
+                     set inport B
+                  }
+               }
+            } else {
+               $c itemconfigure AoLightNoAo -fill $l
+            }
+         }
+
+# Determine which (if any) ISS port the beam emerges from
+         if { $inport != "" } {
+            if { $scfoldpos == "" } {
+               if { $inport == "U" } {
+                  set outport A
+               } else {
+                  set outport D
+               }
+            } elseif { $scfoldpos == "UNKNOWN"  || $scfoldpos == "MOVING" } {
+                  set outport ""
+            } else {
+               if { $inport == [string index $scfoldpos 0] } {
+                  set outport [string index $scfoldpos 1]
+               } elseif { $inport == [string index $scfoldpos 1] } {
+                  set outport [string index $scfoldpos 0]
+               } else {
+                  if { $inport == [string index $scfoldpos 1] } {
+                     set outport [string index $scfoldpos 0]
+                  } elseif { $inport == [string index $scfoldpos 0] } {
+                     set outport [string index $scfoldpos 1]
+                  }
+               }
+            }
+         }
+      }
+   }
+
+# Configure light from the calibration unit.
+   if { $itk_option(-calunit) } {
+
+# GCAL is on so the beam is white even if the telescope is vignetted.
+      set l white
+
+      $c itemconfigure IssLightD -fill $l
+      switch $scfoldpos {
+         DU -
+         UD {
+            $c itemconfigure AoLight -fill $l
+         }
+         DC -
+         CD {
+            $c itemconfigure IssLightC -fill $l
+         }
+         DE -
+         ED {
+            $c itemconfigure IssLightE -fill $l
+         }
+         AD -
+         DA {
+            $c itemconfigure IssLightA -fill $l
+            set outport A
+         }
+         "" {
+            $c itemconfigure IssLightB -fill $l
+         }
+      }
+   }
+
+# Configure the emerging beam
+   if { $outport != "" } {
+      $c itemconfigure IssLight${outport} -fill $l
+   }
+
+# Configure the beam from the HRWFS to the upward looking ISS face or HRWFS
+   if { $outport == "A" } {
+      if { $itk_option(-hrwfs) == "IN" } {
+         $c itemconfigure TvInLight -fill $l
+      } else {
+         $c itemconfigure TvOutLight -fill $l
+      }
+   }
+}
+
+itcl::body OpticsView::relabel {port} {
+   $itk_component(canvas) itemconfigure port${port}label \
+         -text $itk_option(-port${port}label)
+}
+
+itcl::body OpticsView::renumber {port} {
+   $itk_component(canvas) itemconfigure port${port}number \
+         -text $itk_option(-port${port}number)
+}
+
+itcl::configbody OpticsView::aopresent {
+   if { $itk_option(-aopresent) == 1 } {
+      $itk_component(canvas) itemconfigure portBlabel -text AO
+   } else {
+      relabel B
+   }
+}
+
+itcl::configbody OpticsView::portBlabel {
+   if { $itk_option(-aopresent) == 0 } {
+      relabel B
+   }
+}

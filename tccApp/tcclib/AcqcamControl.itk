@@ -1,0 +1,195 @@
+#+
+#  Acqcam <- itk::Widget
+#
+#  A Acqcam is a set of controls for controlling the Acquisition camera/HRWFS
+#
+#  Options:
+#           none
+#
+#  Methods:
+#           none
+#
+#  D Terrett  20 June 2003
+#
+#  Copyright CCLRC
+#+
+
+itcl::class AcqcamControl {
+   inherit itk::Widget
+   constructor {args} {}
+   private {
+      method lenssel {}
+      method ndsel {}
+      method colsel {}
+      method window {}
+      method expose {}
+      method start {}
+      method stop {}
+      method snapshot {}
+      variable filename ""
+      variable filedir
+   }
+}
+
+itk::usual AcqcamControl {
+   keep -cursor -foreground -background
+}
+
+itcl::body AcqcamControl::constructor {args} {
+
+   set w $itk_interior
+   itk_component add frame {
+      frame $w.frame -bd 2 -relief ridge
+   }
+   pack $itk_component(frame)
+   set w $itk_component(frame)
+   itk_component add label {
+      label $w.label -text HRWFS/AC
+   }
+   itk_component add control {
+      frame $w.control
+   }
+   set w $itk_component(control)
+
+   itk_component add start {
+      LiveButton $w.start -text Start \
+            -command [itcl::code $this start]
+   }
+   itk_component add stop {
+      LiveButton $w.stop -text Stop \
+            -command [itcl::code $this stop]
+   }
+   itk_component add snap {
+      LiveButton $w.snap -text Snap \
+            -command [itcl::code $this snapshot]
+   }
+   pack $itk_component(start) $itk_component(stop) $itk_component(snap) \
+         -side left -expand y -pady 2
+
+   set w [winfo parent $w]
+   itk_component add setup {
+      frame $w.setup
+   }
+   set w $itk_component(setup)
+   
+   itk_component add lens {
+     iwidgets::optionmenu $w.lens -labeltext Lens -labelpos w \
+            -command [itcl::code $this lenssel]
+   }
+   $itk_component(lens) insert end AC HRWFS
+
+   itk_component add nd {
+      iwidgets::optionmenu $w.nd -labeltext "ND filt" -labelpos w -width 100 \
+            -command [itcl::code $this ndsel]
+   }
+   $itk_component(nd) insert end open nd100 nd1000 filt04 filt06 filt08
+
+   itk_component add col {
+      iwidgets::optionmenu $w.col -labeltext "Col filt" -labelpos w \
+            -width 100 -command [itcl::code $this colsel]
+   }
+   $itk_component(col) insert end neutral  U-red1 B-blue V-green R-red2 \
+         I-red3
+
+   itk_component add currNDFilt {
+      MonitorLabel $w.currNDFilt hrwfs::currStatus ndfilt -width 7 -anchor e
+   }
+
+   itk_component add currColFilt {
+      MonitorLabel $w.currColFilt hrwfs::currStatus colfilt -width 7 -anchor e
+   }
+
+   itk_component add window {
+      iwidgets::optionmenu $w.window -labeltext Window -labelpos w -width 100 \
+            -command [itcl::code $this window]
+   }
+   $itk_component(window) insert end full 200x200 100x100 
+
+   itk_component add expose {
+      iwidgets::combobox $w.expose -labeltext "Expose (s)" -labelpos w \
+         -width 7 -selectioncommand [itcl::code $this expose] -validate real
+   }
+   $itk_component(expose) insert list end 0.01 0.1 1.0 10.0
+   $itk_component(expose) insert entry end 0.01
+
+   grid $itk_component(lens) x -sticky nes
+   grid $itk_component(nd) $itk_component(currNDFilt) -sticky nes
+   grid $itk_component(col) $itk_component(currColFilt) -sticky nes
+   grid $itk_component(window) x -sticky nes
+   grid $itk_component(expose) - -sticky news
+
+   pack $itk_component(label)
+   pack $itk_component(control) -expand yes -fill x
+   pack $itk_component(setup)
+
+# Initilaise directory for storing WFS images.
+   set filedir [calparam cget -m1_tune_dir]
+
+   eval itk_initialize $args
+}
+
+itcl::body AcqcamControl::lenssel {} {
+
+# Select hrwfs lens.
+   hrwfs lenssel [$itk_component(lens) get]
+}
+
+itcl::body AcqcamControl::ndsel {} {
+
+# Select hrwfs neutral desity filter.
+   hrwfs ndsel [$itk_component(nd) get]
+}
+
+itcl::body AcqcamControl::colsel {} {
+
+# Select hrwfs colout filter.
+   hrwfs colsel [$itk_component(col) get]
+}
+
+itcl::body AcqcamControl::window {} {
+
+# Set window size.
+   hrwfs window [$itk_component(window) get]
+}
+
+itcl::body AcqcamControl::expose {} {
+
+# Set exposure time.
+   hrwfs expose [$itk_component(expose) get]
+}
+
+itcl::body AcqcamControl::stop {} {
+
+# Stop hrwfs.
+   hrwfs stop
+}
+
+itcl::body AcqcamControl::start {} {
+
+# Start continuous exposures to DHS.
+   hrwfs expose [$itk_component(expose) get]
+   hrwfs output DHS
+   hrwfs start -1
+}
+
+itcl::body AcqcamControl::snapshot {} {
+
+# Set exposure time
+#   hrwfs expose [$itk_component(expose) get]
+
+# Get file name.
+   set file [tk_getSaveFile -defaultextension .fits \
+         -filetypes {{FITS .fits} {{All files} *}} \
+         -parent $itk_interior -title "HRWFS image file" \
+         -initialdir $filedir -initialfile $filename]
+   if { $file ne "" } {
+
+# Set hrwfs output parameters.
+      set filedir [file dirname $file]
+      set filename [file tail $file]
+      hrwfs output FILE $filedir $filename
+
+# Start single exposure.
+      hrwfs start 1
+   }
+}

@@ -1,0 +1,58 @@
+#+
+#  EditPanelMgr <- PanelMgr
+#
+#  An EditPanelMgr is a PanelMgr with the addition of an options for 
+#  configuring the components that the panel edits.
+#
+#  Options:
+#           -components     Configures the -components option of the 
+#                           EditPanel
+#
+#  Methods:
+#           map             Overrides the map method of PanelMgr
+#
+#           sync            Synchronizes the contents of the control window
+#
+#  D Terrett 8 March 2002
+#
+#  Copyright CCLRC
+#+
+
+itcl::class EditPanelMgr {
+   inherit PanelMgr
+   constructor args {eval configure $args}
+   public {
+      method map {{component ""}}
+      method sync {component}
+      variable components {}
+   }
+}
+
+itcl::body EditPanelMgr::map {{component ""}} {
+   if { [$this PanelMgr::map $component] } {
+      $name configure -components $components
+      return 1
+   }
+   return 0
+}
+
+itcl::body EditPanelMgr::sync {component} {
+
+# If the window exists, store its contents in the current object.
+   if { [winfo exists $name] } {
+      if { $::Config($component,value) == "" } {
+         $name sync $component $::Config($component,anon)
+      } else {
+         $name sync $component \
+               $::Config($component,namespace)::$::Config($component,value)
+      }
+   }
+
+# Send a sync to the panel managers of all the subcomponents that have
+# values.
+   foreach subcomp $::Config($component,subcomp) {
+      if { $::Config($component.$subcomp,value) != "" } {
+         $::Config($component.$subcomp,panel) sync $component.$subcomp 
+      }
+   }
+}

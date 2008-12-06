@@ -1,0 +1,223 @@
+#+
+#  PoManager <- itk::Widget
+#
+#  Implement a widget for managing an array of pointing origins.
+#
+#  Methods:
+#
+#     update    Updates the currently selected pointing origin with
+#                new values.
+#
+#  D Terrett  11 April 2003
+#
+#  Copyright CCLRC
+#+
+
+itcl::class PoManager {
+   inherit itk::Widget
+   constructor {args} {}
+   itk_option define -lock lock Lock 0 {
+      if { $itk_option(-lock) } {set bchop $achop}
+   }
+   public {
+      method update {chop}
+   }
+   private {
+      method selectcmd {po}
+      method select {chop po}
+      variable achop w
+      variable bchop w
+   }
+}
+
+itk::usual PoManager {
+   keep -background -foreground
+}
+
+itcl::body PoManager::constructor {args} {
+
+   set w $itk_interior
+
+# Column labels.
+   itk_component add alab {
+      label $w.alab -text A
+   }
+   itk_component add blab {
+      label $w.blab -text B
+   }
+   itk_component add xylab {
+      label $w.xylab -text "X (arcsec) Y"
+   }
+   grid $itk_component(alab) $itk_component(blab) x $itk_component(xylab) -
+
+# Remaining rows.
+   foreach po {v w x y z} {
+
+# Chop state radiobuttons.
+      itk_component add a$po {
+         radiobutton $w.a$po -variable [itcl::scope achop] -value $po \
+               -command [itcl::code $this select a $po]
+      }
+      itk_component add b$po {
+         radiobutton $w.b$po -variable [itcl::scope bchop] -value $po \
+               -command [itcl::code $this select b $po]
+      }
+
+# Subcomponent selector.
+      itk_component add sel$po {
+         ListManager $w.sel$po -componentlist PointOrigList \
+               -selectioncommand [itcl::code $this selectcmd $po] \
+               -returncommand [itcl::code $this selectcmd $po]
+      }
+
+# Display of X & Y.
+      itk_component add x$po {
+         label $w.x$po -width 8 -relief groove -text "  0.00"
+      }
+      itk_component add y$po {
+         label $w.y$po -width 8 -relief groove -text "  0.00"
+      }
+      grid $itk_component(a$po) $itk_component(b$po) $itk_component(sel$po) \
+            $itk_component(x$po) $itk_component(y$po)
+   }
+
+   if { [catch {cs absorbPoOffset info}] } {
+      epics cs absorbPoOffset
+   }
+   if { [catch {cs poriginA info}] } {
+      epics cs poriginA
+   }
+   if { [catch {cs poriginB info}] } {
+      epics cs poriginB
+   }
+
+# Select rotator axis in the top.
+   $itk_component(selv) select "rotator_axis"
+
+   eval itk_initialize $args
+}
+
+itcl::body PoManager::selectcmd {po} {
+
+   set name [$itk_component(sel$po) get]
+   if { [string length $name] } {
+
+# There is a name in the combobox; check that it is the name of an existing
+# component.
+      if { [catch {::PointOrigNames::$name cget -x}] } {
+
+# It isn't so create it and set its values from the text widgets.
+         PointOrigComponent ::PointOrigNames::$name PointOrigList \
+               -x [$itk_component(x$po) cget -text] \
+               -y [$itk_component(y$po) cget -text]
+      } else {
+
+# It is so Load its values into the X & Y display columns.
+         $itk_component(x$po) configure \
+               -text [format %6.2f [::PointOrigNames::$name cget -x]]
+         $itk_component(y$po) configure \
+               -text [format %6.2f [::PointOrigNames::$name cget -y]]
+      }
+
+# If one of the chop states is selected for this pointing origin then 
+# absorb any offsets and send the X/Y to the TCS.
+      if { [string equal $achop $po] } {
+         cs absorbPoOffset set vt [list "SOURCE A"]
+         cs absorbPoOffset set index all
+         logger command absorbPoOffset
+         if { [catch {cs tcsApply post} msg] } {
+            tk_messageBox -icon error -parent $itk_interior -message \
+                  "Error absorbing pointing origin offsets: TCS reports \"$msg\""
+         }
+      }
+      if { [string equal $bchop $po] } {
+         cs absorbPoOffset set vt [list "SOURCE B"]
+         cs absorbPoOffset set index all
+         logger command absorbPoOffset
+         if { [catch {cs tcsApply post} msg] } {
+            tk_messageBox -icon error -parent $itk_interior -message \
+                  "Error absorbing pointing origin offsets: TCS reports \"$msg\""
+         }
+         cs absorbPoOffset set vt [list "SOURCE C"]
+         logger command absorbPoOffset
+         if { [catch {cs tcsApply post} msg] } {
+            tk_messageBox -icon error -parent $itk_interior -message \
+                  "Error absorbing pointing origin offsets: TCS reports \"$msg\""
+         }
+      }
+      if {  [string equal $achop $po] ||  [string equal $bchop $po] } {
+         set xmm [expr {[$itk_component(x$po) cget -text] * 0.62056151}]
+         set ymm [expr {[$itk_component(y$po) cget -text] * 0.62056151}]
+         if { [string equal $achop $po] } {
+            cs poriginA set x $xmm
+            cs poriginA set y $ymm
+            logger command poriginA
+         }
+         if { [string equal $bchop $po] } {
+            cs poriginB set x $xmm
+            cs poriginB set y $ymm
+            logger command poriginB
+         }
+         if { [catch {cs tcsApply post} msg] } {
+            tk_messageBox -icon error -parent $itk_interior -message \
+                  "Error setting pointing origin: TCS reports \"$msg\""
+         }
+      }
+   }
+}
+
+itcl::body PoManager::update {chop} {
+   switch $chop {
+      sourceA {
+         set po $achop
+         set target targetA
+      }
+      sourceB {
+         set po $bchop
+         set target targetB
+      }
+   }
+
+# Get the current values of the appropriate pointing origin.
+   set tar [sa tcssad get $target]
+   set x [expr {([lindex $tar 4] + [lindex $tar 6]) / 0.62056151}]
+   set y [expr {([lindex $tar 5] + [lindex $tar 7]) / 0.62056151}]
+   
+   set name [$itk_component(sel$po) get]
+   if { [string length $name] } {
+
+# Update the pointing origin component, creating it if necessary.
+      if { [catch {::PointOrigNames::$name cget -x}] } {
+         PointOrigComponent ::PointOrigNames::$name PointOrigList \
+                -x $x -y $y
+      } else {
+         ::PointOrigNames::$name configure -x $x -y $y
+      }
+   } else {
+
+# Update the X/Y display.
+      $itk_component(x$po) configure -text [format %6.2f $x]
+      $itk_component(y$po) configure -text [format %6.2f $y]
+   }
+
+# Select the pointing origin.
+   selectcmd $po
+}
+
+itcl::body PoManager::select {chop po} {
+
+# If the lock parameter is true then set the other chop state as well.
+   if { $itk_option(-lock) } {
+      switch $chop {
+         a {
+            set bchop $achop
+         }
+         b {
+            set achop $bchop
+         }
+      }
+   }
+
+# Select the pointing origin.
+   selectcmd $po
+}

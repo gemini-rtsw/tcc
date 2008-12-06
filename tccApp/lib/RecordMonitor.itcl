@@ -1,0 +1,67 @@
+#+
+#  RecordMonitor
+#
+#     A RecordMonitor object monitors an EPICS record and executes any
+#     procedures that have been registered with it each time the record
+#     changes its value.
+#
+#  Options:
+#           none
+#
+#  Methods:
+#           RecordMonitor sa name
+#
+#           add proc     Adds a procedure to be called and returns its id.
+#
+#           remove id    Removes a procedure given its id
+#
+#  D Terrett 9 June 2000
+#
+#  Copyright CCLRC
+#+
+
+itcl::class RecordMonitor {
+   constructor {sa name} {}
+   public {
+      method add {proc}
+      method remove {id} {unset procs($id)}
+   }
+   private {
+      method monitor {record status time value}
+      variable procs
+      variable lastid 0
+      variable sa
+      variable name
+   }
+}
+
+itcl::body RecordMonitor::constructor {sa_ name_} {
+
+# Save the status acceptor and record names
+   set sa $sa_
+   set name $name_
+
+# Create the status acceptor if it doesn't alread exist.
+   if { [catch {sa $sa info}] } {
+      epics sa $sa
+   }
+
+# Monitor the record.
+  sa $sa proc $name [itcl::code $this monitor]
+}
+
+itcl::body RecordMonitor::add proc {
+
+   while { [info exists procs([incr lastid])] } {}
+
+   set procs($lastid) $proc
+
+   return $lastid
+}
+
+itcl::body RecordMonitor::monitor {record status time value} {
+
+   foreach {id proc} [array get procs] {
+      uplevel #0 $proc $record \"$value\"
+   }
+}

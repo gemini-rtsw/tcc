@@ -1,0 +1,504 @@
+#+
+#  SciTargetControl <- TargetControl
+#
+#  A SciTarget control is a TargetControl widget with widgets for
+#  the target position etc.
+#
+#  D Terrett 11 July 2002
+#
+#  Copyright CCLRC
+#+
+
+itcl::class SciTargetControl {
+   inherit TargetControl
+   constructor args {}
+   itk_option define -keepApply keepApply KeepApply 0
+   public {
+      method load {name}
+      method reset {}
+      method save {name}
+   }
+   private {
+      method orbtype {}
+   }
+}
+
+itk::usual SciTargetControl {
+   keep -borderwidth -cursor -font -highlightthickness -insertborderwidth \
+         -insertofftime -insertontime -insertwidth -labelfont -popupcursor \
+         -selectborderwidth -textfont -title
+}
+
+itcl::body SciTargetControl::constructor args {
+
+   eval itk_initialize $args
+
+# Set colour of highlight frame.
+   $itk_component(highlight) configure -background black
+
+# Add page for solar system objects
+   set w [$itk_component(notebook) add -label "Solar System" \
+         -command "$itk_component(trackrate) configure -state disabled"]
+
+# Option menu for the orbit type.
+#removed orbtype for now ... let TCS calculate Planet targets
+#      iwidgets::optionmenu $w.format -command [itcl::code $this orbtype]
+
+   itk_component add format {
+      iwidgets::optionmenu $w.format
+   }
+   $itk_component(format) insert end "Major planet (AsA format)" \
+         "Major planet (JPL Horizons format)" \
+         "Minor planet or comet (JPL Horizons format)" \
+         "Minor planet (AsA format)" "Minor planet (MPC format)" \
+         "Comet (AsA format)" "Comet (MPC format)" \
+         Mercury Venus Mars Jupiter Saturn Uranus Neptune Pluto Moon
+
+# Entry widgets for each element.
+   itk_component add epochofel {
+      iwidgets::entryfield $w.epochofel -labeltext "Epoch of elements (TT JD)"
+   }
+   itk_component add orbinc {
+      iwidgets::entryfield $w.orbinc -labeltext \
+            "Orbital inclination (deg)"
+   }
+   itk_component add longascnode {
+      iwidgets::entryfield $w.longascnode -labeltext \
+            "Longitude of ascending node (deg)"
+   }
+   itk_component add peri {
+      iwidgets::entryfield $w.peri -labeltext \
+            "Longitude of perihelion (deg)"
+   }
+   itk_component add aorq {
+      iwidgets::entryfield $w.aorq -labeltext "Mean distance (AU)"
+   }
+   itk_component add e {
+      iwidgets::entryfield $w.e -labeltext "Eccentricity"
+   }
+   itk_component add lormorep {
+      iwidgets::entryfield $w.lormorep -labeltext "Mean longitude (deg)"
+   }
+   itk_component add n {
+      iwidgets::entryfield $w.n -labeltext "Daily motion (deg)"
+   }
+   grid $itk_component(format) -pady 1
+   grid $itk_component(epochofel) -sticky e -pady 1
+   grid $itk_component(orbinc) -sticky e -pady 1
+   grid $itk_component(longascnode) -sticky e -pady 1
+   grid $itk_component(peri) -sticky e -pady 1
+   grid $itk_component(aorq) -sticky e -pady 1
+   grid $itk_component(e) -sticky e -pady 1
+   grid $itk_component(lormorep) -sticky e -pady 1
+   grid $itk_component(n) -sticky e -pady 1
+
+# Add commands to the RA/Dec and Az/El pages to re-enable the track rates
+# control.
+   $itk_component(notebook) pageconfigure "RA/Dec" \
+         -command "$itk_component(trackrate) configure -state normal"
+   $itk_component(notebook) pageconfigure "Az/El" \
+         -command "$itk_component(trackrate) configure -state normal"
+
+# Unpack Apply button and checkbutton so that new science targets have to be
+# applied from the main configuration window.
+
+   if {!$itk_option(-keepApply)} {
+       pack forget $itk_component(aframe)
+   }
+
+# Define object description.
+   set description "science target"
+}
+
+itcl::body SciTargetControl::reset {} {
+
+   $this TargetControl::reset
+
+# Enable all entry fields.
+   set lormorepstate [$itk_component(lormorep) cget -state]
+   $itk_component(lormorep) configure -state normal
+   set nstate [$itk_component(n) cget -state]
+   $itk_component(n) configure -state normal
+
+# Clear the entry fields.
+   $itk_component(epochofel) clear
+   $itk_component(orbinc) clear
+   $itk_component(longascnode) clear
+   $itk_component(peri) clear
+   $itk_component(aorq) clear
+   $itk_component(e) clear
+   $itk_component(lormorep) clear
+   $itk_component(n) clear
+
+# Restore the state of the controls
+   $itk_component(lormorep) configure -state $lormorepstate
+   $itk_component(n) configure -state $nstate
+}
+
+itcl::body SciTargetControl::load {name} {
+
+   $this TargetControl::load $name
+
+   switch [$name cget -type] {
+      namedTarget {
+	  $itk_component(notebook) select "Solar System"
+	  $itk_component(format) select [$name cget -object]
+	  # orbtype
+      }
+      conicTarget {
+
+# Select the solar system page.
+         $itk_component(notebook) select "Solar System"
+
+# Get the element format.
+         set format [$name cget -format]
+
+         switch $format {
+            "AsA major planet" {
+               $itk_component(format) select "Major planet (AsA format)"
+               $itk_component(epochofel) insert end [$name cget -epochofel]
+               $itk_component(orbinc) insert end [$name cget -orbinc]
+               $itk_component(longascnode) insert end [$name cget -longascnode]
+               $itk_component(aorq) insert end [$name cget -meandist]
+               $itk_component(peri) insert end [$name cget -longofperi]
+               $itk_component(e) insert end [$name cget -eccentricity]
+               $itk_component(lormorep) insert end [$name cget -meanlong]
+               $itk_component(n) insert end [$name cget -dailymot]
+            }
+            "JPL major planet" {
+               $itk_component(format) select \
+                     "Major planet (JPL Horizons format)"
+               $itk_component(epochofel) insert end [$name cget -epochofel]
+               $itk_component(orbinc) insert end [$name cget -orbinc]
+               $itk_component(longascnode) insert end [$name cget -longascnode]
+               $itk_component(aorq) insert end [$name cget -meandist]
+               $itk_component(peri) insert end [$name cget -argofperi]
+               $itk_component(e) insert end [$name cget -eccentricity]
+               $itk_component(lormorep) insert end [$name cget -meananom]
+               $itk_component(n) insert end [$name cget -dailymot]
+            }
+            "AsA minor planet" {
+               $itk_component(format) select "Minor planet (AsA format)"
+               $itk_component(epochofel) insert end [$name cget -epochofel]
+               $itk_component(orbinc) insert end [$name cget -orbinc]
+               $itk_component(longascnode) insert end [$name cget -longascnode]
+               $itk_component(aorq) insert end [$name cget -meandist]
+               $itk_component(peri) insert end [$name cget -argofperi]
+               $itk_component(e) insert end [$name cget -eccentricity]
+               $itk_component(lormorep) insert end [$name cget -meananom]
+            }
+            "MPC minor planet" {
+               $itk_component(format) select "Minor planet (MPC format)"
+               $itk_component(epochofel) insert end [$name cget -epochofel]
+               $itk_component(orbinc) insert end [$name cget -orbinc]
+               $itk_component(longascnode) insert end [$name cget -longascnode]
+               $itk_component(aorq) insert end [$name cget -meandist]
+               $itk_component(peri) insert end [$name cget -argofperi]
+               $itk_component(e) insert end [$name cget -eccentricity]
+               $itk_component(lormorep) insert end [$name cget -meananom]
+            }
+            "AsA comet" {
+               $itk_component(format) select "Comet (AsA format)"
+               $itk_component(epochofel) insert end [$name cget -epochofel]
+               $itk_component(orbinc) insert end [$name cget -orbinc]
+               $itk_component(longascnode) insert end [$name cget -longascnode]
+               $itk_component(aorq) insert end [$name cget -peridist]
+               $itk_component(peri) insert end [$name cget -argofperi]
+               $itk_component(e) insert end [$name cget -eccentricity]
+               $itk_component(lormorep) insert end [$name cget -epochofperi]
+            }
+            "JPL minor body" {
+               $itk_component(format) select \
+                           "Minor planet or comet (JPL Horizons format)"
+               $itk_component(epochofel) insert end [$name cget -epochofel]
+               $itk_component(orbinc) insert end [$name cget -orbinc]
+               $itk_component(longascnode) insert end [$name cget -longascnode]
+               $itk_component(aorq) insert end [$name cget -peridist]
+               $itk_component(peri) insert end [$name cget -argofperi]
+               $itk_component(e) insert end [$name cget -eccentricity]
+               $itk_component(lormorep) insert end [$name cget -epochofperi]
+            }
+            "MPC comet" {
+               $itk_component(format) select "Comet (MPC format)"
+               $itk_component(epochofel) insert end [$name cget -epochofel]
+               $itk_component(orbinc) insert end [$name cget -orbinc]
+               $itk_component(longascnode) insert end [$name cget -longascnode]
+               $itk_component(aorq) insert end [$name cget -peridist]
+               $itk_component(peri) insert end [$name cget -argofperi]
+               $itk_component(e) insert end [$name cget -eccentricity]
+               $itk_component(lormorep) insert end  [$name cget -epochofperi]
+            }
+         }
+
+# Update the entry field labels.
+#         orbtype
+      }
+   }
+}
+
+itcl::body SciTargetControl::save {name} {
+#+
+# Updates a target object with the values currently entered in the
+# control window.
+#-
+   $this TargetControl::save $name
+   set page [lindex [$itk_component(notebook) pageconfigure \
+         [$itk_component(notebook) select select] -label] 4]
+   switch $page {
+      "Solar System" {
+         switch [$itk_component(format) get] {
+	    Moon -
+            Mercury -
+            Venus -
+            Mars -
+            Jupiter -
+            Saturn -
+            Uranus -
+            Neptune -
+	    Pluto {
+               $name init
+               $name configure \
+                     -type namedTarget \
+		     -object [$itk_component(format) get]
+	    }
+            "Major planet (AsA format)" {
+               $name init
+               $name configure \
+                     -type conicTarget \
+                     -objname [$itk_component(selector) get] \
+                     -format "AsA major planet" \
+                     -epochofel [$itk_component(epochofel) get] \
+                     -orbinc [$itk_component(orbinc) get] \
+                     -longascnode [$itk_component(longascnode) get] \
+                     -eccentricity [$itk_component(e) get] \
+                     -longofperi [$itk_component(peri) get] \
+                     -meandist [$itk_component(aorq) get] \
+                     -meanlong [$itk_component(lormorep) get] \
+                     -dailymot [$itk_component(n) get]
+            }
+            "Major planet (JPL Horizons format)" {
+               $name init
+               $name configure \
+                     -type conicTarget \
+                     -objname [$itk_component(selector) get] \
+                     -format "JPL major planet" \
+                     -epochofel [$itk_component(epochofel) get] \
+                     -orbinc [$itk_component(orbinc) get] \
+                     -longascnode [$itk_component(longascnode) get] \
+                     -eccentricity [$itk_component(e) get] \
+                     -argofperi [$itk_component(peri) get] \
+                     -meandist [$itk_component(aorq) get] \
+                     -meananom [$itk_component(lormorep) get] \
+                     -dailymot [$itk_component(n) get]
+            }
+            "Minor planet (AsA format)" {
+               $name init
+               $name configure \
+                     -type conicTarget \
+                     -objname [$itk_component(selector) get] \
+                     -format "AsA minor planet" \
+                     -epochofel [$itk_component(epochofel) get] \
+                     -orbinc [$itk_component(orbinc) get] \
+                     -longascnode [$itk_component(longascnode) get] \
+                     -eccentricity [$itk_component(e) get] \
+                     -argofperi [$itk_component(peri) get] \
+                     -meandist [$itk_component(aorq) get] \
+                     -meananom [$itk_component(lormorep) get]
+            }
+            "Minor planet (MPC format)" {
+               $name init
+               $name configure \
+                     -type conicTarget \
+                     -objname [$itk_component(selector) get] \
+                     -format "MPC minor planet" \
+                     -epochofel [$itk_component(epochofel) get] \
+                     -orbinc [$itk_component(orbinc) get] \
+                     -longascnode [$itk_component(longascnode) get] \
+                     -eccentricity [$itk_component(e) get] \
+                     -argofperi [$itk_component(peri) get] \
+                     -meandist [$itk_component(aorq) get] \
+                     -meananom [$itk_component(lormorep) get]
+            }
+            "Minor planet or comet (JPL Horizons format)" {
+               $name init
+               $name configure \
+                     -type conicTarget \
+                     -objname [$itk_component(selector) get] \
+                     -format "JPL minor body" \
+                     -epochofel [$itk_component(epochofel) get] \
+                     -orbinc [$itk_component(orbinc) get] \
+                     -longascnode [$itk_component(longascnode) get] \
+                     -eccentricity [$itk_component(e) get] \
+                     -argofperi [$itk_component(peri) get] \
+                     -peridist [$itk_component(aorq) get] \
+                     -epochofperi [$itk_component(lormorep) get]
+            }
+            "Comet (MPC format)" {
+               $name init
+               $name configure \
+                     -type conicTarget \
+                     -objname [$itk_component(selector) get] \
+                     -format "MPC comet" \
+                     -epochofel [$itk_component(epochofel) get] \
+                     -orbinc [$itk_component(orbinc) get] \
+                     -longascnode [$itk_component(longascnode) get] \
+                     -eccentricity [$itk_component(e) get] \
+                     -argofperi [$itk_component(peri) get] \
+                     -peridist [$itk_component(aorq) get] \
+                     -epochofperi [$itk_component(lormorep) get]
+            }
+            "Comet (AsA format)" {
+               $name init
+               $name configure \
+                     -type conicTarget \
+                     -objname [$itk_component(selector) get] \
+                     -format "AsA comet" \
+                     -epochofel [$itk_component(epochofel) get] \
+                     -orbinc [$itk_component(orbinc) get] \
+                     -longascnode [$itk_component(longascnode) get] \
+                     -eccentricity [$itk_component(e) get] \
+                     -argofperi [$itk_component(peri) get] \
+                     -peridist [$itk_component(aorq) get] \
+                     -epochofperi [$itk_component(lormorep) get]
+            }
+         }
+      }
+   }
+}
+
+itcl::body SciTargetControl::orbtype {} {
+# Don't do this ... let the TCS calculate the Planet positions
+# Update the entry field labels and states.
+   set format [$itk_component(format) get]
+   switch $format {
+      Moon -
+      Mercury -
+      Venus -
+      Mars -
+      Jupiter -
+      Saturn -
+      Uranus -
+      Neptune -
+      Pluto -
+      "Major planet (AsA format)" { 
+         $itk_component(epochofel) configure -labeltext \
+               "Epoch of elements (TT JD)"
+         $itk_component(orbinc) configure -labeltext \
+               "Orbital inclination (deg)"
+         $itk_component(longascnode) configure -labeltext \
+               "Longitude of ascending node (deg)"
+         $itk_component(peri) configure -labeltext \
+               "Longitude of perihelion (deg)"
+         $itk_component(aorq) configure -labeltext \
+               "Mean distance (AU)"
+         $itk_component(e) configure -labeltext "Eccentricity"
+         $itk_component(lormorep) configure -state normal -labeltext \
+               "Mean longitude (deg)"
+         $itk_component(n) configure -state normal -labeltext \
+               "Daily motion (deg)"
+      }
+      "Major planet (JPL Horizons format)" {
+         $itk_component(epochofel) configure -labeltext \
+               "Epoch of elements (TT JD)"
+         $itk_component(orbinc) configure -labeltext IN
+         $itk_component(longascnode) configure -labeltext OM
+         $itk_component(peri) configure -labeltext W
+         $itk_component(aorq) configure -labeltext A
+         $itk_component(e) configure -labeltext EC
+         $itk_component(lormorep) configure -state normal -labeltext MA
+         $itk_component(n) configure -state normal -labeltext N
+      }
+      "Minor planet (AsA format)" {
+         $itk_component(epochofel) configure -labeltext \
+               "Epoch of elements (TT JD)"
+         $itk_component(orbinc) configure -labeltext \
+               "Orbital inclination (deg)"
+         $itk_component(longascnode) configure -labeltext \
+               "Longitude of ascending node (deg)"
+         $itk_component(peri) configure -labeltext \
+               "Argument of perihelion (deg)"
+         $itk_component(aorq) configure -labeltext "Mean distance (AU)"
+         $itk_component(e) configure -labeltext "Eccentricity"
+         $itk_component(lormorep) configure -state normal -labeltext \
+               "Mean anomaly (deg)"
+         $itk_component(n) configure -state disabled
+      }
+      "Minor planet (MPC format)" {
+         $itk_component(epochofel) configure -labeltext "Epoch JDT"
+         $itk_component(orbinc) configure -labeltext Incl
+         $itk_component(longascnode) configure -labeltext Node
+         $itk_component(peri) configure -labeltext Peri
+         $itk_component(aorq) configure -labeltext a
+         $itk_component(e) configure -labeltext e
+         $itk_component(lormorep) configure -state normal -labeltext M
+         $itk_component(n) configure -state disabled
+      }
+      "Minor planet or comet (JPL Horizons format)" {
+         $itk_component(epochofel) configure -labeltext EPOCH
+         $itk_component(orbinc) configure -labeltext IN
+         $itk_component(longascnode) configure -labeltext OM
+         $itk_component(peri) configure -labeltext W
+         $itk_component(aorq) configure -labeltext QR
+         $itk_component(e) configure -labeltext EC
+         $itk_component(lormorep) configure -state normal -labeltext TP
+         $itk_component(n) configure -state disabled
+      }
+      "Comet (AsA format)" {
+         $itk_component(epochofel) configure -labeltext \
+               "Epoch of elements (TT JD)"
+         $itk_component(orbinc) configure -labeltext \
+               "Orbital inclination (deg)"
+         $itk_component(longascnode) configure -labeltext \
+               "Longitude of ascending node (deg)"
+         $itk_component(peri) configure -labeltext \
+               "Argument of perihelion (deg)"
+         $itk_component(aorq) configure -labeltext "Perihelion distance (AU)"
+         $itk_component(e) configure -labeltext "Eccentricity"
+         $itk_component(lormorep) configure -state normal \
+               -labeltext "Perihelion time"
+         $itk_component(n) configure -state disabled
+      }
+      "Comet (MPC format)" {
+         $itk_component(epochofel) configure -labeltext Epoch
+         $itk_component(orbinc) configure -labeltext Incl
+         $itk_component(longascnode) configure -labeltext Node
+         $itk_component(peri) configure -labeltext Peri
+         $itk_component(aorq) configure -labeltext q
+         $itk_component(e) configure -labeltext e
+         $itk_component(lormorep) configure -state normal -labeltext T
+         $itk_component(n) configure -state disabled
+      }
+   }
+
+# Fill in planet elements from  Chapront & Francou ephemeris.
+   switch $format {
+      Moon -
+      Mercury -
+      Venus -
+      Mars -
+      Jupiter -
+      Saturn -
+      Uranus -
+      Neptune -
+      Pluto {
+         set file [file join $::ROOT series96 [string tolower $format]]
+         set elements [plosc $file]
+         $itk_component(epochofel) clear
+         $itk_component(orbinc) clear
+         $itk_component(longascnode) clear
+         $itk_component(peri) clear
+         $itk_component(aorq) clear
+         $itk_component(e) clear
+         $itk_component(lormorep) clear
+         $itk_component(n) clear
+         $itk_component(epochofel) insert end [lindex $elements 0]
+         $itk_component(orbinc) insert end [lindex $elements 1]
+         $itk_component(longascnode) insert end [lindex $elements 2]
+         $itk_component(peri) insert end [lindex $elements 3]
+         $itk_component(aorq) insert end [lindex $elements 4]
+         $itk_component(e) insert end [lindex $elements 5]
+         $itk_component(lormorep) insert end [lindex $elements 6]
+         $itk_component(n) insert end [lindex $elements 7]
+      }
+   }
+}

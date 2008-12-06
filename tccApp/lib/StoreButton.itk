@@ -1,0 +1,76 @@
+#+
+#  StoreButton <- itk::Widget
+#
+#  Implements the StoreButton class. A StoreButton is a push button that
+#  reads the contents of a combobox and only calls its command procedure
+#  the string is not empty.
+#
+#  Options:
+#           -combobox   The combobox widget that the button is associated
+#                       with.
+#
+#           -command    The command to store.
+#
+#  Methods:
+#           invoke      Invokes the action of pressing the button.
+#
+#  D Terrett  18 June 2003
+#
+#  Copyright CCLRC
+#-
+
+itcl::class StoreButton {
+   inherit itk::Widget
+   constructor args {}
+   itk_option define -combobox combobox Combobox {}
+   itk_option define -command command Command {}
+   itk_option define -component component Component {}
+   public {
+      method invoke {} {$itk_component(button) invoke}
+   }
+   private {
+      method command {}
+   }
+}
+
+itk::usual StoreButton {
+   keep -activebackground -activeforeground -background -cursor \
+         -disabledforeground -foreground -font -highlightcolor \
+         -highlightthickness -component
+}
+
+itcl::body StoreButton::constructor args {
+
+   itk_component add button {
+      button $itk_interior.button -command [itcl::code $this command]
+   } {
+      usual
+      keep -text -width
+   }
+   pack $itk_component(button) -fill both -expand y
+
+   eval itk_initialize $args
+}
+
+itcl::body StoreButton::command {} {
+   set name [$itk_option(-combobox) get]
+   if { [string is space $name] } {
+      if { ! [winfo exists $itk_interior.pd] } {
+         iwidgets::promptdialog $itk_interior.pd \
+               -modality application -labeltext \
+               "Name for new $::Config($itk_option(-component),label)?"
+         $itk_interior.pd hide Apply
+         $itk_interior.pd center
+      }
+      if { [$itk_interior.pd activate] } {
+         set name [$itk_interior.pd get]
+         if { [string is space $name] } {
+            tk_messageBox -icon error -parent $itk_interior -message \
+                  "Cannot store without a name to store to."
+         }
+      }
+   }
+   if { ![string equal $name ""] } {
+      $itk_option(-command) $name
+   }
+}

@@ -1,0 +1,169 @@
+#+
+#  RotatorControl <- ComponentControl
+#
+#  A Rotator control is a ComponentControl widget with widgets for the 
+#  instrument position angle and coordinate system.
+#
+#  Options:
+#           -component         The name of component that the control edits
+#
+#  D Terrett 27 February 2001
+#
+#  Copyright CCLRC
+#+
+
+itcl::class RotatorControl {
+   inherit ComponentControl
+
+   constructor args {}
+
+   itk_option define -component component Component {}
+
+   public {
+       method load {name}
+       method reset {}
+       method save {name}
+   }
+   private {
+      method checkcosys
+      method setdir
+      variable refdir
+   }
+}
+
+itk::usual RotatorControl {
+   keep -borderwidth -cursor -font -highlightthickness -insertborderwidth \
+         -insertofftime -insertontime -insertwidth -labelfont -popupcursor \
+         -selectborderwidth -textfont -title
+}
+
+itcl::body RotatorControl::constructor args {
+
+# Create the sender if it doesn't already exist.
+   if { [catch {cs rotMove info}] } {
+      epics cs rotMove
+   }
+
+# Frame for angle.
+   itk_component add angle {
+      frame $itk_interior.angle -bd 2 -relief ridge
+   }
+   pack $itk_component(angle) 
+
+# Entry field for angle.
+   set w $itk_component(angle)
+   itk_component add ipa {
+      iwidgets::entryfield $w.ipa -labeltext [lindex [cs rotator info ipa] 2] \
+            -width 8
+   }
+   pack $itk_component(ipa) -padx 5 -pady 5
+
+# Frame for reference direction.
+   itk_component add refdir {
+      frame $itk_interior.refdir -bd 2 -relief ridge
+   }
+   pack $itk_component(refdir) -fill x -expand y -pady 5
+
+# Title
+   itk_component add title {
+      label $w.label -text "Reference direction"
+   }
+   pack $itk_component(title) -anchor w
+
+# Radiobuttons.
+   itk_component add north {
+      radiobutton $w.north -text "Rotator tracking" \
+            -variable [itcl::scope refdir] -value north \
+            -command [itcl::code $this setdir]
+   }
+   itk_component add vertical {
+      radiobutton $w.vertical -text "Rotator fixed" \
+            -variable [itcl::scope refdir] -value vertical \
+            -command [itcl::code $this setdir]
+   }
+   pack $itk_component(vertical) $itk_component(north) -pady 5 -anchor w \
+         -padx 5
+
+# Control for selecting a coordinate frame.
+   itk_component add cosys {
+      SubComponentSelector $w.cosys -labeltext "Coordinate system" \
+            -labelpos nw -selectioncommand [itcl::code $this checkcosys]
+   }
+   pack $itk_component(cosys) -anchor w -padx 5 -pady 5
+   set w [winfo parent $w]
+
+# Set initial state.
+   set refdir vertical
+
+# Set the object description.
+   set description "field orientation"
+
+   eval itk_initialize $args
+}
+
+itcl::configbody RotatorControl::component {
+   if { $itk_option(-component) != "" } {
+      $itk_component(cosys) configure -component $itk_option(-component).cosys
+   }
+}
+
+itcl::body RotatorControl::reset {} {
+   $itk_component(ipa) clear
+}
+
+itcl::body RotatorControl::load {name} {
+
+# Copy the contents of the specified rotator object into the edit
+# controls.
+   $itk_component(ipa) insert end [$name cget -ipa]
+   set cosys [$name cget -cosys]
+   if { [string equal $cosys Fixed] } {
+      set refdir vertical
+      set ::Config($itk_option(-component).cosys,value) $cosys
+   } elseif { [string equal $cosys AzEl] } {
+      set refdir vertical
+      set ::Config($itk_option(-component).cosys,value) ""
+   } else {
+      set refdir north
+      if { [string is space $cosys] } {
+         set ::Config($itk_option(-component).cosys,value) FK5/J2000
+      } else {
+         set ::Config($itk_option(-component).cosys,value) $cosys
+      }
+   }
+   setdir
+}
+
+itcl::body RotatorControl::save {name} {
+puts " RotatorControl::save name: $name"
+   $name configure -ipa [$itk_component(ipa) get]
+    if { [string equal $refdir north] } {
+      $name configure -cosys [$itk_component(cosys) get]
+   } elseif { [string equal [$name cget -cosys] Fixed] } {
+      set refdir vertical
+      $name configure -cosys [$itk_component(cosys) get]
+   } else {
+      $name configure -cosys AzEl
+   }
+}
+
+itcl::body RotatorControl::setdir {} {
+   if { [string equal $refdir vertical] && ![string equal [$itk_component(cosys) get] Fixed]} {
+      set ::Config($itk_option(-component).cosys,value) Fixed
+   } elseif { [string equal [$itk_component(cosys) get] AzEl] } {
+      set ::Config($itk_option(-component).cosys,value) ""
+   }
+}
+
+itcl::body RotatorControl::checkcosys {} {
+   set cosys [$itk_component(cosys) get]
+   if { [string equal $cosys Fixed] } {
+       set refdir vertical
+   } elseif { ![string equal $cosys ""] } {
+       if { [CosysNames::$cosys cget -isazel] } {
+	   set refdir vertical
+       } else {
+	   set refdir north
+       }
+   }
+}

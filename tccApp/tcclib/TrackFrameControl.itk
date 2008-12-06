@@ -1,0 +1,118 @@
+#+
+#  TrackFrameControl <- ComponentControl
+#
+#  Implements the TrackFrameControl widget.
+#
+#  Options:
+#           -component    The component that the control edits.
+#
+#  D Terrett 27 February 2002
+#
+#  Copyright CCLRC
+#+
+
+itcl::class TrackFrameControl {
+   inherit ComponentControl
+   constructor args {}
+   itk_option define -component component Component {}
+   public {
+      method load {name}
+      method save {name}
+   }
+}
+
+itk::usual TrackFrameControl {
+   keep -borderwidth -cursor -font -highlightthickness -insertborderwidth \
+         -insertofftime -insertontime -insertwidth -labelfont -popupcursor \
+         -selectborderwidth -textfont -title
+}
+
+itcl::body TrackFrameControl::constructor args {
+
+# Frame for the track frames.
+   itk_component add trackframes {
+      frame $itk_interior.trackframes -bd 2 -relief ridge
+   }
+   pack $itk_component(trackframes) -fill x -expand y
+   set w $itk_component(trackframes)
+
+   itk_component add mountCosys {
+      SubComponentSelector $w.mount -labeltext "Mount" \
+            -labelpos w
+   }
+   itk_component add sourceACosys {
+      SubComponentSelector $w.sourcea -labeltext "Source A" \
+            -labelpos w
+   }
+   itk_component add sourceBCosys {
+      SubComponentSelector $w.sourceb -labeltext "Source B" \
+            -labelpos w
+   }
+   itk_component add sourceCCosys {
+      SubComponentSelector $w.sourcec -labeltext "Source C" \
+            -labelpos w
+   }
+   itk_component add pwfs1Cosys {
+      SubComponentSelector $w.pwfs1 -labeltext "PWFS1" \
+            -labelpos w
+   }
+   itk_component add pwfs2Cosys {
+      SubComponentSelector $w.pwfs2 -labeltext "PWFS2" \
+            -labelpos w
+   }
+   itk_component add oiwfsCosys {
+      SubComponentSelector $w.oiwfs -labeltext "OIWFS" \
+            -labelpos w
+   }
+   grid $itk_component(mountCosys) -sticky e
+   grid $itk_component(sourceACosys) -sticky e
+   grid $itk_component(sourceBCosys) -sticky e
+   grid $itk_component(sourceCCosys) -sticky e
+   grid $itk_component(pwfs1Cosys) -sticky e
+   grid $itk_component(pwfs2Cosys) -sticky e
+   grid $itk_component(oiwfsCosys) -sticky e
+
+# Set the object description.
+   set description "tracking frames"
+
+   eval itk_initialize $args
+}
+
+itcl::body TrackFrameControl::load {name} {
+   if { ! [string equal [namespace tail $name] ""] } {
+      foreach tel {mount sourceA sourceB sourceC pwfs1 pwfs2 oiwfs} {
+         set ::Config($itk_option(-component).${tel}cosys,value) \
+               [$name cget -${tel}Cosys]
+      }
+   }
+}
+
+itcl::body TrackFrameControl::save {name} {
+   $name configure \
+         -mountCosys [$itk_component(mountCosys) get] \
+         -sourceACosys [$itk_component(sourceACosys) get] \
+         -sourceBCosys [$itk_component(sourceBCosys) get] \
+         -sourceCCosys [$itk_component(sourceCCosys) get] \
+         -pwfs1Cosys [$itk_component(pwfs1Cosys) get] \
+         -pwfs2Cosys [$itk_component(pwfs2Cosys) get] \
+         -oiwfsCosys [$itk_component(oiwfsCosys) get]
+}
+
+itcl::configbody TrackFrameControl::component {
+   if { $itk_option(-component) != "" } {
+      $itk_component(mountCosys) configure -component \
+            $itk_option(-component).mountcosys
+      $itk_component(sourceACosys) configure -component \
+            $itk_option(-component).sourceAcosys
+      $itk_component(sourceBCosys) configure -component \
+            $itk_option(-component).sourceBcosys
+      $itk_component(sourceCCosys) configure -component \
+            $itk_option(-component).sourceCcosys
+      $itk_component(pwfs1Cosys) configure -component \
+            $itk_option(-component).pwfs1cosys
+      $itk_component(pwfs2Cosys) configure -component \
+            $itk_option(-component).pwfs2cosys
+      $itk_component(oiwfsCosys) configure -component \
+            $itk_option(-component).oiwfscosys
+   }
+}

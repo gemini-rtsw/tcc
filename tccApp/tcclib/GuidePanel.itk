@@ -1,0 +1,42 @@
+#+
+#  GuidePanel <- Panel
+#
+#  Implements the GuidePanel widget. A Panel widget with a 
+#  GuideControl widget packed into its interior.
+#
+#  Methods:
+#          none
+#
+#  D Terrett 6 March 2002
+#
+#  Copyright CCLRC
+#+
+
+itcl::class GuidePanel {
+   inherit Panel
+   constructor args {}
+   public {
+      method sync {component name} {$itk_component(control) sync $name}
+   }
+}
+
+itk::usual GuidePanel {
+   keep -background -cursor
+}
+
+itcl::body GuidePanel::constructor args {
+
+   setWidgetColors $itk_interior \
+         $itk_option(-background) $itk_option(-foreground)
+
+   itk_component add control {
+      GuideControl $itk_interior.control
+   } {
+      usual
+      rename -component -components components Components
+   }
+
+   pack $itk_component(control) -fill both -expand y
+
+   eval itk_initialize $args
+}

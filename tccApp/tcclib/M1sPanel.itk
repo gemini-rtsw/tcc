@@ -1,0 +1,46 @@
+#+
+#  M1sPanel <- Panel
+#
+#  Implements the M1sPanel widget. A Panel widget with a M1sControl
+#  widget packed into its interior
+#
+#  Options:
+#          none
+#
+#  Methods:
+#          none
+#
+#  D Terrett 9 July 2003
+#
+#  Copyright CCLRC
+#+
+
+itcl::class M1sPanel {
+   inherit Panel
+   constructor args {}
+}
+
+itk::usual M1sPanel {
+   keep -background -cursor
+}
+
+itcl::body M1sPanel::constructor args {
+
+# Withdraw the top level window so that we don't see geometry changes as
+# we wait for sa to connect.
+   set toplevel [winfo toplevel $itk_interior]
+   wm withdraw $toplevel
+
+   setWidgetColors $itk_interior \
+         $itk_option(-background) $itk_option(-foreground)
+
+   itk_component add control {
+      M1sControl $itk_interior.control
+   }
+
+   pack $itk_component(control) -fill both -expand y
+
+   eval itk_initialize $args
+
+   wm deiconify $toplevel
+}

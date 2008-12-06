@@ -1,0 +1,96 @@
+#+
+#  PointOrig <- Paramset
+#
+#  Implements the PointOrig class. A PointOrig object stores all the parameters 
+#  needed to specify a pointing origin and knows how to load the pointing
+#  origin into the TCS.
+#
+#  PointOrig components with the name "rotator_axis" are a special case
+#  with x & y fixed at zero.
+#
+#  Options:
+#          -x           The X value of the pointing origin.
+#
+#          -y           The Y value of the pointing origin.
+#
+#  Methods:
+#          apply comp   Applies the pointing origin.
+#
+#          init          Returns the pointing origin object to its initial 
+#                        state.
+#
+#          preview item  Sets "item" in the preview.
+#
+#          save node     Saves the values of the pointing origin options
+#                        to the xml node.
+#
+#  D Terrett 11 April 2003
+#
+#  Copyright CCLRC
+#+
+
+itcl::class PointOrig {
+   inherit Paramset
+   public {
+      method apply {comp}
+      method init {}
+      method preview {view item}
+      method save {node}
+      variable x 0.0
+      variable y 0.0
+   }
+}
+
+itcl::body PointOrig::apply {comp} {
+   set xmm [expr {$x * 0.62056151}]
+   set ymm [expr {$y * 0.62056151}]
+   cs poriginA set x [list $xmm]
+   cs poriginA set y [list $ymm]
+   cs poriginB set x [list $xmm]
+   cs poriginB set y [list $ymm]
+   cs poriginC set x [list $xmm]
+   cs poriginC set y [list $ymm]
+   logger command poriginA
+   logger command poriginB
+   logger command poriginC
+}
+
+itcl::body PointOrig::init {} {
+   set x 0.0
+   set y 0.0
+}
+
+itcl::body PointOrig::preview {view item} {
+   $view configure -pox [expr {$x * 0.62056151}]
+   $view configure -poy [expr {$y * 0.62056151}]
+}
+
+itcl::body PointOrig::save {node} {
+   set node [paramset $node instrument_origin]
+   param $node x $x
+   param $node y $y
+}
+
+itcl::configbody PointOrig::x {
+   if { [string is double -strict $x] } {
+      if { [string equal [namespace tail $this] "rotator_axis"] } {
+         if { $x != 0.0 } {
+            error "Rotator Axis must have X & Y = 0.0"
+         }
+      }
+   } else {
+      error "Instrument origin X \"$x\" is not a number"
+   }
+}
+
+itcl::configbody PointOrig::y {
+   if { [string is double -strict $y] } {
+      if { [string equal [namespace tail $this] "rotator_axis"] } {
+         if { $y != 0.0 } {
+            error "Rotator Axis must have X & Y = 0.0"
+         }
+      }
+   } else {
+      error "Instrument origin Y \"$y\" is not a number"
+   }
+}

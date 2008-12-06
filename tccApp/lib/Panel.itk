@@ -1,0 +1,94 @@
+#+
+#  Panel <- itk:TopLevel
+#
+#  A Panel widget is a toplevel widget with the addition of a file menu with
+#  Move, Hide and Exit entries. It has options that list the window names 
+#  of the controls that the panel contains and the name of the PanelMgr that 
+#  created this Panel.
+#
+#  Options:
+#           -panelmgr       The name of the panel manager object managing
+#                           this panel.
+#
+#  Methods:
+#           show component  Makes component visible
+#
+#  D Terrett 15 July 2003
+#
+#  Copyright CCLRC
+#+
+
+itcl::class Panel {
+   inherit itk::Toplevel
+   constructor args {}
+   itk_option define -panelmgr panelMgr PanelMgr ""
+   public {
+      method show {component} {}
+   }
+   private {
+      method exit {}
+      method hide {}
+      method move {}
+   }
+}
+
+itk::usual Panel {
+   keep -background -cursor
+}
+
+itcl::body Panel::constructor args {
+
+# Menu bar and menus.
+   itk_component add menubar {
+      iwidgets::menubar $itk_interior.menubar -menubuttons {
+         menubutton file -text File -menu {
+            command move -label Move... -command \"[itcl::code $this move]\"
+            command hide -label Hide -command \"[itcl::code $this hide]\"
+            command exit -label Exit -command \"[itcl::code $this exit]\"
+         }
+      }
+   }
+
+# Frame.
+   itk_component add frame {
+      frame $itk_interior.frame
+   }
+
+   pack $itk_component(menubar) -fill x
+   pack $itk_component(frame) -fill both -expand y
+
+# Make the window not resizable.
+   wm resizable $itk_interior 0 0
+
+   set itk_interior $itk_component(frame)
+
+   eval itk_initialize $args
+}
+
+itcl::body Panel::exit {} {
+   destroy [winfo toplevel $itk_interior]
+}
+
+itcl::body Panel::hide {} {
+   wm withdraw [winfo toplevel $itk_interior]
+}
+
+itcl::body Panel::move {} {
+
+# Create the dialog box.
+   set dialog [MoveDialog $itk_interior.moveDialog \
+         -title "Window Position Dialog" -modality application \
+         -master $itk_interior -panelmgr $itk_option(-panelmgr)]
+
+# Hide the help and apply buttons.
+   $dialog hide Help
+   $dialog hide Apply
+
+# Center and activate the dialog.
+   $dialog center
+   $dialog activate
+
+# If the screen was changed the dialog will have been deleted when the
+# parent panel was deleted so destroy the dialog with care.
+   catch {destroy $dialog}
+}
