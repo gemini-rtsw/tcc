@@ -74,7 +74,7 @@ cp -a tccApp/tccscript $RPM_BUILD_ROOT/%{_prefix}/%{gemopt}/tcc/
 cp -a tccApp/tccSkycat $RPM_BUILD_ROOT/%{_prefix}/%{gemopt}/tcc/
 cp -a tccApp/pointtest $RPM_BUILD_ROOT/%{_prefix}/%{gemopt}/tcc/
 cp -a tccApp/probecal $RPM_BUILD_ROOT/%{_prefix}/%{gemopt}/tcc/
-cp -a tccApp/bin/* $RPM_BUILD_ROOT/%{_prefix}/bin/
+cp -a tccApp/linux-bin/* $RPM_BUILD_ROOT/%{_prefix}/bin/
 chmod 755 $RPM_BUILD_ROOT/%{_prefix}/bin/*
 
 ## if you want to do something after installation uncomment the following
