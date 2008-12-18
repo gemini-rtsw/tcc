@@ -22,6 +22,8 @@ itcl::class TcsConfigControl {
       method newfield {n1 n2 op}
       method sesidle {}
       method wrap {par}
+      method applyP1M2Gains {instName wfs}
+      method applyP2M2Gains {instName wfs}
       variable components {
          field pointOrig slewOptions chop gaos trackFrame instrument
       }
@@ -47,7 +49,15 @@ itk::usual TcsConfigControl {
 itcl::body TcsConfigControl::constructor {args} {
 
    if { [catch {cs aoGimOffsets info}] } {
-      epics cs aoGimOffsets
+     epics cs aoGimOffsets
+   }
+
+   if { [catch {cs pwfs1m2Gain info}] } {
+      epics cs pwfs1m2Gain
+   }
+
+   if { [catch {cs pwfs2m2Gain info}] } {
+      epics cs pwfs2m2Gain
    }
 
 # Expand the component selector.
@@ -214,11 +224,13 @@ itcl::body TcsConfigControl::destructor {} {
 itcl::body TcsConfigControl::apply {} {
     global instPO
 
+    logactions logmess "Starting a Slew"
 #+
 # Called when the apply button is pressed.
 #-
 # First check to make sure that the laser isn't propogating!
     if {[string equal [sa aossad get laserProp] "SKY"]} {
+        logactions logmess "Warning The laser is propogating, aborting slew"
 	tk_messageBox -icon error \
 	    -message "You cannot SLEW while the laser is propogating"
 	return
@@ -226,6 +238,7 @@ itcl::body TcsConfigControl::apply {} {
 
 # Ensure that the STRAP is off
     if {[AO state gaosTTGS]} {
+        logactions logmess "Warning The STRAP Detector is On, aborting slew"
 	tk_messageBox -icon error \
 	    -message "Warning The STRAP Detector is On"
 	return
@@ -236,18 +249,20 @@ itcl::body TcsConfigControl::apply {} {
     set oiName [sa agssad get oiwfsName]
     if { [string match "*NICI*" $inst] } {
 	set target $::Config(tcs.field.sciencetarget,value)
-	puts "Science Target: $target"
+	logactions logmess "Science Target: $target"
 	set magnitude [$::Config(tcs.field.oiwfstarget,namespace)::$target cget -brightness]
 	set magparts [split $magnitude " "]
 	set magnitude [lindex $magparts 0]
 	if {[string is double -strict $magnitude]} {
-	    puts "writing magnitude $magnitude to NICI"
-	    cs niciMag set mag $magnitude
-	    cs niciMag set mode Auto
-	    cs niciMag set conf config
-	    cs niciMag set dir 0
-	    after 100
-	    cs niciMag set dir 3
+	    if { ![catch {cs niciMag info}] } {
+		logactions logmess "writing magnitude $magnitude to NICI"
+		cs niciMag set mag $magnitude
+		cs niciMag set mode Auto
+		cs niciMag set conf config
+		cs niciMag set dir 0
+		after 100
+		cs niciMag set dir 3
+	    }
 	} else {
 	    tk_messageBox -icon error \
 		-message "Attempting to send invalid Magnitude to NICI"
@@ -259,12 +274,14 @@ itcl::body TcsConfigControl::apply {} {
 # rather, if NICI is on the telescope
 
     if {([sa agssad get portNici] != "No Value") && ([sa agssad get portNici] > 0) } {
-	set niciFilter [sa nici get ndfilt]
-	puts "NICI ndfilter is set to $niciFilter"
-	if {![string match "*Block*" $niciFilter]} {
-	    tk_messageBox -icon error \
-		-message "Warning The NICI ndFilter is not set to Block"
-	    return
+	if { ![catch {sa nici info}] } {
+	    set niciFilter [sa nici get ndfilt]
+	    puts "NICI ndfilter is set to $niciFilter"
+	    if {![string match "*Block*" $niciFilter]} {
+		tk_messageBox -icon error \
+		    -message "Warning The NICI ndFilter is not set to Block"
+		return
+	    }
 	}
     }
 
@@ -326,23 +343,25 @@ itcl::body TcsConfigControl::apply {} {
 
 # Configure UseAO flag in the TCS
 
-    if {[string match "No AO" $::Config(tcs.gaos,value)] || [string match "" $::Config(tcs.gaos,value)]} {
-	cs configForAO set useAO "No"
-	logger command configForAO
-	logactions logmess "Applying configForAO No"
-	iss configure -source SKY -ao OUT
-	if { [catch {cs tcsApply post} msg] } {
-	    tk_messageBox -icon error -message $msg
-	    return
-	}
-    } else {
-	cs configForAO set useAO "Yes"
-	logger command configForAO
-	logactions logmess "Applying configForAO Yes"
-	iss configure -source AO -ao IN
-	if { [catch {cs tcsApply post} msg] } {
-	    tk_messageBox -icon error -message $msg
-	    return
+    if { ![catch {cs configForAO info}] } {
+	if {[string match "No AO" $::Config(tcs.gaos,value)] || [string match "" $::Config(tcs.gaos,value)]} {
+	    cs configForAO set useAO "No"
+	    logger command configForAO
+	    logactions logmess "Applying configForAO No"
+	    iss configure -source SKY -ao OUT
+	    if { [catch {cs tcsApply post} msg] } {
+		tk_messageBox -icon error -message $msg
+		return
+	    }
+	} else {
+	    cs configForAO set useAO "Yes"
+	    logger command configForAO
+	    logactions logmess "Applying configForAO Yes"
+	    iss configure -source AO -ao IN
+	    if { [catch {cs tcsApply post} msg] } {
+		tk_messageBox -icon error -message $msg
+		return
+	    }
 	}
     }
 
@@ -453,11 +472,25 @@ itcl::body TcsConfigControl::apply {} {
 # 	set ::Config(tcs.field.guide.oiwfswavelength,value) $oiwlName
 #     }
 
+# Set the proper P2 gains for NICI, or the defaults otherwise.
+   switch -glob $inst {
+       *NICI* { set instName NICI }
+       default { set instName $inst }
+   }
+   if { [string match "*P1*" $guide] } {
+      applyP1M2Gains $instName $guide
+   }
+   if { [string match "*P2*" $guide] } {
+      applyP2M2Gains $instName $guide
+   }
+
 # Zero the offsets for the Gimbals if we're using aowfs and not LGS
     if {[string match "*AO*" $guide] && ![AO state useLwfs]} {
-	cs aoGimOffsets set xoff 0
-	cs aoGimOffsets set yoff 0
-	cs aoGimOffsets set zoff 0
+	if { ![catch {cs aoGimOffsets info}] } {
+	    cs aoGimOffsets set xoff 0
+	    cs aoGimOffsets set yoff 0
+	    cs aoGimOffsets set zoff 0
+	}
     }
 
 # this is a slew ... reset wrap controls
@@ -499,35 +532,43 @@ itcl::body TcsConfigControl::apply {} {
 	} else {
 	    set wfs Ngs
 	}
+	set inst $::Config(tcs.instrument,value)
+	set instname [$::Config(tcs.instrument,namespace)::$inst cget -name]
 	set instr ""
 	set port 0
-	if {[string match "*NIRI*" $inst]} {
+	if {[string match "*NIRI*" $inst] || [string match "*niri*" $instname]} {
 	    set instr NIRI
 	    set port [sa agssad get portNiri]
 	    #set the deocus offset
-	    cs aoSFOdefocus set offset [calparam cget -niri_sfo_defocus]
+	    if { ![catch {cs aoSFOdefocus info}] } {
+		cs aoSFOdefocus set offset [calparam cget -niri_sfo_defocus]
+	    }
 	} elseif {[string match "*NIFS*" $inst]} {
 	    set instr NIFS
 	    set port [sa agssad get portNifs]
 	    #set the deocus offset
-	    cs aoSFOdefocus set offset [calparam cget -nifs_sfo_defocus]
+	    if { ![catch {cs aoSFOdefocus info}] } {
+		cs aoSFOdefocus set offset [calparam cget -nifs_sfo_defocus]
+	    }
 	}
 	if {$port == 0} {
 	    tk_messageBox -icon error \
-		-message "The AGS has specified an invalid port (0) for $instr"
+		-message "The AGS has specified an invalid port (0) for $inst"
 	    return
 	}
 	set port "p$port"
 	if {[string length $inst] > 0} {
-	    set ncpafile "/aoBase/rel/input/aoNcpa${instr}${port}${wfs}.dat"
-	    set flexfile "/aoBase/rel/data/aoFlex${instr}${port}${wfs}.dat"
-	    logactions logmess "Setting ncpafile: $ncpafile"
-	    logactions logmess "Setting flexfile: $flexfile"
-	    #puts "ncpafile: $ncpafile"
-	    #puts "flexfile: $flexfile"
-	    cs aoFlex set ncpa $ncpafile
-	    cs aoFlex set flex $flexfile
-	    cs aoFlex set dir 3
+	    if { ![catch {cs aoFlex info}] } {
+		set ncpafile "/aoBase/rel/input/aoNcpa${instr}${port}${wfs}.dat"
+		set flexfile "/aoBase/rel/data/aoFlex${instr}${port}${wfs}.dat"
+		logactions logmess "Setting ncpafile: $ncpafile"
+		logactions logmess "Setting flexfile: $flexfile"
+		#puts "ncpafile: $ncpafile"
+		#puts "flexfile: $flexfile"
+		cs aoFlex set ncpa $ncpafile
+		cs aoFlex set flex $flexfile
+		cs aoFlex set dir 3
+	    }
 	}
     }
 
@@ -635,4 +676,38 @@ itcl::body TcsConfigControl::sesidle {} {
    if { [$dialog activate] } {
       ocssession idleReason [$dialog get reason] [$dialog get comment]
    }
+}
+
+itcl::body TcsConfigControl::applyP1M2Gains {instName wfs} {
+   set tipGain [calparam p1m2TipGain $instName $wfs]
+   set tiltGain [calparam p1m2TiltGain $instName $wfs]
+   set focusGain [calparam p1m2FocusGain $instName $wfs]
+   if { $tipGain != "<undefined>"  && $tiltGain != "<undefined>"  && \
+        $focusGain != "<undefined>"} {
+      cs pwfs1m2Gain tipGain $tipGain
+      cs pwfs1m2Gain tiltGain $tiltGain
+      cs pwfs1m2Gain focusGain $focusGain
+   } else {
+      cs pwfs1m2Gain resetDefaults 1
+   }
+   cs pwfs1m2Gain dir 0
+   after 100
+   cs pwfs1m2Gain dir 3
+}
+
+itcl::body TcsConfigControl::applyP2M2Gains {instName wfs} {
+   set tipGain [calparam p2m2TipGain $instName $wfs]
+   set tiltGain [calparam p2m2TiltGain $instName $wfs]
+   set focusGain [calparam p2m2FocusGain $instName $wfs]
+   if { $tipGain != "<undefined>"  && $tiltGain != "<undefined>"  && \
+        $focusGain != "<undefined>"} {
+      cs pwfs2m2Gain tipGain $tipGain
+      cs pwfs2m2Gain tiltGain $tiltGain
+      cs pwfs2m2Gain focusGain $focusGain
+   } else {
+      cs pwfs2m2Gain resetDefaults 1
+   }
+   cs pwfs2m2Gain dir 0
+   after 100
+   cs pwfs2m2Gain dir 3
 }

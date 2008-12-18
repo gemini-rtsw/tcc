@@ -1,4 +1,4 @@
-static char rcsid[] = "$Id: tccDecode.c,v 1.6 2005-01-20 00:03:25 dlt Exp $";
+static char rcsid[] = "$Id: tccDecode.c,v 1.7 2008/10/17 21:04:34 jluhrs Exp $";
 /* *INDENT-OFF* */
 /*
 *   FILENAME
@@ -16,7 +16,16 @@ static char rcsid[] = "$Id: tccDecode.c,v 1.6 2005-01-20 00:03:25 dlt Exp $";
 *   tccDcT0       - Decode a reference epoch
 */
 /*
- * $Log: not supported by cvs2svn $
+ * $Log: tccDecode.c,v $
+ * Revision 1.7  2008/10/17 21:04:34  jluhrs
+ * Last changes from branch V4-3-1nici merged into main trunk.
+ *
+ * Revision 1.6.4.1  2008/10/13 17:32:17  gemvx
+ * Rotator fixed frame
+ *
+ * Revision 1.6  2005/01/20 00:03:25  dlt
+ * Remove deprecated access to interp->result
+ *
  * Revision 1.5  2002/06/06 13:09:59  dlt
  * Implement new orbit formats and Chapront & Francou planet ephemeris
  *
@@ -378,7 +387,8 @@ int tccDcFrame(Tcl_Interp *interp, const char *string, FRAMETYPE * frame)
                !strcmp(suc, "AZEL_TOPO") ||
                !strcmp(suc, "AZEL") ||
                !strcmp(suc, "TOPOCENTRIC AZ/EL") ||
-               !strcmp(suc, "TOPOCENTRIC AZ EL")) {
+               !strcmp(suc, "TOPOCENTRIC AZ EL") ||
+               !strcmp(suc, "FIXED")) {
         *frame = AZEL_TOPO;
         return TCL_OK;
     } else {

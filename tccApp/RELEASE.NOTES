@@ -561,3 +561,103 @@ TCC
 TSD
 1) MCS and CRCS Inposition override flag added.
 
+V4-3
+Development of NICI branch (V4-1-nici) merged into main trunk:
+1) tcclib/GuideLoop.itk (GuideLoop::constructor): Added a RecordMonitor for niciAOloop.
+
+Branch V4-3-1nici
+
+TCC
+1) ca_config/pwfs2.ca: Created. It contains channel access definitions for controling PWFS2 (needed for auto-setting P2 gains for NICI).
+2) ca_config/tcc.ca: Included pwfs2.ca
+3) lib/CalParam.itcl (class CalParam): added variables for holding P2 gains (tip, tilt, focus). Each one is an array indexed by the instrument name.
+4) lib/CalParam.itcl (CalParam::constructor): Added default values for tip, tilt and focus gains.
+5) lib/CalParam.itcl (CalParam::p2m2TipGain, CalParam::p2m2TiltGain, CalParam::p2m2FocusGain): Created these methods for accessing the gains with the instrument name.
+6) tcclib/TcsConfigControl.itk (TcsConfigControl::apply): Added auto set of P2 gains, depending on the instrument.
+7) calparams.CP: added values for NICI P2 gains and defaults gains.
+
+20080527 Javier Luhrs
+TCC
+1) ca_config/pwfs1.ca: Created. It contains channel access definitions for controling PWFS1 (needed for auto-setting P1 gains for NICI).
+2) ca_config/tcc.ca: Included pwfs1.ca
+3) lib/CalParam.itcl (class CalParam): added variables for holding P1 gains (tip, tilt, focus). Those, and the ones for P2, now are indexed by the instrument name and guiding mode.
+4) lib/CalParam.itcl (CalParam::p2m2TipGain, CalParam::p2m2TiltGain, CalParam::p2m2FocusGain): Added the guiding mode as parameter.
+5) lib/CalParam.itcl (CalParam::p1m2TipGain, CalParam::p1m2TiltGain, CalParam::p1m2FocusGain): Created these methods for accessing the P1 gains.
+6) tcclib/TcsConfigControl.itk (TcsConfigControl::apply): Added auto set of P1 gains, depending on the instrument and guiding mode. Changed the implementation for P2 to add the guiding mode.
+7) tcclib/TcsConfigControl.itk Changed previous implementation for autosetting default M2 gains for P1/P2. Now it issues default command to P1/P2.
+8) calparams.CP: added values for NICI P1 gains.
+
+
+20080612 Javier Luhrs
+1) calparams.CP: Updated P2 to M2 gains for NICI, for guide mode P2-OI.
+
+20080613 Javier Luhrs
+1) ca_config.tc1/tsd.ca: added definition of systemoverride.
+2) tcc-tcsSim: New. Script to run tcc using tcs simulator.
+3) tsd-tcsSim: New. Script to run tsd using tcs simulator.
+4) ca_config.tc1/pwfs1.ca: Added missing file. Modified definitions, so they don't point to real pwfs1.
+4) ca_config.tc1/pwfs2.ca: Added missing file. Modified definitions, so they don't point to real pwfs2.
+5) ca_config.tc1/tcc.ca: Included pwfs1.ca and pwfs2.ca.
+
+
+V4-4
+20080731 Javier Luhrs
+   Branch V4-3-1nici merged into main trunk.
+
+V4-5 changes/new features by AWE
+1) added site (MK or CP) to calparams.  Made channel initialization site specific in tccMain (consolidated channels here)
+   added checks for the existence of sa or cs to many locations to prevent errors.  This reduces channel access load on all
+   RT systems because requests for dead (non-existent) channels causes a continuous sequence of UDP broadcasts.
+   There are still a few orphan channels (inside the sad sa for example) ... these need to be pulled out and seperated.
+2) Added automatic control of the M2 XY deadband.
+3) Provide the option to keep loops closed when there is a STRAP timeout.
+
+
+Branch V4-3-1nici
+
+20081010 Javier Luhrs
+default_components.xml: Added traking frame "fixed" for rotator. 
+ca_config/guidects.ca: Changed definition for NICI APD counts channel. 
+ca_config/sad.ca
+ca_config.tc1/sad.ca: Added definition for NICI APD activity channel.
+src/tccDecode.c: tccDcFrame(): Added case for frame "fixed".
+tcclib/ActiveOptics.itcl: Added APD status.
+tcclib/CosysControl.itk Added frame "fixed" into options.
+tcclib/GuideLoop.itk: Added monitoring for APD status.
+tcclib/RotatorControl.itk: Corrected case for frame "Fixed".
+tcclib/WfsConfig.itk: Added verification of AO loop state before moving NDFW for NICI.
+
+20081014 Javier Luhrs
+tcclib/WfsConfig.itk: Added verification of SP position before moving NDFW for NICI.
+ca_config/agssad.ca
+ca_config.tc1/simagssad.ca: added definition of sfName.
+ca_config.tc1/nici.ca: Corrected some definitions for command niciMag.
+
+
+V4-6
+20081017 Javier Luhrs
+ Last changes from branch V4-3-1nici merged into main trunk.
+
+V4-7
+20081103 AWE
+Altair/LGS Improvements for the TCC
+- FLENS control now goes through the TCS rather than directly to Altair
+- When a GAOS "No AO" config is applied, LGS Zoom tracking is stopped
+- When setting useLwfs mode, check UStage and LGSZoom to determine whether the mode needs to be reapplied
+- When an error occurs changing NGS/LGS modes, Force Config is automatically turned on. The next slew/GAOS Apply will automatically force the useLwfs mode apply and clear the Force Config switch. Any manual selection of "Force Config" will clear the "Force" flag after it is applied.
+- Changed GAOS Park implementation:
+          o No longer puts Altair into NGS mode.
+          o Stops Gimbal(wfspos) and FSM tracking
+          o Stops LGS Zoom tracking.
+	  o shut down STRAP
+          o Park mechanisms
+- When setting useLwfs mode to LGS, check if the STRAP IRIS is open, if not propt user with the option to open it.
+files changed:
+ca_config/aossad.ca
+ca_config/tcsAltair.ca
+ca_config.tc1/simaossad.ca
+ca_config.tc1/tcsAltair.ca
+tcclib/Altair.itcl
+tcclib/AoControl.itk
+tcclib/ObserveControl.itk
+tcclib/TcsControl.itk

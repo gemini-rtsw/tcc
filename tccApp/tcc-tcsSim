@@ -21,42 +21,25 @@ package require Tk
 package require Itcl
 package require Itk
 package require Iwidgets
+package require Ocspkg
 package require dom
 package require dom::libxml2
+package require Seq
 
-if { [string compare [exec uname] "Linux"] == 0 } {
-	# Define the root directory for locating libraries and applications.
-	set ::ROOT [file dirname [info script]]
-	if { [string compare [file pathtype $::ROOT] relative] == 0 } {
-	   set ::ROOT [file join [pwd] $::ROOT]
-	}
-	 
-	# The tcc library files live in the lib subdirectory.
-	lappend auto_path [file join $::ROOT lib]
-	lappend auto_path [file join $::ROOT tcclib]
-	 
-	lappend auto_path [file join $::env(GEMINI_TOP) opt seqexec lib] 
-	lappend auto_path [file join $::env(GEMINI_TOP) opt ocswish lib]
-
-	package require Ocspkg
-	package require Seq
-} else {
-	package require Ocspkg
-	package require Seq
-
-	# Define the root directory for locating libraries and applications.
-	set ::ROOT [file dirname [info script]]
-	if { [string compare [file pathtype $::ROOT] relative] == 0 } {
-	   set ::ROOT [file join [pwd] $::ROOT]
-	}
-
-	# Define the location of the star catalogue files.
-	set ::CATALOG_DIR [file join $::ROOT pointcats]
-
-	# The tcc library files live in the lib subdirectory.
-	lappend auto_path [file join $::ROOT lib]
-	lappend auto_path [file join $::ROOT tcclib]
+set env(TCC_TCSNAME) tc1
+set env(EPICS_CA_ADDR_LIST) "172.16.2.22 172.17.2.92"
+# Define the root directory for locating libraries and applications.
+set ::ROOT [file dirname [info script]]
+if { [string compare [file pathtype $::ROOT] relative] == 0 } {
+   set ::ROOT [file join [pwd] $::ROOT]
 }
+
+# Define the location of the star catalogue files.
+set ::CATALOG_DIR [file join $::ROOT pointcats]
+
+# The tcc library files live in the lib subdirectory.
+lappend auto_path [file join $::ROOT lib]
+lappend auto_path [file join $::ROOT tcclib]
 
 # Load the time and tcc extensions to tcl.
 load [file join $::ROOT lib $::env(HOST_ARCH) tcctime.so]
@@ -79,13 +62,8 @@ appData add configFile tcc.ca
 
 #appData add debuglevel information
 
-if { [string compare [exec uname] "Linux"] == 0 } {
-# Read the options configuration file.
-option readfile [file join $::ROOT options.$::env(GEMINI_SITE)] userDefault
-} else {
 # Read the options configuration file.
 option readfile [file join $::ROOT options] userDefault
-}
 
 # Start the tcc (eval is used to expand $argv into a list of arguments).
 eval tccMain $argv

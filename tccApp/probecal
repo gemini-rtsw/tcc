@@ -10,8 +10,10 @@ exec $HLPG_INSTALL_BASE/bin/ocssh "$0" "$@"
 #  Copyright CCLRC
 #-
 
+if { [string compare [exec uname] "Linux"] == 0 } {
 # extent search path for packages so that package Seq can be found
 lappend auto_path [file join $::env(GEMINI_TOP) opt seqexec lib]
+}
 
 # Load required packages
 package require Tcl 8.4

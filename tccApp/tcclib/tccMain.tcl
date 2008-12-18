@@ -13,7 +13,6 @@
 #-
 
 proc tccMain args {
-  global ROOT
 
 # Withdraw the main window so that it doesn't appear if some error happens
 # during startup and a message box is created and so that the windows that
@@ -28,9 +27,13 @@ proc tccMain args {
    service epics
 
 # Process command line arguments.
-   set layout $::ROOT/config/default_layout.tcc
+   set layout $::ROOT/default_layout.tcc
    set init ""
-   set calfile [file join ${ROOT} config calparams.$::env(GEMINI_SITE)]
+   if { [string compare [exec uname] "Linux"] == 0 } {
+   	set calfile calparams.$::env(GEMINI_SITE).[exec uname]
+   } else {
+   	set calfile "calparams.dat"
+   }
    foreach {opt val} $args {
       switch -- $opt {
          -layout {
@@ -52,12 +55,66 @@ proc tccMain args {
 # Create the TCS principal system.
    seq::PrincipalSystem tcs tcsApply -debug 0
 
+# Create the CalParam object.
+   CalParam calparam -calFile $calfile
+
+# AWE use the site parameter to load site specific channels
+
+   puts "site is [calparam cget -site]"
+   switch [calparam cget -site] {
+       MK {
+	   #Altair sad records
+	   epics sa aossad
+
+	   #Altair Commands
+	   epics cs aoUseLwfs
+	   epics cs aoInitWfs
+	   epics cs aoDeployAdc
+	   epics cs aoFlatten
+	   epics cs aoPrepareCm
+	   epics cs aoFlex
+	   epics cs aoSFOdefocus
+	   epics cs aoMoveAdc
+	   epics cs aoFollow
+	   epics cs aoExitShutter
+	   epics cs aoEntShutter
+	   epics cs aoDmVolt
+	   epics cs aoPark
+	   epics cs aoLgsPark
+	   epics cs aoDatum
+	   epics cs aoCalSource
+	   epics cs aoCentreWfs
+	   epics cs aoCorrect
+	   epics cs aoOiwfsSource
+	   epics cs aoGimOffsets
+	   epics cs aongsNDFilter
+	   epics cs aolgsNDFilter
+	   epics cs aoFLens
+	   epics cs aoTTGSiris
+	   epics cs ttgsloop
+	   epics cs sfoloop
+	   epics cs gaosTTGS
+	   epics cs gaosSFO
+	   epics cs gaosBTO
+	   epics cs gaosObserve
+	   epics cs m2deadband
+
+       }
+       CP {
+	   # NICI channels
+	   epics sa nici
+	   epics cs niciMag
+	   epics cs niciAOLoop
+
+       }
+   }
+
+
 # Create status acceptors for sad databases.
    epics sa tcssad
    epics sa ecssad
    epics sa agssad
    epics sa gpolsad
-   epics sa aossad
 
 # Create status acceptors for tcs status and messages.
    epics sa apply
@@ -69,9 +126,6 @@ proc tccMain args {
 
 # AWE monitor Guide Counts
    epics sa guidects
-
-# AWE monitor NICI ND Filter
-   epics sa nici
 
 # Create status senders for setting SIR records
    global env
@@ -89,6 +143,7 @@ proc tccMain args {
    
 # Create the command senders for all the TCS commands that are used by
 # the configuration components.
+   epics cs configForAO
    epics cs mount
    epics cs sourceA
    epics cs sourceB
@@ -157,26 +212,12 @@ proc tccMain args {
    epics cs chopConfig
    epics cs p2Seq
    epics cs pointParam
-   epics cs configForAO
-   epics cs aoUseLwfs
-   epics cs aoInitWfs
-   epics cs aoDeployAdc
-   epics cs aoFlatten
-   epics cs aoPrepareCm
-   epics cs aoFlex
-   epics cs aoSFOdefocus
-   epics cs aoMoveAdc
    epics cs filter1
    epics cs filter2
    epics cs oiwfsSelect
-   epics cs niciMag
-   epics cs niciAOLoop
 
 # Set the timeout period for posting commands to the TCS.
    cs tcsApply setTimeout 3
-
-# Create the CalParam object.
-   CalParam calparam -calFile $calfile
 
 # Create the object the represents the configuration of the mirrors within
 # the instrument support structure.
@@ -214,7 +255,7 @@ proc tccMain args {
    wm iconname . TCC
 
 # Load default components.
-   set file [open $::ROOT/config/default_components.xml RDONLY]
+   set file [open $::ROOT/default_components.xml RDONLY]
    set config [TcsConfigFile #auto [read $file] .]
    itcl::delete object $config
    close $file

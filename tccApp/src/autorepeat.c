@@ -1,4 +1,4 @@
-static char rcsid[] = "$Id: autorepeat.c,v 1.2 2000-12-13 12:38:09 dlt Exp $";
+static char rcsid[] = "$Id: autorepeat.c,v 1.2 2000/12/13 12:38:09 dlt Exp $";
 /* *INDENT-OFF* */
 /*
 *   FILENAME

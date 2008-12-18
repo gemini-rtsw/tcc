@@ -95,6 +95,8 @@ command aoUseLwfs tcsApply GAOS LGS ON?
 #   state     tcs:aoUseLwfs.A       State (ON/OFF)
    state     ao:useLwfs.A       State (ON/OFF)
    dir       ao:useLwfs.DIR     Directive
+   disTrack  ao:useLwfs.VALE    Set to -1 to disable tracking
+   zoomDir   ao:cc:lgszoomAssembly.DIR  Use to stop tracking (MARK:0, STOP:4)
 }
 
 command aoInitWfs tcsApply GAOS Init WFS
@@ -140,10 +142,8 @@ command aoCalSource tcsApply ALTAIR CalSource Control
 
 command aoFLens tcsApply ALTAIR Field Lens Position
 {
-   pos       ao:moveAStar.A		Demanded position (FLENS/PARK)
-   mode      ao:moveAStar.MODE   	Mode
-   dir       ao:moveAStar.DIR    	Directive
-   flens     tcs:aoPrepareCm.F          Use Field Lens 0/1
+   pos       tc1:aoMoveAStar.A		Demanded position (FLENS/PARK)
+   flens     tc1:aoPrepareCm.F          Use Field Lens 0/1
 }
 
 command aoLgsPark tcsApply ALTAIR park
@@ -205,4 +205,10 @@ command gaosBTO tcsApply GAOS BTO loop closed
    clr       bto:FSAZeroRTC.A       Zero the intefrated corrections (write On, then apply)
    fsaTip    bto:FSAMove.A          Set the FSA Tip Demand
    fsaTilt   bto:FSAMove.B          Set the FSA Tilt Demand
+}
+
+command m2deadband tcsApply M2 XY Deadband
+{
+   dem       m2:tolerance.F         Demanded Deadband (NGS: 50.0, LGS:100.0)
+   dir       m2:tolerance.DIR       Directive (MARK,START)
 }

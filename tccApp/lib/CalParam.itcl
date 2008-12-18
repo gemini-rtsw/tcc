@@ -15,6 +15,7 @@ itcl::class CalParam {
    constructor {args} {}
    public {
       variable calFile <undefined>
+      variable site <undefined>
       variable pwfs1_center_x <undefined>
       variable pwfs1_center_y <undefined>
       variable pwfs1_center_z <undefined>
@@ -36,13 +37,86 @@ itcl::class CalParam {
       variable nifs_sfo_defocus <undefined>
       variable top_shutter_current_limit <undefined>
       variable bottom_shutter_current_limit <undefined>
+      variable p1m2TipGain
+      variable p1m2TiltGain
+      variable p1m2FocusGain
+      variable p2m2TipGain
+      variable p2m2TiltGain
+      variable p2m2FocusGain
+
+      method p1m2TipGain {instrument wfs}
+      method p1m2TiltGain {instrument wfs}
+      method p1m2FocusGain {instrument wfs}
+      method p2m2TipGain {instrument wfs}
+      method p2m2TiltGain {instrument wfs}
+      method p2m2FocusGain {instrument wfs}
    }
 }
 
 itcl::body CalParam::constructor {args} {
    global ROOT
-   set calFile [file join ${ROOT} config calparams.$::env(GEMINI_SITE)]
+   
+   set m2TipGain(Default) 0.1
+   set m2TiltGain(Default) 0.1
+   set m2FocusGain(Default) 0.0002
    eval configure $args
+   if { [string compare [exec uname] "Linux"] == 0 } {
+   	set calFile calparams.$::env(GEMINI_SITE).[exec uname]
+   } else {
+   	set calFile "calparams.dat"
+   }
    puts "CalParam using file $calFile"
-   source $calFile
+   source $ROOT/$calFile
+}
+
+itcl::body CalParam::p1m2TipGain {instrument wfs} {
+   set key "$instrument,$wfs"
+   if { [array names p1m2TipGain -exact $key] == "" } {
+      return <undefined>
+   } else {
+      return $p1m2TipGain($key)
+   }
+}
+
+itcl::body CalParam::p1m2TiltGain {instrument wfs} {
+   set key "$instrument,$wfs"
+   if { [array names p1m2TiltGain -exact $key] == "" } {
+      return <undefined>
+   } else {
+      return $p1m2TiltGain($key)
+   }
+}
+itcl::body CalParam::p1m2FocusGain {instrument wfs} {
+   set key "$instrument,$wfs"
+   if { [array names p1m2FocusGain -exact $key] == "" } {
+      return <undefined>
+   } else {
+      return $p1m2FocusGain($key)
+   }
+}
+
+itcl::body CalParam::p2m2TipGain {instrument wfs} {
+   set key "$instrument,$wfs"
+   if { [array names p2m2TipGain -exact $key] == "" } {
+      return <undefined>
+   } else {
+      return $p2m2TipGain($key)
+   }
+}
+
+itcl::body CalParam::p2m2TiltGain {instrument wfs} {
+   set key "$instrument,$wfs"
+   if { [array names p2m2TiltGain -exact $key] == "" } {
+      return <undefined>
+   } else {
+      return $p2m2TiltGain($key)
+   }
+}
+itcl::body CalParam::p2m2FocusGain {instrument wfs} {
+   set key "$instrument,$wfs"
+   if { [array names p2m2FocusGain -exact $key] == "" } {
+      return <undefined>
+   } else {
+      return $p2m2FocusGain($key)
+   }
 }

@@ -592,24 +592,24 @@ itcl::body Handset::initlabels {} {
 itcl::body Handset::updateProc {name alarm time values} {
     global INPOS FOLLOW tid
     
-    #puts [format "updateProc: %s %-20s\n%s\n" $time $name $values]
+    logactions logmess [format "updateProc: %s %-20s\n%s\n" $time $name $values]
     set tname [lrange [split $name "." ] 1 1 ]
 
    switch $tname {
        inPosition2 { 
-	   #puts "setting INPOS"
+	   logactions logmess "setting INPOS"
 	   set INPOS $values
        }
        followS2 {
-	   #puts "setting FOLLOW"
+	   logactions logmess "setting FOLLOW"
 	   set FOLLOW $values
        }
    }
-   #puts "INPOS: $INPOS   FOLLOW: $FOLLOW"
+   logactions logmess "INPOS: $INPOS   FOLLOW: $FOLLOW"
 
    if { $need_to_close_loop} {
        if {[string match TRUE $INPOS] && [string match ON $FOLLOW]} {
-	   #puts "closing loop"
+	   logactions logmess "automatically closing loop"
 	   if {[AO state useLwfs]} {
 	       AO enableLgs
 	   } else {
@@ -618,7 +618,7 @@ itcl::body Handset::updateProc {name alarm time values} {
 	   set need_to_close_loop 0
        }  else {
 	   # the telescope is not in position, cancel the timeout
-	   #puts "not in position, cancelling timeout $tid"
+	   logactions logmess "not in position, cancelling timeout $tid"
 	   after cancel $tid
        }
    }
@@ -629,7 +629,7 @@ itcl::body Handset::timeout {} {
     # will get here if the telescope did not go out of position
     # assume the move was too fast, close the loop
    if { $need_to_close_loop } {
-       #puts "closing loop in timeout"
+       logactions logmess "timed out: automatically closing loop"
        if {[AO state useLwfs]} {
 	   AO enableLgs
        } else {
@@ -644,7 +644,7 @@ itcl::body Handset::openloop {} {
     global tid INPOS
 # Open loop if neccesary
     if {$control_loop && [AO cget -enabled]} {
-	#puts "opening loop"
+	logactions logmess "automatically opening loop"
 	if {[AO state useLwfs]} {
 	    AO disableLgs
 	} else {

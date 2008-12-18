@@ -27,6 +27,8 @@ itcl::class WfsConfig {
        method aottgsiris {}
        method startNICInd {}
        method setmanNICInd {}
+       method checkNICIAOLoop {}
+       method checkNICI_SFPos {}
        method colsel {}
        method window {}
    }
@@ -39,19 +41,6 @@ itk::usual WfsConfig {
 }
 
 itcl::body WfsConfig::constructor {args} {
-
-   if { [catch {cs aongsNDFilter info}] } {
-      epics cs aongsNDFilter
-   }
-   if { [catch {cs aolgsNDFilter info}] } {
-      epics cs aolgsNDFilter
-   }
-   if { [catch {cs aoFLens info}] } {
-      epics cs aoFLens
-   }
-   if { [catch {cs aoTTGSiris info}] } {
-      epics cs aoTTGSiris
-   }
 
    set w $itk_interior
 
@@ -343,9 +332,11 @@ itcl::body WfsConfig::fldstop {wfs} {
 itcl::body WfsConfig::aottgsiris {} {
 #puts "WfsConfig::aottgsiris sending [$itk_component(aoiris) get]"
 # Select GAOS ND TTGS iris open close
-   cs aoTTGSiris set pos [$itk_component(aoiris) get]
-   cs aoTTGSiris set mode 1
-   cs aoTTGSiris set dir 3
+   if { ![catch {cs aoTTGSiris info}] } {
+       cs aoTTGSiris set pos [$itk_component(aoiris) get]
+       cs aoTTGSiris set mode 1
+       cs aoTTGSiris set dir 3
+   }
 }
 
 itcl::body WfsConfig::aondsel {} {
@@ -354,18 +345,22 @@ itcl::body WfsConfig::aondsel {} {
     if {[$itk_component(aond) get] == ""} {return}
     if {[AO state useLwfs]} {
 	#puts "WfsConfig::aondsel setting ndfilter to $ndFilter"
-	logactions logmess "WfsConfig::aondsel moving ND Filter to [$itk_component(aond) get]"
-	cs aolgsNDFilter set pos [$itk_component(aond) get]
-	cs aolgsNDFilter set mode 1
-	cs aolgsNDFilter set dir 3
-	logactions logmess "WfsConfig::aondsel moving LGS ND Filter to [$itk_component(aond) get]"
+	if { ![catch {cs aolgsNDFilter info}] } {
+	    logactions logmess "WfsConfig::aondsel moving ND Filter to [$itk_component(aond) get]"
+	    cs aolgsNDFilter set pos [$itk_component(aond) get]
+	    cs aolgsNDFilter set mode 1
+	    cs aolgsNDFilter set dir 3
+	    logactions logmess "WfsConfig::aondsel moving LGS ND Filter to [$itk_component(aond) get]"
+	}
     } else {
 	#puts "WfsConfig::aondsel setting ndfilter to $ndFilter"
-	logactions logmess "WfsConfig::aondsel moving ND Filter to [$itk_component(aond) get]"
-	cs aongsNDFilter set pos [$itk_component(aond) get]
-	cs aongsNDFilter set mode 1
-	cs aongsNDFilter set dir 3
-	logactions logmess "WfsConfig::aondsel moving NGS ND Filter to [$itk_component(aond) get]"
+	if { ![catch {cs aongsNDFilter info}] } {
+	    logactions logmess "WfsConfig::aondsel moving ND Filter to [$itk_component(aond) get]"
+	    cs aongsNDFilter set pos [$itk_component(aond) get]
+	    cs aongsNDFilter set mode 1
+	    cs aongsNDFilter set dir 3
+	    logactions logmess "WfsConfig::aondsel moving NGS ND Filter to [$itk_component(aond) get]"
+	}
     }
     if { $::Config(tcs.gaos,value) != "" } {
 	$::Config(tcs.gaos,namespace)::$::Config(tcs.gaos,value) configure -ndFilter [$itk_component(aond) get]
@@ -375,26 +370,28 @@ itcl::body WfsConfig::aondsel {} {
 itcl::body WfsConfig::aoflenssel {} {
 #puts "WfsConfig::aoflenssel sending [$itk_component(aoflens) get]"
 # Select GAOS Field Lens IN/OUT
-    set demand [$itk_component(aoflens) get]
-    logactions logmess "WfsConfig::aoflenssel moving Field Lens to $demand"
-    switch $demand {
-	IN {
-	    cs aoFLens set pos FLENS
-	    cs aoFLens set mode 1
-	    cs aoFLens set dir 3
-	    cs aoFLens set flens 1
-	    cs aoPrepareCm set flens 1
+    if { ![catch {cs aoFlens info}] } {
+	set demand [$itk_component(aoflens) get]
+	logactions logmess "WfsConfig::aoflenssel moving Field Lens to $demand"
+	switch $demand {
+	    IN {
+		cs aoFLens set pos FLENS
+		cs aoFLens set mode 1
+		cs aoFLens set dir 3
+		cs aoFLens set flens 1
+		cs aoPrepareCm set flens 1
+	    }
+	    OUT {
+		cs aoFLens set pos PARK
+		cs aoFLens set mode 1
+		cs aoFLens set dir 3
+		cs aoFLens set flens 0
+		cs aoPrepareCm set flens 0
+	    }
 	}
-	OUT {
-	    cs aoFLens set pos PARK
-	    cs aoFLens set mode 1
-	    cs aoFLens set dir 3
-	    cs aoFLens set flens 0
-	    cs aoPrepareCm set flens 0
+	if { $::Config(tcs.gaos,value) != "" } {
+	    $::Config(tcs.gaos,namespace)::$::Config(tcs.gaos,value) configure -fldLens [$itk_component(aoflens) get]
 	}
-    }
-    if { $::Config(tcs.gaos,value) != "" } {
-	$::Config(tcs.gaos,namespace)::$::Config(tcs.gaos,value) configure -fldLens [$itk_component(aoflens) get]
     }
 # Apply preparing the CM
    if { [catch {cs tcsApply post} msg] } {
@@ -405,41 +402,76 @@ itcl::body WfsConfig::aoflenssel {} {
       return
    }
 }
-itcl::body WfsConfig::startNICInd {} {
-# Trigger AUTO NICI ND Configuration ... after making sure ...
-    set choice [tk_messageBox -icon question -type yesno -default no -title "NICI ND Filter Config" -message \
-            "About to begin NICI Automatic ND Filter configuration.  This will begin with the Requested Filter.\nAre you sure?"]
 
-    if {$choice == "yes"} {
-	logactions logmess "WfsConfig::startNICInd Starting NICI Automatic ND Filter Configuration"
-	cs niciMag set mode Auto
-	cs niciMag set conf config
-	cs niciMag set dir 0
-	after 100
-	cs niciMag set dir 3	
-	cs niciMag set conf moving
-	cs niciMag set dir 0
-	cs niciMag set dir 3
+itcl::body WfsConfig::checkNICIAOLoop {} {
+    if { [AO state oiaoLoop] } {
+	tk_messageBox -icon warning -type ok -title "Warning" -message \
+	"Can not move ND filter wheel while AO loop is closed.\nPlease open the AO loop and try again."
+	return 0
+    } else {
+	return 1
     }
 }
 
-itcl::body WfsConfig::setmanNICInd {} {
-# Sets NICI ND Filter ... after making sure ...
-    set choice [tk_messageBox -icon question -type yesno -default no -title "NICI ND Filter Config" -message \
-            "About to set NICI ND Filter.\nAre you sure?"]
+itcl::body WfsConfig::checkNICI_SFPos {} {
+    if { [string match -nocase "*nici*" [sa agssad get sfName] ] } {
+	return 1
+    } else {
+	tk_messageBox -icon warning -type ok -title "Warning" -message \
+	"Can not move ND filter wheel while Science Fold is not in a NICI position.\nPlease move the Science Fold and try again."
+	return 0
+    }
+}
 
-    if {$choice == "yes"} {
-	set reqPos [$itk_component(niciNDManualFlt) get]
-	logactions logmess "WfsConfig::setmanNICInd Setting NICI ND Filter position manually to $reqPos"
-	cs niciMag set mode Manual
-	cs niciMag set manPos $reqPos
-	cs niciMag set conf config
-	cs niciMag set dir 0
-	after 100
-	cs niciMag set dir 3	
-#	cs niciMag set conf moving
-#	cs niciMag set dir 0
-#	cs niciMag set dir 3
+itcl::body WfsConfig::startNICInd {} {
+    if { [checkNICIAOLoop] == 0 } { return }
+    if { [checkNICI_SFPos] == 0 } { return }
+
+# Trigger AUTO NICI ND Configuration ... after making sure ...
+   if { ![catch {cs niciMag info}] } {
+       set choice [tk_messageBox -icon question -type yesno -default no -title "NICI ND Filter Config" -message \
+		       "About to begin NICI Automatic ND Filter configuration.  This will begin with the Requested Filter.\nAre you sure?"]
+       
+       if {$choice == "yes"} {
+	   logactions logmess "WfsConfig::startNICInd Starting NICI Automatic ND Filter Configuration"
+	   cs niciMag set mode Auto
+	   cs niciMag set conf config
+	   cs niciMag set dir 0
+	   after 100
+	   cs niciMag set dir 3	
+	   cs niciMag set conf moving
+	   cs niciMag set dir 0
+	   cs niciMag set dir 3
+       }
+   }
+}
+
+itcl::body WfsConfig::setmanNICInd {} {
+    if { [checkNICIAOLoop] == 0 } { return }
+
+    set reqPos [$itk_component(niciNDManualFlt) get]
+    if { ![string match -nocase block $reqPos] } {
+	if { [checkNICI_SFPos] == 0 } { return }
+    }
+
+# Sets NICI ND Filter ... after making sure ...
+    if { ![catch {cs niciMag info}] } {
+	set choice [tk_messageBox -icon question -type yesno -default no -title "NICI ND Filter Config" -message \
+			"About to set NICI ND Filter.\nAre you sure?"]
+	
+	if {$choice == "yes"} {
+	    set reqPos [$itk_component(niciNDManualFlt) get]
+	    logactions logmess "WfsConfig::setmanNICInd Setting NICI ND Filter position manually to $reqPos"
+	    cs niciMag set mode Manual
+	    cs niciMag set manPos $reqPos
+	    cs niciMag set conf config
+	    cs niciMag set dir 0
+	    after 100
+	    cs niciMag set dir 3	
+	    #	cs niciMag set conf moving
+	    #	cs niciMag set dir 0
+	    #	cs niciMag set dir 3
+	}
     }
 }
 

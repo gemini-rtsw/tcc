@@ -131,7 +131,7 @@ itcl::body PoHandsetControl::constructor args {
 
 # Handset
    itk_component add handset {
-      Handset $w.handset -adjust instr -cloop 1
+      Handset $w.handset -adjust instr -cloop 1 -loopDef 1
    }
    pack $itk_component(handset)
 
@@ -220,7 +220,8 @@ itcl::body PoHandsetControl::gacq_ack {} {
             "Error posting rotator ipa command: TCS reports \
             \"$msg\""
    }
-   
+   logactions logmess "Applying GACQ Offset"
+
    # send the P
    $itk_component(handset) sendOffset instr [sa tcssad get gacqP] 90.0
    
@@ -259,6 +260,8 @@ itcl::body PoHandsetControl::gacq_validate {} {
       wm deiconify .gacq
       raise .gacq
    }
+
+   logactions logmess "Received a GACQ Offset P: [sa tcssad get gacqP] Q: [sa tcssad get gacqQ] IAA: [sa tcssad get gacqIAA] IPA: [sa tcssad get gacqIPA]"
 
    # wake up ssa   
    bell

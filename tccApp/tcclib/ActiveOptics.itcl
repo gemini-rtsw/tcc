@@ -104,35 +104,6 @@ itcl::body ActiveOptics::constructor {args} {
       epics sa guideConfig
    }
 
-# Create GAOS command senders.
-   if { [catch {cs aoFlatten info}] } {
-      epics cs aoFlatten
-   }
-   if { [catch {cs aoCentreWfs info}] } {
-      epics cs aoCentreWfs
-   }
-   if { [catch {cs aoCorrect info}] } {
-      epics cs aoCorrect
-   }
-   if { [catch {cs aoOiwfsSource info}] } {
-      epics cs aoOiwfsSource
-   }
-   if { [catch {cs ttgsloop info}] } {
-      epics cs ttgsloop
-   }
-   if { [catch {cs sfoloop info}] } {
-      epics cs sfoloop
-   }
-   if { [catch {cs gaosTTGS info}] } {
-      epics cs gaosTTGS
-   }
-   if { [catch {cs gaosSFO info}] } {
-      epics cs gaosSFO
-   }
-   if { [catch {cs gaosBTO info}] } {
-      epics cs gaosBTO
-   }
-
    eval configure $args
 }
 
@@ -184,7 +155,7 @@ global env
 	}
 
 	# wait for the TTGS (STRAP) to be off
-	if {[setTimeout "state gaosTTGS" 1 10000 200 "TTGS (STRAP) gate to be 0"]} return
+	if {[setTimeout "state gaosTTGS" 1 10000 200 "TTGS (Strap) gate to be 0"]} return
 
     }
     process IDLE
@@ -192,6 +163,7 @@ global env
 
 itcl::body ActiveOptics::enable {} {
     global AOtryingToReuseGain AOreuseGains
+    set skip_strap 0
 
     if {$processState == "BUSY"} {
 	logactions logmess "ActiveOptics::enable already busy, ignoring command"
@@ -210,104 +182,120 @@ itcl::body ActiveOptics::enable {} {
     }
 
 # Set parameters according to the current state...
-    # Configure OIWFS Blending in AO
-    if { $oiblend } {
-
-       # first disable all loops if neccesary
-	if {$enabled} {
+# only have a possibility of OI Blending if we're actually using Altair
+    if {!($::Config(tcs.gaos,value) == "No AO") && !($::Config(tcs.gaos,value) == "")} {
+	# Configure OIWFS Blending in AO
+	if { $oiblend } {
+	    
+	    # first disable all loops if neccesary
+	    if {$enabled} {
+		process IDLE
+		$this disable
+		process BUSY
+	    }
+	    
+	    # make sure correctM is Idle
+	    if {[setTimeout "sa aossad get correctBusy" BUSY 10000 200 "Altair to stop correcting"]} return
+	    
+	    cs aoOiwfsSource set state ON
+	} else {
+	    # need to ensure that OIWFS Guide Output is set to SCS
+	    cs aoOiwfsSource set state OFF
+	    cs aoOiwfsSource set bandwidth -1
+	}
+	logger command aoOiwfsSource
+	
+	# Post the Blending Command.
+	# The blending command must be finished before the loops are closed.
+	if { [catch {cs tcsApply post} msg] } {
+	    tk_messageBox -icon error -message \
+		"Error posting guide commands: TCS reports \
+           \"$msg\""
 	    process IDLE
-	    $this disable
-	    process BUSY
+	    return
 	}
 
-       # make sure correctM is Idle
-	if {[setTimeout "sa aossad get correctBusy" BUSY 10000 200 "Altair to stop correcting"]} return
-
-	cs aoOiwfsSource set state ON
-    } else {
-	# need to ensure that OIWFS Guide Output is set to SCS
-        cs aoOiwfsSource set state OFF
-	cs aoOiwfsSource set bandwidth -1
+	# need to wait for aoOiwfsSource to go idle
+	
+	if {[setTimeout "sa aossad get oiblendBusy" BUSY 10000 200 "aoOiwfsSource to go idle"]} return
     }
-   logger command aoOiwfsSource
-
-# Post the Blending Command.
-# The blending command must be finished before the loops are closed.
-   if { [catch {cs tcsApply post} msg] } {
-      tk_messageBox -icon error -message \
-            "Error posting guide commands: TCS reports \
-           \"$msg\""
-      process IDLE
-      return
-   }
-
-# need to wait for aoOiwfsSource to go idle
-
-    if {[setTimeout "sa aossad get oiblendBusy" BUSY 10000 200 "aoOiwfsSource to go idle"]} return
 
 # Start GAOS
 
     # turn on the TTGS
-    if { $gaosTTGS && ![state gaosTTGS]} {
-	# set the Gain
-	set path "/gemini/altair/altair/bin/solaris/"
-	#puts "sending cmd: $path/aoSunClient altairwfcs1x 35  aoStrapTTGains d${ttgsGain} 0 0 0 0"
-	if [ catch {eval exec $path/aoSunClient altairwfcs1x 35  aoStrapTTGains d${ttgsGain} 0 0 0 0} result ] {
-	    # 	    set stat [string match "*Return Val = -1*" $msg]
-	    # 	    set index1 [string first "msg" $msg  ]
-	    # 	    set index2 [string length $msg  ]
-	    # 	    set statMsg [string range $msg $index1 $index2 ]
-	    puts "aoStrapTTGains failed with mess: $result"
-	}
-	# set the flux mode (0:low, 1:high)
-	# only set the flux mode if the requested mode is different from the current mode
-	# also call the Flux Mode proc to attempt to turn TTGS on if any part of the 3 controlled components is off (red)
-	if {([sa aossad get strapRTStat] == 0) || ([sa aossad get strapTPStat] == 0) || ([sa aossad get strapHVStat] == 0) || 
-	    ([sa aossad get strapSFXMode] != $ttgsFlux) } {
-	       if {[$this setTTGSFluxMode]} {
-		   return
-	       }
-	}
-	after 500
-	# set the exposure time
-	if {[expr [sa aossad get strapExpTime] / 1000] != $ttgsExpose} {
-	    cs gaosTTGS set exp [expr $ttgsExpose * 1000]
-	    cs gaosTTGS set expDIR 3
-	    # wait for the TTGS (STRAP SEX) to go IDLE
-	    after 500
-	    if {[setTimeout "sa aossad get strapSEXBusy" BUSY 3000 200 "STRAP Set Exp time to be IDLE"]} return
-	    after 200
-	    if {[sa aossad get strapSEXBusy] == "ERR"} {
-		tk_messageBox -icon error -message \
-		    "Error Setting STRAP Exposure Time: MESS: [sa aossad get strapSEXMess]"
-		process IDLE
-		return
+    if { ![catch {cs gaosTTGS info}] } {
+	if { $gaosTTGS && ![state gaosTTGS]} {
+	    # set the Gain
+	    set path "/gemini/altair/altair/bin/solaris/"
+	    #puts "sending cmd: $path/aoSunClient altairwfcs1x 35  aoStrapTTGains d${ttgsGain} 0 0 0 0"
+	    if [ catch {eval exec $path/aoSunClient altairwfcs1x 35  aoStrapTTGains d${ttgsGain} 0 0 0 0} result ] {
+		# 	    set stat [string match "*Return Val = -1*" $msg]
+		# 	    set index1 [string first "msg" $msg  ]
+		# 	    set index2 [string length $msg  ]
+		# 	    set statMsg [string range $msg $index1 $index2 ]
+		puts "aoStrapTTGains failed with mess: $result"
 	    }
+	    # set the flux mode (0:low, 1:high)
+	    # only set the flux mode if the requested mode is different from the current mode
+	    # also call the Flux Mode proc to attempt to turn TTGS on if any part of the 3 controlled components is off (red)
+	    if {([sa aossad get strapRTStat] == 0) || ([sa aossad get strapTPStat] == 0) || ([sa aossad get strapHVStat] == 0) || 
+		([sa aossad get strapSFXMode] != $ttgsFlux) } {
+		if {[$this setTTGSFluxMode]} {
+		    if {[tk_messageBox -icon  question -type yesno -default no -message \
+			     "There was an Error Configuring STRAP\nShould I open the Loops?"] == "yes"} {
+			process IDLE
+			$this disable 
+			return
+		    } else {
+			set skip_strap 1
+		    }
+		}
+	    }
+	    if {!$skip_strap} {
+		after 500
+		# set the exposure time
+		if {[expr [sa aossad get strapExpTime] / 1000] != $ttgsExpose} {
+		    cs gaosTTGS set exp [expr $ttgsExpose * 1000]
+		    cs gaosTTGS set expDIR 3
+		    # wait for the TTGS (STRAP SEX) to go IDLE
+		    after 500
+		    if {[setTimeout "sa aossad get strapSEXBusy" BUSY 10000 200 "Strap Set Exp time to be IDLE"]} return
+		    after 200
+		    if {[sa aossad get strapSEXBusy] == "ERR"} {
+			tk_messageBox -icon error -message \
+			    "Error Setting STRAP Exposure Time: MESS: [sa aossad get strapSEXMess]"
+			process IDLE
+			return
+		    }
+		}
+		cs gaosTTGS set dem 1
+		cs gaosTTGS set dir 3
+	    }
+	} elseif {!$gaosTTGS && [state gaosTTGS]} {
+	    cs gaosTTGS set dem 0
+	    cs gaosTTGS set dir 3
 	}
-	cs gaosTTGS set dem 1
-	cs gaosTTGS set dir 3
-    } elseif {!$gaosTTGS && [state gaosTTGS]} {
-	cs gaosTTGS set dem 0
-	cs gaosTTGS set dir 3
     }
 
     # turn on the SFO
-    if { $gaosSFO && ![state gaosSFO]} {
-	# set the exposure time
-	cs gaosSFO set exp $sfoExpose
-
-	cs gaosSFO set startDIR 0
-	cs gaosSFO set apply 3
-    } elseif {!$gaosSFO && [state gaosSFO]} {
-	cs gaosSFO set stopDIR 0
-	cs gaosSFO set apply 3
+    if { ![catch {cs gaosSFO info}] } {
+	if { $gaosSFO && ![state gaosSFO]} {
+	    # set the exposure time
+	    cs gaosSFO set exp $sfoExpose
+	    
+	    cs gaosSFO set startDIR 0
+	    cs gaosSFO set apply 3
+	} elseif {!$gaosSFO && [state gaosSFO]} {
+	    cs gaosSFO set stopDIR 0
+	    cs gaosSFO set apply 3
+	}
     }
-
-    if { $useLwfs} {
+    
+    if { $useLwfs && !$skip_strap} {
 	# wait for the TTGS (STRAP) to go IDLE
-	if {[setTimeout "sa aossad get strapBusy" BUSY 10000 200 "TTGS (STRAP) to go IDLE"]} return
+	if {[setTimeout "sa aossad get strapBusy" BUSY 10000 200 "TTGS (Strap) to go IDLE"]} return
     }
-
+	
     if { $gaos && ![state gaos]} {
 	#puts "turning GAOS On"
 	# first check if we have to update the gsmag (gaosExpose)
@@ -319,7 +307,7 @@ itcl::body ActiveOptics::enable {} {
 	    0.02  { set gsmag 15 }
 	    default { set gsmag 11 }
 	}
-
+	
 	#puts "current gsmag: [sa aossad get gsmag], new gsmag: $gsmag"
 	if {[sa aossad get gsmag] != $gsmag } {
 	    #write new gsmag and prepare control matrix
@@ -328,15 +316,17 @@ itcl::body ActiveOptics::enable {} {
 	    if { [catch {cs tcsApply post} msg] } {
 		tk_messageBox -icon error -parent $itk_interior -message $msg
 	    }
-
+	    
 	    #wait for prepareCm to go idle
 	    if {[setTimeout "sa aossad get prepareBusy" BUSY 10000 200 "prepareCm to go idle"]} return
 	}
 
 	# turn on the BTO when using LGS
-	if { $useLwfs} {
-	    cs gaosBTO set dem On
-	    cs gaosBTO set dir 3
+	if { ![catch {cs gaosBTO info}] } {
+	    if { $useLwfs} {
+		cs gaosBTO set dem On
+		cs gaosBTO set dir 3
+	    }
 	}
 	
 	# Disable guiding.
@@ -377,9 +367,10 @@ itcl::body ActiveOptics::enable {} {
 	}
 
 	#wait for flatten to go idle
-	if {[setTimeout "sa aossad get flattenBusy" BUSY 10000 200 "flatten to go idle"]} return
+	if {[setTimeout "sa aossad get flattenBusy" BUSY 15000 200 "flatten to go idle"]} return
 
 	# Post GAOS correct command.
+	logactions logmess "ActiveOptics::enable start correctin, reuseGains= $AOreuseGains"    
 	cs aoCorrect set correct ON
 	cs aoCorrect set matrix 0
 	cs aoCorrect set gains $AOreuseGains
@@ -389,7 +380,7 @@ itcl::body ActiveOptics::enable {} {
 	}
 	
 	#wait for gaos Loop to be on
-	if {[setTimeout "state gaos" 0 10000 200 "gaos Loop to be on"]} return
+	if {[setTimeout "state gaos" 0 20000 200 "gaos Loop to be on"]} return
 
 	if { $useLwfs} {
 	    set AOtryingToReuseGain 1
@@ -636,13 +627,13 @@ puts "beam is $beam gonna wait for 1 second"
 
    # turn on TTGS and SFO loops
    if {[state gaos]} {
-       if {$ttgsloop && ![state ttgsloop]} {
+       if {$ttgsloop && ![state ttgsloop] && !$skip_strap} {
 	   # wait for the main ALTAIR loop to be settled ... timeout 5 minutes ??
 	   if {[setTimeout "sa aossad get aoSettled" 0 300000 200 "the main ALTAIR loop to be settled"]} return
 
 	   cs ttgsloop set dem 1
 	   cs ttgsloop set dir 3
-       } elseif {!$ttgsloop && [state ttgsloop]} {
+       } elseif {!$ttgsloop && [state ttgsloop] && !$skip_strap } {
 	   cs ttgsloop set dem 0
 	   cs ttgsloop set dir 3
        }
@@ -671,10 +662,12 @@ puts "beam is $beam gonna wait for 1 second"
       set oiwfsActive 0
    } else {
 #     puts "Turn OFF NICI OIAO Loop"
-      cs niciAOLoop set dem open
-      cs niciAOLoop set dir 0
-      after 100
-      cs niciAOLoop set dir 3
+       if { ![catch {cs niciAOLoop info}] } {
+	   cs niciAOLoop set dem open
+	   cs niciAOLoop set dir 0
+	   after 100
+	   cs niciAOLoop set dir 3
+       }
    }
 
    foreach wfs [list pwfs1 pwfs2 oiwfs] \
@@ -721,10 +714,12 @@ puts "beam is $beam gonna wait for 1 second"
       if { $pwfs2Active } {
           if { [setTimeout {expr "[AO state pwfs2] && [AO state m2] && [AO state mount]"} 0 30000 200 "P2 before activating NICI AO loop"] } return
       }
-      cs niciAOLoop set dem close
-      cs niciAOLoop set dir 0
-      after 100
-      cs niciAOLoop set dir 3
+      if { ![catch {cs niciAOLoop info}] } {
+	  cs niciAOLoop set dem close
+	  cs niciAOLoop set dir 0
+	  after 100
+	  cs niciAOLoop set dir 3
+      }
    }
 
 # Set the state to "enabled"
@@ -747,14 +742,15 @@ itcl::body ActiveOptics::disable {} {
    Pwfs1 stop
    Pwfs2 stop
    if {$oiao} {
-	puts "Turn off NICI OIAO Loop"
-	cs niciAOLoop set dem open
-	cs niciAOLoop set dir 0
-	after 100
-	cs niciAOLoop set dir 3
-        #AWE manual recolour shouldn't be needed in the non-simulated version ... set the record to be monitored
-	::.observePanel.frame.control.guideloop recolour
-
+       if { ![catch {cs niciAOLoop info}] } {
+	   puts "Turn off NICI OIAO Loop"
+	   cs niciAOLoop set dem open
+	   cs niciAOLoop set dir 0
+	   after 100
+	   cs niciAOLoop set dir 3
+	   #AWE manual recolour shouldn't be needed in the non-simulated version ... set the record to be monitored
+	   ::.observePanel.frame.control.guideloop recolour
+       }
    } else {
       Oiwfs stop
    }
@@ -793,18 +789,26 @@ itcl::body ActiveOptics::disable {} {
       return
    }
 
-   # turn off the TTGS
-   cs gaosTTGS set dem 0
-   cs gaosTTGS set dir 3
+    if { ![catch {cs gaosTTGS info}] } {
+	# turn off the TTGS
+	cs gaosTTGS set dem 0
+	cs gaosTTGS set dir 3
+    }
 
-   # turn off the SFO
-   cs gaosSFO set stopDIR 0
-   cs gaosSFO set apply 3
+    if { ![catch {cs gaosSFO info}] } {
+	# turn off the SFO
+	cs gaosSFO set stopDIR 0
+	cs gaosSFO set apply 3
+    }
 
-   # turn off TTGS and SFO loops
-   cs ttgsloop set dem 0
-   cs ttgsloop set dir 3
-   cs sfoloop set dem 0
+    if { ![catch {cs ttgsloop info}] } {
+	# turn off TTGS and SFO loops
+	cs ttgsloop set dem 0
+	cs ttgsloop set dir 3
+    }
+    if { ![catch {cs sfoloop info}] } {
+	cs sfoloop set dem 0
+    }
 
 # Stop GAOS
    if { [state gaos] } {
@@ -879,18 +883,30 @@ global env
       }
       oiaoAPD {
 	 # AWE will be checking a channel in NICI
-         return $oiaoAPD
+	  if { [catch {sa guideConfig get niciAPD} oiaoAPD ] } {
+		return 0
+	  }
+	  if { [string match "BUSY*" $oiaoAPD ] } {
+	      return 1
+	  } else {
+	      return 0
+	  }
       }
       oiaoLoop {
          # AWE will be checking a channel in NICI
 	 set guiding [sa guideConfig get niciAOloop]
-	 if {$env(TCC_TCSNAME) == "tc1"} {
-            return $oiaoLoop
-         } elseif { [sa guideConfig get niciAOloop] == "CLOSED" } {
+#	 if {$env(TCC_TCSNAME) == "tc1"} {
+#            return $oiaoLoop
+#         } elseif { [sa guideConfig get niciAOloop] == "CLOSED" } {
+#	    return 1
+#         } else {
+#            return 0
+#         }
+         if { $guiding == "CLOSED" || $guiding == "feedback" } {
 	    return 1
          } else {
             return 0
-         }
+         }      
       }
       gaos {
          if { [sa guideConfig get aostate] == "On" } {
@@ -1123,7 +1139,7 @@ itcl::body ActiveOptics::setTimeout {chanStr value time incr reason} {
    } 
    if ($timeout) {
        set timeout 0
-       process IDLE
+       #process IDLE
        return 1
    } else {
        after cancel $tid
@@ -1139,10 +1155,15 @@ itcl::body ActiveOptics::timeout {} {
     tk_messageBox -icon error \
 	-message "Timed out waiting for $timeout_reason. Opening loops"
 
-    process IDLE
-    $this disable
     set timeout 1
-    return
+    if {[string match "*STRAP*" $timeout_reason]} {
+	logactions logmess "allowing the loop to potentially stay closed"
+	return
+    } else {
+	process IDLE
+	$this disable
+	return
+    }
 }
 
 itcl::body ActiveOptics::setCanvas {canv} {
@@ -1175,55 +1196,61 @@ itcl::body ActiveOptics::setTTGSFluxMode {} {
 
     # first turn off the Gate (should be already off ... being careful
     cs gaosTTGS set dem 0
+    after 200
     cs gaosTTGS set dir 3
     after 500
-    if {[setTimeout "sa aossad get strapGTBusy" 1 5000 200 "STRAP GateCtl to turn off"]} {return 1}
+    if {[setTimeout "sa aossad get strapGTBusy" 1 10000 200 "STRAP GateCtl to turn off"]} {return 1}
     after 500
 
     #turn off HVolt Ctl
     cs gaosTTGS set hvCtl 0
+    after 200
     cs gaosTTGS set hvDIR 3
     after 500
-    if {[setTimeout "sa aossad get strapHVStat" 1 5000 200 "STRAP HVStat to turn off"]} {return 1}
+    if {[setTimeout "sa aossad get strapHVStat" 1 10000 200 "STRAP HVStat to turn off"]} {return 1}
     after 500
 
     #turn off Temp Ctl
     cs gaosTTGS set tempCtl 0
+    after 200
     cs gaosTTGS set tempDIR 3
     after 500
-    if {[setTimeout "sa aossad get strapTPStat" 1 5000 200 "STRAP TPStat to turn off"]} {return 1}
+    if {[setTimeout "sa aossad get strapTPStat" 1 10000 200 "STRAP TPStat to turn off"]} {return 1}
     after 500
 
     #turn off RT Ctl
     cs gaosTTGS set rtCtl 0
+    after 200
     cs gaosTTGS set rtDIR 3
     after 500
-    if {[setTimeout "sa aossad get strapRTStat" 1 5000 200 "STRAP RTStat to turn off"]} {return 1}
+    if {[setTimeout "sa aossad get strapRTStat" 1 10000 200 "STRAP RTStat to turn off"]} {return 1}
     after 500
 
     #set Flux Mode
     cs gaosTTGS set flux $ttgsFlux
+    after 200
     cs gaosTTGS set fluxDIR 3
     after 500
-    if {[setTimeout "sa aossad get strapSFXBusy" BUSY 5000 200 "STRAP SFXBusy to be IDLE"]} {return 1}
+    if {[setTimeout "sa aossad get strapSFXBusy" BUSY 10000 200 "STRAP SFXBusy to be IDLE"]} {return 1}
     after 500
     if {[sa aossad get strapSFXBusy] == "ERR"} {
 	tk_messageBox -icon error -message \
 	    "Error Setting STRAP Flux Mode: MESS: [sa aossad get strapSFXMess]"
-	process IDLE
 	return 1
     }
     after 500
 
     #turn on Temp Ctl
     cs gaosTTGS set tempCtl 1
+    after 200
     cs gaosTTGS set tempDIR 3
     after 500
-    if {[setTimeout "sa aossad get strapTPStat" 0 5000 200 "STRAP TPStat to turn on"]} {return 1}
+    if {[setTimeout "sa aossad get strapTPStat" 0 10000 200 "STRAP TPStat to turn on"]} {return 1}
     after 500
 
     #turn on HVolt Ctl
     cs gaosTTGS set hvCtl 1
+    after 200
     cs gaosTTGS set hvDIR 3
     after 500
     if {[setTimeout "sa aossad get strapHVStat" 0 30000 200 "STRAP HVStat to turn on"]} {return 1}
@@ -1231,10 +1258,11 @@ itcl::body ActiveOptics::setTTGSFluxMode {} {
 
     #turn on RT Ctl
     cs gaosTTGS set rtCtl 1
+    after 200
     cs gaosTTGS set rtDIR 3
     after 500
-    if {[setTimeout "sa aossad get strapRTStat" 0 5000 200 "STRAP RTStat to turn on"]} {return 1}
-    after 500
+    if {[setTimeout "sa aossad get strapRTStat" 0 10000 200 "STRAP RTStat to turn on"]} {return 1}
+    after 200
 
     return 0
 }

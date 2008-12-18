@@ -110,20 +110,6 @@ itcl::body AoControl::constructor args {
 	checkbutton $w.gains -variable AOreuseGains -onvalue 1 -offvalue 0 -text "Reuse Gains"
     }
 
-# Create GAOS command senders.
-   if { [catch {cs aoFlatten info}] } {
-      epics cs aoFlatten
-   }
-   if { [catch {cs aoCentreWfs info}] } {
-      epics cs aoCentreWfs
-   }
-   if { [catch {cs aoCorrect info}] } {
-      epics cs aoCorrect
-   }
-   if { [catch {cs aoOiwfsSource info}] } {
-      epics cs aoOiwfsSource
-   }
-
 #   grid $itk_component(loop) -padx 2 -sticky ew
    grid $itk_component(label) -padx 5 -sticky ew
    grid $itk_component(flatten) -padx 5 -sticky ew
@@ -151,6 +137,7 @@ itcl::body AoControl::correct {arg} {
    global AOreuseGains AOtryingToReuseGain
    switch $arg {
       ON {
+	 logactions logmess "AoControl::correct, reuseGains= $AOreuseGains"    
          cs aoCorrect set correct ON
          cs aoCorrect set matrix 0
          cs aoCorrect set gains $AOreuseGains
@@ -174,7 +161,6 @@ itcl::body AoControl::correct {arg} {
 }
 
 itcl::body AoControl::loop {state} {
-puts "\nAoControl loop state $state"
    switch $state {
       ON {
 

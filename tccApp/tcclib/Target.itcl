@@ -920,13 +920,20 @@ itcl::body Target::pmconvert {c1 c2 pm1 pm2 pmunits} {
             set AS2R 0.0000048481368111
             set raz [expr {[slaDafin $c1] * 15.0}]
             set decz [slaDafin $c2]
+#	    set cdecz [expr cos ($decz)]
+#puts "pm1=$pm1, pm2=$pm2, raz=$raz, decz=$decz, cdecz=$cdecz"
+#	    if {[expr abs ($decz) - 1.57] < 0} {
+#		set pm1 [expr {$pm1 / $cdecz}]
+#	    }
             set radec [slaDtp2s [expr {$pm1* $AS2R}] [expr {$pm2 * $AS2R}] \
                   $raz $decz]
+#puts "radec=$radec"
             set pm1 [expr { ([lindex $radec 0] - $raz) / $AS2R / 15.0 }]
             if { $pm1 > 43200.0 } {
                set pm1 [expr { $pm1 - 86400.0 }]
             }
             set pm2 [expr { ([lindex $radec 1] - $decz) / $AS2R }]
+#puts "pm1=$pm1, pm2=$pm2"
          }
       }
       return [list $pm1 $pm2]

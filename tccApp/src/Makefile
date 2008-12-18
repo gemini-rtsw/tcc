@@ -3,7 +3,6 @@ All: tcccmn.so tccext.so tsdext.so tcctime.so slaext.so tcctelsim.so
 TCL_VERS = 8.4
 
 CC = gcc
-LD = g++
 
 include ${HLPG_INSTALL_BASE}/conf/gemini_env
 
@@ -14,44 +13,38 @@ TIMEOBJ = tccTime.o
 SLAOBJ = slaext.o
 TELSIMOBJ = tccTelSim.o
 
-CFLAGS = -fPIC -Wall -DUSE_TCL_STUBS -DUSE_TK_STUBS \
+CFLAGS = -fPIC -Wall -G -DUSE_TCL_STUBS -DUSE_TK_STUBS \
          -I${HLPG_EXT_RUNTIME_BASE}/tcl$(TCL_VERS)/include \
-         -I${EPICS}/modules/slalib/include \
-         -I${EPICS}/modules/timelib/include \
-         -I${EPICS}/modules/astlib/include
+         -I/gemini/epics3.13.4/slalib/slalib/include \
+         -I/gemini/epics3.13.4/timelib/timelib/include \
+         -I/gemini/epics3.13.4/astlib/astlib/include
 
-LDFLAGS = -shared \
-	  -L${EPICS}/modules/slalib/lib/${EPICS_HOST_ARCH} \
-          -Wl,-rpath=${EPICS}/modules/slalib/lib/${EPICS_HOST_ARCH} \
-          -L${EPICS}/modules/timelib/lib/${EPICS_HOST_ARCH} \
-          -Wl,-rpath=${EPICS}/modules/timelib/lib/${EPICS_HOST_ARCH} \
-          -L${EPICS}/modules/astlib/lib/${EPICS_HOST_ARCH} \
-          -Wl,-rpath=${EPICS}/modules/astlib/lib/${EPICS_HOST_ARCH} \
-          -L${EPICS}/base/lib/${EPICS_HOST_ARCH} \
-          -Wl,-rpath=${EPICS}/base/lib/${EPICS_HOST_ARCH} \
+LDFLAGS = -L/gemini/epics3.13.4/slalib/slalib/lib/${HOST_ARCH} \
+          -L/gemini/epics3.13.4/timelib/timelib/lib/${HOST_ARCH} \
+          -L/gemini/epics3.13.4/astlib/astlib/lib/${HOST_ARCH} \
           -L${HLPG_EXT_RUNTIME_BASE}/tcl$(TCL_VERS)/lib \
-          -ltclstub$(TCL_VERS) -ltkstub$(TCL_VERS) -lregistryIoc -last -ltime -lsla #-lposix4
+          -ltclstub$(TCL_VERS) -ltkstub$(TCL_VERS) -last -ltime -lsla -lposix4
 
 tcccmn.so : $(CMNOBJ)
-	$(LD) -o $@ $(CMNOBJ) $(LDFLAGS) 
+	ld -G -z text -o $@ $(CMNOBJ) $(LDFLAGS) 
 
 tccext.so : $(TCCOBJ) 
-	$(LD) -o $@ $(TCCOBJ) $(LDFLAGS) tcccmn.so \
-		-Wl,-rpath=lib/linux-x86 
+	ld -G -z text -o $@ $(TCCOBJ) $(LDFLAGS) tcccmn.so \
+              -R `pwd`/../lib/solaris
 
 tsdext.so : $(TSDOBJ)
-	$(LD) -o $@ $(TSDOBJ) $(CMNOBJ) $(LDFLAGS) tcccmn.so \
-		-Wl,-rpath=lib/linux-x86 
+	ld -G -z text -o $@ $(TSDOBJ) $(CMNOBJ) $(LDFLAGS) tcccmn.so \
+              -R `pwd`/../lib/solaris
 
 tcctime.so : $(TIMEOBJ)
-	$(LD) -o $@ $(TIMEOBJ) $(LDFLAGS) 
+	ld -G -z text -o $@ $(TIMEOBJ) $(LDFLAGS) 
 
 slaext.so : $(SLAOBJ)
-	$(LD) -o $@ $(SLAOBJ) $(LDFLAGS) tcccmn.so \
-		-Wl,-rpath=lib/linux-x86 
+	ld -G -z text -o $@ $(SLAOBJ) $(LDFLAGS) tcccmn.so \
+              -R `pwd`/../lib/solaris
 
 tcctelsim.so : $(TELSIMOBJ)
-	$(LD) -o $@ $(TELSIMOBJ) $(LDFLAGS)
+	ld -G -z text -o $@ $(TELSIMOBJ) $(LDFLAGS)
 
 tsdext.o : tccAst.h
 tccext.o : tccAst.h autorepeat.h plosc.h
@@ -69,17 +62,14 @@ tccTelSim.o : tccConstants.h tccDecode.h tccUtil.h
 clean:
 	-rm $(TCCOBJ) $(TSDOBJ) $(CMNOBJ) $(SLAOBJ) $(TELSIMOBJ) $(TIMEOBJ)
 	-rm tcccmn.so tccext.so tsdext.so tcctime.so slaext.so tcctelsim.so
-	-rm -rf ../tcclib/${EPICS_HOST_ARCH}
-	-rm -rf ../tsdlib/${EPICS_HOST_ARCH}
-	-rm -rf ../lib/${EPICS_HOST_ARCH}
 
 install: All
-	mkdir -p ../tcclib/${EPICS_HOST_ARCH}
-	cp tccext.so ../tcclib/${EPICS_HOST_ARCH}
-	cp tcctelsim.so ../tcclib/${EPICS_HOST_ARCH}
-	mkdir -p ../tsdlib/${EPICS_HOST_ARCH}
-	cp tsdext.so ../tsdlib/${EPICS_HOST_ARCH}
-	mkdir -p ../lib/${EPICS_HOST_ARCH}
-	cp tcctime.so ../lib/${EPICS_HOST_ARCH}
-	cp slaext.so ../lib/${EPICS_HOST_ARCH}
-	cp tcccmn.so ../lib/${EPICS_HOST_ARCH}
+	mkdir -p ../tcclib/${HOST_ARCH}
+	cp tccext.so ../tcclib/${HOST_ARCH}
+	cp tcctelsim.so ../tcclib/${HOST_ARCH}
+	mkdir -p ../tsdlib/${HOST_ARCH}
+	cp tsdext.so ../tsdlib/${HOST_ARCH}
+	mkdir -p ../lib/${HOST_ARCH}
+	cp tcctime.so ../lib/${HOST_ARCH}
+	cp slaext.so ../lib/${HOST_ARCH}
+	cp tcccmn.so ../lib/${HOST_ARCH}

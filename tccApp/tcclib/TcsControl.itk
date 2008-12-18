@@ -18,6 +18,13 @@ itcl::class TcsControl {
    inherit itk::Widget
    constructor args {}
    destructor {destroy $alarmObj}
+   public {
+      method setTimeout {chanStr value time incr reason}
+      method timeout {}
+      variable timeout 0
+      variable timeout_reason ""
+      variable tid 0
+   }
    private {
       method disable {par}
       method enable {par}
@@ -452,33 +459,6 @@ itcl::body TcsControl::constructor args {
    if { [catch {cs oiwfsFocusPark info}] } {
       epics cs oiwfsFocusPark
    }
-   if { [catch {cs aoFollow info}] } {
-      epics cs aoFollow
-   }
-   if { [catch {cs aoExitShutter info}] } {
-      epics cs aoExitShutter
-   }
-   if { [catch {cs aoEntShutter info}] } {
-      epics cs aoEntShutter
-   }
-   if { [catch {cs aoDmVolt info}] } {
-      epics cs aoDmVolt
-   }
-   if { [catch {cs aoPark info}] } {
-      epics cs aoPark
-   }
-   if { [catch {cs aoLgsPark info}] } {
-      epics cs aoLgsPark
-   }
-   if { [catch {cs aoDatum info}] } {
-      epics cs aoDatum
-   }
-   if { [catch {cs aoFLens info}] } {
-      epics cs aoFLens
-   }
-   if { [catch {cs aoCalSource info}] } {
-      epics cs aoCalSource
-   }
 
 
 # Vent gates move command.
@@ -640,42 +620,82 @@ itcl::body TcsControl::mountdatum {par} {
 }
 
 itcl::body TcsControl::gaosfollow {} {
-   cs aoFollow set followState On
-   cs aoEntShutter set state Open
-   cs aoExitShutter set state Open
-   logger command aoFollow
-   logger command aoEntShutter
-   logger command aoExitShutter
-   if { [catch {cs tcsApply post} msg] } {
-      tk_messageBox -icon error -parent $itk_interior -message \
-            "Error posting GAOS mechanism command: TCS reports \
+    if { ![catch {cs aoFollow info}] } {
+	cs aoFollow set followState On
+	cs aoEntShutter set state Open
+	cs aoExitShutter set state Open
+	logger command aoFollow
+	logger command aoEntShutter
+	logger command aoExitShutter
+	if { [catch {cs tcsApply post} msg] } {
+	    tk_messageBox -icon error -parent $itk_interior -message \
+		"Error posting GAOS mechanism command: TCS reports \
             \"$msg\""
-   }
+	}
+    }
 }
 
 itcl::body TcsControl::gaosdatum {} {
 
-   # Turn off Air Purge (commented out due to power bar being inaccesable)
-   #set path "/gemini/altair/altair/bin/solaris/"
-   #eval exec $path/aoRpc3 AP OFF
-   #logger log "Turned off Altair Air Purge"
+   if { ![catch {cs aoDmVolt info}] } {
+       # Turn off Air Purge (commented out due to power bar being inaccesable)
+       #set path "/gemini/altair/altair/bin/solaris/"
+       #eval exec $path/aoRpc3 AP OFF
+       #logger log "Turned off Altair Air Purge"
+       
+       #this is actually unpark, not datum
+       # turn on the dm Voltage
+       cs aoDmVolt set dir 0
+       cs aoDmVolt set dir 3
+       # open the shutters
+       cs aoEntShutter set state Open
+       cs aoExitShutter set state Open
+       logger command aoEntShutter
+       logger command aoExitShutter
 
-   #this is actually unpark, not datum
-   # turn on the dm Voltage
-   cs aoDmVolt set dir 0
-   cs aoDmVolt set dir 3
-   # open the shutters
-   cs aoEntShutter set state Open
-   cs aoExitShutter set state Open
-   logger command aoEntShutter
-   logger command aoExitShutter
-
-   if { [catch {cs tcsApply post} msg] } {
-      tk_messageBox -icon error -parent $itk_interior -message \
-            "Error posting GAOS mechanism command: TCS reports \
+       if { [catch {cs tcsApply post} msg] } {
+	   tk_messageBox -icon error -parent $itk_interior -message \
+	       "Error posting GAOS mechanism command: TCS reports \
             \"$msg\""
+       }
    }
 }
+
+itcl::body TcsControl::setTimeout {chanStr value time incr reason} {
+
+   logactions logmess "starting a timeout check for $reason"
+   logactions logmess "chanStr: $chanStr curr value: [eval $chanStr]  check value: $value"
+   if { [catch {logactions logmess "prev tid: $tid  tid info: [after info $tid]"} ret]} {
+       # logactions logmess "prev tid: $tid tid info: $ret"
+   }
+   set tid [after $time "$this timeout"]
+   set timeout_reason $reason
+   while {[eval $chanStr] == $value} {
+       if {$timeout} break
+       after $incr
+       update 
+   } 
+   if ($timeout) {
+       set timeout 0
+       return 1
+   } else {
+       after cancel $tid
+       return 0
+   }
+}
+
+itcl::body TcsControl::timeout {} {
+    # only get here if we timeout waiting for a response or BUSY-IDLE transition
+    # raise a warning popup and open the loops.
+    puts "TcsControl::timeout"
+    logactions logmess "TcsControl::Timed out waiting for $timeout_reason. Opening loops"
+    tk_messageBox -icon error \
+	-message "Timed out waiting for $timeout_reason. Opening loops"
+    $this disable
+    set timeout 1
+    return
+}
+
 
 itcl::body TcsControl::gaospark {} {
 
@@ -684,50 +704,81 @@ itcl::body TcsControl::gaospark {} {
 #   eval exec $path/aoRpc3 AP ON
 #   logger log "Turned on Altair Air Purge"
 
-   cs aoFollow set followState Off
-   logger command aoFollow
-   if { [catch {cs tcsApply post} msg] } {
-      tk_messageBox -icon error -parent $itk_interior -message \
-            "Error posting GAOS mechanism command: TCS reports \
-           \"$msg\""
-   }
-   # need to wait for gimbals to go idle
-   while {[sa aossad get wfsposBusy] == "BUSY"} { after 200 }   
-#do it again ... fisrt attempt often fails
-   cs aoFollow set followState Off
-   logger command aoFollow
-   if { [catch {cs tcsApply post} msg] } {
-      tk_messageBox -icon error -parent $itk_interior -message \
-            "Error posting GAOS mechanism command: TCS reports \
-           \"$msg\""
-   }
-   # need to wait for gimbals to go idle
-   while {[sa aossad get wfsposBusy] == "BUSY"} { after 200 }   
-
-   if {[AO state useLwfs]} {
-       cs aoUseLwfs set state OFF
-       logger command aoUseLwfs
+   if { ![catch {cs aoFollow info}] } {
+       cs aoFollow set followState Off
+       logger command aoFollow
        if { [catch {cs tcsApply post} msg] } {
 	   tk_messageBox -icon error -parent $itk_interior -message \
 	       "Error posting GAOS mechanism command: TCS reports \
-               \"$msg\""
+           \"$msg\""
        }
-       # need to wait for useLwfs to go idle
-       while {[sa aossad get useLwfsBusy] == "BUSY"} { after 200 }   
-    
+       # need to wait for gimbals to go idle 
+       if {[setTimeout "sa aossad get wfsposBusy" BUSY 10000 200 "Altair to stop following"]} return
+
+       #do it again ... fisrt attempt often fails
+       cs aoFollow set followState Off
+       logger command aoFollow
+       if { [catch {cs tcsApply post} msg] } {
+	   tk_messageBox -icon error -parent $itk_interior -message \
+	       "Error posting GAOS mechanism command: TCS reports \
+           \"$msg\""
+       }
+       # need to wait for gimbals to go idle
+       if {[setTimeout "sa aossad get wfsposBusy" BUSY 10000 200 "Altair to stop following"]} return
+       
+       # Stop LGS Zoom from tracking
+       if { ![catch {cs aoUseLwfs info}] } {
+	   cs aoUseLwfs set disTrack -1
+	   cs aoUseLwfs set zoomDir 0
+	   cs aoUseLwfs set zoomDir 4
+       }
+
+       # Turn STRAP OFF
+
+       # first turn off the Gate (should be already off ... being careful
+       cs gaosTTGS set dem 0
+       after 200
+       cs gaosTTGS set dir 3
+       after 200
+       if {[setTimeout "sa aossad get strapGTBusy" 1 10000 200 "STRAP GateCtl to turn off"]} return
+       after 200
+       
+       #turn off HVolt Ctl
+       cs gaosTTGS set hvCtl 0
+       after 200
+       cs gaosTTGS set hvDIR 3
+       after 200
+       if {[setTimeout "sa aossad get strapHVStat" 1 10000 200 "STRAP HVStat to turn off"]} return
+       after 200
+       
+       #turn off Temp Ctl
+       cs gaosTTGS set tempCtl 0
+       after 200
+       cs gaosTTGS set tempDIR 3
+       after 200
+       if {[setTimeout "sa aossad get strapTPStat" 1 10000 200 "STRAP TPStat to turn off"]} return
+       after 200
+       
+       #turn off RT Ctl
+       cs gaosTTGS set rtCtl 0
+       after 200
+       cs gaosTTGS set rtDIR 3
+       after 200
+       if {[setTimeout "sa aossad get strapRTStat" 1 10000 200 "STRAP RTStat to turn off"]} return
+
+       # need to wait for Altair to go idle
+       if {[setTimeout "sa aossad get gaosBusy" BUSY 10000 200 "Altair to go IDLE"]} return       
+       cs aoPark set dummy 1
+       logger command aoPark
+       if { [catch {cs tcsApply post} msg] } {
+	   tk_messageBox -icon error -parent $itk_interior -message \
+	       "Error posting GAOS mechanism command: TCS reports \
+           \"$msg\""
+       }
+
+       # trigger LGS Park
        cs aoLgsPark set dir 0
        cs aoLgsPark set dir 3
-   }
-
-   # need to wait for Altair to go idle
-   while {[sa aossad get gaosBusy] == "BUSY"} { after 200 }   
-
-   cs aoPark set dummy 1
-   logger command aoPark
-   if { [catch {cs tcsApply post} msg] } {
-      tk_messageBox -icon error -parent $itk_interior -message \
-            "Error posting GAOS mechanism command: TCS reports \
-           \"$msg\""
    }
 }
 

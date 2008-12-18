@@ -1,4 +1,4 @@
-static char rcsid[] = "$Id: tccUtil.c,v 1.2 2001-02-22 16:26:37 dlt Exp $";
+static char rcsid[] = "$Id: tccUtil.c,v 1.2 2001/02/22 16:26:37 dlt Exp $";
 /* *INDENT-OFF* */
 /*
 *   FILENAME

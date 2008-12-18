@@ -138,8 +138,10 @@ itcl::body AoConfig::update {} {
    } else {
       $itk_component(m2chopb) configure -text "M2 ttf from$source in chop B"
    }
-   
-   if { [sa guideConfig get coma] } {
+  
+   set coma_status [sa guideConfig get coma]
+
+   if { $coma_status eq "On" } {
       $itk_component(coma) configure -text "Coma correction on"
    } else {
       $itk_component(coma) configure -text "Coma correction off"

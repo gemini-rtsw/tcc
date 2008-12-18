@@ -1,11 +1,13 @@
-TOP = ..
-include $(TOP)/configure/CONFIG
-include $(TOP)/configure/RELEASE.gemini
-DIRS += src
-DIRS += lib
-DIRS += pointlib
-DIRS += scriptlib
-DIRS += tcclib
-DIRS += tsdlib
-include $(TOP)/configure/RULES_DIRS
-
+default_target:
+	@ if test -n "${site}"; then :;\
+	   else echo "Usage: make site=<site code>"; exit 1; fi
+	@ if test -r calparams.${site}.`uname`; then :;\
+	   else echo "No configuration files for site \"${site}\""; exit 1; fi
+	cp calparams.${site}.`uname` calparams.dat
+	cp options.${site} options
+	cd src; make install
+	cd lib; make
+	cd pointlib; make
+	cd scriptlib; make
+	cd tcclib; make
+	cd tsdlib; make

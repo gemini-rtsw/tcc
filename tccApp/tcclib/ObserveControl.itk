@@ -42,8 +42,6 @@ itcl::class ObserveControl {
       method selwfs {}
       method hrstart {}
       method hrstop {}
-      method gaosfollow {}
-      method gaospark {}
       variable wfs Pwfs1
       variable Pwfs1Dark
       variable Pwfs2Dark
@@ -542,38 +540,6 @@ itcl::body ObserveControl::selwfs {} {
 	 $itk_component(dark) configure -state disabled
       }
    }
-}
-
-itcl::body ObserveControl::gaosfollow {} {
-    cs aoFollow set followState On
-    cs aoEntShutter set state Open
-    cs aoExitShutter set state Open
-    logger command aoFollow
-    logger command aoEntShutter
-    logger command aoExitShutter
-    if { [catch {cs tcsApply post} msg] } {
-        tk_messageBox -icon error -parent $itk_interior -message \
-                "Error posting GAOS mechanism command: TCS reports \
-                \"$msg\""
-    }
-}
-
-itcl::body ObserveControl::gaospark {} {
-
-    # Turn on Air Purge (commented out due to power bar being inaccesable)
-    #set path "/gemini/altair/altair/bin/solaris/"
-    #eval exec $path/aoRpc3 ON
-    #logger log "Turned on Altair Air Purge"
-
-    cs aoFollow set followState Off
-    cs aoPark set dummy 1
-    logger command aoFollow
-    logger command aoPark
-    if { [catch {cs tcsApply post} msg] } {
-        tk_messageBox -icon error -parent $itk_interior -message \
-                "Error posting GAOS mechanism command: TCS reports \
-                \"$msg\""
-    }
 }
 
 itcl::body ObserveControl::traceProc {name index op} {

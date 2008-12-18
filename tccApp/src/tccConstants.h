@@ -9,7 +9,10 @@
 */
 /* *INDENT-OFF* */
 /*
- * $Log: not supported by cvs2svn $
+ * $Log: tccConstants.h,v $
+ * Revision 1.1.1.1  1999/05/27 04:53:39  dlt
+ * Initial load of Gemini telescope consoles
+ *
  */
 /* *INDENT-ON* */
 

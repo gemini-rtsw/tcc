@@ -8,7 +8,10 @@
 */
 /* *INDENT-OFF* */
 /*
- * $Log: not supported by cvs2svn $
+ * $Log: tccDecode.h,v $
+ * Revision 1.3  2005/01/20 00:03:25  dlt
+ * Remove deprecated access to interp->result
+ *
  * Revision 1.2  2000/02/18 02:29:19  dlt
  * New routine for decoding planet names
  *

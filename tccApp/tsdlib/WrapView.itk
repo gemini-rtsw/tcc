@@ -115,7 +115,7 @@ itcl::body WrapView::update {} {
    set azttl [sadVal tcssad timeToAzlim ""]
    $itk_component(azttl) configure -text "" \
          -background [$itk_interior cget -background]
-   if { $azttl != "" } {
+   if { $azttl != "" && $azttl != -999.0 } {
       if { $azttl < $elttl } {
          set h [expr int($azttl / 60.0)]
          set m [expr int($azttl - ( $h * 60.0 ))]
@@ -151,7 +151,7 @@ itcl::body WrapView::update {} {
    set rotttl [sadVal tcssad timeToRotlim ""]
    $itk_component(rotttl) configure -text "" \
          -background [$itk_interior cget -background]
-   if { $rotttl != "" } {
+   if { $rotttl != "" && $rotttl != -999.0 } {
       if { $rotttl < $elttl } {
          set h [expr int($rotttl / 60.0)]
          set m [expr int($rotttl - ( $h * 60.0 ))]

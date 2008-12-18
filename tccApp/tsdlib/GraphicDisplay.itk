@@ -143,7 +143,20 @@ itcl::body GraphicDisplay::constructor args {
    itk_component add p1wavel {
       label $w.p1wavel
    }
-   pack $itk_component(p1label) $itk_component(probe1) $itk_component(p1wavel)
+   itk_component add p1WrapLine1 {
+      label $w.p1WrapLine1 -foreground white
+   } {
+     usual
+     ignore -foreground
+   }
+   itk_component add p1WrapLine2 {
+      label $w.p1WrapLine2 -foreground white
+   } {
+     usual
+     ignore -foreground
+   }
+
+   pack $itk_component(p1label) $itk_component(probe1) $itk_component(p1wavel) $itk_component(p1WrapLine1) $itk_component(p1WrapLine2)
 
 # PWFS2.
    set w $itk_component(col4)
@@ -160,7 +173,19 @@ itcl::body GraphicDisplay::constructor args {
    itk_component add p2wavel {
       label $w.p2wavel
    }
-   pack $itk_component(p2label) $itk_component(probe2) $itk_component(p2wavel)
+   itk_component add p2WrapLine1 {
+      label $w.p2WrapLine1 -foreground white
+   } {
+     usual
+     ignore -foreground
+   }
+   itk_component add p2WrapLine2 {
+      label $w.p2WrapLine2 -foreground white
+   } {
+     usual
+     ignore -foreground
+   }
+   pack $itk_component(p2label) $itk_component(probe2) $itk_component(p2wavel) $itk_component(p2WrapLine1) $itk_component(p2WrapLine2)
 
    grid $itk_component(aosetup) - -sticky ew -padx 5 -pady 2
    grid $itk_component(oiwfs) $itk_component(aowfs) -padx 5 -pady 2 -sticky ns
@@ -415,4 +440,69 @@ itcl::body GraphicDisplay::update {} {
                -portElabel [sa agssad get port5Label] 
       }
    }
+# Check time for P1 wrap Limit
+
+set elttl [sadVal tcssad currentTimeToSet ""]
+   if { $elttl == "" } {
+      set elttl 99999999
+   }
+
+set p1ttl [sadVal tcssad timeToP1lim ""]
+   $itk_component(p1WrapLine1) configure -text "" \
+         -background [$itk_interior cget -background]
+   $itk_component(p1WrapLine2) configure -text "" \
+         -background [$itk_interior cget -background]
+   if { $p1ttl != "" && $p1ttl != -999.0 } {
+      if { $p1ttl < $elttl } {
+         set h [expr int($p1ttl / 60.0)]
+         set m [expr int($p1ttl - ( $h * 60.0 ))]
+         if { $h > 0 } {
+            $itk_component(p1WrapLine1) configure \
+                  -text "${h}hr ${m}min"
+            $itk_component(p1WrapLine2) configure \
+                  -text  "to wrap limit"
+         } else {
+            if { $m > 0 } {
+               $itk_component(p1WrapLine1) configure -text "${m}min"
+               $itk_component(p1WrapLine2) configure -text "to wrap limit"
+            } else {
+               $itk_component(p1WrapLine1) configure -text "Wrap limit in"
+               $itk_component(p1WrapLine2) configure -text "the next minute"
+            }
+         }
+         $itk_component(p1WrapLine1) configure -background red
+         $itk_component(p1WrapLine2) configure -background red
+
+      }
+   }
+
+set p2ttl [sadVal tcssad timeToP2lim ""]
+   $itk_component(p2WrapLine1) configure -text "" \
+         -background [$itk_interior cget -background]
+   $itk_component(p2WrapLine2) configure -text "" \
+         -background [$itk_interior cget -background]
+   if { $p2ttl != "" && $p2ttl != -999.0 } {
+      if { $p2ttl < $elttl } {
+         set h [expr int($p2ttl / 60.0)]
+         set m [expr int($p2ttl - ( $h * 60.0 ))]
+         if { $h > 0 } {
+            $itk_component(p2WrapLine1) configure \
+                  -text "${h}hr ${m}min"
+            $itk_component(p2WrapLine2) configure \
+                  -text  "to wrap limit"
+         } else {
+            if { $m > 0 } {
+               $itk_component(p2WrapLine1) configure -text "${m}min"
+               $itk_component(p2WrapLine2) configure -text "to wrap limit"
+            } else {
+               $itk_component(p2WrapLine1) configure -text "Wrap limit in"
+               $itk_component(p2WrapLine2) configure -text "the next minute"
+            }
+         }
+         $itk_component(p2WrapLine1) configure -background red
+         $itk_component(p2WrapLine2) configure -background red
+
+      }
+   }
+
 }

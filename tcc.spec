@@ -47,14 +47,17 @@ This is a default description for the %{name} package
 %build
 ## Write build instructions here, e.g
 # sh configure
-make
+cd tccApp
+make -f Makefile.linux
 
 %install
 ## Write install instructions here, e.g
 mkdir -p  $RPM_BUILD_ROOT/%{_prefix}/bin
 mkdir -p  $RPM_BUILD_ROOT/%{_prefix}/%{gemopt}/tcc/
 cp -a tccApp/ca_config* $RPM_BUILD_ROOT/%{_prefix}/%{gemopt}/tcc/
-cp -a tccApp/config $RPM_BUILD_ROOT/%{_prefix}/%{gemopt}/tcc/
+cp -a tccApp/calparams* $RPM_BUILD_ROOT/%{_prefix}/%{gemopt}/tcc/
+cp -a tccApp/options* $RPM_BUILD_ROOT/%{_prefix}/%{gemopt}/tcc/
+cp -a tccApp/default* $RPM_BUILD_ROOT/%{_prefix}/%{gemopt}/tcc/
 cp -a tccApp/lib $RPM_BUILD_ROOT/%{_prefix}/%{gemopt}/tcc/
 cp -a tccApp/plugins $RPM_BUILD_ROOT/%{_prefix}/%{gemopt}/tcc/
 cp -a tccApp/pointcats $RPM_BUILD_ROOT/%{_prefix}/%{gemopt}/tcc/
@@ -71,7 +74,7 @@ cp -a tccApp/tccscript $RPM_BUILD_ROOT/%{_prefix}/%{gemopt}/tcc/
 cp -a tccApp/tccSkycat $RPM_BUILD_ROOT/%{_prefix}/%{gemopt}/tcc/
 cp -a tccApp/pointtest $RPM_BUILD_ROOT/%{_prefix}/%{gemopt}/tcc/
 cp -a tccApp/probecal $RPM_BUILD_ROOT/%{_prefix}/%{gemopt}/tcc/
-cp -a tccApp/bin/* $RPM_BUILD_ROOT/%{_prefix}/bin/
+cp -a tccApp/linux-bin/* $RPM_BUILD_ROOT/%{_prefix}/bin/
 chmod 755 $RPM_BUILD_ROOT/%{_prefix}/bin/*
 
 ## if you want to do something after installation uncomment the following

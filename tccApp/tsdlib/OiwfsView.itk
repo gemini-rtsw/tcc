@@ -98,20 +98,27 @@ itcl::body OiwfsView::update {} {
       $itk_component(canvas) itemconfigure $patf -outline ""
       $itk_component(canvas) itemconfigure $outlim -outline white
       $itk_component(canvas) itemconfigure $inlim -outline white
-
    } else {
 
 # X/Y limits case. Transform the patrol field coordinates into TCS frame.
-      foreach {x1 y1} \
+foreach {x1 y1} \
             [oi2tcs [sa tcssad get oiwfsXmax] [sa tcssad get oiwfsYmax]] {}
-      foreach {x2 y2} \
+foreach {x2 y2} \
             [oi2tcs [sa tcssad get oiwfsXmax] [sa tcssad get oiwfsYmin]] {}
-      foreach {x3 y3} \
+foreach {x3 y3} \
             [oi2tcs [sa tcssad get oiwfsXmin] [sa tcssad get oiwfsYmin]] {}
-      foreach {x4 y4} \
+foreach {x4 y4} \
             [oi2tcs [sa tcssad get oiwfsXmin] [sa tcssad get oiwfsYmax]] {}
 
-# Determine zero points and scales for plotting on the canvas.
+#      set x1 [sa tcssad get oiwfsXmax] 
+#      set y1 [sa tcssad get oiwfsYmax]
+#      set x2 [sa tcssad get oiwfsXmax] 
+#      set y2 [sa tcssad get oiwfsYmin]
+#      set x3 [sa tcssad get oiwfsXmin] 
+#      set y3 [sa tcssad get oiwfsYmin]
+#      set x4 [sa tcssad get oiwfsXmin] 
+#      set y4 [sa tcssad get oiwfsYmax]
+
       setscale $x1 $y1 $x2 $y2 $x3 $y3 $x4 $y4
 
 # Transform coordinates to canvas.
@@ -226,6 +233,7 @@ itcl::body OiwfsView::setscale {args} {
    set ymin [lindex $args 1]
    set xmax [lindex $args 0]
    set ymax [lindex $args 1]
+
    for {set i 2} { $i < 8 } {incr i} {
       if {[lindex $args $i] < $xmin} {set xmin [lindex $args $i]}
       if {[lindex $args $i] > $xmax} {set xmax [lindex $args $i]}
