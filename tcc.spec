@@ -79,7 +79,14 @@ chmod 755 $RPM_BUILD_ROOT/%{_prefix}/bin/*
 
 ## if you want to do something after installation uncomment the following
 ## and list the actions to perform:
-# %post
+%post
+for i in tcc tc1; do
+	LOGDIR=/usr/tmp/$i
+	[ -d $LOGDIR  ] || mkdir $LOGDIR
+	chown -R software $LOGDIR
+	chgrp -R gemini $LOGDIR
+	chmod -R 775 $LOGDIR
+done
 ## actions, e.g. /sbin/ldconfig
 
 ## If you want to have a devel-package to be generated and do some
