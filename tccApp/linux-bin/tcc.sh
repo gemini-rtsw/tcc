@@ -3,7 +3,7 @@
 cd ${GEMINI_TOP}/opt/tcc
 
 if [ "$TCC_INITPATH" = "" ]; then
-	export TCC_INITPATH=${GEMINI_TOP}/opt/tcc/var/local-config/${GEMINI_SITE}
+	export TCC_INITPATH=${GEMINI_TOP}/etc/tcc/defaults
 fi
 for i in $*; do
         case $1 in
