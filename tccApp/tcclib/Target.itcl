@@ -911,31 +911,56 @@ itcl::body Target::pmconvert {c1 c2 pm1 pm2 pmunits} {
          }
       }
 
-# Convert arcsec to seconds of RA.
+    # Right ascension and declination should use space separators for slaDafin
+    set c1 [string map {: " "} $c1]
+    set c2 [string map {: " "} $c2]
+    #puts "c1=$c1, c2=$c2"
+
+    # 
+    # Convert arcsec to seconds of RA.
+    #
+    # From Pat Wallace's document
+    # Gemini South Pointing Studies
+    # October/November 2008
+    # Section 4: Proper motion in right ascension
+    #
+    # Less important shortcomings in the TCC code stemmed from the "tangent-plane"
+    # algorithm that it employs in cases whether the proper motions have been
+    # expressed in arc-second (or mas) units and consequently are interpreted as
+    # on-sky.  The method used is to set up a tangent-plane projection with
+    # rectangular (Xi,eta) coordinates running east and north (ICRS).  The
+    # projection is centered on the star's ICRS position at 2000.0, (alpha 0, delta
+    # 0);  the point (uE,uN), where uE and uN are on-sky proper motions in radian/y,
+    # is the star's ICRS position at 2001.0.  This point is transformed to (alpha,
+    # delta), and the spherical-coordinate annual proper motions (which is what the
+    # TCS requires) are taken to be ualpha = alpha-alpha0, udelta = delta-delta0.
+    # The method is economical in lines of code, gives sensible answers near the
+    # pole and removes the need to protect against divide by zero. The code has no
+    # obvious cos(delta) factor, which evidently can mislead the reader.
+    #
+    # The projection is centered on the star's (alpha0,delta0).  But exactly the
+    # same result would be obtained for any value of alpha0, and so the decode of
+    # the actual right ascension is unnecessary.  Moreover, by using a value well
+    # away from zero, such as PI or even 1, the potentially confusing 43200s range
+    # normalization can be eliminated.  We recommend these simplifications be
+    # introduced.
+
       switch $pmunits {
          mas/year -
          mas/century -
          arcsecs/year -
          arcsecs/century {
             set AS2R 0.0000048481368111
-            set raz [expr {[slaDafin $c1] * 15.0}]
+            #set raz [expr {[slaDafin $c1] * 15.0}]
+	    set raz 3.14159265359
             set decz [slaDafin $c2]
-#	    set cdecz [expr cos ($decz)]
-#puts "pm1=$pm1, pm2=$pm2, raz=$raz, decz=$decz, cdecz=$cdecz"
-#	    if {[expr abs ($decz) - 1.57] < 0} {
-#		set pm1 [expr {$pm1 / $cdecz}]
-#	    }
             set radec [slaDtp2s [expr {$pm1* $AS2R}] [expr {$pm2 * $AS2R}] \
                   $raz $decz]
-#puts "radec=$radec"
             set pm1 [expr { ([lindex $radec 0] - $raz) / $AS2R / 15.0 }]
-            if { $pm1 > 43200.0 } {
-               set pm1 [expr { $pm1 - 86400.0 }]
-            }
             set pm2 [expr { ([lindex $radec 1] - $decz) / $AS2R }]
-#puts "pm1=$pm1, pm2=$pm2"
          }
       }
+      #puts "pm1=$pm1, pm2=$pm2"
       return [list $pm1 $pm2]
    }
 }
