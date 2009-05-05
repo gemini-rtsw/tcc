@@ -52,20 +52,32 @@ itcl::body TrackRate::apply {comp} {
 
 # Determine command sender name.
    switch $comp {
-      tcs.field.sciencetarget.trackrate {
+      science {
          set cs difTrSourceA
       }
-      tcs.field.pwfs1target.trackrate {
+      pwfs1 {
          set cs difTrPwfs1
       }
-      tcs.field.pwfs2target.trackrate {
+      pwfs2 {
          set cs difTrPwfs2
       }
-      tcs.field.oiwfstarget.trackrate {
+      oiwfs {
          set cs difTrOiwfs
       }
-      tcs.field.aowfstarget.trackrate {
+      aowfs {
          set cs difTrPwfs2
+      }
+		g1 {
+         set cs difTrG1
+      }
+		g2 {
+         set cs difTrG1
+      }
+		g3 {
+         set cs difTrG1
+      }
+		g4 {
+         set cs difTrG1
       }
    }
 
@@ -103,11 +115,18 @@ itcl::body TrackRate::apply {comp} {
    }
    cs $cs set dtheta1 [list $newc1Rate]
    cs $cs set dtheta2 [list $newc2Rate]
-   if { [string equal $cosys ""] } {
-      CosysNames::FK5/J2000 apply $comp.cosys
-   } else {
-      CosysNames::$cosys apply $comp.cosys
-   }
+	if { [string equal $cosys ""] } {
+		cs $cs set system FK5
+		cs $cs set equinox J2000
+	} else {
+		cs $cs set system [CosysNames::$cosys cget -frame]
+		cs $cs set equinox [CosysNames::$cosys cget -equinox]
+	}
+#   if { [string equal $cosys ""] } {
+#      CosysNames::FK5/J2000 apply $comp.cosys
+#   } else {
+#      CosysNames::$cosys apply $comp.cosys
+#   }
 }
 
 itcl::body TrackRate::init {} {

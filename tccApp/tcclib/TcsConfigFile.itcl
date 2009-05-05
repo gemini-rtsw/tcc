@@ -19,6 +19,7 @@ itcl::class TcsConfigFile {
       method createComponent {type node}
       method createTarget {node}
       method createTrackrate {node}
+		method createTaggedTarget {node}
       method report {msg}
       method findcomp {node}
       method elementis {node name}
@@ -57,6 +58,7 @@ itcl::body TcsConfigFile::constructor {xml parent} {
    set nodelist(wavelength) ""
    set nodelist(oiwfswavelength) ""
    set nodelist(aowfswavelength) ""
+	set nodelist(targetgroup) ""
 
 # Compile a lists of all the component defined in the document.
    foreach node [dom::DOMImplementation selectNode $root \
@@ -95,6 +97,10 @@ itcl::body TcsConfigFile::constructor {xml parent} {
          }
       }
    }
+   foreach node $nodelist(targetgroup) {
+		if { [createTaggedTarget $node] } break	
+	}
+	
 
 # Free the document.
    dom::DOMImplementation destroy $doc
@@ -266,6 +272,64 @@ itcl::body TcsConfigFile::createTarget {node} {
    return 0
 }
 
+itcl::body TcsConfigFile::createTaggedTarget {node} {
+# The node must have a name and a type attribute.
+   set tagPrefix [dom::element getAttribute $node name]
+   if { $tagPrefix eq "" } {
+      return [report "targetgroup with no name"]
+   }
+
+# Targets only exist in field so we have to search for the enclosing field
+# in the nodes ancestors.
+   set fieldnode [dom::DOMImplementation selectNode $node \
+         {ancestor::paramset[@type="field"][1]}]
+
+   if { $fieldnode == "" } {
+      return 0
+   } else {
+      set field ::FieldNames::[dom::element getAttribute $fieldnode name]
+   }
+	set defaultNode [dom::DOMImplementation selectNode $node {child::param[@name="default"][1]}]
+	if { ! [string equal $defaultNode ""] } {
+		set defaultTarget [dom::element getAttribute $defaultNode value]
+	} else {
+		set defaultTarget ""
+	}
+	if { ![string equal $defaultTarget ""]} {
+		set defaultTarget [$field cget -targetns]::$defaultTarget
+	}
+	set targetsNodes [dom::DOMImplementation selectNode $node {child::param[@name="targets"][1]/child::value/text()}]
+	if { $targetsNodes eq "" } {
+		set targetNode [dom::DOMImplementation selectNode $node {child::param[@name="targets"][1]}]
+		set target [dom::element getAttribute $targetNode value]
+		if { $target ne "" } {
+			set target [$field cget -targetns]::$target
+			if { $tagPrefix eq "Base" && $target ne $defaultTarget } {
+				set tagtarget [$field addTaggedTarget User $target]
+			} else {
+				set tagtarget [$field addTaggedTarget $tagPrefix $target]
+			}
+			if { $target eq $defaultTarget } {
+				$field setDefaultTarget $tagtarget
+			}
+		}
+	} else {
+		foreach valNode $targetsNodes {
+			set target [$field cget -targetns]::[dom::node cget $valNode -nodeValue]
+			if { $tagPrefix eq "Base" && $target ne $defaultTarget } {
+				set tagtarget [$field addTaggedTarget User $target]
+			} else {
+				set tagtarget [$field addTaggedTarget $tagPrefix $target]
+			}
+			if { $target eq $defaultTarget } {
+				$field setDefaultTarget $tagtarget
+			}
+		}
+	}
+	
+   return 0
+}
+
 itcl::body TcsConfigFile::createTrackrate {node} {
 
 # The node must have a name and a type attribute.
@@ -373,6 +437,9 @@ itcl::body TcsConfigFile::findcomp {node} {
       aowfswavelength {
          lappend nodelist(aowfswavelength) $node
       }
+		targetgroup {
+			lappend nodelist(targetgroup) $node
+		}
    }
 }
 

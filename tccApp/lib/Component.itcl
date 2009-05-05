@@ -22,10 +22,15 @@
 #  D Terrett 20 February 2000
 #
 #  Copyright CCLRC
+#
+# NOTE: There is a potencial problem for derived classes with the object adding
+# itself to the list. The object is added before the derived class constructor
+# is executed. That means some object variable will not be initialized when
+# widgets are notified of the inclusion of the new object.
 #+
 
 itcl::class Component {
-   constructor list {}
+   constructor {list {_useFullName 0} } {}
    destructor {}
    public {
       method refinc {} {incr refcount}
@@ -34,11 +39,19 @@ itcl::class Component {
    }
    protected {
       variable componentList
+		variable useFullName 0
    }
 }
 
-itcl::body Component::constructor list {
-   $list add [namespace tail $this] end
+itcl::body Component::constructor {list {_useFullName 0} } {
+	set useFullName $_useFullName
+	if { ![string equal $list ""] } {
+		if { $useFullName } {
+		   $list add $this end
+		} else {
+	   	$list add [namespace tail $this] end
+		}
+	}
    set componentList $list
 }
 
@@ -47,5 +60,11 @@ itcl::body Component::destructor {} {
       error \
       "\"[namespace tail $this]\" cannot be deleted (reference count not zero)"
    }
-   $componentList remove [namespace tail $this]
+	if { ![string equal $componentList ""] } {
+		if { $useFullName } {
+	   	$componentList remove $this
+		} else {
+	   	$componentList remove [namespace tail $this]
+		}
+	}
 }

@@ -52,8 +52,22 @@ proc createPanels {} {
          -class TcsConfigPanel -title "Configuration Manager" \
          -components tcs
    EditPanelMgr tcsFieldPanel -name .tcsFieldPanel \
-         -class FieldPanel -title Field -components tcs.field 
-   EditPanelMgr tcsFieldScienceTargetCosysPanel \
+         -class FieldPanel -title Field -components tcs.field
+
+   EditPanelMgr tcsFieldCosysPanel \
+         -name .tcsFieldCosysPanel -class CosysPanel \
+         -title "Coordinate System" \
+         -components tcs.field.cosys
+   EditPanelMgr tcsFieldTrackRatePanel \
+         -name .tcsFieldTrackRatePanel -class TrackRatePanel \
+         -title "Differential Track Rates" \
+         -components tcs.field.trackrate
+   EditPanelMgr tcsFieldTrackRateCosysPanel \
+         -name .tcsFieldTrackRateCosysPanel -class CosysPanel \
+         -title "Coordinate System" \
+         -components tcs.field.trackrate.cosys
+
+	EditPanelMgr tcsFieldScienceTargetCosysPanel \
          -name .tcsFieldScienceTargetCosysPanel -class CosysPanel \
          -title "Science Target Coordinate System" \
          -components tcs.field.sciencetarget.cosys

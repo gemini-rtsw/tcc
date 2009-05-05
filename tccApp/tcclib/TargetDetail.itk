@@ -1,0 +1,216 @@
+package require Itk
+
+itcl::class TargetDetail {
+   inherit itk::Widget
+   constructor {args} {}
+   destructor {}
+   itk_option define -savecommand saveCommand SaveCommand {}
+
+	method load {tagTarget} {}
+	method cleanFields {} {}
+	method loadTarget {target} {}
+	method onTargetSelection {} {}
+	method onTargetNameEdit {} {}
+	
+	method onTargetListChange {n1 n2 op} {}
+	
+	method onSaveCommand {} 
+	method save {taggedTarget} 
+	method saveTarget {target}
+}
+
+itk::usual TargetDetail {
+    keep -background  -cursor
+}
+
+itcl::body TargetDetail::constructor {args} {
+
+    itk_option add hull.borderwidth hull.relief
+    configure -borderwidth 1
+    configure -relief groove
+    eval itk_initialize $args
+
+    itk_component add commonFrm { frame $itk_interior.common }
+	    
+	itk_component add tagMenu { iwidgets::optionmenu $itk_interior.common.tagMenu }
+	$itk_interior.common.tagMenu insert end Science PWFS1 PWFS2 OIWFS AOWFS
+	if { [string equal [calparam cget -site] CP]} {
+		$itk_interior.common.tagMenu insert end CWFS1 CWFS2 CWFS3 ODGW1 ODGW2 ODGW3 ODGW4
+	}
+	$itk_interior.common.tagMenu insert end User
+    
+	trace variable ::Config(tcs.field.target,list) w [itcl::code $this onTargetListChange]
+    itk_component add name { ListManager $itk_interior.common.name -editable 0 \
+            -selectioncommand [itcl::code $this onTargetSelection] -componentlist $::Config(tcs.field.target,list) \
+		 		-returncommand [itcl::code $this onTargetNameEdit] -editable 1}
+    
+    grid $itk_interior.common.tagMenu $itk_interior.common.name
+
+    itk_component add csysSel { iwidgets::optionmenu $itk_interior.csysSel -labeltext "Coord Type" -labelpos w\
+	    -command "$itk_interior.coordFrm.tabs select \[$itk_interior.csysSel get\]" }
+    $itk_interior.csysSel insert end RA/Dec Az/El Nonsidereal
+
+    frame $itk_interior.coordFrm -relief groove -borderwidth 2
+    itk_component add tabs {
+	iwidgets::notebook $itk_interior.coordFrm.tabs -height 218 -width 450
+    }
+    
+    set w [$itk_interior.coordFrm.tabs add -label "RA/Dec"]
+    itk_component add radecTarget {
+	RADecTarget $w.radecTarget
+    }
+
+    set w [$itk_interior.coordFrm.tabs add -label "Az/El"]
+    itk_component add azelTarget {
+		AzElTarget $w.azelTarget
+    }
+	set w [$itk_interior.coordFrm.tabs add -label "Nonsidereal"]
+	itk_component add solarTarget {
+		SolarTarget $w.solarTarget
+	}
+   itk_component add trw {
+      frame $itk_interior.trw
+   }
+
+# Display of brightness.
+   set w $itk_component(trw)
+   itk_component add brightness {
+      iwidgets::entryfield $w.brightness -labeltext Magnitude -labelpos w -width 15
+   }
+
+
+   pack $itk_component(brightness) -side top -anchor w -padx 20 -pady 3 \
+	   -expand y
+
+   itk_component add storeTrg { button $w.storeTrg -text Store -command [itcl::code $this onSaveCommand]}
+   pack $w.storeTrg -side top -pady 3
+
+   pack $itk_component(radecTarget) -fill both
+   pack $itk_component(azelTarget) -fill both
+   pack $itk_component(solarTarget) -fill both
+   grid $itk_interior.coordFrm.tabs
+   pack $itk_interior.common $itk_interior.csysSel $itk_interior.coordFrm -side top
+   pack $itk_component(trw) -side left -fill x -expand yes
+   pack configure $itk_interior.common -anchor w
+   pack configure $itk_interior.csysSel -anchor w
+   pack configure $itk_interior.coordFrm -fill both
+# Select the RA/Dec page.
+   $itk_component(tabs) select RA/Dec
+}
+
+
+itcl::body TargetDetail::load {tagTarget} {
+	if {[string equal $tagTarget ""] } {
+		cleanFields
+	} else {
+		set tag [$tagTarget cget -tagPrefix]
+		if {[string equal $tag "Base"] } {
+			set tag Science
+		}
+		$itk_component(tagMenu) select $tag
+		if { $tag eq "Science" } {
+			$itk_component(tagMenu) configure -state disabled
+		} else {
+			$itk_component(tagMenu) configure -state normal
+		}
+		$itk_component(name) select [[$tagTarget cget -target] cget -objname]
+		loadTarget [$tagTarget cget -target]
+	}
+}
+
+itcl::body TargetDetail::loadTarget {target} {
+	switch [$target cget -type] {
+		degdegTarget {
+			$itk_component(radecTarget) cleanFields
+			$itk_component(solarTarget) cleanFields				
+			$itk_component(csysSel) select Az/El
+			$itk_component(azelTarget) load $target
+		}
+		namedTarget -
+		conicTarget {
+			$itk_component(radecTarget) cleanFields
+			$itk_component(azelTarget) cleanFields
+			$itk_component(csysSel) select Nonsidereal
+			$itk_component(solarTarget) load $target			
+		}
+		hmsdegTarget -
+		default {
+			$itk_component(azelTarget) cleanFields
+			$itk_component(solarTarget) cleanFields
+			$itk_component(csysSel) select RA/Dec
+			$itk_component(radecTarget) load $target
+		}
+	}
+	$itk_component(brightness) clear
+	$itk_component(brightness) insert end [$target cget -brightness]
+}
+
+itcl::body TargetDetail::cleanFields {} {
+	$itk_component(radecTarget) cleanFields
+	$itk_component(azelTarget) cleanFields
+	$itk_component(solarTarget) cleanFields
+	$itk_component(csysSel) select RA/Dec	
+	$itk_component(brightness) clear
+}
+
+itcl::body TargetDetail::onTargetSelection {} {
+	loadTarget $::Config(tcs.field.target,namespace)::[$itk_component(name) get]
+}
+
+itcl::body TargetDetail::onTargetListChange {n1 n2 op} {
+	$itk_component(name) configure -componentlist $::Config(tcs.field.target,list)
+}
+
+itcl::body TargetDetail::onTargetNameEdit {} {
+	set newTargetName [$itk_component(name) get]
+	if {[$::Config(tcs.field.target,list) index $newTargetName]>=0} {
+		$itk_component(name) select $newTargetName
+		loadTarget $::Config(tcs.field.target,namespace)::$newTargetName
+	}
+}
+
+itcl::body TargetDetail::onSaveCommand {} {
+	if {![string equal $itk_option(-savecommand) ""]} {
+		$itk_option(-savecommand)
+	}
+}
+
+itcl::body TargetDetail::save {taggedTarget} {
+	set selectedTag [$itk_component(tagMenu) get]
+	if {[string equal $selectedTag Science]} {
+		set selectedTag Base
+	}
+	
+	set targetName [$itk_component(name) get]
+	if {![string equal $targetName ""] && [$::Config(tcs.field.target,list) index $targetName]<0} {
+		$::Config(tcs.field,namespace)::$::Config(tcs.field,value) add target $targetName
+	}
+	saveTarget $::Config(tcs.field.target,namespace)::$targetName
+
+	if {[string equal [$taggedTarget cget -tagPrefix] $selectedTag]} {
+		$taggedTarget configure -target $::Config(tcs.field.target,namespace)::$targetName
+	} else {
+		$::Config(tcs.field,namespace)::$::Config(tcs.field,value) removeTaggedTarget $taggedTarget
+		set taggedTarget [$::Config(tcs.field,namespace)::$::Config(tcs.field,value) \
+		 addTaggedTarget $selectedTag $::Config(tcs.field.target,namespace)::$targetName]
+	}
+	return $taggedTarget
+}
+
+itcl::body TargetDetail::saveTarget {target} {
+	set name [$target cget -objname]
+	$target init
+	$target configure -objname $name
+	$target configure -brightness [$itk_component(brightness) get]
+	switch [$itk_component(csysSel) get] {
+		Az/El {
+			$itk_component(azelTarget) save $target 
+		}
+		RA/Dec {
+			$itk_component(radecTarget) save $target
+		}
+		Nonsidereal {
+			$itk_component(solarTarget) save $target 
+		}
+	}
+}

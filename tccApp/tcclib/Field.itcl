@@ -16,6 +16,20 @@
 #
 #           -aowfstarget    The name of the aowfs target
 #
+#           -ttgs1target    The name of the tip-tilt (Canopus) target 1
+#
+#           -ttgs2target    The name of the tip-tilt (Canopus) target 2
+#
+#           -ttgs3target    The name of the tip-tilt (Canopus) target 3
+#
+#           -odgw1target    The name of the on-detector guide window 1 target
+#
+#           -odgw2target    The name of the on-detector guide window 2 target
+#
+#           -odgw3target    The name of the on-detector guide window 3 target
+#
+#           -odgw4target    The name of the on-detector guide window 4 target
+#
 #           -rotator        The name of the rotator confguration
 #
 #           -guide          The name of the guide configuration
@@ -75,6 +89,15 @@ itcl::class Field {
       variable pwfs2target ""
       variable oiwfstarget ""
       variable aowfstarget ""
+		variable ttgs1target ""
+		variable ttgs2target ""
+		variable ttgs3target ""
+		variable odgw1target ""
+		variable odgw2target ""
+		variable odgw3target ""
+		variable odgw4target ""
+		variable swaptarget ""
+		variable gcount 0
       variable rotator ""
       variable guide ""
       variable wavelength ""
@@ -86,7 +109,19 @@ itcl::class Field {
       variable trackratens
       variable trackratelist
       variable posAngle
-   }
+		
+		variable taggedTargets
+		method addTaggedTarget {{tagPrefix User} {target ""}}
+		method removeTaggedTarget {taggedTarget}
+		method setDefaultTarget { tagtarget }
+		method clearDefaultTarget { tag }
+		method getDefaultTarget { tag }
+		method setSwapTarget { tagtarget }
+		method clearSwapTarget {}
+		method getSwapTarget {}
+		method subscribe {observer}
+      method unsubscribe {observer}
+	}
    private {
       variable current_sciencetarget ""
       variable current_pwfs1target ""
@@ -96,6 +131,11 @@ itcl::class Field {
       variable current_guide ""
       variable current_rotator ""
       variable current_wavelength ""
+		
+		method cleanTaggedTargets {}
+		
+		variable observerList {}
+		method notify {elementList}
    }
 }
 
@@ -110,6 +150,8 @@ itcl::body Field::constructor {args} {
    set trackratelist [ComponentList ${this}TrackRateList]
    set trackratens ${this}TrackRateNames
    namespace eval $trackratens {}
+	
+	set taggedTargets [namespace current]::[ObservedList #auto]
 
    eval configure $args
 }
@@ -150,46 +192,169 @@ itcl::body Field::destructor {} {
 # Delete the list and the namespace.
    itcl::delete object $trackratelist
    namespace delete $trackratens
+	
+	set n [$taggedTargets length]
+   for {set i 0} {$i < $n} {incr i} {
+      set name [$taggedTargets get $i]
+      if { ![string equal $name ""] } {
+         itcl::delete object $name
+      }
+   }
+	itcl::delete object $taggedTargets
 }
 
 itcl::body Field::apply {comp} {
+	global env
 
+	if { $swaptarget ne "" } {
+		set tag [$swaptarget cget -tagPrefix]
+		switch $tag {
+		   "AOWFS" {
+		       set lpath "Sky>AO>AC/HR"
+		   }
+		   default {
+		       set lpath "Sky>AC/HR"
+		   }
+		}
+		if [winfo exists .observePanel] {
+		    ::.observePanel.frame.control.botframe.mirrors.lpath select $lpath
+		}
+
+		[$swaptarget cget -target] apply science
+		"::GuideNames::No guiding" apply $comp.guide
+	   if { ! [string equal $rotator ""] } {
+	      ::RotatorNames::$rotator apply $comp.rotator
+	   }
+		if {$env(TCC_TCSNAME) == "tcs"} {
+		    set guide_wl [.observePanel.frame.control.botframe.wfsconfig getValue HrwfsColFilt]
+		} else {
+		    set guide_wl [.observePanel.frame.control.botframe.wfsconfig.tabs.canvas.notebook.cs.page1.cs.hrwfs.col get]
+		}
+		switch $guide_wl {
+		   "U-red1"  { set new_wavelength "Acq Cam U" }
+		   "B-blue"  { set new_wavelength "Acq Cam B" }
+		   "V-green" { set new_wavelength "Acq Cam V" }
+		   "R-red2"  { set new_wavelength "Acq Cam R" }
+		   "I-red3"  { set new_wavelength "Acq Cam I" }
+		   "neutral" { set new_wavelength "Acq Cam neutral" }
+		   default   { 
+				tk_messageBox -icon warning -parent $itk_interior \
+					-message "No guide wavelength found ... using 0.5 (Acq Cam neutral)"
+			   set new_wavelength "Acq Cam neutral"
+			}
+		}
+		::WavelengthNames::$new_wavelength configure -set_baffles 0
+		::WavelengthNames::$new_wavelength apply $comp.wavelength
+		::WavelengthNames::$new_wavelength configure -set_baffles 1
+
+		if { ![string is space $airmassLimit] } {
+	      cs airmassLimit set limit $airmassLimit
+	      logger command airmassLimit
+	   }
+	   if { ![string is space $programid] } {
+	      ss $::env(TCC_TCSNAME):sad:programID set value [list $programid]
+	      ss $::env(TCC_TCSNAME):sad:programID post
+	   }
+	   if { ![string is space $observationid] } {
+	      ocssession obsStart $observationid
+	   }
+	} else {
+		#set light path (probably changed by a swap)
+		if {$guide ne "" } {
+			switch $guide {
+				"No guiding" -
+			   "P1-P2" -
+			   "P1-OI" -
+			   "AO-P1" -
+			   "P1" -
+			   "P2-OI" -
+			   "P2" -
+			   "OI" {
+				   set lpath "Sky>Instr"
+				}
+			   "AO-OI" -
+			   "AO" -
+				"GeMS" -
+				"GeMS-OI" {
+				   set lpath "Sky>AO>Inst"
+				}
+			}
+			if [winfo exists .observePanel] {
+			    ::.observePanel.frame.control.botframe.mirrors.lpath select $lpath
+			}
+		}
 # Call the apply method of all the components that have a value.
-   if { ! [string equal $sciencetarget ""] } {
-      ${targetns}::$sciencetarget apply $comp.sciencetarget
-   }
-   if { ! [string equal $pwfs1target ""] } {
-      ${targetns}::$pwfs1target apply $comp.pwfs1target
-   }
-   if { ! [string equal $pwfs2target ""] } {
-      ${targetns}::$pwfs2target apply $comp.pwfs2target
-   }
-   if { ! [string equal $oiwfstarget ""] } {
-      ${targetns}::$oiwfstarget apply $comp.oiwfstarget
-   }
-   if { ! [string equal $aowfstarget ""] } {
-      ${targetns}::$aowfstarget apply $comp.aowfstarget
-   }
-   if { ! [string equal $guide ""] } {
-      ::GuideNames::$guide apply $comp.guide
-   }
-   if { ! [string equal $rotator ""] } {
-      ::RotatorNames::$rotator apply $comp.rotator
-   }
-   if { ! [string equal $wavelength ""] } {
-      ::WavelengthNames::$wavelength apply $comp.wavelength
-   }
-   if { ![string is space $airmassLimit] } {
-      cs airmassLimit set limit $airmassLimit
-      logger command airmassLimit
-   }
-   if { ![string is space $programid] } {
-      ss $::env(TCC_TCSNAME):sad:programID set value [list $programid]
-      ss $::env(TCC_TCSNAME):sad:programID post
-   }
-   if { ![string is space $observationid] } {
-      ocssession obsStart $observationid
-   }
+	   if { ! [string equal $sciencetarget ""] } {
+	      	[$sciencetarget cget -target] apply science
+	   }
+		foreach {tagtarget code} [list $pwfs1target pwfs1 $pwfs2target pwfs2 $oiwfstarget oiwfs $aowfstarget aowfs] {
+			if { $tagtarget ne "" } {
+				puts "Field::apply: Configuring $code"
+				[$tagtarget cget -target] apply $code
+			}
+		}
+		if {[calparam cget -site] eq "CP"} {
+			set gId 1
+			foreach tagtarget "$ttgs1target $ttgs2target $ttgs3target $odgw1target $odgw2target $odgw3target $odgw4target" {
+				if { $tagtarget ne "" } {
+					if { $gId > 4 } {
+						error "Trying to use more that 4 GEMS stars."
+					} else {
+						[$tagtarget cget -target] apply g$gId
+						puts "Field::apply: Configuring g$gId"
+						set tag [$tagtarget cget -tagPrefix]
+						switch $tag {
+							CWFS1 {
+								cs guidersMapping set G${gId}guider TTGS1
+								"::GuideNames::$guide" applyGems g${gId} cwfs
+							}
+							CWFS2 {
+								cs guidersMapping set G${gId}guider TTGS2
+								"::GuideNames::$guide" applyGems g${gId} cwfs
+							}
+							CWFS3 {
+								cs guidersMapping set G${gId}guider TTGS3
+								"::GuideNames::$guide" applyGems g${gId} cwfs
+							}
+							ODGW1 -
+							ODGW2 -
+							ODGW3 -
+							ODGW4 {
+								cs guidersMapping set G${gId}guider [$tagtarget cget -tagPrefix]
+								"::GuideNames::$guide" applyGems g${gId} odgw
+							}
+						}
+						incr gId
+					}
+				}
+			}
+			for {} {$gId <= 4} {incr gId} {
+				cs guidersMapping set G${gId}guider None
+				"::GuideNames::$guide" applyGems g${gId} none
+			}
+		}
+	   if { ! [string equal $guide ""] } {
+	      ::GuideNames::$guide apply $comp.guide
+	   }
+	   if { ! [string equal $rotator ""] } {
+	      ::RotatorNames::$rotator apply $comp.rotator
+	   }
+	   if { ! [string equal $wavelength ""] } {
+	      ::WavelengthNames::$wavelength apply $comp.wavelength
+	   }
+	   if { ![string is space $airmassLimit] } {
+	      cs airmassLimit set limit $airmassLimit
+	      logger command airmassLimit
+	   }
+	   if { ![string is space $programid] } {
+	      ss $::env(TCC_TCSNAME):sad:programID set value [list $programid]
+	      ss $::env(TCC_TCSNAME):sad:programID post
+	   }
+	   if { ![string is space $observationid] } {
+	      ocssession obsStart $observationid
+	   }
+	}
+puts "Field::apply exit"
 }
 
 itcl::body Field::init {} {
@@ -198,11 +363,21 @@ itcl::body Field::init {} {
    $this configure -pwfs2target ""
    $this configure -oiwfstarget ""
    $this configure -aowfstarget ""
-   $this configure -guide ""
+	set ttgs1target ""
+	set ttgs2target ""
+	set ttgs3target ""
+	set odgw1target ""
+	set odgw2target ""
+	set odgw3target ""
+	set odgw4target ""
+	set swaptarget ""
+	set gcount 0
+	$this configure -guide ""
    $this configure -rotator ""
    $this configure -wavelength ""
    set programid ""
    set airmassLimit ""
+	cleanTaggedTargets
 }
 
 itcl::body Field::preview {view} {
@@ -261,75 +436,76 @@ itcl::body Field::save {node} {
    }
 }
 
-itcl::configbody Field::sciencetarget {
-   if { ! [string equal $current_sciencetarget ""] } {
-      ${targetns}::$current_sciencetarget refdec
-   }
-   set current_sciencetarget ""
-   if { ! [string equal $sciencetarget ""] } {
-      if { [catch {${targetns}::$sciencetarget refinc}] } {
-         error "Target \"$sciencetarget\" does not exist"
-      } else {
-         set current_sciencetarget $sciencetarget
-      }
-   }
-}
-
-itcl::configbody Field::pwfs1target {
-   if { ! [string equal $current_pwfs1target ""] } {
-      ${targetns}::$current_pwfs1target refdec
-   }
-   set current_pwfs1target ""
-   if { ! [string equal $pwfs1target ""] } {
-      if { [catch {${targetns}::$pwfs1target refinc}] } {
-         error "Target \"$pwfs1target\" does not exist"
-      } else {
-         set current_pwfs1target $pwfs1target
-      }
-   }
-}
-
-itcl::configbody Field::pwfs2target {
-   if { ! [string equal $current_pwfs2target ""] } {
-      ${targetns}::$current_pwfs2target refdec
-   }
-   set current_pwfs2target ""
-   if { ! [string equal $pwfs2target ""] } {
-      if { [catch {${targetns}::$pwfs2target refinc}] } {
-         error "Target \"$pwfs2target\" does not exist"
-      } else {
-         set current_pwfs2target $pwfs2target
-      }
-   }
-}
-
-itcl::configbody Field::oiwfstarget {
-   if { ! [string equal $current_oiwfstarget ""] } {
-      ${targetns}::$current_oiwfstarget refdec
-   }
-   set current_oiwfstarget ""
-   if { ! [string equal $oiwfstarget ""] } {
-      if { [catch {${targetns}::$oiwfstarget refinc}] } {
-         error "Target \"$oiwfstarget\" does not exist"
-      } else {
-         set current_oiwfstarget $oiwfstarget
-      }
-   }
-}
-
-itcl::configbody Field::aowfstarget {
-   if { ! [string equal $current_aowfstarget ""] } {
-      ${targetns}::$current_aowfstarget refdec
-   }
-   set current_aowfstarget ""
-   if { ! [string equal $aowfstarget ""] } {
-      if { [catch {${targetns}::$aowfstarget refinc}] } {
-         error "Target \"$aowfstarget\" does not exist"
-      } else {
-         set current_aowfstarget $aowfstarget
-      }
-   }
-}
+#itcl::configbody Field::sciencetarget {
+#   if { ! [string equal $current_sciencetarget ""] } {
+#      ${targetns}::$current_sciencetarget refdec
+#   }
+#   set current_sciencetarget ""
+#   if { ! [string equal $sciencetarget ""] } {
+#      if { [catch {${targetns}::$sciencetarget refinc}] } {
+#         error "Target \"$sciencetarget\" does not exist"
+#      } else {
+#         set current_sciencetarget $sciencetarget
+#			
+#      }
+#   }
+#}
+#
+#itcl::configbody Field::pwfs1target {
+#   if { ! [string equal $current_pwfs1target ""] } {
+#      ${targetns}::$current_pwfs1target refdec
+#   }
+#   set current_pwfs1target ""
+#   if { ! [string equal $pwfs1target ""] } {
+#      if { [catch {${targetns}::$pwfs1target refinc}] } {
+#         error "Target \"$pwfs1target\" does not exist"
+#      } else {
+#         set current_pwfs1target $pwfs1target
+#      }
+#   }
+#}
+#
+#itcl::configbody Field::pwfs2target {
+#   if { ! [string equal $current_pwfs2target ""] } {
+#      ${targetns}::$current_pwfs2target refdec
+#   }
+#   set current_pwfs2target ""
+#   if { ! [string equal $pwfs2target ""] } {
+#      if { [catch {${targetns}::$pwfs2target refinc}] } {
+#         error "Target \"$pwfs2target\" does not exist"
+#      } else {
+#         set current_pwfs2target $pwfs2target
+#      }
+#   }
+#}
+#
+#itcl::configbody Field::oiwfstarget {
+#   if { ! [string equal $current_oiwfstarget ""] } {
+#      ${targetns}::$current_oiwfstarget refdec
+#   }
+#   set current_oiwfstarget ""
+#   if { ! [string equal $oiwfstarget ""] } {
+#      if { [catch {${targetns}::$oiwfstarget refinc}] } {
+#         error "Target \"$oiwfstarget\" does not exist"
+#      } else {
+#         set current_oiwfstarget $oiwfstarget
+#      }
+#   }
+#}
+#
+#itcl::configbody Field::aowfstarget {
+#   if { ! [string equal $current_aowfstarget ""] } {
+#      ${targetns}::$current_aowfstarget refdec
+#   }
+#   set current_aowfstarget ""
+#   if { ! [string equal $aowfstarget ""] } {
+#      if { [catch {${targetns}::$aowfstarget refinc}] } {
+#         error "Target \"$aowfstarget\" does not exist"
+#      } else {
+#         set current_aowfstarget $aowfstarget
+#      }
+#   }
+#}
 
 itcl::configbody Field::guide {
    if { ! [string equal $current_guide ""] } {
@@ -337,6 +513,16 @@ itcl::configbody Field::guide {
    }
    set current_guide ""
    if { ! [string equal $guide ""] } {
+		if { [calparam cget -site] eq "CP" } {
+		# Some name translations are needed for CP
+			if { [string match "*AO*" $guide] } {
+				if { [string match "*GSAOI*" $::Config(tcs.instrument,value)] } {
+					set guide GeMS
+				} elseif { $guide eq "AO-OI" } {
+					set guide "GeMS-OI"
+				}
+			}
+		}
       if { [catch {GuideNames::$guide refinc}] } {
          error "Guide configuration \"$guide\" does not exist"
       } else {
@@ -468,4 +654,384 @@ itcl::configbody Field::posAngle {
                -cosys FK5/J2000 -ipa $posAngle
       }
    }
+}
+
+itcl::body Field::addTaggedTarget {{tagPrefix User} {target ""}} {
+	if { [string equal $target ""] } {
+		set freeId 1
+		for {set i 0} {$i < [$targetlist length]} {incr i} {
+			if {[string match target* [namespace tail [$targetlist get $i]] ] } {
+				set idx [string range [namespace tail [$targetlist get $i]] 6 end]
+				if { [string is integer -strict $idx] } {
+					if { $idx >= $freeId } {
+						set freeId [expr "$idx+1"]
+					}
+				}
+			}
+		}
+		set target [TargetComponent ${targetns}::target$freeId $targetlist]
+		$target init
+      $target configure -trackratens $trackratens
+		$target configure -objname [namespace tail $target]		
+	}
+	if { [string equal $tagPrefix Base] } {
+		#We force to have only one Base target. If already exists one, it is overwritten
+		for {set i 0} {$i < [$taggedTargets length]} {incr i} {
+			set tagTarget [$taggedTargets get $i]
+			if { [string equal Base [$tagTarget cget -tagPrefix] ] } {
+				$tagTarget configure -target $target
+				return $tagTarget
+			}
+		}
+		set newTaggedTarget [namespace current]::[TaggedTarget #auto $tagPrefix $target]
+	} else {
+		if { [string equal $tagPrefix User] } {
+			#Check we are not creating a User target for the Science target
+			for {set i 0} {$i < [$taggedTargets length]} {incr i} {
+				set tagTarget [$taggedTargets get $i]
+				if { [string equal Base [$tagTarget cget -tagPrefix] ] && [string equal [$tagTarget cget -target] $target]} {
+					return ""
+				}
+			}
+		}
+		#Check we are not duplicating an existing tag-target
+		for {set i 0} {$i < [$taggedTargets length]} {incr i} {
+			set tagTarget [$taggedTargets get $i]
+			if { [string equal $tagPrefix [$tagTarget cget -tagPrefix] ] && [string equal [$tagTarget cget -target] $target]} {
+				return ""
+			}
+		}
+		set lowestUnusedId 1
+		for {set i 0} {$i < [$taggedTargets length]} {incr i} {
+			set tag [$taggedTargets get $i]
+			if { [string equal [$tag cget -tagPrefix] $tagPrefix ] } {
+				set tagSuffix [$tag cget -tagSuffix]
+				if { [string is integer -strict  $tagSuffix]} {
+					if { $lowestUnusedId <= $tagSuffix } {
+						set lowestUnusedId [expr "$tagSuffix + 1"]
+					}
+				}
+			}
+		}
+		set newTaggedTarget [namespace current]::[TaggedTarget #auto $tagPrefix-$lowestUnusedId $target]
+	}
+	$taggedTargets insert $newTaggedTarget
+	return $newTaggedTarget
+}
+
+itcl::body Field::removeTaggedTarget {taggedTarget} {
+	#Base target can not be removed
+	if {![string equal [$taggedTarget cget -tagPrefix] Base] && [$taggedTargets index $taggedTarget] != -1 } {
+		$taggedTargets remove $taggedTarget
+		if { [string equal $taggedTarget [getDefaultTarget [$taggedTarget cget -tagPrefix]]] } {
+			clearDefaultTarget [$taggedTarget cget -tagPrefix]
+		}
+		itcl::delete object $taggedTarget
+	}
+}
+
+itcl::body Field::cleanTaggedTargets {} {
+	set sciencetarget ""
+	set pwfs1target ""
+	set pwfs2target ""
+	set oiwfstarget ""
+	set aowfstarget ""
+	set ttgs1target ""
+	set ttgs2target ""
+	set ttgs3target ""
+	set odgw1target ""
+	set odgw2target ""
+	set odgw3target ""
+	set odgw4target ""
+	set swaptarget ""
+	while { [$taggedTargets length] > 0 } {
+		set temp [$taggedTargets get 0]
+		$taggedTargets remove $temp
+		itcl::delete object $temp
+	}
+}
+
+itcl::body Field::clearDefaultTarget {tag} {
+	#undo swap if needed
+	if { [getDefaultTarget $tag] eq [getSwapTarget]} {
+		clearSwapTarget
+	}
+	switch $tag {
+		CWFS1 -
+		CWFS2 -
+		CWFS3 -
+		ODGW1 -
+		ODGW2 -
+		ODGW3 -
+		ODGW4 {
+			incr gcount -1
+		}
+	}
+	switch $tag {
+		User {
+			#If default User target is unset, science revert to original science target
+			#We asume science target was set previoulsy to a User target
+			set target ""
+			for {set i 0} {$i < [$taggedTargets length]} {incr i} {
+				set tagTarget [$taggedTargets get $i]
+				if { [string equal Base [$tagTarget cget -tagPrefix] ] } {
+					set target [$tagTarget cget -target]
+					break
+				}
+			}
+			if {[string equal $target ""]} {
+				error "Deselecting User target: Could not revert to Science target, Science target undefined"
+			} else {
+				set sciencetarget $target
+				notify sciencetarget
+			}
+		}
+		PWFS1 {
+			set pwfs1target ""
+			notify pwfs1target
+		}
+		PWFS2 {
+			set pwfs2target ""
+			notify pwfs2target
+		}
+		OIWFS {
+			set oiwfstarget ""
+			notify oiwfstarget
+		}
+		AOWFS {
+			set aowfstarget ""
+			notify aowfstarget
+		}
+		CWFS1 {
+			set ttgs1target ""
+			notify ttgs1target
+		}
+		CWFS2 {
+			set ttgs2target ""
+			notify ttgs2target
+		}
+		CWFS3 {
+			set ttgs3target ""
+			notify ttgs3target
+		}
+		ODGW1 {
+			set odgw1target ""
+			notify odgw1target
+		}
+		ODGW2 {
+			set odgw2target ""
+			notify odgw2target
+		}
+		ODGW3 {
+			set odgw3target ""
+			notify odgw3target
+		}
+		ODGW4 {
+			set odgw4target ""
+			notify odgw4target
+		}
+	}
+}
+
+itcl::body Field::setDefaultTarget {tagtarget} {
+	
+	if {[string equal $tagtarget ""] || [string equal [$tagtarget cget -tagPrefix] ""]} {
+		return
+	}
+	set tag [$tagtarget cget -tagPrefix]
+	
+	if {[string equal [$tagtarget cget -target] ""]} {
+		clearDefaultTarget $tag
+	} else {
+		#Don't do anything if it's the same
+		if { [getDefaultTarget $tag] eq $tagtarget } {
+			return
+		}
+		#undo swap if needed
+		if { [getDefaultTarget $tag] eq [getSwapTarget]} {
+			clearSwapTarget
+		}
+		#Limit GEMS stars to 4
+		switch $tag {
+			CWFS1 -
+			CWFS2 -
+			CWFS3 -
+			ODGW1 -
+			ODGW2 -
+			ODGW3 -
+			ODGW4 {
+				if { [getDefaultTarget $tag] eq "" } {
+					if { $gcount < 4 } {
+						incr gcount
+					} else {
+						return
+					}
+				}
+			}
+		}
+		switch $tag {
+			Base -
+			User {
+				set sciencetarget $tagtarget
+				if { [string is space [$tagtarget cget -target]] } {
+					set $::Config(tcs.field.sciencetarget,value) $::Config(tcs.field.sciencetarget,anon) 
+				} else {					
+					set $::Config(tcs.field.sciencetarget,value) [namespace tail [$tagtarget cget -target]]
+				}
+				notify sciencetarget
+			}
+			PWFS1 {
+				set pwfs1target $tagtarget
+				if { [string is space [$tagtarget cget -target]] } {
+					set $::Config(tcs.field.pwfs1target,value) $::Config(tcs.field.pwfs1target,anon) 
+				} else {					
+					set $::Config(tcs.field.pwfs1target,value) [namespace tail [$tagtarget cget -target]]
+				}
+				notify pwfs1target
+			}
+			PWFS2 {
+				set pwfs2target $tagtarget
+				if { [string is space [$tagtarget cget -target]] } {
+					set $::Config(tcs.field.pwfs2target,value) $::Config(tcs.field.pwfs2target,anon) 
+				} else {					
+					set $::Config(tcs.field.pwfs2target,value) [namespace tail [$tagtarget cget -target]]
+				}
+				notify pwfs2target
+			}
+			OIWFS {
+				set oiwfstarget $tagtarget
+				if { [string is space [$tagtarget cget -target]] } {
+					set $::Config(tcs.field.oiwfstarget,value) $::Config(tcs.field.oiwfstarget,anon) 
+				} else {					
+					set $::Config(tcs.field.oiwfstarget,value) [namespace tail [$tagtarget cget -target]]
+				}
+				notify oiwfstarget
+			}
+			AOWFS {
+				set aowfstarget $tagtarget
+				if { [string is space [$tagtarget cget -target]] } {
+					set $::Config(tcs.field.aowfstarget,value) $::Config(tcs.field.aowfstarget,anon) 
+				} else {					
+					set $::Config(tcs.field.aowfstarget,value) [namespace tail [$tagtarget cget -target]]
+				}
+				notify aowfstarget
+			}
+			CWFS1 {
+				set ttgs1target $tagtarget
+				notify ttgs1target
+			}
+			CWFS2 {
+				set ttgs2target $tagtarget
+				notify ttgs2target
+			}
+			CWFS3 {
+				set ttgs3target $tagtarget
+				notify ttgs3target
+			}
+			ODGW1 {
+				set odgw1target $tagtarget
+				notify odgw1target
+			}
+			ODGW2 {
+				set odgw2target $tagtarget
+				notify odgw2target
+			}
+			ODGW3 {
+				set odgw3target $tagtarget
+				notify odgw3target
+			}
+			ODGW4 {
+				set odgw4target $tagtarget
+				notify odgw4target
+			}
+		}
+	}
+}
+
+itcl::body Field::getDefaultTarget {tag} {
+	set ret ""
+	switch $tag {
+		Base -
+		User {
+			set ret $sciencetarget
+		}
+		PWFS1 {
+			set ret $pwfs1target
+		}
+		PWFS2 {
+			set ret $pwfs2target
+		}
+		OIWFS {
+			set ret $oiwfstarget
+		}
+		AOWFS {
+			set ret $aowfstarget
+		}
+		CWFS1 {
+			set ret $ttgs1target
+		}
+		CWFS2 {
+			set ret $ttgs2target
+		}
+		CWFS3 {
+			set ret $ttgs3target
+		}
+		ODGW1 {
+			set ret $odgw1target
+		}
+		ODGW2 {
+			set ret $odgw2target
+		}
+		ODGW3 {
+			set ret $odgw3target
+		}
+		ODGW4 {
+			set ret $odgw4target
+		}
+	}
+	return $ret
+}
+
+itcl::body Field::subscribe observer {
+
+# Check that the observer isn't already on the list.
+   if { [lsearch -exact $observerList $observer] == -1 } {
+# Append the observer to the list.
+      lappend observerList $observer
+   }
+}
+
+itcl::body Field::unsubscribe observer {
+# Check that the observer is registered.
+   set index [lsearch -exact $observerList $observer]
+   if { $index != -1 } {
+   	set observerList [lreplace $observerList $index $index]
+   }
+}
+
+itcl::body Field::notify elementList {
+   foreach observer $observerList {
+      $observer $elementList
+   }	
+}
+
+itcl::body Field::setSwapTarget tagtarget {
+	set tag [$tagtarget cget -tagPrefix]
+	#Check we are swapping with a WFS star
+	if { ![string equal $tag Base] && ![string equal $tag User] && \
+		[string equal $tagtarget [getDefaultTarget $tag]] && ![string equal $swaptarget $tagtarget]} {
+			set swaptarget $tagtarget
+			notify swaptarget
+		}
+}
+
+itcl::body Field::clearSwapTarget {} {
+	if {![string equal $swaptarget ""]} {
+		set swaptarget ""
+		notify swaptarget
+	}
+}
+
+itcl::body Field::getSwapTarget {} {
+	return $swaptarget
 }

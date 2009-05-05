@@ -1,0 +1,77 @@
+itcl::class AzElTarget {
+   inherit itk::Widget
+   constructor {args} {}
+   destructor {}
+	method load target {}
+	method save target {}
+	method cleanFields {} {}
+}
+
+itk::usual AzElTarget {
+    keep -background  -cursor
+}
+
+itcl::body AzElTarget::constructor {args} {
+    #itk_option add hull.borderwidth hull.relief    
+    eval itk_initialize $args
+
+    set w $itk_interior
+
+   itk_component add az {
+      iwidgets::entryfield $w.az -width 12 -labeltext Az:
+   } {
+      usual
+      rename -textfont -majorfont majorFont Font
+      rename -labelfont -majorfont majorFont Font
+   }
+   itk_component add el {
+      iwidgets::entryfield $w.el -width 12 -labeltext El:
+   } {
+      usual
+      rename -textfont -majorfont majorFont Font
+      rename -labelfont -majorfont majorFont Font
+   }
+   itk_component add trackrate {
+      SubComponentSelector $itk_interior.trackrate -labeltext "Differential Track rates" \
+            -labelpos w -width 12 -component tcs.field.trackrate
+   }
+   pack $itk_component(trackrate) -side bottom -anchor w -padx 20 -pady 3
+
+   itk_component add grabBtn { button $itk_interior.grabBtn -text "Grab from TCS" }
+   pack $itk_component(grabBtn) -side top -anchor w -pady 3
+
+   pack $itk_component(az) $itk_component(el) -side left -expand y -pady 40 \
+      -anchor n
+}
+
+
+itcl::body AzElTarget::cleanFields {} {
+	$itk_component(az) clear
+	$itk_component(el) clear
+	set ::Config(tcs.field.cosys,value) ""
+	set ::Config(tcs.field.trackrate,value) ""
+}
+
+itcl::body AzElTarget::load {target} {
+	if { ![string equal $target ""] && [string equal [$target cget -type] "degdegTarget"]} {
+		cleanFields
+		$itk_component(az) insert end [$target cget -c1]
+		$itk_component(el) insert end [$target cget -c2]
+		$itk_component(trackrate) configure -component tcs.field.trackrate
+		set ::Config(tcs.field.trackrate,value) [$target cget -trackrate]
+		if { ![string equal [$target cget -trackrate] ""]} {
+			set ::Config(tcs.field.trackrate.cosys,value) \
+				[$::Config(tcs.field.trackrate,namespace)::$::Config(tcs.field.trackrate,value) cget -cosys]
+		}
+	}
+}
+
+itcl::body AzElTarget::save {target} {
+	if { ![string equal $target ""] } {
+		#$target init
+		$target configure -type degdegTarget
+		$target configure -c1 [$itk_component(az) get]
+		$target configure -c2 [$itk_component(el) get]
+		$target configure -trackrate [$itk_component(trackrate) get]
+	}	
+}

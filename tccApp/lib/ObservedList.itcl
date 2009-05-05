@@ -1,0 +1,93 @@
+#+
+#  ObservedList
+#
+#  An ObservedList object keeps a list of objects and a list of observers that 
+#  are notified whenever the list change.
+#
+#+
+
+itcl::class ListObserver {
+	public {
+		method onInsert {object} {}
+		method onRemove {object} {}
+		method onDestroy {} {}
+	}
+}
+
+itcl::class ObservedList {
+   public {
+      destructor {}
+      method insert {object}
+      method get position {return [lindex $list $position]}
+      method index object {return [lsearch -exact $list $object]}
+      method length {} {return [llength $list]}
+      method remove {object}
+
+		method subscribe {observer}
+      method unsubscribe {observer}
+   }
+   protected {
+      variable list ""
+   }
+   private {
+      variable observerList {}
+   }
+}
+
+itcl::body ObservedList::destructor {} {
+   foreach observer $observerList {
+      $observer onDestroy
+   }
+}
+
+itcl::body ObservedList::insert {object} {
+# Insert the new object in the list.
+   lappend list $object
+
+# Add the object to all the associated observers.
+   foreach observer $observerList {
+      $observer onInsert $object
+   }
+}
+
+itcl::body ObservedList::remove object {
+
+# remove the object from the list.
+   set index [lsearch -exact $list $object]
+	if {$index == -1 } {
+		error "ObservedList::remove ($this), trying to remove unknown componet ($object)."
+	}
+   set list [lreplace $list $index $index]
+
+# Remove the object from all the observers.
+   foreach observer $observerList {
+      $observer onRemove $object
+   }
+}
+
+itcl::body ObservedList::subscribe observer {
+
+# Check that the observer isn't already on the list.
+   if { [lsearch -exact $observerList $observer] == -1 } {
+# Append the observer to the list.
+      lappend observerList $observer
+
+# Add all the objects to the new observer.
+      foreach el $list {
+         $observer onInsert $el
+      }
+   }
+}
+
+itcl::body ObservedList::unsubscribe observer {
+# Check that the observer is registered.
+   set index [lsearch -exact $observerList $observer]
+   if { $index != -1 } {
+# Clear the observer.
+      foreach el $list {
+         $observer onRemove $el
+      }
+
+   	set observerList [lreplace $observerList $index $index]
+   }
+}

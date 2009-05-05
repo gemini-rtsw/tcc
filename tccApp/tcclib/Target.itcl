@@ -154,22 +154,33 @@ itcl::body Target::constructor {args} {
 }
 
 itcl::body Target::apply {comp} {
-
    switch $comp {
-      tcs.field.sciencetarget {
+      science {
          set vt sourceA
       }
-      tcs.field.pwfs1target {
+      pwfs1 {
          set vt pwfs1
       }
-      tcs.field.pwfs2target {
+      pwfs2 {
          set vt pwfs2
       }
-      tcs.field.oiwfstarget {
+      oiwfs {
          set vt oiwfs
       }
-      tcs.field.aowfstarget {
+      aowfs {
          set vt pwfs2
+      }
+		g1 {
+         set vt g1
+      }
+		g2 {
+         set vt g2
+      }
+		g3 {
+         set vt g3
+      }
+		g4 {
+         set vt g4
       }
    }
 
@@ -192,7 +203,10 @@ itcl::body Target::apply {comp} {
             cs $vt set equinox J2000
             logger command $vt
          } else {
-            CosysNames::$cosys apply $comp.cosys
+				   cs $vt set system [CosysNames::$cosys cget -frame]
+				   cs $vt set equinox [CosysNames::$cosys cget -equinox]
+
+            #CosysNames::$cosys apply $comp.cosys
          }
       }
       degdegTarget {
@@ -216,94 +230,98 @@ itcl::body Target::apply {comp} {
          }
       }
       conicTarget {
-	 switch $vt {
-	     sourceA {set csname orbit}
-	     pwfs1   {set csname pwfs1orbit}
-	     pwfs2   {set csname pwfs2orbit}
-	     oiwfs   {set csname oiwfsorbit}
-	 }
-	 cs $csname set objName [list $objname]
-	 switch $format {
-	     "AsA major planet" {
-		 cs $csname set eltype 1
-		 cs $csname set epoch [list $epochofel]
-		 cs $csname set inclination [list $orbinc]
-		 cs $csname set anode [list $longascnode]
-		 cs $csname set perihelion [list $longofperi]
-		 cs $csname set aorq [list $meandist]
-		 cs $csname set LorM [list $meanlong]
-		 cs $csname set e [list $eccentricity]
-		 cs $csname set n [list $dailymot]
-	     }
-	     "JPL major planet" {
-		 if { ! [string is double -strict $longascnode] } {
-                     error "expecting floating point number but got
-                           \"$longascnode\""
-		 }
-		 if { ! [string is double -strict $argofperi] } {
-                     error "expecting floating point number but got
-                           \"$argofperi\""
-		 }
-		 if { ! [string is double -strict $meananom] } {
-                     error "expecting floating point number but got
-                           \"$longascnode\""
-		 }
-		 cs $csname set eltype 1
-		 cs $csname set epoch [list $epochofel]
-		 cs $csname set inclination [list $orbinc]
-		 cs $csname set anode [list $longascnode]
-		 cs $csname set perihelion [expr { $longascnode + $argofperi }]
-		 cs $csname set aorq [list $meandist]
-		 cs $csname set LorM \
-		     [expr { $longascnode + $argofperi + $meananom }]
-		 cs $csname set e [list $eccentricity]
-		 cs $csname set n [list $dailymot]
-	     }
-	     "AsA minor planet" -
-	     "MPC minor planet" {
-		 foreach {epoch1 inclination1 anode1 perihelion1 a1 e1 M1} \
-		     [slaPertel 2 $epochofel $epochofel $orbinc \
-			  $longascnode $argofperi $meandist $eccentricity \
-			  $meananom] {}
-		 cs $csname set eltype 2
-		 cs $csname set epoch $epoch1
-		 cs $csname set inclination $inclination1
-		 cs $csname set anode $anode1
-		 cs $csname set perihelion $perihelion1
-		 cs $csname set aorq $a1
-		 cs $csname set LorM $M1
-		 cs $csname set e $e1
-		 cs $csname set n ""
-	     }
-	     "AsA comet" -
-	     "JPL minor body" -
-	     "MPC comet" {
-		 foreach {epoch1 inclination1 anode1 perihelion1 q1 e1} \
-		     [slaPertel 3 $epochofel $epochofperi $orbinc \
-			  $longascnode $argofperi $peridist \
-			  $eccentricity] {}
-		 cs $csname set eltype 3
-		 cs $csname set epoch $epoch1
-		 cs $csname set inclination $inclination1
-		 cs $csname set anode $anode1
-		 cs $csname set perihelion $perihelion1
-		 cs $csname set aorq $q1
-		 cs $csname set e $e1
-		 cs $csname set LorM ""
-		 cs $csname set n ""
-	     }
-	 }
-	  logger command $csname
-      }
+			switch $vt {
+				sourceA {set csname orbit}
+				pwfs1   {set csname pwfs1orbit}
+				pwfs2   {set csname pwfs2orbit}
+				oiwfs   {set csname oiwfsorbit}
+				g1      {set csname g1wfsorbit}
+				g2      {set csname g2wfsorbit}
+				g3      {set csname g3wfsorbit}
+				g4      {set csname g4wfsorbit}
+			}
+			cs $csname set objName [list $objname]
+		 	switch $format {
+				"AsA major planet" {
+					cs $csname set eltype 1
+					cs $csname set epoch [list $epochofel]
+					cs $csname set inclination [list $orbinc]
+				 	cs $csname set anode [list $longascnode]
+				 	cs $csname set perihelion [list $longofperi]
+				 	cs $csname set aorq [list $meandist]
+				 	cs $csname set LorM [list $meanlong]
+				 	cs $csname set e [list $eccentricity]
+				 	cs $csname set n [list $dailymot]
+				}
+				"JPL major planet" {
+					if { ! [string is double -strict $longascnode] } {
+	                     error "expecting floating point number but got
+	                           \"$longascnode\""
+					}
+					if { ! [string is double -strict $argofperi] } {
+	                     error "expecting floating point number but got
+	                           \"$argofperi\""
+					}
+					if { ! [string is double -strict $meananom] } {
+	                     error "expecting floating point number but got
+	                           \"$longascnode\""
+					}
+					cs $csname set eltype 1
+					cs $csname set epoch [list $epochofel]
+					cs $csname set inclination [list $orbinc]
+					cs $csname set anode [list $longascnode]
+					cs $csname set perihelion [expr { $longascnode + $argofperi }]
+					cs $csname set aorq [list $meandist]
+					cs $csname set LorM \
+						[expr { $longascnode + $argofperi + $meananom }]
+					cs $csname set e [list $eccentricity]
+					cs $csname set n [list $dailymot]
+				}
+		     	"AsA minor planet" -
+		     	"MPC minor planet" {
+			 		foreach {epoch1 inclination1 anode1 perihelion1 a1 e1 M1} \
+			     		[slaPertel 2 $epochofel $epochofel $orbinc \
+				  		$longascnode $argofperi $meandist $eccentricity \
+				  		$meananom] {}
+					cs $csname set eltype 2
+			 		cs $csname set epoch $epoch1
+					cs $csname set inclination $inclination1
+					cs $csname set anode $anode1
+					cs $csname set perihelion $perihelion1
+					cs $csname set aorq $a1
+					cs $csname set LorM $M1
+					cs $csname set e $e1
+					cs $csname set n ""
+		     	}
+		     	"AsA comet" -
+		     	"JPL minor body" -
+		     	"MPC comet" {
+			 		foreach {epoch1 inclination1 anode1 perihelion1 q1 e1} \
+			     		[slaPertel 3 $epochofel $epochofperi $orbinc \
+				  		$longascnode $argofperi $peridist \
+				  		$eccentricity] {}
+			 		cs $csname set eltype 3
+			 		cs $csname set epoch $epoch1
+			 		cs $csname set inclination $inclination1
+			 		cs $csname set anode $anode1
+			 		cs $csname set perihelion $perihelion1
+			 		cs $csname set aorq $q1
+			 		cs $csname set e $e1
+			 		cs $csname set LorM ""
+			 		cs $csname set n ""
+				}
+			}
+			logger command $csname
+		}
    }
    if { ! [string equal $trackrate ""] } {
-      ${trackratens}::$trackrate apply $comp.trackrate
+      ${trackratens}::$trackrate apply $comp
    }
 }
 
 itcl::body Target::init {} {
 
-   set type {}
+   set type hmsdegTarget
    set objname {}
    $this configure -cosys {}
    set epoch {}
@@ -328,6 +346,7 @@ itcl::body Target::init {} {
    set epochofperi {}
    set dailymot {}
    set brightness {}
+	set tag {}
 }
 
 itcl::body Target::preview {view vt} {
@@ -651,6 +670,7 @@ itcl::body Target::save {node} {
    }
    param $node objname $objname
    param $node brightness $brightness
+	param $node tag $tag
 }
 
 itcl::body Target::grab {comp} {
@@ -917,7 +937,7 @@ itcl::body Target::pmconvert {c1 c2 pm1 pm2 pmunits} {
     #puts "c1=$c1, c2=$c2"
 
     # 
-    # Convert arcsec to seconds of RA.
+# Convert arcsec to seconds of RA.
     #
     # From Pat Wallace's document
     # Gemini South Pointing Studies
@@ -952,7 +972,7 @@ itcl::body Target::pmconvert {c1 c2 pm1 pm2 pmunits} {
          arcsecs/century {
             set AS2R 0.0000048481368111
             #set raz [expr {[slaDafin $c1] * 15.0}]
-	    set raz 3.14159265359
+				set raz 3.14159265359
             set decz [slaDafin $c2]
             set radec [slaDtp2s [expr {$pm1* $AS2R}] [expr {$pm2 * $AS2R}] \
                   $raz $decz]
@@ -960,7 +980,7 @@ itcl::body Target::pmconvert {c1 c2 pm1 pm2 pmunits} {
             set pm2 [expr { ([lindex $radec 1] - $decz) / $AS2R }]
          }
       }
-      #puts "pm1=$pm1, pm2=$pm2"
+#puts "pm1=$pm1, pm2=$pm2"
       return [list $pm1 $pm2]
    }
 }

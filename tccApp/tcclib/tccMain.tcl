@@ -100,13 +100,40 @@ proc tccMain args {
 	   epics cs m2deadband
 
        }
-       CP {
+		CP {
 	   # NICI channels
-	   epics sa nici
-	   epics cs niciMag
-	   epics cs niciAOLoop
-
-       }
+			epics sa nici
+			epics cs niciMag
+			epics cs niciAOLoop
+			
+			#GEMS guide channels
+			epics cs g1
+			epics cs wavelG1
+			epics cs difTrG1
+			epics cs trackG1
+			epics cs g1Guide
+			epics cs g1orbit
+			epics cs g2
+			epics cs wavelG2
+			epics cs difTrG2
+			epics cs trackG2
+			epics cs g2Guide
+			epics cs g2orbit
+			epics cs g3
+			epics cs wavelG3
+			epics cs difTrG3
+			epics cs trackG3
+			epics cs g3Guide
+			epics cs g3orbit
+			epics cs g4
+			epics cs wavelG4
+			epics cs difTrG4
+			epics cs trackG4
+			epics cs g4Guide
+			epics cs g4orbit
+					
+			epics cs guidersMapping
+		}
    }
 
 

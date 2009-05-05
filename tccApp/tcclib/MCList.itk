@@ -1,0 +1,274 @@
+#+
+#
+# class MCList
+# This class provides a multi-column widget
+#
+#+
+
+itcl::class MCList {
+	inherit itk::Widget
+	constructor {args} {}
+	destructor {}
+	itk_option define -width width Width 150 {}
+	itk_option define -height height Height 180 {}
+	itk_option define -columns columns Columns {dummy} {}
+	itk_option define -columnNames columnNames ColumnNames {dummy} {}
+	itk_option define -selectbackground selectBackground Foreground blue {} 
+	itk_option define -selectforeground selectForeground Background white {} 
+	itk_option define -grayedcolor grayedColor GrayedColor "dark gray" {} 
+	itk_option define -selectcommand selectCommand SelectCommand "" {} 
+	
+	protected variable nColumns 0
+	protected variable nRecords 0
+	protected variable contents
+	protected variable index
+	protected variable grayed
+	protected variable selIdx -1
+	protected variable startListView 0.0
+	protected variable endListView 0.0
+	protected variable iconImages
+	protected variable icons
+	public method addRecord { recordName record } {}
+	public method removeRecord recordName
+	public method get {}
+	public method select {recordName}
+	public method length {} { return $nRecords }
+	public method getIndex {name} {}
+	public method selectByIndex {idx} {}
+	public method setIcon {recordName image}
+
+	protected method onListSelect { winId } {}
+	protected method addColumn { columnId columnName } {}
+	protected method notifySelect {} {}
+	protected method onListScroll {start end}
+	protected method redrawIcons {}
+}
+
+itk::usual MCList {
+#    keep -background -cursor -foreground
+    keep -background -borderwidth \
+         -cursor -font -foreground -highlightcolor \
+         -highlightthickness \
+         -selectbackground -selectborderwidth -selectforeground
+}
+
+itcl::body MCList::constructor {args} {
+    itk_option add hull.borderwidth hull.relief
+    configure -borderwidth 1
+    configure -relief sunken
+    eval itk_initialize $args
+    
+   set nColumns [llength $itk_option(-columns)]
+   if { $nColumns != [llength $itk_option(-columnNames)] } {
+		error "Number of column titles is not equal to number of columns"
+   }
+
+	itk_component add iconFrm { frame $itk_interior.iconFrm }
+	itk_component add iconHdr { label $itk_interior.iconFrm.header -borderwidth 1 -relief raised }
+	itk_component add iconLst { canvas $itk_interior.iconFrm.list \
+		-background white -borderwidth 0 -relief flat \
+		-selectforeground $itk_option(-selectforeground) \
+		-selectbackground $itk_option(-selectbackground) \
+		-selectborderwidth 0 -width 18 -height 0}
+	pack $itk_interior.iconFrm.header $itk_interior.iconFrm.list -side top
+	pack configure  $itk_interior.iconFrm.header -fill x
+	pack configure  $itk_interior.iconFrm.list -fill both -expand true
+	
+	pack $itk_interior.iconFrm -expand false -fill both -side left
+
+	itk_component add scrollFrm { frame $itk_interior.scrollFrm }
+	itk_component add scrollHdr { label $itk_interior.scrollFrm.header -borderwidth 0 -relief flat }
+	itk_component add scrollBody { scrollbar $itk_interior.scrollFrm.body -orient vertical}
+	$itk_component(scrollBody) set 0 1
+	pack $itk_interior.iconFrm.header $itk_interior.iconFrm.list -side top
+	pack configure  $itk_interior.scrollFrm.header -fill x
+	pack configure  $itk_interior.scrollFrm.body -fill y -expand true
+	
+	pack $itk_interior.scrollFrm -fill y -side right
+
+	set lstbox $itk_interior.[lindex $itk_option(-columns) 0 ].list
+	$itk_component(scrollBody) configure -command "$lstbox yview"
+
+	set nColumns [llength $itk_option(-columns)]   
+	foreach columnId $itk_option(-columns) columnName  $itk_option(-columnNames) {
+		addColumn $columnId $columnName
+	}
+}
+
+itcl::body MCList::addRecord { recordName record } {
+
+    while { [llength $record] < $nColumns } {
+		lappend record ""
+    }
+
+    set contents($recordName) $record
+
+    foreach column $itk_option(-columns) field $record {
+		$itk_interior.$column.list insert end $field
+    }
+
+    set index($recordName) $nRecords
+    incr nRecords
+	
+	redrawIcons
+	
+#	set lstbox $itk_interior.[lindex $itk_option(-columns) 0 ].list
+#	set coords [$lstbox yview]
+#	$itk_component(scrollBody) set [lindex $coords 0] [lindex $coords 1]
+	
+	#set coords [$itk_interior.[lindex $itk_option(-columns) 0 ].list bbox $index($recordName)]
+	#$itk_component(iconLst) create image [lindex $coords 0] [lindex $coords 1] -anchor nw -image images::makedefaultIcon
+}
+
+itcl::body MCList::removeRecord {recordName} {
+	if { [info exists contents($recordName)] } {
+		set idx $index($recordName)
+   	foreach column "$itk_option(-columns)" {
+			$itk_interior.$column.list delete $idx
+   	}
+		unset index($recordName)
+		foreach name [array names index] {
+			if { $index($name) > $idx } {
+				incr index($name) -1
+			}
+		}
+		unset contents($recordName)
+		incr nRecords -1
+		
+		unset -nocomplain iconImages($recordName)
+		if { [info exists icons($recordName)] } {
+			$itk_component(iconLst) delete $icons($recordName)
+			unset icons($recordName)
+		}
+#		set lstbox $itk_interior.[lindex $itk_option(-columns) 0 ].list
+#		set coords [$lstbox yview]
+#		$itk_component(scrollBody) set [lindex $coords 0] [lindex $coords 1]
+		redrawIcons
+
+		if { $idx == $selIdx } {
+			set selIdx -1
+			notifySelect
+		}
+	}
+}
+
+itcl::body MCList::onListSelect { winId } {
+    selectByIndex [$winId curselection]
+}
+
+itcl::body MCList::addColumn { columnId columnName } {
+    itk_component add $columnId { frame $itk_interior.$columnId }
+    itk_component add ${columnId}Hdr { label $itk_interior.$columnId.header -text $columnName  -borderwidth 1 -relief raised }
+    itk_component add ${columnId}Lst { listbox $itk_interior.$columnId.list \
+		 -background white -borderwidth 0 -relief flat -selectmode single \
+		 -selectforeground $itk_option(-selectforeground) \
+		 -selectbackground $itk_option(-selectbackground) -selectborderwidth 0 \
+		 -width 0 -yscrollcommand [itcl::code $this onListScroll]}
+    pack $itk_interior.$columnId.header $itk_interior.$columnId.list -side top -fill x
+
+    bind $itk_interior.$columnId.list <<ListboxSelect>> "[itcl::code $this onListSelect] %W"
+    pack $itk_interior.$columnId -expand true -fill x -side left
+}
+
+itcl::body MCList::get {} {
+	if { $selIdx >= 0 } {
+		foreach recName [array names index] {
+			if { $index($recName) == $selIdx } {
+				return $recName
+			}
+		}
+	}
+	return ""
+}
+
+itcl::body MCList::notifySelect {} {
+	if {![string equal $itk_option(-selectcommand) ""]} {
+		$itk_option(-selectcommand) [get]
+		#catch "$itk_option(-selectcommand) [get]"
+	}
+}
+
+itcl::body MCList::select {recordName} {
+	if { [info exists index($recordName)] } {
+		selectByIndex $index($recordName)
+	}
+}
+	
+itcl::body MCList::selectByIndex {idx} {
+	set selIdx $idx
+   foreach column "$itk_option(-columns)" {
+		$itk_interior.$column.list selection clear 0 end
+		foreach recName [array names index] {
+			if { $index($recName) == $selIdx } {
+	   		$itk_interior.$column.list itemconfigure $index($recName) \
+		   		-background $itk_option(-selectbackground)
+				$itk_interior.$column.list itemconfigure $index($recName) \
+		   	 	-foreground $itk_option(-selectforeground)
+			} else {
+		   	$itk_interior.$column.list itemconfigure $index($recName) \
+			   	-background $itk_option(-background)
+		    	$itk_interior.$column.list itemconfigure $index($recName) \
+			    	-foreground $itk_option(-foreground)
+			}
+		}
+   }
+	notifySelect
+}
+
+itcl::body MCList::getIndex {name} {
+	if {[info exists index($name)]} {
+		return $index($name)
+	} else {
+		return -1
+	}
+}
+
+itcl::body MCList::onListScroll {start end} {
+	if { $startListView != $start || $endListView != $end} {
+		set startListView $start
+		set endListView $end
+	   foreach column "$itk_option(-columns)" {
+			$itk_interior.$column.list yview moveto $start
+	   }
+		$itk_component(scrollBody) set $start $end
+
+		redrawIcons
+	}
+}
+
+itcl::body MCList::setIcon {recordName image} {
+	if { [string equal $image ""] } {
+		unset -nocomplain iconImages($recordName)
+		if { [info exists icons($recordName)] } {
+			$itk_component(iconLst) delete $icons($recordName)
+			unset icons($recordName)
+		}
+	} else {
+		set lstbox $itk_interior.[lindex $itk_option(-columns) 0 ].list	
+		set coords [$lstbox bbox $index($recordName)]
+		if { ![string equal $coords ""] } {
+			if { [info exists icons($recordName)] } {
+				$itk_component(iconLst) delete $icons($recordName)
+				unset icons($recordName)
+			}
+			set icons($recordName) [$itk_component(iconLst) create image [lindex $coords 0] \
+				[lindex $coords 1] -anchor nw -image $image ]
+		}
+		set iconImages($recordName) $image
+	}
+}
+
+itcl::body MCList::redrawIcons {} {
+	set lstbox $itk_interior.[lindex $itk_option(-columns) 0 ].list
+	foreach name [array names index] {
+		if { [info exists icons($name)] } {
+			$itk_component(iconLst) delete $icons($name)
+			unset icons($name)
+		}
+		set coords [$lstbox bbox $index($name)]
+		if { ![string equal $coords ""] && [info exists iconImages($name)] } {
+			set icons($name) [$itk_component(iconLst) create image [lindex $coords 0] \
+				[lindex $coords 1] -anchor nw -image $iconImages($name)]
+		}
+	}
+}

@@ -51,6 +51,16 @@ itcl::class FieldControl {
       variable curr_wl_name ""
       variable curr_wavelength ""
       variable new_wavelength ""
+		method onSelectTarget {target} {}
+		method deleteTarget {taggedTarget} {}
+		method onDeleteTarget {} {}
+		method addNewTarget {} {}
+		method onAddNewTarget {} {}
+		method onSaveTarget {} {}
+		method onFieldChange {elementList} {}
+		method onAnyAssignedTargetChange {attr} {}
+		method onSetDefault {} {}
+		method onSwapTarget {} {}
    }
 }
 
@@ -72,36 +82,36 @@ itcl::body FieldControl::constructor args {
    set w $itk_component(display)
 
 # Display of current targets.
-   itk_component add sciencelabel {
-      label $w.sciencelabel -text "SCIENCE Target"
-   }
-   itk_component add sciencename {
-      label $w.sciencename -width 30 -borderwidth 2 -relief sunken
-   }
-   itk_component add pwfs1label {
-      label $w.pwfs1label -text "PWFS1 Target"
-   }
-   itk_component add pwfs1name {
-      label $w.pwfs1name -width 30 -borderwidth 2 -relief sunken
-   }
-   itk_component add pwfs2label {
-      label $w.pwfs2label -text "PWFS2 Target"
-   }
-   itk_component add pwfs2name {
-      label $w.pwfs2name -width 30 -borderwidth 2 -relief sunken
-   }
-   itk_component add oiwfslabel {
-      label $w.oiwfslabel -text "OIWFS target"
-   }
-   itk_component add oiwfsname {
-      label $w.oiwfsname -width 30 -borderwidth 2 -relief sunken
-   }
-   itk_component add aowfslabel {
-      label $w.aowfslabel -text "AOWFS target"
-   }
-   itk_component add aowfsname {
-      label $w.aowfsname -width 30 -borderwidth 2 -relief sunken
-   }
+#   itk_component add sciencelabel {
+#      label $w.sciencelabel -text "SCIENCE Target"
+#   }
+#   itk_component add sciencename {
+#      label $w.sciencename -width 30 -borderwidth 2 -relief sunken
+#   }
+#   itk_component add pwfs1label {
+#      label $w.pwfs1label -text "PWFS1 Target"
+#   }
+#   itk_component add pwfs1name {
+#      label $w.pwfs1name -width 30 -borderwidth 2 -relief sunken
+#   }
+#   itk_component add pwfs2label {
+#      label $w.pwfs2label -text "PWFS2 Target"
+#   }
+#   itk_component add pwfs2name {
+#      label $w.pwfs2name -width 30 -borderwidth 2 -relief sunken
+#   }
+#   itk_component add oiwfslabel {
+#      label $w.oiwfslabel -text "OIWFS target"
+#   }
+#   itk_component add oiwfsname {
+#      label $w.oiwfsname -width 30 -borderwidth 2 -relief sunken
+#   }
+#   itk_component add aowfslabel {
+#      label $w.aowfslabel -text "AOWFS target"
+#   }
+#   itk_component add aowfsname {
+#      label $w.aowfsname -width 30 -borderwidth 2 -relief sunken
+#   }
 #   grid $itk_component(sciencelabel) $itk_component(sciencename)
 #   grid $itk_component(pwfs1label)  $itk_component(pwfs1name)
 #   grid $itk_component(pwfs2label) $itk_component(pwfs2name)
@@ -125,7 +135,7 @@ itcl::body FieldControl::constructor args {
       SubComponentSelector $w.wavelength -labeltext "Observing wavelength" \
             -labelpos w -width 30
    }
-   pack $itk_component(subsel)
+   pack $itk_component(subsel) -anchor w
    pack $itk_component(guide) $itk_component(rotator) \
          $itk_component(wavelength) -side top -pady 3 -anchor e
 
@@ -136,117 +146,71 @@ itcl::body FieldControl::constructor args {
    set w $itk_component(data)
 
 # Swapguide button
-   itk_component add swapguide {
-	button $w.swapguide -text "Swap Science/Guide Targets" -command "$this swapguide"
-   }
-   pack $itk_component(swapguide) -side top -pady 3
-
-
+#   itk_component add swapguide {
+#	button $w.swapguide -text "Swap Science/Guide Targets" -command "$this swapguide"
+#   }
+#   pack $itk_component(swapguide) -side top -pady 3
 
 
 # Notebook for target entry controls.
    itk_component add tarframe {
-      frame $w.tarframe -borderwidth 2 -relief raised
+      frame $w.tarframe -borderwidth 0 -relief flat
    }
-   pack $itk_component(tarframe)
+   pack $itk_component(tarframe) -expand true -fill x
    set w $itk_component(tarframe)
 
    itk_component add targets {
-      iwidgets::tabnotebook $w.targets -height 440 -width 450 \
-            -tabpos n
-   } {
-      ignore -background -tabbackground
+      TargetList $w.targets -selectcommand [itcl::code $this onSelectTarget]
    }
 
-# Science target page.
-   set w [$itk_component(targets) add -label Science]
+   itk_component add trgOpFrm { frame $w.trgOpFrm }
 
-# Set colours from the options database
-   set bg [option get $w background Background] 
-   set fg [option get $w foreground Foreground] 
-   setWidgetColors $w [option get $w background Background] \
-         [option get $w foreground Foreground]
 
-# Configure page to set background when selected.
-   $itk_component(targets) pageconfigure Science -background $bg \
-         -foreground $fg -command [itcl::code $this pageSelectCB $bg]
+   image create photo ::images::addIcon -file [file join tcclib add.gif]
+   image create photo ::images::delIcon -file [file join tcclib remove.gif]
+   itk_component add addTrg { button $w.trgOpFrm.add -image ::images::addIcon -command [itcl::code $this onAddNewTarget]}
+   itk_component add delTrg { button $w.trgOpFrm.del -image ::images::delIcon -command [itcl::code $this onDeleteTarget]}
 
-   itk_component add sciencecontrol {
-      SciTargetControl $w.sciencecontrol
-   } {
-      usual
-      ignore -title
-   }
-   pack $itk_component(sciencecontrol)
+   frame $w.trgOpFrm.edBtnFrm
+   image create photo ::images::copyIcon -file [file join tcclib copy.gif]
+   image create photo ::images::pasteIcon -file [file join tcclib paste.gif]
+   image create photo ::images::duplicateIcon -file [file join tcclib duplicate.gif]
+   itk_component add copyTrg { button $w.trgOpFrm.edBtnFrm.copy -image ::images::copyIcon }
+   itk_component add pasteTrg { button $w.trgOpFrm.edBtnFrm.paste -image ::images::pasteIcon }
+   itk_component add duplicateTrg { button $w.trgOpFrm.edBtnFrm.duplicate -image ::images::duplicateIcon }
 
-# Repeat for PWFS1
-   set w [$itk_component(targets) add -label PWFS1]
-   set bg [option get $w background Background] 
-   set fg [option get $w foreground Foreground] 
-   setWidgetColors $w [option get $w background Background] \
-         [option get $w foreground Foreground]
-   $itk_component(targets) pageconfigure PWFS1 -background $bg \
-         -foreground $fg -command [itcl::code $this pageSelectCB $bg]
+	pack $w.trgOpFrm.edBtnFrm.copy $w.trgOpFrm.edBtnFrm.paste $w.trgOpFrm.edBtnFrm.duplicate \
+		-side left
 
-   itk_component add pwfs1control {
-      SciTargetControl $w.pwfs1control -keepApply 1
-   } {
-      usual
-      ignore -title
-   }
-   pack $itk_component(pwfs1control)
+	frame $w.trgOpFrm.opBtnFrm
+	image create photo ::images::makedefaultIcon -file [file join tcclib star.gif]
+	itk_component add makeDefault { button $w.trgOpFrm.opBtnFrm.makedefault -image ::images::makedefaultIcon \
+		-command [itcl::code $this onSetDefault]}
+	image create photo ::images::swapTargetsIcon -file [file join tcclib dep_loop.gif]
+	itk_component add swapTargets { button $w.trgOpFrm.opBtnFrm.swaptargets -image ::images::swapTargetsIcon \
+		-command [itcl::code $this onSwapTarget]}
+	pack $w.trgOpFrm.opBtnFrm.makedefault $w.trgOpFrm.opBtnFrm.swaptargets -side left 
+	
 
-# and PWFS2
-   set w [$itk_component(targets) add -label PWFS2]
-   set bg [option get $w background Background] 
-   set fg [option get $w foreground Foreground] 
-   setWidgetColors $w [option get $w background Background] \
-         [option get $w foreground Foreground]
-   $itk_component(targets) pageconfigure PWFS2 -background $bg \
-         -foreground $fg -command [itcl::code $this pageSelectCB $bg]
+   pack $w.trgOpFrm.add $w.trgOpFrm.del  -side left
+#	pack $w.trgOpFrm.add $w.trgOpFrm.del  $w.trgOpFrm.edBtnFrm -side left
+#	pack configure $w.trgOpFrm.edBtnFrm -padx 5
 
-   itk_component add pwfs2control {
-      SciTargetControl $w.pwfs2control -keepApply 1
-   } {
-      usual
-      ignore -title
-   }
-   pack $itk_component(pwfs2control)
+	pack $w.trgOpFrm.opBtnFrm -side right 
 
-# and OIWFS
-   set w [$itk_component(targets) add -label OIWFS]
-   set bg [option get $w background Background] 
-   set fg [option get $w foreground Foreground] 
-   setWidgetColors $w [option get $w background Background] \
-         [option get $w foreground Foreground]
-   $itk_component(targets) pageconfigure OIWFS -background $bg \
-         -foreground $fg -command [itcl::code $this pageSelectCB $bg]
 
-   itk_component add oiwfscontrol {
-      SciTargetControl $w.oiwfscontrol -keepApply 1
-   } {
-      usual
-      ignore -title
-   }
-   pack $itk_component(oiwfscontrol)
+#   itk_component add hideNonDefaultBtn { button $w.trgOpFrm.hideNonDefaultBtn -text "Show non-defaults" }
+#   pack $w.trgOpFrm.hideNonDefaultBtn -side right
+   itk_component add trgFrm { iwidgets::labeledframe $w.trgFrm -labeltext "Selected Target" \
+	   -labelpos nw -relief groove}
 
-# and AOWFS
-   set w [$itk_component(targets) add -label AOWFS]
-   set bg [option get $w background Background] 
-   set fg [option get $w foreground Foreground] 
-   setWidgetColors $w [option get $w background Background] \
-         [option get $w foreground Foreground]
-   $itk_component(targets) pageconfigure AOWFS -background $bg \
-         -foreground $fg -command [itcl::code $this pageSelectCB $bg]
+   itk_component add trgDetails { TargetDetail  $w.trgFrm.trgDetails -relief flat -savecommand [itcl::code $this onSaveTarget]}
+   grid $w.trgFrm.trgDetails
 
-   itk_component add aowfscontrol {
-      SciTargetControl $w.aowfscontrol -keepApply 1
-   } {
-      usual
-      ignore -title
-   }
-   pack $itk_component(aowfscontrol)
-   pack $itk_component(targets)
+   pack $itk_component(targets) $itk_component(trgOpFrm) $itk_component(trgFrm) -side top
+   pack configure $itk_component(targets) -expand true -fill x
+   pack configure $itk_component(trgFrm) -fill x -padx 4
+   pack configure $itk_component(trgOpFrm) -anchor w -fill x
 
 # Airmass limit and program ID.
    set w $itk_component(data)
@@ -260,7 +224,7 @@ itcl::body FieldControl::constructor args {
    pack $itk_component(airmass) $itk_component(progid) -side left \
          -padx 5 -pady 10 -expand yes
 
-   $itk_component(targets) select Science
+   #$itk_component(targets) select Science
 
    pack $w.sf -side top -pady 3
 
@@ -275,10 +239,10 @@ itcl::body FieldControl::constructor args {
 # Turn off geometry propogation once the widget is constructed so that
 # re-configuring the notebook widgets doesn't cause the top level window
 # to be re-sized.
-   after idle pack propagate $itk_component(tarframe) 0
+   #after idle pack propagate $itk_component(tarframe) 0
 
    eval itk_initialize $args
-   $itk_component(swapguide) configure -text "Swap Science/Guide Targets" -bg "white"
+#   $itk_component(swapguide) configure -text "Swap Science/Guide Targets" -bg "white"
 }
 
 itcl::body FieldControl::destructor {} {
@@ -288,11 +252,11 @@ itcl::body FieldControl::destructor {} {
 }
 
 itcl::body FieldControl::save {name} {
-
 #+
 # Updates the named field object.
 #-
-
+	#Force save of target details
+	onSaveTarget
 # If this is a new field then add each target and track rate from the old 
 # field to the new provided that the old field still exists.
    if { ![string equal $currentname $name] && \
@@ -349,12 +313,6 @@ itcl::body FieldControl::save {name} {
       }
    }
 
-# Configure the targets.
-   foreach target {science pwfs1 pwfs2 oiwfs aowfs} {
-      $name configure -${target}target \
-            [$itk_component(${target}name) cget -text]
-   }
-
 # Set the remaining components.
    $name configure -guide [$itk_component(guide) get] \
          -rotator [$itk_component(rotator) get] \
@@ -369,6 +327,9 @@ itcl::body FieldControl::save {name} {
 itcl::body FieldControl::reset {} {
    $itk_component(progid) clear
    $itk_component(airmass) clear
+	
+	set ::Config(tcs.field.target,value) ""
+	
    set ::Config(tcs.field.sciencetarget,value) ""
    set ::Config(tcs.field.pwfs1target,value) ""
    set ::Config(tcs.field.pwfs2target,value) ""
@@ -378,6 +339,7 @@ itcl::body FieldControl::reset {} {
 
 
 itcl::body FieldControl::swapguide {} {
+return
    global env
    if {$curr_guide == ""} {
 	set new_wavelength ""
@@ -597,18 +559,28 @@ itcl::body FieldControl::load {name} {
 
 # Save the existing name so that we can copy all the targets it
 # contains.
+	if {![string equal $currentname ""]} {
+		$currentname unsubscribe [itcl::code $this onFieldChange]
+	}
    set currentname ${name}
 
 # Set the namespace and list to save targets and track rates in.
    foreach target {science pwfs1 pwfs2 oiwfs aowfs} {
-      set ::Config($comp.${target}target,list) ${name}TargetList
       set ::Config($comp.${target}target,namespace) ${name}TargetNames
-      set ::Config($comp.${target}target,value) [$name cget -${target}target]
-      set ::Config($comp.${target}target.trackrate,list) ${name}TrackRateList
       set ::Config($comp.${target}target.trackrate,namespace) \
             ${name}TrackRateNames
+      set ::Config($comp.${target}target,list) ${name}TargetList
+      set ::Config($comp.${target}target,value) [$name cget -${target}target]
+      set ::Config($comp.${target}target.trackrate,list) ${name}TrackRateList
    }
-
+  set ::Config($comp.target,namespace) ${name}TargetNames
+  set ::Config($comp.trackrate,namespace) ${name}TrackRateNames
+  set ::Config($comp.target,list) ${name}TargetList 
+  set ::Config($comp.target,value) ""
+  set ::Config($comp.taggedtarget,list) [${name} cget -taggedTargets] 
+  set ::Config($comp.taggedtarget,value) ""
+  set ::Config($comp.trackrate,list) ${name}TrackRateList
+ 
    set ::Config($comp.guide,value) [$name cget -guide]
    set ::Config($comp.rotator,value) [$name cget -rotator]
    set ::Config($comp.wavelength,value) [$name cget -wavelength]
@@ -617,6 +589,7 @@ itcl::body FieldControl::load {name} {
    $itk_component(progid) insert end [$name cget -programid]
    $itk_component(airmass) insert end [$name cget -airmassLimit]
 
+	$currentname subscribe [itcl::code $this onFieldChange]
 }
 
 itcl::configbody FieldControl::component {
@@ -628,15 +601,17 @@ itcl::configbody FieldControl::component {
        set comp $itk_option(-component)
 
 # Configure the component options of the target controls.
-      foreach target {science pwfs1 pwfs2 oiwfs aowfs} {
-         $itk_component(${target}control) configure \
-               -component $comp.${target}target
+#      foreach target {science pwfs1 pwfs2 oiwfs aowfs} {
+#         $itk_component(${target}control) configure \
+#               -component $comp.${target}target
 
 # Configure the textvariable option on the target display widgets to the
 # config array.
-         $itk_component(${target}name) configure -textvariable \
-               ::Config($comp.${target}target,value)
-      }
+#         $itk_component(${target}name) configure -textvariable \
+#               ::Config($comp.${target}target,value)
+#      }
+      $itk_component(targets) configure -component $comp.taggedtarget
+		
 
 # Configure the guide, rotator and wavelength components.
       $itk_component(guide) configure -component $comp.guide
@@ -654,11 +629,18 @@ itcl::configbody FieldControl::component {
          set ::Config($comp.${target}target,list) ${currentname}TargetList
          set ::Config($comp.${target}target,namespace) ${currentname}TargetNames
       }
-      set name $::Config($comp.wavelength,value)
+      set ::Config($comp.target,namespace) ${currentname}TargetNames
+		set ::Config($comp.trackrate,namespace) ${currentname}TrackRateNames
+      set ::Config($comp.target,list) ${currentname}TargetList
+      set ::Config($comp.taggedtarget,list) [${currentname} cget -taggedTargets]
+      set ::Config($comp.trackrate,list) ${currentname}TrackRateList
+      
+		set name $::Config($comp.wavelength,value)
    }
 }
 
 itcl::body FieldControl::sync {component name} {
+return
    switch $component {
       tcs.field.sciencetarget {
          $itk_component(sciencecontrol) sync $name
@@ -679,6 +661,7 @@ itcl::body FieldControl::sync {component name} {
 }
 
 itcl::body FieldControl::newfieldval {n1 n2 op} {
+return
 # Update the current name if the scratch object is selected. This is required
 # because load will not get called.
    if { $::Config($comp,value) == "" } {
@@ -732,20 +715,100 @@ itcl::body FieldControl::newtarget {name type args} {
 }
 
 itcl::body FieldControl::pageSelectCB {color} {
-
+return
 # Re-configure the notebook background to match the selected page.
    $itk_component(targets) config -background $color -tabbackground $color \
          -backdrop $color
 
 # Restore the colours of the tabs.
-   $itk_component(targets) pageconfigure Science -background \
-         [option get $itk_component(sciencecontrol) background Background] 
-   $itk_component(targets) pageconfigure PWFS1 -background \
-         [option get $itk_component(pwfs1control) background Background] 
-   $itk_component(targets) pageconfigure PWFS2 -background \
-         [option get $itk_component(pwfs2control) background Background] 
-   $itk_component(targets) pageconfigure OIWFS -background \
-         [option get $itk_component(oiwfscontrol) background Background] 
-   $itk_component(targets) pageconfigure AOWFS -background \
-         [option get $itk_component(aowfscontrol) background Background] 
+#   $itk_component(targets) pageconfigure Science -background \
+#         [option get $itk_component(sciencecontrol) background Background] 
+#   $itk_component(targets) pageconfigure PWFS1 -background \
+#         [option get $itk_component(pwfs1control) background Background] 
+#   $itk_component(targets) pageconfigure PWFS2 -background \
+#         [option get $itk_component(pwfs2control) background Background] 
+#   $itk_component(targets) pageconfigure OIWFS -background \
+#         [option get $itk_component(oiwfscontrol) background Background] 
+#   $itk_component(targets) pageconfigure AOWFS -background \
+#         [option get $itk_component(aowfscontrol) background Background] 
+}
+
+itcl::body FieldControl::onSelectTarget {target} {
+	$itk_component(trgDetails) load $target
+}
+
+itcl::body FieldControl::deleteTarget {target} {
+	$::Config(tcs.field,namespace)::$::Config(tcs.field,value) removeTaggedTarget $target
+}
+
+itcl::body FieldControl::onDeleteTarget {} {
+	set target [$itk_component(targets) getSelected]
+	if { ![string equal $target ""] } {
+		deleteTarget $target
+	}
+}
+
+itcl::body FieldControl::addNewTarget {} {
+	set currTarget [$itk_component(targets) getSelected]
+	if { [string equal $currTarget ""] } {
+		set tag Base
+	} elseif {[string equal [$currTarget cget -tagPrefix] "Base"]} {
+		set tag User
+	} else {
+		set tag [$currTarget cget -tagPrefix]
+	}
+	
+	return [$::Config(tcs.field,namespace)::$::Config(tcs.field,value) addTaggedTarget $tag]
+}
+
+itcl::body FieldControl::onAddNewTarget {} {
+	set newTarget [addNewTarget]
+	$itk_component(targets) select $newTarget 
+}
+
+itcl::body FieldControl::onSaveTarget {} {
+	set tagtarget [$itk_component(targets) getSelected]
+	if { $tagtarget ne "" } {
+		set tagtarget [$itk_component(trgDetails) save [$itk_component(targets) getSelected]]
+		$itk_component(targets) refresh
+		$itk_component(targets) select $tagtarget
+	}
+}
+
+itcl::body FieldControl::onFieldChange {elementList} {
+	foreach attr $elementList {
+		switch -glob $attr {
+			*target 	{
+				onAnyAssignedTargetChange $attr
+			}
+		}
+	}
+}
+
+itcl::body FieldControl::onAnyAssignedTargetChange {attr} {
+	$itk_component(targets) onAnyAssignedTargetChange
+}
+
+itcl::body FieldControl::onSetDefault {} {
+	set tagtarget [$itk_component(targets) getSelected]
+	set tag [$tagtarget cget -tagPrefix]
+	set default [$::Config(tcs.field,namespace)::$::Config(tcs.field,value) getDefaultTarget $tag]
+	if { $default eq $tagtarget } {
+		$::Config(tcs.field,namespace)::$::Config(tcs.field,value) clearDefaultTarget $tag
+	} else {
+		$::Config(tcs.field,namespace)::$::Config(tcs.field,value) setDefaultTarget $tagtarget
+	}
+}
+
+itcl::body FieldControl::onSwapTarget {} {
+	set tagtarget [$itk_component(targets) getSelected]
+	set tag [$tagtarget cget -tagPrefix]
+	if { !( $tagtarget eq [$::Config(tcs.field,namespace)::$::Config(tcs.field,value) getDefaultTarget $tag] ) } {
+		return
+	}
+	if { $tag eq "Base" || $tag eq "User" || [$::Config(tcs.field,namespace)::$::Config(tcs.field,value) getSwapTarget] eq $tagtarget } {
+		$::Config(tcs.field,namespace)::$::Config(tcs.field,value) clearSwapTarget
+	} else {
+		$::Config(tcs.field,namespace)::$::Config(tcs.field,value) setSwapTarget $tagtarget
+	}
 }

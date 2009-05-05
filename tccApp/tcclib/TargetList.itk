@@ -1,0 +1,406 @@
+#+
+#  TargetList <- itk::Widget
+#
+#  A TargetList widget is a widget with controls for displaying and selecting 
+#  targets.
+#
+#  Options:
+#           -apply          The name of the apply record to post to when the
+#                           apply button is pressed.
+#
+#           -component      The name of the component that the control edits.
+#
+#           -system         The name of the system being controlled (for
+#                           error messages).
+#
+#  Methods:
+#           select name     Selects the component "name".
+#
+#           sync name       Syncronises the window contents with the named
+#                           object
+#
+#  Derived classes also need to supply implementations of the following
+#  public methods:
+#
+#           load object     Load the control with the definition of object.
+#
+#           reset           Reset the control to its default state as if
+#                           no object has been selected.
+#
+#           save object     Save the contents of the controls in the object.
+#
+#  D Terrett  18 August 2003
+#
+#  Copyright CCLRC
+#+
+
+itcl::class TargetList {
+   inherit itk::Widget
+   constructor args {}
+   destructor {}
+   itk_option define -selectcommand selectCommand SelectCommand {}
+   itk_option define -returncommand returnCommand ReturnComamnd {}
+   itk_option define -component component Component {}
+	itk_option define -editable editable Editable 1
+   public {
+      method load {object} {}
+      method reset {} {}
+      method save {object} {}
+      method sync {name}
+		method getSelected {} {}
+      method select {name}
+		method refresh {}
+		
+		method onInsert {target} {}
+		method onRemove {target} {}
+		method onDestroy {} {}
+
+		method onAnyAssignedTargetChange {} {}
+   }
+   protected {
+      method applycmd {}
+      method store {name}
+      method delselected {}
+      variable description
+   }
+   private {
+		method setComponentList list
+      method returncmd {}
+      method lock {}
+      method newname {n1 n2 op}
+      method newlist {n1 n2 op}
+      method newtrlist {n1 n2 op}
+      variable cursel {}
+      variable lockstate
+      variable comp ""
+      variable currentlist ""
+		method onSelect {target} {}
+		method isDefault tagtarget {}
+		method setIcon {tagtarget} {}
+  	}
+}
+
+# Create bitmap for the delete button.
+image create bitmap images::delete -data {
+   #define delete_width 18
+   #define delete_height 18
+   static unsigned char delete_bits[] = {
+      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x18, 0x60, 0x00,
+      0x38, 0x70, 0x00, 0x70, 0x38, 0x00, 0xe0, 0x1c, 0x00, 0xc0, 0x0f, 0x00,
+      0x80, 0x07, 0x00, 0x80, 0x07, 0x00, 0xc0, 0x0f, 0x00, 0xe0, 0x1c, 0x00,
+      0x70, 0x38, 0x00, 0x38, 0x70, 0x00, 0x18, 0x60, 0x00, 0x00, 0x00, 0x00,
+      0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+}
+
+itk::usual TargetList {
+	
+#   keep -activebackground -activeforeground -background -borderwidth \
+#         -cursor -disabledforeground -font -foreground -highlightcolor \
+#         -highlightthickness -insertbackground -insertborderwidth \
+#         -insertofftime -insertontime -insertwidth -labelfont -popupcursor \
+#         -selectbackground -selectborderwidth -selectforeground \
+#         -textbackground -textfont -title
+	keep -background -borderwidth \
+        -cursor -font -foreground -highlightcolor \
+        -highlightthickness \
+        -selectbackground -selectborderwidth -selectforeground
+}
+
+itcl::body TargetList::constructor args {
+
+   set w $itk_interior
+
+   itk_component add selector {
+      MCList $w.selector -height 240 -width 250  -columns {tag name ra dec} \
+			-columnNames {"Type Tag" Name RA/Azimuth Dec/Elevation} -selectcommand [itcl::code $this onSelect]
+   }
+   pack $itk_component(selector) -side top -fill both
+
+   eval itk_initialize $args
+}
+
+itcl::body TargetList::destructor {} {
+
+# Remove variable trace.
+	if { $comp != "" } {
+		trace vdelete ::Config($comp,value) w [itcl::code $this newname]
+	   trace vdelete ::Config($comp,list) w [itcl::code $this newlist]
+	}
+}
+
+itcl::body TargetList::lock {} {
+   if { $lockstate } {
+#      $itk_component(apply) configure -state normal
+   } else {
+#      $itk_component(apply) configure -state disabled
+   }
+}
+
+itcl::body TargetList::store {name} {
+
+# Determine the full name of the object to be updated.
+   if { [string equal $name ""] } {
+      set fullname $::Config($comp,anon)
+   } else {
+      set fullname $::Config($comp,namespace)::$name
+   }
+
+# If the object doesn't exist.
+   if { [lsearch -exact [itcl::find objects -class $::Config($comp,class)] \
+         $fullname] < 0 && ( ! [string equal $name ""] ) } {
+
+# Create it.
+      $::Config($comp,class) $fullname $::Config($comp,list)
+
+# Update the object with the contents of the widget, catching any errors
+# due to invalid data.
+      if { [catch {$this save $fullname} msg] } {
+
+# Delete the bad object and report the error.
+         itcl::delete object $fullname
+         #$itk_component(selector) insert $name
+         tk_messageBox -icon error -parent $itk_interior -message \
+               "Error creating $description \"$name\": $msg"
+         return 0
+      } else {
+
+# Update the global config array with the new name.
+         set ::Config($comp,value) $name
+      }
+   } else {
+
+# Update the existing object with data from the widget.
+      if { [catch {$this save $fullname} msg] } {
+         if { [string equal $name ""] } {
+            tk_messageBox -icon error -parent $itk_interior -message \
+                  "Error updating $description: $msg"
+            return 0
+         } else {
+            tk_messageBox -icon error -parent $itk_interior -message \
+                  "Error updating $description \"$name\": $msg"
+            return 0
+         }
+      }
+
+# Update the global config array name - although the name hasn't changed
+# this enables other parts of the system to watch for changes in
+# component definitions. Only do this if the name isn't blank.
+      if { $name != "" } {
+         set ::Config($comp,value) $name
+      }
+   } 
+   return 1
+}
+
+itcl::body TargetList::applycmd {} {
+
+# Store the window contents.
+   if { [store [$itk_component(selector) get]] } {
+
+# Send a sync to the panel managers of all the subcomponents that have
+# values.
+      foreach subcomp $::Config($comp,subcomp) {
+         if { $::Config($comp.$subcomp,value) != "" } {
+            $::Config($comp.$subcomp,panel) sync $comp.$subcomp 
+         }
+      }
+
+# Apply the object.
+      if { [string equal $::Config($comp,value) ""] } {
+         $::Config($comp,anon) apply $itk_option(-component)
+
+# Return the scratch object to its initial state so that it doesn't prevent
+# the deletion of any of its subcomponents.
+         $::Config($comp,anon) init
+      } else {
+         $::Config($comp,namespace)::$::Config($comp,value) apply \
+               $itk_option(-component)
+      }
+
+# Post the command.
+      if [catch {cs $itk_option(-apply) post} msg] {
+           tk_messageBox -icon error -parent $itk_interior -message \
+               "Error posting command: $itk_option(-system) reports \"$msg\""
+      }
+   }
+}
+
+itcl::body TargetList::delselected {} {
+#+
+# Deletes the currently selected component object.
+#-
+   set name [$itk_component(selector) get]
+   if { ! [string equal $name ""] } {
+      set ::Config($comp,value) ""
+      set fullname ::$::Config($comp,namespace)::$name
+      if { [catch {itcl::delete object $fullname} msg] } {
+         tk_messageBox -icon error -message $msg \
+               -parent $itk_interior -title "Component delete error"
+         set ::Config($comp,value) $name
+      }
+   }
+}
+
+itcl::body TargetList::select {name} {
+	$itk_component(selector) select $name
+}
+
+itcl::body TargetList::returncmd {} {
+
+# If there is something entered in the selection box then invoke the
+# store button.
+   set name [$itk_component(selector) get]
+   if { $name != "" } {
+ #     $itk_component(store) invoke
+   }
+}
+
+itcl::configbody TargetList::component {
+
+# Remove any existing trace
+	if { $comp != "" } {
+		trace vdelete ::Config($comp,value) w [itcl::code $this newname]
+	   trace vdelete ::Config($comp,list) w [itcl::code $this newlist]
+	   set comp ""
+	}
+
+   if { $itk_option(-component) != "" } {
+# Record current component name.
+      set comp $itk_option(-component)
+
+# Configure the -componentlist option of the selector.
+#      $itk_component(selector) configure -componentlist $::Config($comp,list)
+		#setComponentList $::Config($comp,namespace)$::Config($comp,list)
+# Trace changes to the component value.
+      trace variable ::Config($comp,value) w [itcl::code $this newname]
+      trace variable ::Config($comp,list) w [itcl::code $this newlist]
+
+# Initialise with the current name.
+      after idle [itcl::code $this newname "" "" ""]
+   }
+}
+
+itcl::body TargetList::newname {n1 n2 op} {
+   #$itk_component(selector) select $::Config($comp,value)
+
+# Determine the full name of the new object.
+   if { ! [string equal $::Config($comp,value) ""] } {
+      set fullname $::Config($comp,namespace)::$::Config($comp,value)
+
+# Load the new object.
+      $this reset
+      $this load $fullname
+   } else {
+
+# Clear the control.
+      $this reset
+   }
+}
+
+itcl::body TargetList::sync {name} {
+
+# Check that the name matches the selection combobox.
+   if { [string equal [namespace tail $name] [$itk_component(selector) get]] } {
+      $this save $name
+   }
+}
+
+itcl::body TargetList::onInsert {taggedTarget} {
+	if { $taggedTarget == "" } return
+	set fullname [$taggedTarget cget -target]
+	
+	set tag [$taggedTarget getFullTag]
+	if {[string equal $tag Base]} {
+		set tag Science
+	}
+	
+	set targetInfo [list $tag [$fullname cget -objname] [$fullname cget -c1] [$fullname cget -c2] ]
+	$itk_component(selector) addRecord $taggedTarget $targetInfo
+	setIcon $taggedTarget
+	if {[string equal "" [$itk_component(selector) get]]} {
+		$itk_component(selector) select $taggedTarget
+	}
+}
+
+itcl::body TargetList::onRemove {taggedTarget} {
+	set idx [$itk_component(selector) getIndex $taggedTarget]
+	$itk_component(selector) removeRecord $taggedTarget
+	if { [$itk_component(selector) length] > 0 && [string equal "" [$itk_component(selector) get]] } {
+		if { $idx >= [$itk_component(selector) length] } {
+			$itk_component(selector) selectByIndex [expr "[$itk_component(selector) length]-1"]
+		} else {
+			$itk_component(selector) selectByIndex [expr "$idx"]
+		}
+	}
+}
+
+itcl::body TargetList::onDestroy {} {
+	for {set i 0} {$i < [$currentlist length]} {incr i} {
+		$itk_component(selector) removeRecord [$currentlist get $i]
+	}
+}
+
+itcl::body TargetList::setComponentList {list} {
+#-
+#  Adds the widget to the list of widgets managed by the list.
+#-
+   if { ! [string equal $currentlist ""] } {   
+		$currentlist unsubscribe $this
+   }
+   set currentlist $list
+   if { ! [string equal $list ""] } {
+      $list subscribe $this
+   }
+}
+
+itcl::body TargetList::newlist {n1 n2 op} {
+# Re-configure the control.
+  setComponentList $::Config($comp,list)
+
+# Select the current component.
+#  $itk_component(selector) select $::Config($comp,value)
+}
+
+itcl::body TargetList::onSelect {target} {
+	set selectCB $itk_option(-selectcommand)
+	if { ![string equal $selectCB ""] } {
+		$selectCB $target
+	}
+}
+
+itcl::body TargetList::getSelected {} {
+	return [$itk_component(selector) get]
+}
+
+itcl::body TargetList::refresh {} {
+   if { ! [string equal $currentlist ""] } {
+		$currentlist unsubscribe $this
+      $currentlist subscribe $this
+   }
+}
+
+itcl::body TargetList::onAnyAssignedTargetChange {} {
+	#refresh "default" icons
+	for {set i 0} {$i < [$currentlist length]} {incr i} {
+		setIcon [$currentlist get $i]
+	}
+}
+
+itcl::body TargetList::isDefault tagtarget {
+	set default [$::Config(tcs.field,namespace)::$::Config(tcs.field,value) getDefaultTarget [$tagtarget cget -tagPrefix]]
+	return [string equal $default $tagtarget]
+}
+
+itcl::body TargetList::setIcon {tagtarget} {
+	if { [isDefault $tagtarget] } {
+		set swaptarget [$::Config(tcs.field,namespace)::$::Config(tcs.field,value) getSwapTarget]
+		set tag [$tagtarget cget -tagPrefix]
+		if { (($tag eq "Base" || $tag eq "User") && $swaptarget ne "") || $swaptarget eq $tagtarget } {
+			$itk_component(selector) setIcon $tagtarget ::images::swapTargetsIcon
+		} else {
+			$itk_component(selector) setIcon $tagtarget ::images::makedefaultIcon
+		}
+	} else {
+		$itk_component(selector) setIcon $tagtarget ""
+	}	
+}
