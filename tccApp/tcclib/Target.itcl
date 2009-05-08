@@ -674,25 +674,36 @@ itcl::body Target::save {node} {
 }
 
 itcl::body Target::grab {comp} {
-
 # Determine name of the virtual telescope.
-   switch $comp {
-      tcs.field.sciencetarget {
-         set vt sourceA
-      }
-      tcs.field.pwfs1target {
-         set vt pwfs1
-      }
-      tcs.field.pwfs2target {
-         set vt pwfs2
-      }
-      tcs.field.oiwfstarget {
-         set vt oiwfs
-      }
-      tcs.field.aowfstarget {
-         set vt pwfs2
-      }
-   }
+	switch $comp {
+			science {
+				set vt sourceA
+			}
+			pwfs1 {
+				set vt pwfs1
+			}
+			pwfs2 {
+				set vt pwfs2
+			}
+			oiwfs {
+				set vt oiwfs
+			}
+			aowfs {
+				set vt pwfs2
+			}
+#			g1 {
+#				set vt g1
+#			}
+#			g2 {
+#				set vt g2
+#			}
+#			g3 {
+#				set vt g3
+#			}
+#			g4 {
+#				set vt g4
+#			}
+		}
 
 
 # Clear current state.
@@ -755,6 +766,7 @@ itcl::body Target::grab {comp} {
    set rv ""
    set parallax ""
    set trackrate ""
+		
 }
 
 itcl::configbody Target::cosys {

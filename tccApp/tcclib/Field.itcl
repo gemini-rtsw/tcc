@@ -97,6 +97,9 @@ itcl::class Field {
 		variable odgw3target ""
 		variable odgw4target ""
 		variable swaptarget ""
+		variable swapguide ""
+		variable swaprotator ""
+		variable swapwavelength ""
 		variable gcount 0
       variable rotator ""
       variable guide ""
@@ -221,31 +224,14 @@ itcl::body Field::apply {comp} {
 		}
 
 		[$swaptarget cget -target] apply science
-		"::GuideNames::No guiding" apply $comp.guide
+		"::GuideNames::$swapguide" apply $comp.guide
 	   if { ! [string equal $rotator ""] } {
 	      ::RotatorNames::$rotator apply $comp.rotator
 	   }
-		if {$env(TCC_TCSNAME) == "tcs"} {
-		    set guide_wl [.observePanel.frame.control.botframe.wfsconfig getValue HrwfsColFilt]
-		} else {
-		    set guide_wl [.observePanel.frame.control.botframe.wfsconfig.tabs.canvas.notebook.cs.page1.cs.hrwfs.col get]
-		}
-		switch $guide_wl {
-		   "U-red1"  { set new_wavelength "Acq Cam U" }
-		   "B-blue"  { set new_wavelength "Acq Cam B" }
-		   "V-green" { set new_wavelength "Acq Cam V" }
-		   "R-red2"  { set new_wavelength "Acq Cam R" }
-		   "I-red3"  { set new_wavelength "Acq Cam I" }
-		   "neutral" { set new_wavelength "Acq Cam neutral" }
-		   default   { 
-				tk_messageBox -icon warning -parent $itk_interior \
-					-message "No guide wavelength found ... using 0.5 (Acq Cam neutral)"
-			   set new_wavelength "Acq Cam neutral"
-			}
-		}
-		::WavelengthNames::$new_wavelength configure -set_baffles 0
-		::WavelengthNames::$new_wavelength apply $comp.wavelength
-		::WavelengthNames::$new_wavelength configure -set_baffles 1
+		
+		"::WavelengthNames::$swapwavelength" configure -set_baffles 0
+		"::WavelengthNames::$swapwavelength" apply $comp.wavelength
+		"::WavelengthNames::$swapwavelength" configure -set_baffles 1
 
 		if { ![string is space $airmassLimit] } {
 	      cs airmassLimit set limit $airmassLimit
@@ -289,7 +275,6 @@ itcl::body Field::apply {comp} {
 	   }
 		foreach {tagtarget code} [list $pwfs1target pwfs1 $pwfs2target pwfs2 $oiwfstarget oiwfs $aowfstarget aowfs] {
 			if { $tagtarget ne "" } {
-				puts "Field::apply: Configuring $code"
 				[$tagtarget cget -target] apply $code
 			}
 		}
@@ -301,7 +286,6 @@ itcl::body Field::apply {comp} {
 						error "Trying to use more that 4 GEMS stars."
 					} else {
 						[$tagtarget cget -target] apply g$gId
-						puts "Field::apply: Configuring g$gId"
 						set tag [$tagtarget cget -tagPrefix]
 						switch $tag {
 							CWFS1 {
@@ -354,7 +338,6 @@ itcl::body Field::apply {comp} {
 	      ocssession obsStart $observationid
 	   }
 	}
-puts "Field::apply exit"
 }
 
 itcl::body Field::init {} {
@@ -513,16 +496,16 @@ itcl::configbody Field::guide {
    }
    set current_guide ""
    if { ! [string equal $guide ""] } {
-		if { [calparam cget -site] eq "CP" } {
+#		if { [calparam cget -site] eq "CP" } {
 		# Some name translations are needed for CP
-			if { [string match "*AO*" $guide] } {
-				if { [string match "*GSAOI*" $::Config(tcs.instrument,value)] } {
-					set guide GeMS
-				} elseif { $guide eq "AO-OI" } {
-					set guide "GeMS-OI"
-				}
-			}
-		}
+#			if { [string match "*AO*" $guide] } {
+#				if { [string match "*GSAOI*" $::Config(tcs.instrument,value)] } {
+#					set guide GeMS
+#				} elseif { $guide eq "AO-OI" } {
+#					set guide "GeMS-OI"
+#				}
+#			}
+#		}
       if { [catch {GuideNames::$guide refinc}] } {
          error "Guide configuration \"$guide\" does not exist"
       } else {
@@ -564,6 +547,7 @@ itcl::body Field::add {type name args} {
       target {
          set targetname [TargetComponent ${targetns}::$name $targetlist]
          $targetname configure -trackratens $trackratens
+			$targetname configure -objname $name
          eval [list $targetname] configure $args
          return $targetname
       }
@@ -1016,11 +1000,32 @@ itcl::body Field::notify elementList {
 }
 
 itcl::body Field::setSwapTarget tagtarget {
+	global env
+	
 	set tag [$tagtarget cget -tagPrefix]
 	#Check we are swapping with a WFS star
 	if { ![string equal $tag Base] && ![string equal $tag User] && \
 		[string equal $tagtarget [getDefaultTarget $tag]] && ![string equal $swaptarget $tagtarget]} {
 			set swaptarget $tagtarget
+			set swapguide "No guiding"
+			if {$env(TCC_TCSNAME) == "tcs"} {
+				 set guide_wl [.observePanel.frame.control.botframe.wfsconfig getValue HrwfsColFilt]
+			} else {
+				 set guide_wl [.observePanel.frame.control.botframe.wfsconfig.tabs.canvas.notebook.cs.page1.cs.hrwfs.col get]
+			}
+			switch $guide_wl {
+				"U-red1"  { set swapwavelength "Acq Cam U" }
+				"B-blue"  { set swapwavelength "Acq Cam B" }
+				"V-green" { set swapwavelength "Acq Cam V" }
+				"R-red2"  { set swapwavelength "Acq Cam R" }
+				"I-red3"  { set swapwavelength "Acq Cam I" }
+				"neutral" { set swapwavelength "Acq Cam neutral" }
+				default   { 
+					tk_messageBox -icon warning -parent $itk_interior \
+						-message "No guide wavelength found ... using 0.5 (Acq Cam neutral)"
+					set swapwavelength "Acq Cam neutral"
+				}
+			}
 			notify swaptarget
 		}
 }

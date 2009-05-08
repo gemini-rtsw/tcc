@@ -35,7 +35,7 @@ itcl::class FieldControl {
       method save {name}
       method sync {component name}
       method newtarget {name type args}
-      method swapguide {}
+#      method swapguide {}
    }
    private {
       method newfieldval {n1 n2 op}
@@ -146,10 +146,10 @@ itcl::body FieldControl::constructor args {
    set w $itk_component(data)
 
 # Swapguide button
-#   itk_component add swapguide {
-#	button $w.swapguide -text "Swap Science/Guide Targets" -command "$this swapguide"
-#   }
-#   pack $itk_component(swapguide) -side top -pady 3
+	itk_component add swapguide {
+		button $w.swapguide -text "Swap Science/Guide Targets" -command [itcl::code $this onSwapTarget]
+	}
+	pack $itk_component(swapguide) -side top -pady 3
 
 
 # Notebook for target entry controls.
@@ -189,8 +189,9 @@ itcl::body FieldControl::constructor args {
 	image create photo ::images::swapTargetsIcon -file [file join tcclib dep_loop.gif]
 	itk_component add swapTargets { button $w.trgOpFrm.opBtnFrm.swaptargets -image ::images::swapTargetsIcon \
 		-command [itcl::code $this onSwapTarget]}
-	pack $w.trgOpFrm.opBtnFrm.makedefault $w.trgOpFrm.opBtnFrm.swaptargets -side left 
-	
+#	pack $w.trgOpFrm.opBtnFrm.makedefault $w.trgOpFrm.opBtnFrm.swaptargets -side left 
+	pack $w.trgOpFrm.opBtnFrm.makedefault -side left 
+		
 
    pack $w.trgOpFrm.add $w.trgOpFrm.del  -side left
 #	pack $w.trgOpFrm.add $w.trgOpFrm.del  $w.trgOpFrm.edBtnFrm -side left
@@ -314,11 +315,16 @@ itcl::body FieldControl::save {name} {
    }
 
 # Set the remaining components.
-   $name configure -guide [$itk_component(guide) get] \
-         -rotator [$itk_component(rotator) get] \
-         -wavelength [$itk_component(wavelength) get] \
-         -programid [$itk_component(progid) get] \
-         -airmassLimit [$itk_component(airmass) get]
+	if {[string is space [$name getSwapTarget]]} {
+		$name configure -guide [$itk_component(guide) get] \
+			-wavelength [$itk_component(wavelength) get]
+	} else {
+		$name configure -swapguide [$itk_component(guide) get] \
+			-swapwavelength [$itk_component(wavelength) get]
+	}
+   $name configure -rotator [$itk_component(rotator) get] \
+		-programid [$itk_component(progid) get] \
+		-airmassLimit [$itk_component(airmass) get]
 
 # Record the new current object.
    set currentname $name
@@ -338,221 +344,221 @@ itcl::body FieldControl::reset {} {
 }
 
 
-itcl::body FieldControl::swapguide {} {
-return
-   global env
-   if {$curr_guide == ""} {
-	set new_wavelength ""
-	set fieldObj ${::Config(tcs.field,namespace)}::${::Config(tcs.field,value)}
-	#puts "fieldObj: $fieldObj"
-
-	set curr_guide ${::Config(tcs.field.guide,value)}
-   	set curr_sciencetarget ${::Config(tcs.field.sciencetarget,value)}
-	set curr_wl_name ${::Config(tcs.field.wavelength,value)}
-
-	if {![string equal $curr_wl_name ""]} {
-	   set curr_wavelength [::WavelengthNames::$curr_wl_name cget -wavel]
-	}
-	#puts "got current wavelength name: $curr_wl_name , wl: $curr_wavelength"
-	# getting current guide wavelength (from Acquisition Camera)
-	# Create the status acceptor if it doesn't alread exist.
-	if { [catch {sa hrwfs::currStatus info}] } {
-	   epics sa hrwfs::currStatus
-	}
-        if {$env(TCC_TCSNAME) == "tcs"} {
-	    set guide_wl [.observePanel.frame.control.botframe.wfsconfig getValue HrwfsColFilt]
-	} else {
-	    set guide_wl [.observePanel.frame.control.botframe.wfsconfig.tabs.canvas.notebook.cs.page1.cs.hrwfs.col get]
-	}
-#	puts "swapguide got guide wl: $guide_wl"
-	switch $guide_wl {
-	   "U-red1"  { set new_wavelength "Acq Cam U" }
-	   "B-blue"  { set new_wavelength "Acq Cam B" }
-	   "V-green" { set new_wavelength "Acq Cam V" }
-	   "R-red2"  { set new_wavelength "Acq Cam R" }
-	   "I-red3"  { set new_wavelength "Acq Cam I" }
-	   "neutral" { set new_wavelength "Acq Cam neutral" }
-	   default   { set new_wavelength "" }
-	}
-       switch $curr_guide {
-	   "P1-P2" -
-	   "P1-OI" -
-	   "AO-P1" -
-	   "P1" {
-	       set curr_guidetarget ${::Config(tcs.field.pwfs1target,value)}
-	       #set ::Config(tcs.field.pwfs1target,value) ""
-	       set lpath "Sky>AC/HR"
-	   }
-	   "P2-OI" -
-	   "P2" {
-	       set curr_guidetarget ${::Config(tcs.field.pwfs2target,value)}
-	       #set ::Config(tcs.field.pwfs2target,value) ""
-	       set lpath "Sky>AC/HR"
-	   }
-	   "OI" {
-	       set curr_guidetarget ${::Config(tcs.field.oiwfstarget,value)}
-	       #set ::Config(tcs.field.oiwfstarget,value) ""
-	       set lpath "Sky>AC/HR"
-	   }
-	   "AO-OI" -
-	   "AO" {
-	       set curr_guidetarget ${::Config(tcs.field.aowfstarget,value)}
-	       #set ::Config(tcs.field.aowfstarget,value) ""
-	       set lpath "Sky>AO>AC/HR"
-	   }
-	   default {
-	       tk_messageBox -icon warning -parent $itk_interior \
-		   -message "Invalid guide configuration ... doing nothing"
-	       # puts "No guidestar set ... do nothing"
-	       set curr_guide ""
-	       set curr_sciencetarget ""
-	       return
-	   }
-	}
-	if {$curr_guidetarget == ""} {
-	   tk_messageBox -icon warning -parent $itk_interior \
-		-message "No guidestar set ... doing nothing"
-	   # puts "No guidestar set ... do nothing"
-	   set curr_guide ""
-	   set curr_sciencetarget ""
-	   set curr_wl_name ""
-	   set curr_wavelength ""
-	   set new_wavelength ""
-	   return
-	}
-   	 #puts "guide conficuration is: $curr_guide"
-   	 #puts "Science target is $curr_sciencetarget, curr_wl_name: $curr_wl_name"
-   	 #puts "Guide target is $curr_guidetarget"
-	
-	if {[string equal $new_wavelength ""]} {
-	   tk_messageBox -icon warning -parent $itk_interior \
-		-message "No guide wavelength found ... using 0.5 (Acq Cam neutral)"
-	   set new_wavelength "Acq Cam neutral"
-	}
-	#puts "guide wl: $guide_wl using wl: $new_wavelength"
-       logactions logmess "guide wl: $guide_wl using wl: $new_wavelength"
-
-   	::WavelengthNames::$new_wavelength configure -set_baffles 0
-	$fieldObj configure -guide "No guiding"
-	$fieldObj configure -sciencetarget $curr_guidetarget
-	$fieldObj configure -wavelength $new_wavelength
-
-	$itk_component(swapguide) configure -text "Revert Science/Guide Targets" -bg red
-
-	# set Light Path Mode (for the A&G)
-	if [winfo exists .observePanel] {
-	    ::.observePanel.frame.control.botframe.mirrors.lpath select $lpath
-	}
-
-	# Append _GUIDE to the object name.
-	# puts "current guide target: $curr_guidetarget"
-	set curr_ns ${::Config(tcs.field.sciencetarget,namespace)}
-	set curr_objname [${curr_ns}::$curr_guidetarget cget -objname]
-	#puts "objname: $curr_objname ns: $curr_ns"
-	#puts "changing name to [list ${curr_objname}_GUIDE]"
-	${curr_ns}::$curr_guidetarget configure -objname [list ${curr_objname}_GUIDE]
-	$this load $fieldObj
-	$this applycmd
-   	::WavelengthNames::$new_wavelength configure -set_baffles 1
-   } else {
-	#puts "swapping back ..."
-	
-	switch $curr_guide {
-	   "P1-P2" -
-	   "P1-OI" -
-	   "AO-P1" -
-	   "P1" {
-		   $fieldObj configure -pwfs1target $curr_guidetarget
-		   set lpath "Sky>Instr"
-	        }
-	   "P2-OI" -
-	   "P2" {
-		   $fieldObj configure -pwfs2target $curr_guidetarget
-		   set lpath "Sky>Instr"
-	        }
-	   "OI" {
-		   $fieldObj configure -oiwfstarget $curr_guidetarget
-		   set lpath "Sky>Instr"
-	        }
-	   "AO-OI" -
-	   "AO" {
-		   $fieldObj configure -aowfstarget $curr_guidetarget
-		   set lpath "Sky>AO>Inst"
-	        }
-	}
-	$fieldObj configure -guide $curr_guide
-	$fieldObj configure -sciencetarget $curr_sciencetarget
-	${curr_ns}::$curr_guidetarget configure -objname ${curr_objname}
-	$fieldObj configure -wavelength $curr_wl_name
-
-	# set Light Path Mode (for the A&G)
-	if [winfo exists .observePanel] {
-	    ::.observePanel.frame.control.botframe.mirrors.lpath select $lpath
-	}
-	
-	#clear temp storage
-	set curr_guide ""
-	set curr_sciencetarget ""
-	set curr_guidetarget ""
-	set curr_wl_name ""
-	set curr_wavelength ""
-	#set fieldObj ""
-	$itk_component(swapguide) configure -text "Swap Science/Guide Targets" -bg "white"
-	$this load $fieldObj
-	$this applycmd
-   }
-}
+#itcl::body FieldControl::swapguide {} {
+#   global env
+#   if {$curr_guide == ""} {
+#	set new_wavelength ""
+#	set fieldObj ${::Config(tcs.field,namespace)}::${::Config(tcs.field,value)}
+#	#puts "fieldObj: $fieldObj"
+#
+#	set curr_guide ${::Config(tcs.field.guide,value)}
+#   	set curr_sciencetarget ${::Config(tcs.field.sciencetarget,value)}
+#	set curr_wl_name ${::Config(tcs.field.wavelength,value)}
+#
+#	if {![string equal $curr_wl_name ""]} {
+#	   set curr_wavelength [::WavelengthNames::$curr_wl_name cget -wavel]
+#	}
+#	#puts "got current wavelength name: $curr_wl_name , wl: $curr_wavelength"
+#	# getting current guide wavelength (from Acquisition Camera)
+#	# Create the status acceptor if it doesn't alread exist.
+#	if { [catch {sa hrwfs::currStatus info}] } {
+#	   epics sa hrwfs::currStatus
+#	}
+#        if {$env(TCC_TCSNAME) == "tcs"} {
+#	    set guide_wl [.observePanel.frame.control.botframe.wfsconfig getValue HrwfsColFilt]
+#	} else {
+#	    set guide_wl [.observePanel.frame.control.botframe.wfsconfig.tabs.canvas.notebook.cs.page1.cs.hrwfs.col get]
+#	}
+##	puts "swapguide got guide wl: $guide_wl"
+#	switch $guide_wl {
+#	   "U-red1"  { set new_wavelength "Acq Cam U" }
+#	   "B-blue"  { set new_wavelength "Acq Cam B" }
+#	   "V-green" { set new_wavelength "Acq Cam V" }
+#	   "R-red2"  { set new_wavelength "Acq Cam R" }
+#	   "I-red3"  { set new_wavelength "Acq Cam I" }
+#	   "neutral" { set new_wavelength "Acq Cam neutral" }
+#	   default   { set new_wavelength "" }
+#	}
+#       switch $curr_guide {
+#	   "P1-P2" -
+#	   "P1-OI" -
+#	   "AO-P1" -
+#	   "P1" {
+#	       set curr_guidetarget ${::Config(tcs.field.pwfs1target,value)}
+#	       #set ::Config(tcs.field.pwfs1target,value) ""
+#	       set lpath "Sky>AC/HR"
+#	   }
+#	   "P2-OI" -
+#	   "P2" {
+#	       set curr_guidetarget ${::Config(tcs.field.pwfs2target,value)}
+#	       #set ::Config(tcs.field.pwfs2target,value) ""
+#	       set lpath "Sky>AC/HR"
+#	   }
+#	   "OI" {
+#	       set curr_guidetarget ${::Config(tcs.field.oiwfstarget,value)}
+#	       #set ::Config(tcs.field.oiwfstarget,value) ""
+#	       set lpath "Sky>AC/HR"
+#	   }
+#	   "AO-OI" -
+#	   "AO" {
+#	       set curr_guidetarget ${::Config(tcs.field.aowfstarget,value)}
+#	       #set ::Config(tcs.field.aowfstarget,value) ""
+#	       set lpath "Sky>AO>AC/HR"
+#	   }
+#	   default {
+#	       tk_messageBox -icon warning -parent $itk_interior \
+#		   -message "Invalid guide configuration ... doing nothing"
+#	       # puts "No guidestar set ... do nothing"
+#	       set curr_guide ""
+#	       set curr_sciencetarget ""
+#	       return
+#	   }
+#	}
+#	if {$curr_guidetarget == ""} {
+#	   tk_messageBox -icon warning -parent $itk_interior \
+#		-message "No guidestar set ... doing nothing"
+#	   # puts "No guidestar set ... do nothing"
+#	   set curr_guide ""
+#	   set curr_sciencetarget ""
+#	   set curr_wl_name ""
+#	   set curr_wavelength ""
+#	   set new_wavelength ""
+#	   return
+#	}
+#   	 #puts "guide conficuration is: $curr_guide"
+#   	 #puts "Science target is $curr_sciencetarget, curr_wl_name: $curr_wl_name"
+#   	 #puts "Guide target is $curr_guidetarget"
+#	
+#	if {[string equal $new_wavelength ""]} {
+#	   tk_messageBox -icon warning -parent $itk_interior \
+#		-message "No guide wavelength found ... using 0.5 (Acq Cam neutral)"
+#	   set new_wavelength "Acq Cam neutral"
+#	}
+#	#puts "guide wl: $guide_wl using wl: $new_wavelength"
+#       logactions logmess "guide wl: $guide_wl using wl: $new_wavelength"
+#
+#   	::WavelengthNames::$new_wavelength configure -set_baffles 0
+#	$fieldObj configure -guide "No guiding"
+#	$fieldObj configure -sciencetarget $curr_guidetarget
+#	$fieldObj configure -wavelength $new_wavelength
+#
+#	$itk_component(swapguide) configure -text "Revert Science/Guide Targets" -bg red
+#
+#	# set Light Path Mode (for the A&G)
+#	if [winfo exists .observePanel] {
+#	    ::.observePanel.frame.control.botframe.mirrors.lpath select $lpath
+#	}
+#
+#	# Append _GUIDE to the object name.
+#	# puts "current guide target: $curr_guidetarget"
+#	set curr_ns ${::Config(tcs.field.sciencetarget,namespace)}
+#	set curr_objname [${curr_ns}::$curr_guidetarget cget -objname]
+#	#puts "objname: $curr_objname ns: $curr_ns"
+#	#puts "changing name to [list ${curr_objname}_GUIDE]"
+#	${curr_ns}::$curr_guidetarget configure -objname [list ${curr_objname}_GUIDE]
+#	$this load $fieldObj
+#	$this applycmd
+#   	::WavelengthNames::$new_wavelength configure -set_baffles 1
+#   } else {
+#	#puts "swapping back ..."
+#	
+#	switch $curr_guide {
+#	   "P1-P2" -
+#	   "P1-OI" -
+#	   "AO-P1" -
+#	   "P1" {
+#		   $fieldObj configure -pwfs1target $curr_guidetarget
+#		   set lpath "Sky>Instr"
+#	        }
+#	   "P2-OI" -
+#	   "P2" {
+#		   $fieldObj configure -pwfs2target $curr_guidetarget
+#		   set lpath "Sky>Instr"
+#	        }
+#	   "OI" {
+#		   $fieldObj configure -oiwfstarget $curr_guidetarget
+#		   set lpath "Sky>Instr"
+#	        }
+#	   "AO-OI" -
+#	   "AO" {
+#		   $fieldObj configure -aowfstarget $curr_guidetarget
+#		   set lpath "Sky>AO>Inst"
+#	        }
+#	}
+#	$fieldObj configure -guide $curr_guide
+#	$fieldObj configure -sciencetarget $curr_sciencetarget
+#	${curr_ns}::$curr_guidetarget configure -objname ${curr_objname}
+#	$fieldObj configure -wavelength $curr_wl_name
+#
+#	# set Light Path Mode (for the A&G)
+#	if [winfo exists .observePanel] {
+#	    ::.observePanel.frame.control.botframe.mirrors.lpath select $lpath
+#	}
+#	
+#	#clear temp storage
+#	set curr_guide ""
+#	set curr_sciencetarget ""
+#	set curr_guidetarget ""
+#	set curr_wl_name ""
+#	set curr_wavelength ""
+#	#set fieldObj ""
+#	$itk_component(swapguide) configure -text "Swap Science/Guide Targets" -bg "white"
+#	$this load $fieldObj
+#	$this applycmd
+#   }
+#}
 
 
 itcl::body FieldControl::load {name} {
-
 # If the targets are currently swapped, swap back
-   if {($curr_guide != "") && ( ${name} != ${currentname} )} {
-
-	#puts "swapping back because loading new target ..."
-	
-	switch $curr_guide {
-	   "P1-P2" -
-	   "P1-OI" -
-	   "AO-P1" -
-	   "P1" {
-		   $fieldObj configure -pwfs1target $curr_guidetarget
-		   set lpath "Sky>Instr"
-	        }
-	   "P2-OI" -
-	   "P2" {
-		   $fieldObj configure -pwfs2target $curr_guidetarget
-		   set lpath "Sky>Instr"
-	        }
-	   "OI" {
-		   $fieldObj configure -oiwfstarget $curr_guidetarget
-		   set lpath "Sky>Instr"
-	        }
-	   "AO-OI" -
-	   "AO" {
-		   $fieldObj configure -aowfstarget $curr_guidetarget
-		   set lpath "Sky>AO>Inst"
-	        }
+#   if {($curr_guide != "") && ( ${name} != ${currentname} )} {
+#
+#	#puts "swapping back because loading new target ..."
+#	
+#	switch $curr_guide {
+#	   "P1-P2" -
+#	   "P1-OI" -
+#	   "AO-P1" -
+#	   "P1" {
+#		   $fieldObj configure -pwfs1target $curr_guidetarget
+#		   set lpath "Sky>Instr"
+#	        }
+#	   "P2-OI" -
+#	   "P2" {
+#		   $fieldObj configure -pwfs2target $curr_guidetarget
+#		   set lpath "Sky>Instr"
+#	        }
+#	   "OI" {
+#		   $fieldObj configure -oiwfstarget $curr_guidetarget
+#		   set lpath "Sky>Instr"
+#	        }
+#	   "AO-OI" -
+#	   "AO" {
+#		   $fieldObj configure -aowfstarget $curr_guidetarget
+#		   set lpath "Sky>AO>Inst"
+#	        }
+#	}
+#	$fieldObj configure -guide $curr_guide
+#	$fieldObj configure -sciencetarget $curr_sciencetarget
+#	${curr_ns}::$curr_guidetarget configure -objname ${curr_objname}
+#	$fieldObj configure -wavelength $curr_wl_name
+#
+#	# set Light Path Mode (for the A&G)
+#	if [winfo exists .observePanel] {
+#	    ::.observePanel.frame.control.botframe.mirrors.lpath select $lpath
+#	}
+#	
+#	#clear temp storage
+#	set curr_guide ""
+#	set curr_sciencetarget ""
+#	set curr_guidetarget ""
+#	set curr_wl_name ""
+#	set curr_wavelength ""
+#	$itk_component(swapguide) configure -text "Swap Science/Guide Targets" -bg "white"
+#    }
+	if {( ${name} != ${currentname} ) && ![string is space $currentname ]} {
+		$currentname clearSwapTarget
 	}
-	$fieldObj configure -guide $curr_guide
-	$fieldObj configure -sciencetarget $curr_sciencetarget
-	${curr_ns}::$curr_guidetarget configure -objname ${curr_objname}
-	$fieldObj configure -wavelength $curr_wl_name
-
-	# set Light Path Mode (for the A&G)
-	if [winfo exists .observePanel] {
-	    ::.observePanel.frame.control.botframe.mirrors.lpath select $lpath
-	}
-	
-	#clear temp storage
-	set curr_guide ""
-	set curr_sciencetarget ""
-	set curr_guidetarget ""
-	set curr_wl_name ""
-	set curr_wavelength ""
-	$itk_component(swapguide) configure -text "Swap Science/Guide Targets" -bg "white"
-    }
-
 
 # Copy the contents of the field object selected in the combobox into the 
 # edit controls.
@@ -581,9 +587,15 @@ itcl::body FieldControl::load {name} {
   set ::Config($comp.taggedtarget,value) ""
   set ::Config($comp.trackrate,list) ${name}TrackRateList
  
-   set ::Config($comp.guide,value) [$name cget -guide]
-   set ::Config($comp.rotator,value) [$name cget -rotator]
-   set ::Config($comp.wavelength,value) [$name cget -wavelength]
+	if { [string is space [$name getSwapTarget]] } {
+   	set ::Config($comp.guide,value) [$name cget -guide]
+		set ::Config($comp.wavelength,value) [$name cget -wavelength]
+	} else {
+		set ::Config($comp.guide,value) [$name cget -swapguide]
+		set ::Config($comp.wavelength,value) [$name cget -swapwavelength]
+	}
+
+	set ::Config($comp.rotator,value) [$name cget -rotator]
    $itk_component(progid) clear
    $itk_component(airmass) clear
    $itk_component(progid) insert end [$name cget -programid]
@@ -780,6 +792,17 @@ itcl::body FieldControl::onFieldChange {elementList} {
 		switch -glob $attr {
 			*target 	{
 				onAnyAssignedTargetChange $attr
+				if { $attr eq "swaptarget" } {
+					if { [string is space [$::Config(tcs.field,namespace)::$::Config(tcs.field,value) getSwapTarget]] } {
+						$itk_component(swapguide) configure -text "Swap Science/Guide Targets" -bg $itk_option(-background)
+						set ::Config($comp.wavelength,value) [$currentname cget -wavelength]
+						set ::Config($comp.guide,value) [$currentname cget -guide]
+					} else {
+						$itk_component(swapguide) configure -text "Revert Science/Guide Targets" -bg red
+						set ::Config($comp.wavelength,value) [$currentname cget -swapwavelength]
+						set ::Config($comp.guide,value) [$currentname cget -swapguide]
+					}
+				}
 			}
 		}
 	}
@@ -801,14 +824,35 @@ itcl::body FieldControl::onSetDefault {} {
 }
 
 itcl::body FieldControl::onSwapTarget {} {
+	#Currently, store has the effect of reloading the field, so I must save the
+	#current selection beforehand
 	set tagtarget [$itk_component(targets) getSelected]
-	set tag [$tagtarget cget -tagPrefix]
-	if { !( $tagtarget eq [$::Config(tcs.field,namespace)::$::Config(tcs.field,value) getDefaultTarget $tag] ) } {
-		return
-	}
-	if { $tag eq "Base" || $tag eq "User" || [$::Config(tcs.field,namespace)::$::Config(tcs.field,value) getSwapTarget] eq $tagtarget } {
+	#Always store windows contents before doing a swap
+	#FIXME: It would be better to warn the user of unsaved changes, and give 
+	#her/him the option to save or ignore.
+	store [$itk_component(selector) get]
+	
+	set swaptarget [$::Config(tcs.field,namespace)::$::Config(tcs.field,value) getSwapTarget]
+	#If the science and guide are swapped, just unswap
+	if { ![string is space $swaptarget]} {
 		$::Config(tcs.field,namespace)::$::Config(tcs.field,value) clearSwapTarget
 	} else {
-		$::Config(tcs.field,namespace)::$::Config(tcs.field,value) setSwapTarget $tagtarget
+		set tag [$tagtarget cget -tagPrefix]
+		if { $tagtarget eq [$::Config(tcs.field,namespace)::$::Config(tcs.field,value) getDefaultTarget $tag] && \
+				$tag ne "Base" && $tag ne "User" } {
+			$::Config(tcs.field,namespace)::$::Config(tcs.field,value) setSwapTarget $tagtarget
+		}
+	}
+	#Keep the target selected
+	$itk_component(targets) select $tagtarget
+	
+	#Force an apply of the swapped configuration
+	if { $swaptarget ne [$::Config(tcs.field,namespace)::$::Config(tcs.field,value) getSwapTarget] } {
+		$::Config($comp,namespace)::$::Config($comp,value) apply \
+			$itk_option(-component)
+		if [catch {cs $itk_option(-apply) post} msg] {
+			  tk_messageBox -icon error -parent $itk_interior -message \
+					"Error posting command: $itk_option(-system) reports \"$msg\""
+		}
 	}
 }

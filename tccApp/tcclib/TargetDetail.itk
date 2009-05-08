@@ -14,7 +14,8 @@ itcl::class TargetDetail {
 	
 	method onTargetListChange {n1 n2 op} {}
 	
-	method onSaveCommand {} 
+	method onSaveCommand {}
+	method onGrabCommand {}
 	method save {taggedTarget} 
 	method saveTarget {target}
 }
@@ -40,20 +41,24 @@ itcl::body TargetDetail::constructor {args} {
 	$itk_interior.common.tagMenu insert end User
     
 	trace variable ::Config(tcs.field.target,list) w [itcl::code $this onTargetListChange]
-    itk_component add name { ListManager $itk_interior.common.name -editable 0 \
+	itk_component add name { ListManager $itk_interior.common.name -editable 0 \
             -selectioncommand [itcl::code $this onTargetSelection] -componentlist $::Config(tcs.field.target,list) \
 		 		-returncommand [itcl::code $this onTargetNameEdit] -editable 1}
     
-    grid $itk_interior.common.tagMenu $itk_interior.common.name
+	pack $itk_interior.common.tagMenu $itk_interior.common.name -side left
+	
+	itk_component add grabButton { button $itk_interior.common.grabButton -text "Grab from TCS" \
+		-command [itcl::code $this onGrabCommand] }
+	pack $itk_interior.common.grabButton -side right
 
-    itk_component add csysSel { iwidgets::optionmenu $itk_interior.csysSel -labeltext "Coord Type" -labelpos w\
-	    -command "$itk_interior.coordFrm.tabs select \[$itk_interior.csysSel get\]" }
-    $itk_interior.csysSel insert end RA/Dec Az/El Nonsidereal
-
-    frame $itk_interior.coordFrm -relief groove -borderwidth 2
-    itk_component add tabs {
-	iwidgets::notebook $itk_interior.coordFrm.tabs -height 218 -width 450
-    }
+	itk_component add csysSel { iwidgets::optionmenu $itk_interior.csysSel -labeltext "Coord Type" -labelpos w\
+		-command "$itk_interior.coordFrm.tabs select \[$itk_interior.csysSel get\]" }
+	$itk_interior.csysSel insert end RA/Dec Az/El Nonsidereal
+	
+	frame $itk_interior.coordFrm -relief groove -borderwidth 2
+	itk_component add tabs {
+		iwidgets::notebook $itk_interior.coordFrm.tabs -height 218 -width 450
+   }
     
     set w [$itk_interior.coordFrm.tabs add -label "RA/Dec"]
     itk_component add radecTarget {
@@ -91,7 +96,7 @@ itcl::body TargetDetail::constructor {args} {
    grid $itk_interior.coordFrm.tabs
    pack $itk_interior.common $itk_interior.csysSel $itk_interior.coordFrm -side top
    pack $itk_component(trw) -side left -fill x -expand yes
-   pack configure $itk_interior.common -anchor w
+   pack configure $itk_interior.common -anchor w -fill x
    pack configure $itk_interior.csysSel -anchor w
    pack configure $itk_interior.coordFrm -fill both
 # Select the RA/Dec page.
@@ -212,5 +217,23 @@ itcl::body TargetDetail::saveTarget {target} {
 		Nonsidereal {
 			$itk_component(solarTarget) save $target 
 		}
+	}
+}
+
+itcl::body TargetDetail::onGrabCommand {} {
+	set tag ""
+	switch [$itk_component(tagMenu) get] {
+		Science -
+		User { set tag science }
+		PWFS1 { set tag pwfs1 }
+		PWFS2 { set tag pwfs2 }
+		OIWFS { set tag oiwfs }
+		AOWFS { set tag aowfs }
+	}
+	if { $tag ne ""} {
+		set target [namespace current]::[Target #auto]
+		$target grab $tag
+		loadTarget $target
+		itcl::delete object $target
 	}
 }
