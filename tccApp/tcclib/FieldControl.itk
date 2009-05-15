@@ -80,6 +80,9 @@ itcl::body FieldControl::constructor args {
    }
    pack $itk_component(display) -side top -anchor c
    set w $itk_component(display)
+	
+	setTooltip $itk_component(store) "Save changes to the field parameters."
+	setTooltip $itk_component(apply) "Configure TCS with the current field values."
 
 # Display of current targets.
 #   itk_component add sciencelabel {
@@ -149,6 +152,7 @@ itcl::body FieldControl::constructor args {
 	itk_component add swapguide {
 		button $w.swapguide -text "Swap Science/Guide Targets" -command [itcl::code $this onSwapTarget]
 	}
+	setTooltip $itk_component(swapguide) "Temporarily slew telescope to selected target."
 	pack $itk_component(swapguide) -side top -pady 3
 
 
@@ -167,28 +171,32 @@ itcl::body FieldControl::constructor args {
 
 
    image create photo ::images::addIcon -file [file join tcclib add.gif]
-   image create photo ::images::delIcon -file [file join tcclib remove.gif]
+	image create photo ::images::delIcon -file [file join tcclib remove.gif]
    itk_component add addTrg { button $w.trgOpFrm.add -image ::images::addIcon -command [itcl::code $this onAddNewTarget]}
    itk_component add delTrg { button $w.trgOpFrm.del -image ::images::delIcon -command [itcl::code $this onDeleteTarget]}
 
-   frame $w.trgOpFrm.edBtnFrm
-   image create photo ::images::copyIcon -file [file join tcclib copy.gif]
-   image create photo ::images::pasteIcon -file [file join tcclib paste.gif]
-   image create photo ::images::duplicateIcon -file [file join tcclib duplicate.gif]
-   itk_component add copyTrg { button $w.trgOpFrm.edBtnFrm.copy -image ::images::copyIcon }
-   itk_component add pasteTrg { button $w.trgOpFrm.edBtnFrm.paste -image ::images::pasteIcon }
-   itk_component add duplicateTrg { button $w.trgOpFrm.edBtnFrm.duplicate -image ::images::duplicateIcon }
+	setTooltip $itk_component(addTrg) "Add new target."
+	setTooltip $itk_component(delTrg) "Delete selected target."
 
-	pack $w.trgOpFrm.edBtnFrm.copy $w.trgOpFrm.edBtnFrm.paste $w.trgOpFrm.edBtnFrm.duplicate \
-		-side left
+#   frame $w.trgOpFrm.edBtnFrm
+#   image create photo ::images::copyIcon -file [file join tcclib copy.gif]
+#   image create photo ::images::pasteIcon -file [file join tcclib paste.gif]
+#   image create photo ::images::duplicateIcon -file [file join tcclib duplicate.gif]
+#   itk_component add copyTrg { button $w.trgOpFrm.edBtnFrm.copy -image ::images::copyIcon }
+#   itk_component add pasteTrg { button $w.trgOpFrm.edBtnFrm.paste -image ::images::pasteIcon }
+#   itk_component add duplicateTrg { button $w.trgOpFrm.edBtnFrm.duplicate -image ::images::duplicateIcon }
+#
+#	pack $w.trgOpFrm.edBtnFrm.copy $w.trgOpFrm.edBtnFrm.paste $w.trgOpFrm.edBtnFrm.duplicate \
+#		-side left
 
 	frame $w.trgOpFrm.opBtnFrm
 	image create photo ::images::makedefaultIcon -file [file join tcclib star.gif]
 	itk_component add makeDefault { button $w.trgOpFrm.opBtnFrm.makedefault -image ::images::makedefaultIcon \
 		-command [itcl::code $this onSetDefault]}
-	image create photo ::images::swapTargetsIcon -file [file join tcclib dep_loop.gif]
-	itk_component add swapTargets { button $w.trgOpFrm.opBtnFrm.swaptargets -image ::images::swapTargetsIcon \
-		-command [itcl::code $this onSwapTarget]}
+	setTooltip $itk_component(makeDefault) "Select/unselect target as the default for science/WFS." 
+#	image create photo ::images::swapTargetsIcon -file [file join tcclib dep_loop.gif]
+#	itk_component add swapTargets { button $w.trgOpFrm.opBtnFrm.swaptargets -image ::images::swapTargetsIcon \
+#		-command [itcl::code $this onSwapTarget]}
 #	pack $w.trgOpFrm.opBtnFrm.makedefault $w.trgOpFrm.opBtnFrm.swaptargets -side left 
 	pack $w.trgOpFrm.opBtnFrm.makedefault -side left 
 		
@@ -205,7 +213,8 @@ itcl::body FieldControl::constructor args {
    itk_component add trgFrm { iwidgets::labeledframe $w.trgFrm -labeltext "Selected Target" \
 	   -labelpos nw -relief groove}
 
-   itk_component add trgDetails { TargetDetail  $w.trgFrm.trgDetails -relief flat -savecommand [itcl::code $this onSaveTarget]}
+   itk_component add trgDetails { TargetDetail  $w.trgFrm.trgDetails -relief flat \
+		-savecommand [itcl::code $this onSaveTarget]}
    grid $w.trgFrm.trgDetails
 
    pack $itk_component(targets) $itk_component(trgOpFrm) $itk_component(trgFrm) -side top
@@ -795,10 +804,12 @@ itcl::body FieldControl::onFieldChange {elementList} {
 				if { $attr eq "swaptarget" } {
 					if { [string is space [$::Config(tcs.field,namespace)::$::Config(tcs.field,value) getSwapTarget]] } {
 						$itk_component(swapguide) configure -text "Swap Science/Guide Targets" -bg $itk_option(-background)
+						setTooltip $itk_component(swapguide) "Temporarily slew telescope to selected target."
 						set ::Config($comp.wavelength,value) [$currentname cget -wavelength]
 						set ::Config($comp.guide,value) [$currentname cget -guide]
 					} else {
 						$itk_component(swapguide) configure -text "Revert Science/Guide Targets" -bg red
+						setTooltip $itk_component(swapguide) "Revert telescope to Science target."
 						set ::Config($comp.wavelength,value) [$currentname cget -swapwavelength]
 						set ::Config($comp.guide,value) [$currentname cget -swapguide]
 					}

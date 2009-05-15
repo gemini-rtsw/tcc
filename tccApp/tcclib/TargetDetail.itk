@@ -49,6 +49,7 @@ itcl::body TargetDetail::constructor {args} {
 	
 	itk_component add grabButton { button $itk_interior.common.grabButton -text "Grab from TCS" \
 		-command [itcl::code $this onGrabCommand] }
+	setTooltip $itk_component(grabButton) "Grab coordinates from current TCS configuration."
 	pack $itk_interior.common.grabButton -side right
 
 	itk_component add csysSel { iwidgets::optionmenu $itk_interior.csysSel -labeltext "Coord Type" -labelpos w\
@@ -88,6 +89,7 @@ itcl::body TargetDetail::constructor {args} {
 	   -expand y
 
    itk_component add storeTrg { button $w.storeTrg -text Store -command [itcl::code $this onSaveCommand]}
+	setTooltip $itk_component(storeTrg) "Save changes to the target parameters."
    pack $w.storeTrg -side top -pady 3
 
    pack $itk_component(radecTarget) -fill both
