@@ -47,6 +47,7 @@ itcl::class OnOffButton {
    itk_option define -offproc offProc Proc {}
    itk_option define -offvalue offValue Value {} checkstate
    itk_option define -sadrecord sadrecord SadRecord {} checkstate
+	itk_option define -checktimeout checkTimeout CheckTimeout 0 
    public {
       method select {label}
       method get {}
@@ -94,6 +95,10 @@ itcl::body OnOffButton::pressed {} {
 # Assume no command senders.
    set cslist [list]
 
+# FIXME: State update is forced here, because channel change callbacks seem to
+# be unreliable.
+	checkstate
+		
 # Set the command sender parameter appropriate for the current state.
    if { $state } {
       if { ! [string equal $itk_option(-offproc) ""] } {
@@ -128,8 +133,13 @@ itcl::body OnOffButton::pressed {} {
 
 # Set the button background to indicate that a state change is in progress.
       $itk_component(button) configure -background yellow \
-            -activebackground yellow
+            -activebackground yellow		
    }
+#FIXME: Channel change callbacks seem to be unreliable, so a forced update is
+#scheduled if checktimeout is greater than zero.
+	if { $itk_option(-checktimeout) > 0 } {
+		after $itk_option(-checktimeout) [itcl::code $this checkstate]
+	}
 }
 
 itcl::configbody OnOffButton::oncommand {
@@ -159,7 +169,7 @@ itcl::configbody OnOffButton::offcommand {
 itcl::body OnOffButton::checkstate {} {
    if { [llength $itk_option(-sadrecord)] } {
 
-# Extract the staus acceptor and record names.
+# Extract the status acceptor and record names.
       foreach {sa rec} $itk_option(-sadrecord) {}
 
 # Create the status acceptor if it doesn't already exist.
@@ -171,7 +181,6 @@ itcl::body OnOffButton::checkstate {} {
       if { $monid == "" } {
          set monid [$sa.$rec add [itcl::code $this monitor]]
       }
-
 # Call the monitor routine to update the state.
       monitor $sa.$rec [sa $sa get $rec]
    }
