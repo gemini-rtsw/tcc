@@ -56,6 +56,7 @@ itcl::class OnOffButton {
       method pressed {}
       method monitor {record value}
       method checkstate {}
+		variable timerId ""
       variable state 0
       variable monid ""
    }
@@ -135,10 +136,13 @@ itcl::body OnOffButton::pressed {} {
       $itk_component(button) configure -background yellow \
             -activebackground yellow		
    }
-#FIXME: Channel change callbacks seem to be unreliable, so a forced update is
+#FIXME: Channel update callbacks seem to be unreliable, so a forced update is
 #scheduled if checktimeout is greater than zero.
 	if { $itk_option(-checktimeout) > 0 } {
-		after $itk_option(-checktimeout) [itcl::code $this checkstate]
+		if { $timerId ne "" && ![catch {after info $timerId }] } {
+			after cancel $timerId
+		}
+		set timerId [after $itk_option(-checktimeout) [itcl::code $this checkstate] ]
 	}
 }
 

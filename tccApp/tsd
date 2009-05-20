@@ -21,7 +21,6 @@ package require Tk
 package require Itcl
 package require Itk
 package require Iwidgets
-package require Ocspkg
 
 
 # Define the root directory for locating libraries and extensions.
@@ -35,6 +34,13 @@ if { [string compare [file pathtype $ROOT] relative] == 0 } {
 # containing this script.
 lappend auto_path [file join $ROOT lib]
 lappend auto_path [file join $ROOT tsdlib]
+
+if { [string compare [exec uname] "Linux"] == 0 } {
+	lappend auto_path [file join $::env(GEMINI_TOP) opt seqexec lib] 
+	lappend auto_path [file join $::env(GEMINI_TOP) opt ocswish lib]
+}
+
+package require Ocspkg
 
 # Load the tcctime, sla and tsd extensions to tcl.
 load [file join $ROOT lib $::env(HOST_ARCH) tcctime.so]

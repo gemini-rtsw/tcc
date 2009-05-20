@@ -506,8 +506,8 @@ itcl::body NumericDisplay::newtarget {record value} {
 #   }
 
 # Target position.
-   set system [sa tcssad get sourceATrackFrame]
-   set type ""
+	set system [sa tcssad get sourceATrackFrame]
+	set type ""
    set year ""
    scan [sa tcssad get sourceATrackEq] "%c%d" type year
    set type [format "%c" $type]
@@ -710,7 +710,16 @@ itcl::body NumericDisplay::update {} {
       $itk_component(seeao) configure -text [format %.2f $seeing] -status ok
    } else {
       $itk_component(seeao) configure -text $seeing -status error
-   }   
+   }
+	
+#FIXME: FR10305: It seems that sometimes the update signals that call newtarget
+#and newobject are lost. The refresh of both wavelength and object name is moved
+#here as a workaround.
+	if { $wavel != "" } {
+		set wavel "[expr {$wavel / 10000.0}] um"
+	}
+	$itk_component(tarwavel) configure -text "$wavel"
+	$itk_component(objname) configure -text [sa tcssad get sourceAObjectName]
 }
 
 itcl::body NumericDisplay::inPosition {rec value} {
