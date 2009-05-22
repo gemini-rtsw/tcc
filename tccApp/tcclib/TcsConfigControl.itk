@@ -422,7 +422,12 @@ itcl::body TcsConfigControl::apply {} {
 		       cs oiwfsSelect set oiwfs BHROS
 	               cs oiwfsSelect set output WFS
 		       logger command oiwfsSelect
-		   } else {
+		   } elseif {[string match "*FLAMINGOS2*" $inst]} {
+				 #puts "found FLAMINGOS2"
+				 cs oiwfsSelect set oiwfs F2
+						cs oiwfsSelect set output WFS
+				 logger command oiwfsSelect
+			} else {
 		       #puts "no OIWFS"
 		       cs oiwfsSelect set oiwfs None
 	               cs oiwfsSelect set output WFS
@@ -453,6 +458,8 @@ itcl::body TcsConfigControl::apply {} {
 		   set ::Config(tcs.field.guide.oiwfswavelength,value) "GMOS OIWFS"
 		} elseif {[string match "*NICI*" $inst]} {
 			set ::Config(tcs.field.guide.oiwfswavelength,value) "NICI OIWFS"
+		} elseif {[string match "*FLAMINGOS2*" $inst]} {
+			set ::Config(tcs.field.guide.oiwfswavelength,value) "FLAMINGOS2 OIWFS"
 		} else {
 		   set ::Config(tcs.field.guide.oiwfswavelength,value) "K"
 		}
@@ -615,21 +622,25 @@ itcl::body TcsConfigControl::load {name} {
             if { ! [string equal $comp ""] } {
                set ::Config(tcs.[string tolower $component],value) $comp
                $itk_component($component) configure \
-		   -source [namespace tail $name]
-		if {$component == "pointOrig"} {
-		    global instPO
-		    set instPO $comp
-		    #puts "set instPO to $instPO"
-		}
+		   			-source [namespace tail $name]
+					if {$component == "pointOrig"} {
+					    global instPO
+					    set instPO $comp
+					    #puts "set instPO to $instPO"
+					}
             }
          }
       }
       set name ::FieldNames::[$name cget -field]
       foreach subcomponent $fieldcomponents suboption $fieldoptions {
-	  set comp [$name cget $suboption]
-	  if { ! [string equal $comp ""] } {
-	      set ::Config(tcs.[string tolower $subcomponent],value) $comp
-	  }
+			set comp [$name cget $suboption]
+			if { ! [string equal $comp ""] } {
+				if {[string match *target $suboption]} {
+					set ::Config(tcs.[string tolower $subcomponent],value) [namespace tail [$comp cget -target]]
+				} else {
+					set ::Config(tcs.[string tolower $subcomponent],value) $comp
+				}
+			}
       }
    }
 }

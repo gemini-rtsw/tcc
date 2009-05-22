@@ -585,8 +585,12 @@ itcl::body FieldControl::load {name} {
       set ::Config($comp.${target}target.trackrate,namespace) \
             ${name}TrackRateNames
       set ::Config($comp.${target}target,list) ${name}TargetList
-      set ::Config($comp.${target}target,value) [$name cget -${target}target]
-      set ::Config($comp.${target}target.trackrate,list) ${name}TrackRateList
+		if {[$name cget -${target}target] ne "" && [[$name cget -${target}target] cget -target] ne "" } {
+      	set ::Config($comp.${target}target,value) [namespace tail [[$name cget -${target}target] cget -target]]
+		} else {
+			set ::Config($comp.${target}target,value) ""
+		}
+		set ::Config($comp.${target}target.trackrate,list) ${name}TrackRateList
    }
   set ::Config($comp.target,namespace) ${name}TargetNames
   set ::Config($comp.trackrate,namespace) ${name}TrackRateNames
@@ -730,8 +734,44 @@ itcl::body FieldControl::newtarget {name type args} {
 
 # Make it the specified target and select it.
    if { $type != "" } {
-      $field configure -$type $target
-      set ::Config(tcs.field.$type,value) $target
+		switch $type {
+			sciencetarget {
+				$field setDefaultTarget [$field addTaggedTarget Base [$field cget -targetns]::$target]
+			}
+			pwfs1target {
+				$field setDefaultTarget [$field addTaggedTarget PWFS1 [$field cget -targetns]::$target]
+			}
+			pwfs2target {
+				$field setDefaultTarget [$field addTaggedTarget PWFS2 [$field cget -targetns]::$target]
+			}
+			oiwfstarget {
+				$field setDefaultTarget [$field addTaggedTarget OIWFS [$field cget -targetns]::$target]
+			}
+			aowfstarget {
+				$field setDefaultTarget [$field addTaggedTarget AOWFS [$field cget -targetns]::$target]
+			}
+			ttgs1target {
+				$field setDefaultTarget [$field addTaggedTarget CWFS1 [$field cget -targetns]::$target]
+			}
+			ttgs2target {
+				$field setDefaultTarget [$field addTaggedTarget CWFS2 [$field cget -targetns]::$target]
+			}
+			ttgs3target {
+				$field setDefaultTarget [$field addTaggedTarget CWFS3 [$field cget -targetns]::$target]
+			}
+			odgw1target {
+				$field setDefaultTarget [$field addTaggedTarget ODGW1 [$field cget -targetns]::$target]
+			}
+			odgw2target {
+				$field setDefaultTarget [$field addTaggedTarget ODGW2 [$field cget -targetns]::$target]
+			}
+			odgw3target {
+				$field setDefaultTarget [$field addTaggedTarget ODGW3 [$field cget -targetns]::$target]
+			}
+			odgw4target {
+				$field setDefaultTarget [$field addTaggedTarget ODGW4 [$field cget -targetns]::$target]
+			}
+		}
    }
 }
 

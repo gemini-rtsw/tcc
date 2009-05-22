@@ -46,6 +46,8 @@ itcl::class ObserveControl {
       variable Pwfs1Dark
       variable Pwfs2Dark
       variable OiwfsDark
+		
+		variable tid 0
    }
 }
 
@@ -285,7 +287,7 @@ itcl::body ObserveControl::constructor args {
 }
 
 itcl::body ObserveControl::destructor {} {
-    global inPosition followS tid
+    global inPosition followS
 
     after cancel $tid
     if {$mon_inpos} {
@@ -546,7 +548,7 @@ itcl::body ObserveControl::traceProc {name index op} {
 
    set gVar "$name\($index\)"
    #puts "gVar: $gVar"
-   global $name INPOS FOLLOW tid
+   global $name INPOS FOLLOW
    #puts "traceProc called with name: $name index: $index op: $op gVar: $gVar [set $gVar]"
 
    switch $name {
@@ -586,7 +588,7 @@ itcl::body ObserveControl::timeout {} {
 }
 
 itcl::body ObserveControl::openloop {} {
-    global tid INPOS
+    global INPOS
 # Open loop if neccesary
     if {[AO cget -enabled]} {
 	#puts "opening loop"
