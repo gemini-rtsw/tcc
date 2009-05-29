@@ -81,20 +81,23 @@ itcl::body MonitorLabel::constructor {sys var args} {
    }
    lappend buttonList $itk_component(label)
 
-   trace variable $varName w "$this traceProc"
+   trace add variable $varName write [itcl::code $this traceProc]
 
    set $varName [sa $sys get $var]
    sa $sys link $var $var
 
    set unlink "sa $sys unlink $var $var"
-   set untrace "trace remove variable $varName write MonitorLabel::traceProc"
+   set untrace "trace remove variable $varName write [list [itcl::code $this traceProc]]"
 
    pack $itk_component(desc) $itk_component(label) -side left -anchor $itk_option(-anchor)
 }
 
 itcl::body MonitorLabel::destructor {} {
-    global [string trimright $varName "(value)"]
-    eval $untrace
+   global [string trimright $varName "(value)"]
+	
+	eval $unlink
+	
+	trace remove variable $varName write [itcl::code $this traceProc]
 }
 
 itcl::body MonitorLabel::getValue {} {

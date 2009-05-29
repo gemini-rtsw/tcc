@@ -734,3 +734,28 @@ tccApp/lib/monitorLabel.itk: Fixed problem in destructor, in call to "untrace"
 	command, that prevented a clean exit of A&G panel.
 tccApp/tcclib/ObserveControl.itk: fixed reference to unknown variable "tid" in 
 	destructor.
+	
+5.1-5
+2009B release candidate
+20090529 JLU
+tccApp/lib/monitorLabel.itk: Fixed problem where trace proc on the value 
+	variable was not properly unregistered.
+tccApp/tcclib/ActiveOptics.itcl: ActiveOptics::setTimeout: Fixed bug in
+	condition check for leaving the timeout wait used for temperature. Added a 
+	special procedure to check for inequality (used to check that T<threshold).
+	Forced a prepareCM call before closing GASO main loop (workaround for FR 
+	8556+dups, 10265,	9889, 8383+dups).
+tccApp/ca_config/tcc.ca -
+tccApp/ca_config/tcccommon.ca -
+tccApp/ca_config/tccCP.ca -
+tccApp/ca_config/tccMK.ca -
+tccApp/ca_config/guidects.ca -
+tccApp/ca_config/guidectsCP.ca -
+tccApp/ca_config/guidectsMK.ca -
+tccApp/ca_config.tc1/tcc.ca -
+tccApp/ca_config.tc1/tcccommon.ca -
+tccApp/ca_config.tc1/tccCP.ca -
+tccApp/ca_config.tc1/tccMK.ca -
+tccApp/tcc: Separated guidects CA file for CP and MK. Created different root
+	files (tccCP.ca and tccMK.ca) to manage configuration differences between CP
+	and MK.
