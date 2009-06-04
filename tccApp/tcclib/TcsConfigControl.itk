@@ -371,6 +371,12 @@ itcl::body TcsConfigControl::apply {} {
    set guideObj ::GuideNames::$guide
    #puts "guideObj: $guideObj"
    $guideObj apply tcs.field.guide
+	if {[calparam cget -site] eq "CP"} {
+		$guideObj applyGems g1 none
+		$guideObj applyGems g2 none
+		$guideObj applyGems g3 none
+		$guideObj applyGems g4 none
+	}
 
 # Set OIWFS mode in the TCS
    set guide $::Config(tcs.field.guide,value)
@@ -439,6 +445,10 @@ itcl::body TcsConfigControl::apply {} {
 			cs oiwfsSelect set output WFS
 		   logger command oiwfsSelect
 		}
+		#Force configuration of oiwfsSelect, so the target configuration finds the
+		#right parameters
+		cs oiwfsSelect set dir 3
+		after 100
 	}
 
 # Configure default filters, fieldstop for the WFS

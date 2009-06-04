@@ -18,9 +18,9 @@ itcl::class MonitorLabel {
        method traceProc { name index op }
    }
    private {
-      variable unlink ""
-      variable untrace ""
       variable varName ""
+		variable attrName ""
+		variable sysName ""
       variable buttonList {}
    }
    itk_option define -width width Width 0 {
@@ -62,6 +62,8 @@ itcl::body MonitorLabel::constructor {sys var args} {
    #puts "MonitorLabel const: this: $this sys: $sys var: $var path: $itk_interior"
    eval itk_initialize $args
    set varName "$var\(value\)"
+	set sysName $sys
+	set attrName $var
 
    global $var
 
@@ -86,8 +88,8 @@ itcl::body MonitorLabel::constructor {sys var args} {
    set $varName [sa $sys get $var]
    sa $sys link $var $var
 
-   set unlink "sa $sys unlink $var $var"
-   set untrace "trace remove variable $varName write [list [itcl::code $this traceProc]]"
+#   set unlink "sa $sys unlink $var $var"
+#   set untrace "trace remove variable $varName write [list [itcl::code $this traceProc]]"
 
    pack $itk_component(desc) $itk_component(label) -side left -anchor $itk_option(-anchor)
 }
@@ -95,7 +97,7 @@ itcl::body MonitorLabel::constructor {sys var args} {
 itcl::body MonitorLabel::destructor {} {
    global [string trimright $varName "(value)"]
 	
-	eval $unlink
+	sa $sysName unlink $attrName
 	
 	trace remove variable $varName write [itcl::code $this traceProc]
 }
@@ -122,5 +124,4 @@ itcl::body MonitorLabel::traceProc {name index op} {
          $itk_component(label) configure -text $text
       }
    }
-
 }
