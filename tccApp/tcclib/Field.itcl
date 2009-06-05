@@ -394,11 +394,31 @@ itcl::body Field::preview {view} {
 
 itcl::body Field::save {node} {
    set node [paramset $node field]
-   param $node sciencetarget $sciencetarget
-   param $node pwfs1target $pwfs1target
-   param $node pwfs2target $pwfs2target
-   param $node oiwfstarget $oiwfstarget
-   param $node aowfstarget $aowfstarget
+	if {$sciencetarget ne "" } {
+   	param $node sciencetarget [namespace tail [$sciencetarget cget -target]]
+	} else {
+		param $node sciencetarget ""
+	}
+	if { $pwfs1target ne "" } {
+   	param $node pwfs1target [namespace tail [$pwfs1target cget -target]]
+	} else {
+		param $node pwfs1target ""
+	}
+	if { $pwfs2target ne "" } {
+		param $node pwfs2target [namespace tail [$pwfs2target cget -target]]
+	} else {
+		param $node pwfs2target ""
+	}
+	if { $oiwfstarget ne "" } {
+		param $node oiwfstarget [namespace tail [$oiwfstarget cget -target]]
+	} else {
+		param $node oiwfstarget ""
+	}
+	if { $aowfstarget ne "" } {
+		param $node aowfstarget [namespace tail [$aowfstarget cget -target]]
+	} else {
+		param $node aowfstarget ""
+	}
    param $node guide $guide
    param $node rotator $rotator
    param $node wavelength $wavelength
@@ -419,76 +439,35 @@ itcl::body Field::save {node} {
    }
 }
 
-#itcl::configbody Field::sciencetarget {
-#   if { ! [string equal $current_sciencetarget ""] } {
-#      ${targetns}::$current_sciencetarget refdec
-#   }
-#   set current_sciencetarget ""
-#   if { ! [string equal $sciencetarget ""] } {
-#      if { [catch {${targetns}::$sciencetarget refinc}] } {
-#         error "Target \"$sciencetarget\" does not exist"
-#      } else {
-#         set current_sciencetarget $sciencetarget
-#			
-#      }
-#   }
-#}
-#
-#itcl::configbody Field::pwfs1target {
-#   if { ! [string equal $current_pwfs1target ""] } {
-#      ${targetns}::$current_pwfs1target refdec
-#   }
-#   set current_pwfs1target ""
-#   if { ! [string equal $pwfs1target ""] } {
-#      if { [catch {${targetns}::$pwfs1target refinc}] } {
-#         error "Target \"$pwfs1target\" does not exist"
-#      } else {
-#         set current_pwfs1target $pwfs1target
-#      }
-#   }
-#}
-#
-#itcl::configbody Field::pwfs2target {
-#   if { ! [string equal $current_pwfs2target ""] } {
-#      ${targetns}::$current_pwfs2target refdec
-#   }
-#   set current_pwfs2target ""
-#   if { ! [string equal $pwfs2target ""] } {
-#      if { [catch {${targetns}::$pwfs2target refinc}] } {
-#         error "Target \"$pwfs2target\" does not exist"
-#      } else {
-#         set current_pwfs2target $pwfs2target
-#      }
-#   }
-#}
-#
-#itcl::configbody Field::oiwfstarget {
-#   if { ! [string equal $current_oiwfstarget ""] } {
-#      ${targetns}::$current_oiwfstarget refdec
-#   }
-#   set current_oiwfstarget ""
-#   if { ! [string equal $oiwfstarget ""] } {
-#      if { [catch {${targetns}::$oiwfstarget refinc}] } {
-#         error "Target \"$oiwfstarget\" does not exist"
-#      } else {
-#         set current_oiwfstarget $oiwfstarget
-#      }
-#   }
-#}
-#
-#itcl::configbody Field::aowfstarget {
-#   if { ! [string equal $current_aowfstarget ""] } {
-#      ${targetns}::$current_aowfstarget refdec
-#   }
-#   set current_aowfstarget ""
-#   if { ! [string equal $aowfstarget ""] } {
-#      if { [catch {${targetns}::$aowfstarget refinc}] } {
-#         error "Target \"$aowfstarget\" does not exist"
-#      } else {
-#         set current_aowfstarget $aowfstarget
-#      }
-#   }
-#}
+itcl::configbody Field::sciencetarget {
+	if { [llength [itcl::find objects $sciencetarget -isa TaggedTarget]] == 0 } {
+		set sciencetarget ""
+	}
+}
+
+itcl::configbody Field::pwfs1target {
+	if { [llength [itcl::find objects $pwfs1target -isa TaggedTarget]] == 0 } {
+		set pwfs1target ""
+	}
+}
+
+itcl::configbody Field::pwfs2target {
+	if { [llength [itcl::find objects $pwfs2target -isa TaggedTarget]] == 0 } {
+		set pwfs2target ""
+	}
+}
+
+itcl::configbody Field::oiwfstarget {
+	if { [llength [itcl::find objects $oiwfstarget -isa TaggedTarget]] == 0 } {
+		set oiwfstarget ""
+	}
+}
+
+itcl::configbody Field::aowfstarget {
+	if { [llength [itcl::find objects $aowfstarget -isa TaggedTarget]] == 0 } {
+		set aowfstarget ""
+	}
+}
 
 itcl::configbody Field::guide {
    if { ! [string equal $current_guide ""] } {

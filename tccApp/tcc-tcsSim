@@ -40,6 +40,9 @@ if { [string compare [exec uname] "Linux"] == 0 } {
 
 	package require Ocspkg
 	package require Seq
+
+# Define the default directory for writing files.
+	set SaveFileDirectory "~/files"
 } else {
 	package require Ocspkg
 	package require Seq
@@ -56,6 +59,9 @@ if { [string compare [exec uname] "Linux"] == 0 } {
 	# The tcc library files live in the lib subdirectory.
 	lappend auto_path [file join $::ROOT lib]
 	lappend auto_path [file join $::ROOT tcclib]
+
+# Define the default directory for writing files.
+	set SaveFileDirectory /gemini/files
 }
 
 set env(TCC_TCSNAME) tc1

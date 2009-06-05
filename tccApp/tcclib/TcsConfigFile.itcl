@@ -18,13 +18,15 @@ itcl::class TcsConfigFile {
    private {
       method createComponent {type node}
       method createTarget {node}
-      method createTrackrate {node}
+		method createField {node}
+		method createTrackrate {node}
 		method createTaggedTarget {node}
       method report {msg}
       method findcomp {node}
       method elementis {node name}
       method compconf {component node}
-      method targetconf {field target node}
+		method fieldConf {component node}
+		method targetconf {field target node}
       variable w
       variable nodelist
    }
@@ -74,31 +76,28 @@ itcl::body TcsConfigFile::constructor {xml parent} {
 
 # Process each of the lists of component types (note that the order is
 # important so that we don't get errors because a subcomponent isn't defined).
-   foreach type {cosys wavelength oiwfswavelength aowfswavelength rotator guide trackrate \
-         target field instrument pointorig slewoptions trackframe \
+   foreach type {cosys wavelength oiwfswavelength aowfswavelength rotator guide} {
+		foreach node $nodelist($type) {
+			if { [createComponent $type $node] } break
+		}
+   }
+	foreach node $nodelist(trackrate) {
+		if { [createTrackrate $node] } break
+	}
+	foreach node $nodelist(target) {
+		if { [createTarget $node] } break
+	}
+	foreach node $nodelist(field) {
+		if { [createField $node] } break
+	}
+	foreach type {instrument pointorig slewoptions trackframe \
          chop gaos tcsconfig} {
-
-# Targets and track rates are special cases.
-      switch $type {
-         target {
-            foreach node $nodelist($type) {
-               if { [createTarget $node] } break
-            }
-         }
-         trackrate {
-            foreach node $nodelist($type) {
-               if { [createTrackrate $node] } break
-            }
-         }
-         default {
-            foreach node $nodelist($type) {
-               if { [createComponent $type $node] } break
-            }
-         }
-      }
+		foreach node $nodelist($type) {
+			if { [createComponent $type $node] } break
+		}
    }
    foreach node $nodelist(targetgroup) {
-		if { [createTaggedTarget $node] } break	
+		if { [createTaggedTarget $node] } break
 	}
 	
 
@@ -140,11 +139,6 @@ itcl::body TcsConfigFile::createComponent {type node} {
          set class WavelengthComponent
          set namespace ::AOWFSWavelengthNames
          set list AOWFSWavelengthList
-      }
-      field {
-         set class FieldComponent
-         set namespace ::FieldNames
-         set list FieldList
       }
       instrument {
          set class InstrumentComponent
@@ -209,6 +203,31 @@ itcl::body TcsConfigFile::createComponent {type node} {
 # Keep the display alive.
    update
    return 0
+}
+
+itcl::body TcsConfigFile::createField {node} {
+	# The node must have a name attribute.
+	if { [dom::element getAttribute $node name] == "" } {
+		return [report "$type with no name"]
+	}
+	set name [dom::element getAttribute $node name]
+	set class FieldComponent
+	set namespace ::FieldNames
+	set list FieldList
+	set component ${namespace}::$name
+	if { [catch {$class $component $list}] } {
+		$component init
+	}
+	
+	# Configure the component from the child nodes of type param.
+	foreach node [dom::DOMImplementation selectNode $node \
+			descendant-or-self::node()/child::param] {
+		fieldConf $component $node
+	}
+	
+	# Keep the display alive.
+	update
+	return 0
 }
 
 itcl::body TcsConfigFile::createTarget {node} {
@@ -470,6 +489,46 @@ itcl::body TcsConfigFile::compconf {component node} {
          }
       }
    }
+}
+
+itcl::body TcsConfigFile::fieldConf {component node} {
+
+# Get the attribute name.
+	set name [dom::element getAttribute $node name]
+
+# If the component has an option of that name.
+	if { ! [catch {$component cget -$name}] } {
+		switch $name {
+			sciencetarget {
+				set tagtarget [$component addTaggedTarget Base [$component cget -targetns]::[dom::element getAttribute $node value]]
+				$component setDefaultTarget $tagtarget
+			}
+			pwfs1target {
+				set tagtarget [$component addTaggedTarget PWFS1 [$component cget -targetns]::[dom::element getAttribute $node value]]
+				$component setDefaultTarget $tagtarget
+			}
+			pwfs2target {
+				set tagtarget [$component addTaggedTarget PWFS2 [$component cget -targetns]::[dom::element getAttribute $node value]]
+				$component setDefaultTarget $tagtarget
+			}
+			oiwfstarget {
+				set tagtarget [$component addTaggedTarget OIWFS [$component cget -targetns]::[dom::element getAttribute $node value]]
+				$component setDefaultTarget $tagtarget
+			}
+			aowfstarget {
+				set tagtarget [$component addTaggedTarget AOWFS [$component cget -targetns]::[dom::element getAttribute $node value]]
+				$component setDefaultTarget $tagtarget
+			}
+			default {
+				if { [catch {$component configure \
+						-$name [dom::element getAttribute $node value]} msg ]} {
+					if { [report $msg] } {
+						return 1
+					}
+				}
+			}
+		}
+	}
 }
 
 itcl::body TcsConfigFile::targetconf {field target node} {
