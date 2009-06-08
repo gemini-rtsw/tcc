@@ -262,8 +262,9 @@ itcl::body GuideLoop::constructor args {
    $w create text 168 15 -text M2 -tags m2 -font $font
    $w create text 168 35 -text TIP/TILT -tags m2 -font $font
    $w create text 168 55 -text FOCUS -tags m2 -font $font
-   $w create rectangle 0 0 84 89 -fill white -tags "active m2xy m2xy_bg"
-   $w create text 42 15 -text "M2 COMA" -tags m2xy -font $font
+   $w create rectangle 0 0 110 89 -fill white -tags "active m2xy m2xy_bg"
+   $w create text 26 15 -text "M2" -tags m2xy -font $font
+	$w create text 22 35 -text "COMA" -tags m2xy -font $font
    $w create rectangle 0 0 132 109 -fill white -tags "active m1 m1_bg"
    $w create text 92 45 -text M1 -tags m1 -font $font
    $w create text 92 65 -text FIGURE -tags m1 -font $font
@@ -341,9 +342,14 @@ itcl::body GuideLoop::constructor args {
       usual
       rename -offbackground -background background Background
    }
-   $w create window 42 54 -width 60 -window $itk_component(m2coma) -tags m2xy
-   $itk_component(m2coma) add ON -pady 0
-   $itk_component(m2coma) add OFF -pady 0
+   $w create window 78 45 -width 60 -window $itk_component(m2coma) -tags m2xy
+   $itk_component(m2coma) add PWFS1 -pady 0
+	$itk_component(m2coma) add HRWFS -pady 0
+	$itk_component(m2coma) add GAOS -pady 0
+	$itk_component(m2coma) add OFF -pady 0
+	if { [calparam cget -site] eq "CP"} {
+		$itk_component(m2coma) setState 2 disabled
+	}
 
 # Controls for Mount.
    itk_component add mt {
@@ -434,7 +440,7 @@ itcl::body GuideLoop::constructor args {
 
    $w create line 251 389 205 389 205 100 -width 3 -fill white \
          -tags {active oiwfs_m2} -arrow last -arrowshape {20 20 7}
-   $w create line 471 85 382 85  -width 3 -fill white \
+   $w create line 471 85 410 85  -width 3 -fill white \
          -tags {active gaos_m2} -arrow last -arrowshape {20 20 7}
 
 # WFS to Probes
@@ -870,11 +876,17 @@ itcl::body GuideLoop::recolour args {
 
 itcl::body GuideLoop::comacorr {val} {
    switch $val {
-      ON {
-         AO configure -comacorr 1
+		PWFS1 {
+         AO configure -comasource PWFS1
       }
+		HRWFS {
+			AO configure -comasource HRWFS
+		}
+		GAOS {
+			AO configure -comasource Altair
+		}
       OFF {
-         AO configure -comacorr 0
+         AO configure -comasource ""
       }
    }
 }
