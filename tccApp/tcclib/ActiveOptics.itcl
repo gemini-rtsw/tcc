@@ -232,7 +232,11 @@ itcl::body ActiveOptics::enable {} {
     if { ![catch {cs gaosTTGS info}] } {
 	if { $gaosTTGS && ![state gaosTTGS]} {
 	    # set the Gain
-	    set path "/gemini/altair/altair/bin/solaris/"
+            if { [string compare [exec uname] "Linux"] == 0 } {
+                set path [file join $::env(GEMINI_TOP) bin]
+            } else {
+	        set path "/gemini/altair/altair/bin/solaris/"
+            }
 	    #puts "sending cmd: $path/aoSunClient altairwfcs1x 35  aoStrapTTGains d${ttgsGain} 0 0 0 0"
 	    if [ catch {eval exec $path/aoSunClient altairwfcs1x 35  aoStrapTTGains d${ttgsGain} 0 0 0 0} result ] {
 		# 	    set stat [string match "*Return Val = -1*" $msg]
