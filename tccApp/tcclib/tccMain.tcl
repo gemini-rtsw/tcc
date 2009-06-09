@@ -23,8 +23,6 @@ global env
 # Initialise the time service.
    timeInit
 
-# Create the epics service.
-   service epics
 
 # Process command line arguments.
    set layout $::ROOT/default_layout.tcc
@@ -56,11 +54,17 @@ global env
       }
    }
 
+# Create the CalParam object.
+   CalParam calparam -calFile $calfile
+
+	appData add configFile tcc[calparam cget -site].ca
+	puts "Using ca file [appData lookup configPath]/[appData lookup configFile]"
+	# Create the epics service.
+	service epics
+
 # Create the TCS principal system.
    seq::PrincipalSystem tcs tcsApply -debug 0
 
-# Create the CalParam object.
-   CalParam calparam -calFile $calfile
 
 #OCS proxy can be overwriten with an environment variable or command line option
 	if { [info exists env(OCSPROXY)] && ![string is space $env(OCSPROXY)] } {
@@ -69,7 +73,7 @@ global env
 	if { ![string is space $ocsproxy] } {
 		calparam configure -ocs_proxy $ocsproxy
 	}
-	
+
 
 # AWE use the site parameter to load site specific channels
    puts "site is [calparam cget -site]"
