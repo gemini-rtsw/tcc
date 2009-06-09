@@ -60,11 +60,13 @@ itcl::body CalParam::constructor {args} {
    set m2TiltGain(Default) 0.1
    set m2FocusGain(Default) 0.0002
    eval configure $args
-   if { [string compare [exec uname] "Linux"] == 0 } {
-   	set calFile calparams.$::env(GEMINI_SITE).[exec uname]
-   } else {
-   	set calFile "calparams.dat"
-   }
+	if { $calFile eq "<undefined>" } {
+	   if { [string compare [exec uname] "Linux"] == 0 } {
+	   	set calFile calparams.$::env(GEMINI_SITE).[exec uname]
+	   } else {
+	   	set calFile "calparams.dat"
+	   }
+	}
    puts "CalParam using file $calFile"
    source $ROOT/$calFile
 }

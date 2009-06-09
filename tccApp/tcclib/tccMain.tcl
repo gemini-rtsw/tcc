@@ -13,7 +13,7 @@
 #-
 
 proc tccMain args {
-
+global env
 # Withdraw the main window so that it doesn't appear if some error happens
 # during startup and a message box is created and so that the windows that
 # need access to the TCS can't get created while we are waiting for a
@@ -34,6 +34,7 @@ proc tccMain args {
    } else {
    	set calfile "calparams.dat"
    }
+	set ocsproxy ""
    foreach {opt val} $args {
       switch -- $opt {
          -layout {
@@ -45,6 +46,9 @@ proc tccMain args {
          -cal {
             set calfile "$val"
          }
+			-ocsproxy {
+				set ocsproxy "$val"
+			}
          default {
             tk_messageBox -icon warning -message \
                   "Unknown command line option \"$opt\" being ignored."
@@ -58,8 +62,16 @@ proc tccMain args {
 # Create the CalParam object.
    CalParam calparam -calFile $calfile
 
-# AWE use the site parameter to load site specific channels
+#OCS proxy can be overwriten with an environment variable or command line option
+	if { [info exists env(OCSPROXY)] && ![string is space $env(OCSPROXY)] } {
+		calparam configure -ocs_proxy $env(OCSPROXY)
+	}
+	if { ![string is space $ocsproxy] } {
+		calparam configure -ocs_proxy $ocsproxy
+	}
+	
 
+# AWE use the site parameter to load site specific channels
    puts "site is [calparam cget -site]"
    switch [calparam cget -site] {
        MK {
