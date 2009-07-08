@@ -50,7 +50,16 @@ set CATALOG_DIR [file join $ROOT pointcats]
 
 # Define the default location for storing pointing test results.
 global SAVE_FILE_DIR
-set SAVE_FILE_DIR [file join /gemini files]
+if { [string compare [exec uname] "Linux"] == 0 } {
+#How is that they ended with different names ??
+	if { $env(GEMINI_SITE) eq "CP" } {
+		set SAVE_FILE_DIR [file join $env(GEMINI_TOP) etc/tcc/pointtest]
+	} else {
+		set SAVE_FILE_DIR [file join $env(GEMINI_TOP) etc/tcc/pointtests]
+	}
+} else {
+	set SAVE_FILE_DIR [file join /gemini files]
+}
 
 # The pointtest application procedures live in the pointlib subdirectory.
 lappend auto_path [file join $ROOT pointlib]

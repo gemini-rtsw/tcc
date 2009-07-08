@@ -1,0 +1,59 @@
+#+
+#  AcqGuideSys
+#
+#  Singleton class to access A&G system.
+#
+#  Options:
+#           none
+#
+#  Methods:
+#           none
+#
+#  J. Luhrs July 2009
+#
+#+
+
+package require Ocspkg
+
+itcl::class AcqGuideSys {
+	public {		
+		proc getSingleton {}
+		
+		constructor {} {}
+		method getPort {instrument}
+	}
+	protected {
+		common singleton ""
+	}
+}
+
+itcl::body AcqGuideSys::getSingleton {} {
+	if { $singleton eq "" } {
+		set singleton [namespace current]::[AcqGuideSys #auto]
+	}
+	return $singleton
+}
+
+itcl::body AcqGuideSys::constructor {} {
+	if { [catch {sa agssad info}] } {
+		epics sa agssad
+	}
+}
+
+itcl::body AcqGuideSys::getPort {instrument} {
+	set port1Label [sa agssad get port1Label]
+	set port2Label [sa agssad get port2Label]
+	set port3Label [sa agssad get port3Label]
+	set port4Label [sa agssad get port4Label]
+	set port5Label [sa agssad get port5Label]
+	switch $instrument \
+		$port1Label { set port 1 } \
+		$port2Label { set port 2 } \
+		$port3Label { set port 3 } \
+		$port4Label { set port 4 } \
+		$port5Label { set port 5 } \
+		default { 
+			set port 0
+		}		
+	return $port
+}
