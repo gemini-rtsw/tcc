@@ -262,6 +262,16 @@ itcl::configbody TcsConfig::instrument {
    }
    set current_instrument ""
    if { ! [string equal $instrument ""] } {
+		#FIXME: Added backwards compatibility for old FLAMINGOS-2 configuration
+		#names. This should be removed for 2010A.
+		if { $instrument eq "FLAMINGOS2" } {
+			logactions logmess "Warning: Obsolete FLAMINGOS-2 configuration name FLAMINGOS2. Changed to F2_UP."
+			set instrument "F2_UP"
+		} elseif { $instrument eq "FLAMINGOS2_SPEC" } {
+			logactions logmess "Warning: Obsolete FLAMINGOS-2 configuration name FLAMINGOS2_SPEC. Changed to F2_UP_SPEC."
+			set instrument "F2_UP_SPEC"
+		}
+
       if { [catch {InstrumentNames::$instrument refinc}] } {
          error "Instrument \"$instrument\" does not exist"
       } else {
