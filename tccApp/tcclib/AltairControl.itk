@@ -1,5 +1,5 @@
 #+
-#  GaosControl <- ComponentControl
+#  AltairControl <- ComponentControl
 #
 #  A Gaos control is a ComponentControl widget with widgets for the 
 #  guide star magnitude, wind speed, seeing estimate and whether the
@@ -14,7 +14,7 @@
 #  Copyright CCLRC
 #+
 
-itcl::class GaosControl {
+itcl::class AltairControl {
    inherit ComponentControl
    constructor args {}
    itk_option define -component component Component {}
@@ -31,13 +31,13 @@ itcl::class GaosControl {
    }
 }
 
-itk::usual GaosControl {
+itk::usual AltairControl {
    keep -borderwidth -cursor -font -highlightthickness -insertborderwidth \
          -insertofftime -insertontime -insertwidth -labelfont -popupcursor \
          -selectborderwidth -textfont -title
 }
 
-itcl::body GaosControl::constructor args {
+itcl::body AltairControl::constructor args {
 
 # Frame.
    itk_component add chop {
@@ -113,7 +113,7 @@ itcl::body GaosControl::constructor args {
    eval itk_initialize $args
 }
 
-itcl::body GaosControl::reset {} {
+itcl::body AltairControl::reset {} {
    $itk_component(gsmag) clear
    $itk_component(seeing) clear
    $itk_component(windspeed) clear
@@ -125,7 +125,7 @@ itcl::body GaosControl::reset {} {
    set force OFF
 }
 
-itcl::body GaosControl::load {name} {
+itcl::body AltairControl::load {name} {
 
 # Copy the contents of the specified Gaos object into the edit
 # controls.
@@ -140,7 +140,7 @@ itcl::body GaosControl::load {name} {
    set force [string toupper [$name cget -force]]
 }
 
-itcl::body GaosControl::save {name} {
+itcl::body AltairControl::save {name} {
    $name configure -gsmag [$itk_component(gsmag) get]
    $name configure -seeing [$itk_component(seeing) get]
    $name configure -windspeed [$itk_component(windspeed) get]

@@ -1,0 +1,99 @@
+#+
+#  GemsControl <- ComponentControl
+#
+#  A Gems control is a ComponentControl widget with widgets for the 
+#  ADC, Dichroic beamsplitter and Astrometric mode.
+#
+#  Options:
+#           -component         The name of the component that this control
+#                              edits.
+#
+#  J Luhrs July 2009
+#
+#+
+
+package require Itk
+
+itcl::class GemsControl {
+	inherit ComponentControl
+	constructor args {}
+	itk_option define -component component Component {}
+	public {
+		method load {name}
+		method reset {}
+		method save {name}
+		variable adc IN
+		variable dichroicBeamsplitter WAVELENGTH_850NM
+		variable astrometricMode BEST
+	}
+}
+
+itk::usual GemsControl {
+	keep -borderwidth -cursor -font -highlightthickness -insertborderwidth \
+			-insertofftime -insertontime -insertwidth -labelfont -popupcursor \
+			-selectborderwidth -textfont -title
+}
+
+itcl::body GemsControl::constructor args {
+# Frame.
+	itk_component add mainframe {
+		frame $itk_interior.mainframe -bd 2 -relief ridge
+	}
+	pack $itk_component(mainframe) -fill x -expand y
+	set w $itk_component(mainframe)
+	
+# Dichroic beamsplitter
+	itk_component add beamsplt { iwidgets::optionmenu $w.beamsplt \
+		-labeltext "Beam splitter"}
+	$w.beamsplt insert end WAVELENGTH_850NM WAVELENGTH_1UM
+	pack $itk_component(beamsplt) -pady 4 -anchor w
+
+# Astrometric mode
+	itk_component add astromode { iwidgets::optionmenu $w.astromode \
+		-labeltext "Astrometric mode"}
+	$w.astromode insert end OFF REGULAR GOOD BEST
+	pack $itk_component(astromode) -pady 4 -pady 4 -anchor w
+
+# ADC control
+	itk_component add adc {
+		checkbutton $w.adc -text "ADC" \
+				-variable [itcl::scope adc] -onvalue IN -offvalue OUT
+	}
+	pack $itk_component(adc) -pady 4
+
+# Set the object description.
+	set description "GeMS configuration"
+
+	eval itk_initialize $args
+}
+
+itcl::body GemsControl::reset {} {
+	set adc IN
+	set dichroicBeamsplitter WAVELENGTH_850NM
+	set astrometricMode BEST
+}
+
+itcl::body GemsControl::load {name} {
+# Copy the contents of the specified GeMS object into the edit controls.
+	set adc [string toupper [$name cget -adc]]
+	set dichroicBeamsplitter [string toupper [$name cget -dichroicBeamsplitter]]
+	if { [string is space $dichroicBeamsplitter] } {
+		$itk_component(beamsplt) select WAVELENGTH_850NM
+	} else {
+		$itk_component(beamsplt) select $dichroicBeamsplitter
+	}
+	set astrometricMode [string toupper [$name cget -astrometricMode]]
+	if { [string is space $astrometricMode] } {
+		$itk_component(astromode) select OFF
+	} else {
+		$itk_component(astromode) select $astrometricMode
+	}
+}
+
+itcl::body GemsControl::save {name} {
+	$name configure -adc $adc
+	set dichroicBeamsplitter [$itk_component(beamsplt) get]
+	$name configure -dichroicBeamsplitter $dichroicBeamsplitter
+	set astrometricMode [$itk_component(astromode) get]
+	$name configure -astrometricMode $astrometricMode
+}

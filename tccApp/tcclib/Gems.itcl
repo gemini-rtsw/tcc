@@ -1,0 +1,59 @@
+#+
+#  Gems <- Paramset
+#
+#  Implements the Gems class. A Gems object stores various parameters
+#  that are needed for the initial setup of GeMS when the telescope is
+#  slewed.
+#
+#  Options:
+#
+#          -adc                  Use ADC
+#
+#          -dichroicBeamsplitter Dichroic beamsplitter
+#
+#          -astrometricMode      Astrometric mode
+#
+#  Methods:
+#          apply comp    Applies the GeMS configuration to the TCS by 
+#                        setting the values of the command parameters.
+#                        The argument is ignored.
+#
+#          init          Returns the GeMS object to its initial state.
+#
+#          save node     Saves the values of the Gaos configuration
+#                        to the xml node
+#
+#  J Luhrs   July 2009
+#+
+
+itcl::class Gems {
+	inherit Paramset
+	destructor {}
+	public {
+		method apply {comp}
+		method init {}
+		method save {node}
+		
+		variable adc ""
+		variable dichroicBeamsplitter ""
+		variable astrometricMode ""
+	}	
+}
+
+itcl::body Gems::destructor {} {
+	init
+}
+
+itcl::body Gems::apply {comp} {
+	#FIXME: Add proper configuration commands when the ICD is released.
+	logactions logmess "Applying GeMS ADC: (\"$adc\")"
+	logactions logmess "Applying GeMS dichroic beamsplitter: (\"$dichroicBeamsplitter\")"
+	logactions logmess "Applying GeMS astrometric mode: (\"$astrometricMode\")"
+}
+
+itcl::body Gems::save {node} {
+	set node [paramset $node gaos]
+	param $node adc $adc
+	param $node dichroicBeamsplitter $dichroicBeamsplitter
+	param $node astrometricMode $astrometricMode
+}

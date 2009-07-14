@@ -72,7 +72,7 @@
 
 # Disable AO related features
 *toolbar*ao*state:                      disabled
-*tcsConfigPanel*control*gaos*state:   disabled
+#*tcsConfigPanel*control*gaos*state:   disabled
 *tcsPanel*control*gaos*state:         disabled
 *tcsPanel*control*aodatum*state:        disabled
 *tcsPanel*control*aopark*state:         disabled

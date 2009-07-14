@@ -1,7 +1,7 @@
 #+
-#  Gaos <- Paramset
+#  Altair <- Paramset
 #
-#  Implements the Gaos class. A Gaos object stores various parameters
+#  Implements the Altair class. A Altair object stores various parameters
 #  that are needed for the initial setup of GAOS when the telescope is
 #  slewed.
 #
@@ -24,13 +24,13 @@
 #          -lgs          LGS/NGS mode
 #
 #  Methods:
-#          apply comp    Applies the Gaos configuration to the TCS by 
+#          apply comp    Applies the Altair configuration to the TCS by 
 #                        setting the values of the command parameters.
 #                        The argument is ignored.
 #
-#          init          Returns the Gaos object to its initial state.
+#          init          Returns the Altair object to its initial state.
 #
-#          save node     Saves the values of the Gaos configuration
+#          save node     Saves the values of the Altair configuration
 #                        to the xml node
 #
 #  D Terrett 15 May 2003
@@ -38,7 +38,7 @@
 #  Copyright CCLRC
 #+
 
-itcl::class Gaos {
+itcl::class Altair {
    inherit Paramset
    destructor {$this init}
    public {
@@ -80,9 +80,9 @@ itcl::class Gaos {
    }
 }
 
-itcl::body Gaos::apply {comp} {
+itcl::body Altair::apply {comp} {
     global AOreuseGains AOtryingToReuseGain
-#puts "Gaos::apply comp: $comp name: $::Config($comp,value)"
+#puts "Altair::apply comp: $comp name: $::Config($comp,value)"
 
 # recolour the A&G screen because the Adaptive Optics Mode could effect available options
     if [winfo exists .observePanel] {
@@ -92,16 +92,16 @@ itcl::body Gaos::apply {comp} {
 # set the m2 xy deadband
     if {$::Config($comp,value) == "LGS+TTGS"} {
 	cs m2deadband set dem 100.0
-	logactions logmess "Gaos::Apply, setting m2 XY deadband to 100.0"
+	logactions logmess "Altair::Apply, setting m2 XY deadband to 100.0"
     } else {
 	cs m2deadband set dem 50.0
-	logactions logmess "Gaos::Apply, setting m2 XY deadband to 50.0"
+	logactions logmess "Altair::Apply, setting m2 XY deadband to 50.0"
     }	
     cs m2deadband set dir 0
     cs m2deadband set dir 3
 
 
-    logactions logmess "Gaos::Apply, TCS useAO is: [sa aossad get useAO], config is $::Config($comp,value)"
+    logactions logmess "Altair::Apply, TCS useAO is: [sa aossad get useAO], config is $::Config($comp,value)"
 
 # If empty or "No AO" stop the lgs zoom from tracking (we could send it into a limit while not using Altair)
     if { ($::Config($comp,value) == "") || ($::Config($comp,value) == "No AO") } {
@@ -130,7 +130,7 @@ itcl::body Gaos::apply {comp} {
    set zd [expr { 90.0 - $el }]
    set x [sa tcssad get aoDemandx]
    set y [sa tcssad get aoDemandy]
-   logactions logmess "Gaos::apply using tcs to determine zd: $zd rotpos: $rotpos x: $x y: $y"
+   logactions logmess "Altair::apply using tcs to determine zd: $zd rotpos: $rotpos x: $x y: $y"
 
 # set loop to use default gains
    set AOreuseGains 0
@@ -150,15 +150,15 @@ itcl::body Gaos::apply {comp} {
        .observePanel.frame.control.botframe.wfsconfig.tabs.canvas.notebook.cs.page5.cs.aowfs.nd select $ndFilter
    } else {
        if {[AO state useLwfs]} {
-	   #puts "Gaos::apply setting ndfilter to $ndFilter"
-	   set mess "Gaos::apply moving lgs ND Filter to $ndFilter"
+	   #puts "Altair::apply setting ndfilter to $ndFilter"
+	   set mess "Altair::apply moving lgs ND Filter to $ndFilter"
 	   logactions logmess $mess
 	   cs aolgsNDFilter set pos $ndFilter
 	   cs aolgsNDFilter set mode 1
 	   cs aolgsNDFilter set dir 3
        } else {
-	   #puts "Gaos::apply setting ndfilter to $ndFilter"
-	   set mess "Gaos::apply moving ngs ND Filter to $ndFilter"
+	   #puts "Altair::apply setting ndfilter to $ndFilter"
+	   set mess "Altair::apply moving ngs ND Filter to $ndFilter"
 	   logactions logmess $mess
 	   cs aongsNDFilter set pos $ndFilter
 	   cs aongsNDFilter set mode 1
@@ -174,8 +174,8 @@ itcl::body Gaos::apply {comp} {
        [winfo ismapped .observePanel.frame.control.botframe.wfsconfig.tabs.canvas.notebook.cs.page5.cs.aowfs.flens]} {
        .observePanel.frame.control.botframe.wfsconfig.tabs.canvas.notebook.cs.page5.cs.aowfs.flens select $fldLens
    }
-    #puts "Gaos::apply setting fldlens to $fldLens"
-    logactions logmess "Gaos::apply setting fldlens to $fldLens"
+    #puts "Altair::apply setting fldlens to $fldLens"
+    logactions logmess "Altair::apply setting fldlens to $fldLens"
     switch $fldLens {
 	IN {
 	    cs aoFLens set pos FLENS
@@ -262,7 +262,7 @@ itcl::body Gaos::apply {comp} {
    }
 }
 
-itcl::body Gaos::save {node} {
+itcl::body Altair::save {node} {
    set node [paramset $node gaos]
    param $node adjustAdc $adjustAdc
    param $node deployAdc $deployAdc
@@ -274,7 +274,7 @@ itcl::body Gaos::save {node} {
    param $node windspeed $windspeed
 }
 
-itcl::body Gaos::init {} {
+itcl::body Altair::init {} {
    set adjustAdc ""
    set deployAdc ""
    set gsmag ""
@@ -285,7 +285,7 @@ itcl::body Gaos::init {} {
    set fldLens ""
 }
 
-itcl::body Gaos::setUseLwfs {} {
+itcl::body Altair::setUseLwfs {} {
 
 # Open/Reset the loops
    if [winfo exists .observePanel] {
@@ -316,11 +316,11 @@ itcl::body Gaos::setUseLwfs {} {
    if {$lgs && [expr {![AO state useLwfs] || [string equal $force "ON"] ||
 		      [string equal [sa aossad get ustage] "OUT"] || ![string equal [sa aossad get zoomMode] "TRACK"] ||
 		      ![string equal [sa aossad get zoomBusy] "BUSY"] || [expr {[sa aossad get zoomInPos] == 0}]}]} {
-       logactions logmess "Gaos::apply Configuring NGS/LGS lgs: $lgs"
+       logactions logmess "Altair::apply Configuring NGS/LGS lgs: $lgs"
        cs aoUseLwfs set state ON
    } elseif {!$lgs && [expr {[AO state useLwfs] || [string equal $force "ON"] ||
 			     [string equal [sa aossad get ustage] "IN"] || ![string equal [sa aossad get zoomBusy] "IDLE"] }]} {
-       logactions logmess "Gaos::apply Configuring NGS/LGS lgs: $lgs"
+       logactions logmess "Altair::apply Configuring NGS/LGS lgs: $lgs"
        cs aoUseLwfs set state OFF
    } else {
        return 0
@@ -380,10 +380,10 @@ itcl::body Gaos::setUseLwfs {} {
    return 0
 }
 
-itcl::body Gaos::initWfs {} {
+itcl::body Altair::initWfs {} {
 
 # Initialize the appropriate WFS
-   logactions logmess "Gaos::apply Initializing the NGS/LGS WFS lgs: $lgs"
+   logactions logmess "Altair::apply Initializing the NGS/LGS WFS lgs: $lgs"
 
    if {$lgs} {
        cs aoInitWfs set wfs 1

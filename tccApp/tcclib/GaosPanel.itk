@@ -29,12 +29,21 @@ itcl::body GaosPanel::constructor args {
    setWidgetColors $itk_interior \
          $itk_option(-background) $itk_option(-foreground)
 
-   itk_component add control {
-      GaosControl $itk_interior.control
-   } {
-      usual
-      rename -component -components components Components
-   }
+	if {[calparam cget -site] eq "CP"} {
+		itk_component add control {
+			GemsControl $itk_interior.control
+		} {
+			usual
+			rename -component -components components Components
+		}
+	} else {
+	   itk_component add control {
+			AltairControl $itk_interior.control
+	   } {
+	      usual
+	      rename -component -components components Components
+	   }
+	}
    setWidgetColors "$itk_component(menubar) $itk_component(control)" \
          $itk_option(-background) $itk_option(-foreground)
 

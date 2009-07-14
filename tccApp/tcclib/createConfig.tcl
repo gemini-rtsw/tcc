@@ -403,13 +403,18 @@ proc createConfig {} {
    set ::Config(tcs.chop.cosys,label) "Coordinate system"
 
    set ::Config(tcs.gaos,value) ""
-   set ::Config(tcs.gaos,anon) ::[Gaos #auto]
-   set ::Config(tcs.gaos,class) GaosComponent
    set ::Config(tcs.gaos,namespace) ::GaosNames
    set ::Config(tcs.gaos,list) GaosList
    set ::Config(tcs.gaos,panel) tcsGaosPanel
    set ::Config(tcs.gaos,subcomp) ""
    set ::Config(tcs.gaos,label) "GAOS configuration"
+	if {[calparam cget -site] eq "CP"} {
+		set ::Config(tcs.gaos,anon) ::[Gems #auto]
+		set ::Config(tcs.gaos,class) GemsComponent
+	} else {
+	   set ::Config(tcs.gaos,anon) ::[Altair #auto]
+		set ::Config(tcs.gaos,class) AltairComponent
+	}
 
    set ::Config(tcs.slewoptions,value) "Normal"
    set ::Config(tcs.slewoptions,anon) ::[SlewOptions #auto]

@@ -45,7 +45,8 @@ itcl::body TcsConfigFile::constructor {xml parent} {
 
 # Initialise lists of nodes that represent configuration components.
    set nodelist(gaos) ""
-   set nodelist(chop) ""
+	set nodelist(gems) ""
+	set nodelist(chop) ""
    set nodelist(cosys) ""
    set nodelist(field) ""
    set nodelist(guide) ""
@@ -91,11 +92,23 @@ itcl::body TcsConfigFile::constructor {xml parent} {
 		if { [createTarget $node] } break
 	}
 	foreach type {instrument pointorig slewoptions trackframe \
-         chop gaos tcsconfig} {
+         chop} {
 		foreach node $nodelist($type) {
 			if { [createComponent $type $node] } break
 		}
    }
+	if {[calparam cget -site] eq "CP"} {
+		foreach node $nodelist(gems) {
+					if { [createComponent gems $node] } break
+				}
+	} else {
+		foreach node $nodelist(gaos) {
+			if { [createComponent gaos $node] } break
+		}
+	}
+	foreach node $nodelist(tcsconfig) {
+		if { [createComponent tcsconfig $node] } break
+	}
    foreach node $nodelist(targetgroup) {
 		if { [createTaggedTarget $node] } break
 	}
@@ -116,10 +129,15 @@ itcl::body TcsConfigFile::createComponent {type node} {
 # Create a component of the appropriate type.
    switch $type {
       gaos {
-         set class GaosComponent
+         set class AltairComponent
          set namespace ::GaosNames
          set list GaosList
       }
+		gems {
+			set class GemsComponent
+			set namespace ::GaosNames
+			set list GaosList
+		}
       cosys {
          set class CosysComponent
          set namespace ::CosysNames
@@ -179,11 +197,6 @@ itcl::body TcsConfigFile::createComponent {type node} {
          set class TcsConfigComponent
          set namespace ::TcsConfigNames
          set list TcsConfigList
-      }
-      gaos {
-         set class GaosComponent
-         set namespace ::GaosNames
-         set list GaosList
       }
    }
 
@@ -408,6 +421,9 @@ itcl::body TcsConfigFile::findcomp {node} {
       gaos {
          lappend nodelist(gaos) $node
       }
+		gems {
+			lappend nodelist(gems) $node
+		}
       chop {
          lappend nodelist(chop) $node
       }
