@@ -3,8 +3,11 @@ itcl::class AzElTarget {
    constructor {args} {}
    destructor {}
 	method load target {}
-	method save target {}
+	method save {target {propagate 1}} {}
 	method cleanFields {} {}
+	protected {
+		method buildDiffTrackRate {parent}
+	}
 }
 
 itk::usual AzElTarget {
@@ -12,33 +15,38 @@ itk::usual AzElTarget {
 }
 
 itcl::body AzElTarget::constructor {args} {
-    #itk_option add hull.borderwidth hull.relief    
-    eval itk_initialize $args
+   #itk_option add hull.borderwidth hull.relief    
+   eval itk_initialize $args
 
-    set w $itk_interior
+   set w $itk_interior
+	
+	itk_component add coordframe { frame $w.coordframe }
 
    itk_component add az {
-      iwidgets::entryfield $w.az -width 12 -labeltext Az:
+      iwidgets::entryfield $w.coordframe.az -width 12 -labeltext Az
    } {
       usual
       rename -textfont -majorfont majorFont Font
       rename -labelfont -majorfont majorFont Font
    }
    itk_component add el {
-      iwidgets::entryfield $w.el -width 12 -labeltext El:
+      iwidgets::entryfield $w.coordframe.el -width 12 -labeltext El
    } {
       usual
       rename -textfont -majorfont majorFont Font
       rename -labelfont -majorfont majorFont Font
    }
-   itk_component add trackrate {
-      SubComponentSelector $itk_interior.trackrate -labeltext "Differential Track rates" \
-            -labelpos w -width 12 -component tcs.field.trackrate
-   }
-   pack $itk_component(trackrate) -side bottom -anchor w -padx 20 -pady 3
 
-   pack $itk_component(az) $itk_component(el) -side left -expand y -pady 40 \
-      -anchor n
+# Controls for differential track rate.
+	itk_component add trframe { iwidgets::labeledframe $w.trframe \
+		-labelpos nw -labeltext "Differential Track Rates" -ipadx 1 -ipady 1 }
+	
+	buildDiffTrackRate [$itk_component(trframe) childsite]
+   pack $itk_component(az) $itk_component(el) -side left -expand n -padx 3 -pady 15 \
+      -anchor n	
+   pack $itk_component(coordframe) -side top -anchor w -expand yes -fill x
+   pack $itk_component(trframe) -side top -anchor w
+
 }
 
 
@@ -46,7 +54,7 @@ itcl::body AzElTarget::cleanFields {} {
 	$itk_component(az) clear
 	$itk_component(el) clear
 	set ::Config(tcs.field.cosys,value) ""
-	set ::Config(tcs.field.trackrate,value) ""
+	set ::Config(tcs.field.trackrate2,value) ""
 }
 
 itcl::body AzElTarget::load {target} {
@@ -54,21 +62,26 @@ itcl::body AzElTarget::load {target} {
 		cleanFields
 		$itk_component(az) insert end [$target cget -c1]
 		$itk_component(el) insert end [$target cget -c2]
-		$itk_component(trackrate) configure -component tcs.field.trackrate
-		set ::Config(tcs.field.trackrate,value) [$target cget -trackrate]
-		if { ![string equal [$target cget -trackrate] ""]} {
-			set ::Config(tcs.field.trackrate.cosys,value) \
-				[$::Config(tcs.field.trackrate,namespace)::$::Config(tcs.field.trackrate,value) cget -cosys]
-		}
+		set ::Config(tcs.field.trackrate2,value) [$target cget -trackrate]
+		set ::Config(tcs.field.trackrate2.cosys,value) AzEl		
 	}
 }
 
-itcl::body AzElTarget::save {target} {
+itcl::body AzElTarget::save {target {propagate 1}} {
+	if { $propagate } {
+		$itk_component(trcontrol) store
+	}
 	if { ![string equal $target ""] } {
 		#$target init
 		$target configure -type degdegTarget
 		$target configure -c1 [$itk_component(az) get]
 		$target configure -c2 [$itk_component(el) get]
-		$target configure -trackrate [$itk_component(trackrate) get]
+		$target configure -trackrate $::Config(tcs.field.trackrate2,value)
 	}	
+}
+
+itcl::body AzElTarget::buildDiffTrackRate {parent} {
+	itk_component add trcontrol { TrackRateControl $parent.trcontrol \
+		-component tcs.field.trackrate2 -cosys AzEl }
+	pack $itk_component(trcontrol) -side top -anchor w  -padx 1 -pady 1
 }

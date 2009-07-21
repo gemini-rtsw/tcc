@@ -61,6 +61,7 @@ itcl::class FieldControl {
 		method onAnyAssignedTargetChange {attr} {}
 		method onSetDefault {} {}
 		method onSwapTarget {} {}
+		method store {name} 
    }
 }
 
@@ -156,7 +157,7 @@ itcl::body FieldControl::constructor args {
 	pack $itk_component(swapguide) -side top -pady 3
 
 
-# Notebook for target entry controls.
+# Frame for target entry controls.
    itk_component add tarframe {
       frame $w.tarframe -borderwidth 0 -relief flat
    }
@@ -265,8 +266,7 @@ itcl::body FieldControl::save {name} {
 #+
 # Updates the named field object.
 #-
-	#Force save of target details
-	onSaveTarget
+
 # If this is a new field then add each target and track rate from the old 
 # field to the new provided that the old field still exists.
    if { ![string equal $currentname $name] && \
@@ -594,11 +594,13 @@ itcl::body FieldControl::load {name} {
    }
   set ::Config($comp.target,namespace) ${name}TargetNames
   set ::Config($comp.trackrate,namespace) ${name}TrackRateNames
+  set ::Config($comp.trackrate2,namespace) ${name}TrackRateNames
   set ::Config($comp.target,list) ${name}TargetList 
   set ::Config($comp.target,value) ""
   set ::Config($comp.taggedtarget,list) [${name} cget -taggedTargets] 
   set ::Config($comp.taggedtarget,value) ""
   set ::Config($comp.trackrate,list) ${name}TrackRateList
+  set ::Config($comp.trackrate2,list) ${name}TrackRateList
  
 	if { [string is space [$name getSwapTarget]] } {
    	set ::Config($comp.guide,value) [$name cget -guide]
@@ -619,8 +621,10 @@ itcl::body FieldControl::load {name} {
 
 itcl::configbody FieldControl::component {
 # Remove any existing trace
-   trace vdelete ::Config($comp,value) w [itcl::code $this newname]
-   set comp ""
+	if { $comp ne "" } {
+   	trace vdelete ::Config($comp,value) w [itcl::code $this newname]
+   	set comp ""
+	}
 
    if { $itk_option(-component) != "" } {
        set comp $itk_option(-component)
@@ -656,10 +660,12 @@ itcl::configbody FieldControl::component {
       }
       set ::Config($comp.target,namespace) ${currentname}TargetNames
 		set ::Config($comp.trackrate,namespace) ${currentname}TrackRateNames
+		set ::Config($comp.trackrate2,namespace) ${currentname}TrackRateNames
       set ::Config($comp.target,list) ${currentname}TargetList
       set ::Config($comp.taggedtarget,list) [${currentname} cget -taggedTargets]
       set ::Config($comp.trackrate,list) ${currentname}TrackRateList
-      
+      set ::Config($comp.trackrate2,list) ${currentname}TrackRateList
+     
 		set name $::Config($comp.wavelength,value)
    }
 }
@@ -686,11 +692,12 @@ return
 }
 
 itcl::body FieldControl::newfieldval {n1 n2 op} {
-return
+
 # Update the current name if the scratch object is selected. This is required
 # because load will not get called.
    if { $::Config($comp,value) == "" } {
-      set currentname $::Config($comp,anon)
+      #set currentname $::Config($comp,anon)
+		load $::Config($comp,anon)
    }
 }
 
@@ -830,7 +837,7 @@ itcl::body FieldControl::onAddNewTarget {} {
 itcl::body FieldControl::onSaveTarget {} {
 	set tagtarget [$itk_component(targets) getSelected]
 	if { $tagtarget ne "" } {
-		set tagtarget [$itk_component(trgDetails) save [$itk_component(targets) getSelected]]
+		set tagtarget [$itk_component(trgDetails) save $tagtarget]
 		$itk_component(targets) refresh
 		$itk_component(targets) select $tagtarget
 	}
@@ -899,6 +906,48 @@ itcl::body FieldControl::onSwapTarget {} {
 	
 	#Force an apply of the swapped configuration
 	if { $swaptarget ne [$::Config(tcs.field,namespace)::$::Config(tcs.field,value) getSwapTarget] } {
+		#set light path
+		set swaptarget [$::Config(tcs.field,namespace)::$::Config(tcs.field,value) getSwapTarget]
+		if { [string is space $swaptarget]} {
+			set guide [$::Config(tcs.field,namespace)::$::Config(tcs.field,value) cget -guide]
+			if {$guide ne "" } {
+				switch $guide {
+					"No guiding" -
+				   "P1-P2" -
+				   "P1-OI" -
+				   "AO-P1" -
+				   "P1" -
+				   "P2-OI" -
+				   "P2" -
+				   "OI" {
+					   set lpath "Sky>Instr"
+					}
+				   "AO-OI" -
+				   "AO" -
+					"GeMS" -
+					"GeMS-OI" {
+					   set lpath "Sky>AO>Inst"
+					}
+				}
+				if [winfo exists .observePanel] {
+				    ::.observePanel.frame.control.botframe.mirrors.lpath select $lpath
+				}
+			}		
+		} else {
+			set tag [$swaptarget cget -tagPrefix]
+			switch $tag {
+			   "AOWFS" {
+			       set lpath "Sky>AO>AC/HR"
+			   }
+			   default {
+			       set lpath "Sky>AC/HR"
+			   }
+			}
+			if [winfo exists .observePanel] {
+			    ::.observePanel.frame.control.botframe.mirrors.lpath select $lpath
+			}	
+		}
+		#Apply the swapped configuration
 		$::Config($comp,namespace)::$::Config($comp,value) apply \
 			$itk_option(-component)
 		if [catch {cs $itk_option(-apply) post} msg] {
@@ -906,4 +955,10 @@ itcl::body FieldControl::onSwapTarget {} {
 					"Error posting command: $itk_option(-system) reports \"$msg\""
 		}
 	}
+}
+
+itcl::body FieldControl::store {name} {
+	#Force store of target
+	onSaveTarget
+	ComponentControl::store $name
 }

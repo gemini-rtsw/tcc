@@ -66,7 +66,7 @@ proc createConfig {} {
    set ::Config(tcs.field.cosys,label) "Coordinate system"
 	
    set ::Config(tcs.field.trackrate,value) ""
-   set ::Config(tcs.field.trackrate,anon) [TrackRate #auto]
+   set ::Config(tcs.field.trackrate,anon) ::[TrackRate #auto]
    set ::Config(tcs.field.trackrate,class) TrackRateComponent
    set ::Config(tcs.field.trackrate,namespace) \
          $::Config(tcs.field,anon)TrackRateNames
@@ -87,6 +87,30 @@ proc createConfig {} {
       tcsFieldTrackRateCosysPanel
    set ::Config(tcs.field.trackrate.cosys,subcomp) ""
    set ::Config(tcs.field.trackrate.cosys,label) \
+         "Coordinate system"
+
+   set ::Config(tcs.field.trackrate2,value) ""
+   set ::Config(tcs.field.trackrate2,anon) ::[TrackRate #auto]
+   set ::Config(tcs.field.trackrate2,class) TrackRateComponent
+   set ::Config(tcs.field.trackrate2,namespace) \
+         $::Config(tcs.field,anon)TrackRateNames
+   set ::Config(tcs.field.trackrate2,list) \
+         $::Config(tcs.field,anon)TrackRateList
+   set ::Config(tcs.field.trackrate2,panel) \
+      tcsFieldTrackRatePanel
+   set ::Config(tcs.field.trackrate2,subcomp) cosys
+   set ::Config(tcs.field.trackrate2,label) \
+         "Differential track rate"
+
+   set ::Config(tcs.field.trackrate2.cosys,value) ""
+   set ::Config(tcs.field.trackrate2.cosys,anon) ::[Cosys #auto]
+   set ::Config(tcs.field.trackrate2.cosys,class) CosysComponent
+   set ::Config(tcs.field.trackrate2.cosys,namespace) ::CosysNames
+   set ::Config(tcs.field.trackrate2.cosys,list) CosysList
+   set ::Config(tcs.field.trackrate2.cosys,panel) \
+      tcsFieldTrackRateCosysPanel
+   set ::Config(tcs.field.trackrate2.cosys,subcomp) ""
+   set ::Config(tcs.field.trackrate2.cosys,label) \
          "Coordinate system"
 
 	set ::Config(tcs.field.sciencetarget,value) ""

@@ -88,16 +88,18 @@ itcl::body TargetDetail::constructor {args} {
    pack $itk_component(brightness) -side top -anchor w -padx 20 -pady 3 \
 	   -expand y
 
-   itk_component add storeTrg { button $w.storeTrg -text Store -command [itcl::code $this onSaveCommand]}
-	setTooltip $itk_component(storeTrg) "Save changes to the target parameters."
-   pack $w.storeTrg -side top -pady 3
+#   itk_component add storeTrg { button $w.storeTrg -text Store -command [itcl::code $this onSaveCommand]}
+#	setTooltip $itk_component(storeTrg) "Save changes to the target parameters."
+#   pack $w.storeTrg -side top -pady 3
 
    pack $itk_component(radecTarget) -fill both
    pack $itk_component(azelTarget) -fill both
    pack $itk_component(solarTarget) -fill both
-   grid $itk_interior.coordFrm.tabs
-   pack $itk_interior.common $itk_interior.csysSel $itk_interior.coordFrm -side top
-   pack $itk_component(trw) -side left -fill x -expand yes
+   pack $itk_interior.coordFrm.tabs -fill both
+	pack $itk_interior.common -side top 
+	pack $itk_interior.coordFrm -side bottom
+   pack $itk_interior.csysSel -side left
+   pack $itk_component(trw) -side right -fill x -expand yes
    pack configure $itk_interior.common -anchor w -fill x
    pack configure $itk_interior.csysSel -anchor w
    pack configure $itk_interior.coordFrm -fill both
@@ -130,22 +132,25 @@ itcl::body TargetDetail::loadTarget {target} {
 		degdegTarget {
 			$itk_component(radecTarget) cleanFields
 			$itk_component(solarTarget) cleanFields				
-			$itk_component(csysSel) select Az/El
 			$itk_component(azelTarget) load $target
+			$itk_component(csysSel) select Az/El
+			$itk_component(tabs) select Az/El
 		}
 		namedTarget -
 		conicTarget {
 			$itk_component(radecTarget) cleanFields
 			$itk_component(azelTarget) cleanFields
-			$itk_component(csysSel) select Nonsidereal
 			$itk_component(solarTarget) load $target			
+			$itk_component(csysSel) select Nonsidereal
+			$itk_component(tabs) select Nonsidereal
 		}
 		hmsdegTarget -
 		default {
 			$itk_component(azelTarget) cleanFields
 			$itk_component(solarTarget) cleanFields
-			$itk_component(csysSel) select RA/Dec
 			$itk_component(radecTarget) load $target
+			$itk_component(csysSel) select RA/Dec
+			$itk_component(tabs) select RA/Dec
 		}
 	}
 	$itk_component(brightness) clear

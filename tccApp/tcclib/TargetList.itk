@@ -256,7 +256,6 @@ itcl::body TargetList::returncmd {} {
 }
 
 itcl::configbody TargetList::component {
-
 # Remove any existing trace
 	if { $comp != "" } {
 		trace vdelete ::Config($comp,value) w [itcl::code $this newname]
@@ -276,13 +275,15 @@ itcl::configbody TargetList::component {
       trace variable ::Config($comp,list) w [itcl::code $this newlist]
 
 # Initialise with the current name.
+		after idle [itcl::code $this newlist "" "" ""]
       after idle [itcl::code $this newname "" "" ""]
+   } else {
+		after idle [itcl::code $this newlist "" "" ""]
    }
 }
 
 itcl::body TargetList::newname {n1 n2 op} {
    #$itk_component(selector) select $::Config($comp,value)
-
 # Determine the full name of the new object.
    if { ! [string equal $::Config($comp,value) ""] } {
       set fullname $::Config($comp,namespace)::$::Config($comp,value)
@@ -355,7 +356,11 @@ itcl::body TargetList::setComponentList {list} {
 
 itcl::body TargetList::newlist {n1 n2 op} {
 # Re-configure the control.
-  setComponentList $::Config($comp,list)
+	if { $comp ne "" } {
+  		setComponentList $::Config($comp,list)
+	} else {
+		setComponentList ""
+	}
 
 # Select the current component.
 #  $itk_component(selector) select $::Config($comp,value)

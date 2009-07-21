@@ -210,18 +210,18 @@ itcl::body Field::apply {comp} {
 	global env
 
 	if { $swaptarget ne "" } {
-		set tag [$swaptarget cget -tagPrefix]
-		switch $tag {
-		   "AOWFS" {
-		       set lpath "Sky>AO>AC/HR"
-		   }
-		   default {
-		       set lpath "Sky>AC/HR"
-		   }
-		}
-		if [winfo exists .observePanel] {
-		    ::.observePanel.frame.control.botframe.mirrors.lpath select $lpath
-		}
+#		set tag [$swaptarget cget -tagPrefix]
+#		switch $tag {
+#		   "AOWFS" {
+#		       set lpath "Sky>AO>AC/HR"
+#		   }
+#		   default {
+#		       set lpath "Sky>AC/HR"
+#		   }
+#		}
+#		if [winfo exists .observePanel] {
+#		    ::.observePanel.frame.control.botframe.mirrors.lpath select $lpath
+#		}
 
 		[$swaptarget cget -target] apply science
 		"::GuideNames::$swapguide" apply $comp.guide
@@ -246,29 +246,29 @@ itcl::body Field::apply {comp} {
 	   }
 	} else {
 		#set light path (probably changed by a swap)
-		if {$guide ne "" } {
-			switch $guide {
-				"No guiding" -
-			   "P1-P2" -
-			   "P1-OI" -
-			   "AO-P1" -
-			   "P1" -
-			   "P2-OI" -
-			   "P2" -
-			   "OI" {
-				   set lpath "Sky>Instr"
-				}
-			   "AO-OI" -
-			   "AO" -
-				"GeMS" -
-				"GeMS-OI" {
-				   set lpath "Sky>AO>Inst"
-				}
-			}
-			if [winfo exists .observePanel] {
-			    ::.observePanel.frame.control.botframe.mirrors.lpath select $lpath
-			}
-		}
+#		if {$guide ne "" } {
+#			switch $guide {
+#				"No guiding" -
+#			   "P1-P2" -
+#			   "P1-OI" -
+#			   "AO-P1" -
+#			   "P1" -
+#			   "P2-OI" -
+#			   "P2" -
+#			   "OI" {
+#				   set lpath "Sky>Instr"
+#				}
+#			   "AO-OI" -
+#			   "AO" -
+#				"GeMS" -
+#				"GeMS-OI" {
+#				   set lpath "Sky>AO>Inst"
+#				}
+#			}
+#			if [winfo exists .observePanel] {
+#			    ::.observePanel.frame.control.botframe.mirrors.lpath select $lpath
+#			}
+#		}
 # Call the apply method of all the components that have a value.
 	   if { ! [string equal $sciencetarget ""] } {
 	      	[$sciencetarget cget -target] apply science
@@ -679,6 +679,10 @@ itcl::body Field::addTaggedTarget {{tagPrefix User} {target ""}} {
 		set newTaggedTarget [namespace current]::[TaggedTarget #auto $tagPrefix-$lowestUnusedId $target]
 	}
 	$taggedTargets insert $newTaggedTarget
+	#if it is the first of its kind, set it as default
+	if { [getDefaultTarget [$newTaggedTarget cget -tagPrefix]] eq "" } {
+		setDefaultTarget $newTaggedTarget
+	}
 	return $newTaggedTarget
 }
 

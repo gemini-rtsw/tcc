@@ -3,8 +3,14 @@ itcl::class RADecTarget {
     constructor {args} {}
     destructor {}
  	method load {target}
- 	method save {target}
+ 	method save {target {propagate 1}}
 	method cleanFields {}
+	
+	private {
+		method buildProperMotion {parent}
+		method buildDiffTrackRate {parent}
+		method onCosys {}
+	}
 }
 
 itk::usual RADecTarget {
@@ -16,21 +22,21 @@ itcl::body RADecTarget::constructor {args} {
 
     set w $itk_interior
 # Frame for position.
-    itk_component add pos {
-	frame $w.pos
-    }
+	itk_component add pos {
+		frame $w.pos
+   }
 
 # RA and Dec.
     set w $itk_component(pos)
     itk_component add ra {
-	iwidgets::entryfield $w.ra -width 12 -labeltext RA:
+	iwidgets::entryfield $w.ra -width 12 -labeltext RA
     } {
 	usual
 	rename -textfont -majorfont majorFont Font
 	rename -labelfont -majorfont majorFont Font
     }
     itk_component add dec {
-	iwidgets::entryfield $w.dec -width 12 -labeltext Dec:
+	iwidgets::entryfield $w.dec -width 12 -labeltext Dec
     } {
 	usual
 	rename -textfont -majorfont majorFont Font
@@ -40,68 +46,34 @@ itcl::body RADecTarget::constructor {args} {
 #   set w [winfo parent $w]
 
 #  Coordinate frame.
-    itk_component add cosys {
-	SubComponentSelector $w.cosys -labeltext "Coord system" \
-		-labelpos nw \
-		-width 10 -component tcs.field.cosys
+	itk_component add cosys {
+		SubComponentSelector $w.cosys  \
+			-labelpos w -width 10 \
+			-component tcs.field.cosys -selectioncommand [itcl::code $this onCosys]
     }
-    pack $itk_component(ra) $itk_component(dec) $itk_component(cosys) \
-	    -expand y -pady 10
-    set w [winfo parent $w]
+#    pack $itk_component(cosys) -side bottom  \
+#	    -expand y -pady 4 -anchor w
+	pack $itk_component(ra) $itk_component(dec) -side left -expand n -padx 3 -pady 15
+	pack $itk_component(cosys) -side right -padx 3 -pady 15
+   set w [winfo parent $w]
 
 # Frame for space motions.
-    itk_component add space {
+	itk_component add space {
 	iwidgets::labeledframe $w.space -labeltext "Proper motions" \
-		-labelpos nw
-    }
-    set w [$itk_component(space) childsite]
+		-labelpos nw -ipadx 0 -ipady 2
+	}
+	buildProperMotion [$itk_component(space) childsite]
 
-# Epoch.
-    itk_component add epoch {
-	iwidgets::entryfield $w.epoch -width 11 \
-		-labeltext [lindex [cs sourceA info epoch] 2]
-    }
 
-# Proper motions.
-   itk_component add pmunits {
-      iwidgets::optionmenu $w.pmunits -labeltext Units
-   }
-   [$itk_component(pmunits) component menuBtn] configure -anchor w
-   $itk_component(pmunits) insert 0 mas/year mas/century arcsecs/year \
-         arcsecs/century sec-arcsecs/year sec-arcsecs/century
-   itk_component add pm {
-      frame $w.pm
-   }
-   itk_component add pm1 {
-      iwidgets::entryfield $w.pm.pm1 -labeltext RA -width 9
-   }
-   itk_component add pm2 {
-      iwidgets::entryfield $w.pm.pm2 -labeltext Dec -width 9
-   }
-   pack $itk_component(pm1) $itk_component(pm2) -side left
+# Controls for differential track rate.
+	itk_component add trframe { iwidgets::labeledframe $itk_interior.trframe \
+		-labelpos nw -labeltext "Differential Track Rates" -ipadx 1 -ipady 2 }
+	
+	buildDiffTrackRate [$itk_component(trframe) childsite]
+	
 
-# Parallax
-   itk_component add parallax {
-      iwidgets::entryfield $w.parallax -width 11 \
-            -labeltext "Parallax (arcsec)"
-   }
-
-# Radial velocity.
-   itk_component add rv {
-      iwidgets::entryfield $w.rv -width 11 \
-            -labeltext "Radial velocity (km/s)"
-   }
-   pack $itk_component(epoch) $itk_component(pmunits) $itk_component(pm) \
-         $itk_component(parallax) $itk_component(rv) -padx 3 -pady 1 \
-         -anchor e -side top -expand yes
-# Control for selecting a differential track rate.
-   itk_component add trackrate {
-      SubComponentSelector $itk_interior.trackrate -labeltext "Differential Track rates" \
-            -labelpos w -width 12 -component tcs.field.trackrate
-   }
-   pack $itk_component(trackrate) -side bottom -anchor w -padx 20 -pady 3
-
-   pack $itk_component(pos) $itk_component(space) -side left -expand yes -fill y
+	pack $itk_component(pos) -side top -expand yes -fill x
+	pack $itk_component(trframe) $itk_component(space) -side left -expand y -fill both -padx 0
 }
 
 
@@ -137,7 +109,10 @@ itcl::body RADecTarget::load {target} {
 	}
 }
 
-itcl::body RADecTarget::save {target} {
+itcl::body RADecTarget::save {target {propagate 1}} {
+	if { $propagate } {
+		$itk_component(trcontrol) store
+	}
 	if { ![string equal $target ""] } {
 		#$target init
 		$target configure -type hmsdegTarget
@@ -149,6 +124,56 @@ itcl::body RADecTarget::save {target} {
 		$target configure -parallax [$itk_component(parallax) get]
 		$target configure -rv [$itk_component(rv) get]
 		$target configure -cosys [$itk_component(cosys) get]
-		$target configure -trackrate [$itk_component(trackrate) get]
-	}	
+		$target configure -trackrate $::Config(tcs.field.trackrate,value)
+	}
+}
+
+itcl::body RADecTarget::buildProperMotion {parent} {
+	# Epoch.
+    itk_component add epoch {
+	iwidgets::entryfield $parent.epoch -width 8 \
+		-labeltext [lindex [cs sourceA info epoch] 2]
+    }
+
+# Proper motions.
+   itk_component add pmunits {
+      iwidgets::optionmenu $parent.pmunits -labeltext Units
+   }
+   [$itk_component(pmunits) component menuBtn] configure -anchor w
+   $itk_component(pmunits) insert 0 mas/year mas/century arcsecs/year \
+         arcsecs/century sec-arcsecs/year sec-arcsecs/century
+   itk_component add pm {
+      frame $parent.pm
+   }
+   itk_component add pm1 {
+      iwidgets::entryfield $parent.pm.pm1 -labeltext RA -width 8
+   }
+   itk_component add pm2 {
+      iwidgets::entryfield $parent.pm.pm2 -labeltext Dec -width 8
+   }
+   pack $itk_component(pm1) $itk_component(pm2) -side left
+
+# Parallax
+   itk_component add parallax {
+      iwidgets::entryfield $parent.parallax -width 8 \
+            -labeltext "Parallax (\")"
+   }
+
+# Radial velocity.
+   itk_component add rv {
+      iwidgets::entryfield $parent.rv -width 8 \
+            -labeltext "Radial vel. (km/s)"
+   }
+   pack $itk_component(epoch) $itk_component(pmunits) $itk_component(pm) \
+         $itk_component(parallax) $itk_component(rv) -padx 3 -pady 1 \
+         -anchor e -side top -expand yes
+}
+
+itcl::body RADecTarget::buildDiffTrackRate {parent} {
+	itk_component add trcontrol { TrackRateControl $parent.trcontrol -component tcs.field.trackrate}
+	pack $itk_component(trcontrol) -side top -anchor n -expand yes -padx 1 -pady 1
+}
+
+itcl::body RADecTarget::onCosys {} {
+	$itk_component(trcontrol) configure -cosys [$itk_component(cosys) get]
 }
