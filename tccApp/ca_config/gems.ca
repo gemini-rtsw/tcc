@@ -1,0 +1,32 @@
+#+
+# crs.ca
+#
+# Channel access configuration file for GeMS subsystem commands.
+#
+# J Luhrs July 2009
+#
+#-
+
+apply gems::aomApply aom:apply aom:applyC Primary GeMS Apply Record
+apply gems::mystApply myst:apply myst:applyC Primary Myst Apply Record
+
+command gems::adcMech gems::aomApply ADC Control
+{
+	pos	aom:adcScCtrl.A		ADC unit position In/Out
+}
+
+command gems::adcLoop gems::aomApply ADC Control
+{
+	loop	aom:adcScLpCtrl.A		ADC loop control On/Off
+}
+
+command gems::beamSplitter gems::aomApply ADC Control
+{
+	pos	aom:bsCtrl.A			Dichroic beamsplitter position 1|2
+}
+
+command gems::astroMode gems::mystApply ADC Control
+{
+	mode	myst:astrometric.A 	Astrometric mode Off|Regular|Good|Best
+}
+	

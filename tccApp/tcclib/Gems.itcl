@@ -45,10 +45,59 @@ itcl::body Gems::destructor {} {
 }
 
 itcl::body Gems::apply {comp} {
-	#FIXME: Add proper configuration commands when the ICD is released.
+	#FIXME: Check configuration commands when the ICD is released.
 	logactions logmess "Applying GeMS ADC: (\"$adc\")"
+	if { ![string is space $adc] } {
+		switch $adc {
+			ON {
+				cs gems::adcMech set pos In
+				cs gems::adcLoop set loop On
+			}
+			OFF {
+				cs gems::adcMech set pos Out
+				cs gems::adcLoop set loop Off
+			}
+			default {
+				error "Gems::apply: $adc is not a valid option for ADC"
+			}
+		}
+	}
+
 	logactions logmess "Applying GeMS dichroic beamsplitter: (\"$dichroicBeamsplitter\")"
+	if { ![string is space $dichroicBeamsplitter] } {
+		switch $dichroicBeamsplitter {
+			WAVELENGTH_850NM {
+				cs gems::beamSplitter set pos 1
+			}
+			WAVELENGTH_1UM {
+				cs gems::beamSplitter set pos 2
+			}
+			default {
+				error "Gems::apply: $dichroicBeamsplitter is not a valid option for the Dichroic Beamsplitter"
+			}
+		}
+	}
+	
 	logactions logmess "Applying GeMS astrometric mode: (\"$astrometricMode\")"
+	if { ![string is space $astrometricMode] } {
+		switch $astrometricMode {
+			OFF {
+				cs gems::astroMode set mode Off
+			}
+			REGULAR {
+				cs gems::astroMode set mode Regular
+			}
+			GOOD {
+				cs gems::astroMode set mode Good
+			}
+			BEST {
+				cs gems::astroMode set mode Best
+			}
+			default {
+				error "Gems::apply: $astrometricMode is not a valid option for Astrometric Mode"
+			}
+		}
+	}
 }
 
 itcl::body Gems::save {node} {
@@ -56,4 +105,10 @@ itcl::body Gems::save {node} {
 	param $node adc $adc
 	param $node dichroicBeamsplitter $dichroicBeamsplitter
 	param $node astrometricMode $astrometricMode
+}
+	
+itcl::body Gems::init {} {
+	set adc ""
+	set dichroicBeamsplitter ""
+	set astrometricMode ""
 }
