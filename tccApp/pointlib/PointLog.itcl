@@ -200,8 +200,13 @@ itcl::body PointLog::destructor {} {
 
 # Convert the log file to tpoint format.
    if { ! [string equal $tpname ""] } {
+		if { [string compare [exec uname] "Linux"] == 0 } {
+			set execpath [file join $::env(GEMINI_TOP) bin]
+		} else {
+			set execpath /gemini/epics3.13.4/tcs/tcs/bin/solaris
+		}
       if { [catch { \
-            exec /gemini/epics3.13.4/tcs/tcs/bin/solaris/ptconv < $LogFileName > $tpname} \
+            exec [file join $execpath ptconv] < $LogFileName > $tpname} \
             msg] } {
          tk_messageBox -icon error -parent . -message \
                "Unable to convert the log file to a tpoint input file \
