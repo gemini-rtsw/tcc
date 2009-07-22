@@ -28,6 +28,7 @@
 
 itcl::class Gems {
 	inherit Paramset
+	constructor {} {}
 	destructor {}
 	public {
 		method apply {comp}
@@ -40,6 +41,26 @@ itcl::class Gems {
 	}	
 }
 
+itcl::body Gems::constructor {} {
+#	epics cs gems::aomApply
+#	epics cs gems::mystApply
+	if { [catch {cs gems::adcMech info}] } {
+		epics cs gems::adcMech
+	}
+	if { [catch {cs gems::adcLoop info}] } {
+		epics cs gems::adcLoop
+	}
+	if { [catch {cs gems::beamSplitter info}] } {
+		epics cs gems::beamSplitter
+	}
+	if { [catch {cs gems::astroMode info}] } {
+		epics cs gems::astroMode
+	}
+	
+	cs gems::aomApply setTimeout 3
+	cs gems::mystApply setTimeout 3
+}
+
 itcl::body Gems::destructor {} {
 	init
 }
@@ -47,15 +68,19 @@ itcl::body Gems::destructor {} {
 itcl::body Gems::apply {comp} {
 	#FIXME: Check configuration commands when the ICD is released.
 	logactions logmess "Applying GeMS ADC: (\"$adc\")"
+	set aomChange 0
+	set mystChange 0
 	if { ![string is space $adc] } {
 		switch $adc {
 			ON {
 				cs gems::adcMech set pos In
 				cs gems::adcLoop set loop On
+				set aomChange 1
 			}
 			OFF {
 				cs gems::adcMech set pos Out
 				cs gems::adcLoop set loop Off
+				set aomChange 1
 			}
 			default {
 				error "Gems::apply: $adc is not a valid option for ADC"
@@ -68,9 +93,11 @@ itcl::body Gems::apply {comp} {
 		switch $dichroicBeamsplitter {
 			WAVELENGTH_850NM {
 				cs gems::beamSplitter set pos 1
+				set aomChange 1
 			}
 			WAVELENGTH_1UM {
 				cs gems::beamSplitter set pos 2
+				set aomChange 1
 			}
 			default {
 				error "Gems::apply: $dichroicBeamsplitter is not a valid option for the Dichroic Beamsplitter"
@@ -83,20 +110,30 @@ itcl::body Gems::apply {comp} {
 		switch $astrometricMode {
 			OFF {
 				cs gems::astroMode set mode Off
+				set mystChange 1
 			}
 			REGULAR {
 				cs gems::astroMode set mode Regular
+				set mystChange 1
 			}
 			GOOD {
 				cs gems::astroMode set mode Good
+				set mystChange 1
 			}
 			BEST {
 				cs gems::astroMode set mode Best
+				set mystChange 1
 			}
 			default {
 				error "Gems::apply: $astrometricMode is not a valid option for Astrometric Mode"
 			}
 		}
+	}
+	if { $aomChange && [catch {cs gems::aomApply post} msg] } {
+		error "Error posting commands for GeMS: \"$msg\""
+	}
+	if { $mystChange && [catch {cs gems::mystApply post} msg]} {
+		error "Error posting commands for GeMS (Myst): \"$msg\""
 	}
 }
 

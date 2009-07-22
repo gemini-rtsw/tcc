@@ -22,7 +22,7 @@ itcl::class GemsControl {
 		method load {name}
 		method reset {}
 		method save {name}
-		variable adc IN
+		variable adc OFF
 		variable dichroicBeamsplitter WAVELENGTH_850NM
 		variable astrometricMode BEST
 	}
@@ -60,6 +60,9 @@ itcl::body GemsControl::constructor args {
 				-variable [itcl::scope adc] -onvalue ON -offvalue OFF
 	}
 	pack $itk_component(adc) -pady 4
+	
+	$this configure -apply ""
+	$this configure -system GeMS
 
 # Set the object description.
 	set description "GeMS configuration"
@@ -68,7 +71,7 @@ itcl::body GemsControl::constructor args {
 }
 
 itcl::body GemsControl::reset {} {
-	set adc IN
+	set adc OFF
 	set dichroicBeamsplitter WAVELENGTH_850NM
 	set astrometricMode BEST
 }

@@ -149,11 +149,6 @@ global env
 			epics cs g4orbit
 					
 			epics cs guidersMapping
-			
-			epics cs gems::adcMech
-			epics cs gems::adcLoop
-			epics cs gems::beamSplitter
-			epics cs gems::astroMode
 		}
    }
 

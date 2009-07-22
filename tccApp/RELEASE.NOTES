@@ -889,3 +889,15 @@ tccApp/ca_config.tc1/tccCP.ca: Include gems.ca.
 tccApp/tcclib/Gems.itcl: Gems::apply: Added calls to GeMS commands.
 tccApp/tcclib/GemsControl.itk: GemsControl::constructor: Corrected values for ADC.
 tccApp/tcclib/tccMain.tcl: Added creation of EPICS commands for GeMS.
+
+20090722 jluhrs
+tccApp/lib/ComponentControl.itk: ComponentControl::applycmd: Added the 
+	posibility to have an empty value for option -apply. Useful for components
+	that not rely in tcsApply or have the apply posted in the same component
+	apply method. 
+tccApp/tcclib/Gems.itcl: constructor: moved EPICS command construction here 
+	(they were in tclMain.itcl), for the sake of better encapsulation.
+	Gems::apply: addedm missing apply commands (to aom and myst).
+tcclib/GemsControl.itk: Changed default value for adc from IN to OFF. Set option -apply
+	to empty value.
+tccApp/tcclib/tccMain.tcl: removed creation of EPICS commands for GeMS.
