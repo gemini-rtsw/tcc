@@ -95,7 +95,7 @@ proc createConfig {} {
    set ::Config(tcs.field.trackrate2,namespace) \
          $::Config(tcs.field,anon)TrackRateNames
    set ::Config(tcs.field.trackrate2,list) \
-         $::Config(tcs.field,anon)TrackRateList
+         $::Config(tcs.field,anon)TrackRateList2
    set ::Config(tcs.field.trackrate2,panel) \
       tcsFieldTrackRatePanel
    set ::Config(tcs.field.trackrate2,subcomp) cosys

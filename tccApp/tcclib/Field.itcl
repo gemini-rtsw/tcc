@@ -111,6 +111,7 @@ itcl::class Field {
       variable targetlist
       variable trackratens
       variable trackratelist
+		variable trackratelist2
       variable posAngle
 		
 		variable taggedTargets
@@ -151,6 +152,7 @@ itcl::body Field::constructor {args} {
 
 # Create the list and namespace for track rates.
    set trackratelist [ComponentList ${this}TrackRateList]
+   set trackratelist2 [ComponentList ${this}TrackRateList2]
    set trackratens ${this}TrackRateNames
    namespace eval $trackratens {}
 	
@@ -186,6 +188,10 @@ itcl::body Field::destructor {} {
    for {set i 0} {$i < $n} {incr i} {
       lappend trackrates [$trackratelist get $i]
    }
+   set n [$trackratelist2 length]
+   for {set i 0} {$i < $n} {incr i} {
+      lappend trackrates [$trackratelist2 get $i]
+   }
    foreach name $trackrates {
       if { ![string equal $name ""] } {
          itcl::delete object ${trackratens}::$name
@@ -194,6 +200,7 @@ itcl::body Field::destructor {} {
 
 # Delete the list and the namespace.
    itcl::delete object $trackratelist
+   itcl::delete object $trackratelist2
    namespace delete $trackratens
 	
 	set n [$taggedTargets length]
@@ -433,6 +440,12 @@ itcl::body Field::save {node} {
    }
    for {set i 0} {$i < [$trackratelist length]} {incr i} {
       set trackrate [$trackratelist get $i]
+      if { ! [string equal $trackrate ""] } {
+         ${trackratens}::$trackrate save $node
+      }
+   }
+   for {set i 0} {$i < [$trackratelist2 length]} {incr i} {
+      set trackrate [$trackratelist2 get $i]
       if { ! [string equal $trackrate ""] } {
          ${trackratens}::$trackrate save $node
       }

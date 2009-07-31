@@ -83,21 +83,38 @@ itcl::body TrackRate::apply {comp} {
 
 # Set all the parameters.
    cs $cs set t0 [list $t0]
+	
+	set c1Rate [regsub ^0+(.+) $c1Rate \\1]
+	set c2Rate [regsub ^0+(.+) $c2Rate \\1]
 
 # Convert c1 (ra or az)
-    if {[string is double $c1Rate] && [string length $c1Rate] > 0} {
-       if {[string equal $cosys AzEl]} {
-	   set newc1Rate [expr $c1Rate / 3600.0 ]
-       } else {
-	   set pi 3.14159265
-	   set dec [$::Config(tcs.field.sciencetarget,namespace)::$::Config(tcs.field.sciencetarget,value) cget -c2]
-	   set parts [split $dec " :"]
-	   #puts "dec parts: $parts"
-	   set num_dec [expr [lindex $parts 0] + [lindex $parts 1] / 60.0 + [lindex $parts 2] / 3600.0]
-	   #puts "changing c1Rate: $c1Rate aph dec: $dec or $num_dec"
-	   set newc1Rate [expr $c1Rate / (3600.0 * 15.0 * cos($num_dec * $pi / 180.0 ))]
-	   #puts "to $newc1Rate sps"
-       }
+	if {[string is double $c1Rate] && [string length $c1Rate] > 0} {
+		if {[string equal $cosys AzEl]} {
+	   	set newc1Rate [expr $c1Rate / 3600.0 ]
+      } else {
+	   	set pi 3.14159265
+	   	set dec [$::Config(tcs.field.sciencetarget,namespace)::$::Config(tcs.field.sciencetarget,value) cget -c2]
+	   	set parts [split $dec " :"]
+		   #puts "dec parts: $parts"
+			set deg [lindex $parts 0]
+			set min [lindex $parts 1]
+			set sec [lindex $parts 2]
+			if { $deg < 0.0 } {
+				set deg [string range $deg 1 end]
+				set sign "-"
+			} else {
+				set sign "+"
+			}
+			#removing leading zeros
+			set deg [regsub ^0+(.+) $deg \\1]
+			set min [regsub ^0+(.+) $min \\1]
+			set sec [regsub ^0+(.+) $sec \\1]		
+			
+	   	set num_dec [expr $sign ( $deg + $min / 60.0 + $sec / 3600.0 )]
+		   #puts "changing c1Rate: $c1Rate aph dec: $dec or $num_dec"
+		   set newc1Rate [expr $c1Rate / (3600.0 * 15.0 * cos($num_dec * $pi / 180.0 ))]
+		   #puts "to $newc1Rate sps"
+		}
    } else {
         set newc1Rate $c1Rate
    }
