@@ -1,0 +1,206 @@
+#+
+# Odgw
+#
+# Define class Odgw to set the On-detector guide window parameters.
+#
+#  J. Lührs July 2009
+#+
+
+itcl::class Odgw {
+	public {
+		proc getSingleton {}
+		method setInstrument {inst}
+		method configureFilter {filter}
+		method configureWavelength {wavel}
+		method getCurrentFilter {}
+		method getCurrentWavelength {}
+		method getFilterList {}
+		method getFilterWavelength {filter}
+		method subscribe {observer}
+		method unsubscribe {observer}
+		method destructor {}
+	}
+	protected {
+		common theSingleton ""
+		variable comp "tcs.field.guide.odgwwavelength"
+		variable instrument ""
+		variable wavelength ""
+		
+		constructor {{instr ""}} {}
+		method configureTargetWavelength {wavel}
+		variable observerList {}
+		method notify {elementList}
+		method onFilterChange {change}
+		method onWavelengthChange {name alarm time value}
+	}
+}
+
+itcl::body Odgw::getSingleton {} {
+	if { $theSingleton eq "" } {
+		set theSingleton [namespace current]::[Odgw #auto]
+	}
+	return $theSingleton
+}
+
+itcl::body Odgw::constructor {{instr ""}} {
+	if { [catch {cs wavelG1 info}]} {
+		epics cs wavelG1
+	}
+	if { [catch {cs wavelG2 info}]} {
+		epics cs wavelG2
+	}
+	if { [catch {cs wavelG3 info}]} {
+		epics cs wavelG3
+	}
+	if { [catch {cs wavelG4 info}]} {
+		epics cs wavelG4
+	}
+	if { [catch {sa tcssad info}]} {
+		epics sa tcssad
+	}
+
+	if {[string is space $instr] } {
+		setInstrument [Gsaoi::getSingleton]
+	} else {
+		setInstrument $instr
+	}
+	sa tcssad proc g1MapName [itcl::code $this onWavelengthChange]
+	sa tcssad proc g1Wavelength [itcl::code $this onWavelengthChange]
+	sa tcssad proc g2MapName [itcl::code $this onWavelengthChange]
+	sa tcssad proc g2Wavelength [itcl::code $this onWavelengthChange]
+	sa tcssad proc g3MapName [itcl::code $this onWavelengthChange]
+	sa tcssad proc g3Wavelength [itcl::code $this onWavelengthChange]
+	sa tcssad proc g4MapName [itcl::code $this onWavelengthChange]
+	sa tcssad proc g4Wavelength [itcl::code $this onWavelengthChange]
+}
+
+itcl::body Odgw::destructor {} {
+	sa tcssad unproc g1MapName [itcl::code $this onWavelengthChange]
+	sa tcssad unproc g1Wavelength [itcl::code $this onWavelengthChange]
+	sa tcssad unproc g2MapName [itcl::code $this onWavelengthChange]
+	sa tcssad unproc g2Wavelength [itcl::code $this onWavelengthChange]
+	sa tcssad unproc g3MapName [itcl::code $this onWavelengthChange]
+	sa tcssad unproc g3Wavelength [itcl::code $this onWavelengthChange]
+	sa tcssad unproc g4MapName [itcl::code $this onWavelengthChange]
+	sa tcssad unproc g4Wavelength [itcl::code $this onWavelengthChange]	
+}
+
+itcl::body Odgw::setInstrument {instr} {
+	if { ![string is space $instrument] } {
+		$instrument unsubscribe [itcl::code $this onFilterChange]
+	}
+	set instrument $instr
+	if { ![string is space $instrument] } {
+		$instrument subscribe [itcl::code $this onFilterChange]
+	}
+}
+
+itcl::body Odgw::configureFilter {filter} {
+	if {$instrument ne ""} {
+		$instrument configureFilter $filter
+		set wavel [$instrument getFilterWavelength $filter]
+		if { [string is double -strict $wavel] } {
+			configureTargetWavelength $wavel
+		}	
+	}
+}
+
+itcl::body Odgw::getCurrentFilter {} {
+	if {$instrument ne ""} {
+		return [$instrument getCurrentFilter]
+	}
+	return ""
+}
+
+itcl::body Odgw::getCurrentWavelength {} {
+	foreach {guideMap wlValue} {g1MapName g1Wavelength g2MapName g2Wavelength g3MapName g3Wavelength g4MapName g4Wavelength} {
+		if { [string match "ODGW*" [sa tcssad get $guideMap] ] } {
+			puts "wavelength is [sa tcssad get sourceAWavelength]"
+			return [sa tcssad get $wlValue]
+		}
+	}
+	return ""
+}
+
+itcl::body Odgw::configureTargetWavelength {wavel} {
+	set change 0
+	foreach {guideMap wlCmd} {g1MapName wavelG1 g2MapName wavelG2 g3MapName wavelG3 g4MapName wavelG4} {
+		if { [string match "ODGW*" [sa tcssad get $guideMap] ] } {
+			cs $wlCmd set wavel $wavel
+			set change 1 
+		}
+	}
+	if { $change } {
+		logactions logmess "Applying ODGW target wavelength: (\"$wavel\")"
+		if { [catch {cs wavelG2 post} msg] } {
+			logactions logmess "Error posting ODGW target wavelegth: TCS reports \"$msg\""		
+		}
+	}
+}
+
+itcl::body Odgw::configureWavelength {wavel} {
+	if {$instrument ne ""} {
+		set filter $instrument findFilter $wavel
+		if { ![string is space $filter] } {
+			$instrument configureFilter $filter
+		}	
+	}
+	configureTargetWavelength $wavel
+}
+
+itcl::body Odgw::getFilterList {} {
+	if {$instrument ne ""} {
+		return [$instrument getFilterList]
+	} else {
+		return ""
+	}
+}
+
+itcl::body Odgw::getFilterWavelength {filter} {
+	if {$instrument ne ""} {
+		return [$instrument getFilterWavelength $filter]
+	} else {
+		return ""
+	}
+}
+
+itcl::body Odgw::subscribe observer {
+
+# Check that the observer isn't already on the list.
+	if { [lsearch -exact $observerList $observer] == -1 } {
+# Append the observer to the list.
+		lappend observerList $observer
+	}
+}
+
+itcl::body Odgw::unsubscribe observer {
+# Check that the observer is registered.
+	set index [lsearch -exact $observerList $observer]
+	if { $index != -1 } {
+		set observerList [lreplace $observerList $index $index]
+	}
+}
+
+itcl::body Odgw::notify elementList {
+	foreach observer $observerList {
+		$observer $elementList
+	}	
+}
+
+itcl::body Odgw::onFilterChange {changeList} {
+	foreach el $changeList {
+		switch $el {
+			filter {
+				notify filter
+			}
+		}
+	}
+}
+
+itcl::body Odgw::onWavelengthChange {name alarm time value} {
+	set newval [getCurrentWavelength]
+	if { $newval ne $wavelength } {
+		set wavelength $newval
+		notify wavelength
+	}
+}

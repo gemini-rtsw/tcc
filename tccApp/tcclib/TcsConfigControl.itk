@@ -586,6 +586,17 @@ itcl::body TcsConfigControl::apply {} {
 			}
 		}
 	}
+	
+	if {[string match "*GEMS*" $guide] && [string match "*GSAOI*" $inst]} {
+		set field [$::Config($comp,namespace)::$::Config($comp,value) cget -field]
+		foreach odgwtarget {odgw1target odgw2target odgw3target odgw4target} {
+			if {[$field cget -$odgwtarget] ne ""} {
+				set scienceWavel [::WavelengthNames::[$field cget -wavelength] cget -wavel]
+				[Gsaoi::getSingleton] configureWavelength $scienceWavel
+				break
+			}
+		}
+	}
 
 # Reinvoke the sf to auto conf inst origin and wavelength
    global sfPos

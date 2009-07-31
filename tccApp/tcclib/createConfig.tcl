@@ -369,6 +369,16 @@ proc createConfig {} {
          tcsGuideAowfsWavelengthPanel
    set ::Config(tcs.field.guide.aowfswavelength,subcomp) ""
    set ::Config(tcs.field.guide.aowfswavelength,label) "AOWFS Filter"
+	
+	set ::Config(tcs.field.guide.odgwwavelength,value) ""
+	set ::Config(tcs.field.guide.odgwwavelength,anon) ::[Wavelength #auto]
+	set ::Config(tcs.field.guide.odgwwavelength,class) WavelengthComponent
+	set ::Config(tcs.field.guide.odgwwavelength,namespace) \
+			::ODGWWavelengthNames
+	set ::Config(tcs.field.guide.odgwwavelength,list) ODGWWavelengthList
+	set ::Config(tcs.field.guide.odgwwavelength,panel) ""
+	set ::Config(tcs.field.guide.odgwwavelength,subcomp) ""
+	set ::Config(tcs.field.guide.odgwwavelength,label) "ODGW Filter"
 
    set ::Config(tcs.field.rotator,value) ""
    set ::Config(tcs.field.rotator,anon) ::[Rotator #auto]

@@ -1,0 +1,126 @@
+#+
+#  Gsaoi:Gsaoi
+#
+#  Implements the Gsaoi class, that allows to setup the GSAOI ODGW.
+#
+# J Lührs July 2009
+#+
+
+itcl::class Gsaoi {
+	public {
+		proc getSingleton {}
+		
+		method configureFilter {filter}
+		method findFilter {wavelength}
+		method getFilterWavelength {filter}
+		method getCurrentFilter {}
+		method getFilterList {}
+		method subscribe {observer}
+		method unsubscribe {observer}
+	}
+	protected {
+		common theSingleton ""
+		variable comp "tcs.field.guide.odgwwavelength"
+		
+		constructor {} {}
+		destructor {}
+		method lockInstrument {}
+		method unlockInstrument {}
+		variable observerList {}
+		method notify {elementList}
+		method onFilterChange {name alarm time value}
+	}
+}
+
+itcl::body Gsaoi::getSingleton {} {
+	if { $theSingleton eq "" } {
+		set theSingleton [namespace current]::[Gsaoi #auto]
+	}
+	return $theSingleton
+}
+
+itcl::body Gsaoi::constructor {} {
+	if { [catch {cs gsaoi::config info}]} {
+		epics cs gsaoi::config
+	}
+	if { [catch {sa gsaoi::status info}]} {
+		epics sa gsaoi::status
+	}
+	sa gsaoi::status proc filter [list [itcl::code $this onFilterChange]]
+}
+
+itcl::body Gsaoi::destructor {} {
+	sa gsaoi::status unproc filter [list [itcl::code $this notify filter]]
+}
+
+itcl::body Gsaoi::configureFilter {filter} {
+	cs gsaoi::config set filter $filter
+	logactions logmess "Applying GSAOI filter: (\"$filter\")"
+	if { [catch {cs gsaoi::config post} msg] } {
+		logactions logmess "Error posting gsaoi::config: GSAOI reports \"$msg\""		
+	}
+}
+
+itcl::body Gsaoi::findFilter {wavelength} {
+	if { [string is double -strict $wavelength] } {
+		for {set i 0} {$i<[$::Config($comp,list) length]} {incr i} {
+			set fullname $::Config($comp,namespace)::[$::Config($comp,list) get $i]
+			set w [$fullname cget -wavel]
+			if { [string is double -strict $wavelength] } {
+				if { $wavelength == $w } {
+					return $wavel
+				}
+			}
+		}
+	}
+	return ""
+}
+
+itcl::body Gsaoi::getFilterWavelength {filter} {
+	set fullname $::Config($comp,namespace)::$filter
+	if { [llength [itcl::find objects $fullname] ] > 0} {
+		return [$fullname cget -wavel]
+	}
+	return ""
+}
+
+itcl::body Gsaoi::getCurrentFilter {} {
+	return [sa gsaoi::status get filter]
+}
+
+itcl::body Gsaoi::getFilterList {} {
+	set list {}
+	for {set i 0} {$i<[$::Config($comp,list) length]} {incr i} {
+		lappend list [$::Config($comp,list) get $i]
+	}
+	return $list
+}
+
+itcl::body Gsaoi::subscribe observer {
+
+# Check that the observer isn't already on the list.
+	if { [lsearch -exact $observerList $observer] == -1 } {
+# Append the observer to the list.
+		lappend observerList $observer
+	}
+}
+
+itcl::body Gsaoi::unsubscribe observer {
+# Check that the observer is registered.
+	set index [lsearch -exact $observerList $observer]
+	if { $index != -1 } {
+		set observerList [lreplace $observerList $index $index]
+	}
+}
+
+itcl::body Gsaoi::notify elementList {
+	foreach observer $observerList {
+		$observer $elementList
+	}	
+}
+
+itcl::body Gsaoi::onFilterChange {name alarm time value} {
+	if { $name eq "gsaoi::status.filter" } {
+		notify filter
+	}
+}

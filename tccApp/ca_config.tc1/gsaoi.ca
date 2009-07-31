@@ -1,0 +1,114 @@
+#+
+# gsaoi.ca
+#
+# Channel access configuration file for the GSAOI package
+#
+#  J Lührs March 2009
+
+####################
+# Top apply records: 
+####################
+
+apply gsaoi::apply   gsaoi:apply     gsaoi:applyC     IS Primary Apply Record
+apply gsaoi::dcapply gsaoi:dc:apply gsaoi:dc:applyC   DC Primary Apply Record
+
+command gsaoi::observe gsaoi::dcapply Observe
+{
+   label   gsaoi:dc:observe.A      DHS data label
+   type    gsaoi:dc:observe.B      Image type (IMAGE|DARK|FLAT|ARC|BIAS)
+   comment gsaoi:dc:observe.C      Comment
+}
+
+command gsaoi::endObserve gsaoi::dcapply End Observe
+{
+   dummy      gsaoi:dc:endObserve.A                    Dummy  
+}
+
+command gsaoi::stop gsaoi::dcapply Stop observation
+{
+   dummy      gsaoi:dc:stop.A                          Dummy
+}
+
+command gsaoi::abort gsaoi::dcapply Abort observation
+{
+   dummy      gsaoi:dc:abort.A                         Dummy
+}
+
+command gsaoi::pause gsaoi::dcapply Pause observation
+{
+   dummy      gsaoi:dc:pause.A
+}
+
+command gsaoi::continue gsaoi::dcapply Continue observation
+{
+   dummy      gsaoi:dc:continue.A
+}
+
+
+command gsaoi::config gsaoi::apply Setup a Configuration
+{
+   filter 	      gsaoi:cc:vfiltSel.A   Filter
+   utilWheel		gsaoi:cc:utilSel.A	Utility Wheel		
+   windowCover		gsaoi:cc:covSel.A	   Window Cover
+}
+
+command gsaoi::dcconfig gsaoi::dcapply Setup a DC Configuration
+{
+	readMode           gsaoi:dc:seqObs.A  Read mode (DCS|FOWLER|SINGLE)
+	numberOfResets     gsaoi:dc:seqObs.B  Number of resets
+	resetDelay         gsaoi:dc:seqObs.C  Reset delay
+	numberOfFowSamples gsaoi:dc:seqObs.D  Number of fowler samples
+	exposureTime		 gsaoi:dc:seqObs.E  Period between sample sets
+	#period             gsaoi:dc:seqObs.E  Period between sample sets
+	coadds             gsaoi:dc:seqObs.F  Number of coadds
+	numberOfRefSamples gsaoi:dc:seqObs.G  Number of reference samples
+
+   #coadds 				  gsaoi:dc:obs_ncoadds 	  Number of coadds
+	#exposureTime		  gsaoi:dc:obs_exposed 	  Exposure time  (Requested)
+	#readMode			     gsaoi:dc:obs_readMode   Read mode (DCS|FOWLER|SINGLE)	
+ 	#numberOfResets  	  gsaoi:dc:obs_nresets    Number of resets
+	#numberOfFowSamples  gsaoi:dc:obs_nfowler    Number of fowler samples
+		
+}
+
+
+#############
+#Status:
+#############
+
+
+status gsaoi::status gsaoi status
+{
+   applyC      gsaoi:applyC.VAL          0  Command status
+   message     gsaoi:applyC.OMSS         0  Command completion message
+   observeC    gsaoi:observeC.VAL        0  Observe status
+
+	windowCover gsaoi:sad:cc:covName   0  Window cover current position (by name)
+
+	filter      gsaoi:sad:cc:vfiltName 0  Virtual filter wheel current position (by name)
+	lowerFilter gsaoi:sad:cc:lfwName   0  Lower filter wheel current position (by name)
+	upperFilter gsaoi:sad:cc:ufwName   0  Upper filter wheel current position (by name)
+	utilWheel   gsaoi:sad:cc:utilName  0  Utility wheel current position (by name)
+	
+}
+
+status gsaoi::dcstatus gsaoi status
+{
+   applyC		  gsaoi:dc:applyC.VAL		 0     Command status
+   message  	  gsaoi:dc:applyC.OMSS		 0     Command completion message
+   observeC      gsaoi:dc:observeC.VAL  	 0     Observe status
+      
+   exposureTime		gsaoi:sad:dc:obs_exposedRQ      0    Exposure time requested
+   exposedTime		gsaoi:sad:dc:obs_exposed      0    Time exposed
+   
+    #period 		  gsaoi:sad:dc:obs_period.VAL     0     Period
+  	coadds 				gsaoi:sad:dc:obs_ncoadds    0	Number of coadds
+	exposureTime		gsaoi:sad:dc:obs_exposedRQ  0	Exposure time  (Requested)
+	readMode			gsaoi:sad:dc:obs_readMode   0	Read mode (0=dcs, 1=fowler, 2=linear, 3=linear) 
+ 	numberOfResets  	gsaoi:sad:dc:obs_nresets    0	Number of resets
+	numberOfFowSamples 	gsaoi:sad:dc:obs_nfowler    0	Number of fowler samples  
+	#numberOfPeriods		gsaoi:sad:dc:obs_nperiods   0	Number of periods
+	timeMode			gsaoi:sad:dc:obs_timeMode   0 	Which variable (0=exposure time, 1=period, 2=nr of periods) to calculate
+   countdown    gsaoi:sad:dc:s_obs_timeLeft    0    countdown
+   dhcConnected gsaoi:sad:dc:dhsConnO    0    dhs connection
+}

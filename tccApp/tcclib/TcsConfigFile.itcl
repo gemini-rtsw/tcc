@@ -61,6 +61,7 @@ itcl::body TcsConfigFile::constructor {xml parent} {
    set nodelist(wavelength) ""
    set nodelist(oiwfswavelength) ""
    set nodelist(aowfswavelength) ""
+	set nodelist(gsaoiwavelength) ""
 	set nodelist(targetgroup) ""
 
 # Compile a lists of all the component defined in the document.
@@ -77,7 +78,7 @@ itcl::body TcsConfigFile::constructor {xml parent} {
 
 # Process each of the lists of component types (note that the order is
 # important so that we don't get errors because a subcomponent isn't defined).
-   foreach type {cosys wavelength oiwfswavelength aowfswavelength rotator guide} {
+   foreach type {cosys wavelength oiwfswavelength aowfswavelength gsaoiwavelength rotator guide} {
 		foreach node $nodelist($type) {
 			if { [createComponent $type $node] } break
 		}
@@ -99,8 +100,8 @@ itcl::body TcsConfigFile::constructor {xml parent} {
    }
 	if {[calparam cget -site] eq "CP"} {
 		foreach node $nodelist(gems) {
-					if { [createComponent gems $node] } break
-				}
+			if { [createComponent gems $node] } break
+		}
 	} else {
 		foreach node $nodelist(gaos) {
 			if { [createComponent gaos $node] } break
@@ -158,6 +159,11 @@ itcl::body TcsConfigFile::createComponent {type node} {
          set namespace ::AOWFSWavelengthNames
          set list AOWFSWavelengthList
       }
+		gsaoiwavelength {
+			set class WavelengthComponent
+			set namespace ::ODGWWavelengthNames
+			set list ODGWWavelengthList
+		}
       instrument {
          set class InstrumentComponent
          set namespace ::InstrumentNames
@@ -472,6 +478,9 @@ itcl::body TcsConfigFile::findcomp {node} {
       aowfswavelength {
          lappend nodelist(aowfswavelength) $node
       }
+		gsaoiwavelength {
+			lappend nodelist(gsaoiwavelength) $node
+		}
 		targetgroup {
 			lappend nodelist(targetgroup) $node
 		}

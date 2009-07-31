@@ -31,7 +31,15 @@ itcl::class WfsConfig {
        method checkNICI_SFPos {}
        method colsel {}
        method window {}
-   }
+		method buildPageFrame {tabbook wfs label}
+		method buildOiwfsPage {parent}
+		method buildAowfsPage {parent}
+		method buildGemsPage {parent}
+		method buildHrwfsPage {parent}
+		method buildPwfsPage {wfs parent}
+		method configureODGWFilter {}
+		method onODGWChange {changeList}
+	}
 }
 
 itk::usual WfsConfig {
@@ -52,258 +60,16 @@ itcl::body WfsConfig::constructor {args} {
 
    pack $itk_component(tabbook)
 
-   foreach wfs {hrwfs pwfs1 pwfs2 oiwfs aowfs} label {HRWFS/AC PWFS1 PWFS2 OIWFS AOWFS} {
+	buildHrwfsPage [buildPageFrame $itk_component(tabbook) hrwfs HRWFS/AC]
+	buildPwfsPage pwfs1 [buildPageFrame $itk_component(tabbook) pwfs1 PWFS1]
+	buildPwfsPage pwfs2 [buildPageFrame $itk_component(tabbook) pwfs2 PWFS2]
+	buildOiwfsPage [buildPageFrame $itk_component(tabbook) oiwfs OIWFS]
+	if {[calparam cget -site] eq "CP"} {
+		buildGemsPage [buildPageFrame $itk_component(tabbook) gems GEMS]
+	} else {
+		buildAowfsPage [buildPageFrame $itk_component(tabbook) aowfs AOWFS]
+	}
 
-# add a page
-       set w  [$itk_component(tabbook) add -label $label]
-
-# Set colours from the options database
-       set bg [option get $w background Background] 
-       set fg [option get $w foreground Foreground] 
-       setWidgetColors $w [option get $w background Background] \
-	   [option get $w foreground Foreground]
-       
-# Configure page to set background when selected.
-       $itk_component(tabbook) pageconfigure $label -background $bg \
-	   -foreground $fg -command [itcl::code $this pageSelectCB $bg]
-       
-       itk_component add $wfs {
-	   frame $w.$wfs -bd 2
-       } {
-	   ignore -background
-       }
-       pack $itk_component($wfs)
-       
-       set w $itk_component($wfs)
-       
-# Effective wavelength.
-       if { $wfs == "oiwfs" } {
-	   
-# A subcomponent selector for the OIWFS.
-	   itk_component add oiwfsfilter {
-	       WavelengthSelector $w.oiwfsfilter -labeltext "filter" \
-		   -labelpos w -component tcs.field.guide.oiwfswavelength
-	   } {
-	       usual
-	       ignore -background
-	   }
-	   pack $itk_component(${wfs}filter) -anchor w -padx 3 -pady 3
-	   
-    # ND Filter for the NICI OI/AO system
-
-           itk_component add niciFrame {
-              frame $w.nicifr
-           }  {
-	       ignore -background
-	   }
-           itk_component add niciLabel {
-              label $w.nicifr.lab -text "NICI" 
-           }  {
-	       ignore -background
-	   }
-	   itk_component add nicindcurrMag {
-	       MonitorLabel $w.nicifr.niciNdMag nici ndMag -width 6 -anchor w -text "Req Mag:"
-	   }  {
-	       ignore -background
-	   }
-	   itk_component add nicindreqFlt {
-	       MonitorLabel $w.nicifr.niciNdReq nici ndReq -width 8 -anchor w  -text "Req ND Flt:"
-	   }  {
-	       ignore -background
-	   }
-	   itk_component add nicindcurrFlt {
-	       MonitorLabel $w.nicifr.niciNdFlt nici ndfilt2 -width 8 -anchor w  -text "Cur ND Flt:"
-	   }  {
-	       ignore -background
-	   }
-	   itk_component add niciManFltFrame {
-	       frame $w.nicimanfr
-	   } {
-	       ignore -background
-	   }
-	   itk_component add niciNDManualFlt {
-	       iwidgets::optionmenu $w.nicimanfr.niciNdFltSel -labeltext "ND filter" -labelpos w -width 90
-	   } {
-	       ignore -background
-	   }
-	   $itk_component(niciNDManualFlt) insert end Block ND5 ND3 ND2 ND1 Open
-           itk_component add niciManFltApply {
-              button $w.nicimanfr.nicimanflapply -text "Apply ND Filter" -command [itcl::code $this setmanNICInd]
-           }  {
-	       ignore -background
-	   }
-           itk_component add niciFrame2 {
-              frame $w.nicifr2
-           }  {
-	       ignore -background
-	   }
-           itk_component add niciAutoBut {
-              button $w.nicifr2.nicibut -text "Start AUTO ND Config" -command [itcl::code $this startNICInd]
-           }  {
-	       ignore -background
-	   }
-	   itk_component add nicindcar {
-	       MonitorLabel $w.nicifr2.nicicar nici ndCAR -width 10 -anchor w -text "CAR:"
-	   }  {
-	       ignore -background
-	   }
-	   pack $itk_component(niciLabel) -side top
-           pack $itk_component(nicindcurrMag) $itk_component(nicindreqFlt) $itk_component(nicindcurrFlt) -side left -padx 2
-           pack $itk_component(niciNDManualFlt) $itk_component(niciManFltApply) -side left
-	   pack $itk_component(niciAutoBut) $itk_component(nicindcar) -side left -padx 2
-	   pack $itk_component(niciFrame) $itk_component(niciManFltFrame) $itk_component(niciFrame2) -side top -padx 3 -pady 3
-
-       } elseif { $wfs == "aowfs" } {
-	   
-# A subcomponent selector for the AOWFS.
-	   itk_component add ${wfs}filter {
-	       WavelengthSelector $w.${wfs}filter -labeltext "filter" \
-		   -labelpos w -component tcs.field.guide.aowfswavelength
-	   } {
-	       usual
-	       ignore -background
-	   }
-#	   pack $itk_component(${wfs}filter) -anchor w -padx 3 -pady 3
-
-
-	   itk_component add aond {
-	       iwidgets::optionmenu $w.nd -labeltext "ND filt" -labelpos w -width 100 \
-		   -command [itcl::code $this aondsel]
-	   } {
-	       ignore -background
-	   }
-	   $itk_component(aond) insert end IN OUT ""
-	   #puts "aond optionmenu: $itk_component(aond)"
-
-	   itk_component add currAONDFilt {
-	       MonitorLabel $w.currNDFilt aossad ndFiltPos -width 12 -anchor e -font "Arial 12 bold"
-	   } {
-	       ignore -background
-	   }
-
-	   itk_component add aoflens {
-	       iwidgets::optionmenu $w.flens -labeltext "Field Lens" -labelpos w -width 100 \
-		   -command [itcl::code $this aoflenssel]
-	   } {
-	       ignore -background
-	   }
-	   $itk_component(aoflens) insert end IN OUT ""
-	   #puts "aoflens optionmenu: $itk_component(aoflens)"
-	   
-	   itk_component add currflens {
-	       MonitorLabel $w.currflens aossad flensPos -width 12 -anchor e -font "Arial 12 bold" -trans "* OUT {} unknown FLENS IN"
-	   } {
-	       ignore -background
-	   }
-
-	   itk_component add aoiris {
-	       iwidgets::optionmenu $w.iris -labeltext "TTGS iris" -labelpos w -width 100 \
-		   -command [itcl::code $this aottgsiris]
-	   } {
-	       ignore -background
-	   }
-	   $itk_component(aoiris) insert end open close ""
-
-	   itk_component add currTTGSiris {
-	       MonitorLabel $w.currTTGSiris aossad ttgsIrisPos -width 12 -anchor e -font "Arial 12 bold"
-	   } {
-	       ignore -background
-	   }
-
-	   grid $itk_component(${wfs}filter) - -sticky nes -pady 1
-	   grid $itk_component(aond) $itk_component(currAONDFilt) -sticky nes
-	   grid $itk_component(aoflens) $itk_component(currflens) -sticky nes
-	   grid $itk_component(aoiris) $itk_component(currTTGSiris) -sticky nes
-	   grid configure $itk_component(currAONDFilt) $itk_component(currflens) $itk_component(currTTGSiris) -sticky nws
-	   
-       } elseif { $wfs == "hrwfs" } {
-	   
-	   itk_component add nd {
-	       iwidgets::optionmenu $w.nd -labeltext "ND filt" -labelpos w -width 100 \
-		   -command [itcl::code $this ndsel]
-	   } {
-	       ignore -background
-	   }
-	   $itk_component(nd) insert end open nd100 nd1000 filt04 filt06 filt08
-	   
-	   itk_component add col {
-	       iwidgets::optionmenu $w.col -labeltext "Col filt" -labelpos w \
-		   -width 100 -command [itcl::code $this colsel]
-	   } {
-	       ignore -background
-	   }
-	   
-	   $itk_component(col) insert end neutral  U-red1 B-blue V-green R-red2 \
-	       I-red3
-	   itk_component add currNDFilt {
-	       MonitorLabel $w.currNDFilt hrwfs::currStatus ndfilt -width 12 -anchor e -font "Arial 12 bold"
-	   } {
-	       ignore -background
-	   }
-	   
-	   itk_component add currColFilt {
-	       MonitorLabel $w.currColFilt hrwfs::currStatus colfilt -width 12 -anchor e -font "Arial 12 bold"
-	   } {
-	       ignore -background
-	   }
-	   itk_component add window {
-	       iwidgets::optionmenu $w.window -labeltext Window -labelpos w -width 100 \
-		   -command [itcl::code $this window]
-	   } {
-	       ignore -background
-	   }
-	   $itk_component(window) insert end full 200x200 100x100 
-	   
-	   grid $itk_component(nd) $itk_component(currNDFilt) -sticky nes -pady 2
-	   grid $itk_component(col) $itk_component(currColFilt) -sticky nes -pady 2
-	   grid $itk_component(window) x -sticky nes -pady 3
-	   
-       } else {
-	   
-# An option menus and an entry field for the PWFSs.
-	   
-	   itk_component add ${wfs}filter {
-            iwidgets::optionmenu $w.${wfs}filter -labeltext "filter" -labelpos w -width 100 \
-		-command [itcl::code $this filter $wfs]
-	   } {
-	       ignore -background
-	   }
-	   itk_component add ${wfs}currFlt {
-	       MonitorLabel $w.currFlt agssad ${wfs}Filter -width 10 -anchor w -font "Arial 12 bold"
-	   }  {
-	       ignore -background
-	   }
-	   
-	   $itk_component(${wfs}filter) insert end neutral Blue Green Red Red04 \
-               Red1 ""
-
-	   itk_component add ${wfs}wavel {
-	       iwidgets::entryfield $w.${wfs}wavel -labeltext "wavelength" -width 6
-	   }  {
-	       ignore -background
-	   }
-	   
-	   itk_component add ${wfs}fldstop {
-	       iwidgets::optionmenu $w.${wfs}fldstop -labeltext "fieldstop" -labelpos w -width 100 \
-		   -command [itcl::code $this fldstop $wfs]
-	   }  {
-	       ignore -background
-	   }
-	   
-	   itk_component add ${wfs}currFld {
-	       MonitorLabel $w.currFld agssad ${wfs}Fldstop -width 10 -anchor w -font "Arial 12 bold"
-	   }  {
-	       ignore -background
-	   }
-	   
-	   $itk_component(${wfs}fldstop) insert end prism 10.0 6.4 3.2 1.6 open1 open2 open3 open4 ""
-	   
-	   grid $itk_component(${wfs}filter) $itk_component(${wfs}currFlt) $itk_component(${wfs}wavel) -sticky e -pady 2
-	   grid $itk_component(${wfs}fldstop) $itk_component(${wfs}currFld) -sticky nes -pady 2
-       }
-   }
-   
-# Select the first page.
    $itk_component(tabbook) select HRWFS/AC
 
    eval itk_initialize $args
@@ -313,16 +79,15 @@ itcl::body WfsConfig::destructor {} {
 }
 
 itcl::body WfsConfig::filter {wfs} {
-
-    if {[$itk_component(${wfs}filter) get] != ""} {
-	if {$wfs == "aowfs"} {
-	    pwfs filter pwfs2 [$itk_component(${wfs}filter) get]
-	} else {
-	    pwfs filter $wfs [$itk_component(${wfs}filter) get]
+	if {[$itk_component(${wfs}filter) get] != ""} {
+		if {$wfs == "aowfs"} {
+		    pwfs filter pwfs2 [$itk_component(${wfs}filter) get]
+		} else {
+		    pwfs filter $wfs [$itk_component(${wfs}filter) get]
+		}
+		$itk_component(${wfs}wavel) clear
+		$itk_component(${wfs}wavel) insert end [pwfs getWl [$itk_component(${wfs}filter) get]]
 	}
-	$itk_component(${wfs}wavel) clear
-	$itk_component(${wfs}wavel) insert end [pwfs getWl [$itk_component(${wfs}filter) get]]
-    }
 }
 
 itcl::body WfsConfig::fldstop {wfs} {
@@ -342,29 +107,29 @@ itcl::body WfsConfig::aottgsiris {} {
 itcl::body WfsConfig::aondsel {} {
     #puts "WfsConfig::aondsel sending [$itk_component(aond) get]"
 # Select GAOS ND filter IN/OUT
-    if {[$itk_component(aond) get] == ""} {return}
-    if {[AO state useLwfs]} {
-	#puts "WfsConfig::aondsel setting ndfilter to $ndFilter"
-	if { ![catch {cs aolgsNDFilter info}] } {
-	    logactions logmess "WfsConfig::aondsel moving ND Filter to [$itk_component(aond) get]"
-	    cs aolgsNDFilter set pos [$itk_component(aond) get]
-	    cs aolgsNDFilter set mode 1
-	    cs aolgsNDFilter set dir 3
-	    logactions logmess "WfsConfig::aondsel moving LGS ND Filter to [$itk_component(aond) get]"
+	if {[$itk_component(aond) get] == ""} {return}
+	if {[AO state useLwfs]} {
+		#puts "WfsConfig::aondsel setting ndfilter to $ndFilter"
+		if { ![catch {cs aolgsNDFilter info}] } {
+				logactions logmess "WfsConfig::aondsel moving ND Filter to [$itk_component(aond) get]"
+				cs aolgsNDFilter set pos [$itk_component(aond) get]
+				cs aolgsNDFilter set mode 1
+				cs aolgsNDFilter set dir 3
+				logactions logmess "WfsConfig::aondsel moving LGS ND Filter to [$itk_component(aond) get]"
+		}
+	} else {
+		#puts "WfsConfig::aondsel setting ndfilter to $ndFilter"
+		if { ![catch {cs aongsNDFilter info}] } {
+	   	logactions logmess "WfsConfig::aondsel moving ND Filter to [$itk_component(aond) get]"
+			cs aongsNDFilter set pos [$itk_component(aond) get]
+			cs aongsNDFilter set mode 1
+			cs aongsNDFilter set dir 3
+			logactions logmess "WfsConfig::aondsel moving NGS ND Filter to [$itk_component(aond) get]"
+		}
 	}
-    } else {
-	#puts "WfsConfig::aondsel setting ndfilter to $ndFilter"
-	if { ![catch {cs aongsNDFilter info}] } {
-	    logactions logmess "WfsConfig::aondsel moving ND Filter to [$itk_component(aond) get]"
-	    cs aongsNDFilter set pos [$itk_component(aond) get]
-	    cs aongsNDFilter set mode 1
-	    cs aongsNDFilter set dir 3
-	    logactions logmess "WfsConfig::aondsel moving NGS ND Filter to [$itk_component(aond) get]"
+	if { $::Config(tcs.gaos,value) != "" } {
+		$::Config(tcs.gaos,namespace)::$::Config(tcs.gaos,value) configure -ndFilter [$itk_component(aond) get]
 	}
-    }
-    if { $::Config(tcs.gaos,value) != "" } {
-	$::Config(tcs.gaos,namespace)::$::Config(tcs.gaos,value) configure -ndFilter [$itk_component(aond) get]
-    }
 }
 
 itcl::body WfsConfig::aoflenssel {} {
@@ -518,9 +283,14 @@ itcl::body WfsConfig::pageSelectCB {color} {
    $itk_component(tabbook) pageconfigure PWFS2 -background \
          [option get $itk_component(pwfs2) background Background] 
    $itk_component(tabbook) pageconfigure OIWFS -background \
-         [option get $itk_component(oiwfs) background Background] 
-   $itk_component(tabbook) pageconfigure AOWFS -background \
-         [option get $itk_component(aowfs) background Background] 
+         [option get $itk_component(oiwfs) background Background]
+	if {[calparam cget -site] eq "CP"} {
+		$itk_component(tabbook) pageconfigure GEMS -background \
+			[option get $itk_component(gems) background Background]
+	} else {
+   	$itk_component(tabbook) pageconfigure AOWFS -background \
+			[option get $itk_component(aowfs) background Background]
+	}
 }
 
 itcl::body WfsConfig::niciState {state} {
@@ -533,4 +303,301 @@ itcl::body WfsConfig::niciState {state} {
     $itk_component(nicindcar) configure -state $state
     $itk_component(niciNDManualFlt) configure -state $state
     $itk_component(niciManFltApply) configure -state $state
+}
+
+itcl::body WfsConfig::buildOiwfsPage {parent} {
+	# A subcomponent selector for the OIWFS.
+	itk_component add oiwfsfilter {
+		 WavelengthSelector $parent.oiwfsfilter -labeltext "filter" \
+		-labelpos w -component tcs.field.guide.oiwfswavelength
+	} {
+		 usual
+		 ignore -background
+	}
+	pack $itk_component(oiwfsfilter) -anchor w -padx 3 -pady 3
+	
+ # ND Filter for the NICI OI/AO system
+
+	itk_component add niciFrame {
+		frame $parent.nicifr
+	} {
+		ignore -background
+	}
+	itk_component add niciLabel {
+		label $parent.nicifr.lab -text "NICI" 
+	} {
+		 ignore -background
+	}
+	itk_component add nicindcurrMag {
+		 MonitorLabel $parent.nicifr.niciNdMag nici ndMag -width 6 -anchor w -text "Req Mag:"
+	}  {
+		 ignore -background
+	}
+	itk_component add nicindreqFlt {
+		 MonitorLabel $parent.nicifr.niciNdReq nici ndReq -width 8 -anchor w  -text "Req ND Flt:"
+	}  {
+		 ignore -background
+	}
+	itk_component add nicindcurrFlt {
+		 MonitorLabel $parent.nicifr.niciNdFlt nici ndfilt2 -width 8 -anchor w  -text "Cur ND Flt:"
+	}  {
+		 ignore -background
+	}
+	itk_component add niciManFltFrame {
+		 frame $parent.nicimanfr
+	} {
+		 ignore -background
+	}
+	itk_component add niciNDManualFlt {
+		 iwidgets::optionmenu $parent.nicimanfr.niciNdFltSel -labeltext "ND filter" -labelpos w -width 90
+	} {
+		 ignore -background
+	}
+	$itk_component(niciNDManualFlt) insert end Block ND5 ND3 ND2 ND1 Open
+	itk_component add niciManFltApply {
+		button $parent.nicimanfr.nicimanflapply -text "Apply ND Filter" -command [itcl::code $this setmanNICInd]
+	} {
+		ignore -background
+	}
+	itk_component add niciFrame2 {
+		frame $parent.nicifr2
+	} {
+		ignore -background
+	}
+	itk_component add niciAutoBut {
+		button $parent.nicifr2.nicibut -text "Start AUTO ND Config" -command [itcl::code $this startNICInd]
+	} {
+		 ignore -background
+	}
+	itk_component add nicindcar {
+		 MonitorLabel $parent.nicifr2.nicicar nici ndCAR -width 10 -anchor w -text "CAR:"
+	}  {
+		 ignore -background
+	}
+	pack $itk_component(niciLabel) -side top
+		  pack $itk_component(nicindcurrMag) $itk_component(nicindreqFlt) $itk_component(nicindcurrFlt) -side left -padx 2
+		  pack $itk_component(niciNDManualFlt) $itk_component(niciManFltApply) -side left
+	pack $itk_component(niciAutoBut) $itk_component(nicindcar) -side left -padx 2
+	pack $itk_component(niciFrame) $itk_component(niciManFltFrame) $itk_component(niciFrame2) -side top -padx 3 -pady 3	
+}
+
+itcl::body WfsConfig::buildAowfsPage {parent} {
+	# A subcomponent selector for the AOWFS.
+	itk_component add aowfsfilter {
+		 WavelengthSelector $parent.aowfsfilter -labeltext "filter" \
+		-labelpos w -component tcs.field.guide.aowfswavelength
+	} {
+		 usual
+		 ignore -background
+	}
+#	   pack $itk_component(aowfsfilter) -anchor w -padx 3 -pady 3
+
+	itk_component add aond {
+		 iwidgets::optionmenu $parent.nd -labeltext "ND filt" -labelpos w -width 100 \
+		-command [itcl::code $this aondsel]
+	} {
+		 ignore -background
+	}
+	$itk_component(aond) insert end IN OUT ""
+	#puts "aond optionmenu: $itk_component(aond)"
+
+	itk_component add currAONDFilt {
+		 MonitorLabel $parent.currNDFilt aossad ndFiltPos -width 12 -anchor e -font "Arial 12 bold"
+	} {
+		 ignore -background
+	}
+
+	itk_component add aoflens {
+		 iwidgets::optionmenu $parent.flens -labeltext "Field Lens" -labelpos w -width 100 \
+		-command [itcl::code $this aoflenssel]
+	} {
+		 ignore -background
+	}
+	$itk_component(aoflens) insert end IN OUT ""
+	#puts "aoflens optionmenu: $itk_component(aoflens)"
+	
+	itk_component add currflens {
+		 MonitorLabel $parent.currflens aossad flensPos -width 12 -anchor e -font "Arial 12 bold" -trans "* OUT {} unknown FLENS IN"
+	} {
+		 ignore -background
+	}
+
+	itk_component add aoiris {
+		 iwidgets::optionmenu $parent.iris -labeltext "TTGS iris" -labelpos w -width 100 \
+		-command [itcl::code $this aottgsiris]
+	} {
+		 ignore -background
+	}
+	$itk_component(aoiris) insert end open close ""
+
+	itk_component add currTTGSiris {
+		 MonitorLabel $parent.currTTGSiris aossad ttgsIrisPos -width 12 -anchor e -font "Arial 12 bold"
+	} {
+		 ignore -background
+	}
+
+	grid $itk_component(aowfsfilter) - -sticky nes -pady 1
+	grid $itk_component(aond) $itk_component(currAONDFilt) -sticky nes
+	grid $itk_component(aoflens) $itk_component(currflens) -sticky nes
+	grid $itk_component(aoiris) $itk_component(currTTGSiris) -sticky nes
+	grid configure $itk_component(currAONDFilt) $itk_component(currflens) $itk_component(currTTGSiris) -sticky nws	
+}
+
+itcl::body WfsConfig::buildHrwfsPage {parent} {
+	itk_component add nd {
+		 iwidgets::optionmenu $parent.nd -labeltext "ND filt" -labelpos w -width 100 \
+		-command [itcl::code $this ndsel]
+	} {
+		 ignore -background
+	}
+	$itk_component(nd) insert end open nd100 nd1000 filt04 filt06 filt08
+	
+	itk_component add col {
+		 iwidgets::optionmenu $parent.col -labeltext "Col filt" -labelpos w \
+		-width 100 -command [itcl::code $this colsel]
+	} {
+		 ignore -background
+	}
+	
+	$itk_component(col) insert end neutral  U-red1 B-blue V-green R-red2 \
+		 I-red3
+	itk_component add currNDFilt {
+		 MonitorLabel $parent.currNDFilt hrwfs::currStatus ndfilt -width 12 -anchor e -font "Arial 12 bold"
+	} {
+		 ignore -background
+	}
+	
+	itk_component add currColFilt {
+		 MonitorLabel $parent.currColFilt hrwfs::currStatus colfilt -width 12 -anchor e -font "Arial 12 bold"
+	} {
+		 ignore -background
+	}
+	itk_component add window {
+		 iwidgets::optionmenu $parent.window -labeltext Window -labelpos w -width 100 \
+		-command [itcl::code $this window]
+	} {
+		 ignore -background
+	}
+	$itk_component(window) insert end full 200x200 100x100 
+	
+	grid $itk_component(nd) $itk_component(currNDFilt) -sticky nes -pady 2
+	grid $itk_component(col) $itk_component(currColFilt) -sticky nes -pady 2
+	grid $itk_component(window) x -sticky nes -pady 3
+}
+
+itcl::body WfsConfig::buildPwfsPage {wfs parent} {
+	# An option menus and an entry field for the PWFSs.
+	itk_component add ${wfs}filter {
+		iwidgets::optionmenu $parent.${wfs}filter -labeltext "filter" -labelpos w -width 100 \
+			-command [itcl::code $this filter $wfs]
+	} {
+		 ignore -background
+	}
+	itk_component add ${wfs}currFlt {
+		 MonitorLabel $parent.currFlt agssad ${wfs}Filter -width 10 -anchor w -font "Arial 12 bold"
+	}  {
+		 ignore -background
+	}
+	
+	$itk_component(${wfs}filter) insert end neutral Blue Green Red Red04 \
+				Red1 ""
+
+	itk_component add ${wfs}wavel {
+		 iwidgets::entryfield $parent.${wfs}wavel -labeltext "wavelength" -width 6
+	}  {
+		 ignore -background
+	}
+	
+	itk_component add ${wfs}fldstop {
+		 iwidgets::optionmenu $parent.${wfs}fldstop -labeltext "fieldstop" -labelpos w -width 100 \
+		-command [itcl::code $this fldstop $wfs]
+	}  {
+		 ignore -background
+	}
+	
+	itk_component add ${wfs}currFld {
+		 MonitorLabel $parent.currFld agssad ${wfs}Fldstop -width 10 -anchor w -font "Arial 12 bold"
+	}  {
+		 ignore -background
+	}
+	
+	$itk_component(${wfs}fldstop) insert end prism 10.0 6.4 3.2 1.6 open1 open2 open3 open4 ""
+	
+	grid $itk_component(${wfs}filter) $itk_component(${wfs}currFlt) $itk_component(${wfs}wavel) -sticky e -pady 2
+	grid $itk_component(${wfs}fldstop) $itk_component(${wfs}currFld) -sticky nes -pady 2
+}
+
+itcl::body WfsConfig::buildGemsPage {parent} {
+	itk_component add odgwframe { iwidgets::labeledframe $parent.odgwframe \
+		-labeltext "ODGW" -labelpos nw } {ignore -background}
+	set w [$itk_component(odgwframe) childsite]
+	# An option menus for the ODGW filter.
+	itk_component add odgwfilter {
+		iwidgets::optionmenu $w.odgwfilter -labeltext "filter" -labelpos w \
+			-width 150 -command [itcl::code $this configureODGWFilter]
+	} {
+		 ignore -background
+	}
+	itk_component add odgwlab1 {label $w.labb1 -text "current:"} { 
+		ignore -background }
+	itk_component add odgwCurrFlt { label $w.currFlt -width 15 -relief sunken } { 
+		ignore -background }
+	itk_component add odgwlab2 {label $w.labb2 -text "wavelength (um):" } {
+		ignore -background}
+	itk_component add odgwCurrWavel { label $w.currWavel -width 10 -relief sunken 
+		} { ignore -background }
+			
+	set odgw [Odgw::getSingleton]
+	foreach name [$odgw getFilterList] {
+		$itk_component(odgwfilter) insert end $name
+	}
+	
+	pack $itk_component(odgwfilter) -side top -anchor w -pady 2
+	pack $itk_component(odgwlab1) $itk_component(odgwCurrFlt) \
+		$itk_component(odgwlab2) $itk_component(odgwCurrWavel) -side left \
+		-pady 2 -padx 2
+	pack $itk_component(odgwframe) -side top -pady 2 -expand yes -fill x
+
+	[Odgw::getSingleton] subscribe [itcl::code $this onODGWChange]
+}
+
+itcl::body WfsConfig::buildPageFrame {tabbook wfs label} {
+	set w  [$tabbook add -label $label]
+
+# Set colours from the options database
+	set bg [option get $w background Background] 
+	set fg [option get $w foreground Foreground] 
+	setWidgetColors $w $bg $fg
+
+# Configure page to set background when selected.
+	$tabbook pageconfigure $label -background $bg \
+		-foreground $fg -command [itcl::code $this pageSelectCB $bg]
+
+	itk_component add $wfs {
+		frame $w.$wfs -bd 2
+	} {
+		ignore -background
+	}
+	pack $itk_component($wfs)
+	
+	return $itk_component($wfs)
+}
+
+itcl::body WfsConfig::configureODGWFilter {} {
+	set filter [$itk_component(odgwfilter) get]
+	if {![string is space $filter]} {
+		[Odgw::getSingleton] configureFilter $filter
+	}
+}
+
+itcl::body WfsConfig::onODGWChange {changeList} {
+	foreach el $changeList {
+		switch $el {
+			filter {
+				set filter [[Odgw::getSingleton] getCurrentFilter]
+				$itk_component(odgwCurrFlt) configure -text $filter
+				$itk_component(odgwCurrWavel) configure -text [[Odgw::getSingleton] getFilterWavelength $filter]
+			}
+		}
+	}
 }
