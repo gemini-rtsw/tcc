@@ -14,6 +14,7 @@
 itcl::class CalParam {
    constructor {args} {}
    public {
+		variable defaultFile <undefined>
       variable calFile <undefined>
       variable site <undefined>
       variable pwfs1_center_x <undefined>
@@ -60,15 +61,23 @@ itcl::body CalParam::constructor {args} {
    set m2TiltGain(Default) 0.1
    set m2FocusGain(Default) 0.0002
    eval configure $args
-	if { $calFile eq "<undefined>" } {
+	if { $defaultFile eq "<undefined>" } {
 	   if { [string compare [exec uname] "Linux"] == 0 } {
-	   	set calFile calparams.$::env(GEMINI_SITE).[exec uname]
+	   	set defaultFile defaultparams.$::env(GEMINI_SITE).[exec uname]
 	   } else {
-	   	set calFile "calparams.dat"
+	   	set defaultFile "defaultparams.dat"
 	   }
 	}
-   puts "CalParam using file $calFile"
-   source $ROOT/$calFile
+	if { $calFile eq "<undefined>" } {
+	   if { [string compare [exec uname] "Linux"] == 0 } {
+	   	set calFile [file join $::env(GEMINI_TOP) etc tcc calparams calparams.dat]
+	   } else {
+	   	set calFile "/gemini/files/calparams/calparams.dat"
+	   }
+	}
+   puts "CalParam using file $calFile (defaults is $ROOT/$defaultFile)"
+   source $ROOT/$defaultFile
+   source $calFile
 }
 
 itcl::body CalParam::p1m2TipGain {instrument wfs} {

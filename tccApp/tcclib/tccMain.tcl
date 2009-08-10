@@ -28,10 +28,11 @@ global env
    set layout $::ROOT/default_layout.tcc
    set init ""
    if { [string compare [exec uname] "Linux"] == 0 } {
-   	set calfile calparams.$::env(GEMINI_SITE).[exec uname]
-   } else {
-   	set calfile "calparams.dat"
-   }
+		set calfile [file join $env(GEMINI_TOP) etc tcc calparams calparams.dat]
+	} else {
+		set calfile "/gemini/files/calparams/calparams.dat"
+	}
+
 	set ocsproxy ""
    foreach {opt val} $args {
       switch -- $opt {
