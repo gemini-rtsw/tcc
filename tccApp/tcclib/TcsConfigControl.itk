@@ -229,7 +229,7 @@ itcl::body TcsConfigControl::apply {} {
 # Called when the apply button is pressed.
 #-
 # First check to make sure that the laser isn't propogating!
-	if {[string equal [sa aossad get laserProp] "SKY"]} {
+	if {[calparam cget -site] eq "MK" && [string equal [sa aossad get laserProp] "SKY"]} {
 		logactions logmess "Warning The laser is propogating, aborting slew"
 		tk_messageBox -icon error \
 	   	-message "You cannot SLEW while the laser is propogating"
