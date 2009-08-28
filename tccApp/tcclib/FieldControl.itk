@@ -826,7 +826,13 @@ itcl::body FieldControl::addNewTarget {} {
 		set tag [$currTarget cget -tagPrefix]
 	}
 	
-	return [$::Config(tcs.field,namespace)::$::Config(tcs.field,value) addTaggedTarget $tag]
+	set field $::Config(tcs.field,namespace)::$::Config(tcs.field,value)
+	set newTaggedTarget [$field addTaggedTarget $tag]
+	#if it is the first of its kind, set it as default
+	if { [$field getDefaultTarget $tag] eq "" } {
+		$field setDefaultTarget $newTaggedTarget
+	}
+	return $newTaggedTarget
 }
 
 itcl::body FieldControl::onAddNewTarget {} {
