@@ -36,6 +36,7 @@ itcl::class MCList {
 	public method getIndex {name} {}
 	public method selectByIndex {idx} {}
 	public method setIcon {recordName image}
+	public method clear {}
 
 	protected method onListSelect { winId } {}
 	protected method addColumn { columnId columnName } {}
@@ -193,7 +194,7 @@ itcl::body MCList::select {recordName} {
 		selectByIndex $index($recordName)
 	}
 }
-	
+
 itcl::body MCList::selectByIndex {idx} {
 	set selIdx $idx
    foreach column "$itk_option(-columns)" {
@@ -269,6 +270,30 @@ itcl::body MCList::redrawIcons {} {
 		if { ![string equal $coords ""] && [info exists iconImages($name)] } {
 			set icons($name) [$itk_component(iconLst) create image [lindex $coords 0] \
 				[lindex $coords 1] -anchor nw -image $iconImages($name)]
+		}
+	}
+}
+
+itcl::body MCList::clear {} {
+	if { $nRecords > 0 } {
+		foreach column "$itk_option(-columns)" {
+			$itk_interior.$column.list delete 0 end
+		}
+		$itk_component(iconLst) delete all
+		
+		set nRecords 0
+		unset contents
+		unset index
+		unset -nocomplain grayed
+		set oldSel $selIdx
+		set selIdx -1
+		set startListView 0.0
+		set endListView 0.0
+		unset -nocomplain iconImages
+		unset icons
+
+		if { $oldSel != -1 } {
+			notifySelect
 		}
 	}
 }

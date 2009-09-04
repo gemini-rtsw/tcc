@@ -345,13 +345,19 @@ itcl::body TargetList::setComponentList {list} {
 #-
 #  Adds the widget to the list of widgets managed by the list.
 #-
-   if { ! [string equal $currentlist ""] } {   
-		$currentlist unsubscribe $this
-   }
-   set currentlist $list
-   if { ! [string equal $list ""] } {
-      $list subscribe $this
-   }
+	if { $currentlist eq $list} {
+		if {! [string equal $currentlist ""]} {
+			refresh
+		}		
+	} else {
+	   if { ! [string equal $currentlist ""] } {   
+			$currentlist unsubscribe $this
+	   }
+	   set currentlist $list
+	   if { ! [string equal $list ""] } {
+	      $list subscribe $this
+	   }
+	}
 }
 
 itcl::body TargetList::newlist {n1 n2 op} {
@@ -378,10 +384,14 @@ itcl::body TargetList::getSelected {} {
 }
 
 itcl::body TargetList::refresh {} {
-   if { ! [string equal $currentlist ""] } {
-		$currentlist unsubscribe $this
-      $currentlist subscribe $this
-   }
+	set selected [$itk_component(selector) get]
+	$itk_component(selector) clear
+	for {set i 0} {$i < [$currentlist length]} {incr i} {
+		onInsert [$currentlist get $i]
+	}
+	if { $selected ne "" } {
+		$itk_component(selector) select $selected
+	}
 }
 
 itcl::body TargetList::onAnyAssignedTargetChange {} {
