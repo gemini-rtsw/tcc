@@ -44,10 +44,24 @@ itcl::class Preview {
       variable p1Target [list]
       variable p2Target [list]
       variable oiTarget [list]
+		variable ttgs1Target [list]
+		variable ttgs2Target [list]
+		variable ttgs3Target [list]
+		variable odgw1Target [list]
+		variable odgw2Target [list]
+		variable odgw3Target [list]
+		variable odgw4Target [list]
       variable wavel 0.5 {$telsim configure -wavelength $wavel}
       variable p1Wavel 0.5
       variable p2Wavel 0.5
       variable oiWavel 0.5
+		variable ttgs1Wavel 0.5
+		variable ttgs2Wavel 0.5
+		variable ttgs3Wavel 0.5
+		variable odgw1Wavel 0.5
+		variable odgw2Wavel 0.5
+		variable odgw3Wavel 0.5
+		variable odgw4Wavel 0.5
 # Outputs.
       variable utc
       variable visible
@@ -70,9 +84,17 @@ itcl::class Preview {
       variable p1xy [list]
       variable p2xy [list]
       variable oixy [list]
+		variable ttgs1xy [list]
+		variable ttgs2xy [list]
+		variable ttgs3xy [list]
+		variable odgw1xy [list]
+		variable odgw2xy [list]
+		variable odgw3xy [list]
+		variable odgw4xy [list]
    }
    private {
       variable telsim
+		method getXY {wavelength target}
    }
 }
 
@@ -155,104 +177,45 @@ itcl::body Preview::slew {time} {
 
 # Compute the WFS x/y positions.
    if {[string length $p1Target]} {
-       set type [lindex $p1Target 0]
-       switch $type {
-	   hmsdegTarget {
-	       $telsim configure \
-		   -targetType $type \
-		   -theta1 [lindex $p1Target 1] \
-		   -theta2 [lindex $p1Target 2] \
-		   -system [lindex $p1Target 3] \
-		   -equinox [lindex $p1Target 4] \
-		   -epoch [lindex $p1Target 5] \
-		   -pm1 [lindex $p1Target 6] \
-		   -pm2 [lindex $p1Target 7] \
-		   -parallax [lindex $p1Target 8] \
-		   -rv [lindex $p1Target 9] \
-		   -wavelength $p1Wavel
-	   }
-	   degdegTarget {
-	       $telsim configure \
-		   -targetType $type \
-		   -theta1 [lindex $p1Target 2] \
-		   -theta2 [lindex $p1Target 3]
-	   }
-	   conicTarget {
-	       $telsim configure \
-		   -targetType $type \
-		   -orbType [lindex $p1Target 1] \
-		   -orbElements [lrange $args 2 end]
-	   }
-       }
-       set p1xy [$telsim getxy]   
+		set p1xy [getXY $p1Wavel $p1Target]
    }
 
    if {[string length $p2Target]} {
-       set type [lindex $p2Target 0]
-       switch $type {
-	   hmsdegTarget {
-	       $telsim configure \
-		   -targetType $type \
-		   -theta1 [lindex $p2Target 1] \
-		   -theta2 [lindex $p2Target 2] \
-		   -system [lindex $p2Target 3] \
-		   -equinox [lindex $p2Target 4] \
-		   -epoch [lindex $p2Target 5] \
-		   -pm1 [lindex $p2Target 6] \
-		   -pm2 [lindex $p2Target 7] \
-		   -parallax [lindex $p2Target 8] \
-		   -rv [lindex $p2Target 9] \
-		   -wavelength $p2Wavel
-	   }
-	   degdegTarget {
-	       $telsim configure \
-		   -targetType $type \
-		   -theta1 [lindex $p2Target 2] \
-		   -theta2 [lindex $p2Target 3]
-	   }
-	   conicTarget {
-	       $telsim configure \
-		   -targetType $type \
-		   -orbType [lindex $p2Target 1] \
-		   -orbElements [lrange $p2Target 2 end]
-	   }
-       }
-       set p2xy [$telsim getxy]
-       puts "Preview: p2xy: $p2xy p2Target: $p2Target"
+		set p2xy [getXY $p2Wavel $p2Target]
    }
 
    if {[string length $oiTarget]} {
-       set type [lindex $oiTarget 0]
-       switch $type {
-	   hmsdegTarget {
-	       $telsim configure \
-		   -targetType $type \
-		   -theta1 [lindex $oiTarget 1] \
-		   -theta2 [lindex $oiTarget 2] \
-		   -system [lindex $oiTarget 3] \
-		   -equinox [lindex $oiTarget 4] \
-		   -epoch [lindex $oiTarget 5] \
-		   -pm1 [lindex $oiTarget 6] \
-		   -pm2 [lindex $oiTarget 7] \
-		   -parallax [lindex $oiTarget 8] \
-		   -rv [lindex $oiTarget 9] \
-		   -wavelength $oiWavel
-	   }
-	   degdegTarget {
-	       $telsim configure \
-		   -targetType $type \
-		   -theta1 [lindex $oiTarget 2] \
-		   -theta2 [lindex $oiTarget 3]
-	   }
-	   conicTarget {
-	       $telsim configure \
-		   -targetType $type \
-		   -orbType [lindex $oiTarget 1] \
-		   -orbElements [lrange $oiTarget 2 end]
-	   }
-       }
-       set oixy [$telsim getxy]
+		set oixy [getXY $oiWavel $oiTarget]
    }
+
+	if {[string length $ttgs1Target]} {
+		set ttgs1xy [getXY $ttgs1Wavel $ttgs1Target]
+	}
+
+	if {[string length $ttgs2Target]} {
+		set ttgs2xy [getXY $ttgs2Wavel $ttgs2Target]
+	}
+	
+	if {[string length $ttgs3Target]} {
+		set ttgs3xy [getXY $ttgs3Wavel $ttgs3Target]
+	}
+
+	if {[string length $odgw1Target]} {
+		set odgw1xy [getXY $odgw1Wavel $odgw1Target]
+	}
+
+	if {[string length $odgw2Target]} {
+		set odgw2xy [getXY $odgw2Wavel $odgw2Target]
+	}
+	
+	if {[string length $odgw3Target]} {
+		set odgw3xy [getXY $odgw3Wavel $odgw3Target]
+	}
+
+	if {[string length $odgw4Target]} {
+		set odgw4xy [getXY $odgw4Wavel $odgw4Target]
+	}
+
 
 # Fetch the results.
    set utc [$telsim cget -utc]
@@ -273,4 +236,13 @@ itcl::body Preview::slew {time} {
    set azttl1 [$telsim cget -rotttl1]
    set azttl2 [$telsim cget -rotttl2]
    set zttl [$telsim cget -zttl]
+}
+
+
+itcl::body Preview::getXY {wavelength target} {
+	eval target [lindex $target 0] [lrange $target 1 end]
+	if { [lindex $target 0] eq "hmsdegTarget" } {
+		$telsim configure -wavelength $wavelength
+	}
+	return [$telsim getxy]
 }

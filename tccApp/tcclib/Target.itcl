@@ -137,6 +137,7 @@ itcl::class Target {
       method pmconvert {c1 c2 pm1 pm2 pmunits}
       variable current_cosys {}
       variable current_trackrate {}
+		method formatPreviewData {}
    }
 }
 
@@ -351,243 +352,114 @@ itcl::body Target::init {} {
 	set tag {}
 }
 
+itcl::body Target::formatPreviewData {} {
+	if { [string equal $cosys ""] } {
+		set system FK5
+		set equinox J2000
+	} else {
+		set system [CosysNames::$cosys cget -frame]
+		set equinox [CosysNames::$cosys cget -equinox]
+	}
+	switch $type {
+		hmsdegTarget {
+			if { [catch {set pm [pmconvert $c1 $c2 $pm1 $pm2 $pmunits]} ] } {
+				error "Unable to convert proper motions to secs & arcsecs/year"
+			}
+			return [list $type $c1 $c2 $system $equinox $epoch [lindex $pm 0] \
+				[lindex $pm 1] $parallax $rv]
+		}
+		degdegTarget {
+			return [list $type AZEL $c1 $c2]
+		}
+		conicTarget {
+			switch $format {
+				"AsA major planet" {
+					return [list $type 1 $epochofel $orbinc $longascnode $longofperi \
+					 	$meandist $eccentricity $meanlong $dailymot]
+				}
+				"JPL major planet" {
+					if { ! [string is double -strict $longascnode] } {
+						error "expecting floating point number but got
+											\"$longascnode\""
+					}
+					if { ! [string is double -strict $argofperi] } {
+						error "expecting floating point number but got
+													\"$argofperi\""
+					}
+					if { ! [string is double -strict $meananom] } {
+						error "expecting floating point number but got
+												\"$longascnode\""
+					}
+					return [list $type 1 $epochofel $orbinc $longascnode \
+						[expr { $longascnode + $argofperi }] $meandist \
+						$eccentricity  \
+						[expr { $longascnode + $argofperi + $meananom }] \
+						$dailymot]
+				}
+				"AsA minor planet" -
+				"MPC minor planet" {
+			 		foreach {epoch1 inclination1 anode1 perihelion1 a1 e1 M1} \
+				  		[slaPertel 2 $epochofel $epochofel $orbinc \
+				  		$longascnode $argofperi $meandist $eccentricity \
+				  		$meananom] {}
+					return [list $type 2 $epoch1 $inclination1 $anode1 $perihelion1 \
+						  $a1 $e1 $M1]
+				}
+				"AsA comet" -
+				"JPL minor body" -
+				"MPC comet" {
+					foreach {epoch1 inclination1 anode1 perihelion1 q1 e1} \
+						[slaPertel 3 $epochofel $epochofperi $orbinc \
+						$longascnode $argofperi $peridist \
+						$eccentricity] {}
+					return [list $type 3 $epoch1 $inclination1 $anode1 $perihelion1 \
+					 	$q1 $e1]
+				}
+			}
+		}
+	}
+}
+
 itcl::body Target::preview {view vt} {
    if { [string equal $vt aowfs] } {
       set vt pwfs2
    }
-   if { [string equal $cosys ""] } {
-      set system FK5
-      set equinox J2000
-   } else {
-      set system [CosysNames::$cosys cget -frame]
-      set equinox [CosysNames::$cosys cget -equinox]
-   }
-   switch $type {
-      hmsdegTarget {
-         if { [catch {set pm [pmconvert $c1 $c2 $pm1 $pm2 $pmunits]} ] } {
-            error "Unable to convert proper motions to secs & arcsecs/year"
-         }
-         switch $vt {
-            sourceA {
-               $view target $type $c1 $c2 $system $equinox $epoch \
-                     [lindex $pm 0] [lindex $pm 1] $parallax $rv
-            }
-            pwfs1 {
-               $view configure -p1Target [list $type $c1 $c2 $system \
-                     $equinox $epoch [lindex $pm 0] [lindex $pm 1] \
-                     $parallax $rv]
-            }
-            pwfs2 {
-               $view configure -p2Target [list $type $c1 $c2 $system \
-                     $equinox $epoch [lindex $pm 0] [lindex $pm 1] \
-                     $parallax $rv]
-            }
-            oiwfs {
-               $view configure -oiTarget [list $type $c1 $c2 $system \
-                     $equinox $epoch [lindex $pm 0] [lindex $pm 1] \
-                     $parallax $rv]
-            }
-         }
-      }
-      degdegTarget {
-         switch $vt {
-            sourceA {
-               $view target $type AZEL $c1 $c2
-            }
-            pwfs1 {
-               $view configure -p1Target [list $type AZEL $c1 $c2]
-            }
-            pwfs2 {
-               $view configure -p2Target [list $type AZEL $c1 $c2]
-            }
-            oiwfs {
-               $view configure -oiTarget [list $type AZEL $c1 $c2]
-            }
-         }
-      }
-      conicTarget {
-         switch $vt {
-	     sourceA {
-		 switch $format {
-		     "AsA major planet" {
-			 $view target $type 1 $epochofel $orbinc $longascnode \
-			     $longofperi $meandist $eccentricity $meanlong $dailymot
-		     }
-		     "JPL major planet" {
-			 if { ! [string is double -strict $longascnode] } {
-			     error "expecting floating point number but got
-                           \"$longascnode\""
-			 }
-			 if { ! [string is double -strict $argofperi] } {
-			     error "expecting floating point number but got
-                           \"$argofperi\""
-			 }
-			 if { ! [string is double -strict $meananom] } {
-			     error "expecting floating point number but got
-                           \"$longascnode\""
-			 }
-			 $view target $type 1 $epochofel $orbinc $longascnode \
-			     [expr { $longascnode + $argofperi }] $meandist \
-			     $eccentricity  \
-			     [expr { $longascnode + $argofperi + $meananom }] \
-			     $dailymot
-		     }
-		     "AsA minor planet" -
-		     "MPC minor planet" {
-			 foreach {epoch1 inclination1 anode1 perihelion1 a1 e1 M1} \
-			     [slaPertel 2 $epochofel $epochofel $orbinc \
-				  $longascnode $argofperi $meandist $eccentricity \
-				  $meananom] {}
-			 $view target $type 2 $epoch1 $inclination1 $anode1 \
-			     $perihelion1 $a1 $e1 $M1
-		     }
-		     "AsA comet" -
-		     "JPL minor body" -
-		     "MPC comet" {
-			 foreach {epoch1 inclination1 anode1 perihelion1 q1 e1} \
-			     [slaPertel 3 $epochofel $epochofperi $orbinc \
-				  $longascnode $argofperi $peridist \
-				  $eccentricity] {}
-			 $view target $type 3 $epoch1 $inclination1 $anode1 \
-			     $perihelion1 $q1 $e1
-		     }
-		 }
-	     }
-	     pwfs1 {
-		 switch $format {
-		     "AsA major planet" {
-			 $view configure -p1Target [list $type 1 $epochofel $orbinc $longascnode \
-							$longofperi $meandist $eccentricity $meanlong $dailymot]
-		     }
-		     "JPL major planet" {
-			 if { ! [string is double -strict $longascnode] } {
-			     error "expecting floating point number but got
-                           \"$longascnode\""
-			 }
-			 if { ! [string is double -strict $argofperi] } {
-			     error "expecting floating point number but got
-                           \"$argofperi\""
-			 }
-			 if { ! [string is double -strict $meananom] } {
-			     error "expecting floating point number but got
-                           \"$longascnode\""
-			 }
-			 $view configure -p1Target [list $type 1  $epochofel $orbinc $longascnode \
-			     [expr { $longascnode + $argofperi }] $meandist \
-			     $eccentricity \
-			     [expr { $longascnode + $argofperi + $meananom }] \
-			     $dailymot]
-		     }
-		     "AsA minor planet" -
-		     "MPC minor planet" {
-			 foreach {epoch1 inclination1 anode1 perihelion1 a1 e1 M1} \
-			     [slaPertel 2 $epochofel $epochofel $orbinc \
-				  $longascnode $argofperi $meandist $eccentricity \
-				  $meananom] {}
-			 $view configure -p1Target [list $type 2 $epoch1 $inclination1 $anode1 $perihelion1 $a1 $e1 $M1]
-		     }
-		     "AsA comet" -
-		     "JPL minor body" -
-		     "MPC comet" {
-			 foreach {epoch1 inclination1 anode1 perihelion1 q1 e1} \
-			     [slaPertel 3 $epochofel $epochofperi $orbinc \
-				  $longascnode $argofperi $peridist \
-				  $eccentricity] {}
-			 $view configure -p1Target [list $type 3 $epoch1 $inclination1 $anode1 $perihelion1 $q1 $e1]
-		     }
-		 }
-	     }
-	     pwfs2 {
-		 switch $format {
-		     "AsA major planet" {
-			 $view configure -p2Target [list $type 1 $epochofel $orbinc $longascnode \
-							$longofperi $meandist $eccentricity $meanlong $dailymot]
-		     }
-		     "JPL major planet" {
-			 if { ! [string is double -strict $longascnode] } {
-			     error "expecting floating point number but got
-                           \"$longascnode\""
-			 }
-			 if { ! [string is double -strict $argofperi] } {
-			     error "expecting floating point number but got
-                           \"$argofperi\""
-			 }
-			 if { ! [string is double -strict $meananom] } {
-			     error "expecting floating point number but got
-                           \"$longascnode\""
-			 }
-			 $view configure -p2Target [list $type 1  $epochofel $orbinc $longascnode \
-			     [expr { $longascnode + $argofperi }] $meandist \
-			     $eccentricity \
-			     [expr { $longascnode + $argofperi + $meananom }] \
-			     $dailymot]
-		     }
-		     "AsA minor planet" -
-		     "MPC minor planet" {
-			 foreach {epoch1 inclination1 anode1 perihelion1 a1 e1 M1} \
-			     [slaPertel 2 $epochofel $epochofel $orbinc \
-				  $longascnode $argofperi $meandist $eccentricity \
-				  $meananom] {}
-			 $view configure -p2Target [list $type 2 $epoch1 $inclination1 $anode1 $perihelion1 $a1 $e1 $M1]
-		     }
-		     "AsA comet" -
-		     "JPL minor body" -
-		     "MPC comet" {
-			 foreach {epoch1 inclination1 anode1 perihelion1 q1 e1} \
-			     [slaPertel 3 $epochofel $epochofperi $orbinc \
-				  $longascnode $argofperi $peridist \
-				  $eccentricity] {}
-			 $view configure -p2Target [list $type 3 $epoch1 $inclination1 $anode1 $perihelion1 $q1 $e1]
-		     }
-		 }
-	     }
-	     oiwfs {
-		 switch $format {
-		     "AsA major planet" {
-			 $view configure -oiTarget [list $type 1 $epochofel $orbinc $longascnode \
-							$longofperi $meandist $eccentricity $meanlong $dailymot]
-		     }
-		     "JPL major planet" {
-			 if { ! [string is double -strict $longascnode] } {
-			     error "expecting floating point number but got
-                           \"$longascnode\""
-			 }
-			 if { ! [string is double -strict $argofperi] } {
-			     error "expecting floating point number but got
-                           \"$argofperi\""
-			 }
-			 if { ! [string is double -strict $meananom] } {
-			     error "expecting floating point number but got
-                           \"$longascnode\""
-			 }
-			 $view configure -oiTarget [list $type 1  $epochofel $orbinc $longascnode \
-			     [expr { $longascnode + $argofperi }] $meandist \
-			     $eccentricity \
-			     [expr { $longascnode + $argofperi + $meananom }] \
-			     $dailymot]
-		     }
-		     "AsA minor planet" -
-		     "MPC minor planet" {
-			 foreach {epoch1 inclination1 anode1 perihelion1 a1 e1 M1} \
-			     [slaPertel 2 $epochofel $epochofel $orbinc \
-				  $longascnode $argofperi $meandist $eccentricity \
-				  $meananom] {}
-			 $view configure -oiTarget [list $type 2 $epoch1 $inclination1 $anode1 $perihelion1 $a1 $e1 $M1]
-		     }
-		     "AsA comet" -
-		     "JPL minor body" -
-		     "MPC comet" {
-			 foreach {epoch1 inclination1 anode1 perihelion1 q1 e1} \
-			     [slaPertel 3 $epochofel $epochofperi $orbinc \
-				  $longascnode $argofperi $peridist \
-				  $eccentricity] {}
-			 $view configure -oiTarget [list $type 3 $epoch1 $inclination1 $anode1 $perihelion1 $q1 $e1]
-		     }
-		 }
-	     }
-	 }
-      }
-   }
+	switch $vt {
+	   sourceA {
+	      eval $view target [formatPreviewData]
+	   }
+	   pwfs1 {
+	      $view configure -p1Target [formatPreviewData]
+	   }
+	   pwfs2 {
+	      $view configure -p2Target [formatPreviewData]
+	   }
+	   oiwfs {
+	      $view configure -oiTarget [formatPreviewData]
+	   }
+		ttgs1 {
+			$view configure -ttgs1Target [formatPreviewData]
+		}
+		ttgs2 {
+			$view configure -ttgs2Target [formatPreviewData]
+		}
+		ttgs3 {
+			$view configure -ttgs3Target [formatPreviewData]
+		}
+		odgw1 {
+			$view configure -odgw1Target [formatPreviewData]
+		}
+		odgw2 {
+			$view configure -odgw2Target [formatPreviewData]
+		}
+		odgw3 {
+			$view configure -odgw3Target [formatPreviewData]
+		}
+		odgw4 {
+			$view configure -odgw4Target [formatPreviewData]
+		}
+	}
+
    if { ! [string equal $trackrate ""] } {
       ${trackratens}::$trackrate preview $view $vt
    }

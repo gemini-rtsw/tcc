@@ -26,7 +26,12 @@ itcl::class PreviewControl {
       method countdown {}
       method plot {}
       variable view ""
-   }
+		method updateProbeTarget { xComp yComp rComp {x ""} {y ""} {platescale 0.0268573967}}
+		method updateProbeAlarmR {xComp yComp rComp x y Rmin Rmax} 
+		method updateProbeAlarmXY {xComp yComp rComp x y Xmin Xmax Ymin Ymax {conv {0 1 0 0 0 1}}}
+		method setProbeAlarm {xComp yComp rComp}
+		method clearProbeAlarm {xComp yComp rComp}
+	}
 }
 
 itk::usual PreviewControl {
@@ -206,8 +211,112 @@ itcl::body PreviewControl::constructor args {
          $itk_component(pwfs2r) -sticky e
    grid $itk_component(lo) $itk_component(oiwfsx) $itk_component(oiwfsy) \
          $itk_component(oiwfsr) -sticky e
+	
+	if {[calparam cget -site] eq "CP"} {
+		itk_component add ttgs1x {
+			AlarmLabel $w.ttgs1x -width 8 -borderwidth 2 -relief groove -anchor e
+		}
+		itk_component add ttgs1y {
+			AlarmLabel $w.ttgs1y -width 8 -borderwidth 2 -relief groove -anchor e
+		}
+		itk_component add ttgs1r {
+			AlarmLabel $w.ttgs1r -width 8 -borderwidth 2 -relief groove -anchor e
+		}
+		itk_component add ttgs2x {
+			AlarmLabel $w.ttgs2x -width 8 -borderwidth 2 -relief groove -anchor e
+		}
+		itk_component add ttgs2y {
+			AlarmLabel $w.ttgs2y -width 8 -borderwidth 2 -relief groove -anchor e
+		}
+		itk_component add ttgs2r {
+			AlarmLabel $w.ttgs2r -width 8 -borderwidth 2 -relief groove -anchor e
+		}
+		itk_component add ttgs3x {
+			AlarmLabel $w.ttgs3x -width 8 -borderwidth 2 -relief groove -anchor e
+		}
+		itk_component add ttgs3y {
+			AlarmLabel $w.ttgs3y -width 8 -borderwidth 2 -relief groove -anchor e
+		}
+		itk_component add ttgs3r {
+			AlarmLabel $w.ttgs3r -width 8 -borderwidth 2 -relief groove -anchor e
+		}
+		itk_component add odgw1x {
+			AlarmLabel $w.odgw1x -width 8 -borderwidth 2 -relief groove -anchor e
+		}
+		itk_component add odgw1y {
+			AlarmLabel $w.odgw1y -width 8 -borderwidth 2 -relief groove -anchor e
+		}
+		itk_component add odgw1r {
+			AlarmLabel $w.odgw1r -width 8 -borderwidth 2 -relief groove -anchor e
+		}
+		itk_component add odgw2x {
+			AlarmLabel $w.odgw2x -width 8 -borderwidth 2 -relief groove -anchor e
+		}
+		itk_component add odgw2y {
+			AlarmLabel $w.odgw2y -width 8 -borderwidth 2 -relief groove -anchor e
+		}
+		itk_component add odgw2r {
+			AlarmLabel $w.odgw2r -width 8 -borderwidth 2 -relief groove -anchor e
+		}
+		itk_component add odgw3x {
+			AlarmLabel $w.odgw3x -width 8 -borderwidth 2 -relief groove -anchor e
+		}
+		itk_component add odgw3y {
+			AlarmLabel $w.odgw3y -width 8 -borderwidth 2 -relief groove -anchor e
+		}
+		itk_component add odgw3r {
+			AlarmLabel $w.odgw3r -width 8 -borderwidth 2 -relief groove -anchor e
+		}
+		itk_component add odgw4x {
+			AlarmLabel $w.odgw4x -width 8 -borderwidth 2 -relief groove -anchor e
+		}
+		itk_component add odgw4y {
+			AlarmLabel $w.odgw4y -width 8 -borderwidth 2 -relief groove -anchor e
+		}
+		itk_component add odgw4r {
+			AlarmLabel $w.odgw4r -width 8 -borderwidth 2 -relief groove -anchor e
+		}
+		
+		itk_component add lttgs1 {
+			label $w.lttgs1 -text "Canopus 1 WFS"
+		}
+		itk_component add lttgs2 {
+			label $w.lttgs2 -text "Canopus 2 WFS"
+		}
+		itk_component add lttgs3 {
+			label $w.lttgs3 -text "Canopus 3 WFS"
+		}
+		itk_component add lodgw1 {
+			label $w.lodgw1 -text "ODGW 1"
+		}
+		itk_component add lodgw2 {
+			label $w.lodgw2 -text "ODGW 2"
+		}
+		itk_component add lodgw3 {
+			label $w.lodgw3 -text "ODGW 3"
+		}
+		itk_component add lodgw4 {
+			label $w.lodgw4 -text "ODGW 4"
+		}
 
-   set w $itk_component(bot)
+		grid $itk_component(lttgs1) $itk_component(ttgs1x) $itk_component(ttgs1y) \
+			$itk_component(ttgs1r) -sticky e
+		grid $itk_component(lttgs2) $itk_component(ttgs2x) $itk_component(ttgs2y) \
+			$itk_component(ttgs2r) -sticky e
+		grid $itk_component(lttgs3) $itk_component(ttgs3x) $itk_component(ttgs3y) \
+			$itk_component(ttgs3r) -sticky e
+		grid $itk_component(lodgw1) $itk_component(odgw1x) $itk_component(odgw1y) \
+			$itk_component(odgw1r) -sticky e
+		grid $itk_component(lodgw2) $itk_component(odgw2x) $itk_component(odgw2y) \
+			$itk_component(odgw2r) -sticky e
+		grid $itk_component(lodgw3) $itk_component(odgw3x) $itk_component(odgw3y) \
+			$itk_component(odgw3r) -sticky e
+		grid $itk_component(lodgw4) $itk_component(odgw4x) $itk_component(odgw4y) \
+			$itk_component(odgw4r) -sticky e
+
+	}
+   
+	set w $itk_component(bot)
    itk_component add left {
       frame $w.left
    }
@@ -401,68 +510,35 @@ itcl::body PreviewControl::update {} {
          if { ! [string equal $pwfs1 ""] } {
             set x [lindex $pwfs1 0]
             set y [lindex $pwfs1 1]
-            $itk_component(pwfs1x) configure -text [format "%.1f" $x]
-            $itk_component(pwfs1y) configure -text [format "%.1f" $y]
-            set r2 [expr $x * $x + $y * $y]
-            $itk_component(pwfs1r) configure -text \
-                  [format "%.2f" [expr {sqrt($r2) * 0.0268573967}]]
+				updateProbeTarget pwfs1x pwfs1y pwfs1r $x $y
             set rmax [sa tcssad get pwfs1Rmax]
             set rmin [sa tcssad get pwfs1Rmin]
-            if { ($r2 > $rmax * $rmax) || ($r2 < $rmin * $rmin) } {
-               $itk_component(pwfs1x) configure -state alarm
-               $itk_component(pwfs1y) configure -state alarm
-               $itk_component(pwfs1r) configure -state alarm
-            } else {
-               $itk_component(pwfs1x) configure -state normal
-               $itk_component(pwfs1y) configure -state normal
-               $itk_component(pwfs1r) configure -state normal
-            }
+				updateProbeAlarmR pwfs1x pwfs1y pwfs1r $x $y $rmin $rmax
          } else {
-            $itk_component(pwfs1x) configure -text "" -state normal
-            $itk_component(pwfs1y) configure -text "" -state normal
-            $itk_component(pwfs1r) configure -text "" -state normal
+				updateProbeTarget pwfs1x pwfs1y pwfs1r
+				clearProbeAlarm pwfs1x pwfs1y pwfs1r
          }
          set pwfs2 [$view cget -p2xy]
          if { ! [string equal $pwfs2 ""] } {
             set x [lindex $pwfs2 0]
             set y [lindex $pwfs2 1]
-            $itk_component(pwfs2x) configure -text [format "%.1f" $x]
-            $itk_component(pwfs2y) configure -text [format "%.1f" $y]
-            set r2 [expr $x * $x + $y * $y]
-            $itk_component(pwfs2r) configure -text \
-                  [format "%.2f" [expr {sqrt($r2) * 0.0268573967}]]
+				updateProbeTarget pwfs2x pwfs2y pwfs2r $x $y
             set rmax [sa tcssad get pwfs2Rmax]
             set rmin [sa tcssad get pwfs2Rmin]
-            if { ($r2 > $rmax * $rmax) || ($r2 < $rmin * $rmin) } {
-               $itk_component(pwfs2x) configure -state alarm
-               $itk_component(pwfs2y) configure -state alarm
-               $itk_component(pwfs2r) configure -state alarm
-            } else {
-               $itk_component(pwfs2x) configure -state normal
-               $itk_component(pwfs2y) configure -state normal
-               $itk_component(pwfs2r) configure -state normal
-            }
+				updateProbeAlarmR pwfs2x pwfs2y pwfs2r $x $y $rmin $rmax
          } else {
-            $itk_component(pwfs2x) configure -text "" -state normal
-            $itk_component(pwfs2y) configure -text "" -state normal
-            $itk_component(pwfs2r) configure -text "" -state normal
+				updateProbeTarget pwfs2x pwfs2y pwfs2r
+				clearProbeAlarm pwfs2x pwfs2y pwfs2r
          }
          set oiwfs [$view cget -oixy]
          if { ! [string equal $oiwfs ""] } {
             set x [lindex $oiwfs 0]
             set y [lindex $oiwfs 1]
-            $itk_component(oiwfsx) configure -text [format "%.1f" $x]
-            $itk_component(oiwfsy) configure -text [format "%.1f" $y]
-            set r2 [expr $x * $x + $y * $y]
-            $itk_component(oiwfsr) configure -text \
-                  [format "%.2f" [expr {sqrt($r2) * 0.0268573967}]]
-            set inlimit 0
+				updateProbeTarget oiwfsx oiwfsy oiwfsr $x $y
             if { [sa tcssad get oiwfsLimitType] } {
                set rmax [sa tcssad get oiwfsRmax]
                set rmin [sa tcssad get oiwfsRmin]
-               if { ($r2 > $rmax * $rmax) || ($r2 < $rmin * $rmin) } {
-                  set inlimit 1
-               }
+					updateProbeAlarmR oiwfsx oiwfsy oiwfsr $x $y $rmin $rmax
             } else {
 
 # The OIWFS x,y limits are in the OIWFS coordinate system so the predicted
@@ -473,29 +549,107 @@ itcl::body PreviewControl::update {} {
                set ymax [sa tcssad get oiwfsYmax]
                set ymin [sa tcssad get oiwfsYmin]
                set coeffs [sa agssad get oiwfsCoeffs]
-               set oix [expr { [lindex $coeffs 0] + [lindex $coeffs 1] * $x + \
-                     [lindex $coeffs 2] * $y} ]
-               set oiy [expr { [lindex $coeffs 3] + [lindex $coeffs 4] * $x + \
-                     [lindex $coeffs 5] * $y} ]
-               if { $oix > $xmax || $oix < $xmin || $oiy > $ymax || \
-                     $oiy < $ymin } {
-                  set inlimit 1
-               }
+					updateProbeAlarmXY oiwfsx oiwfsy oiwfsr $x $y $xmin $xmax $ymin $ymax $coeffs
             }
-            if { $inlimit } {
-               $itk_component(oiwfsx) configure -state alarm
-               $itk_component(oiwfsy) configure -state alarm
-               $itk_component(oiwfsr) configure -state alarm
-            } else {
-               $itk_component(oiwfsx) configure -state normal
-               $itk_component(oiwfsy) configure -state normal
-               $itk_component(oiwfsr) configure -state normal
-            }
+            
          } else {
-            $itk_component(oiwfsx) configure -text "" -state normal
-            $itk_component(oiwfsy) configure -text "" -state normal
-            $itk_component(oiwfsr) configure -text "" -state normal
+				updateProbeTarget oiwfsx oiwfsy oiwfsr
+				clearProbeAlarm oiwfsx oiwfsy oiwfsr
          }
+			if {[calparam cget -site] eq "CP"} {
+				set ttgs1 [$view cget -ttgs1xy]
+				if { ! [string equal $ttgs1 ""] } {
+					set x [lindex $ttgs1 0]
+					set y [lindex $ttgs1 1]
+					updateProbeTarget ttgs1x ttgs1y ttgs1r $x $y
+					set rmax [sa tcssad get ttgs1Rmax]
+					set rmin [sa tcssad get ttgs1Rmin]
+					updateProbeAlarmR ttgs1x ttgs1y ttgs1r $x $y $rmin $rmax
+				} else {
+					updateProbeTarget ttgs1x ttgs1y ttgs1r
+					clearProbeAlarm ttgs1x ttgs1y ttgs1r
+				}
+				set ttgs2 [$view cget -ttgs2xy]
+				if { ! [string equal $ttgs2 ""] } {
+					set x [lindex $ttgs2 0]
+					set y [lindex $ttgs2 1]
+					updateProbeTarget ttgs2x ttgs2y ttgs2r $x $y
+					set rmax [sa tcssad get ttgs2Rmax]
+					set rmin [sa tcssad get ttgs2Rmin]
+					updateProbeAlarmR ttgs2x ttgs2y ttgs2r $x $y $rmin $rmax					
+				} else {
+					updateProbeTarget ttgs2x ttgs2y ttgs2r
+					clearProbeAlarm ttgs2x ttgs2y ttgs2r
+				}
+				set ttgs3 [$view cget -ttgs3xy]
+				if { ! [string equal $ttgs3 ""] } {
+					set x [lindex $ttgs3 0]
+					set y [lindex $ttgs3 1]
+					updateProbeTarget ttgs3x ttgs3y ttgs3r $x $y
+					set rmax [sa tcssad get ttgs3Rmax]
+					set rmin [sa tcssad get ttgs3Rmin]
+					updateProbeAlarmR ttgs3x ttgs3y ttgs3r $x $y $rmin $rmax	
+				} else {
+					updateProbeTarget ttgs3x ttgs3y ttgs3r
+					clearProbeAlarm ttgs3x ttgs3y ttgs3r
+				}
+				set odgw1 [$view cget -odgw1xy]
+				if { ! [string equal $odgw1 ""] } {
+					set x [lindex $odgw1 0]
+					set y [lindex $odgw1 1]
+					updateProbeTarget odgw1x odgw1y odgw1r $x $y
+					set xmax [sa tcssad get odgw1Xmax]
+					set xmin [sa tcssad get odgw1Xmin]
+					set ymax [sa tcssad get odgw1Ymax]
+					set ymin [sa tcssad get odgw1Ymin]
+					updateProbeAlarmXY odgw1x odgw1y odgw1r $x $y $xmin $xmax $ymin $ymax				
+				} else {
+					updateProbeTarget odgw1x odgw1y odgw1r
+					clearProbeAlarm odgw1x odgw1y odgw1r
+				}
+				set odgw2 [$view cget -odgw2xy]
+				if { ! [string equal $odgw2 ""] } {
+					set x [lindex $odgw2 0]
+					set y [lindex $odgw2 1]
+					updateProbeTarget odgw2x odgw2y odgw2r $x $y
+					set xmax [sa tcssad get odgw2Xmax]
+					set xmin [sa tcssad get odgw2Xmin]
+					set ymax [sa tcssad get odgw2Ymax]
+					set ymin [sa tcssad get odgw2Ymin]
+					updateProbeAlarmXY odgw2x odgw2y odgw2r $x $y $xmin $xmax $ymin $ymax
+				} else {
+					updateProbeTarget odgw2x odgw2y odgw2r
+					clearProbeAlarm odgw2x odgw2y odgw2r
+				}
+				set odgw3 [$view cget -odgw3xy]
+				if { ! [string equal $odgw3 ""] } {
+					set x [lindex $odgw3 0]
+					set y [lindex $odgw3 1]
+					updateProbeTarget odgw3x odgw3y odgw3r $x $y
+					set xmax [sa tcssad get odgw3Xmax]
+					set xmin [sa tcssad get odgw3Xmin]
+					set ymax [sa tcssad get odgw3Ymax]
+					set ymin [sa tcssad get odgw3Ymin]
+					updateProbeAlarmXY odgw3x odgw3y odgw3r $x $y $xmin $xmax $ymin $ymax
+				} else {
+					updateProbeTarget odgw3x odgw3y odgw3r
+					clearProbeAlarm odgw3x odgw3y odgw3r
+				}
+				set odgw4 [$view cget -odgw4xy]
+				if { ! [string equal $odgw4 ""] } {
+					set x [lindex $odgw4 0]
+					set y [lindex $odgw4 1]
+					updateProbeTarget odgw4x odgw4y odgw4r $x $y
+					set xmax [sa tcssad get odgw4Xmax]
+					set xmin [sa tcssad get odgw4Xmin]
+					set ymax [sa tcssad get odgw4Ymax]
+					set ymin [sa tcssad get odgw4Ymin]
+					updateProbeAlarmXY odgw4x odgw4y odgw4r $x $y $xmin $xmax $ymin $ymax
+				} else {
+					updateProbeTarget odgw4x odgw4y odgw4r
+					clearProbeAlarm odgw4x odgw4y odgw4r
+				}
+			}
          set az1time [$view cget -azttl1]
          set az2time [$view cget -azttl2]
          set eltime [$view cget -elttl]
@@ -601,4 +755,52 @@ itcl::body PreviewControl::plot {} {
                [$view cget -p1xy] [$view cget -p2xy] [$view cget -oixy]]
       }
    }
+}
+
+itcl::body PreviewControl::updateProbeTarget { xComp yComp rComp {x ""} {y ""} \
+															  {platescale 0.0268573967} } {
+	if { [string is double -strict $x] && [string is double -strict $y]} {
+		set r [expr sqrt( $x*$x + $y*$y) * $platescale]
+		$itk_component($xComp) configure -text [format "%.1f" $x]
+		$itk_component($yComp) configure -text [format "%.1f" $y]
+		$itk_component($rComp) configure -text [format "%.2f" $r]	
+	} else {
+		$itk_component($xComp) configure -text ""
+		$itk_component($yComp) configure -text ""
+		$itk_component($rComp) configure -text ""	
+	}
+}
+
+itcl::body PreviewControl::updateProbeAlarmR {xComp yComp rComp x y Rmin Rmax} {
+	set r2 [expr $x * $x + $y * $y]
+	if { ($r2 > $Rmax * $Rmax) || ($r2 < $Rmin * $Rmin) } {
+		setProbeAlarm $xComp $yComp $rComp
+	} else {
+		clearProbeAlarm $xComp $yComp $rComp
+	}
+}
+
+itcl::body PreviewControl::updateProbeAlarmXY {xComp yComp rComp x y Xmin Xmax \
+															  Ymin Ymax {coeffs {0 1 0 0 0 1}}} {
+	set oix [expr { [lindex $coeffs 0] + [lindex $coeffs 1] * $x + \
+		[lindex $coeffs 2] * $y} ]
+	set oiy [expr { [lindex $coeffs 3] + [lindex $coeffs 4] * $x + \
+		[lindex $coeffs 5] * $y} ]
+	if { $oix > $Xmax || $oix < $Xmin || $oiy > $Ymax || $oiy < $Ymin } {
+		setProbeAlarm $xComp $yComp $rComp
+	} else {
+		clearProbeAlarm $xComp $yComp $rComp
+	}
+} 
+
+itcl::body PreviewControl::setProbeAlarm {xComp yComp rComp} {
+	$itk_component($xComp) configure -state alarm
+	$itk_component($yComp) configure -state alarm
+	$itk_component($rComp) configure -state alarm
+}
+
+itcl::body PreviewControl::clearProbeAlarm {xComp yComp rComp} {
+	$itk_component($xComp) configure -state normal
+	$itk_component($yComp) configure -state normal
+	$itk_component($rComp) configure -state normal
 }
