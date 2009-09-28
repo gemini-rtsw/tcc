@@ -32,6 +32,7 @@ itcl::class Odgw {
 		method notify {elementList}
 		method onFilterChange {change}
 		method onWavelengthChange {name alarm time value}
+		method onVirtualMapChange {reasons}
 	}
 }
 
@@ -64,25 +65,19 @@ itcl::body Odgw::constructor {{instr ""}} {
 	} else {
 		setInstrument $instr
 	}
-	sa tcssad proc g1MapName [itcl::code $this onWavelengthChange]
+	[TcsVirtualMap::getSingleton] subscribe [itcl::code $this onVirtualMapChange]
 	sa tcssad proc g1Wavelength [itcl::code $this onWavelengthChange]
-	sa tcssad proc g2MapName [itcl::code $this onWavelengthChange]
 	sa tcssad proc g2Wavelength [itcl::code $this onWavelengthChange]
-	sa tcssad proc g3MapName [itcl::code $this onWavelengthChange]
 	sa tcssad proc g3Wavelength [itcl::code $this onWavelengthChange]
-	sa tcssad proc g4MapName [itcl::code $this onWavelengthChange]
 	sa tcssad proc g4Wavelength [itcl::code $this onWavelengthChange]
 }
 
 itcl::body Odgw::destructor {} {
-	sa tcssad unproc g1MapName [itcl::code $this onWavelengthChange]
 	sa tcssad unproc g1Wavelength [itcl::code $this onWavelengthChange]
-	sa tcssad unproc g2MapName [itcl::code $this onWavelengthChange]
 	sa tcssad unproc g2Wavelength [itcl::code $this onWavelengthChange]
-	sa tcssad unproc g3MapName [itcl::code $this onWavelengthChange]
 	sa tcssad unproc g3Wavelength [itcl::code $this onWavelengthChange]
-	sa tcssad unproc g4MapName [itcl::code $this onWavelengthChange]
-	sa tcssad unproc g4Wavelength [itcl::code $this onWavelengthChange]	
+	sa tcssad unproc g4Wavelength [itcl::code $this onWavelengthChange]
+	[TcsVirtualMap::getSingleton] unsubscribe [itcl::code $this onVirtualMapChange]
 }
 
 itcl::body Odgw::setInstrument {instr} {
@@ -203,4 +198,8 @@ itcl::body Odgw::onWavelengthChange {name alarm time value} {
 		set wavelength $newval
 		notify wavelength
 	}
+}
+
+itcl::body Odgw::onVirtualMapChange {reasons} {
+	onWavelengthChange name alarm time value
 }

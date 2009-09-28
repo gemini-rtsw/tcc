@@ -1,0 +1,84 @@
+itcl::class TcsVirtualMap {
+public {
+	proc getSingleton {}
+	method getMap { telName }
+	method subscribe {observer}
+	method unsubscribe {observer}
+	destructor {}
+}
+protected {
+	common singleton ""
+	constructor {} {}
+	
+	variable map {}
+	variable observerList {}
+
+	method onMapChange {name alarm time value}
+	method notify {reason}
+}
+}
+
+itcl::body TcsVirtualMap::getSingleton {} {
+	if { $singleton eq "" } {
+		set singleton [namespace current]::[TcsVirtualMap #auto]
+	}
+	return $singleton
+}
+
+itcl::body TcsVirtualMap::constructor {} {
+	sa tcssad proc g1MapName [list [itcl::code $this onMapChange]]
+	sa tcssad proc g2MapName [list [itcl::code $this onMapChange]]
+	sa tcssad proc g3MapName [list [itcl::code $this onMapChange]]
+	sa tcssad proc g4MapName [list [itcl::code $this onMapChange]]
+}
+
+itcl::body TcsVirtualMap::destructor {} {
+	sa tcssad unproc g1MapName [list [itcl::code $this onMapChange]]
+	sa tcssad unproc g2MapName [list [itcl::code $this onMapChange]]
+	sa tcssad unproc g3MapName [list [itcl::code $this onMapChange]]
+	sa tcssad unproc g4MapName [list [itcl::code $this onMapChange]]
+}
+
+itcl::body TcsVirtualMap::getMap { telName } {
+	set ret ""
+	switch $telName {
+	g1	{ set ret [sa tcssad get g1MapName] }
+	g2	{ set ret [sa tcssad get g2MapName] }
+	g3	{ set ret [sa tcssad get g3MapName] }
+	g4	{ set ret [sa tcssad get g4MapName] }
+	}
+	return $ret
+}
+
+itcl::body TcsVirtualMap::subscribe observer {
+# Check that the observer isn't already on the list.
+	if { [lsearch -exact $observerList $observer] == -1 } {
+# Append the observer to the list.
+		lappend observerList $observer
+	}
+}
+
+itcl::body TcsVirtualMap::unsubscribe observer {
+# Check that the observer is registered.
+	set index [lsearch -exact $observerList $observer]
+	if { $index != -1 } {
+		set observerList [lreplace $observerList $index $index]
+	}
+}
+
+itcl::body TcsVirtualMap::notify {reason} {
+	foreach observer $observerList {
+		$observer $reason
+	}	
+}
+
+itcl::body TcsVirtualMap::onMapChange {name alarm time value} {
+	set changes {}
+	switch $name {
+	tcssad.g1MapName { set changes g1 }
+	tcssad.g2MapName { set changes g2 }
+	tcssad.g3MapName { set changes g3 }
+	tcssad.g4MapName { set changes g4 }
+	}
+	notify $changes
+}

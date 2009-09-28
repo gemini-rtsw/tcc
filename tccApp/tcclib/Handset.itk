@@ -42,20 +42,25 @@ itcl::class Handset {
       method openloop {}
       method sendOffset {frame stepsize angle}
       variable oiAngle 138.94
+   	method onMapChange {reasons}
    }
    private {
       method push {button}
       method rot {dir}
       method hflip {}
       method vflip {}
-      method reset {}
+      method reset {frame}
+		method onReset {}
       method relabel {}
       method initlabels {}
+		method getCurrentFrame {}
+
       variable cs ""
       variable angles
       variable labels
       variable control_loop 0
-   }
+		
+	}
 }
 
 # Create custom bitmaps.
@@ -187,7 +192,7 @@ itcl::body Handset::constructor {args} {
 
 # Reset button.
    itk_component add reset {
-      button $w.reset -image images::reset -command [itcl::code $this reset]
+      button $w.reset -image images::reset -command [itcl::code $this onReset]
    }
    grid x $itk_component(u) -sticky nsew
    grid $itk_component(l) $itk_component(reset) $itk_component(r)
@@ -231,6 +236,14 @@ itcl::body Handset::constructor {args} {
    $itk_component(orient) add pwfs1 -text PWFS1
    $itk_component(orient) add pwfs2 -text PWFS2
    $itk_component(orient) add oiwfs -text OIWFS
+	if { [calparam cget -site] eq "CP" } {
+		$itk_component(orient) add g1
+		$itk_component(orient) add g2
+		$itk_component(orient) add g3
+		$itk_component(orient) add g4
+		
+		
+	}
    $itk_component(orient) configure -command [itcl::code $this relabel]
 
 # buttons for rotating and flipping.
@@ -279,11 +292,18 @@ itcl::body Handset::constructor {args} {
 
 # Fill in the table of angles (xy is last in the list so that it becomes
 # the default selection).
+	if { [calparam cget -site] eq "CP" } {
+		foreach frame {ttgs1 ttgs2 ttgs3 odgw1 odgw2 odgw3 odgw4} {
+			#$itk_component(orient) select $frame
+			reset $frame
+		}
+	}
    foreach frame {tracking azel instr pwfs1 pwfs2 oiwfs xy} {
-      $itk_component(orient) select $frame
-      reset
+      #$itk_component(orient) select $frame
+      reset $frame
    }
-   
+	$itk_component(orient) select xy
+
 # Create bindings on the top-level window for the arrow keys (this assumes
 # that there is only one HandPaddleButtons widget in the window).
    set top [winfo toplevel $itk_interior]
@@ -326,12 +346,19 @@ itcl::body Handset::constructor {args} {
 	   updateProc mcssad.followS2 alarm time [sa mcssad get followS2]
        }
    }
+	
+	if { [calparam cget -site] eq "CP" } {
+		[TcsVirtualMap::getSingleton] subscribe [itcl::code $this onMapChange]
+		onMapChange [list g1 g2 g3 g4]
+	}
 }
 
 
 itcl::body Handset::destructor {} {
     global tid
-
+	if { [calparam cget -site] eq "CP" } {
+		[TcsVirtualMap::getSingleton] unsubscribe [itcl::code $this onMapChange]
+	}
     after cancel $tid
     if {$mon_inpos} {
 	sa tcssad unproc inPosition2 "$this updateProc"
@@ -394,7 +421,7 @@ itcl::body Handset::push {dir} {
 
 # Called whenever one of the handset buttons is pressed.
    if { ! [string equal $cs ""] } {
-      set frame [$itk_component(orient) get]
+      set frame [getCurrentFrame]
 # Set the step size.
       set stepsize [$itk_component(stepsize) get]
 
@@ -425,7 +452,8 @@ itcl::body Handset::push {dir} {
 itcl::body Handset::sendOffset { frame stepsize angle } {
    openloop
    if { ! [string equal $cs ""] } {
-      set frameid [lsearch -exact {azel xy instr tracking pwfs1 pwfs2 oiwfs} $frame]
+      set frameid [lsearch -exact {azel xy instr tracking pwfs1 pwfs2 oiwfs \
+			ttgs1 ttgs2 ttgs3 odgw1 odgw2 odgw3 odgw4} $frame]
       if { $frameid > 3 } {
          set frameid 1
       }
@@ -439,7 +467,7 @@ itcl::body Handset::sendOffset { frame stepsize angle } {
          set mask 0
          foreach vt $itk_option(-vt) {
             set i [lsearch -exact \
-                  {mount sourceA sourceB sourceC pwfs1 pwfs2 oiwfs} $vt]
+                  {mount sourceA sourceB sourceC pwfs1 pwfs2 oiwfs g1 g2 g3 g4} $vt]
             set mask [expr { $mask | ( 1 << $i ) }]
          }
          cs $cs set vt [expr { - $mask }]
@@ -453,7 +481,7 @@ itcl::body Handset::sendOffset { frame stepsize angle } {
 }
 
 itcl::body Handset::rot {dir} {
-   set frame [$itk_component(orient) get]
+   set frame [getCurrentFrame]
    set uplab $labels($frame,u)
    switch $dir {
       clock {
@@ -478,7 +506,7 @@ itcl::body Handset::rot {dir} {
 }
 
 itcl::body Handset::hflip {} {
-   set frame [$itk_component(orient) get]
+   set frame [getCurrentFrame]
    set angles($frame,l) [expr {$angles($frame,l) + 180}]
    set angles($frame,r) [expr {$angles($frame,r) - 180}]
    set leftlab $labels($frame,l)
@@ -488,7 +516,7 @@ itcl::body Handset::hflip {} {
 }
 
 itcl::body Handset::vflip {} {
-   set frame [$itk_component(orient) get]
+   set frame [getCurrentFrame]
    set angles($frame,u) [expr {$angles($frame,u) + 180}]
    set angles($frame,d) [expr {$angles($frame,d) - 180}]
    set uplab $labels($frame,u)
@@ -497,10 +525,9 @@ itcl::body Handset::vflip {} {
    relabel
 }
 
-itcl::body Handset::reset {} {
+itcl::body Handset::reset {frame} {
 
 # Set all the button labels and angles to their defaults.
-   set frame [$itk_component(orient) get]
    switch $frame {
       azel -
       tracking {
@@ -522,7 +549,14 @@ itcl::body Handset::reset {} {
          set angles($frame,l) 180.0
          set angles($frame,d) 270.0
       }
-      oiwfs -
+		ttgs1 -
+		ttgs2 -
+		ttgs3 -
+		odgw1 -
+		odgw1 -
+		odgw2 -
+		odgw3 -
+      oiwf4 -
       instr {
          set angles($frame,u) 0.0
          set angles($frame,r) 90.0
@@ -531,13 +565,10 @@ itcl::body Handset::reset {} {
       }
    }
 
-# Set all the button labels to their defaults.
-   initlabels
-   relabel
 }
 
 itcl::body Handset::relabel {} {
-   set frame [$itk_component(orient) get]
+   set frame [getCurrentFrame]
    $itk_component(u) configure -text $labels($frame,u)
    $itk_component(d) configure -text $labels($frame,d)
    $itk_component(l) configure -text $labels($frame,l)
@@ -547,46 +578,36 @@ itcl::body Handset::relabel {} {
 itcl::body Handset::initlabels {} {
 
 # Fill in the table of labels with their default values.
-   foreach frame {tracking xy azel instr pwfs1 pwfs2 oiwfs} {
-      switch $frame {
-         xy {
 #            set labels($frame,u) +y
 #            set labels($frame,d) -y
 #            set labels($frame,l) -x
 #            set labels($frame,r) +x
-            set labels($frame,u) -x
-            set labels($frame,d) x
-            set labels($frame,l) -y
-            set labels($frame,r) +y
-         }
-	 azel {
-            set labels($frame,u) +El
-            set labels($frame,d) -El
-            set labels($frame,l) -Az
-            set labels($frame,r) +Az
-         }
-	 tracking {
-            set labels($frame,u) N
-            set labels($frame,d) S
-            set labels($frame,l) E
-            set labels($frame,r) W
-	 }
-	 instr {
-	   set labels($frame,u) -Q
-	   set labels($frame,d) +Q
-	   set labels($frame,l) -P
-	   set labels($frame,r) +P
-         }
-	 oiwfs -
-	 pwfs2 -
-	 pwfs1 {
-            set labels($frame,u) ""
-            set labels($frame,d) ""
-            set labels($frame,l) ""
-            set labels($frame,r) ""
-         }
-      }
-   }
+	set labels(xy,u) -x
+	set labels(xy,d) x
+	set labels(xy,l) -y
+	set labels(xy,r) +y
+	
+	set labels(azel,u) +El
+	set labels(azel,d) -El
+	set labels(azel,l) -Az
+	set labels(azel,r) +Az
+
+	set labels(tracking,u) N
+	set labels(tracking,d) S
+	set labels(tracking,l) E
+	set labels(tracking,r) W
+	 
+	set labels(instr,u) -Q
+	set labels(instr,d) +Q
+	set labels(instr,l) -P
+	set labels(instr,r) +P
+	
+	foreach frame {pwfs1 pwfs2 oiwfs ttgs1 ttgs2 ttgs3 odgw1 odgw2 odgw3 odgw4} {
+		set labels($frame,u) ""
+		set labels($frame,d) ""
+		set labels($frame,l) ""
+		set labels($frame,r) ""
+	}
 }
 
 itcl::body Handset::updateProc {name alarm time values} {
@@ -657,4 +678,66 @@ itcl::body Handset::openloop {} {
 	}
 	#puts "tid: $tid"
     }
+}
+
+itcl::body Handset::onMapChange {reasons} {
+	foreach reason $reasons {
+		switch $reason {
+		g1 {
+			set value [[TcsVirtualMap::getSingleton] getMap g1] 
+			$itk_component(orient) buttonconfigure g1 -text G1($value)
+			if { $value eq "NONE" } {
+				$itk_component(orient) buttonconfigure g1 -state disabled
+			} else {
+				$itk_component(orient) buttonconfigure g1 -state normal
+			} 
+		}		
+		g2 {
+			set value [[TcsVirtualMap::getSingleton] getMap g2] 
+			$itk_component(orient) buttonconfigure g2 -text G2($value)
+			if { $value eq "NONE" } {
+				$itk_component(orient) buttonconfigure g2 -state disabled
+			} else {
+				$itk_component(orient) buttonconfigure g2 -state normal
+			}
+		}
+		g3 {
+			set value [[TcsVirtualMap::getSingleton] getMap g3] 
+			$itk_component(orient) buttonconfigure g3 -text G3($value)
+			if { $value eq "NONE" } {
+				$itk_component(orient) buttonconfigure g3 -state disabled
+			} else {
+				$itk_component(orient) buttonconfigure g3 -state normal
+			}
+		}
+		g4 {
+			set value [[TcsVirtualMap::getSingleton] getMap g4] 
+			$itk_component(orient) buttonconfigure g4 -text G4($value)
+			if { $value eq "NONE" } {
+				$itk_component(orient) buttonconfigure g4 -state disabled
+			} else {
+				$itk_component(orient) buttonconfigure g4 -state normal
+			}
+		}
+		}
+	}
+}
+
+itcl::body Handset::onReset {} {
+	set frame [getCurrentFrame]
+	reset $frame
+	# Set all the button labels to their defaults.
+	initlabels
+	relabel
+}
+
+itcl::body Handset::getCurrentFrame {} {
+	set frame [$itk_component(orient) get]
+	switch $frame {
+	g1 -
+	g2 -
+	g2 -
+	g3 {set frame [string tolower [[TcsVirtualMap::getSingleton] getMap $frame]]}
+	}
+	return $frame
 }

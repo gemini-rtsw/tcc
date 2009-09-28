@@ -19,7 +19,7 @@
 itcl::class TargetHandsetControl {
    inherit itk::Widget
    constructor args {}
-   destructor {after cancel $refid}
+   destructor {}
    private {
       method abpars {par}
       method clpars {par}
@@ -28,6 +28,7 @@ itcl::class TargetHandsetControl {
       method refresh {}
       variable vt
       variable refid
+		method onMapChange {reasons}
    }
 }
 
@@ -92,6 +93,8 @@ itcl::body TargetHandsetControl::constructor args {
    itk_component add oilab {
       StatusField $w.oilab -text OIWFS -width 4
    }
+	
+
 
 # Display of positions and offsets.
    itk_component add scira {
@@ -154,6 +157,93 @@ itcl::body TargetHandsetControl::constructor args {
    grid $itk_component(oilab) $itk_component(oisel) $itk_component(oira) \
          $itk_component(oidec) $itk_component(oioff1) $itk_component(oioff2)
 
+	if { [calparam cget -site] eq "CP" } {
+		itk_component add g1sel {
+			radiobutton $w.g1sel -variable [itcl::scope vt] -value g1 \
+															-command [itcl::code $this setvt]
+		}
+		itk_component add g2sel {
+			radiobutton $w.g2sel -variable [itcl::scope vt] -value g2 \
+															-command [itcl::code $this setvt]
+		}
+		itk_component add g3sel {
+			radiobutton $w.g3sel -variable [itcl::scope vt] -value g3 \
+															-command [itcl::code $this setvt]
+		}
+		itk_component add g4sel {
+			radiobutton $w.g4sel -variable [itcl::scope vt] -value g4 \
+															-command [itcl::code $this setvt]
+		}
+		itk_component add g1lab {
+			StatusField $w.g1lab -width 9 -background grey
+		}
+		itk_component add g2lab {
+			StatusField $w.g2lab -width 9 -background grey
+		}
+		itk_component add g3lab {
+			StatusField $w.g3lab -width 9 -background grey
+		}
+		itk_component add g4lab {
+			StatusField $w.g4lab -width 9 -background grey
+		}
+		itk_component add g1ra {
+				label $w.g1ra -width 12 -borderwidth 2 -relief groove
+			}
+		itk_component add g1dec {
+			label $w.g1dec -width 12 -borderwidth 2 -relief groove
+		}
+		itk_component add g1off1 {
+			label $w.g1off1 -width 6 -borderwidth 2 -relief groove
+		}
+		itk_component add g1off2 {
+			label $w.g1off2 -width 6 -borderwidth 2 -relief groove
+		}
+		itk_component add g2ra {
+			label $w.g2ra -width 12 -borderwidth 2 -relief groove
+		}
+		itk_component add g2dec {
+			label $w.g2dec -width 12 -borderwidth 2 -relief groove
+		}
+		itk_component add g2off1 {
+			label $w.g2off1 -width 6 -borderwidth 2 -relief groove
+		}
+		itk_component add g2off2 {
+			label $w.g2off2 -width 6 -borderwidth 2 -relief groove
+		}
+		itk_component add g3ra {
+			label $w.g3ra -width 12 -borderwidth 2 -relief groove
+		}
+		itk_component add g3dec {
+			label $w.g3dec -width 12 -borderwidth 2 -relief groove
+		}
+		itk_component add g3off1 {
+			label $w.g3off1 -width 6 -borderwidth 2 -relief groove
+		}
+		itk_component add g3off2 {
+			label $w.g3off2 -width 6 -borderwidth 2 -relief groove
+		}
+		itk_component add g4ra {
+			label $w.g4ra -width 12 -borderwidth 2 -relief groove
+		}
+		itk_component add g4dec {
+			label $w.g4dec -width 12 -borderwidth 2 -relief groove
+		}
+		itk_component add g4off1 {
+			label $w.g4off1 -width 6 -borderwidth 2 -relief groove
+		}
+		itk_component add g4off2 {
+			label $w.g4off2 -width 6 -borderwidth 2 -relief groove
+		}
+		grid $itk_component(g1lab) $itk_component(g1sel) $itk_component(g1ra) \
+				$itk_component(g1dec) $itk_component(g1off1) $itk_component(g1off2)
+		grid $itk_component(g2lab) $itk_component(g2sel) $itk_component(g2ra) \
+				$itk_component(g2dec) $itk_component(g2off1) $itk_component(g2off2)
+		grid $itk_component(g3lab) $itk_component(g3sel) $itk_component(g3ra) \
+				$itk_component(g3dec) $itk_component(g3off1) $itk_component(g3off2)
+		grid $itk_component(g4lab) $itk_component(g4sel) $itk_component(g4ra) \
+				$itk_component(g4dec) $itk_component(g4off1) $itk_component(g4off2)
+	}
+
 # Handset
    set w $itk_interior
    itk_component add handset {
@@ -211,6 +301,10 @@ itcl::body TargetHandsetControl::constructor args {
       epics sa agssad
    }
 
+	if { [calparam cget -site] eq "CP" } {
+		[TcsVirtualMap::getSingleton] subscribe [itcl::code $this onMapChange]
+		onMapChange [list g1 g2 g3 g4]
+	}
 # Start process to refresh the position and offsets display.
    set refid [after 1000 [itcl::code $this refresh]]
 
@@ -228,6 +322,10 @@ itcl::body TargetHandsetControl::abpars par {
             pwfs1 {return PWFS1}
             pwfs2 {return PWFS2}
             oiwfs {return OIWFS}
+				g1 {return G1}
+				g2 {return G2}
+				g3 {return G3}
+				g4 {return G4}
          }
       }
       index {
@@ -238,7 +336,11 @@ itcl::body TargetHandsetControl::abpars par {
             sourceC {return all}
             pwfs1 -
             pwfs2 -
-            oiwfs {return 0}
+            oiwfs -
+				g1 -
+				g2 -
+				g3 -
+				g4 {return 0}
          }
       }
    }
@@ -256,6 +358,10 @@ itcl::body TargetHandsetControl::clpars par {
             pwfs1 {return PWFS1}
             pwfs2 {return PWFS2}
             oiwfs {return OIWFS}
+				g1 {return G1}
+				g2 {return G2}
+				g3 {return G3}
+				g4 {return G4}
          }
       }
       index {return all}
@@ -276,7 +382,11 @@ itcl::body TargetHandsetControl::getOffset {par} {
             pwfs1 { return PWFS1 }
             pwfs2 { return PWFS2 }
             oiwfs { return OIWFS }
-         }
+				g1		{ return G1 }
+				g2		{ return G2 }
+				g3		{ return G3 }
+				g4		{ return G4 }
+			}
       }
       type {
             return "TANGENT PLANE"
@@ -357,3 +467,62 @@ itcl::body TargetHandsetControl::refresh {} {
 
    set refid [after 1000 [itcl::code $this refresh]]
 }
+
+itcl::body TargetHandsetControl::destructor {} {
+	if { [calparam cget -site] eq "CP" } {
+		[TcsVirtualMap::getSingleton] unsubscribe [itcl::code $this onMapChange]
+	}
+	after cancel $refid
+}
+
+itcl::body TargetHandsetControl::onMapChange {reasons} {
+	foreach reason $reasons {
+		switch $reason {
+		g1 {
+			set value [[TcsVirtualMap::getSingleton] getMap g1] 
+			$itk_component(g1lab) configure -text G1($value)
+			if { $value eq "NONE" } {
+				$itk_component(g1lab) configure -state disabled
+				$itk_component(g1sel) configure -state disabled
+			} else {
+				$itk_component(g1lab) configure -state normal
+				$itk_component(g1sel) configure -state normal
+			} 
+		}
+		g2 {
+			set value [[TcsVirtualMap::getSingleton] getMap g2] 
+			$itk_component(g2lab) configure -text G1($value)
+			if { $value eq "NONE" } {
+				$itk_component(g2lab) configure -state disabled
+				$itk_component(g2sel) configure -state disabled
+			} else {
+				$itk_component(g2lab) configure -state normal
+				$itk_component(g2sel) configure -state normal
+			} 
+		}
+		g3 {
+			set value [[TcsVirtualMap::getSingleton] getMap g3] 
+			$itk_component(g3lab) configure -text G1($value)
+			if { $value eq "NONE" } {
+				$itk_component(g3lab) configure -state disabled
+				$itk_component(g3sel) configure -state disabled
+			} else {
+				$itk_component(g3lab) configure -state normal
+				$itk_component(g3sel) configure -state normal
+			} 
+		}
+		g4 {
+			set value [[TcsVirtualMap::getSingleton] getMap g4] 
+			$itk_component(g4lab) configure -text G1($value)
+			if { $value eq "NONE" } {
+				$itk_component(g4lab) configure -state disabled
+				$itk_component(g4sel) configure -state disabled
+			} else {
+				$itk_component(g4lab) configure -state normal
+				$itk_component(g4sel) configure -state normal
+			} 
+		}
+		}
+	}
+}
+
