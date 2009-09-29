@@ -109,6 +109,10 @@ itcl::body ActiveOptics::constructor {args} {
    if { [catch {sa guideConfig info}] } {
       epics sa guideConfig
    }
+	
+	if { [calparam cget -site] eq "CP" && [catch {sa gemssad info}]} {
+		epics sa gemssad
+	}
 
    eval configure $args
 }
@@ -949,11 +953,19 @@ global env
 	 }
       }
       aoSettled {
-         if { [sa aossad get aoSettled] == "1" } {
-            return 1
-         } else {
-            return 0
-         }
+			if { [calparam cget -site] eq "CP" } {
+				if { [sa gemssad get sciReady] == "Ready" } {
+					return 1
+				} else {
+					return 0
+				}
+			} else {
+	         if { [sa aossad get aoSettled] == "1" } {
+	            return 1
+	         } else {
+	            return 0
+	         }
+			}
       }
       ttgs -
       gaosTTGS {
