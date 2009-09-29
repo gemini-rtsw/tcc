@@ -33,8 +33,12 @@ itcl::body HandsetPanel::constructor args {
          $itk_option(-background) $itk_option(-foreground)
 
 # Notebook for the handset controls.
+	set h 670
+	if { [calparam cget -site] eq "CP" } {
+		set h 730
+	}
    itk_component add handsets {
-      iwidgets::tabnotebook $itk_interior.handsets -height 730 -width 450 \
+      iwidgets::tabnotebook $itk_interior.handsets -height $h -width 450 \
             -tabpos n -equaltabs no
    } {
       ignore -background -tabbackground
