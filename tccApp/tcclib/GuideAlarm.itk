@@ -180,7 +180,7 @@ itcl::body GuideAlarm::constructor {args} {
             rename -font -majorfont majorFont Font
 	}
 	
-	if {$guideCentroid($wfs)} {
+	if {![string is boolean -strict $guideCentroid($wfs)] || $guideCentroid($wfs)} {
 	    $itk_component(${wfs}centroid) configure -text "Subaperture BAD"
 	}
         bind $itk_component(${wfs}liment) <KeyPress-Return> "$this configure -${wfs}Limit \[set ${wfs}CountLimit\] ; $this alarmCheck $wfs"
@@ -332,20 +332,23 @@ itcl::body GuideAlarm::ringBell {} {
     
     set makeNoise 0
     
-    foreach wfs {pwfs1 pwfs2 oiwfs gaos ttgs sfo nici} {
-		 #Disable alarm if it can not be silenced.
-        if {$alarmEnabled($wfs) && $alarmOn($wfs) && [$itk_component(${wfs}silent) cget -state] eq "normal"} {
-            #puts "in ring bell wfs: $wfs silent: [set ${wfs}Silent]"
-            if {![set ${wfs}Silent]} {
-                set makeNoise 1
-            }
-            if { $flash } {
-                setWfsColor $wfs red
-            } else {
-                setWfsColor $wfs yellow
-            }
-        }
-    }
+	foreach wfs {pwfs1 pwfs2 oiwfs gaos ttgs sfo nici} {
+		#Disable alarm if it can not be silenced.
+		if {$alarmEnabled($wfs) && $alarmOn($wfs)} {
+			if { [$itk_component(${wfs}silent) cget -state] ne "disabled"} {
+	         if {![set ${wfs}Silent]} {
+	         	set makeNoise 1
+	         }
+	         if { $flash } {
+	           	setWfsColor $wfs red
+	         } else {
+	         	setWfsColor $wfs yellow
+	         }
+			} else {
+				setWfsColor $wfs PeachPuff1
+			}
+		}
+	}
     if { $makeNoise } {
         bell
         after 100
