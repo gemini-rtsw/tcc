@@ -29,6 +29,9 @@ itcl::class AltairControl {
       variable lgs OFF
       variable force OFF
    }
+	protected {
+		method applycmd {}
+	}
 }
 
 itk::usual AltairControl {
@@ -150,4 +153,14 @@ itcl::body AltairControl::save {name} {
    $name configure -fldLens $fldLens
    $name configure -lgs $lgs
    $name configure -force $force
+}
+
+
+itcl::body GaosControl::applycmd {} {
+	# Open/Reset the loops
+   if [winfo exists .observePanel] {
+       .observePanel.frame.control.guideloop reset
+   }
+
+	ComponentControl::applycmd
 }

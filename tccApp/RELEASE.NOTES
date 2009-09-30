@@ -1022,3 +1022,55 @@ M tccApp/tcclib/TcsConfigControl.itk: For GS, Added check for laser propagating
 	before slewing.
 M tccApp/ca_config/gems.ca: -
 M tccApp/ca_config.tc1/gems.ca: Added laser propagation status.
+
+5.1-15
+Merged branch 5.1-maintenance:21439 into branch 2009BMinRel1.
+
+5.1-16
+20090911 JLU
+M tccApp/tcclib/ActiveOptics.itcl: ActiveOptics::enable: Added wait (up to 0.5s)
+	for the "prepare control matrix" record to go busy before waiting for it to 
+	go idle.
+M tccApp/tcclib/Altair.itcl: Gaos::setUseLwfs: Removed call to A&G panel "reset"
+	(was causing double commands when slewing)...
+M tccApp/tcclib/AltairControl.itk: GaosControl::applycmd: ... and moved it here.
+
+5.1-17
+20090914 JLU
+ENG10-111S: Faulty OI alarm in TCC
+M tccApp/ca_config.tc1/guidects.ca: Read nici counts from tc1:test, for testing
+	in simulation.
+M tccApp/tcclib/GuideAlarm.itk: GuideAlarm::ringBell: Disabled alarm if WFS
+	alarm control was disabled (i.e, alarm can not be silenced).
+	Added methods to enable/disable WFS alarm UI.
+M tccApp/tcclib/GuideLoop.itk: GuideLoop::recolour: Use GuideAlarm::enableWfs 
+	and GuideAlarm::disableWfs instead of directly change UI controls. Added 
+	config option wfsAlarmObj.
+M tccApp/tcclib/ObserveControl.itk: Set new wfsAlarmObj option in GuideLoop 
+	object.
+	
+5.1-18
+20090925 JLU
+FR20053
+M tccApp/tcclib/TcsConfig.itcl: TcsConfig::apply: post TCS apply before 
+	configuring GAOS to make sure all the values read to configure GAOS are up 
+	to date for.
+	
+5.1-19
+0090929 JLU
+FR20053
+M tccApp/tcclib/TcsConfig.itcl: TcsConfig::apply: took out the tcsApply from 
+	here...
+M tccApp/tcclib/Altair.itcl: Gaos::setUseLwfs: ...and moved here, just were the 
+	indirect call to "AO disable" used to be. Also, replaced the "post" with a 
+	"postWait".
+	
+5.1-21
+0090929 JLU
+FR20053
+M tccApp/tcclib/Altair.itcl: Gaos::setUseLwfs: Added 0.5s of delay after 
+	tcsApply, to fully simulate the (strange) effect of the AO disable that was 
+	taken out.
+	
+Branch 2009BMinRel2:22042 merged into main trunk.
+

@@ -22,6 +22,8 @@ itcl::class GuideAlarm {
         method scanLoop {}
         method setSilent {wfs}
         method alarmCheck {wfs}
+		method enableWfs {wfs}
+		method disableWfs {wfs}
         variable flash 0
         variable pwfs1Limit 2000.0
         variable pwfs2Limit 1000.0
@@ -42,11 +44,12 @@ itcl::class GuideAlarm {
         variable niciSilent 0
         variable exitnow 0
     }
-    private {
-        method ringBell {}
-        method setWfsColor {wfs color}
-        variable tid 0
-    }
+	private {
+		method ringBell {}
+		method setWfsColor {wfs color}
+		method setUIState {wfs state}
+		variable tid 0
+	}
 }
 
 itk::usual GuideAlarm {
@@ -194,45 +197,45 @@ itcl::body GuideAlarm::constructor {args} {
         if {$wfs != "gaos" && $wfs != "ttgs" && $wfs != "sfo" && $wfs != "nici"} {
 	    grid $itk_component(${wfs}centroid) - -sticky news
 	}
-    }
-    pack $itk_component(oiwfsframe) $itk_component(niciframe) -side top -padx 3 -pady 1 -ipadx 3 -ipady 1 -fill x -expand 1
-    pack $itk_component(pwfs1frame) $itk_component(pwfs2frame) $itk_component(alloiwfsframe) $itk_component(gaosframe)  $itk_component(ttgsframe) $itk_component(sfoframe) -side top -padx 3 -pady 3 -ipadx 3 -ipady 3 -fill x -expand 1
-    
-    sa guidects proc pwfs1 "$this updateProc"
-    sa guidects proc pwfs2 "$this updateProc"
-    sa guidects proc oiwfs "$this updateProc"
-    sa guidects proc gaos  "$this updateProc"
-    sa guidects proc ttgs1  "$this updateProc"
-    sa guidects proc ttgs2  "$this updateProc"
-    sa guidects proc ttgs3  "$this updateProc"
-    sa guidects proc ttgs4  "$this updateProc"
-    sa guidects proc sfo    "$this updateProc"
-    sa guidects proc nici   "$this updateProc"
-    sa guidects proc pwfs1cent "$this updateProc2"
-    sa guidects proc pwfs2cent "$this updateProc2"
-    sa guidects proc oiwfscent "$this updateProc2"
-
-    # start the scan task ...
-    $this scanLoop
-    
-    eval itk_initialize $args
+	}
+	pack $itk_component(oiwfsframe) $itk_component(niciframe) -side top -padx 3 -pady 1 -ipadx 3 -ipady 1 -fill x -expand 1
+	pack $itk_component(pwfs1frame) $itk_component(pwfs2frame) $itk_component(alloiwfsframe) $itk_component(gaosframe)  $itk_component(ttgsframe) $itk_component(sfoframe) -side top -padx 3 -pady 3 -ipadx 3 -ipady 3 -fill x -expand 1
+	
+	sa guidects proc pwfs1 "$this updateProc"
+	sa guidects proc pwfs2 "$this updateProc"
+	sa guidects proc oiwfs "$this updateProc"
+	sa guidects proc gaos  "$this updateProc"
+	sa guidects proc ttgs1  "$this updateProc"
+	sa guidects proc ttgs2  "$this updateProc"
+	sa guidects proc ttgs3  "$this updateProc"
+	sa guidects proc ttgs4  "$this updateProc"
+	sa guidects proc sfo    "$this updateProc"
+	sa guidects proc nici "$this updateProc"
+	sa guidects proc pwfs1cent "$this updateProc2"
+	sa guidects proc pwfs2cent "$this updateProc2"
+	sa guidects proc oiwfscent "$this updateProc2"
+	
+	    # start the scan task ...
+	$this scanLoop
+	
+	eval itk_initialize $args
 }
 
 itcl::body GuideAlarm::destructor {} {
-    after cancel $tid
-    sa guidects unproc pwfs1 "$this updateProc"
-    sa guidects unproc pwfs2 "$this updateProc"
-    sa guidects unproc oiwfs "$this updateProc"
-    sa guidects unproc gaos  "$this updateProc"
-    sa guidects unproc ttgs1  "$this updateProc"
-    sa guidects unproc ttgs2  "$this updateProc"
-    sa guidects unproc ttgs3  "$this updateProc"
-    sa guidects unproc ttgs4  "$this updateProc"
-    sa guidects unproc sfo    "$this updateProc"
-    sa guidects unproc nici   "$this updateProc"
-    sa guidects unproc pwfs1cent "$this updateProc2"
-    sa guidects unproc pwfs2cent "$this updateProc2"
-    sa guidects unproc oiwfscent "$this updateProc2"
+	after cancel $tid
+	sa guidects unproc pwfs1 "$this updateProc"
+	sa guidects unproc pwfs2 "$this updateProc"
+	sa guidects unproc oiwfs "$this updateProc"
+	sa guidects unproc gaos  "$this updateProc"
+	sa guidects unproc ttgs1  "$this updateProc"
+	sa guidects unproc ttgs2  "$this updateProc"
+	sa guidects unproc ttgs3  "$this updateProc"
+	sa guidects unproc ttgs4  "$this updateProc"
+	sa guidects unproc sfo    "$this updateProc"
+	sa guidects unproc nici "$this updateProc"
+	sa guidects unproc pwfs1cent "$this updateProc2"
+	sa guidects unproc pwfs2cent "$this updateProc2"
+	sa guidects unproc oiwfscent "$this updateProc2"
 }
 
 itcl::body GuideAlarm::setWfsColor {wfs color} {
@@ -285,8 +288,7 @@ itcl::body GuideAlarm::alarmCheck {wfs} {
 
 itcl::body GuideAlarm::updateProc {name alarm time values} {
     global guideCounts
-    
-    #puts [format "updateProc: %s %-20s\n%s\n" $time $name $values]
+
     set tname [lrange [split $name "." ] 1 1 ]
     set tnamev [format "%s%s" $tname "(value)"]
     set $tnamev $values
@@ -331,7 +333,8 @@ itcl::body GuideAlarm::ringBell {} {
     set makeNoise 0
     
     foreach wfs {pwfs1 pwfs2 oiwfs gaos ttgs sfo nici} {
-        if {$alarmEnabled($wfs) && $alarmOn($wfs)} {
+		 #Disable alarm if it can not be silenced.
+        if {$alarmEnabled($wfs) && $alarmOn($wfs) && [$itk_component(${wfs}silent) cget -state] eq "normal"} {
             #puts "in ring bell wfs: $wfs silent: [set ${wfs}Silent]"
             if {![set ${wfs}Silent]} {
                 set makeNoise 1
@@ -415,4 +418,29 @@ itcl::body GuideAlarm::scanLoop {} {
     }
     set tid [after 500 "$this scanLoop"]
     update
+}
+
+itcl::body GuideAlarm::enableWfs {wfs} {
+	setUIState $wfs normal
+}
+
+itcl::body GuideAlarm::disableWfs {wfs} {
+	setUIState $wfs disabled
+}
+
+itcl::body GuideAlarm::setUIState {wfs state} {
+	$itk_component(${wfs}title) configure -state $state
+	$itk_component(${wfs}silent) configure -state $state
+	$itk_component(${wfs}clab) configure -state $state
+	if {$wfs == "ttgs"} {
+		$itk_component(${wfs}cnts1) configure -state $state
+		$itk_component(${wfs}cnts2) configure -state $state
+		$itk_component(${wfs}cnts3) configure -state $state
+		$itk_component(${wfs}cnts4) configure -state $state
+	} else {
+		$itk_component(${wfs}cnts) configure -state $state
+	}
+	$itk_component(${wfs}limlab) configure -state $state
+	$itk_component(${wfs}liment) configure -state $state
+	$itk_component(${wfs}centroid) configure -state $state
 }

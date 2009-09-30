@@ -70,6 +70,7 @@ itcl::class ActiveOptics {
    }
 	private {
 		method checkTemp {val ref}
+		method waitFor {timeout outCondition}
 	}
 }
 
@@ -151,17 +152,17 @@ global env
 	    set ttgsloop 0
 	    ::.observePanel.frame.control.guideloop recolour
 	} else {
-	    if { $oiblend } {
-		Oiwfs stop
-	    }
+		if { $oiblend } {
+			Oiwfs stop
+		}
 	    # turn off TTGS and SFO loops
 	    cs ttgsloop set dem 0
 	    cs ttgsloop set dir 3
 	    cs sfoloop set dem 0
 	    
 	    # turn off the TTGS
-	    cs gaosTTGS set dem 0
-	    cs gaosTTGS set dir 3
+		cs gaosTTGS set dem 0
+		cs gaosTTGS set dir 3
 	}
 
 	# wait for the TTGS (STRAP) to be off
@@ -332,6 +333,8 @@ itcl::body ActiveOptics::enable {} {
 		tk_messageBox -icon error -parent $itk_interior -message $msg
 	    }
 	    
+		 #small wait for prepareCm to go busy. Nothing is done in case of timeout.
+		 waitFor 500 {expr \"[sa aossad get prepareBusy]\" eq \"BUSY\" }
 	    #wait for prepareCm to go idle
 	    if {[setTimeout "sa aossad get prepareBusy" BUSY 10000 200 "prepareCm to go idle"]} return
 #	}
@@ -1316,4 +1319,17 @@ itcl::body ActiveOptics::checkTemp {val ref} {
 	} else {
 		return 0
 	}
+}
+
+itcl::body ActiveOptics::waitFor {timeout outCondition} {
+	set elapsedTime 0
+	while {$timeout==0 || $elapsedTime<$timeout} {
+		if {[eval $outCondition]} {
+			return ok
+		}
+		after 100
+		set elapsedTime [expr $elapsedTime + 100]
+		update
+	}
+	return timeout
 }

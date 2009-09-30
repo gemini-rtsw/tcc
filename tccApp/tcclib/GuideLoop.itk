@@ -44,6 +44,7 @@ itcl::class GuideLoop {
    itk_option define -wfsConfigObj wfsConfigObj WfsConfigObj "" {
 	#puts "wfsConfigObj: $itk_option(-wfsConfigObj)"
    }
+	itk_option define -wfsAlarmObj wfsAlarmObj WfsAlarmObj ""
 }
 
 itk::usual GuideLoop {
@@ -587,20 +588,9 @@ itcl::body GuideLoop::recolour args {
    # puts "recolour OI oiao: [AO state oiao], oiAPD: [AO state oiaoAPD],  oiaoLoop: [AO state oiaoLoop]"
    if { [AO state oiao] } {
       # disable the regular oiwfs guide alarm and enable the nici guide alarm
-      .observePanel.frame.control.alarm.fr.alloiwfsframe.oiwfsframe.lab configure -state disabled
-      .observePanel.frame.control.alarm.fr.alloiwfsframe.oiwfsframe.sil configure -state disabled
-      .observePanel.frame.control.alarm.fr.alloiwfsframe.oiwfsframe.clab configure -state disabled
-      .observePanel.frame.control.alarm.fr.alloiwfsframe.oiwfsframe.cnts configure -state disabled
-      .observePanel.frame.control.alarm.fr.alloiwfsframe.oiwfsframe.limlab configure -state disabled
-      .observePanel.frame.control.alarm.fr.alloiwfsframe.oiwfsframe.liment configure -state disabled
-      .observePanel.frame.control.alarm.fr.alloiwfsframe.oiwfsframe.cent configure -state disabled
-      .observePanel.frame.control.alarm.fr.alloiwfsframe.niciframe.lab configure -state normal
-      .observePanel.frame.control.alarm.fr.alloiwfsframe.niciframe.sil configure -state normal
-      .observePanel.frame.control.alarm.fr.alloiwfsframe.niciframe.clab configure -state normal
-      .observePanel.frame.control.alarm.fr.alloiwfsframe.niciframe.cnts configure -state normal
-      .observePanel.frame.control.alarm.fr.alloiwfsframe.niciframe.limlab configure -state normal
-      .observePanel.frame.control.alarm.fr.alloiwfsframe.niciframe.liment configure -state normal
-      .observePanel.frame.control.alarm.fr.alloiwfsframe.niciframe.cent configure -state normal
+		$itk_option(-wfsAlarmObj) disableWfs oiwfs
+		$itk_option(-wfsAlarmObj) enableWfs nici
+
       $w itemconfigure oiwfs_ao -outline black 
       $w itemconfigure oiwfs_wfs -outline grey
       $w itemconfigure oiwfs_aotxt -fill black 
@@ -620,20 +610,9 @@ itcl::body GuideLoop::recolour args {
       }
    } elseif { [AO state oiwfs] } {
       # enable the regular oiwfs guide alarm and disable the nici guide alarm
-      .observePanel.frame.control.alarm.fr.alloiwfsframe.oiwfsframe.lab configure -state normal
-      .observePanel.frame.control.alarm.fr.alloiwfsframe.oiwfsframe.sil configure -state normal
-      .observePanel.frame.control.alarm.fr.alloiwfsframe.oiwfsframe.clab configure -state normal
-      .observePanel.frame.control.alarm.fr.alloiwfsframe.oiwfsframe.cnts configure -state normal
-      .observePanel.frame.control.alarm.fr.alloiwfsframe.oiwfsframe.limlab configure -state normal
-      .observePanel.frame.control.alarm.fr.alloiwfsframe.oiwfsframe.liment configure -state normal
-      .observePanel.frame.control.alarm.fr.alloiwfsframe.oiwfsframe.cent configure -state normal
-      .observePanel.frame.control.alarm.fr.alloiwfsframe.niciframe.lab configure -state disabled
-      .observePanel.frame.control.alarm.fr.alloiwfsframe.niciframe.sil configure -state disabled
-      .observePanel.frame.control.alarm.fr.alloiwfsframe.niciframe.clab configure -state disabled
-      .observePanel.frame.control.alarm.fr.alloiwfsframe.niciframe.cnts configure -state disabled
-      .observePanel.frame.control.alarm.fr.alloiwfsframe.niciframe.limlab configure -state disabled
-      .observePanel.frame.control.alarm.fr.alloiwfsframe.niciframe.liment configure -state disabled
-      .observePanel.frame.control.alarm.fr.alloiwfsframe.niciframe.cent configure -state disabled
+		$itk_option(-wfsAlarmObj) disableWfs nici
+		$itk_option(-wfsAlarmObj) enableWfs oiwfs
+
       $w itemconfigure oiwfs_bg -fill green
       $w itemconfigure oiwfs_ao -outline grey
       $w itemconfigure oiwfs_wfs -outline black
@@ -664,20 +643,9 @@ itcl::body GuideLoop::recolour args {
       }	  
    } else {
       # enable the regular oiwfs guide alarm and disable the nici guide alarm
-      .observePanel.frame.control.alarm.fr.alloiwfsframe.oiwfsframe.lab configure -state normal
-      .observePanel.frame.control.alarm.fr.alloiwfsframe.oiwfsframe.sil configure -state normal
-      .observePanel.frame.control.alarm.fr.alloiwfsframe.oiwfsframe.clab configure -state normal
-      .observePanel.frame.control.alarm.fr.alloiwfsframe.oiwfsframe.cnts configure -state normal
-      .observePanel.frame.control.alarm.fr.alloiwfsframe.oiwfsframe.limlab configure -state normal
-      .observePanel.frame.control.alarm.fr.alloiwfsframe.oiwfsframe.liment configure -state normal
-      .observePanel.frame.control.alarm.fr.alloiwfsframe.oiwfsframe.cent configure -state normal
-      .observePanel.frame.control.alarm.fr.alloiwfsframe.niciframe.lab configure -state disabled
-      .observePanel.frame.control.alarm.fr.alloiwfsframe.niciframe.sil configure -state disabled
-      .observePanel.frame.control.alarm.fr.alloiwfsframe.niciframe.clab configure -state disabled
-      .observePanel.frame.control.alarm.fr.alloiwfsframe.niciframe.cnts configure -state disabled
-      .observePanel.frame.control.alarm.fr.alloiwfsframe.niciframe.limlab configure -state disabled
-      .observePanel.frame.control.alarm.fr.alloiwfsframe.niciframe.liment configure -state disabled
-      .observePanel.frame.control.alarm.fr.alloiwfsframe.niciframe.cent configure -state disabled
+		$itk_option(-wfsAlarmObj) disableWfs nici
+		$itk_option(-wfsAlarmObj) enableWfs oiwfs
+      
       $w itemconfigure oiwfs_ao -outline grey
       $w itemconfigure oiwfs_wfs -outline black
       $w itemconfigure oiwfs_aotxt -fill grey 

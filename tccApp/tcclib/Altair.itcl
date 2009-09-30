@@ -288,9 +288,21 @@ itcl::body Altair::init {} {
 itcl::body Altair::setUseLwfs {} {
 
 # Open/Reset the loops
-   if [winfo exists .observePanel] {
-       .observePanel.frame.control.guideloop reset
-   }
+#   if [winfo exists .observePanel] {
+#       .observePanel.frame.control.guideloop reset
+#   }
+#HACK: Removing the previous call solves problem with STRAP gate command been 
+#issued twice, but reveals other problems that were masked by secondary effects 
+#of calling AO disable. I added this call to tcsApply instead, plus a delay to 
+#be sure all status in TCS are up to date when needed
+	logactions logmess "Gaos::apply Applying pending TCS configuration before setting up Gaos."
+	if { [catch {cs tcsApply postWait} msg] } {
+		tk_messageBox -icon error -message \
+			"Error posting TCS apply: TCS reports \
+			\"$msg\""
+		return 1
+	}
+	after 500
 
 # disable follow for all wfs
    .tcsPanel.frame.control.row1.f2.p1 select Off
