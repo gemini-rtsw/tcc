@@ -23,7 +23,7 @@ itcl::class GuideLoop {
       method recolour {args}
    }
    private {
-      method comacorr {val}
+      method comacorr {op}
       method gaos {val}
       method gaosTTGS {val}
       method gaosSFO {val}
@@ -31,7 +31,7 @@ itcl::class GuideLoop {
       method mtmode {val}
       method probefrom {val}
       method probeto {val}
-      method probemode {val}
+      #method probemode {val}
       method wfsmode {wfs val}
       method enable {}
       method m1mode {state}
@@ -67,30 +67,29 @@ itcl::body GuideLoop::constructor args {
 
 # WFS boxes AWE ... seperating out the OIWFS
    # rectangle to group pwfs1 and pwfs2
-   $w create rectangle 0 0 141 146 -fill white -tags "active pwfs1_bg pwfs2_bg pwfs_comb"
+   $w create rectangle 0 0 131 99 -fill white -tags "active pwfs1_bg pwfs2_bg pwfs_comb"
 
    foreach sys {pwfs1 pwfs2} {
       itk_component add $sys {
-         SelectButton $w.$sys -orient vertical \
+			ToggleButton $w.$sys -text ON -pady 0 -pushedbackground Green\
             -command [itcl::code $this wfsmode $sys]
       } {
          usual
-         rename -offbackground -background background Background
       }
-      $w create window 32 24 -width 60 -window $w.$sys -tags $sys
-      $itk_component($sys) add ON -pady 0
-      $itk_component($sys) add OFF -pady 0
-      itk_component add ${sys}_label {
-         label $w.${sys}_label -text [string toupper $sys]
-      }
-      $w create rectangle 0 0 132 67 -fill white -tags "active ${sys} ${sys}_bg"
+      $w create window 2 2 -width 60 -window $w.$sys -tags $sys -anchor nw
+#      $itk_component($sys) add ON -pady 0
+#      $itk_component($sys) add OFF -pady 0
+#      itk_component add ${sys}_label {
+#         label $w.${sys}_label -text [string toupper $sys]
+#      }
+      $w create rectangle 0 0 123 44 -fill white -tags "active ${sys} ${sys}_bg"
 
 # WFS controls.
       itk_component add ${sys}_ex {
          iwidgets::combobox $w.${sys}_ex -arrowrelief flat -width 5 \
                -validate real -labeltext "exp(s)"
       }
-      $w create window 62 55 -window $w.${sys}_ex -tag $sys
+      $w create window 2 22 -window $w.${sys}_ex -tag $sys -anchor nw
       $w.${sys}_ex insert list end 1.0 0.5 0.1 0.05 0.02 0.01 0.005
       $w.${sys}_ex insert entry end [AO cget -${sys}Expose]
       [$w.${sys}_ex component list] configure -hscrollmode none \
@@ -101,26 +100,25 @@ itcl::body GuideLoop::constructor args {
    set font [$w.pwfs1 cget -font]
 
    foreach sys {pwfs1 pwfs2} label {PWFS1 PWFS2} {
-      $w create text 92 25 -text $label -tags $sys -font $font
+      $w create text 92 11 -text $label -tags $sys -font $font
    }
 
 # OIWFS including an AO mode for NICI
    itk_component add oiwfs {
-     SelectButton $w.oiwfs -orient vertical \
+	  ToggleButton $w.oiwfs -text ON -pushedbackground Green -pady 0 \
         -command [itcl::code $this wfsmode oiwfs]
    } {
       usual
-      rename -offbackground -background background Background
    }
-   $w create window 32 24 -width 60 -window $w.oiwfs -tags oiwfs
-   $itk_component(oiwfs) add ON -pady 0
-   $itk_component(oiwfs) add OFF -pady 0
+   $w create window 2 2 -width 60 -window $w.oiwfs -tags oiwfs -anchor nw
+#   $itk_component(oiwfs) add ON -pady 0
+#   $itk_component(oiwfs) add OFF -pady 0
    itk_component add oiwfs_label {
       label $w.oiwfs_label -text [string toupper oiwfs]
    }
-   $w create rectangle 0 0 132 67 -fill white -tags "active oiwfs oiwfs_bg"
-   $w create rectangle 64 2 88 22 -fill white -tags "active oiwfs oiwfs_ao"
-   $w create rectangle 64 24 88 44 -fill white -tags "active oiwfs oiwfs_wfs"
+   $w create rectangle 0 0 123 67 -fill white -tags "active oiwfs oiwfs_bg"
+   $w create rectangle 2 23 60 44 -fill white -tags "active oiwfs oiwfs_ao"
+   $w create rectangle 63 23 121 44 -fill white -tags "active oiwfs oiwfs_wfs"
 
 # WFS controls.
    itk_component add oiwfs_ex {
@@ -128,15 +126,15 @@ itcl::body GuideLoop::constructor args {
             -validate real -labeltext "exp(s)"
    }
 
-   $w create window 62 55 -window $w.oiwfs_ex -tag oiwfs
+   $w create window 2 45 -window $w.oiwfs_ex -tag oiwfs -anchor nw
    $w.oiwfs_ex insert list end 1.0 0.5 0.1 0.05 0.02 0.01 0.005
    $w.oiwfs_ex insert entry end [AO cget -oiwfsExpose]
    [$w.oiwfs_ex component list] configure -hscrollmode none \
          -vscrollmode none
 
-   $w create text 108 25 -text OI -tags oiwfs -font $font
-   $w create text 75 13 -text AO -tags "oiwfs oiwfs_aotxt" -font $font
-   $w create text 75 35 -text WFS -tags "oiwfs oiwfs_wfstxt" -font $font
+   $w create text 92 11 -text OI -tags oiwfs -font $font
+   $w create text 31 34 -text AO -tags "oiwfs oiwfs_aotxt" -font $font
+   $w create text 92 34 -text WFS -tags "oiwfs oiwfs_wfstxt" -font $font
 
 # GAOS
 #   $w create rectangle 0 0 140 137 -fill white -tags "active gaos gaos_bg"
@@ -144,25 +142,25 @@ itcl::body GuideLoop::constructor args {
    $w create rectangle 0 0 100 20 -fill white -tags "settled aoSettled active"
    $w create text 50 10 -text aoSettled -tags settled -font $font
 
-   $w create rectangle -2 -3 144 278 -fill white -tags "active gaos gaos_bg"
-   $w create text 96 23 -text GAOS -tags gaos -font $font
+   $w create rectangle -2 -2 129 227 -fill white -tags "active gaos gaos_bg"
+   $w create text 96 11 -text GAOS -tags gaos -font $font
 
    itk_component add gaoson {
-      SelectButton $w.gaoson -orient vertical -command [itcl::code $this gaos]
+      ToggleButton $w.gaoson -text ON -pushedbackground Green -pady 0 \
+			-command [itcl::code $this gaos]
    } {
       usual
-      rename -offbackground -background background Background
    }
-   $w create window 32 22 -width 60 -window $w.gaoson -tags gaos
-   $w.gaoson add ON -pady 0
-   $w.gaoson add OFF -pady 0
+   $w create window 2 2 -width 60 -window $w.gaoson -tags gaos -anchor nw
+#   $w.gaoson add ON -pady 0
+#   $w.gaoson add OFF -pady 0
 
    # exposure time
    itk_component add gaos_ex {
        iwidgets::combobox $w.gaos_ex -arrowrelief flat -width 5 \
 	   -validate real -labeltext "exp(s)"
    }
-   $w create window 62 55 -window $w.gaos_ex -tag gaos
+   $w create window 2 22 -window $w.gaos_ex -tag gaos -anchor nw
    $w.gaos_ex insert list end 0.02 0.01 0.005 0.002 0.001
    $w.gaos_ex insert entry end [AO cget -gaosExpose]
    [$w.gaos_ex component list] configure -hscrollmode none \
@@ -170,62 +168,58 @@ itcl::body GuideLoop::constructor args {
 
    # TTGS loop closed
    itk_component add ttao {
-      SelectButton $w.ttao -orient horizontal \
+		ToggleButton $w.ttao -text TTGS -pushedbackground Green -pady 0 \
             -command [itcl::code $this ttgsloop]
    } {
       usual
-      rename -offbackground -background background Background
    }
-   $w create window 90 79 -width 100 -window $w.ttao -tags gaos
-   $w create text 16 79 -text TTGS -tags gaos -font $font
-   $itk_component(ttao) add ON -pady 0
-   $itk_component(ttao) add OFF -pady 0
+   $w create window 2 46 -width 60 -window $w.ttao -tags gaos -anchor nw
+#   $w create text 16 79 -text TTGS -tags gaos -font $font
+#   $itk_component(ttao) add ON -pady 0
+#   $itk_component(ttao) add OFF -pady 0
 
    # SFO loop closed
    itk_component add sfao {
-      SelectButton $w.sfao -orient horizontal \
+		ToggleButton $w.sfao -text SFO -pushedbackground Green -pady 0 \
             -command [itcl::code $this sfoloop]
    } {
       usual
-      rename -offbackground -background background Background
    }
-   $w create window 90 100 -width 100 -window $w.sfao -tags gaos
-   $w create text 16 100 -text SFO -tags gaos -font $font
-   $itk_component(sfao) add ON -pady 0
-   $itk_component(sfao) add OFF -pady 0
+   $w create window 2 67 -width 60 -window $w.sfao -tags gaos -anchor nw
+#   $w create text 16 100 -text SFO -tags gaos -font $font
+#   $itk_component(sfao) add ON -pady 0
+#   $itk_component(sfao) add OFF -pady 0
 
    # OI Blending
    itk_component add oiao {
-      SelectButton $w.oiao -orient horizontal \
+		ToggleButton $w.oiao -text OIWFS -pushedbackground Green -pady 0 \
             -command [itcl::code $this oiblend]
    } {
       usual
-      rename -offbackground -background background Background
    }
-   $w create window 90 122 -width 100 -window $w.oiao -tags gaos
-   $w create text 16 122 -text OI -tags gaos -font $font
-   $itk_component(oiao) add ON -pady 0
-   $itk_component(oiao) add OFF -pady 0
+   $w create window 2 88 -width 60 -window $w.oiao -tags gaos -anchor nw
+#   $w create text 16 122 -text OI -tags gaos -font $font
+#   $itk_component(oiao) add ON -pady 0
+#   $itk_component(oiao) add OFF -pady 0
 
    # gaosTTGS
    itk_component add aottgs {
-      SelectButton $w.aottgs -orient vertical \
+		ToggleButton $w.aottgs -text ON -pushedbackground Green -pady 0 \
             -command [itcl::code $this gaosTTGS]
    } {
       usual
-      rename -offbackground -background background Background
    }
-   $w create rectangle 4 136 136 203 -fill white -tags "active gaos gaos_ttgs"
-   $w create window 36 160 -width 60 -window $w.aottgs -tags gaos
-   $w create text 97 156 -text TTGS -tags gaos -font $font
-   $itk_component(aottgs) add ON -pady 0
-   $itk_component(aottgs) add OFF -pady 0
+   $w create rectangle 2 111 125 176 -fill white -tags "active gaos gaos_ttgs"
+   $w create window 4 113 -width 60 -window $w.aottgs -tags gaos -anchor nw
+   $w create text 97 122 -text TTGS -tags gaos -font $font
+#   $itk_component(aottgs) add ON -pady 0
+#   $itk_component(aottgs) add OFF -pady 0
    # TTGS exp
    itk_component add ttgs_ex {
        iwidgets::combobox $w.ttgs_ex -arrowrelief flat -width 11 -selectioncommand [itcl::code $this configSfoEx] \
-	   -listheight 320 -editable 1 -labeltext "Mag(exp)"
+	   	-listheight 320 -editable 1 -labeltext "Mag(exp)" -labelpos nw
    }
-   $w create window 66 191 -window $w.ttgs_ex -tags gaos
+   $w create window 4 133 -window $w.ttgs_ex -tags gaos -anchor nw
    $w.ttgs_ex insert list end 19.0(0.05) 18.5(0.05) 18.0(0.05) 17.5(0.02) 17.0(0.01) 16.5(0.005) 16.0(0.005) \
        15.5(0.002) 15.0(0.001) 14.5(0.001) 14.0(0.001) 13.5(0.001) 13.0(0.001) 12.5(0.001) 12.0(0.001) 11.5(0.001) \
        11.0(0.001) 10.5(0.001) 10.0(0.001)
@@ -236,40 +230,39 @@ itcl::body GuideLoop::constructor args {
 
    # gaosSFO
    itk_component add aosfo {
-      SelectButton $w.aosfo -orient vertical \
+		ToggleButton $w.aosfo -text ON -pushedbackground Green -pady 0 \
             -command [itcl::code $this gaosSFO]
    } {
       usual
-      rename -offbackground -background background Background
    }
-   $w create rectangle 4 207 136 274 -fill white -tags "active gaos gaos_sfo"
-   $w create window 36 231 -width 60 -window $w.aosfo -tags gaos
-   $w create text 97 227 -text SFO -tags gaos -font $font
-   $itk_component(aosfo) add ON -pady 0
-   $itk_component(aosfo) add OFF -pady 0
+   $w create rectangle 2 179 125 223 -fill white -tags "active gaos gaos_sfo"
+   $w create window 4 181 -width 60 -window $w.aosfo -tags gaos -anchor nw
+   $w create text 97 190 -text SFO -tags gaos -font $font
+#   $itk_component(aosfo) add ON -pady 0
+#   $itk_component(aosfo) add OFF -pady 0
    # SFO exp
    itk_component add sfo_ex {
        iwidgets::combobox $w.sfo_ex -arrowrelief flat -width 5 \
 	   -validate real -labeltext "exp(s)"
    }
-   $w create window 66 262 -window $w.sfo_ex -tags gaos
+   $w create window 4 201 -window $w.sfo_ex -tags gaos -anchor nw
    $w.sfo_ex insert list end 50.0 20.0 10.0 7.0 5.0 2.0 1.0
    $w.sfo_ex insert entry end [AO cget -sfoExpose]
    [$w.sfo_ex component list] configure -hscrollmode none \
             -vscrollmode none
 
 # M1, M2 and Mount boxes.
-   $w create rectangle 0 0 200 89 -fill white -tags "active m2 m2_bg"
-   $w create text 168 15 -text M2 -tags m2 -font $font
-   $w create text 168 35 -text TIP/TILT -tags m2 -font $font
-   $w create text 168 55 -text FOCUS -tags m2 -font $font
-   $w create rectangle 0 0 84 89 -fill white -tags "active m2xy m2xy_bg"
-   $w create text 42 15 -text "M2 COMA" -tags m2xy -font $font
-   $w create rectangle 0 0 132 109 -fill white -tags "active m1 m1_bg"
-   $w create text 92 45 -text M1 -tags m1 -font $font
-   $w create text 92 65 -text FIGURE -tags m1 -font $font
-   $w create rectangle 0 23 132 66 -fill white -tags "active mount mount_bg"
-   $w create text 92 44 -text MOUNT -tags mount -font $font
+   $w create rectangle 0 0 128 87 -fill white -tags "active m2 m2_bg"
+   $w create text 95 22 -text M2 -tags m2 -font $font
+   $w create text 95 42 -text TIP/TILT -tags m2 -font $font
+   $w create text 95 62 -text FOCUS -tags m2 -font $font
+   $w create rectangle 0 0 73 87 -fill white -tags "active m2xy m2xy_bg"
+   $w create text 37 15 -text "M2 COMA" -tags m2xy -font $font
+   $w create rectangle 0 0 123 87 -fill white -tags "active m1 m1_bg"
+   $w create text 92 33 -text M1 -tags m1 -font $font
+   $w create text 92 54 -text FIGURE -tags m1 -font $font
+   $w create rectangle 0 23 123 47 -fill white -tags "active mount mount_bg"
+   $w create text 92 35 -text MOUNT -tags mount -font $font
 
 # Controls for M1.
    itk_component add m1src {
@@ -279,88 +272,82 @@ itcl::body GuideLoop::constructor args {
       usual
       rename -offbackground -background background Background
    }
-   $w create window 32 55 -width 60 -window $w.m1src -tags m1
+   $w create window 2 2 -width 60 -window $w.m1src -tags m1 -anchor nw
    $itk_component(m1src) add PWFS1 -pady 0
    $itk_component(m1src) add PWFS2 -pady 0
    $itk_component(m1src) add OIWFS -pady 0
    $itk_component(m1src) add GAOS -pady 0
-   $itk_component(m1src) add OFF -pady 0
 
 # Controls for M2
    itk_component add m2p1 {
-      SelectButton $w.m2p1 -orient horizontal \
+		ToggleButton $w.m2p1 -text PWFS1 -pushedbackground Green -pady 0 -padx 0 \
             -command [itcl::code $this m2mode p1]
    } {
       usual
-      rename -offbackground -background background Background
    }
-   $w create text 12 12 -text P1 -tags m2 -font $font
-   $w create window 80 12 -width 110 -window $itk_component(m2p1) -tags m2
-   $itk_component(m2p1) add ON -pady 0 -padx 0
-   $itk_component(m2p1) add OFF -pady 0 -padx 0
+#   $w create text 12 12 -text P1 -tags m2 -font $font
+   $w create window 2 2 -width 60 -window $itk_component(m2p1) -tags m2 -anchor nw
+#   $itk_component(m2p1) add ON -pady 0 -padx 0
+#   $itk_component(m2p1) add OFF -pady 0 -padx 0
 
    itk_component add m2p2 {
-      SelectButton $w.m2p2 -orient horizontal \
+		ToggleButton $w.m2p2 -text PWFS2 -pushedbackground Green -pady 0 -padx 0 \
             -command [itcl::code $this m2mode p2]
    } {
       usual
-      rename -offbackground -background background Background
    }
-   $w create text 12 34 -text P2 -tags m2 -font $font
-   $w create window 80 34 -width 110 -window $itk_component(m2p2) -tags m2
-   $itk_component(m2p2) add ON -pady 0 -padx 0
-   $itk_component(m2p2) add OFF -pady 0 -padx 0
-
-   itk_component add m2ao {
-      SelectButton $w.m2ao -orient horizontal \
-            -command [itcl::code $this m2mode ao]
-   } {
-      usual
-      rename -offbackground -background background Background
-   }
-   $w create text 12 56 -text AO -tags m2 -font $font
-   $w create window 80 56 -width 110 -window $itk_component(m2ao) -tags m2
-   $itk_component(m2ao) add ON -pady 0 -padx 0
-   $itk_component(m2ao) add OFF -pady 0 -padx 0
+#   $w create text 12 34 -text P2 -tags m2 -font $font
+   $w create window 2 23 -width 60 -window $itk_component(m2p2) -tags m2 -anchor nw
+#   $itk_component(m2p2) add ON -pady 0 -padx 0
+#   $itk_component(m2p2) add OFF -pady 0 -padx 0
 
    itk_component add m2oi {
-      SelectButton $w.m2oi -orient horizontal \
+		ToggleButton $w.m2oi -text OIWFS -pushedbackground Green -pady 0 -padx 0 \
             -command [itcl::code $this m2mode oi]
    } {
       usual
-      rename -offbackground -background background Background
    }
-   $w create text 12 78 -text OI -tags m2 -font $font
-   $w create window 80 78 -width 110 -window $itk_component(m2oi) -tags m2
-   $itk_component(m2oi) add ON -pady 0 -padx 0
-   $itk_component(m2oi) add OFF -pady 0 -padx 0
+#   $w create text 12 78 -text OI -tags m2 -font $font
+   $w create window 2 44 -width 60 -window $itk_component(m2oi) -tags m2 -anchor nw
+#   $itk_component(m2oi) add ON -pady 0 -padx 0
+#   $itk_component(m2oi) add OFF -pady 0 -padx 0
+
+   itk_component add m2ao {
+		ToggleButton $w.m2ao -text GAOS -pushedbackground Green -pady 0 -padx 0 \
+            -command [itcl::code $this m2mode ao]
+   } {
+      usual
+   }
+#   $w create text 12 56 -text AO -tags m2 -font $font
+   $w create window 2 65 -width 60 -window $itk_component(m2ao) -tags m2 -anchor nw
+#   $itk_component(m2ao) add ON -pady 0 -padx 0
+#   $itk_component(m2ao) add OFF -pady 0 -padx 0
 
    itk_component add m2coma {
-      SelectButton $w.m2coma -orient vertical \
+		ToggleButton $w.m2coma -text ON -pushedbackground Green -pady 0 \
             -command [itcl::code $this comacorr]
    } {
       usual
-      rename -offbackground -background background Background
    }
-   $w create window 42 54 -width 60 -window $itk_component(m2coma) -tags m2xy
-   $itk_component(m2coma) add ON -pady 0
-	$itk_component(m2coma) add OFF -pady 0
+   $w create window 37 54 -width 60 -window $itk_component(m2coma) -tags m2xy
+   #$itk_component(m2coma) add ON -pady 0
+	#$itk_component(m2coma) add OFF -pady 0
 
 # Controls for Mount.
    itk_component add mt {
-      SelectButton $w.mt -orient vertical \
+		SelectButton $w.mt -orient horizontal \
             -command [itcl::code $this mtmode]
    } {
       usual
-      rename -offbackground -background background Background
+		rename -offbackground -background background Background
    }
-   $w create window 32 45 -width 60 -window $itk_component(mt) -tags mount
+   $w create window 2 25 -width 60 -window $itk_component(mt) -tags mount -anchor nw
    $itk_component(mt) add M2 -pady 0
-   $itk_component(mt) add OFF -pady 0
+#   $itk_component(mt) add OFF -pady 0
 
 # Box for WFS probes.
-   $w create rectangle 0 0 132 87 -fill white -tags "active probes probes_bg"
-   $w create text 92 44 -text PROBES -tags probes -font $font
+   $w create rectangle 0 0 123 66 -fill white -tags "active probes probes_bg"
+   $w create text 92 33 -text PROBES -tags probes -font $font
 
 # Controls for probes.
    itk_component add prfrom {
@@ -370,85 +357,84 @@ itcl::body GuideLoop::constructor args {
       usual
       rename -offbackground -background background Background
    }
-   $w create window 17 34 -width 30 -window $w.prfrom -tags probes
+   $w create window 2 2 -width 30 -window $w.prfrom -tags probes -anchor nw
    $itk_component(prfrom) add P1 -pady 0
    $itk_component(prfrom) add P2 -pady 0
    $itk_component(prfrom) add OI -pady 0
 
    itk_component add prto {
-      SelectButton $w.prto -orient vertical \
-            -command [itcl::code $this probeto]
+      SelectButton $w.prto -orient vertical -command [itcl::code $this probeto]
    } {
       usual
       rename -offbackground -background background Background
    }
-   $w create window 47 34 -width 30 -window $w.prto -tags probes
+   $w create window 32 2 -width 30 -window $w.prto -tags probes -anchor nw
    $itk_component(prto) add P1 -pady 0
    $itk_component(prto) add P2 -pady 0
    $itk_component(prto) add OI -pady 0
 
-   itk_component add pron {
-      SelectButton $w.pron -orient vertical \
-            -command [itcl::code $this probemode]
-   } {
-      usual
-      rename -offbackground -background background Background
-   }
-   $w create window 32 76 -width 60 -window $w.pron -tags probes
-   $itk_component(pron) add OFF -pady 0
+#   itk_component add pron {
+#      SelectButton $w.pron -orient vertical \
+#            -command [itcl::code $this probemode]
+#   } {
+#      usual
+#      rename -offbackground -background background Background
+#   }
+#   $w create window 32 76 -width 60 -window $w.pron -tags probes
+#   $itk_component(pron) add OFF -pady 0
    $itk_component(prto) setState "0 1 2" disabled
 
 # Move boxes into position.
-   $w move m2 100 10
+   $w move m2 172 10
    $w move m2xy 300 10
    $w move m1 250 115
    $w move gaos 473 74
    $w move settled 480 40
    $w move oiwfs 250 342
-   $w move pwfs_comb 31 191
-   $w move pwfs1 35 195
-   $w move pwfs2 35 265
+   $w move pwfs_comb 31 215
+   $w move pwfs1 35 219
+   $w move pwfs2 35 266
    $w move probes 250 242
    $w move mount 250 400
 
 # PWFS to M1
-   $w create line 100 191 100 140 252 140 -width 3 -fill white \
+   $w create line 100 215 100 138 252 138 -width 3 -fill white \
          -tags {active pwfs1_m1 pwfs2_m2} -arrow last -arrowshape {20 20 7}
 
-   $w create line 251 370 215 370 215 200 251 200 -width 3 -fill white \
+   $w create line 251 370 215 370 215 169 251 169 -width 3 -fill white \
          -tags {active oiwfs_m1} -arrow last -arrowshape {20 20 7}
-   $w create line 471 130 381 130 -width 3 -fill white \
+   $w create line 471 110 407 110 407 130 373 130 -width 3 -fill white \
          -tags {active gaos_m1} -arrow last -arrowshape {20 20 7}
 
-   $w create line 381 382 407 382 407 196 473 196 -width 3 -fill white \
+   $w create line 374 382 407 382 407 171 473 171 -width 3 -fill white \
          -tags {active oiwfs_gaos} -arrow last -arrowshape {20 20 7}
 
 # GAOS internal
-   $w create line 477 241 425 241 425 154 473 154 -width 3 -fill white \
+   $w create line 475 216 425 216 425 129 473 129 -width 3 -fill white \
          -tags {active ttgs_gaos} -arrow last -arrowshape {20 20 7}
-   $w create line 477 316 440 316 440 175 473 175 -width 3 -fill white \
+   $w create line 475 275 440 275 440 150 473 150 -width 3 -fill white \
          -tags {active sfo_gaos} -arrow last -arrowshape {20 20 7}
 
 # WFS to M2
-   $w create line 45 191 45 33 100 33 -width 3 -fill white \
+   $w create line 45 215 45 33 172 33 -width 3 -fill white \
          -tags {active pwfs1_m2 pwfs2_m2} -arrow last -arrowshape {20 20 7}
 
-   $w create line 251 389 205 389 205 100 -width 3 -fill white \
+   $w create line 251 389 205 389 205 97 -width 3 -fill white \
          -tags {active oiwfs_m2} -arrow last -arrowshape {20 20 7}
-   $w create line 471 85 382 85  -width 3 -fill white \
+   $w create line 471 85 373 85  -width 3 -fill white \
          -tags {active gaos_m2} -arrow last -arrowshape {20 20 7}
 
 # WFS to Probes
-   $w create line 173 265 251 265 -width 3 -fill white \
+   $w create line 162 265 251 265 -width 3 -fill white \
          -tags {active pwfs1_pr pwfs2_pr} -arrow last -arrowshape {20 20 7}
 
 
-   $w create line 251 351 225 351 225 321 251 321 -width 3 -fill white \
+   $w create line 251 351 225 351 225 296 251 296 -width 3 -fill white \
          -tags {active oiwfs_pr} -arrow last -arrowshape {20 20 7}
 
 
 # M2 to mount
-   $w create line 100 60  20  60  20 432 251 432 -width 3 -fill white \
+   $w create line 172 60  20  60  20 435 251 435 -width 3 -fill white \
          -tags {active m2_mt} -arrow last -arrowshape {20 20 7}
 
 # ENABLE/DISABLE/RESET buttons.
@@ -507,13 +493,13 @@ itcl::body GuideLoop::recolour args {
        $itk_component(sfo_ex) configure -state normal
        $itk_component(ttgs_ex) configure -state normal
    } else {
-       $itk_component(ttao) select OFF
+       $itk_component(ttao) clear
        $itk_component(ttao) configure -state disabled
-       $itk_component(sfao) select OFF
+       $itk_component(sfao) clear
        $itk_component(sfao) configure -state disabled
-       $itk_component(aosfo) select OFF
+       $itk_component(aosfo) clear
        $itk_component(aosfo) configure -state disabled
-       $itk_component(aottgs) select OFF
+       $itk_component(aottgs) clear
        $itk_component(aottgs) configure -state disabled
        $itk_component(sfo_ex) configure -state disabled
        $itk_component(ttgs_ex) configure -state disabled
@@ -747,16 +733,16 @@ itcl::body GuideLoop::recolour args {
 
 # M2 guide source buttons.
    if { [AO source m2 PWFS1] } {
-      $itk_component(m2p1) configure -background green
+      $itk_component(m2p1) mark
    }
    if { [AO source m2 PWFS2] } {
-      $itk_component(m2p2) configure -background green
+      $itk_component(m2p2) mark
    }
    if { [AO source m2 OIWFS] } {
-      $itk_component(m2oi) configure -background green
+      $itk_component(m2oi) mark
    }
    if { [AO source m2 GAOS] } {
-      $itk_component(m2ao) configure -background green
+      $itk_component(m2ao) mark
    }
 
 # Mount
@@ -836,14 +822,14 @@ itcl::body GuideLoop::recolour args {
 #    }
 }
 
-itcl::body GuideLoop::comacorr {val} {
-   switch $val {
-      ON {
-         AO configure -comacorr 1
-		}
-      OFF {
-         AO configure -comacorr 0
-      }
+itcl::body GuideLoop::comacorr {op} {
+   switch $op {
+	push {
+		AO configure -comacorr 1
+	}
+	pop {
+		AO configure -comacorr 0
+	}
    }
 }
 
@@ -852,10 +838,10 @@ itcl::body GuideLoop::gaos {val} {
    AO configure -useLwfs [AO  state useLwfs]
    
    switch $val {
-      ON {
+		push {
          AO configure -gaos 1
       }
-      OFF {
+      pop {
          AO configure -gaos 0
       }
    }
@@ -863,10 +849,10 @@ itcl::body GuideLoop::gaos {val} {
 
 itcl::body GuideLoop::gaosTTGS {val} {
    switch $val {
-      ON {
+		push {
          AO configure -gaosTTGS 1
       }
-      OFF {
+		pop {
          AO configure -gaosTTGS 0
       }
    }
@@ -874,10 +860,10 @@ itcl::body GuideLoop::gaosTTGS {val} {
 
 itcl::body GuideLoop::ttgsloop {val} {
    switch $val {
-      ON {
+		push {
          AO configure -ttgsloop 1
       }
-      OFF {
+		pop {
          AO configure -ttgsloop 0
       }
    }
@@ -885,10 +871,10 @@ itcl::body GuideLoop::ttgsloop {val} {
 
 itcl::body GuideLoop::gaosSFO {val} {
    switch $val {
-      ON {
+		push {
          AO configure -gaosSFO 1
       }
-      OFF {
+		pop {
          AO configure -gaosSFO 0
       }
    }
@@ -896,21 +882,24 @@ itcl::body GuideLoop::gaosSFO {val} {
 
 itcl::body GuideLoop::sfoloop {val} {
    switch $val {
-      ON {
-         AO configure -sfoloop 1
-      }
-      OFF {
-         AO configure -sfoloop 0
-      }
-   }
+	push {
+		AO configure -sfoloop 1
+	}
+	pop {
+		AO configure -sfoloop 0
+	}
+	}
 }
 
 itcl::body GuideLoop::m2mode {probe val} {
-   if { $val eq "OFF"} {
-      AO configure -${probe}guide ""
-   } else {
+	switch $val {
+	push {
       AO configure -${probe}guide On
+   } 
+	pop {
+      AO configure -${probe}guide ""
    }
+	}
 }
 
 itcl::body GuideLoop::mtmode {val} {
@@ -924,7 +913,7 @@ itcl::body GuideLoop::mtmode {val} {
       M2 {
          AO configure -mountguide SCS
       }
-      OFF {
+		"" {
          AO configure -mountguide none
       }
    }
@@ -932,10 +921,10 @@ itcl::body GuideLoop::mtmode {val} {
 
 itcl::body GuideLoop::oiblend {val} {
    switch $val {
-      ON {
+		push {
           AO configure -oiblend 1
       }
-      OFF {
+		pop {
           AO configure -oiblend 0
       }
    }
@@ -945,70 +934,74 @@ itcl::body GuideLoop::probefrom {val} {
    $itk_component(prto) clear
    $itk_component(prto) setState "0 1 2" disabled
    switch $val {
-      P1 {
-         AO configure -probefrom PWFS1
-	 $itk_component(prto) setState 0 normal
-      }
-      P2 {
-         AO configure -probefrom PWFS2
-	 $itk_component(prto) setState 1 normal
-      }
-      OI {
-         AO configure -probefrom OIWFS
-	 $itk_component(prto) setState "0 1 2" normal
-      }
+	P1 {
+		AO configure -probefrom PWFS1
+		$itk_component(prto) setState 0 normal
+	}
+	P2 {
+		AO configure -probefrom PWFS2
+		$itk_component(prto) setState 1 normal
+	}
+	OI {
+		AO configure -probefrom OIWFS
+		$itk_component(prto) setState "0 1 2" normal
+	}
    }
+	AO configure -probeguide OFF
 }
 
 itcl::body GuideLoop::probeto {val} {
-   switch $val {
-      P1 {
-         AO configure -probeto PWFS1
-      }
-      P2 {
-         AO configure -probeto PWFS2
-      }
-      OI {
-         AO configure -probeto OIWFS
-      }
-   }
-   AO configure -probeguide ON
-   $itk_component(pron) clear
+	if { [string is space $val] } {
+		AO configure -probeguide OFF
+	} else {
+	   switch $val {
+	      P1 {
+	         AO configure -probeto PWFS1
+	      }
+	      P2 {
+	         AO configure -probeto PWFS2
+	      }
+	      OI {
+	         AO configure -probeto OIWFS
+	      }
+	   }
+   	AO configure -probeguide ON
+	}
 }
 
-itcl::body GuideLoop::probemode {val} {
-   switch $val {
-      ON {
-         AO configure -probeguide ON
-      }
-      OFF {
-         AO configure -probeguide OFF
-	 $itk_component(prfrom) clear
-	 $itk_component(prto) clear
-	 $itk_component(prto) setState "0 1 2" disabled
-      }
-   }
-}
+#itcl::body GuideLoop::probemode {val} {
+#   switch $val {
+#      ON {
+#         AO configure -probeguide ON
+#      }
+#      OFF {
+#         AO configure -probeguide OFF
+#	 $itk_component(prfrom) clear
+#	 $itk_component(prto) clear
+#	 $itk_component(prto) setState "0 1 2" disabled
+#      }
+#   }
+#}
 
 itcl::body GuideLoop::wfsmode {wfs val} {
    #puts "GuideLoop::wfsmode oiao: [AO state oiao], wfs: $wfs, val: $val"
    if { [AO state oiao] && $wfs == "oiwfs" } {
-      switch $val {
-         ON {
-            AO configure -oiaoLoop 1
-         }
-         OFF {
-            AO configure -oiaoLoop 0
-         }
+		switch $val {
+		push {
+			AO configure -oiaoLoop 1
+		}
+		pop {
+			AO configure -oiaoLoop 0
+		}
       }
    } else {
       switch $val {
-         ON {
-            AO configure -${wfs}Active 1
-         }
-         OFF {
-            AO configure -${wfs}Active 0
-         }
+		push {
+			AO configure -${wfs}Active 1
+		}
+		pop {
+			AO configure -${wfs}Active 0
+		}
       }
    }
 }
@@ -1108,7 +1101,7 @@ itcl::body GuideLoop::configSfoEx {} {
 }
 
 itcl::body GuideLoop::m1mode {state} {
-   if { $state eq "OFF" } {
+   if { [string is space $state] } {
       AO configure -m1source ""
    } else {
       AO configure -m1source $state
@@ -1122,25 +1115,24 @@ itcl::body GuideLoop::reset {} {
    AO disable
 
 # Simulate pushing all the "off" buttons.
-   $itk_component(pwfs1) select OFF
-   $itk_component(pwfs2) select OFF
-   $itk_component(oiwfs) select OFF
-   $itk_component(m1src) select OFF
-   $itk_component(m2p1) select OFF
-   $itk_component(m2p2) select OFF
-   $itk_component(m2ao) select OFF
-   $itk_component(m2oi) select OFF
-   $itk_component(m2coma) select OFF
-   $itk_component(mt) select OFF
-   $itk_component(pron) select OFF
-   $itk_component(prfrom) clear
-   $itk_component(prto) clear
-   $itk_component(oiao) select OFF
-   $itk_component(gaoson) select OFF
-   $itk_component(ttao) select OFF
-   $itk_component(sfao) select OFF
-   $itk_component(aosfo) select OFF
-   $itk_component(aottgs) select OFF
-   $itk_component(prto) setState "0 1 2" disabled
+   $itk_component(pwfs1) pop
+   $itk_component(pwfs2) pop
+   $itk_component(oiwfs) pop
+   $itk_component(m1src) select ""
+   $itk_component(m2p1) pop
+   $itk_component(m2p2) pop
+   $itk_component(m2ao) pop
+   $itk_component(m2oi) pop
+   $itk_component(m2coma) pop
+   $itk_component(mt) select ""
+	$itk_component(prto) select ""
+	$itk_component(prfrom) select ""
+   $itk_component(oiao) pop
+   $itk_component(gaoson) pop
+   $itk_component(ttao) pop
+   $itk_component(sfao) pop
+   $itk_component(aosfo) pop
+   $itk_component(aottgs) pop
+#   $itk_component(prto) setState "0 1 2" disabled
    AO configure -probeto ""
 }

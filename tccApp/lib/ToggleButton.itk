@@ -1,0 +1,140 @@
+#+
+#  ToggleButton <- itk::Widget
+#
+#  Implements the ToggleButton class. A ToggleButton is two-states button, that
+#  can be either pushed or popped.
+#
+#  Options:
+#          -command      A command to be executed when the button is pressed.
+#
+#  Methods:
+#          invoke
+#
+#  JLU October 2009
+#
+#-
+
+itcl::class ToggleButton {
+	inherit itk::Widget
+	constructor args {}
+	itk_option define -command command Command {}
+	itk_option define -pushedforeground pushedForeground Foreground black
+	itk_option define -pushedbackground pushedBackground PushedBackground red
+	#itk_option define -disabledforeground disabledForeground DisabledForeground {}
+	#itk_option define -activebackground activeBackground Foreground {}
+	itk_option define -state state State {}
+	public {
+		method invoke {}
+		method push {}
+		method pop {}
+		method get {} { return $value }
+		method clear {}
+		method mark {}
+	}
+	private {
+		method onButton1Press {}
+		method onMouseEnter {}
+		method onMouseLeave {}
+		variable value popped
+	}
+}
+
+#itk::usual ToggleButton {
+#	keep -activeforeground -activebackground -background -cursor -disabledforeground \
+#			-foreground -font -highlightcolor -highlightthickness -width -text
+#}
+itk::usual ToggleButton {
+	keep  -background -cursor \
+			-foreground -font -highlightcolor -highlightthickness -width
+}
+
+itcl::body ToggleButton::constructor args {
+	itk_component add button { label $itk_interior.lb -relief raised } {
+		usual
+		keep -state -text -width -height -padx -pady -activeforeground -activebackground
+	}
+	bind $itk_interior.lb <ButtonPress-1> [itcl::code $this onButton1Press]
+	bind $itk_interior.lb <Enter> [itcl::code $this onMouseEnter]
+	bind $itk_interior.lb <Leave> [itcl::code $this onMouseLeave]
+	pack $itk_component(button) -expand yes -fill both -ipady 1
+	eval itk_initialize $args
+}
+
+itcl::body ToggleButton::invoke {} {
+	if { $value eq "popped" } {
+		set op pop
+	} else {
+		set op push
+	}
+	if { ! [string equal $itk_option(-command) ""] } {
+		if { [catch {uplevel #0 $itk_option(-command) $op} msg] } {
+			tk_messageBox -icon error -parent $itk_interior -message $msg
+		}
+	}
+}
+
+itcl::body ToggleButton::push {} {
+	set value pushed
+	$itk_component(button) configure -relief sunken
+	$itk_component(button) configure -background $itk_option(-pushedbackground)
+	$itk_component(button) configure -foreground $itk_option(-pushedforeground)
+	invoke
+}
+
+itcl::body ToggleButton::pop {} {
+	set value popped
+	$itk_component(button) configure -relief raised
+	$itk_component(button) configure -background $itk_option(-background)
+	$itk_component(button) configure -foreground $itk_option(-foreground)
+	invoke
+}
+
+itcl::body ToggleButton::clear {} {
+	set value popped
+	$itk_component(button) configure -relief raised
+	$itk_component(button) configure -background $itk_option(-background)
+	$itk_component(button) configure -foreground $itk_option(-foreground)
+}
+
+itcl::body ToggleButton::mark {} {
+	set value pushed
+	$itk_component(button) configure -relief sunken
+	$itk_component(button) configure -background $itk_option(-pushedbackground)
+	$itk_component(button) configure -foreground $itk_option(-pushedforeground)
+}
+
+itcl::configbody ToggleButton::state {
+	switch $itk_option(-state) {
+	normal {
+	}
+	active {
+	}
+	disabled {
+		clear
+	}
+	}
+}
+
+itcl::body ToggleButton::onButton1Press {} {
+	if { $itk_option(-state) ne "disabled" } {
+		if { $value eq "popped" } {
+			push
+		} else {
+			pop
+		}
+	}
+}
+
+itcl::body ToggleButton::onMouseEnter {} {
+	if { $itk_option(-state) ne "disabled" } {
+		configure -state active
+		#$itk_component(button) configure -background $itk_option(-activebackground)
+	}
+}
+
+itcl::body ToggleButton::onMouseLeave {} {
+	if { $itk_option(-state) ne "disabled" } {
+		configure -state normal
+		#$itk_component(button) configure -background $itk_option(-background)
+	}
+}

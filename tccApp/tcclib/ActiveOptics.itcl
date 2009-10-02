@@ -67,10 +67,16 @@ itcl::class ActiveOptics {
 		
 		common lowfluxTempLimit -29.0
 		common highfluxTempLimit -9.0
+		
+		#method configure {args} { puts "$this configure $args"; eval _itcl_config $args }
    }
 	private {
 		method checkTemp {val ref}
 		method waitFor {timeout outCondition}
+		
+		#method _itcl_config {option args} \
+		#	@itcl-builtin-configure
+
 	}
 }
 

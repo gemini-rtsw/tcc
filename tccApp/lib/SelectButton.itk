@@ -38,6 +38,7 @@ itcl::class SelectButton {
    itk_option define -activeforeground activeForeground Background Black
    itk_option define -highlightcolor highlightColor HighlightColor Black
    itk_option define -highlightthickness highlightThickness HighlightThickness 2
+	itk_option define -allownone allowNone AllowNone 1
    public {
       method add {label args}
       method get {} {return $current}
@@ -46,7 +47,7 @@ itcl::class SelectButton {
       method setState {elements state}
    }
    private {
-      method selectioncommand {label}
+      method selectioncommand {label op}
       variable n 0
       variable current ""
    }
@@ -73,11 +74,12 @@ itcl::body SelectButton::add {label args} {
 
 # Create the new button.
    itk_component add $n {
-      LiveButton $itk_interior.$n \
+		ToggleButton $itk_interior.$n \
             -text $label -command [itcl::code $this selectioncommand $label]
    } {
       usual
       ignore -background
+		rename -pushedbackground -onbackground onBackground OnBackGround
    }
    $itk_component($n) configure \
       -command [itcl::code $this selectioncommand $itk_component($n)]
@@ -91,34 +93,55 @@ itcl::body SelectButton::add {label args} {
 
 # Repack with the new one added.
    eval pack $slaves $itk_component($n) -side $side -expand yes -fill both
+	
    incr n
+	
 }
 
 itcl::body SelectButton::clear {} {
    foreach button [winfo children $itk_interior] {
-      $button configure -background $itk_option(-offbackground)
+      $button clear
    }
 }
-itcl::body SelectButton::selectioncommand w {
-   foreach button [winfo children $itk_interior] {
-      $button configure -background $itk_option(-offbackground)
-   }
-   $w configure -background $itk_option(-onbackground)
 
-   set current [$w cget -text]
-
-   if { ! [string equal $itk_option(-command) ""] } {
-      uplevel #0 $itk_option(-command) \"[$w cget -text]\"
-   }
+itcl::body SelectButton::selectioncommand {w op} {
+	if {$op eq "push"} {
+		foreach button [winfo children $itk_interior] {
+			if { $button ne $w } {
+				$button clear
+			}
+	      #$button configure -background $itk_option(-offbackground)
+	   }
+	   #$w configure -background $itk_option(-onbackground)
+	
+	   set current [$w cget -text]
+	} else {
+		if { $itk_option(-allownone)  } {
+			set current {}
+		} else {
+			$w mark
+		}
+	}
+	if { ! [string equal $itk_option(-command) ""] } {
+		uplevel #0 $itk_option(-command) \"$current\"
+	}
 }
 
 itcl::body SelectButton::select {label} {
-   for {set i 0} {$i < $n} {incr i} {
-      if { [string equal $label [$itk_component($i) cget -text]] } {
-         $itk_component($i) invoke
-         break
-      }
-   }
+	if {[string is space $label]} {
+		clear
+		set current {}
+		if { ! [string equal $itk_option(-command) ""] } {
+			uplevel #0 $itk_option(-command) \"$current\"
+		}
+	} else {
+	   for {set i 0} {$i < $n} {incr i} {
+	      if { [string equal $label [$itk_component($i) cget -text]] } {
+	         $itk_component($i) push
+	         break
+	      }
+	   }
+	}
 }
 
 itcl::body SelectButton::setState {elements state} {
