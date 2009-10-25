@@ -179,7 +179,8 @@ itcl::body WfsConfig::checkNICIAOLoop {} {
 }
 
 itcl::body WfsConfig::checkNICI_SFPos {} {
-    if { [string match -nocase "*nici*" [sa agssad get sfName] ] } {
+    set port [sa agssad get portNici]
+    if { ([string match -nocase "*nici*" [sa agssad get sfName] ]) || ($port == 1) } {
 	return 1
     } else {
 	tk_messageBox -icon warning -type ok -title "Warning" -message \
