@@ -297,22 +297,30 @@ itcl::body Field::apply {comp} {
 						switch $tag {
 							CWFS1 {
 								cs guidersMapping set G${gId}guider TTGS1
-								"::GuideNames::$guide" applyGems g${gId} cwfs
+								if { $guide != ""} { 
+									"::GuideNames::$guide" applyGems g${gId} cwfs
+								}
 							}
 							CWFS2 {
 								cs guidersMapping set G${gId}guider TTGS2
-								"::GuideNames::$guide" applyGems g${gId} cwfs
+								if { $guide != ""} {								
+									"::GuideNames::$guide" applyGems g${gId} cwfs
+								}
 							}
 							CWFS3 {
 								cs guidersMapping set G${gId}guider TTGS3
-								"::GuideNames::$guide" applyGems g${gId} cwfs
+								if { $guide != ""} {
+									"::GuideNames::$guide" applyGems g${gId} cwfs
+								}
 							}
 							ODGW1 -
 							ODGW2 -
 							ODGW3 -
 							ODGW4 {
 								cs guidersMapping set G${gId}guider [$tagtarget cget -tagPrefix]
-								"::GuideNames::$guide" applyGems g${gId} odgw
+								if { $guide != ""} {								
+									"::GuideNames::$guide" applyGems g${gId} odgw
+								}
 							}
 						}
 						incr gId
@@ -321,7 +329,9 @@ itcl::body Field::apply {comp} {
 			}
 			for {} {$gId <= 4} {incr gId} {
 				cs guidersMapping set G${gId}guider None
-				"::GuideNames::$guide" applyGems g${gId} none
+				if { $guide != ""} {				
+					"::GuideNames::$guide" applyGems g${gId} none
+				}
 			}
 		}
 	   if { ! [string equal $guide ""] } {
