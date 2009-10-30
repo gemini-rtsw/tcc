@@ -222,13 +222,20 @@ itcl::body TcsConfigControl::destructor {} {
 }
 
 itcl::body TcsConfigControl::apply {} {
-    global instPO
-
-    logactions logmess "Starting a Slew"
 #+
 # Called when the apply button is pressed.
 #-
-# First check to make sure that the laser isn't propogating!
+	global instPO
+
+	logactions logmess "Starting a Slew"
+	
+# First, store the window contents (this was moved here because any error in 
+# the first steps would prevent saving the window changes.
+	if { ![store [$itk_component(selector) get]] } {
+		return
+	}
+
+# Check to make sure that the laser isn't propogating!
 	if {([calparam cget -site] eq "MK" && [string equal [sa aossad get laserProp] "SKY"]) ||
 			([calparam cget -site] eq "CP" && [string equal [sa gemssad get laserProp] "SKY"]) } {
 		logactions logmess "Warning The laser is propogating, aborting slew"
@@ -343,7 +350,7 @@ itcl::body TcsConfigControl::apply {} {
 
 # Configure UseAO flag in the TCS
 	if { ![catch {cs configForAO info}] } {
-		if {[string match "No AO" $::Config(tcs.gaos,value)] || [string match "" $::Config(tcs.gaos,value)]} {
+		if {[calparam cget -site] eq "CP" || [string match "No AO" $::Config(tcs.gaos,value)] || [string match "" $::Config(tcs.gaos,value)]} {
 			cs configForAO set useAO "No"
 		   logger command configForAO
 		   logactions logmess "Applying configForAO No"
@@ -534,7 +541,7 @@ itcl::body TcsConfigControl::apply {} {
    }
 
 # Call the normal apply function.
-   $this ComponentControl::applycmd
+   $this ComponentControl::doapply
 
 # Configure default filters, fieldstop for the WFS, and AO Flexture Model
 	if {[string match "*AO*" $guide]} {

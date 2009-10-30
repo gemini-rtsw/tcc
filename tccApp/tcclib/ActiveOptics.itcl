@@ -68,15 +68,14 @@ itcl::class ActiveOptics {
 		common lowfluxTempLimit -29.0
 		common highfluxTempLimit -9.0
 		
-		#method configure {args} { puts "$this configure $args"; eval _itcl_config $args }
+		method configure {args} { if {[llength $args] > 0 } {logactions logmess "$this configure $args"} ; eval _itcl_config $args }
    }
 	private {
 		method checkTemp {val ref}
 		method waitFor {timeout outCondition}
 		
-		#method _itcl_config {option args} \
-		#	@itcl-builtin-configure
-
+		method _itcl_config {option args} \
+			@itcl-builtin-configure
 	}
 }
 
@@ -187,7 +186,12 @@ itcl::body ActiveOptics::enable {} {
 	return
     } else {
 	process BUSY
-	logactions logmess  "ActiveOptics::enable"
+		 set currentconfig ""
+		 set config [configure]
+		 foreach item $config {
+			 lappend currentconfig [list [lindex $item 0] [lindex $item 2]]
+		 }
+	logactions logmess  "ActiveOptics::enable: $currentconfig"
     }
 
 # check to make sure we're not using OI probe guiding with GMOS
@@ -200,7 +204,7 @@ itcl::body ActiveOptics::enable {} {
 
 # Set parameters according to the current state...
 # only have a possibility of OI Blending if we're actually using Altair
-    if {!($::Config(tcs.gaos,value) == "No AO") && !($::Config(tcs.gaos,value) == "")} {
+    if {[calparam cget -site] eq "MK" && $::Config(tcs.gaos,value) ne "No AO" && !($::Config(tcs.gaos,value) == "")} {
 	# Configure OIWFS Blending in AO
 	if { $oiblend } {
 	    
@@ -942,7 +946,7 @@ global env
       useLwfs {
          # changed to be taken from altair directly when not simulating
 	 # aditionally, should be always 0 if we're not using AO
-	 if {($::Config(tcs.gaos,value) == "No AO") || ($::Config(tcs.gaos,value) == "")} {
+	 if {[calparam cget -site] eq "CP" || ($::Config(tcs.gaos,value) == "No AO") || ($::Config(tcs.gaos,value) == "")} {
 	     return 0
 	 }
 	 if {$env(TCC_TCSNAME) == "tc1"} {

@@ -50,7 +50,8 @@ itcl::class ComponentControl {
    }
    protected {
       method applycmd {}
-      method select {}
+		method doapply {}
+		method select {}
       method store {name}
       method delselected {}
       variable description
@@ -215,36 +216,38 @@ itcl::body ComponentControl::store {name} {
 }
 
 itcl::body ComponentControl::applycmd {} {
-
 # Store the window contents.
    if { [store [$itk_component(selector) get]] } {
+		doapply
+   }
+}
 
+itcl::body ComponentControl::doapply {} {
 # Send a sync to the panel managers of all the subcomponents that have
 # values.
-      foreach subcomp $::Config($comp,subcomp) {
-         if { $::Config($comp.$subcomp,value) != "" } {
-            $::Config($comp.$subcomp,panel) sync $comp.$subcomp 
-         }
-      }
+	foreach subcomp $::Config($comp,subcomp) {
+		if { $::Config($comp.$subcomp,value) != "" } {
+			$::Config($comp.$subcomp,panel) sync $comp.$subcomp 
+		}
+	}
 
 # Apply the object.
-      if { [string equal $::Config($comp,value) ""] } {
-         $::Config($comp,anon) apply $itk_option(-component)
+	if { [string equal $::Config($comp,value) ""] } {
+		$::Config($comp,anon) apply $itk_option(-component)
 
 # Return the scratch object to its initial state so that it doesn't prevent
 # the deletion of any of its subcomponents.
-         $::Config($comp,anon) init
-      } else {
-         $::Config($comp,namespace)::$::Config($comp,value) apply \
-               $itk_option(-component)
-      }
+		$::Config($comp,anon) init
+	} else {
+		$::Config($comp,namespace)::$::Config($comp,value) apply \
+			$itk_option(-component)
+	}
 
 # Post the command.
-      if { ![string is space $itk_option(-apply)] && [catch {cs $itk_option(-apply) post} msg] } {
-           tk_messageBox -icon error -parent $itk_interior -message \
-               "Error posting command: $itk_option(-system) reports \"$msg\""
-      }
-   }
+	if { ![string is space $itk_option(-apply)] && [catch {cs $itk_option(-apply) post} msg] } {
+		tk_messageBox -icon error -parent $itk_interior -message \
+			"Error posting command: $itk_option(-system) reports \"$msg\""
+	}
 }
 
 itcl::body ComponentControl::delselected {} {

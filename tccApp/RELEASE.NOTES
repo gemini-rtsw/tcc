@@ -1105,9 +1105,29 @@ M tccApp/tcclib/AltairControl.itk: Fixed problem with class name from code
 M tccApp/tcclib/TargetHandsetControl.itk: Fixed typo in G[1-4] target names.
 
 
-Current
+5.2-1
+M tccApp/tcclib/WfsConfig.itk: WfsConfig::checkNICI_SFPos: Added check for NICI
+	in port 1
+
+5.2-2
 20091028 JLU
 M tccApp/tcclib/GuideLoop.itk: Removed recolor of M2 source buttons. It was 
-	causing problem were buttons seemed to press themselves.
+	causing problem where buttons seemed to press themselves.
 M tccApp/tcclib/Field.itcl: Field::apply: Added check for empty "guide" field
 	before applying it for GeMS.
+
+20091030 JLU
+M tccApp/lib/ComponentControl.itk: ComponentControl::applycmd: put everything
+	but the call to "store" in a separate method, so the TcsConfigControl::apply
+	can call "store" at the beginning.
+M tccApp/tcclib/GuideLoop.itk:
+M tccApp/tcclib/ActiveOptics.itcl: Added log messages when modifying and applying 
+	configuration. Checked for site=MK before trying to use AO configuration as 
+	it was for Altair. 
+M tccApp/tcclib/GuideControl.itk: Removed some debug messages. Checked for 
+	site=MK before trying to use AO configuration as it was for Altair.
+M tccApp/tcclib/WfsConfig.itk
+M tccApp/tcclib/TcsConfigControl.itk: Forced store at the beginning of
+	TcsConfigControl::apply, to prevent changes not been saved when there was a 
+	problem in the first steps. Checked for site=MK before trying to use AO 
+	configuration as it was for Altair.
