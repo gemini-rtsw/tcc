@@ -180,7 +180,9 @@ itcl::body WfsConfig::checkNICIAOLoop {} {
 
 itcl::body WfsConfig::checkNICI_SFPos {} {
     set port [sa agssad get portNici]
-    if { ([string match -nocase "*nici*" [sa agssad get sfName] ]) || ($port == 1) } {
+    set sfParked [sa agssad get sfParked]
+# Check if SF is in a NICI valid position, or if NICI is installed in bottom port that SF is parked
+    if { ([string match -nocase "*nici*" [sa agssad get sfName] ]) || (( $port == 1) && ($sfParked)) } {
 	return 1
     } else {
 	tk_messageBox -icon warning -type ok -title "Warning" -message \
