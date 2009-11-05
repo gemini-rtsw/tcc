@@ -343,8 +343,6 @@ itcl::body ActiveOptics::enable {} {
 		tk_messageBox -icon error -parent $itk_interior -message $msg
 	    }
 	    
-		 #small wait for prepareCm to go busy. Nothing is done in case of timeout.
-		 waitFor 500 {expr \"[sa aossad get prepareBusy]\" eq \"BUSY\" }
 	    #wait for prepareCm to go idle
 	    if {[setTimeout "sa aossad get prepareBusy" BUSY 10000 200 "prepareCm to go idle"]} return
 #	}
@@ -1161,6 +1159,10 @@ itcl::body ActiveOptics::source {component src {beam A}} {
 
 itcl::body ActiveOptics::setTimeout {chanStr value time incr reason {compop ""}} {
    logactions logmess "starting a timeout check for $reason"
+
+   #Make sure that the record goes to the check value first (ie BUSY before waiting for not BUSY)
+   waitFor 500 "expr \\\"\[$chanStr\]\\\" eq \\\"$value\\\""
+
    logactions logmess "chanStr: $chanStr curr value: [eval $chanStr]  check value: $value"
    if { [catch {logactions logmess "prev tid: $tid  tid info: [after info $tid]"} ret]} {
        # logactions logmess "prev tid: $tid tid info: $ret"
@@ -1185,6 +1187,7 @@ itcl::body ActiveOptics::setTimeout {chanStr value time incr reason {compop ""}}
        #process IDLE
        return 1
    } else {
+       logactions logmess "chanStr: $chanStr curr value: [eval $chanStr]  check value: $value"
        after cancel $tid
        return 0
    }
