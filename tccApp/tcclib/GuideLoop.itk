@@ -67,58 +67,59 @@ itcl::body GuideLoop::constructor args {
 
 # WFS boxes AWE ... seperating out the OIWFS
    # rectangle to group pwfs1 and pwfs2
-   $w create rectangle 0 0 131 99 -fill white -tags "active pwfs1_bg pwfs2_bg pwfs_comb"
+   $w create rectangle 0 0 131 107 -fill white -tags "active pwfs1_bg pwfs2_bg pwfs_comb"
 
    foreach sys {pwfs1 pwfs2} {
       itk_component add $sys {
-			ToggleButton $w.$sys -text ON -pady 0 -pushedbackground Green\
+			ToggleButton $w.$sys -pady 0 -pushedbackground Green\
             -command [itcl::code $this wfsmode $sys]
       } {
          usual
       }
-      $w create window 2 2 -width 60 -window $w.$sys -tags $sys -anchor nw
+      $w create window 62 3 -width 60 -window $w.$sys -tags $sys -anchor n
 #      $itk_component($sys) add ON -pady 0
 #      $itk_component($sys) add OFF -pady 0
 #      itk_component add ${sys}_label {
 #         label $w.${sys}_label -text [string toupper $sys]
 #      }
-      $w create rectangle 0 0 123 44 -fill white -tags "active ${sys} ${sys}_bg"
+      $w create rectangle 0 0 123 48 -fill white -tags "active ${sys} ${sys}_bg"
 
 # WFS controls.
       itk_component add ${sys}_ex {
          iwidgets::combobox $w.${sys}_ex -arrowrelief flat -width 5 \
                -validate real -labeltext "exp(s)"
       }
-      $w create window 2 22 -window $w.${sys}_ex -tag $sys -anchor nw
+      $w create window 2 26 -window $w.${sys}_ex -tag $sys -anchor nw
       $w.${sys}_ex insert list end 1.0 0.5 0.1 0.05 0.02 0.01 0.005
       $w.${sys}_ex insert entry end [AO cget -${sys}Expose]
       [$w.${sys}_ex component list] configure -hscrollmode none \
             -vscrollmode none
    }
-
+	$itk_component(pwfs1) configure -text P1
+	$itk_component(pwfs2) configure -text P2
 # Find the name of the font used for the buttons and use it for all text.
    set font [$w.pwfs1 cget -font]
 
-   foreach sys {pwfs1 pwfs2} label {PWFS1 PWFS2} {
-      $w create text 92 11 -text $label -tags $sys -font $font
-   }
+#   foreach sys {pwfs1 pwfs2} label {PWFS1 PWFS2} {
+#      $w create text 92 11 -text $label -tags $sys -font $font
+#   }
 
 # OIWFS including an AO mode for NICI
    itk_component add oiwfs {
-	  ToggleButton $w.oiwfs -text ON -pushedbackground Green -pady 0 \
+	  ToggleButton $w.oiwfs -text OI -pushedbackground Green -pady 0 \
         -command [itcl::code $this wfsmode oiwfs]
    } {
       usual
    }
-   $w create window 2 2 -width 60 -window $w.oiwfs -tags oiwfs -anchor nw
+   $w create window 62 3 -width 60 -window $w.oiwfs -tags oiwfs -anchor n
 #   $itk_component(oiwfs) add ON -pady 0
 #   $itk_component(oiwfs) add OFF -pady 0
    itk_component add oiwfs_label {
       label $w.oiwfs_label -text [string toupper oiwfs]
    }
-   $w create rectangle 0 0 123 67 -fill white -tags "active oiwfs oiwfs_bg"
-   $w create rectangle 2 23 60 44 -fill white -tags "active oiwfs oiwfs_ao"
-   $w create rectangle 63 23 121 44 -fill white -tags "active oiwfs oiwfs_wfs"
+   $w create rectangle 0 0 123 70 -fill white -tags "active oiwfs oiwfs_bg"
+   $w create rectangle 2 26 60 47 -fill white -tags "active oiwfs oiwfs_ao"
+   $w create rectangle 63 26 121 47 -fill white -tags "active oiwfs oiwfs_wfs"
 
 # WFS controls.
    itk_component add oiwfs_ex {
@@ -126,15 +127,15 @@ itcl::body GuideLoop::constructor args {
             -validate real -labeltext "exp(s)"
    }
 
-   $w create window 2 45 -window $w.oiwfs_ex -tag oiwfs -anchor nw
+   $w create window 2 48 -window $w.oiwfs_ex -tag oiwfs -anchor nw
    $w.oiwfs_ex insert list end 1.0 0.5 0.1 0.05 0.02 0.01 0.005
    $w.oiwfs_ex insert entry end [AO cget -oiwfsExpose]
    [$w.oiwfs_ex component list] configure -hscrollmode none \
          -vscrollmode none
 
-   $w create text 92 11 -text OI -tags oiwfs -font $font
-   $w create text 31 34 -text AO -tags "oiwfs oiwfs_aotxt" -font $font
-   $w create text 92 34 -text WFS -tags "oiwfs oiwfs_wfstxt" -font $font
+#   $w create text 92 11 -text OI -tags oiwfs -font $font
+   $w create text 31 37 -text AO -tags "oiwfs oiwfs_aotxt" -font $font
+   $w create text 92 37 -text WFS -tags "oiwfs oiwfs_wfstxt" -font $font
 
 # GAOS
 #   $w create rectangle 0 0 140 137 -fill white -tags "active gaos gaos_bg"
@@ -142,16 +143,16 @@ itcl::body GuideLoop::constructor args {
    $w create rectangle 0 0 100 20 -fill white -tags "settled aoSettled active"
    $w create text 50 10 -text aoSettled -tags settled -font $font
 
-   $w create rectangle -2 -2 129 227 -fill white -tags "active gaos gaos_bg"
-   $w create text 96 11 -text GAOS -tags gaos -font $font
+   $w create rectangle -2 -2 129 237 -fill white -tags "active gaos gaos_bg"
+#   $w create text 96 11 -text GAOS -tags gaos -font $font
 
    itk_component add gaoson {
-      ToggleButton $w.gaoson -text ON -pushedbackground Green -pady 0 \
+      ToggleButton $w.gaoson -text AO -pushedbackground Green -pady 0 \
 			-command [itcl::code $this gaos]
    } {
       usual
    }
-   $w create window 2 2 -width 60 -window $w.gaoson -tags gaos -anchor nw
+   $w create window 64 1 -width 60 -window $w.gaoson -tags gaos -anchor n
 #   $w.gaoson add ON -pady 0
 #   $w.gaoson add OFF -pady 0
 
@@ -160,7 +161,7 @@ itcl::body GuideLoop::constructor args {
        iwidgets::combobox $w.gaos_ex -arrowrelief flat -width 5 \
 	   -validate real -labeltext "exp(s)"
    }
-   $w create window 2 22 -window $w.gaos_ex -tag gaos -anchor nw
+   $w create window 2 24 -window $w.gaos_ex -tag gaos -anchor nw
    $w.gaos_ex insert list end 0.02 0.01 0.005 0.002 0.001
    $w.gaos_ex insert entry end [AO cget -gaosExpose]
    [$w.gaos_ex component list] configure -hscrollmode none \
@@ -173,7 +174,7 @@ itcl::body GuideLoop::constructor args {
    } {
       usual
    }
-   $w create window 2 46 -width 60 -window $w.ttao -tags gaos -anchor nw
+   $w create window 2 48 -width 60 -window $w.ttao -tags gaos -anchor nw
 #   $w create text 16 79 -text TTGS -tags gaos -font $font
 #   $itk_component(ttao) add ON -pady 0
 #   $itk_component(ttao) add OFF -pady 0
@@ -185,7 +186,7 @@ itcl::body GuideLoop::constructor args {
    } {
       usual
    }
-   $w create window 2 67 -width 60 -window $w.sfao -tags gaos -anchor nw
+   $w create window 2 69 -width 60 -window $w.sfao -tags gaos -anchor nw
 #   $w create text 16 100 -text SFO -tags gaos -font $font
 #   $itk_component(sfao) add ON -pady 0
 #   $itk_component(sfao) add OFF -pady 0
@@ -197,21 +198,21 @@ itcl::body GuideLoop::constructor args {
    } {
       usual
    }
-   $w create window 2 88 -width 60 -window $w.oiao -tags gaos -anchor nw
+   $w create window 2 90 -width 60 -window $w.oiao -tags gaos -anchor nw
 #   $w create text 16 122 -text OI -tags gaos -font $font
 #   $itk_component(oiao) add ON -pady 0
 #   $itk_component(oiao) add OFF -pady 0
 
    # gaosTTGS
    itk_component add aottgs {
-		ToggleButton $w.aottgs -text ON -pushedbackground Green -pady 0 \
+		ToggleButton $w.aottgs -text TTGS -pushedbackground Green -pady 0 \
             -command [itcl::code $this gaosTTGS]
    } {
       usual
    }
-   $w create rectangle 2 111 125 176 -fill white -tags "active gaos gaos_ttgs"
-   $w create window 4 113 -width 60 -window $w.aottgs -tags gaos -anchor nw
-   $w create text 97 122 -text TTGS -tags gaos -font $font
+   $w create rectangle 2 113 125 182 -fill white -tags "active gaos gaos_ttgs"
+   $w create window 64 116 -width 60 -window $w.aottgs -tags gaos -anchor n
+#   $w create text 97 122 -text TTGS -tags gaos -font $font
 #   $itk_component(aottgs) add ON -pady 0
 #   $itk_component(aottgs) add OFF -pady 0
    # TTGS exp
@@ -219,7 +220,7 @@ itcl::body GuideLoop::constructor args {
        iwidgets::combobox $w.ttgs_ex -arrowrelief flat -width 11 -selectioncommand [itcl::code $this configSfoEx] \
 	   	-listheight 320 -editable 1 -labeltext "Mag(exp)" -labelpos nw
    }
-   $w create window 4 133 -window $w.ttgs_ex -tags gaos -anchor nw
+   $w create window 4 139 -window $w.ttgs_ex -tags gaos -anchor nw
    $w.ttgs_ex insert list end 19.0(0.05) 18.5(0.05) 18.0(0.05) 17.5(0.02) 17.0(0.01) 16.5(0.005) 16.0(0.005) \
        15.5(0.002) 15.0(0.001) 14.5(0.001) 14.0(0.001) 13.5(0.001) 13.0(0.001) 12.5(0.001) 12.0(0.001) 11.5(0.001) \
        11.0(0.001) 10.5(0.001) 10.0(0.001)
@@ -230,14 +231,14 @@ itcl::body GuideLoop::constructor args {
 
    # gaosSFO
    itk_component add aosfo {
-		ToggleButton $w.aosfo -text ON -pushedbackground Green -pady 0 \
+		ToggleButton $w.aosfo -text SFO -pushedbackground Green -pady 0 \
             -command [itcl::code $this gaosSFO]
    } {
       usual
    }
-   $w create rectangle 2 179 125 223 -fill white -tags "active gaos gaos_sfo"
-   $w create window 4 181 -width 60 -window $w.aosfo -tags gaos -anchor nw
-   $w create text 97 190 -text SFO -tags gaos -font $font
+   $w create rectangle 2 185 125 233 -fill white -tags "active gaos gaos_sfo"
+   $w create window 64 188 -width 60 -window $w.aosfo -tags gaos -anchor n
+#   $w create text 97 190 -text SFO -tags gaos -font $font
 #   $itk_component(aosfo) add ON -pady 0
 #   $itk_component(aosfo) add OFF -pady 0
    # SFO exp
@@ -245,7 +246,7 @@ itcl::body GuideLoop::constructor args {
        iwidgets::combobox $w.sfo_ex -arrowrelief flat -width 5 \
 	   -validate real -labeltext "exp(s)"
    }
-   $w create window 4 201 -window $w.sfo_ex -tags gaos -anchor nw
+   $w create window 4 211 -window $w.sfo_ex -tags gaos -anchor nw
    $w.sfo_ex insert list end 50.0 20.0 10.0 7.0 5.0 2.0 1.0
    $w.sfo_ex insert entry end [AO cget -sfoExpose]
    [$w.sfo_ex component list] configure -hscrollmode none \
@@ -257,11 +258,11 @@ itcl::body GuideLoop::constructor args {
    $w create text 95 42 -text TIP/TILT -tags m2 -font $font
    $w create text 95 62 -text FOCUS -tags m2 -font $font
    $w create rectangle 0 0 73 87 -fill white -tags "active m2xy m2xy_bg"
-   $w create text 37 15 -text "M2 COMA" -tags m2xy -font $font
+   $w create text 37 24 -text "M2" -tags m2xy -font $font
    $w create rectangle 0 0 123 87 -fill white -tags "active m1 m1_bg"
    $w create text 92 33 -text M1 -tags m1 -font $font
    $w create text 92 54 -text FIGURE -tags m1 -font $font
-   $w create rectangle 0 23 123 47 -fill white -tags "active mount mount_bg"
+   $w create rectangle 0 21 123 49 -fill white -tags "active mount mount_bg"
    $w create text 92 35 -text MOUNT -tags mount -font $font
 
 # Controls for M1.
@@ -273,14 +274,14 @@ itcl::body GuideLoop::constructor args {
       rename -offbackground -background background Background
    }
    $w create window 2 2 -width 60 -window $w.m1src -tags m1 -anchor nw
-   $itk_component(m1src) add PWFS1 -pady 0
-   $itk_component(m1src) add PWFS2 -pady 0
-   $itk_component(m1src) add OIWFS -pady 0
-   $itk_component(m1src) add GAOS -pady 0
+   $itk_component(m1src) add P1 -pady 0
+   $itk_component(m1src) add P2 -pady 0
+   $itk_component(m1src) add OI -pady 0
+   $itk_component(m1src) add AO -pady 0
 
 # Controls for M2
    itk_component add m2p1 {
-		ToggleButton $w.m2p1 -text PWFS1 -pushedbackground Green -pady 0 -padx 0 \
+		ToggleButton $w.m2p1 -text P1 -pushedbackground Green -pady 0 -padx 0 \
             -command [itcl::code $this m2mode p1]
    } {
       usual
@@ -291,7 +292,7 @@ itcl::body GuideLoop::constructor args {
 #   $itk_component(m2p1) add OFF -pady 0 -padx 0
 
    itk_component add m2p2 {
-		ToggleButton $w.m2p2 -text PWFS2 -pushedbackground Green -pady 0 -padx 0 \
+		ToggleButton $w.m2p2 -text P2 -pushedbackground Green -pady 0 -padx 0 \
             -command [itcl::code $this m2mode p2]
    } {
       usual
@@ -302,7 +303,7 @@ itcl::body GuideLoop::constructor args {
 #   $itk_component(m2p2) add OFF -pady 0 -padx 0
 
    itk_component add m2oi {
-		ToggleButton $w.m2oi -text OIWFS -pushedbackground Green -pady 0 -padx 0 \
+		ToggleButton $w.m2oi -text OI -pushedbackground Green -pady 0 -padx 0 \
             -command [itcl::code $this m2mode oi]
    } {
       usual
@@ -313,7 +314,7 @@ itcl::body GuideLoop::constructor args {
 #   $itk_component(m2oi) add OFF -pady 0 -padx 0
 
    itk_component add m2ao {
-		ToggleButton $w.m2ao -text GAOS -pushedbackground Green -pady 0 -padx 0 \
+		ToggleButton $w.m2ao -text AO -pushedbackground Green -pady 0 -padx 0 \
             -command [itcl::code $this m2mode ao]
    } {
       usual
@@ -324,7 +325,7 @@ itcl::body GuideLoop::constructor args {
 #   $itk_component(m2ao) add OFF -pady 0 -padx 0
 
    itk_component add m2coma {
-		ToggleButton $w.m2coma -text ON -pushedbackground Green -pady 0 \
+		ToggleButton $w.m2coma -text COMA -pushedbackground Green -pady 0 \
             -command [itcl::code $this comacorr]
    } {
       usual
@@ -393,7 +394,7 @@ itcl::body GuideLoop::constructor args {
    $w move oiwfs 250 342
    $w move pwfs_comb 31 215
    $w move pwfs1 35 219
-   $w move pwfs2 35 266
+   $w move pwfs2 35 270
    $w move probes 250 242
    $w move mount 250 400
 
@@ -406,13 +407,13 @@ itcl::body GuideLoop::constructor args {
    $w create line 471 110 407 110 407 130 373 130 -width 3 -fill white \
          -tags {active gaos_m1} -arrow last -arrowshape {20 20 7}
 
-   $w create line 374 382 407 382 407 171 473 171 -width 3 -fill white \
+   $w create line 374 377 407 377 407 174 473 174 -width 3 -fill white \
          -tags {active oiwfs_gaos} -arrow last -arrowshape {20 20 7}
 
 # GAOS internal
-   $w create line 475 216 425 216 425 129 473 129 -width 3 -fill white \
+   $w create line 475 216 425 216 425 132 473 132 -width 3 -fill white \
          -tags {active ttgs_gaos} -arrow last -arrowshape {20 20 7}
-   $w create line 475 275 440 275 440 150 473 150 -width 3 -fill white \
+   $w create line 475 275 440 275 440 153 473 153 -width 3 -fill white \
          -tags {active sfo_gaos} -arrow last -arrowshape {20 20 7}
 
 # WFS to M2
