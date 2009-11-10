@@ -778,18 +778,18 @@ itcl::body Field::clearDefaultTarget {tag} {
 		User {
 			#If default User target is unset, science revert to original science target
 			#We asume science target was set previoulsy to a User target
-			set target ""
+			set scienceTagTarget ""
 			for {set i 0} {$i < [$taggedTargets length]} {incr i} {
 				set tagTarget [$taggedTargets get $i]
 				if { [string equal Base [$tagTarget cget -tagPrefix] ] } {
-					set target [$tagTarget cget -target]
+					set scienceTagTarget $tagTarget
 					break
 				}
 			}
-			if {[string equal $target ""]} {
+			if {[string equal $scienceTagTarget ""]} {
 				error "Deselecting User target: Could not revert to Science target, Science target undefined"
 			} else {
-				set sciencetarget $target
+				set sciencetarget $scienceTagTarget
 				notify sciencetarget
 			}
 		}

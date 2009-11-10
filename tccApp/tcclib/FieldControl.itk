@@ -843,11 +843,15 @@ itcl::body FieldControl::onAddNewTarget {} {
 itcl::body FieldControl::onSaveTarget {} {
 	set tagtarget [$itk_component(targets) getSelected]
 	if { $tagtarget ne "" } {
+		set oldTagPrefix [$tagtarget cget -tagPrefix]
 		set tagtarget [$itk_component(trgDetails) save $tagtarget]
+		set tagPrefix [$tagtarget cget -tagPrefix]
 		#Set as default if first of its kind
-		set field $::Config(tcs.field,namespace)::$::Config(tcs.field,value)
-		if { [$field getDefaultTarget [$tagtarget cget -tagPrefix]] eq "" } {
-			$field setDefaultTarget $tagtarget
+		if { $oldTagPrefix ne $tagPrefix } {
+			set field $::Config(tcs.field,namespace)::$::Config(tcs.field,value)
+			if { [$field getDefaultTarget $tagPrefix] eq "" } {
+				$field setDefaultTarget $tagtarget
+			}
 		}
 		$itk_component(targets) refresh
 
