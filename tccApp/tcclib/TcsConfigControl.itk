@@ -661,16 +661,18 @@ itcl::body TcsConfigControl::load {name} {
          }
       }
       set name ::FieldNames::[$name cget -field]
-      foreach subcomponent $fieldcomponents suboption $fieldoptions {
-			set comp [$name cget $suboption]
-			if { ! [string equal $comp ""] } {
-				if {[string match *target $suboption]} {
-					set ::Config(tcs.[string tolower $subcomponent],value) [namespace tail [$comp cget -target]]
-				} else {
-					set ::Config(tcs.[string tolower $subcomponent],value) $comp
+		if { [info exists $name] } {
+	      foreach subcomponent $fieldcomponents suboption $fieldoptions {
+				set comp [$name cget $suboption]
+				if { ! [string equal $comp ""] } {
+					if {[string match *target $suboption]} {
+						set ::Config(tcs.[string tolower $subcomponent],value) [namespace tail [$comp cget -target]]
+					} else {
+						set ::Config(tcs.[string tolower $subcomponent],value) $comp
+					}
 				}
-			}
-      }
+	      }
+		}
    }
 }
 
