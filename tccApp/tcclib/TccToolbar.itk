@@ -80,17 +80,22 @@ itcl::body TccToolbar::constructor args {
    itk_component add catalogs {
       PanelButton $w.catalogs -text Catalogs -panel skyPanel
    }
-   itk_component add eng {
-      button $w.eng -text "Engineering Screen" -command \
-               "exec [file join [calparam cget -tcs_root_dir] data tcs_dm.sh] &"
-   }
-   global env
-   if { [info exists env(TCC_TCSNAME)] } {
-      switch $env(TCC_TCSNAME) {
-         tc1 {
-            $itk_component(eng) configure -command \
-               "exec [file join [calparam cget -tcs_root_dir] data tc1_dm.sh] &"
-         }
+	global ::env
+	if { [string compare [exec uname] "Solaris"] == 0 } {
+	   itk_component add eng {
+	      button $w.eng -text "Engineering Screen" -command \
+				"exec [file join [calparam cget -tcs_root_dir] data $::env(TCC_TCSNAME)_dm.sh] &"
+	   }
+	} else {
+		itk_component add eng {
+			button $w.eng -text "Engineering Screen" -command \
+				"exec $::env(TCC_TCSNAME)_dm.sh &"
+		}
+	}
+   if { [info exists ::env(TCC_TCSNAME)] } {
+      switch $::env(TCC_TCSNAME) {
+         tc1 -
+			tcs {}
          default {
             $itk_component(eng) configure -state disabled
          }
