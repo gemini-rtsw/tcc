@@ -61,7 +61,7 @@ itcl::body LogPanel::openfile {} {
 
 # cd to save file directory.
    set pwd [pwd]
-   catch {cd $::SaveFileDirectory}
+   catch {cd $::LogSaveFileDirectory}
 
 # Create dialog.
    set dialog [iwidgets::fileselectiondialog $itk_interior.dialog \
@@ -82,9 +82,9 @@ itcl::body LogPanel::openfile {} {
 # Update save file directory.
       set dir [file dirname $filename]
       if { [string compare [file pathtype $dir] relative] == 0 } {
-         set ::SaveFileDirectory [pwd]/$dir
+         set ::LogSaveFileDirectory [pwd]/$dir
       } else {
-         set ::SaveFileDirectory $dir
+         set ::LogSaveFileDirectory $dir
       }
    }
    destroy $dialog
