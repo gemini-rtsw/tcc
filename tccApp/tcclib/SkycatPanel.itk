@@ -102,11 +102,11 @@ itcl::body SkycatPanel::findskycat {} {
 # Look for copies of skycat running on the screen.
    foreach interp [winfo interps -displayof $itk_interior] {
       if { $interp eq "tccSkycat" || [regexp {^tccSkycat #[0-9]+$} $interp] } {
-
 # Check that it is responding to commands.
          if { ! [catch {send $interp info tclversion}] } {
             return $interp
          }
       }
    }
+	return ""
 }

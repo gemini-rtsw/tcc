@@ -7,7 +7,7 @@
 #-
 
 proc SkyCat_plugin {this} {
-
+	global ::env
 # Set the application name to the name that the consoles use to send commands
 # to skycat.
    tk appname tccSkycat
@@ -32,9 +32,33 @@ proc SkyCat_plugin {this} {
    $w add_menuitem $gemmenu command "Pick OIWFS Target" \
          "Pick an object and define it as the on instrument wave front sensor target" \
          -command "TccSkyCat::pick_target oiwfs"
-   $w add_menuitem $gemmenu command "Pick GAOS Target" \
-         "Pick an object and define it as the GAOS wave front sensor target" \
-         -command "TccSkyCat::pick_target gaos"
+	if { $::env(GEMINI_SITE) eq "MK" } {
+   	$w add_menuitem $gemmenu command "Pick GAOS Target" \
+      	   "Pick an object and define it as the GAOS wave front sensor target" \
+         	-command "TccSkyCat::pick_target aowfs"
+	} else {
+		$w add_menuitem $gemmenu command "Pick Canopus-1 Target" \
+			"Pick an object and define it as the Canopus wave front sensor 1 target" \
+			-command "TccSkyCat::pick_target ttgs1"
+		$w add_menuitem $gemmenu command "Pick Canopus-2 Target" \
+			"Pick an object and define it as the Canopus wave front sensor 2 target" \
+			-command "TccSkyCat::pick_target ttgs2"
+		$w add_menuitem $gemmenu command "Pick Canopus-3 Target" \
+			"Pick an object and define it as the Canopus wave front sensor 3 target" \
+			-command "TccSkyCat::pick_target ttgs3"
+		$w add_menuitem $gemmenu command "Pick ODGW1 Target" \
+			"Pick an object and define it as the first On-Detector Guide Window target" \
+			-command "TccSkyCat::pick_target odgw1"
+		$w add_menuitem $gemmenu command "Pick ODGW2 Target" \
+			"Pick an object and define it as the second On-Detector Guide Window target" \
+			-command "TccSkyCat::pick_target odgw2"
+		$w add_menuitem $gemmenu command "Pick ODGW3 Target" \
+			"Pick an object and define it as the third On-Detector Guide Window target" \
+			-command "TccSkyCat::pick_target odgw3"
+		$w add_menuitem $gemmenu command "Pick ODGW4 Target" \
+			"Pick an object and define it as the fourth On-Detector Guide Window target" \
+			-command "TccSkyCat::pick_target odgw4"
+	}
    $w add_menuitem $gemmenu command "Set IPD" \
          "Set Instrument Principle Direction" \
          -command "TccSkyCat::pick_angle"

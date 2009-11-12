@@ -137,6 +137,7 @@ itcl::class Field {
       variable current_wavelength ""
 		
 		method cleanTaggedTargets {}
+		method getFreeTargetId {}
 		
 		variable observerList {}
 		method notify {elementList}
@@ -567,6 +568,9 @@ itcl::configbody Field::wavelength {
 itcl::body Field::add {type name args} {
    switch $type {
       target {
+			if { [string is space $name] } {
+				set name [getFreeTargetId]
+			}
          set targetname [TargetComponent ${targetns}::$name $targetlist]
          $targetname configure -trackratens $trackratens
 			$targetname configure -objname $name
@@ -661,21 +665,24 @@ itcl::configbody Field::posAngle {
       }
    }
 }
-
-itcl::body Field::addTaggedTarget {{tagPrefix User} {target ""}} {
-	if { [string equal $target ""] } {
-		set freeId 1
-		for {set i 0} {$i < [$targetlist length]} {incr i} {
-			if {[string match target* [namespace tail [$targetlist get $i]] ] } {
-				set idx [string range [namespace tail [$targetlist get $i]] 6 end]
-				if { [string is integer -strict $idx] } {
-					if { $idx >= $freeId } {
-						set freeId [expr "$idx+1"]
-					}
+itcl::body Field::getFreeTargetId {} {
+	set freeId 1
+	for {set i 0} {$i < [$targetlist length]} {incr i} {
+		if {[string match target* [namespace tail [$targetlist get $i]] ] } {
+			set idx [string range [namespace tail [$targetlist get $i]] 6 end]
+			if { [string is integer -strict $idx] } {
+				if { $idx >= $freeId } {
+					set freeId [expr "$idx+1"]
 				}
 			}
 		}
-		set target [TargetComponent ${targetns}::target$freeId $targetlist]
+	}
+	return target$freeId
+}
+
+itcl::body Field::addTaggedTarget {{tagPrefix User} {target ""}} {
+	if { [string equal $target ""] } {
+		set target [TargetComponent ${targetns}::[getFreeTargetId] $targetlist]
 		$target init
       $target configure -trackratens $trackratens
 		$target configure -objname [namespace tail $target]		

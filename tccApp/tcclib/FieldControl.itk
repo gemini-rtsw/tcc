@@ -708,42 +708,18 @@ itcl::body FieldControl::newtarget {name type args} {
       set field $::Config(tcs.field,namespace)::$::Config(tcs.field,value)
    }
 
-# See if a name was specified.
-   if { $name != "" } {
-      set target $name
-   } else {
-      set target "Unnamed target"
-   }
-
-# Remove any existing target with the specified name.
-   if { $target == $::Config(tcs.field.sciencetarget,value) } {
-      $field configure -sciencetarget ""
-   }
-   if { $target == $::Config(tcs.field.pwfs1target,value) } {
-      $field configure -pwfs1target ""
-   }
-   if { $target == $::Config(tcs.field.pwfs2target,value) } {
-      $field configure -pwfs2target ""
-   }
-   if { $target == $::Config(tcs.field.oiwfstarget,value) } {
-      $field configure -oiwfstarget ""
-   }
-   if { $target == $::Config(tcs.field.aowfstarget,value) } {
-      $field configure -aowfstarget ""
-   }
-   catch {$field remove target $target}
-
 # Create the new target.
-   $field add target $target
-
-# Configure the new target.
-   eval [list $field] subconfigure target [list $target] $args
+   set target [namespace tail [eval [list $field] add target [list $name] $args]]
 
 # Make it the specified target and select it.
    if { $type != "" } {
 		switch $type {
 			sciencetarget {
-				$field setDefaultTarget [$field addTaggedTarget Base [$field cget -targetns]::$target]
+				if { [$field getDefaultTarget Base] eq "" } {
+					$field setDefaultTarget [$field addTaggedTarget Base [$field cget -targetns]::$target]
+				} else {
+					$field setDefaultTarget [$field addTaggedTarget User [$field cget -targetns]::$target]
+				}
 			}
 			pwfs1target {
 				$field setDefaultTarget [$field addTaggedTarget PWFS1 [$field cget -targetns]::$target]

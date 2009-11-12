@@ -7,7 +7,7 @@
 #-
 
 proc SkySearch_plugin {this} {
-
+	global ::env
 # Get the top level window name and call the procedure that stores the name
 # inside the TccSkyQuery namespace.
    set w [namespace tail $this]
@@ -30,9 +30,33 @@ proc SkySearch_plugin {this} {
    $w add_menuitem $gemmenu command "Selection -> OIWFS target" \
          "Define the selected entry as the on instrument wave front sensor target" \
          -command "TccSkyQuery::define_selected oiwfstarget"
-   $w add_menuitem $gemmenu command "Selection -> GAOS target" \
-         "Define the selected entry as the GAOS wave front sensor target" \
-         -command "TccSkyQuery::define_selected gaostarget"
+	if { $::env(GEMINI_SITE) eq "MK" } {
+   	$w add_menuitem $gemmenu command "Selection -> GAOS target" \
+      	   "Define the selected entry as the GAOS wave front sensor target" \
+         	-command "TccSkyQuery::define_selected aowfstarget"
+	} else {
+		$w add_menuitem $gemmenu command "Selection -> Canopus-1 target" \
+			"Define the selected entry as the Canopus wave front sensor 1 target" \
+			-command "TccSkyCat::define_selected ttgs1target"
+		$w add_menuitem $gemmenu command "Selection -> Canopus-2 target" \
+			"Define the selected entry as the Canopus wave front sensor 2 target" \
+			-command "TccSkyCat::define_selected ttgs2target"
+		$w add_menuitem $gemmenu command "Selection -> Canopus-3 target" \
+			"Define the selected entry as the Canopus wave front sensor 3 target" \
+			-command "TccSkyCat::define_selected ttgs3target"
+		$w add_menuitem $gemmenu command "Selection -> ODGW1 target" \
+			"Define the selected entry as the first On-Detector Guide Window target" \
+			-command "TccSkyCat::define_selected odgw1target"
+		$w add_menuitem $gemmenu command "Selection -> ODGW2 target" \
+			"Define the selected entry as the second On-Detector Guide Window target" \
+			-command "TccSkyCat::define_selected odgw2target"
+		$w add_menuitem $gemmenu command "Selection -> ODGW3 target" \
+			"Define the selected entry as the third On-Detector Guide Window target" \
+			-command "TccSkyCat::define_selected odgw3target"
+		$w add_menuitem $gemmenu command "Selection -> ODGW4 target" \
+			"Define the selected entry as the fourth On-Detector Guide Window target" \
+			-command "TccSkyCat::define_selected odgw4target"
+	}
    $w add_menuitem $gemmenu command "Result -> targets" \
          "Define the search result as targets" \
          -command "TccSkyQuery::define_contents"
