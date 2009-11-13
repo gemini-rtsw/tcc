@@ -260,6 +260,9 @@ itcl::body FieldControl::destructor {} {
 
 # Remove variable trace.
    trace vdelete ::Config($comp,value) w [itcl::code $this newfieldval]
+	if {![string equal $currentname ""]} {
+		$currentname unsubscribe [itcl::code $this onFieldChange]
+	}
 }
 
 itcl::body FieldControl::save {name} {

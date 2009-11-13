@@ -126,6 +126,9 @@ itcl::body TargetList::destructor {} {
 		trace vdelete ::Config($comp,value) w [itcl::code $this newname]
 	   trace vdelete ::Config($comp,list) w [itcl::code $this newlist]
 	}
+	if { $currentlist ne "" } {   
+		$currentlist unsubscribe $this
+	}
 }
 
 itcl::body TargetList::lock {} {
@@ -336,9 +339,7 @@ itcl::body TargetList::onRemove {taggedTarget} {
 }
 
 itcl::body TargetList::onDestroy {} {
-	for {set i 0} {$i < [$currentlist length]} {incr i} {
-		$itk_component(selector) removeRecord [$currentlist get $i]
-	}
+	$itk_component(selector) clear
 }
 
 itcl::body TargetList::setComponentList {list} {
@@ -350,12 +351,16 @@ itcl::body TargetList::setComponentList {list} {
 			refresh
 		}		
 	} else {
-	   if { ! [string equal $currentlist ""] } {   
+	   if { $currentlist ne "" } {   
 			$currentlist unsubscribe $this
+			$itk_component(selector) clear
 	   }
 	   set currentlist $list
 	   if { ! [string equal $list ""] } {
 	      $list subscribe $this
+			for {set i 0} {$i < [$currentlist length]} {incr i} {
+				onInsert [$currentlist get $i]
+			}
 	   }
 	}
 }
