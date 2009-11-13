@@ -43,9 +43,9 @@ itcl::body AoConfig::constructor args {
    }
 
 # Mount absorb tip/tilt
-   itk_component add mtabs {
-      label $w.mtabs -borderwidth 2 -relief groove
-   }
+#   itk_component add mtabs {
+#      label $w.mtabs -borderwidth 2 -relief groove
+#   }
 
 # M2 configuration in both chop states
    itk_component add m2chopa {
@@ -65,7 +65,7 @@ itcl::body AoConfig::constructor args {
    pack $itk_component(m1fig) -fill x -expand y -padx 2 -pady 1
    pack $itk_component(coma) -fill x -expand y -padx 2 -pady 1
    pack $itk_component(m1fig) -fill x -expand y -padx 2 -pady 1
-   pack $itk_component(mtabs) -fill x -expand y -padx 2 -pady 1
+#   pack $itk_component(mtabs) -fill x -expand y -padx 2 -pady 1
    pack $itk_component(frame) -fill x -expand y -expand y
 
    eval itk_initialize $args
@@ -81,20 +81,20 @@ itcl::body AoConfig::update {} {
       $itk_component(m1fig) configure -text "No M1 figure updates"
    }
 
-   switch [sa guideConfig get absorbtilt] {
-      0 {
-         $itk_component(mtabs) configure -text "No mount guiding"
-      }
-      3 {
-         $itk_component(mtabs) configure -text "Mount guiding from M2"
-      }
-      4 {
-         $itk_component(mtabs) configure -text "Mount guiding from PWFS"
-      }
-      default {
-         $itk_component(mtabs) configure -text ""
-      }
-   }
+#   switch [sa guideConfig get absorbtilt] {
+#      0 {
+#         $itk_component(mtabs) configure -text "No mount guiding"
+#      }
+#      3 {
+#         $itk_component(mtabs) configure -text "Mount guiding from M2"
+#      }
+#      4 {
+#         $itk_component(mtabs) configure -text "Mount guiding from PWFS"
+#      }
+#      default {
+#         $itk_component(mtabs) configure -text ""
+#      }
+#   }
 
    set p1guide [sa m2ssad get p1GuideConfig]
    set p2guide [sa m2ssad get p2GuideConfig]

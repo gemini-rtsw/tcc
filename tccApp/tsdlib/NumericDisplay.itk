@@ -390,11 +390,25 @@ itcl::body NumericDisplay::constructor args {
        StatusField $w.focus -labelmargin 2 -width 5 -entryborder 3 \
             -entryrelief groove -labeltext "Focus (um):"
    }
+   
+   itk_component add comalab {
+      label $w.comalab -text "Coma:"
+   }
+   itk_component add xcoma {
+      StatusField $w.xcoma -labelmargin 2 -width 5 -entryborder 3 \
+         -entryrelief groove -labeltext X
+   }
+   itk_component add ycoma {
+       StatusField $w.ycoma -labelmargin 2 -width 5 -entryborder 3 \
+            -entryrelief groove -labeltext Y
+   }
+
 #   grid $itk_component(m2lab) -pady 2
    grid $itk_component(ttlab) $itk_component(tip) $itk_component(tilt) -pady 2
    grid $itk_component(poslab) $itk_component(xpos) $itk_component(ypos) -pady 2
 #   grid configure $itk_component(m2lab) -columnspan 3
    grid $itk_component(focus) - -sticky e -pady 2
+   grid $itk_component(comalab) $itk_component(xcoma) $itk_component(ycoma) -pady 2
 
 # Nod and chop state.
    itk_component add nod {
@@ -678,6 +692,18 @@ itcl::body NumericDisplay::update {} {
       $itk_component(focus) configure -text [format %.2f $focus] -status ok
    } else {
       $itk_component(focus) configure -text $focus -status error
+   }
+   set xcoma [sa tcssad get m2XComaCorr]
+   if { [string is double -strict $xcoma] } {
+      $itk_component(xcoma) configure -text [format %.2f $xcoma] -status ok
+   } else {
+      $itk_component(xcoma) configure -text $xcoma -status error
+   }
+   set ycoma [sa tcssad get m2YComaCorr]
+   if { [string is double -strict $ycoma] } {
+      $itk_component(ycoma) configure -text [format %.2f $ycoma] -status ok
+   } else {
+      $itk_component(ycoma) configure -text $ycoma -status error
    }
 
 # Time.

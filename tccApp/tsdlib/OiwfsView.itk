@@ -147,26 +147,26 @@ foreach {x4 y4} \
    if { [isFollowing agssad oiFollowS] } {
       if { [isInPosition agssad oiInPosition] } {
          $itk_component(canvas) itemconfigure $arm -fill green
-      } else {
+	      switch [sa tcssad get nodState] {
+	         A {
+	            if { [string equal [sa oiwfsGuide get nodachopa] On] ||
+	                  [string equal [sa oiwfsGuide get nodachopb] On] } {
+	               $itk_component(canvas) itemconfigure $arm -fill green
+	            } else {
+	               $itk_component(canvas) itemconfigure $arm -fill orange
+	            }
+	         }
+	         B {
+	            if { [string equal [sa oiwfsGuide get nodbchopa] On] ||
+	                  [string equal [sa oiwfsGuide get nodbchopb] On] } {
+	               $itk_component(canvas) itemconfigure $arm -fill green
+	            } else {
+	               $itk_component(canvas) itemconfigure $arm -fill orange
+	            }
+	         }
+	      }
+		} else {
          $itk_component(canvas) itemconfigure $arm -fill yellow
-      }
-      switch [sa tcssad get nodState] {
-         A {
-            if { [string equal [sa oiwfsGuide get nodachopa] On] ||
-                  [string equal [sa oiwfsGuide get nodachopb] On] } {
-               $itk_component(canvas) itemconfigure $arm -stipple ""
-            } else {
-               $itk_component(canvas) itemconfigure $arm -stipple gray50
-            }
-         }
-         B {
-            if { [string equal [sa oiwfsGuide get nodbchopa] On] ||
-                  [string equal [sa oiwfsGuide get nodbchopb] On] } {
-               $itk_component(canvas) itemconfigure $arm -stipple ""
-            } else {
-               $itk_component(canvas) itemconfigure $arm -stipple gray50
-            }
-         }
       }
    } else {
       $itk_component(canvas) itemconfigure $arm -fill red -stipple ""
