@@ -128,7 +128,8 @@ static int update( Tcl_Interp *interp )
     //FIXME: Put the distortion values, missing from the TCS context. This must
     //removed if TCS is modified to provide a full context.
     if(AST_CTXA_SIZE-TCS_CTXA_SIZE == DISTORTION_SIZE) {
-    	static double distortion[DISTORTION_SIZE] = {0.0, 1.0, 0.0, 0.0, 0.0, 1.0};
+    	double distortion[DISTORTION_SIZE];
+    	astGetdistortion(distortion);
     	int i;
     	for(i=0; i<DISTORTION_SIZE; i++) {
     		ctxa[TCS_CTXA_SIZE+i] = distortion[i];
