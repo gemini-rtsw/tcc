@@ -28,8 +28,9 @@ static char rcsid[]="$Id:";
 #include "tccAst.h"
 #include "tccDecode.h"
 
-/* Redefine AST_CTXA_SIZE because of bug in TCS V5-4 */
-#define AST_CTXA_SIZE 39
+/* TCS returns a shorter context. It lack the optical distortion values. */
+#define TCS_CTXA_SIZE 39
+#define DISTORTION_SIZE 6
 
 static int update( Tcl_Interp * );
 static int target( Tcl_Interp *, int, Tcl_Obj *CONST [] );
@@ -72,14 +73,14 @@ int Tccext_AstCmd( ClientData clientdata, Tcl_Interp *interp, int objc,
             return update( interp );
         case 1:
             if ( objc != 7 ) {
-                Tcl_WrongNumArgs( interp, 2, objv, 
+                Tcl_WrongNumArgs( interp, 2, objv,
                         "origin chop wavelength frame equinox");
                 return TCL_ERROR;
             }
             return target( interp, objc, objv );
         case 2:
             if ( objc != 6 ) {
-                Tcl_WrongNumArgs( interp, 2, objv, 
+                Tcl_WrongNumArgs( interp, 2, objv,
                         "theta1 theta2 frame equinox");
                 return TCL_ERROR;
             }
@@ -111,17 +112,27 @@ static int update( Tcl_Interp *interp )
     if ( Tcl_SplitList( interp, Tcl_GetStringResult(interp), &nel, &listPtr) !=
             TCL_OK )
         return TCL_ERROR;
-    if ( nel != AST_CTXA_SIZE ) {
+    if ( nel != TCS_CTXA_SIZE ) {
         Tcl_Free( (char *) listPtr );
-        Tcl_SetResult( interp, "ast context array has wrong size", 
+        Tcl_SetResult( interp, "ast context array has wrong size",
              TCL_VOLATILE);
         return TCL_ERROR;
     }
-    for ( i = 0; i < AST_CTXA_SIZE; i++ ) {
+    for ( i = 0; i < TCS_CTXA_SIZE; i++ ) {
         if ( Tcl_GetDouble( interp, listPtr[i], &ctxa[i] ) != TCL_OK ) {
             Tcl_Free( (char *) listPtr );
             return TCL_ERROR;
         }
+    }
+
+    //FIXME: Put the distortion values, missing from the TCS context. This must
+    //removed if TCS is modified to provide a full context.
+    if(AST_CTXA_SIZE-TCS_CTXA_SIZE == DISTORTION_SIZE) {
+    	static double distortion[DISTORTION_SIZE] = {0.0, 1.0, 0.0, 0.0, 0.0, 1.0};
+    	int i;
+    	for(i=0; i<DISTORTION_SIZE; i++) {
+    		ctxa[TCS_CTXA_SIZE+i] = distortion[i];
+    	}
     }
 
 /* Free the list allocated by Tcl_SplitList. */
@@ -154,7 +165,7 @@ static int target( Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[] )
 
 /* Focal plane X/Y. */
     astGetpo ( &po );
-    if ( Tcl_GetIndexFromObj( interp, objv[2], pos, "pointing origin", 
+    if ( Tcl_GetIndexFromObj( interp, objv[2], pos, "pointing origin",
         TCL_EXACT, &ind) != TCL_OK ) return TCL_ERROR;
     switch ( ind ) {
         case 0:
@@ -168,7 +179,7 @@ static int target( Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[] )
     }
 
 /* Chop state. */
-    if ( Tcl_GetIndexFromObj( interp, objv[3], chops, "chop states", 
+    if ( Tcl_GetIndexFromObj( interp, objv[3], chops, "chop states",
         TCL_EXACT, &ind) != TCL_OK ) return TCL_ERROR;
     switch ( ind ) {
         case 0:
@@ -184,12 +195,12 @@ static int target( Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[] )
             return TCL_ERROR;
 
 /* Frame */
-    if ( tccDcFrame( interp, Tcl_GetStringFromObj(objv[5], NULL), &frame ) != 
+    if ( tccDcFrame( interp, Tcl_GetStringFromObj(objv[5], NULL), &frame ) !=
         TCL_OK ) return TCL_ERROR;
 
 /* Equinox */
     if ( frame == FK4 || frame == FK5 ) {
-         if ( tccDcEpoch( interp, Tcl_GetStringFromObj(objv[6], NULL), 
+         if ( tccDcEpoch( interp, Tcl_GetStringFromObj(objv[6], NULL),
              &equinox.type, &equinox.year ) != TCL_OK ) return TCL_ERROR;
     }
 
@@ -206,14 +217,14 @@ static int target( Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[] )
 /* Get ZD and airmass */
             zd = D90 - b;
             am = slaAirmas( zd );
-            sprintf( result, "%9.4f %9.4f {} %4.1f %4.2f", a / D2R, 
+            sprintf( result, "%9.4f %9.4f {} %4.1f %4.2f", a / D2R,
                b / D2R, zd / D2R, am );
         } else {
 
 /* Get the hour angle, ZD and airmass. */
             astGetctx( &ctx );
             timeThenR( ctx.time, LAST, &lst );
-            ha = slaDrange( lst - a ); 
+            ha = slaDrange( lst - a );
             slaDr2tf( 3, ha, &hasign, hahmsf );
             zd = slaZd( ha, b, ctx.aoprms[0] );
             am = slaAirmas( zd );
@@ -221,10 +232,10 @@ static int target( Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[] )
             slaDr2tf( 3, a, &sign, hmsf );
             if ( hmsf[0] == 24 ) hmsf[0] = 0;
             slaDr2af( 2, b, &sign, dmsf );
-            sprintf( result, 
+            sprintf( result,
   "%2.2d:%2.2d:%2.2d.%.3d %c%2.2d:%2.2d:%2.2d.%2.2d %c%2.2d:%2.2d:%2.2d %4.1f %4.2f",
                 hmsf[0], hmsf[1], hmsf[2], hmsf[3], sign, dmsf[0], dmsf[1],
-                dmsf[2], dmsf[3], hasign, hahmsf[0], hahmsf[1], hahmsf[2], 
+                dmsf[2], dmsf[3], hasign, hahmsf[0], hahmsf[1], hahmsf[2],
                 zd / D2R, am);
         }
         Tcl_SetResult( interp, result, TCL_VOLATILE);
@@ -249,12 +260,12 @@ static int format( Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[] )
         return TCL_ERROR;
 
 /* Frame */
-    if ( tccDcFrame( interp, Tcl_GetStringFromObj(objv[4], NULL), &frame ) != 
+    if ( tccDcFrame( interp, Tcl_GetStringFromObj(objv[4], NULL), &frame ) !=
         TCL_OK ) return TCL_ERROR;
 
 /* Equinox */
     if ( frame == FK4 || frame == FK5 ) {
-         if ( tccDcEpoch( interp, Tcl_GetStringFromObj(objv[5], NULL), 
+         if ( tccDcEpoch( interp, Tcl_GetStringFromObj(objv[5], NULL),
              &equinox.type, &equinox.year ) != TCL_OK ) return TCL_ERROR;
     }
 
@@ -266,18 +277,18 @@ static int format( Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[] )
         if ( hmsf[0] == 24 ) hmsf[0] = 0;
         slaDr2af( 2, slaDrange( theta2 * D2R ), &sign, dmsf);
         if ( frame == APPT ) {
-            sprintf( result, 
-          "%2.2d:%2.2d:%2.2d.%3.3d %c%2.2d:%2.2d:%2.2d.%2.2d {Apparent place}", 
+            sprintf( result,
+          "%2.2d:%2.2d:%2.2d.%3.3d %c%2.2d:%2.2d:%2.2d.%2.2d {Apparent place}",
                 hmsf[0], hmsf[1], hmsf[2], hmsf[3], sign, dmsf[0], dmsf[1],
                 dmsf[2], dmsf[3]);
         } else if ( frame == FK5 ) {
-            sprintf( result, 
-                "%2.2d:%2.2d:%2.2d.%3.3d %c%2.2d:%2.2d:%2.2d.%2.2d FK5/%c%.1f", 
+            sprintf( result,
+                "%2.2d:%2.2d:%2.2d.%3.3d %c%2.2d:%2.2d:%2.2d.%2.2d FK5/%c%.1f",
                 hmsf[0], hmsf[1], hmsf[2], hmsf[3], sign, dmsf[0], dmsf[1],
                 dmsf[2], dmsf[3], equinox.type, equinox.year);
         } else {
-            sprintf( result, 
-                "%2.2d:%2.2d:%2.2d.%3.3d %c%2.2d:%2.2d:%2.2d.%2.2d FK4/%c%.1f", 
+            sprintf( result,
+                "%2.2d:%2.2d:%2.2d.%3.3d %c%2.2d:%2.2d:%2.2d.%2.2d FK4/%c%.1f",
                 hmsf[0], hmsf[1], hmsf[2], hmsf[3], sign, dmsf[0], dmsf[1],
                 dmsf[2], dmsf[3], equinox.type, equinox.year);
         }
@@ -296,7 +307,7 @@ static int instrument( Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[] )
 
 /* Focal plane X/Y. */
     astGetpo ( &po );
-    if ( Tcl_GetIndexFromObj( interp, objv[2], pos, "pointing origin", 
+    if ( Tcl_GetIndexFromObj( interp, objv[2], pos, "pointing origin",
         TCL_EXACT, &ind) != TCL_OK ) return TCL_ERROR;
     switch ( ind ) {
         case 0:

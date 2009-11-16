@@ -35,18 +35,18 @@ LDFLAGS = -shared \
 tcccmn.so : $(CMNOBJ)
 	$(LD) -o $@ $(CMNOBJ) $(LDFLAGS) 
 
-tccext.so : $(TCCOBJ) 
+tccext.so : $(TCCOBJ) tcccmn.so
 	$(LD) -o $@ $(TCCOBJ) $(LDFLAGS) tcccmn.so \
 		-Wl,-rpath=lib/${HOST_ARCH}
 
-tsdext.so : $(TSDOBJ)
+tsdext.so : $(TSDOBJ) tcccmn.so
 	$(LD) -o $@ $(TSDOBJ) $(CMNOBJ) $(LDFLAGS) tcccmn.so \
 		-Wl,-rpath=lib/${HOST_ARCH}
 
 tcctime.so : $(TIMEOBJ)
 	$(LD) -o $@ $(TIMEOBJ) $(LDFLAGS) 
 
-slaext.so : $(SLAOBJ)
+slaext.so : $(SLAOBJ) tcccmn.so
 	$(LD) -o $@ $(SLAOBJ) $(LDFLAGS) tcccmn.so \
 		-Wl,-rpath=lib/${HOST_ARCH}
 
