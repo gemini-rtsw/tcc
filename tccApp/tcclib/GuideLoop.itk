@@ -460,12 +460,20 @@ itcl::body GuideLoop::constructor args {
 # Monitor the guide states
    foreach rec {p1state p2state oistate aostate m2state absorbtilt m1state \
          m1source p1guide p2guide oiguide p1mweight p2mweight m2p1guide m2p2guide \
-         m2oiguide m2aoguide coma oiblend aoTTGS aoSFO ttgsloop sfoloop useLwfs niciAOloop niciAPD} {
+         m2oiguide m2aoguide coma oiblend aoTTGS aoSFO ttgsloop sfoloop useLwfs} {
       if { [llength [itcl::find objects ::guideConfig.$rec]] == 0 } {
          RecordMonitor ::guideConfig.$rec guideConfig $rec
       }
       lappend monids [::guideConfig.$rec add [itcl::code $this recolour]]
    }
+	if { [calparam cget -site] eq "CP" } {
+		foreach rec {niciAOloop niciAPD} {
+			if { [llength [itcl::find objects ::guideConfig.$rec]] == 0 } {
+				RecordMonitor ::guideConfig.$rec guideConfig $rec
+			}
+			lappend monids [::guideConfig.$rec add [itcl::code $this recolour]]
+		}
+	}
 
 # Schedule an update once the channels have connected.
    after 1000 [itcl::code $this recolour]
@@ -475,10 +483,12 @@ itcl::body GuideLoop::constructor args {
 
 itcl::body GuideLoop::destructor {} {
    foreach rec {p1state p2state oistate aostate m2state absorbtilt m1state \
-         m1source p1guide p2guide oiguide p1mweight p2mweight m2p1guide m2p2guide \
-	 m2oiguide m2aoguide coma oiblend aoTTGS aoSFO ttgsloop sfoloop useLwfs niciAOloop niciAPD} mon $monids {
-	::guideConfig.$rec remove $mon
-    }
+      	m1source p1guide p2guide oiguide p1mweight p2mweight m2p1guide m2p2guide \
+	 		m2oiguide m2aoguide coma oiblend aoTTGS aoSFO ttgsloop sfoloop useLwfs niciAOloop niciAPD} mon $monids {
+		if { ( $rec ne niciAOloop && $rec ne niciAPD ) || [calparam cget -site] eq "CP" } {
+			::guideConfig.$rec remove $mon
+		}
+	}
 }
 
 itcl::body GuideLoop::recolour args {

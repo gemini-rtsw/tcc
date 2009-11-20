@@ -210,7 +210,9 @@ itcl::body GuideAlarm::constructor {args} {
 	sa guidects proc ttgs3  "$this updateProc"
 	sa guidects proc ttgs4  "$this updateProc"
 	sa guidects proc sfo    "$this updateProc"
-	sa guidects proc nici "$this updateProc"
+	if {[calparam cget -site] eq "CP"} {
+		sa guidects proc nici "$this updateProc"
+	}
 	sa guidects proc pwfs1cent "$this updateProc2"
 	sa guidects proc pwfs2cent "$this updateProc2"
 	sa guidects proc oiwfscent "$this updateProc2"
@@ -232,7 +234,9 @@ itcl::body GuideAlarm::destructor {} {
 	sa guidects unproc ttgs3  "$this updateProc"
 	sa guidects unproc ttgs4  "$this updateProc"
 	sa guidects unproc sfo    "$this updateProc"
-	sa guidects unproc nici "$this updateProc"
+	if {[calparam cget -site] eq "CP"} {
+		sa guidects unproc nici "$this updateProc"
+	}
 	sa guidects unproc pwfs1cent "$this updateProc2"
 	sa guidects unproc pwfs2cent "$this updateProc2"
 	sa guidects unproc oiwfscent "$this updateProc2"

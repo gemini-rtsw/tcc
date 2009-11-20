@@ -910,7 +910,7 @@ global env
       }
       oiaoAPD {
 	 # AWE will be checking a channel in NICI
-	  if { [catch {sa guideConfig get niciAPD} oiaoAPD ] } {
+	  if { [calparam cget -site] ne "CP" || [catch {sa guideConfig get niciAPD} oiaoAPD ] } {
 		return 0
 	  }
 	  if { [string match "BUSY*" $oiaoAPD ] } {

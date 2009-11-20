@@ -297,15 +297,16 @@ itcl::body WfsConfig::pageSelectCB {color} {
 }
 
 itcl::body WfsConfig::niciState {state} {
-
-    $itk_component(niciLabel) configure -state $state
-    $itk_component(nicindcurrMag) configure -state $state
-    $itk_component(nicindreqFlt) configure -state $state
-    $itk_component(nicindcurrFlt) configure -state $state
-    $itk_component(niciAutoBut) configure -state $state
-    $itk_component(nicindcar) configure -state $state
-    $itk_component(niciNDManualFlt) configure -state $state
-    $itk_component(niciManFltApply) configure -state $state
+	if {[calparam cget -site] eq "CP"} {
+	    $itk_component(niciLabel) configure -state $state
+	    $itk_component(nicindcurrMag) configure -state $state
+	    $itk_component(nicindreqFlt) configure -state $state
+	    $itk_component(nicindcurrFlt) configure -state $state
+	    $itk_component(niciAutoBut) configure -state $state
+	    $itk_component(nicindcar) configure -state $state
+	    $itk_component(niciNDManualFlt) configure -state $state
+	    $itk_component(niciManFltApply) configure -state $state
+	}
 }
 
 itcl::body WfsConfig::buildOiwfsPage {parent} {
@@ -318,70 +319,71 @@ itcl::body WfsConfig::buildOiwfsPage {parent} {
 		 ignore -background
 	}
 	pack $itk_component(oiwfsfilter) -anchor w -padx 3 -pady 3
-	
- # ND Filter for the NICI OI/AO system
 
-	itk_component add niciFrame {
-		frame $parent.nicifr
-	} {
-		ignore -background
+ # ND Filter for the NICI OI/AO system
+	if {[calparam cget -site] eq "CP" } {
+		itk_component add niciFrame {
+			frame $parent.nicifr
+		} {
+			ignore -background
+		}
+		itk_component add niciLabel {
+			label $parent.nicifr.lab -text "NICI" 
+		} {
+			 ignore -background
+		}
+		itk_component add nicindcurrMag {
+			 MonitorLabel $parent.nicifr.niciNdMag nici ndMag -width 6 -anchor w -text "Req Mag:"
+		}  {
+			 ignore -background
+		}
+		itk_component add nicindreqFlt {
+			 MonitorLabel $parent.nicifr.niciNdReq nici ndReq -width 8 -anchor w  -text "Req ND Flt:"
+		}  {
+			 ignore -background
+		}
+		itk_component add nicindcurrFlt {
+			 MonitorLabel $parent.nicifr.niciNdFlt nici ndfilt2 -width 8 -anchor w  -text "Cur ND Flt:"
+		}  {
+			 ignore -background
+		}
+		itk_component add niciManFltFrame {
+			 frame $parent.nicimanfr
+		} {
+			 ignore -background
+		}
+		itk_component add niciNDManualFlt {
+			 iwidgets::optionmenu $parent.nicimanfr.niciNdFltSel -labeltext "ND filter" -labelpos w -width 90
+		} {
+			 ignore -background
+		}
+		$itk_component(niciNDManualFlt) insert end Block ND5 ND3 ND2 ND1 Open
+		itk_component add niciManFltApply {
+			button $parent.nicimanfr.nicimanflapply -text "Apply ND Filter" -command [itcl::code $this setmanNICInd]
+		} {
+			ignore -background
+		}
+		itk_component add niciFrame2 {
+			frame $parent.nicifr2
+		} {
+			ignore -background
+		}
+		itk_component add niciAutoBut {
+			button $parent.nicifr2.nicibut -text "Start AUTO ND Config" -command [itcl::code $this startNICInd]
+		} {
+			 ignore -background
+		}
+		itk_component add nicindcar {
+			 MonitorLabel $parent.nicifr2.nicicar nici ndCAR -width 10 -anchor w -text "CAR:"
+		}  {
+			 ignore -background
+		}
+		pack $itk_component(niciLabel) -side top
+			  pack $itk_component(nicindcurrMag) $itk_component(nicindreqFlt) $itk_component(nicindcurrFlt) -side left -padx 2
+			  pack $itk_component(niciNDManualFlt) $itk_component(niciManFltApply) -side left
+		pack $itk_component(niciAutoBut) $itk_component(nicindcar) -side left -padx 2
+		pack $itk_component(niciFrame) $itk_component(niciManFltFrame) $itk_component(niciFrame2) -side top -padx 3 -pady 3
 	}
-	itk_component add niciLabel {
-		label $parent.nicifr.lab -text "NICI" 
-	} {
-		 ignore -background
-	}
-	itk_component add nicindcurrMag {
-		 MonitorLabel $parent.nicifr.niciNdMag nici ndMag -width 6 -anchor w -text "Req Mag:"
-	}  {
-		 ignore -background
-	}
-	itk_component add nicindreqFlt {
-		 MonitorLabel $parent.nicifr.niciNdReq nici ndReq -width 8 -anchor w  -text "Req ND Flt:"
-	}  {
-		 ignore -background
-	}
-	itk_component add nicindcurrFlt {
-		 MonitorLabel $parent.nicifr.niciNdFlt nici ndfilt2 -width 8 -anchor w  -text "Cur ND Flt:"
-	}  {
-		 ignore -background
-	}
-	itk_component add niciManFltFrame {
-		 frame $parent.nicimanfr
-	} {
-		 ignore -background
-	}
-	itk_component add niciNDManualFlt {
-		 iwidgets::optionmenu $parent.nicimanfr.niciNdFltSel -labeltext "ND filter" -labelpos w -width 90
-	} {
-		 ignore -background
-	}
-	$itk_component(niciNDManualFlt) insert end Block ND5 ND3 ND2 ND1 Open
-	itk_component add niciManFltApply {
-		button $parent.nicimanfr.nicimanflapply -text "Apply ND Filter" -command [itcl::code $this setmanNICInd]
-	} {
-		ignore -background
-	}
-	itk_component add niciFrame2 {
-		frame $parent.nicifr2
-	} {
-		ignore -background
-	}
-	itk_component add niciAutoBut {
-		button $parent.nicifr2.nicibut -text "Start AUTO ND Config" -command [itcl::code $this startNICInd]
-	} {
-		 ignore -background
-	}
-	itk_component add nicindcar {
-		 MonitorLabel $parent.nicifr2.nicicar nici ndCAR -width 10 -anchor w -text "CAR:"
-	}  {
-		 ignore -background
-	}
-	pack $itk_component(niciLabel) -side top
-		  pack $itk_component(nicindcurrMag) $itk_component(nicindreqFlt) $itk_component(nicindcurrFlt) -side left -padx 2
-		  pack $itk_component(niciNDManualFlt) $itk_component(niciManFltApply) -side left
-	pack $itk_component(niciAutoBut) $itk_component(nicindcar) -side left -padx 2
-	pack $itk_component(niciFrame) $itk_component(niciManFltFrame) $itk_component(niciFrame2) -side top -padx 3 -pady 3	
 }
 
 itcl::body WfsConfig::buildAowfsPage {parent} {
