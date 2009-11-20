@@ -23,7 +23,7 @@ itcl::class GuideLoop {
       method recolour {args}
    }
    private {
-      method comacorr {op}
+      method comacorr {val}
       method gaos {val}
       method gaosTTGS {val}
       method gaosSFO {val}
@@ -325,14 +325,14 @@ itcl::body GuideLoop::constructor args {
 #   $itk_component(m2ao) add OFF -pady 0 -padx 0
 
    itk_component add m2coma {
-		ToggleButton $w.m2coma -text COMA -pushedbackground Green -pady 0 \
+		SelectButton $w.m2coma -orient vertical \
             -command [itcl::code $this comacorr]
    } {
       usual
    }
    $w create window 37 54 -width 60 -window $itk_component(m2coma) -tags m2xy
-   #$itk_component(m2coma) add ON -pady 0
-	#$itk_component(m2coma) add OFF -pady 0
+   $itk_component(m2coma) add P1 -pady 0
+	$itk_component(m2coma) add AO -pady 0
 
 # Controls for Mount.
    itk_component add mt {
@@ -823,13 +823,16 @@ itcl::body GuideLoop::recolour args {
 #    }
 }
 
-itcl::body GuideLoop::comacorr {op} {
-   switch $op {
-	push {
-		AO configure -comacorr 1
+itcl::body GuideLoop::comacorr {val} {
+   switch $val {
+	P1 {
+		AO configure -comasource PWFS1
 	}
-	pop {
-		AO configure -comacorr 0
+	AO {
+		AO configure -comasource GAOS
+	}
+	default {
+		AO configure -comasource ""
 	}
    }
 }

@@ -33,7 +33,7 @@ itcl::class ActiveOptics {
       variable p2guide ""
       variable aoguide ""
       variable oiguide ""
-      variable comacorr 0
+      variable comasource ""
       variable m1source ""
       variable m1filename ""
       variable probefrom ""
@@ -578,12 +578,13 @@ puts "beam is $beam gonna wait for 1 second"
   }
 
 # Coma correction.
-   if { [state coma] &&  ! $comacorr } {
+   if { [state coma] && [string is space $comasource] } {
       cs m2GuideMode set coma Off
       logger command m2GuideMode
-   } elseif {  ! [state coma] &&  $comacorr } {
-			cs m2GuideMode set coma On
-			logger command m2GuideMode
+   } elseif { ![string is space $comasource] } {
+		cs m2GuideMode set comaSource $comasource
+		cs m2GuideMode set coma On
+		logger command m2GuideMode
    }
 
 # Mount guide mode.
