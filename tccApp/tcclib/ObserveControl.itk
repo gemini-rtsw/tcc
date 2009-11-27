@@ -532,7 +532,8 @@ itcl::body ObserveControl::selwfs {} {
       }
       OI {
          set wfs Oiwfs
-         if { [sa agssad get oiwfsName] == "GMOS" } {
+			set oiwfsSrc [sa agssad get oiwfsName]
+         if { $oiwfsSrc eq "GMOS" || $oiwfsSrc eq "F2" } {
             $itk_component(dark) configure -state normal
          } else {
             $itk_component(dark) configure -state disabled
