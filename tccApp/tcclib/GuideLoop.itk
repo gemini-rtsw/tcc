@@ -23,7 +23,7 @@ itcl::class GuideLoop {
       method recolour {args}
    }
    private {
-      method comacorr {val}
+      method comacorr {op}
       method gaos {val}
       method gaosTTGS {val}
       method gaosSFO {val}
@@ -258,7 +258,7 @@ itcl::body GuideLoop::constructor args {
    $w create text 95 42 -text TIP/TILT -tags m2 -font $font
    $w create text 95 62 -text FOCUS -tags m2 -font $font
    $w create rectangle 0 0 73 87 -fill white -tags "active m2xy m2xy_bg"
-   $w create text 37 22 -text "M2 COMA" -tags m2xy -font $font
+   $w create text 37 24 -text "M2" -tags m2xy -font $font
    $w create rectangle 0 0 123 87 -fill white -tags "active m1 m1_bg"
    $w create text 92 33 -text M1 -tags m1 -font $font
    $w create text 92 54 -text FIGURE -tags m1 -font $font
@@ -325,17 +325,15 @@ itcl::body GuideLoop::constructor args {
 #   $itk_component(m2ao) add OFF -pady 0 -padx 0
 
    itk_component add m2coma {
-		SelectButton $w.m2coma -orient vertical \
+		ToggleButton $w.m2coma -text COMA -pushedbackground Green -pady 0 \
             -command [itcl::code $this comacorr]
    } {
       usual
    }
    $w create window 37 54 -width 60 -window $itk_component(m2coma) -tags m2xy
-   $itk_component(m2coma) add P1 -pady 0
-	$itk_component(m2coma) add AO -pady 0
-	if { [calparam cget -site] eq "CP" } {
-		$itk_component(m2coma) setState "1" disabled
-	}
+   #$itk_component(m2coma) add ON -pady 0
+	#$itk_component(m2coma) add OFF -pady 0
+
 # Controls for Mount.
    itk_component add mt {
 		SelectButton $w.mt -orient horizontal \
@@ -462,7 +460,7 @@ itcl::body GuideLoop::constructor args {
 # Monitor the guide states
    foreach rec {p1state p2state oistate aostate m2state absorbtilt m1state \
          m1source p1guide p2guide oiguide p1mweight p2mweight m2p1guide m2p2guide \
-         m2oiguide m2aoguide coma comasource oiblend aoTTGS aoSFO ttgsloop sfoloop useLwfs} {
+         m2oiguide m2aoguide coma oiblend aoTTGS aoSFO ttgsloop sfoloop useLwfs} {
       if { [llength [itcl::find objects ::guideConfig.$rec]] == 0 } {
          RecordMonitor ::guideConfig.$rec guideConfig $rec
       }
@@ -486,7 +484,7 @@ itcl::body GuideLoop::constructor args {
 itcl::body GuideLoop::destructor {} {
    foreach rec {p1state p2state oistate aostate m2state absorbtilt m1state \
       	m1source p1guide p2guide oiguide p1mweight p2mweight m2p1guide m2p2guide \
-	 		m2oiguide m2aoguide coma comasource oiblend aoTTGS aoSFO ttgsloop sfoloop useLwfs niciAOloop niciAPD} mon $monids {
+	 		m2oiguide m2aoguide coma oiblend aoTTGS aoSFO ttgsloop sfoloop useLwfs niciAOloop niciAPD} mon $monids {
 		if { ( $rec ne "niciAOloop" && $rec ne "niciAPD" ) || [calparam cget -site] eq "CP" } {
 			::guideConfig.$rec remove $mon
 		}
@@ -538,7 +536,7 @@ itcl::body GuideLoop::recolour args {
       } else {
          $w itemconfigure pwfs1_m2 -fill yellow
       }
-      if { [AO state coma] && [AO source coma PWFS1] } {
+      if { [AO state coma] } {
          $w itemconfigure pwfs1_m2 -fill green
       } else {
          $w itemconfigure pwfs1_m2 -fill yellow
@@ -677,7 +675,7 @@ itcl::body GuideLoop::recolour args {
       } else {
          $w itemconfigure gaos_m2 -fill yellow
       }
-      if { [AO state coma] && [AO source coma GAOS] } {
+      if { [AO state coma] } {
          $w itemconfigure gaos_m2 -fill green
       } else {
          $w itemconfigure gaos_m2 -fill yellow
@@ -835,16 +833,13 @@ itcl::body GuideLoop::recolour args {
 #    }
 }
 
-itcl::body GuideLoop::comacorr {val} {
-   switch $val {
-	P1 {
-		AO configure -comasource PWFS1
+itcl::body GuideLoop::comacorr {op} {
+   switch $op {
+	push {
+		AO configure -comacorr 1
 	}
-	AO {
-		AO configure -comasource ALTAIR
-	}
-	default {
-		AO configure -comasource ""
+	pop {
+		AO configure -comacorr 0
 	}
    }
 }
@@ -1139,7 +1134,7 @@ itcl::body GuideLoop::reset {} {
    $itk_component(m2p2) pop
    $itk_component(m2ao) pop
    $itk_component(m2oi) pop
-   $itk_component(m2coma) select ""
+   $itk_component(m2coma) pop
    $itk_component(mt) select ""
 	$itk_component(prto) select ""
 	$itk_component(prfrom) select ""
