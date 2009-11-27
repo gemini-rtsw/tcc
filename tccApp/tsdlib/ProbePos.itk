@@ -91,35 +91,36 @@ itcl::body ProbePos::update {} {
       if { [isInPosition $sad $inpos] } {
          $itk_component(canx) itemconfigure bg -fill green
          $itk_component(cany) itemconfigure bg -fill green
-      } else {
-         $itk_component(canx) itemconfigure bg -fill yellow
-         $itk_component(cany) itemconfigure bg -fill yellow
-      }
-      switch [sa tcssad get nodState] {
-         A {
-            if { [string equal [sa ${probename}Guide get nodachopa] On] ||
-                  [string equal [sa ${probename}Guide get nodachopb] On] } {
-               $itk_component(canx) itemconfigure bg -stipple ""
-               $itk_component(cany) itemconfigure bg -stipple ""
-            } else {
-               $itk_component(canx) itemconfigure bg -stipple gray50
-               $itk_component(cany) itemconfigure bg -stipple gray50
-            }
-         }
-         B {
-            if { [string equal [sa ${probename}Guide get nodbchopa] On] ||
-                  [string equal [sa ${probename}Guide get nodbchopb] On] } {
-               $itk_component(canx) itemconfigure bg -stipple ""
-               $itk_component(cany) itemconfigure bg -stipple ""
-            } else {
-               $itk_component(canx) itemconfigure bg -stipple gray50
-               $itk_component(cany) itemconfigure bg -stipple gray50
-            }
-         }
-      }
+      
+	      switch [sa tcssad get nodState] {
+	         A {
+	            if { [string equal [sa ${probename}Guide get nodachopa] On] ||
+	                  [string equal [sa ${probename}Guide get nodachopb] On] } {
+	               $itk_component(canx) itemconfigure bg -fill green
+	               $itk_component(cany) itemconfigure bg -fill green
+	            } else {
+	               $itk_component(canx) itemconfigure bg -fill orange
+	               $itk_component(cany) itemconfigure bg -fill orange
+	            }
+	         }
+	         B {
+	            if { [string equal [sa ${probename}Guide get nodbchopa] On] ||
+	                  [string equal [sa ${probename}Guide get nodbchopb] On] } {
+	               $itk_component(canx) itemconfigure bg -fill green
+	               $itk_component(cany) itemconfigure bg -fill green
+	            } else {
+	               $itk_component(canx) itemconfigure bg -fill orange
+	               $itk_component(cany) itemconfigure bg -fill orange
+	            }
+	         }
+	      }
+		} else {
+			$itk_component(canx) itemconfigure bg -fill yellow
+		  	$itk_component(cany) itemconfigure bg -fill yellow
+		}
    } else {
-      $itk_component(canx) itemconfigure bg -fill red -stipple ""
-      $itk_component(cany) itemconfigure bg -fill red -stipple ""
+      $itk_component(canx) itemconfigure bg -fill red
+      $itk_component(cany) itemconfigure bg -fill red
    }
 }
 
