@@ -258,7 +258,7 @@ itcl::body GuideLoop::constructor args {
    $w create text 95 42 -text TIP/TILT -tags m2 -font $font
    $w create text 95 62 -text FOCUS -tags m2 -font $font
    $w create rectangle 0 0 73 87 -fill white -tags "active m2xy m2xy_bg"
-   $w create text 37 24 -text "M2" -tags m2xy -font $font
+   $w create text 37 22 -text "M2 COMA" -tags m2xy -font $font
    $w create rectangle 0 0 123 87 -fill white -tags "active m1 m1_bg"
    $w create text 92 33 -text M1 -tags m1 -font $font
    $w create text 92 54 -text FIGURE -tags m1 -font $font
@@ -333,7 +333,9 @@ itcl::body GuideLoop::constructor args {
    $w create window 37 54 -width 60 -window $itk_component(m2coma) -tags m2xy
    $itk_component(m2coma) add P1 -pady 0
 	$itk_component(m2coma) add AO -pady 0
-
+	if { [calparam cget -site] eq "CP" } {
+		$itk_component(m2coma) setState "1" disabled
+	}
 # Controls for Mount.
    itk_component add mt {
 		SelectButton $w.mt -orient horizontal \
