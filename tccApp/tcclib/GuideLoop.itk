@@ -460,7 +460,7 @@ itcl::body GuideLoop::constructor args {
 # Monitor the guide states
    foreach rec {p1state p2state oistate aostate m2state absorbtilt m1state \
          m1source p1guide p2guide oiguide p1mweight p2mweight m2p1guide m2p2guide \
-         m2oiguide m2aoguide coma oiblend aoTTGS aoSFO ttgsloop sfoloop useLwfs} {
+         m2oiguide m2aoguide coma comasource oiblend aoTTGS aoSFO ttgsloop sfoloop useLwfs} {
       if { [llength [itcl::find objects ::guideConfig.$rec]] == 0 } {
          RecordMonitor ::guideConfig.$rec guideConfig $rec
       }
@@ -484,8 +484,8 @@ itcl::body GuideLoop::constructor args {
 itcl::body GuideLoop::destructor {} {
    foreach rec {p1state p2state oistate aostate m2state absorbtilt m1state \
       	m1source p1guide p2guide oiguide p1mweight p2mweight m2p1guide m2p2guide \
-	 		m2oiguide m2aoguide coma oiblend aoTTGS aoSFO ttgsloop sfoloop useLwfs niciAOloop niciAPD} mon $monids {
-		if { ( $rec ne niciAOloop && $rec ne niciAPD ) || [calparam cget -site] eq "CP" } {
+	 		m2oiguide m2aoguide coma comasource oiblend aoTTGS aoSFO ttgsloop sfoloop useLwfs niciAOloop niciAPD} mon $monids {
+		if { ( $rec ne "niciAOloop" && $rec ne "niciAPD" ) || [calparam cget -site] eq "CP" } {
 			::guideConfig.$rec remove $mon
 		}
 	}
@@ -536,7 +536,7 @@ itcl::body GuideLoop::recolour args {
       } else {
          $w itemconfigure pwfs1_m2 -fill yellow
       }
-      if { [AO state coma] } {
+      if { [AO state coma] && [AO source coma PWFS1] } {
          $w itemconfigure pwfs1_m2 -fill green
       } else {
          $w itemconfigure pwfs1_m2 -fill yellow
@@ -675,7 +675,7 @@ itcl::body GuideLoop::recolour args {
       } else {
          $w itemconfigure gaos_m2 -fill yellow
       }
-      if { [AO state coma] } {
+      if { [AO state coma] && [AO source coma GAOS] } {
          $w itemconfigure gaos_m2 -fill green
       } else {
          $w itemconfigure gaos_m2 -fill yellow
@@ -839,7 +839,7 @@ itcl::body GuideLoop::comacorr {val} {
 		AO configure -comasource PWFS1
 	}
 	AO {
-		AO configure -comasource GAOS
+		AO configure -comasource ALTAIR
 	}
 	default {
 		AO configure -comasource ""

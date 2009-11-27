@@ -1130,6 +1130,21 @@ itcl::body ActiveOptics::source {component src {beam A}} {
             }
          }
       }
+		coma {
+			set guide [sa guideConfig get comasource]
+			switch $src {
+				PWFS1 {
+					if { $guide eq "PWFS1"} {
+						return 1
+					}
+				}
+				GAOS {
+					if { $guide eq "ALTAIR"} {
+						return 1
+					}
+				}
+			}
+		}
       mount {
          switch [sa guideConfig get absorbtilt value] {
             3 {
