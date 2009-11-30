@@ -1112,11 +1112,23 @@ itcl::body GuideLoop::configSfoEx {} {
 }
 
 itcl::body GuideLoop::m1mode {state} {
-   if { [string is space $state] } {
-      AO configure -m1source ""
-   } else {
-      AO configure -m1source $state
-   }
+	switch $state {
+	P1 {
+		AO configure -m1source PWFS1
+	}
+	P2 {
+		AO configure -m1source PWFS2
+	}
+	OI {
+		AO configure -m1source OIWFS
+	}
+	AO {
+		AO configure -m1source GAOS
+	}
+	default {
+		AO configure -m1source ""
+	}
+	}
 }
 
 itcl::body GuideLoop::reset {} {
