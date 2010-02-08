@@ -40,6 +40,11 @@ itcl::class GuideLoop {
       method sfoloop {val}
       method configSfoEx {}
       variable monids
+		
+		method buildGaos {}
+		method buildGaosArrows {}
+		method buildGems {}
+		method buildGemsArrows {}
    }
    itk_option define -wfsConfigObj wfsConfigObj WfsConfigObj "" {
 	#puts "wfsConfigObj: $itk_option(-wfsConfigObj)"
@@ -143,114 +148,8 @@ itcl::body GuideLoop::constructor args {
    $w create rectangle 0 0 100 20 -fill white -tags "settled aoSettled active"
    $w create text 50 10 -text aoSettled -tags settled -font $font
 
-   $w create rectangle -2 -2 129 237 -fill white -tags "active gaos gaos_bg"
-#   $w create text 96 11 -text GAOS -tags gaos -font $font
-
-   itk_component add gaoson {
-      ToggleButton $w.gaoson -text AO -pushedbackground Green -pady 0 \
-			-command [itcl::code $this gaos]
-   } {
-      usual
-   }
-   $w create window 64 1 -width 60 -window $w.gaoson -tags gaos -anchor n
-#   $w.gaoson add ON -pady 0
-#   $w.gaoson add OFF -pady 0
-
-   # exposure time
-   itk_component add gaos_ex {
-       iwidgets::combobox $w.gaos_ex -arrowrelief flat -width 5 \
-	   -validate real -labeltext "exp(s)"
-   }
-   $w create window 2 24 -window $w.gaos_ex -tag gaos -anchor nw
-   $w.gaos_ex insert list end 0.02 0.01 0.005 0.002 0.001
-   $w.gaos_ex insert entry end [AO cget -gaosExpose]
-   [$w.gaos_ex component list] configure -hscrollmode none \
-       -vscrollmode none
-
-   # TTGS loop closed
-   itk_component add ttao {
-		ToggleButton $w.ttao -text TTGS -pushedbackground Green -pady 0 \
-            -command [itcl::code $this ttgsloop]
-   } {
-      usual
-   }
-   $w create window 2 48 -width 60 -window $w.ttao -tags gaos -anchor nw
-#   $w create text 16 79 -text TTGS -tags gaos -font $font
-#   $itk_component(ttao) add ON -pady 0
-#   $itk_component(ttao) add OFF -pady 0
-
-   # SFO loop closed
-   itk_component add sfao {
-		ToggleButton $w.sfao -text SFO -pushedbackground Green -pady 0 \
-            -command [itcl::code $this sfoloop]
-   } {
-      usual
-   }
-   $w create window 2 69 -width 60 -window $w.sfao -tags gaos -anchor nw
-#   $w create text 16 100 -text SFO -tags gaos -font $font
-#   $itk_component(sfao) add ON -pady 0
-#   $itk_component(sfao) add OFF -pady 0
-
-   # OI Blending
-   itk_component add oiao {
-		ToggleButton $w.oiao -text OIWFS -pushedbackground Green -pady 0 \
-            -command [itcl::code $this oiblend]
-   } {
-      usual
-   }
-   $w create window 2 90 -width 60 -window $w.oiao -tags gaos -anchor nw
-#   $w create text 16 122 -text OI -tags gaos -font $font
-#   $itk_component(oiao) add ON -pady 0
-#   $itk_component(oiao) add OFF -pady 0
-
-   # gaosTTGS
-   itk_component add aottgs {
-		ToggleButton $w.aottgs -text TTGS -pushedbackground Green -pady 0 \
-            -command [itcl::code $this gaosTTGS]
-   } {
-      usual
-   }
-   $w create rectangle 2 113 125 182 -fill white -tags "active gaos gaos_ttgs"
-   $w create window 64 116 -width 60 -window $w.aottgs -tags gaos -anchor n
-#   $w create text 97 122 -text TTGS -tags gaos -font $font
-#   $itk_component(aottgs) add ON -pady 0
-#   $itk_component(aottgs) add OFF -pady 0
-   # TTGS exp
-   itk_component add ttgs_ex {
-       iwidgets::combobox $w.ttgs_ex -arrowrelief flat -width 11 -selectioncommand [itcl::code $this configSfoEx] \
-	   	-listheight 320 -editable 1 -labeltext "Mag(exp)" -labelpos nw
-   }
-   $w create window 4 139 -window $w.ttgs_ex -tags gaos -anchor nw
-   $w.ttgs_ex insert list end 19.0(0.05) 18.5(0.05) 18.0(0.05) 17.5(0.02) 17.0(0.01) 16.5(0.005) 16.0(0.005) \
-       15.5(0.002) 15.0(0.001) 14.5(0.001) 14.0(0.001) 13.5(0.001) 13.0(0.001) 12.5(0.001) 12.0(0.001) 11.5(0.001) \
-       11.0(0.001) 10.5(0.001) 10.0(0.001)
-#   $w.ttgs_ex insert list end 0.05 0.02 0.01 0.005 0.002 0.001
-   $w.ttgs_ex insert entry end 10.0(0.001)
-   [$w.ttgs_ex component list] configure -hscrollmode none \
-            -vscrollmode none
-
-   # gaosSFO
-   itk_component add aosfo {
-		ToggleButton $w.aosfo -text SFO -pushedbackground Green -pady 0 \
-            -command [itcl::code $this gaosSFO]
-   } {
-      usual
-   }
-   $w create rectangle 2 185 125 233 -fill white -tags "active gaos gaos_sfo"
-   $w create window 64 188 -width 60 -window $w.aosfo -tags gaos -anchor n
-#   $w create text 97 190 -text SFO -tags gaos -font $font
-#   $itk_component(aosfo) add ON -pady 0
-#   $itk_component(aosfo) add OFF -pady 0
-   # SFO exp
-   itk_component add sfo_ex {
-       iwidgets::combobox $w.sfo_ex -arrowrelief flat -width 5 \
-	   -validate real -labeltext "exp(s)"
-   }
-   $w create window 4 211 -window $w.sfo_ex -tags gaos -anchor nw
-   $w.sfo_ex insert list end 50.0 20.0 10.0 7.0 5.0 2.0 1.0
-   $w.sfo_ex insert entry end [AO cget -sfoExpose]
-   [$w.sfo_ex component list] configure -hscrollmode none \
-            -vscrollmode none
+	buildGaos
+	buildGaosArrows
 
 # M1, M2 and Mount boxes.
    $w create rectangle 0 0 128 87 -fill white -tags "active m2 m2_bg"
@@ -389,7 +288,6 @@ itcl::body GuideLoop::constructor args {
    $w move m2 172 10
    $w move m2xy 300 10
    $w move m1 250 115
-   $w move gaos 473 74
    $w move settled 480 40
    $w move oiwfs 250 342
    $w move pwfs_comb 31 215
@@ -404,17 +302,8 @@ itcl::body GuideLoop::constructor args {
 
    $w create line 251 370 215 370 215 169 251 169 -width 3 -fill white \
          -tags {active oiwfs_m1} -arrow last -arrowshape {20 20 7}
-   $w create line 471 110 407 110 407 130 373 130 -width 3 -fill white \
-         -tags {active gaos_m1} -arrow last -arrowshape {20 20 7}
 
-   $w create line 374 377 407 377 407 174 473 174 -width 3 -fill white \
-         -tags {active oiwfs_gaos} -arrow last -arrowshape {20 20 7}
 
-# GAOS internal
-   $w create line 475 216 425 216 425 132 473 132 -width 3 -fill white \
-         -tags {active ttgs_gaos} -arrow last -arrowshape {20 20 7}
-   $w create line 475 275 440 275 440 153 473 153 -width 3 -fill white \
-         -tags {active sfo_gaos} -arrow last -arrowshape {20 20 7}
 
 # WFS to M2
    $w create line 45 215 45 33 172 33 -width 3 -fill white \
@@ -422,8 +311,6 @@ itcl::body GuideLoop::constructor args {
 
    $w create line 251 389 205 389 205 97 -width 3 -fill white \
          -tags {active oiwfs_m2} -arrow last -arrowshape {20 20 7}
-   $w create line 471 85 373 85  -width 3 -fill white \
-         -tags {active gaos_m2} -arrow last -arrowshape {20 20 7}
 
 # WFS to Probes
    $w create line 162 265 251 265 -width 3 -fill white \
@@ -437,6 +324,7 @@ itcl::body GuideLoop::constructor args {
 # M2 to mount
    $w create line 172 60  20  60  20 435 251 435 -width 3 -fill white \
          -tags {active m2_mt} -arrow last -arrowshape {20 20 7}
+
 
 # ENABLE/DISABLE/RESET buttons.
 # display loopProcessing state
@@ -1158,4 +1046,140 @@ itcl::body GuideLoop::reset {} {
    $itk_component(aottgs) pop
 #   $itk_component(prto) setState "0 1 2" disabled
    AO configure -probeto ""
+}
+
+itcl::body GuideLoop::buildGaos {} {
+	set w $itk_component(canv)
+
+	$w create rectangle -2 -2 129 237 -fill white -tags "active gaos gaos_bg"
+	#   $w create text 96 11 -text GAOS -tags gaos -font $font
+	
+	itk_component add gaoson {
+		ToggleButton $w.gaoson -text AO -pushedbackground Green -pady 0 \
+			-command [itcl::code $this gaos]
+	} {
+		usual
+	}
+	$w create window 64 1 -width 60 -window $w.gaoson -tags gaos -anchor n
+#   $w.gaoson add ON -pady 0
+#   $w.gaoson add OFF -pady 0
+
+	# exposure time
+	itk_component add gaos_ex {
+		 iwidgets::combobox $w.gaos_ex -arrowrelief flat -width 5 \
+		-validate real -labeltext "exp(s)"
+	}
+	$w create window 2 24 -window $w.gaos_ex -tag gaos -anchor nw
+	$w.gaos_ex insert list end 0.02 0.01 0.005 0.002 0.001
+	$w.gaos_ex insert entry end [AO cget -gaosExpose]
+	[$w.gaos_ex component list] configure -hscrollmode none \
+		 -vscrollmode none
+
+	# TTGS loop closed
+	itk_component add ttao {
+		ToggleButton $w.ttao -text TTGS -pushedbackground Green -pady 0 \
+				-command [itcl::code $this ttgsloop]
+	} {
+		usual
+	}
+	$w create window 2 48 -width 60 -window $w.ttao -tags gaos -anchor nw
+#   $w create text 16 79 -text TTGS -tags gaos -font $font
+#   $itk_component(ttao) add ON -pady 0
+#   $itk_component(ttao) add OFF -pady 0
+
+	# SFO loop closed
+	itk_component add sfao {
+		ToggleButton $w.sfao -text SFO -pushedbackground Green -pady 0 \
+				-command [itcl::code $this sfoloop]
+	} {
+		usual
+	}
+	$w create window 2 69 -width 60 -window $w.sfao -tags gaos -anchor nw
+#   $w create text 16 100 -text SFO -tags gaos -font $font
+#   $itk_component(sfao) add ON -pady 0
+#   $itk_component(sfao) add OFF -pady 0
+
+	# OI Blending
+	itk_component add oiao {
+		ToggleButton $w.oiao -text OIWFS -pushedbackground Green -pady 0 \
+				-command [itcl::code $this oiblend]
+	} {
+		usual
+	}
+	$w create window 2 90 -width 60 -window $w.oiao -tags gaos -anchor nw
+#   $w create text 16 122 -text OI -tags gaos -font $font
+#   $itk_component(oiao) add ON -pady 0
+#   $itk_component(oiao) add OFF -pady 0
+
+	# gaosTTGS
+	itk_component add aottgs {
+		ToggleButton $w.aottgs -text TTGS -pushedbackground Green -pady 0 \
+				-command [itcl::code $this gaosTTGS]
+	} {
+		usual
+	}
+	$w create rectangle 2 113 125 182 -fill white -tags "active gaos gaos_ttgs"
+	$w create window 64 116 -width 60 -window $w.aottgs -tags gaos -anchor n
+#   $w create text 97 122 -text TTGS -tags gaos -font $font
+#   $itk_component(aottgs) add ON -pady 0
+#   $itk_component(aottgs) add OFF -pady 0
+	# TTGS exp
+	itk_component add ttgs_ex {
+		 iwidgets::combobox $w.ttgs_ex -arrowrelief flat -width 11 -selectioncommand [itcl::code $this configSfoEx] \
+			-listheight 320 -editable 1 -labeltext "Mag(exp)" -labelpos nw
+	}
+	$w create window 4 139 -window $w.ttgs_ex -tags gaos -anchor nw
+	$w.ttgs_ex insert list end 19.0(0.05) 18.5(0.05) 18.0(0.05) 17.5(0.02) 17.0(0.01) 16.5(0.005) 16.0(0.005) \
+		 15.5(0.002) 15.0(0.001) 14.5(0.001) 14.0(0.001) 13.5(0.001) 13.0(0.001) 12.5(0.001) 12.0(0.001) 11.5(0.001) \
+		 11.0(0.001) 10.5(0.001) 10.0(0.001)
+#   $w.ttgs_ex insert list end 0.05 0.02 0.01 0.005 0.002 0.001
+	$w.ttgs_ex insert entry end 10.0(0.001)
+	[$w.ttgs_ex component list] configure -hscrollmode none \
+				-vscrollmode none
+
+	# gaosSFO
+	itk_component add aosfo {
+		ToggleButton $w.aosfo -text SFO -pushedbackground Green -pady 0 \
+				-command [itcl::code $this gaosSFO]
+	} {
+		usual
+	}
+	$w create rectangle 2 185 125 233 -fill white -tags "active gaos gaos_sfo"
+	$w create window 64 188 -width 60 -window $w.aosfo -tags gaos -anchor n
+#   $w create text 97 190 -text SFO -tags gaos -font $font
+#   $itk_component(aosfo) add ON -pady 0
+#   $itk_component(aosfo) add OFF -pady 0
+	# SFO exp
+	itk_component add sfo_ex {
+		 iwidgets::combobox $w.sfo_ex -arrowrelief flat -width 5 \
+		-validate real -labeltext "exp(s)"
+	}
+	$w create window 4 211 -window $w.sfo_ex -tags gaos -anchor nw
+	$w.sfo_ex insert list end 50.0 20.0 10.0 7.0 5.0 2.0 1.0
+	$w.sfo_ex insert entry end [AO cget -sfoExpose]
+	[$w.sfo_ex component list] configure -hscrollmode none \
+				-vscrollmode none	
+
+	$w move gaos 473 74
+}
+
+itcl::body GuideLoop::buildGaosArrows {} {
+	set w $itk_component(canv)
+	$w create line 471 85 373 85  -width 3 -fill white -tags {active gaos_m2} \
+		-arrow last -arrowshape {20 20 7}
+	$w create line 471 110 407 110 407 130 373 130 -width 3 -fill white \
+		-tags {active gaos_m1} -arrow last -arrowshape {20 20 7}
+	$w create line 374 377 407 377 407 174 473 174 -width 3 -fill white \
+		-tags {active oiwfs_gaos} -arrow last -arrowshape {20 20 7}
+
+	# GAOS internal
+	$w create line 475 216 425 216 425 132 473 132 -width 3 -fill white \
+		-tags {active ttgs_gaos} -arrow last -arrowshape {20 20 7}
+	$w create line 475 275 440 275 440 153 473 153 -width 3 -fill white \
+		-tags {active sfo_gaos} -arrow last -arrowshape {20 20 7}
+
+}
+
+itcl::body GuideLoop::buildGems {} {
+	
 }
