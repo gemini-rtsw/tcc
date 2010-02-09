@@ -41,20 +41,19 @@ itcl::class Guide {
    constructor {} {}
    public {
       method apply {comp}
-		method applyGems { virtualGuide type }
-      method init {}
+		method applyGems { virtualGuide }
+		method disableGems { virtualGuide }
+		method init {}
       method preview {view}
       method save {node}
       variable pwfs1Active never
       variable pwfs2Active never
       variable oiwfsActive never
-		variable cwfsActive never
-		variable odgwActive never
+		variable gemsActive never
 		variable pwfs1NodState AB
       variable pwfs2NodState AB
       variable oiwfsNodState AB
-		variable cwfsNodState AB
-		variable odgwNodState AB
+		variable gemsNodState AB
 	}
    private {
       method setEnableFlags {wfs active nodstate}
@@ -67,18 +66,12 @@ itcl::body Guide::apply {comp} {
    setEnableFlags oiwfs $oiwfsActive $oiwfsNodState
 }
 
-itcl::body Guide::applyGems { virtualGuide type } {
-	switch $type {
-		cwfs {
-			setEnableFlags $virtualGuide $cwfsActive $cwfsNodState
-		}
-		odgw {
-			setEnableFlags $virtualGuide $odgwActive $odgwNodState
-		}
-		none {
-			setEnableFlags $virtualGuide never AB
-		}
-	}
+itcl::body Guide::applyGems { virtualGuide } {
+	setEnableFlags $virtualGuide $gemsActive $gemsNodState
+}
+
+itcl::body Guide::disableGems { virtualGuide } {
+	setEnableFlags $virtualGuide never AB
 }
 
 itcl::body Guide::init {} {

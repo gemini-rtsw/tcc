@@ -19,6 +19,9 @@ itcl::class GuideControl {
       method load {name}
       method save {name}
    }
+	private {
+		method applycmd {}
+	}
 }
 
 itk::usual GuideControl {
@@ -29,24 +32,33 @@ itk::usual GuideControl {
 
 itcl::body GuideControl::constructor {args} {
 
-# Create 3 panels, one for each of the wave front sensors.
+# Create 4 panels, one for each of the wave front sensors.
    set w $itk_interior
-   foreach wfs {pwfs1 pwfs2 oiwfs} {
+   foreach wfs {pwfs1 pwfs2 oiwfs gems} {
       itk_component add $wfs {
          frame $w.$wfs -bd 2 -relief sunken
       }
    }
-   pack $itk_component(pwfs1) $itk_component(pwfs2) $itk_component(oiwfs)
+   pack $itk_component(pwfs1) $itk_component(pwfs2) $itk_component(oiwfs) \
+		$itk_component(gems)
 
-   foreach wfs {pwfs1 pwfs2 oiwfs} label {PWFS1 P2/AO OIWFS} {
+   foreach wfs {pwfs1 pwfs2 oiwfs gems} label {PWFS1 P2/AO OIWFS GeMS} {
       set w $itk_component($wfs)
 
 # Chop state
-      itk_component add ${wfs}chop {
-         iwidgets::optionmenu $w.chop \
-               -labeltext "$label probe follows star" \
-               -labelpos nw
-      }
+		if { $wfs eq "gems" } {
+			itk_component add ${wfs}chop {
+				iwidgets::optionmenu $w.chop \
+						-labeltext "$label probes follow stars" \
+						-labelpos nw
+			}
+		} else {
+	      itk_component add ${wfs}chop {
+	         iwidgets::optionmenu $w.chop \
+	               -labeltext "$label probe follows star" \
+	               -labelpos nw
+	      }
+		}
       [$itk_component(${wfs}chop) component menuBtn] configure -anchor w
       $itk_component(${wfs}chop) insert end \
             "when in chop beam A" \
@@ -66,6 +78,12 @@ itcl::body GuideControl::constructor {args} {
             -padx 5 -pady 2 -anchor w
 
    }
+	
+	if {[calparam cget -site] eq "MK"} {
+		$itk_component(gemschop) configure -state disabled
+		$itk_component(gemsnod) configure -state disabled
+	}
+	
 # Define the object description.
    set description "guide configuration"
 
@@ -76,7 +94,7 @@ itcl::body GuideControl::save {name} {
 #+
 # Updates the named guide object.
 #-
-   foreach wfs {pwfs1 pwfs2 oiwfs} {
+   foreach wfs {pwfs1 pwfs2 oiwfs gems} {
       switch [$itk_component(${wfs}nod) index \
             [$itk_component(${wfs}nod) get]] {
          0 {set nod A}
@@ -98,7 +116,7 @@ itcl::body GuideControl::save {name} {
 itcl::body GuideControl::load {name} {
 # Copy the contents of the guide object selected in the combobox
 # into the edit control.
-   foreach wfs {pwfs1 pwfs2 oiwfs} {
+   foreach wfs {pwfs1 pwfs2 oiwfs gems} {
       switch [$name cget -${wfs}Active] {
          A {$itk_component(${wfs}chop) select 0}
          B {$itk_component(${wfs}chop) select 1}
@@ -112,4 +130,35 @@ itcl::body GuideControl::load {name} {
          AB {$itk_component(${wfs}nod) select 2}
       }
    }
+}
+
+# Guide::apply only applies the guide configuration for the non-virtual guiders
+# only. For GeMS, the guide configuration is set according to the current 
+# virtual guider mapping in an extra step.
+itcl::body GuideControl::applycmd {} {
+	if { ![store [$itk_component(selector) get]] } {
+		return
+	}
+	if {[calparam cget -site] eq "CP"} {
+		set comp $itk_option(-component)
+		set obj $::Config($comp,namespace)::$::Config($comp,value)
+		foreach vguider {g1 g2 g3 g4} {
+			set value [[TcsVirtualMap::getSingleton] getMap $vguider]
+			switch $value {
+			TTGS1 -
+			TTGS2 -
+			TTGS3 -
+			ODGW1 -
+			ODGW2 -
+			ODGW3 -
+			ODGW4 {
+				$obj applyGems $vguider
+			}
+			default {
+				$obj disableGems $vguider
+			}
+			}
+		}
+	}
+	doapply
 }
