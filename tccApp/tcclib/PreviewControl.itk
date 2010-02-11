@@ -31,6 +31,7 @@ itcl::class PreviewControl {
 		method updateProbeAlarmXY {xComp yComp rComp x y Xmin Xmax Ymin Ymax {conv {0 1 0 0 0 1}}}
 		method setProbeAlarm {xComp yComp rComp}
 		method clearProbeAlarm {xComp yComp rComp}
+		method transformCoordinates {x y coeffs}
 	}
 }
 
@@ -298,13 +299,22 @@ itcl::body PreviewControl::constructor args {
 		itk_component add lodgw4 {
 			label $w.lodgw4 -text "ODGW 4"
 		}
-
+		itk_component add xpx {
+			label $w.xpx -text "X (pixels)"
+		}
+		itk_component add ypx {
+			label $w.ypx -text "Y (pixels)"
+		}
+		itk_component add rpx {
+			label $w.rpx -text "R (pixels)"
+		}
 		grid $itk_component(lttgs1) $itk_component(ttgs1x) $itk_component(ttgs1y) \
 			$itk_component(ttgs1r) -sticky e
 		grid $itk_component(lttgs2) $itk_component(ttgs2x) $itk_component(ttgs2y) \
 			$itk_component(ttgs2r) -sticky e
 		grid $itk_component(lttgs3) $itk_component(ttgs3x) $itk_component(ttgs3y) \
 			$itk_component(ttgs3r) -sticky e
+		grid x $itk_component(xpx) $itk_component(ypx) $itk_component(rpx)
 		grid $itk_component(lodgw1) $itk_component(odgw1x) $itk_component(odgw1y) \
 			$itk_component(odgw1r) -sticky e
 		grid $itk_component(lodgw2) $itk_component(odgw2x) $itk_component(odgw2y) \
@@ -597,15 +607,18 @@ itcl::body PreviewControl::update {} {
 				if { ! [string equal $odgw1 ""] } {
 					set x [lindex $odgw1 0]
 					set y [lindex $odgw1 1]
-					updateProbeTarget odgw1x odgw1y odgw1r $x $y
+					set coeffs [list [sa tcssad get odgw1ACoeff] [sa tcssad get odgw1BCoeff] \
+						[sa tcssad get odgw1CCoeff] [sa tcssad get odgw1DCoeff] \
+						[sa tcssad get odgw1ECoeff] [sa tcssad get odgw1FCoeff] ]
+					set coords [transformCoordinates $x $y $coeffs]
+					set x [lindex $coords 0]
+					set y [lindex $coords 1]
+					updateProbeTarget odgw1x odgw1y odgw1r $x $y 1.0
 					set xmax [calparam cget -odgw1XLimHigh]
 					set xmin [calparam cget -odgw1XLimLow]
 					set ymax [calparam cget -odgw1YLimHigh]
 					set ymin [calparam cget -odgw1YLimLow]
-					set coeffs [list [sa tcssad get odgw1ACoeff] [sa tcssad get odgw1BCoeff] \
-						[sa tcssad get odgw1CCoeff] [sa tcssad get odgw1DCoeff] \
-						[sa tcssad get odgw1ECoeff] [sa tcssad get odgw1FCoeff] ]
-					updateProbeAlarmXY odgw1x odgw1y odgw1r $x $y $xmin $xmax $ymin $ymax $coeffs				
+					updateProbeAlarmXY odgw1x odgw1y odgw1r $x $y $xmin $xmax $ymin $ymax				
 				} else {
 					updateProbeTarget odgw1x odgw1y odgw1r
 					clearProbeAlarm odgw1x odgw1y odgw1r
@@ -614,15 +627,18 @@ itcl::body PreviewControl::update {} {
 				if { ! [string equal $odgw2 ""] } {
 					set x [lindex $odgw2 0]
 					set y [lindex $odgw2 1]
-					updateProbeTarget odgw2x odgw2y odgw2r $x $y
+					set coeffs [list [sa tcssad get odgw2ACoeff] [sa tcssad get odgw2BCoeff] \
+						[sa tcssad get odgw2CCoeff] [sa tcssad get odgw2DCoeff] \
+						[sa tcssad get odgw2ECoeff] [sa tcssad get odgw2FCoeff] ]
+					set coords [transformCoordinates $x $y $coeffs]
+					set x [lindex $coords 0]
+					set y [lindex $coords 1]
+					updateProbeTarget odgw2x odgw2y odgw2r $x $y 1.0
 					set xmax [calparam cget -odgw2XLimHigh]
 					set xmin [calparam cget -odgw2XLimLow]
 					set ymax [calparam cget -odgw2YLimHigh]
 					set ymin [calparam cget -odgw2YLimLow]
-					set coeffs [list [sa tcssad get odgw2ACoeff] [sa tcssad get odgw2BCoeff] \
-						[sa tcssad get odgw2CCoeff] [sa tcssad get odgw2DCoeff] \
-						[sa tcssad get odgw2ECoeff] [sa tcssad get odgw2FCoeff] ]
-					updateProbeAlarmXY odgw2x odgw2y odgw2r $x $y $xmin $xmax $ymin $ymax $coeffs
+					updateProbeAlarmXY odgw2x odgw2y odgw2r $x $y $xmin $xmax $ymin $ymax
 				} else {
 					updateProbeTarget odgw2x odgw2y odgw2r
 					clearProbeAlarm odgw2x odgw2y odgw2r
@@ -631,15 +647,18 @@ itcl::body PreviewControl::update {} {
 				if { ! [string equal $odgw3 ""] } {
 					set x [lindex $odgw3 0]
 					set y [lindex $odgw3 1]
-					updateProbeTarget odgw3x odgw3y odgw3r $x $y
+					set coeffs [list [sa tcssad get odgw3ACoeff] [sa tcssad get odgw3BCoeff] \
+						[sa tcssad get odgw3CCoeff] [sa tcssad get odgw3DCoeff] \
+						[sa tcssad get odgw3ECoeff] [sa tcssad get odgw3FCoeff] ]
+					set coords [transformCoordinates $x $y $coeffs]
+					set x [lindex $coords 0]
+					set y [lindex $coords 1]
+					updateProbeTarget odgw3x odgw3y odgw3r $x $y 1.0
 					set xmax [calparam cget -odgw3XLimHigh]
 					set xmin [calparam cget -odgw3XLimLow]
 					set ymax [calparam cget -odgw3YLimHigh]
 					set ymin [calparam cget -odgw3YLimLow]
-					set coeffs [list [sa tcssad get odgw3ACoeff] [sa tcssad get odgw3BCoeff] \
-						[sa tcssad get odgw3CCoeff] [sa tcssad get odgw3DCoeff] \
-						[sa tcssad get odgw3ECoeff] [sa tcssad get odgw3FCoeff] ]
-					updateProbeAlarmXY odgw3x odgw3y odgw3r $x $y $xmin $xmax $ymin $ymax $coeffs
+					updateProbeAlarmXY odgw3x odgw3y odgw3r $x $y $xmin $xmax $ymin $ymax
 				} else {
 					updateProbeTarget odgw3x odgw3y odgw3r
 					clearProbeAlarm odgw3x odgw3y odgw3r
@@ -648,15 +667,18 @@ itcl::body PreviewControl::update {} {
 				if { ! [string equal $odgw4 ""] } {
 					set x [lindex $odgw4 0]
 					set y [lindex $odgw4 1]
-					updateProbeTarget odgw4x odgw4y odgw4r $x $y
+					set coeffs [list [sa tcssad get odgw4ACoeff] [sa tcssad get odgw4BCoeff] \
+						[sa tcssad get odgw4CCoeff] [sa tcssad get odgw4DCoeff] \
+						[sa tcssad get odgw4ECoeff] [sa tcssad get odgw4FCoeff] ]
+					set coords [transformCoordinates $x $y $coeffs]
+					set x [lindex $coords 0]
+					set y [lindex $coords 1]
+					updateProbeTarget odgw4x odgw4y odgw4r $x $y 1.0
 					set xmax [calparam cget -odgw4XLimHigh]
 					set xmin [calparam cget -odgw4XLimLow]
 					set ymax [calparam cget -odgw4YLimHigh]
 					set ymin [calparam cget -odgw4YLimLow]
-					set coeffs [list [sa tcssad get odgw4ACoeff] [sa tcssad get odgw4BCoeff] \
-						[sa tcssad get odgw4CCoeff] [sa tcssad get odgw4DCoeff] \
-						[sa tcssad get odgw4ECoeff] [sa tcssad get odgw4FCoeff] ]
-					updateProbeAlarmXY odgw4x odgw4y odgw4r $x $y $xmin $xmax $ymin $ymax $coeffs
+					updateProbeAlarmXY odgw4x odgw4y odgw4r $x $y $xmin $xmax $ymin $ymax
 				} else {
 					updateProbeTarget odgw4x odgw4y odgw4r
 					clearProbeAlarm odgw4x odgw4y odgw4r
@@ -794,10 +816,9 @@ itcl::body PreviewControl::updateProbeAlarmR {xComp yComp rComp x y Rmin Rmax} {
 
 itcl::body PreviewControl::updateProbeAlarmXY {xComp yComp rComp x y Xmin Xmax \
 															  Ymin Ymax {coeffs {0 1 0 0 0 1}}} {
-	set oix [expr { [lindex $coeffs 0] + [lindex $coeffs 1] * $x + \
-		[lindex $coeffs 2] * $y} ]
-	set oiy [expr { [lindex $coeffs 3] + [lindex $coeffs 4] * $x + \
-		[lindex $coeffs 5] * $y} ]
+	set coords [transformCoordinates $x $y $coeffs]
+	set oix [lindex $coords 0]
+	set oiy [lindex $coords 1]
 	puts "PreviewControl::updateProbeAlarmXY $oix $oiy"
 	if { $oix > $Xmax || $oix < $Xmin || $oiy > $Ymax || $oiy < $Ymin } {
 		setProbeAlarm $xComp $yComp $rComp
@@ -816,4 +837,12 @@ itcl::body PreviewControl::clearProbeAlarm {xComp yComp rComp} {
 	$itk_component($xComp) configure -state normal
 	$itk_component($yComp) configure -state normal
 	$itk_component($rComp) configure -state normal
+}
+
+itcl::body PreviewControl::transformCoordinates {x y coeffs} {
+	set oix [expr { [lindex $coeffs 0] + [lindex $coeffs 1] * $x + \
+		[lindex $coeffs 2] * $y} ]
+	set oiy [expr { [lindex $coeffs 3] + [lindex $coeffs 4] * $x + \
+		[lindex $coeffs 5] * $y} ]
+	return [list $oix $oiy]
 }
