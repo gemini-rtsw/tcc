@@ -29,6 +29,8 @@ itcl::class TargetHandsetControl {
       variable vt
       variable refid
 		method onMapChange {reasons}
+		method changeState {target state}
+		method refreshGLabel {vguide}
    }
 }
 
@@ -404,7 +406,12 @@ itcl::body TargetHandsetControl::setvt {} {
 itcl::body TargetHandsetControl::refresh {} {
 
 # Update the fields.
-   foreach {src w} {A sci Pwfs1 p1 Pwfs2 p2 Oiwfs oi} {
+	if { [calparam cget -site] eq "CP" } {
+		set srcList {A sci Pwfs1 p1 Pwfs2 p2 Oiwfs oi G1 g1 G2 g2 G3 g3 G4 g4}
+	} else {
+		set srcList {A sci Pwfs1 p1 Pwfs2 p2 Oiwfs oi}
+	}
+   foreach {src w} $srcList {
       set target [sa tcssad get target$src]
       set ra [slaDr2tf 3 [lindex $target 0]]
       $itk_component(${w}ra) configure -text \
@@ -465,7 +472,13 @@ itcl::body TargetHandsetControl::refresh {} {
    }
    $itk_component(oilab) configure -status $status
 
-   set refid [after 1000 [itcl::code $this refresh]]
+	if { [calparam cget -site] eq "CP" } {
+		foreach vguide {g1 g2 g3 g4} {
+			refreshGLabel $vguide 
+		}
+	}
+
+	set refid [after 1000 [itcl::code $this refresh]]
 }
 
 itcl::body TargetHandsetControl::destructor {} {
@@ -482,47 +495,89 @@ itcl::body TargetHandsetControl::onMapChange {reasons} {
 			set value [[TcsVirtualMap::getSingleton] getMap g1] 
 			$itk_component(g1lab) configure -text G1($value)
 			if { $value eq "NONE" } {
-				$itk_component(g1lab) configure -state disabled
-				$itk_component(g1sel) configure -state disabled
+				changeState g1 disabled
+				
 			} else {
-				$itk_component(g1lab) configure -state normal
-				$itk_component(g1sel) configure -state normal
-			} 
+				changeState g1 normal
+			}
+			refreshGLabel g1
 		}
 		g2 {
 			set value [[TcsVirtualMap::getSingleton] getMap g2] 
 			$itk_component(g2lab) configure -text G2($value)
 			if { $value eq "NONE" } {
-				$itk_component(g2lab) configure -state disabled
-				$itk_component(g2sel) configure -state disabled
+				changeState g2 disabled
 			} else {
-				$itk_component(g2lab) configure -state normal
-				$itk_component(g2sel) configure -state normal
+				changeState g2 normal
 			} 
+			refreshGLabel g2
 		}
 		g3 {
 			set value [[TcsVirtualMap::getSingleton] getMap g3] 
 			$itk_component(g3lab) configure -text G3($value)
 			if { $value eq "NONE" } {
-				$itk_component(g3lab) configure -state disabled
-				$itk_component(g3sel) configure -state disabled
+				changeState g3 disabled
 			} else {
-				$itk_component(g3lab) configure -state normal
-				$itk_component(g3sel) configure -state normal
-			} 
+				changeState g3 normal
+			}
+			refreshGLabel g3
 		}
 		g4 {
 			set value [[TcsVirtualMap::getSingleton] getMap g4] 
 			$itk_component(g4lab) configure -text G4($value)
 			if { $value eq "NONE" } {
-				$itk_component(g4lab) configure -state disabled
-				$itk_component(g4sel) configure -state disabled
+				changeState g4 disabled
 			} else {
-				$itk_component(g4lab) configure -state normal
-				$itk_component(g4sel) configure -state normal
-			} 
+				changeState g4 normal
+			}
+			refreshGLabel g4
 		}
 		}
 	}
 }
 
+itcl::body TargetHandsetControl::changeState {target state} {
+	$itk_component(${target}lab) configure -state $state
+	$itk_component(${target}sel) configure -state $state
+	$itk_component(${target}ra) configure -state $state
+	$itk_component(${target}dec) configure -state $state
+	$itk_component(${target}off1) configure -state $state
+	$itk_component(${target}off2) configure -state $state
+}
+
+itcl::body TargetHandsetControl::refreshGLabel {vguide} {
+	set value [[TcsVirtualMap::getSingleton] getMap $vguide]
+	switch $value {
+	TTGS1 {
+		if { [isFollowing gemssad ngs1Follow] } {
+			set status ok
+		} else {
+			set status error
+		}
+	}
+	TTGS2 {
+		if { [isFollowing gemssad ngs2Follow] } {
+			set status ok
+		} else {
+			set status error
+		}
+	}
+	TTGS2 {
+		if { [isFollowing gemssad ngs2Follow] } {
+			set status ok
+		} else {
+			set status error
+		}
+	}
+	ODGW1 -
+	ODGW2 -
+	ODGW3 -
+	ODGW4	{
+		set status none
+	}
+	default {
+		set status none
+	}
+	}
+	$itk_component(${vguide}lab) configure -status $status
+}
