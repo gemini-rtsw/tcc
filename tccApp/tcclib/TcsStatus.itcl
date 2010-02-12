@@ -1,0 +1,136 @@
+#+
+#  TcsStatus
+#
+# Implements the TcsStatus class. This class keeps the TCS status (inPosition 
+# for now, more to come). It allows to subscribe to status changes.
+# The statuses are checked periodically to detect missed updates.
+# The class is Observable and a Singleton.
+#
+# J Lührs December 2009
+#+
+
+itcl::class TcsStatus {
+	public {
+		proc getSingleton {}
+		
+      #getters
+		method getInPosition {}
+      method getMcsFollow {}
+      
+      #Observable interface
+		method subscribe {observer}
+		method unsubscribe {observer}
+	}
+	protected {
+		common theSingleton ""
+		
+		constructor {} {}
+		destructor {}
+		variable observerList {}
+		method notify {elementList}
+		method onInPositionChange {name alarm time value}
+      method onMcsFollowChange {name alarm time value}
+      
+      common checkPeriod 1000
+      variable lastInPosition ""
+      variable lastMcsFollow ""
+      variable tid
+      variable missedInPosition 0
+      variable missedMcsFollow 0
+      method onCheckCycle {}
+	}
+}
+
+itcl::body TcsStatus::getSingleton {} {
+	if { $theSingleton eq "" } {
+		set theSingleton [namespace current]::[TcsStatus #auto]
+	}
+	return $theSingleton
+}
+
+itcl::body TcsStatus::constructor {} {
+	if { [catch {sa tcssad info}]} {
+		epics sa tcssad
+	}
+	if { [catch {sa mcssad info}]} {
+		epics sa mcssad
+	}
+   set lastInPosition [getInPosition]
+   set lastMcsFollow [getMcsFollow]
+	sa tcssad proc inPosition2 [list [itcl::code $this onInPositionChange]]
+   sa mcssad proc followS2 [list [itcl::code $this onMcsFollowChange]]
+   set tid [after $checkPeriod [itcl::code $this onCheckCycle]]
+}
+
+itcl::body TcsStatus::destructor {} {
+   after cancel $tid
+   sa mcssad unproc followS2 [list [itcl::code $this onMcsFollowChange]]
+   sa tcssad unproc inPosition2 [list [itcl::code $this onInPositionChange]]
+}
+
+itcl::body TcsStatus::getInPosition {} {
+	return [sa tcssad get inPosition2]
+}
+
+itcl::body TcsStatus::getMcsFollow {} {
+   return [sa mcssad get followS2]
+}
+
+itcl::body TcsStatus::subscribe observer {
+
+# Check that the observer isn't already on the list.
+	if { [lsearch -exact $observerList $observer] == -1 } {
+# Append the observer to the list.
+		lappend observerList $observer
+	}
+}
+
+itcl::body TcsStatus::unsubscribe observer {
+# Check that the observer is registered.
+	set index [lsearch -exact $observerList $observer]
+	if { $index != -1 } {
+		set observerList [lreplace $observerList $index $index]
+	}
+}
+
+itcl::body TcsStatus::notify elementList {
+	foreach observer $observerList {
+		$observer $elementList
+	}	
+}
+
+itcl::body TcsStatus::onInPositionChange {name alarm time value} {
+   if { $name eq "tcssad.inPosition2" && $value ne $lastInPosition} {
+		notify inPosition
+      set lastInPosition $value
+      set missedInPosition 0
+	}
+}
+
+itcl::body TcsStatus::onMcsFollowChange {name alarm time value} {
+   if { $name eq "mcssad.followS2" && $value ne $lastMcsFollow} {
+      notify mcsFollow
+      set lastMcsFollow $value
+      set missedMcsFollow 0
+   }
+}
+
+itcl::body TcsStatus::onCheckCycle {} {
+   set inPosition [getInPosition]
+   set mcsFollow [getMcsFollow]
+   if { $missedInPosition } {
+      logactions logmess "TcsStatus::onCheckCycle: missed tcssad.inPosition2 update ($inPosition)"
+      onInPositionChange tcssad.inPosition2 "" "" $inPosition
+   }
+   if { $missedInPosition } {
+      logactions logmess "TcsStatus::onCheckCycle: missed mcssad.followS2 update ($mcsFollow)"
+      onMcdFollowChange mcssad.followS2 "" "" $mcsFollow
+   }
+   if {$inPosition ne $lastInPosition} {
+      set missedInPosition 1
+   }
+   if {$mcsFollow ne $lastMcsFollow} {
+      set missedMcsFollow 1
+   }
+   set tid [after $checkPeriod [itcl::code $this onCheckCycle]] 
+}

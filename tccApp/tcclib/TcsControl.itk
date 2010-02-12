@@ -185,25 +185,25 @@ itcl::body TcsControl::constructor args {
 			OnOffButton $w.ngs1 -text CWFS1 \
 					-oncommand {ngs1Follow followState On } \
 					-offcommand {ngs1Follow followState Off } \
-					-onvalue {ON On} \
-					-offvalue {OFF Off} \
-					-sadrecord {gemssad ngs1Follow} -state disabled
+					-onvalue {ON On Enabled} \
+					-offvalue {OFF Off Disabled} \
+					-sadrecord {agssad ngs1Follow} -state normal
 		}
 		itk_component add ngs2 {
 			OnOffButton $w.ngs2 -text CWFS2 \
 					-oncommand {ngs2Follow followState On } \
 					-offcommand {ngs2Follow followState Off } \
-					-onvalue {ON On} \
-					-offvalue {OFF Off} \
-					-sadrecord {gemssad ngs2Follow} -state disabled
+					-onvalue {ON On Enabled} \
+					-offvalue {OFF Off Disabled} \
+					-sadrecord {agssad ngs2Follow} -state normal
 		}
 		itk_component add ngs3 {
 			OnOffButton $w.ngs3 -text CWFS3 \
 					-oncommand {ngs3Follow followState On } \
 					-offcommand {ngs3Follow followState Off } \
-					-onvalue {ON On} \
-					-offvalue {OFF Off} \
-					-sadrecord {gemssad ngs3Follow} -state disabled
+					-onvalue {ON On Enabled} \
+					-offvalue {OFF Off Disabled} \
+					-sadrecord {agssad ngs3Follow} -state normal
 		}
    }
 
@@ -240,15 +240,15 @@ itcl::body TcsControl::constructor args {
 	   }
    } else {
 		itk_component add ngs1datum {
-			ApplyButton $w.ngs1datum -command gems::ngsPr1Ctrl -text Datum \
+			ApplyButton $w.ngs1datum -command ngsPr1Ctrl -text Datum \
 				-state disabled -parcommand [itcl::code $this ngsDatum]
 		}
 		itk_component add ngs2datum {
-			ApplyButton $w.ngs2datum -command gems::ngsPr2Ctrl -text Datum \
+			ApplyButton $w.ngs2datum -command ngsPr2Ctrl -text Datum \
 				-state disabled -parcommand [itcl::code $this ngsDatum]
 		}
 		itk_component add ngs3datum {
-			ApplyButton $w.ngs3datum -command gems::ngsPr3Ctrl -text Datum \
+			ApplyButton $w.ngs3datum -command ngsPr3Ctrl -text Datum \
 				-state disabled -parcommand [itcl::code $this ngsDatum]
 		}
    }
@@ -288,15 +288,15 @@ itcl::body TcsControl::constructor args {
 	   }
    } else {
 		itk_component add ngs1park {
-			ApplyButton $w.ngs1park -command gems::ngsPr1Ctrl -text Park -state disabled \
+			ApplyButton $w.ngs1park -command ngsPr1Ctrl -text Park -state disabled \
 				-parcommand [itcl::code $this ngsPark]
 		}
 		itk_component add ngs2park {
-			ApplyButton $w.ngs2park -command gems::ngsPr2Ctrl -text Park -state disabled \
+			ApplyButton $w.ngs2park -command ngsPr2Ctrl -text Park -state disabled \
 				-parcommand [itcl::code $this ngsPark]
 		}
 		itk_component add ngs3park {
-			ApplyButton $w.ngs3park -command gems::ngsPr3Ctrl -text Park -state disabled \
+			ApplyButton $w.ngs3park -command ngsPr3Ctrl -text Park -state disabled \
 				-parcommand [itcl::code $this ngsPark]
 		}
 	}
@@ -864,9 +864,9 @@ itcl::body TcsControl::lockIndex {} {
 		if {[calparam cget -site] eq "MK"} {
 			$itk_component(aodatum) configure -state [checkState $itk_component(aodatum) ]
 		} else {
-			#$itk_component(ngs1datum) configure -state [checkState $itk_component(ngs1datum) ]
-			#$itk_component(ngs2datum) configure -state [checkState $itk_component(ngs2datum) ]
-			#$itk_component(ngs3datum) configure -state [checkState $itk_component(ngs3datum) ]
+			$itk_component(ngs1datum) configure -state [checkState $itk_component(ngs1datum) ]
+			$itk_component(ngs2datum) configure -state [checkState $itk_component(ngs2datum) ]
+			$itk_component(ngs3datum) configure -state [checkState $itk_component(ngs3datum) ]
 		}
 	} else {
 		$itk_component(mcsdatum) configure -state disabled
@@ -900,9 +900,9 @@ itcl::body TcsControl::lockPark {} {
 		if {[calparam cget -site] eq "MK"} {
 			$itk_component(aopark) configure -state [checkState $itk_component(aopark) ]
 		} else {
-			#$itk_component(ngs1park) configure -state [checkState $itk_component(ngs1park) ]
-			#$itk_component(ngs2park) configure -state [checkState $itk_component(ngs2park) ]
-			#$itk_component(ngs3park) configure -state [checkState $itk_component(ngs3park) ]
+			$itk_component(ngs1park) configure -state [checkState $itk_component(ngs1park) ]
+			$itk_component(ngs2park) configure -state [checkState $itk_component(ngs2park) ]
+			$itk_component(ngs3park) configure -state [checkState $itk_component(ngs3park) ]
 		}
 	} else {
 		$itk_component(mcspark) configure -state disabled

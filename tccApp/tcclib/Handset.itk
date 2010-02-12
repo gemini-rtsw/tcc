@@ -30,19 +30,14 @@ itcl::class Handset {
    inherit itk::Widget
    constructor args {}
    destructor {}
-   common mon_inpos 0
-   common need_to_close_loop 0
    itk_option define -adjust adjust Adjust ""
    itk_option define -vt vt Vt sourceA
    itk_option define -cloop cloop Cloop 0 {}
    itk_option define -loopDef loopDef LoopDef 1 {}
    public {
-      method updateProc { name alarm time values }
-      method timeout {}
+      proc onTcsStatusChange {reasons}
+      proc timeout {}
       method openloop {}
-      method sendOffset {frame stepsize angle}
-      variable oiAngle 138.94
-   	method onMapChange {reasons}
    }
    private {
       method push {button}
@@ -59,7 +54,15 @@ itcl::class Handset {
       variable angles
       variable labels
       variable control_loop 0
-		
+
+      common monCount 0
+      common need_to_close_loop 0
+      common tid ""
+
+      method onMapChange {reasons}
+
+      method sendOffset {frame stepsize angle}
+      variable oiAngle 138.94
 	}
 }
 
@@ -129,9 +132,6 @@ itk::usual Handset {
 
 itcl::body Handset::constructor {args} {
 #puts "creating Handset with args: $args"
-    global tid
-    set tid 0
-
 # Fill out the table of button labels.
    initlabels
 
@@ -320,7 +320,6 @@ itcl::body Handset::constructor {args} {
    relabel
 
    eval itk_initialize $args
-
 # checkbutton for opening loop
    if {$itk_option(-cloop)} {
        set control_loop $itk_option(-loopDef)
@@ -332,19 +331,10 @@ itcl::body Handset::constructor {args} {
        pack $itk_component(loopControl) -pady 5
        
        # Monior TCS inPosition Flag
-       if {! $mon_inpos} {
-	   set mon_inpos 1
-	   global INPOS FOLLOW
-	   set INPOS ""
-	   set FOLLOW ""
-
-	   sa tcssad proc inPosition2 "$this updateProc"
-	   sa mcssad proc followS2 "$this updateProc"
-	   
-	   #initial value
-	   updateProc tcssad.inPosition2 alarm time [sa tcssad get inPosition2]
-	   updateProc mcssad.followS2 alarm time [sa mcssad get followS2]
-       }
+      if {$monCount == 0} {
+	      [TcsStatus::getSingleton] subscribe Handset::onTcsStatusChange
+      }
+		incr monCount
    }
 	
 	if { [calparam cget -site] eq "CP" } {
@@ -355,15 +345,19 @@ itcl::body Handset::constructor {args} {
 
 
 itcl::body Handset::destructor {} {
-    global tid
 	if { [calparam cget -site] eq "CP" } {
 		[TcsVirtualMap::getSingleton] unsubscribe [itcl::code $this onMapChange]
 	}
-    after cancel $tid
-    if {$mon_inpos} {
-	sa tcssad unproc inPosition2 "$this updateProc"
-	sa mcssad unproc followS2 "$this updateProc"
-    }
+   if {$itk_option(-cloop)} {
+      incr monCount -1
+	   if {$monCount == 0} {
+	      [TcsStatus::getSingleton] unsubscribe Handset::onTcsStatusChange
+		   if {$tid ne ""} {
+		      after cancel $tid
+            set tid ""
+		   }
+	   }
+   }
 }
 
 itcl::configbody Handset::adjust {
@@ -611,74 +605,68 @@ itcl::body Handset::initlabels {} {
 	}
 }
 
-itcl::body Handset::updateProc {name alarm time values} {
-    global INPOS FOLLOW tid
-    
-    logactions logmess [format "updateProc: %s %-20s\n%s\n" $time $name $values]
-    set tname [lrange [split $name "." ] 1 1 ]
+itcl::body Handset::onTcsStatusChange {reasons} {   
+   set INPOS [[TcsStatus::getSingleton] getInPosition]
+   set FOLLOW [[TcsStatus::getSingleton] getMcsFollow]
 
-   switch $tname {
-       inPosition2 { 
-	   logactions logmess "setting INPOS"
-	   set INPOS $values
-       }
-       followS2 {
-	   logactions logmess "setting FOLLOW"
-	   set FOLLOW $values
-       }
-   }
-   logactions logmess "INPOS: $INPOS   FOLLOW: $FOLLOW"
+   logactions logmess "Handset::onTcsStatusChange: INPOS:\"$INPOS\" FOLLOW:\"$FOLLOW\""
 
    if { $need_to_close_loop} {
-       if {[string match TRUE $INPOS] && [string match ON $FOLLOW]} {
-	   logactions logmess "automatically closing loop"
-	   if {[AO state useLwfs]} {
-	       AO enableLgs
-	   } else {
-	       AO enable
-	   }
-	   set need_to_close_loop 0
-       }  else {
+      if {[string match "TRUE*" $INPOS] && [string match "ON*" $FOLLOW]} {
+         logactions logmess "Handset::onTcsStatusChange: automatically closing loop"
+		   if {[AO state useLwfs]} {
+		       AO enableLgs
+		   } else {
+		       AO enable
+		   }
+		   set need_to_close_loop 0
+      } else {
 	   # the telescope is not in position, cancel the timeout
-	   logactions logmess "not in position, cancelling timeout $tid"
-	   after cancel $tid
-       }
+         logactions logmess "Handset::onTcsStatusChange: not in position, cancelling timeout $tid"
+         after cancel $tid
+         set tid ""
+      }
    }
 }
 
 itcl::body Handset::timeout {} {
-    #puts "timeout callback"
-    # will get here if the telescope did not go out of position
-    # assume the move was too fast, close the loop
-   if { $need_to_close_loop } {
-       logactions logmess "timed out: automatically closing loop"
-       if {[AO state useLwfs]} {
-	   AO enableLgs
-       } else {
-	   AO enable
-       }
-       set need_to_close_loop 0
+	#puts "timeout callback"
+	# will get here if the telescope did not go out of position
+	# assume the move was too fast, close the loop
+   #Check inPosition, just in case the change to FALSE was missed.
+   set INPOS [[TcsStatus::getSingleton] getInPosition]
+   if { $need_to_close_loop && [string match "TRUE*" $INPOS]} {
+      logactions logmess "timed out: automatically closing loop"
+      if {[AO state useLwfs]} {
+	     AO enableLgs
+      } else {
+	     AO enable
+      }
+      set need_to_close_loop 0
    }
+   set tid ""
 }
 
-
 itcl::body Handset::openloop {} {
-    global tid INPOS
 # Open loop if neccesary
-    if {$control_loop && [AO cget -enabled]} {
-	logactions logmess "automatically opening loop"
-	if {[AO state useLwfs]} {
-	    AO disableLgs
-	} else {
-	    AO disable
-	}
-	set need_to_close_loop 1
-	# start timeout process
-	if {[string match TRUE $INPOS]} {
-	    set tid [after 5000 "$this timeout"]
-	}
-	#puts "tid: $tid"
-    }
+   if {$control_loop && [AO cget -enabled]} {
+      logactions logmess "automatically opening loop"
+		if {[AO state useLwfs]} {
+         AO disableLgs
+		} else {
+         AO disable
+		}
+		set need_to_close_loop 1
+		# start timeout process
+	   set INPOS [[TcsStatus::getSingleton] getInPosition]
+		if {[string match "TRUE*" $INPOS]} {
+         if { $tid ne "" } {
+            after cancel $tid
+         }
+         set tid [after 5000 Handset::timeout]
+		}
+		#puts "tid: $tid"
+   }
 }
 
 itcl::body Handset::onMapChange {reasons} {

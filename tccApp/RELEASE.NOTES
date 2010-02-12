@@ -1258,6 +1258,54 @@ M tccApp/tcclib/TcsControl.itk: Disabled GeMS related buttons.
 M tccApp/tcclib/GuideLoop.itcl: GuideLoop::m1mode: Fixed M1 source not been set
 	in TCS.
 
+5.2-9
+
+FR 7508
+20091215 JLU
+A tccApp/tcclib/TcsStatus.itcl: Created class to access and monitor TCS status.
+   Class is Observable and a Singleton. Added periodic check to detect missing
+   updates.
+M tccApp/tcclib/Handset.itk: Use TcsStatus instead of directly reading and 
+   monitoring the EPICS channels. Fixed bug with monitoring of TCS in-position 
+   not been restored after all objects were destroyed and recreated.
+   
+20091218 JLU
+M tccApp/tcclib/ActiveOptics.itcl: ActiveOptics::enable: Added check for Altair
+   unparked.
+M tccApp/ca_config/aossad.ca: -
+M tccApp/ca_config.tc1/simaossad.ca: Added channel for Altair parked state.
+
+20100111 JLU
+M tccApp/tcclib/WfsConfig.itk: WfsConfig::aondsel: Fixed typo (missing && in 
+   conditional expression)
+
+20100112 JLU   
+M tccApp/tcclib/ActiveOptics.itcl: ActiveOptics::enable: Changed check for 
+   altair to look for DM voltage status. If fails, it offers to turn it on.
+   Changed all message boxes to appear over the currently active window.
+M tccApp/ca_config.tc1/simaossad.ca: -
+M tccApp/ca_config/aossad.ca: Added channels to read DM voltages.
+
+5.2-10
+
+20100118
+M tccApp/tcclib/TcsControl.itk: Enabled Canopus buttons. Changed channels to use
+   TCS commands for Canopus.
+M tccApp/ca_config.tc1/agssad.ca: -
+M tccApp/ca_config/agssad.ca: -
+M tccApp/ca_config.tc1/simagssad.ca: Added TCS channels for Canopus probes 
+   status.
+M tccApp/ca_config/ags.ca: -
+M tccApp/ca_config.tc1/ags.ca: -
+M tccApp/ca_config/ags.ca: Redefined canopus probes commands to use TCS 
+   commands. 
+
+5.2-11
+
+20100202 JLU
+M tccApp/tcclib/ActiveOptics.itcl: ActiveOptics::enable: Removed check for 
+   Altair in park position.
+
 5.2-12
 20100208 JLU
 ENG10-113: task 284
@@ -1319,3 +1367,5 @@ M tccApp/tcclib/Wavelength.itcl: added types p1, p2, ao y GeMS types in preview
 M tccApp/tcclib/Odgw.itcl: removed debug message.
 M tccApp/tcclib/PreviewControl.itk: Implemented special alarm test for canopus 
 	probes.
+
+Branch 2010APatchRelease1 23010:23698 merged into main trunk.

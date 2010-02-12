@@ -23,6 +23,7 @@ itcl::class ActiveOptics {
       method setCanvas {canv}
       method process {state}
       method setTTGSFluxMode {}
+      method unparkAltair {}
       variable processState IDLE
       variable canvas ""
       variable timeout 0
@@ -181,26 +182,40 @@ itcl::body ActiveOptics::enable {} {
     global AOtryingToReuseGain AOreuseGains
     set skip_strap 0
 
-    if {$processState == "BUSY"} {
-	logactions logmess "ActiveOptics::enable already busy, ignoring command"
-	return
-    } else {
-	process BUSY
-		 set currentconfig ""
-		 set config [configure]
-		 foreach item $config {
-			 lappend currentconfig [list [lindex $item 0] [lindex $item 2]]
-		 }
-	logactions logmess  "ActiveOptics::enable: $currentconfig"
-    }
+   if {$processState == "BUSY"} {
+      logactions logmess "ActiveOptics::enable already busy, ignoring command"
+      return
+   } else {
+      process BUSY
+		set currentconfig ""
+		set config [configure]
+		foreach item $config {
+         lappend currentconfig [list [lindex $item 0] [lindex $item 2]]
+      }
+	   logactions logmess  "ActiveOptics::enable: $currentconfig"
+   }
 
 # check to make sure we're not using OI probe guiding with GMOS
-    if { ($probeto == "OIWFS") && [string match "*GMOS*" $::Config(tcs.instrument,value)]} {
-	tk_messageBox -icon error \
-	    -message "You cannot use OIWFS probe guiding with GMOS"
-	process IDLE
-	return
-    }
+   if { ($probeto == "OIWFS") && [string match "*GMOS*" $::Config(tcs.instrument,value)]} {
+      tk_messageBox -icon error -parent [focus] \
+         -message "You cannot use OIWFS probe guiding with GMOS"
+      process IDLE
+      return
+   }
+
+#Removed while requirements are settled.
+# If using Altair, check that it is unparked before closing loops.
+#   if {[calparam cget -site] eq "MK" && $gaos } {
+#      set dmVolt1 [sa aossad get dmVolt1]
+#      set dmVolt2 [sa aossad get dmVolt2]
+#      if { ( [string is double -strict $dmVolt1] && $dmVolt1 < 1 ) || \
+#           ( [string is double -strict $dmVolt2] && $dmVolt2 < 1 ) } {
+#	      if { [tk_messageBox -type yesno -icon warning -parent [focus] -message \
+#               "Altair is parked (DM is off). Do you want TCC to unpark it before closing loops?"] eq "yes" } {
+#            unparkAltair
+#	      }
+#      }
+#   }
 
 # Set parameters according to the current state...
 # only have a possibility of OI Blending if we're actually using Altair
@@ -229,7 +244,7 @@ itcl::body ActiveOptics::enable {} {
 	# Post the Blending Command.
 	# The blending command must be finished before the loops are closed.
 	if { [catch {cs tcsApply post} msg] } {
-	    tk_messageBox -icon error -message \
+	    tk_messageBox -icon error -message -parent [focus] \
 		"Error posting guide commands: TCS reports \
            \"$msg\""
 	    process IDLE
@@ -266,7 +281,7 @@ itcl::body ActiveOptics::enable {} {
 	    if {([sa aossad get strapRTStat] == 0) || ([sa aossad get strapTPStat] == 0) || ([sa aossad get strapHVStat] == 0) || 
 		([sa aossad get strapSFXMode] != $ttgsFlux) } {
 		if {[$this setTTGSFluxMode]} {
-		    if {[tk_messageBox -icon  question -type yesno -default no -message \
+		    if {[tk_messageBox -icon question -type yesno -parent [focus] -default no -message \
 			     "There was an Error Configuring STRAP\nShould I open the Loops?"] == "yes"} {
 			process IDLE
 			$this disable 
@@ -287,7 +302,7 @@ itcl::body ActiveOptics::enable {} {
 		    if {[setTimeout "sa aossad get strapSEXBusy" BUSY 10000 200 "Strap Set Exp time to be IDLE"]} return
 		    after 200
 		    if {[sa aossad get strapSEXBusy] == "ERR"} {
-			tk_messageBox -icon error -message \
+			tk_messageBox -icon error -parent [focus] -message \
 			    "Error Setting STRAP Exposure Time: MESS: [sa aossad get strapSEXMess]"
 			process IDLE
 			return
@@ -340,7 +355,7 @@ itcl::body ActiveOptics::enable {} {
 	    cs aoPrepareCm set gsmag $gsmag
 	    logger command aoPrepareCm
 	    if { [catch {cs tcsApply post} msg] } {
-		tk_messageBox -icon error -parent $itk_interior -message $msg
+		tk_messageBox -icon error -parent [focus] -message $msg
 	    }
 	    
 	    #wait for prepareCm to go idle
@@ -385,7 +400,7 @@ itcl::body ActiveOptics::enable {} {
 	
 	# Post the command.
 	if { [catch {cs tcsApply post} msg] } {
-	    tk_messageBox -icon error -message \
+	    tk_messageBox -icon error -parent [focus] -message \
 		"Error posting guide commands: TCS reports \
             \"$msg\""
 	    process IDLE
@@ -402,7 +417,7 @@ itcl::body ActiveOptics::enable {} {
 	cs aoCorrect set gains $AOreuseGains
 	logger command aoCorrect
 	if { [catch {cs tcsApply post} msg] } {
-            tk_messageBox -icon error -parent $itk_interior -message $msg
+            tk_messageBox -icon error -parent [focus] -message $msg
 	}
 	
 	#wait for gaos Loop to be on
@@ -429,7 +444,7 @@ itcl::body ActiveOptics::enable {} {
        cs aoCorrect set correct OFF
        logger command aoCorrect
        if { [catch {cs tcsApply post} msg] } {
-	   tk_messageBox -icon error -parent $itk_interior -message $msg
+	   tk_messageBox -icon error -parent [focus] -message $msg
        }
        after 10
        
@@ -503,7 +518,7 @@ itcl::body ActiveOptics::enable {} {
          cs m2Guide set state Off
          logger command m2Guide
          if { [catch {cs m2Guide post} msg] } {
-            tk_messageBox -icon error -message \
+            tk_messageBox -icon error -parent [focus] -message \
                   "Error posting m2Guide command: TCS reports \
                   \"$msg\""
 	    process IDLE
@@ -515,7 +530,7 @@ itcl::body ActiveOptics::enable {} {
             cs m2GuideReset set dummy 1
             logger command m2GuideReset
             if { [catch {cs m2GuideReset post} msg] } {
-               tk_messageBox -icon error -message \
+               tk_messageBox -icon error -parent [focus] -message \
                      "Error posting m2GuideReset command: TCS reports \
                      \"$msg\""
 	       process IDLE
@@ -534,7 +549,7 @@ itcl::body ActiveOptics::enable {} {
                }
                logger command oiwfsSelect
                if { [catch { cs oiwfsSelect post} msg] } {
-                 tk_messageBox -icon error -message \
+                 tk_messageBox -icon error -parent [focus] -message \
                      "Error posting oiwfsSelect command: TCS reports \
                      \"$msg\""
 		  process IDLE
@@ -556,7 +571,7 @@ puts "beam is $beam gonna wait for 1 second"
                after 1000
                logger command m2GuideConfig
                if { [catch {cs m2GuideConfig post} msg] } {
-                  tk_messageBox -icon error -message \
+                  tk_messageBox -icon error -parent [focus] -message \
                         "Error posting m2GuideConfig command: TCS reports \
                         \"$msg\""
 		  process IDLE
@@ -644,7 +659,7 @@ puts "beam is $beam gonna wait for 1 second"
 
 # Post the commands.
    if { [catch {cs tcsApply post} msg] } {
-      tk_messageBox -icon error -message \
+      tk_messageBox -icon error -parent [focus] -message \
             "Error posting guide commands: TCS reports \
             \"$msg\""
       process IDLE
@@ -724,7 +739,7 @@ puts "beam is $beam gonna wait for 1 second"
 
 # Post the commands.
    if { [catch {cs tcsApply post} msg] } {
-      tk_messageBox -icon error -message \
+      tk_messageBox -icon error -parent [focus] -message \
             "Error posting guide commands: TCS reports \
             \"$msg\""
       process IDLE
@@ -808,7 +823,7 @@ itcl::body ActiveOptics::disable {} {
 
 # Post the command.
    if { [catch {cs tcsApply post} msg] } {
-      tk_messageBox -icon error -message \
+      tk_messageBox -icon error -parent [focus] -message \
             "Error posting guide commands: TCS reports \
             \"$msg\""
       process IDLE
@@ -853,7 +868,7 @@ itcl::body ActiveOptics::disable {} {
        cs aoCorrect set correct OFF
        logger command aoCorrect
        if { [catch {cs tcsApply post} msg] } {
-	   tk_messageBox -icon error -parent $itk_interior -message $msg
+	   tk_messageBox -icon error -parent [focus] -message $msg
        }
        after 10
        
@@ -1198,7 +1213,7 @@ itcl::body ActiveOptics::timeout {} {
     # raise a warning popup and open the loops.
     puts "ActiveOptics::timeout"
     logactions logmess "ActiveOptics::Timed out waiting for $timeout_reason. Opening loops"
-    tk_messageBox -icon error \
+    tk_messageBox -icon error -parent [focus] \
 	-message "Timed out waiting for $timeout_reason. Opening loops"
 
     set timeout 1
@@ -1280,7 +1295,7 @@ itcl::body ActiveOptics::setTTGSFluxMode {} {
 	if {[setTimeout "sa aossad get strapSFXBusy" BUSY 10000 200 "STRAP SFXBusy to be IDLE"]} {return 1}
 	after 500
 	if {[sa aossad get strapSFXBusy] == "ERR"} {
-		tk_messageBox -icon error -message \
+		tk_messageBox -icon error -parent [focus] -message \
 	    	"Error Setting STRAP Flux Mode: MESS: [sa aossad get strapSFXMess]"
 		return 1
 	}
@@ -1345,4 +1360,23 @@ itcl::body ActiveOptics::waitFor {timeout outCondition} {
 		update
 	}
 	return timeout
+}
+
+itcl::body ActiveOptics::unparkAltair {} {
+   if { ![catch {cs aoDmVolt info}] } {
+      #Turn the DM voltage on
+      cs aoDmVolt set dir 0
+      cs aoDmVolt set dir 3
+      #Open the shutters
+      cs aoEntShutter set state Open
+      cs aoExitShutter set state Open
+      logger command aoEntShutter
+      logger command aoExitShutter
+
+      if { [catch {cs tcsApply post} msg] } {
+         tk_messageBox -icon error -parent [focus] -message \
+            "Error posting GAOS mechanism command: TCS reports \
+            \"$msg\""
+      }
+   }
 }
