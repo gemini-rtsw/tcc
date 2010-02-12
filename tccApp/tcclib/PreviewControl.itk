@@ -29,6 +29,7 @@ itcl::class PreviewControl {
 		method updateProbeTarget { xComp yComp rComp {x ""} {y ""} {platescale 0.0268573967}}
 		method updateProbeAlarmR {xComp yComp rComp x y Rmin Rmax} 
 		method updateProbeAlarmXY {xComp yComp rComp x y Xmin Xmax Ymin Ymax {conv {0 1 0 0 0 1}}}
+		method updateProbeAlarm {xComp yComp rComp x y Xmin Xmax Ymin Ymax Rmin Rmax {conv {0 1 0 0 0 1}}}
 		method setProbeAlarm {xComp yComp rComp}
 		method clearProbeAlarm {xComp yComp rComp}
 		method transformCoordinates {x y coeffs}
@@ -574,7 +575,10 @@ itcl::body PreviewControl::update {} {
 					updateProbeTarget ttgs1x ttgs1y ttgs1r $x $y
 					set rmax [sa tcssad get ttgs1Rmax]
 					set rmin [sa tcssad get ttgs1Rmin]
-					updateProbeAlarmR ttgs1x ttgs1y ttgs1r $x $y $rmin $rmax
+					set xmax [sa tcssad get ttgs1Xmax]
+					set xmin [sa tcssad get ttgs1Xmin]
+					updateProbeAlarm ttgs1x ttgs1y ttgs1r $x $y $xmin $xmax [expr - $rmax] \
+						$rmax $rmin $rmax
 				} else {
 					updateProbeTarget ttgs1x ttgs1y ttgs1r
 					clearProbeAlarm ttgs1x ttgs1y ttgs1r
@@ -586,7 +590,10 @@ itcl::body PreviewControl::update {} {
 					updateProbeTarget ttgs2x ttgs2y ttgs2r $x $y
 					set rmax [sa tcssad get ttgs2Rmax]
 					set rmin [sa tcssad get ttgs2Rmin]
-					updateProbeAlarmR ttgs2x ttgs2y ttgs2r $x $y $rmin $rmax					
+					set xmax [sa tcssad get ttgs2Xmax]
+					set xmin [sa tcssad get ttgs2Xmin]
+					updateProbeAlarm ttgs2x ttgs2y ttgs2r $x $y $xmin $xmax [expr - $rmax] \
+											$rmax $rmin $rmax					
 				} else {
 					updateProbeTarget ttgs2x ttgs2y ttgs2r
 					clearProbeAlarm ttgs2x ttgs2y ttgs2r
@@ -820,6 +827,20 @@ itcl::body PreviewControl::updateProbeAlarmXY {xComp yComp rComp x y Xmin Xmax \
 	set oix [lindex $coords 0]
 	set oiy [lindex $coords 1]
 	if { $oix > $Xmax || $oix < $Xmin || $oiy > $Ymax || $oiy < $Ymin } {
+		setProbeAlarm $xComp $yComp $rComp
+	} else {
+		clearProbeAlarm $xComp $yComp $rComp
+	}
+} 
+
+itcl::body PreviewControl::updateProbeAlarm {xComp yComp rComp x y Xmin Xmax \
+															Ymin Ymax Rmin Rmax {coeffs {0 1 0 0 0 1}}} {
+	set coords [transformCoordinates $x $y $coeffs]
+	set oix [lindex $coords 0]
+	set oiy [lindex $coords 1]
+	set r2 [expr $oix * $oix + $oiy * $oiy]									  
+	if { $oix > $Xmax || $oix < $Xmin || $oiy > $Ymax || $oiy < $Ymin || \
+		($r2 > $Rmax * $Rmax) || ($r2 < $Rmin * $Rmin) } {
 		setProbeAlarm $xComp $yComp $rComp
 	} else {
 		clearProbeAlarm $xComp $yComp $rComp

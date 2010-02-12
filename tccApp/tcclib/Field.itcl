@@ -301,18 +301,27 @@ itcl::body Field::apply {comp} {
 								if { $guide != ""} { 
 									"::GuideNames::$guide" applyGems g${gId}
 								}
+								#HACK: until Canopus wavel are defined
+								set wavel ["::WavelengthNames::Acq Cam neutral" cget -wavel]
+								cs wavelG${gId} set wavel $wavel
 							}
 							CWFS2 {
 								cs guidersMapping set G${gId}guider TTGS2
 								if { $guide != ""} {								
 									"::GuideNames::$guide" applyGems g${gId}
 								}
+								#HACK: until Canopus wavel are defined
+								set wavel ["::WavelengthNames::Acq Cam neutral" cget -wavel]
+								cs wavelG${gId} set wavel $wavel
 							}
 							CWFS3 {
 								cs guidersMapping set G${gId}guider TTGS3
 								if { $guide != ""} {
 									"::GuideNames::$guide" applyGems g${gId}
 								}
+								#HACK: until Canopus wavel are defined
+								set wavel ["::WavelengthNames::Acq Cam neutral" cget -wavel]
+								cs wavelG${gId} set wavel $wavel
 							}
 							ODGW1 -
 							ODGW2 -
@@ -322,6 +331,8 @@ itcl::body Field::apply {comp} {
 								if { $guide != ""} {								
 									"::GuideNames::$guide" applyGems g${gId}
 								}
+								set scienceWavel [::WavelengthNames::$wavelength cget -wavel]
+								cs wavelG${gId} set wavel $scienceWavel
 							}
 						}
 						incr gId
@@ -427,7 +438,20 @@ itcl::body Field::preview {view} {
    }
    if { ! [string equal $wavelength ""] } {
       ::WavelengthNames::$wavelength preview $view science
+		#HACK: to set the odgw wavelength
+		if { ! [string equal $odgw1target ""] || \
+			  ! [string equal $odgw2target ""] || \
+			  ! [string equal $odgw3target ""] || \
+			  ! [string equal $odgw4target ""]} {
+			::WavelengthNames::$wavelength preview $view odgw
+		}
    }
+	#HACK: to set the ttgs wavelength
+	if { ! [string equal $ttgs1target ""] || \
+		  ! [string equal $ttgs2target ""] || \
+		  ! [string equal $ttgs3target ""]} {
+		"::WavelengthNames::Acq Cam neutral" preview $view ttgs
+	}
 }
 
 itcl::body Field::save {node} {
