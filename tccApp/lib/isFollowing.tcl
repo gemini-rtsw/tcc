@@ -22,6 +22,7 @@ proc isFollowing {sad rec} {
    if { [string compare $val "ON"] == 0 } {return 1}
    if { [string compare $val "TRUE"] == 0 } {return 1}
    if { [string compare $val "YES"] == 0 } {return 1}
+	if { [string compare $val "ENABLED"] == 0 } {return 1}
    if { $val == 1 } {return 1}
 
 # No match so return false.

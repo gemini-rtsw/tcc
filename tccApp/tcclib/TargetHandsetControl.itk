@@ -549,31 +549,53 @@ itcl::body TargetHandsetControl::refreshGLabel {vguide} {
 	set value [[TcsVirtualMap::getSingleton] getMap $vguide]
 	switch $value {
 	TTGS1 {
-		if { [isFollowing gemssad ngs1Follow] } {
+		if { [isFollowing agssad ngs1Follow] } {
 			set status ok
 		} else {
 			set status error
 		}
 	}
 	TTGS2 {
-		if { [isFollowing gemssad ngs2Follow] } {
+		if { [isFollowing agssad ngs2Follow] } {
 			set status ok
 		} else {
 			set status error
 		}
 	}
-	TTGS2 {
-		if { [isFollowing gemssad ngs2Follow] } {
+	TTGS3 {
+		if { [isFollowing agssad ngs3Follow] } {
 			set status ok
 		} else {
 			set status error
 		}
 	}
-	ODGW1 -
-	ODGW2 -
-	ODGW3 -
+	ODGW1 {
+		if { [isFollowing agssad odgw1Follow] } {
+			set status ok
+		} else {
+			set status error
+		}
+	}
+	ODGW2 {
+		if { [isFollowing agssad odgw2Follow] } {
+			set status ok
+		} else {
+			set status error
+		}
+	}
+	ODGW3 {
+		if { [isFollowing agssad odgw3Follow] } {
+			set status ok
+		} else {
+			set status error
+		}
+	}
 	ODGW4	{
-		set status none
+		if { [isFollowing agssad odgw4Follow] } {
+			set status ok
+		} else {
+			set status error
+		}
 	}
 	default {
 		set status none
