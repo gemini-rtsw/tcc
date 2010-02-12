@@ -82,8 +82,8 @@
 *observePanel*control*ttgsframe*state:  disabled
 *observePanel*control*sfoframe*state:  disabled
 *observePanel*control*niciframe*state:  disabled
-*observePanel*control*lpath*1*state:    disabled
-*observePanel*control*lpath*4*state:    disabled
+#*observePanel*control*lpath*1*state:    disabled
+#*observePanel*control*lpath*4*state:    disabled
 *observePanel*guideloop*m2ao*state:   disabled
 *observePanel*guideloop*oiao*state:     disabled
 *observePanel*guideloop*ttao*state:     disabled
