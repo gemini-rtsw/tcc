@@ -1,0 +1,318 @@
+#+
+#  AltairWidget <- itk::Widget
+#
+#  Widget to specify parameters for a Altair.
+##  Options:
+#           none
+#
+#  Methods:
+#           none
+#
+#  J. Luhrs 04 March 2010
+#
+#+
+
+itcl::class AltairWidget {
+	inherit itk::Widget
+	
+public {
+	constructor {args} {}
+	
+	itk_option define -aocontroller aoController AoController {} { init }
+	
+	method reset {} {}
+	method enable {} {}
+	method recolor {} {}
+	method init {}
+}
+private {
+	method gaos {val}
+	method gaosTTGS {val}
+	method gaosSFO {val}
+	method oiblend {val}
+	method ttgsloop {val}
+	method sfoloop {val}
+}
+}
+
+itk::usual AltairWidget {
+#	keep -background -cursor -foreground -highlightcolor \
+#		-highlightthickness
+	keep -background -cursor
+}
+
+itcl::body AltairWidget::constructor {args} {
+
+	itk_component add mainframe {
+		frame $itk_interior.mainframe -relief solid -borderwidth 1 -background white 
+	} { usual
+		ignore -background }
+	pack $itk_component(mainframe)
+	set w $itk_component(mainframe)
+	
+	itk_component add gaos {
+		WfsWidget $w.gaos -label AO -onswitchpress [itcl::code $this gaos] -relief flat
+	}
+	$itk_component(gaos) configure -expvalues [list 0.02 0.01 0.005 0.002 0.001]
+	
+	pack $itk_component(gaos) -side top -anchor n
+
+	# TTGS loop closed
+	itk_component add ttao {
+		ToggleButton $w.ttao -text TTGS -pushedbackground Green -pady 0 -width 7 \
+				-command [itcl::code $this ttgsloop]
+	} {
+		usual
+		ignore -width
+	}
+	#$w create window 2 48 -width 60 -window $w.ttao -tags gaos -anchor nw
+	pack $itk_component(ttao) -side top -anchor nw
+
+	# SFO loop closed
+	itk_component add sfao {
+		ToggleButton $w.sfao -text SFO -pushedbackground Green -pady 0  -width 7 \
+				-command [itcl::code $this sfoloop]
+	} {
+		usual
+		ignore -width
+	}
+	#$w create window 2 69 -width 60 -window $w.sfao -tags gaos -anchor nw
+	pack $itk_component(sfao) -side top -anchor nw
+
+	# OI Blending
+	itk_component add oiao {
+		ToggleButton $w.oiao -text OIWFS -pushedbackground Green -pady 0  -width 7 \
+				-command [itcl::code $this oiblend]
+	} {
+		usual
+		ignore -width
+	}
+	#$w create window 2 90 -width 60 -window $w.oiao -tags gaos -anchor nw
+	pack $itk_component(oiao) -side top -anchor nw
+
+
+	itk_component add wfsframe {
+		frame $w.wfsframe -background white
+	} {
+		ignore -background
+	}
+	# gaosTTGS
+	itk_component add aottgs {
+		WfsWidget $w.wfsframe.aottgs -label TTGS -onswitchpress [itcl::code $this gaosTTGS]
+	}
+	[$itk_component(aottgs) getExpCombo] configure -labeltext "Mag(exp)" \
+		-labelpos nw -width 11
+	$itk_component(aottgs) configure -expvalues [list 19.0(0.05) 18.5(0.05) \
+		18.0(0.05) 17.5(0.02) 17.0(0.01) 16.5(0.005) 16.0(0.005) 15.5(0.002) \
+		15.0(0.001) 14.5(0.001) 14.0(0.001) 13.5(0.001) 13.0(0.001) 12.5(0.001) \
+		12.0(0.001) 11.5(0.001) 11.0(0.001) 10.5(0.001) 10.0(0.001)]
+	
+	pack $itk_component(aottgs) -side top -anchor n -expand yes -fill x
+
+	# gaosSFO
+	itk_component add aosfo {
+		WfsWidget $w.wfsframe.aosfo -label SFO -onswitchpress [itcl::code $this gaosSFO]
+	}
+	#$w create window 2 185 -window $w.aosfo -tags gaos -anchor nw
+	pack $itk_component(aottgs) $itk_component(aosfo) -side top -anchor nw \
+		-expand yes -fill x -padx 1 -pady 1
+	pack $itk_component(wfsframe) -padx 2 -pady 2
+
+	eval itk_initialize $args
+}
+
+itcl::body AltairWidget::init {} {
+	if { $itk_option(-aocontroller) ne "" } {
+		$itk_component(gaos) expSet [$itk_option(-aocontroller) cget -gaosExpose]
+		$itk_component(aosfo) expSet [$itk_option(-aocontroller) cget -sfoExpose]
+	}
+	$itk_component(aottgs) expSet "10.0(0.001)"
+}
+
+itcl::body AltairWidget::reset {} {
+	$itk_component(oiao) pop
+   $itk_component(gaos) switchPop
+   $itk_component(ttao) pop
+   $itk_component(sfao) pop
+   $itk_component(aosfo) switchPop
+   $itk_component(aottgs) switchPop
+}
+
+itcl::body AltairWidget::recolor {} {
+
+#	 Disable LGS options unless useLwfs is true
+   if {[$itk_option(-aocontroller) state useLwfs]} {
+       $itk_component(ttao) configure -state normal
+       $itk_component(sfao) configure -state normal
+       $itk_component(aosfo) configure -state normal
+       $itk_component(aottgs) configure -state normal
+   } else {
+       $itk_component(ttao) clear
+       $itk_component(ttao) configure -state disabled
+       $itk_component(sfao) clear
+       $itk_component(sfao) configure -state disabled
+       $itk_component(aosfo) clear
+       $itk_component(aosfo) configure -state disabled
+       $itk_component(aottgs) clear
+       $itk_component(aottgs) configure -state disabled
+   }
+
+#	 GAOS signals
+	if { [$itk_option(-aocontroller) state gaos] } {
+		$itk_component(gaos) configure -status on
+		$itk_component(mainframe) configure -background Green
+      # aoSettled
+   } else {
+		$itk_component(gaos) configure -status off
+		$itk_component(mainframe) configure -background white
+   }
+   if { [$itk_option(-aocontroller) state gaosTTGS] } {
+		$itk_component(aottgs) configure -status on
+	} else {
+		$itk_component(aottgs) configure -status off
+	}
+	if { [$itk_option(-aocontroller) state gaosSFO] } {
+		$itk_component(aosfo) configure -status on
+	} else {
+		$itk_component(aosfo) configure -status off
+	}
+}
+
+itcl::body AltairWidget::enable {} {
+   AO configure -gaosExpose [$itk_component(gaos) expGet]
+
+   if { [string match "*LGS*" $::Config(tcs.gaos,value)] } {
+       set ttgsexp [$itk_component(aottgs) expGet]
+       set ind [string first "(" $ttgsexp]
+       set ttgsmag [string range $ttgsexp 0 [expr $ind-1]]
+       set ttgsexp [string trim [string range $ttgsexp $ind end] "()"]
+
+       AO configure -ttgsExpose $ttgsexp
+       AO configure -sfoExpose [$itk_component(aosfo) expGet]
+
+       switch $ttgsmag {
+	   10.0 -
+	   10.5 -
+	   11.0 -
+	   11.5 -
+	   12.0 -
+	   12.5 {
+	       AO configure -ttgsGain 0.2
+	       AO configure -ttgsFlux 1
+	   }
+	   13.0 -
+	   13.5 -
+	   14.0 -
+	   14.5 -
+	   15.0 -
+	   15.5 -
+	   16.0 {
+	       AO configure -ttgsGain 0.2
+	       AO configure -ttgsFlux 0
+	   }
+	   16.5 {
+	       AO configure -ttgsGain 0.4
+	       AO configure -ttgsFlux 0
+	   }
+	   17.0 {
+	       AO configure -ttgsGain 0.7
+	       AO configure -ttgsFlux 0
+	   }
+	   17.5 {
+	       AO configure -ttgsGain 1.1
+	       AO configure -ttgsFlux 0
+	   }
+	   18.0 {
+	       AO configure -ttgsGain 1.6
+	       AO configure -ttgsFlux 0
+	   }
+	   18.5 {
+	       AO configure -ttgsGain 2.0
+	       AO configure -ttgsFlux 0
+	   }
+	   19.0 {
+	       AO configure -ttgsGain 2.6
+	       AO configure -ttgsFlux 0
+	   }
+       }
+   }
+   if { [calparam cget -site] eq "MK" && $::Config(tcs.gaos,value) ne "No AO" && $::Config(tcs.gaos,value) != "" } {
+       switch [$itk_component(gaos_ex) get] {
+	   0.001 { $::Config(tcs.gaos,namespace)::$::Config(tcs.gaos,value) configure -gsmag 11 }
+	   0.002 { $::Config(tcs.gaos,namespace)::$::Config(tcs.gaos,value) configure -gsmag 12 }
+	   0.005 { $::Config(tcs.gaos,namespace)::$::Config(tcs.gaos,value) configure -gsmag 13 }
+	   0.01  { $::Config(tcs.gaos,namespace)::$::Config(tcs.gaos,value) configure -gsmag 14 }
+	   0.02  { $::Config(tcs.gaos,namespace)::$::Config(tcs.gaos,value) configure -gsmag 15 }
+	   default { $::Config(tcs.gaos,namespace)::$::Config(tcs.gaos,value) configure -gsmag 11 }
+       }
+   }
+}
+
+itcl::body AltairWidget::gaos {val} {
+	
+	$itk_option(-aocontroller) configure -useLwfs [$itk_option(-aocontroller)  state useLwfs]
+	
+	switch $val {
+		push {
+			$itk_option(-aocontroller) configure -gaos 1
+		}
+		pop {
+			$itk_option(-aocontroller) configure -gaos 0
+		}
+	}
+}
+
+itcl::body AltairWidget::gaosTTGS {val} {
+	switch $val {
+		push {
+			$itk_option(-aocontroller) configure -gaosTTGS 1
+		}
+		pop {
+			$itk_option(-aocontroller) configure -gaosTTGS 0
+		}
+	}
+}
+
+itcl::body AltairWidget::ttgsloop {val} {
+	switch $val {
+		push {
+			$itk_option(-aocontroller) configure -ttgsloop 1
+		}
+		pop {
+			$itk_option(-aocontroller) configure -ttgsloop 0
+		}
+	}
+}
+
+itcl::body AltairWidget::gaosSFO {val} {
+	switch $val {
+		push {
+			$itk_option(-aocontroller) configure -gaosSFO 1
+		}
+		pop {
+			$itk_option(-aocontroller) configure -gaosSFO 0
+		}
+	}
+}
+
+itcl::body AltairWidget::sfoloop {val} {
+	switch $val {
+	push {
+		$itk_option(-aocontroller) configure -sfoloop 1
+	}
+	pop {
+		$itk_option(-aocontroller) configure -sfoloop 0
+	}
+	}
+}
+
+itcl::body AltairWidget::oiblend {val} {
+	switch $val {
+		push {
+			 $itk_option(-aocontroller) configure -oiblend 1
+		}
+		pop {
+			 $itk_option(-aocontroller) configure -oiblend 0
+		}
+	}
+}

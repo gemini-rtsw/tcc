@@ -93,7 +93,7 @@
 *observePanel*guideloop*sfo_ex*state:     disabled
 *observePanel*guideloop*aottgs*state:     disabled
 *observePanel*guideloop*ttgs_ex*state:     disabled
-*observePanel*guideloop*gaoson*state:   disabled
+#*observePanel*guideloop*gaoson*state:   disabled
 *observePanel*guideloop*gaos_ex*state:   disabled
 *observePanel*guideloop*m1src*3*state:  disabled
 *tcsSlewOptionsPanel*ltcscheck*state:   disabled
