@@ -26,7 +26,8 @@ itcl::class GuideLoop {
       method comacorr {op}
       method m2mode {probe val}
       method mtmode {val}
-      method probefrom {val}
+		method crmode {val}
+		method probefrom {val}
       method probeto {val}
       method wfsmode {wfs val}
       method enable {}
@@ -69,7 +70,7 @@ itcl::body GuideLoop::constructor args {
 
 # WFS boxes AWE ... seperating out the OIWFS
    # rectangle to group pwfs1 and pwfs2
-   $w create rectangle 0 0 131 107 -fill white -tags "active pwfs1_bg pwfs2_bg pwfs_comb"
+   $w create rectangle 0 0 131 106 -fill white -tags "active pwfs1_bg pwfs2_bg pwfs_comb"
 
 	itk_component add pwfs1 {
 		WfsWidget $w.pwfs1 -label P1 -onswitchpress [itcl::code $this wfsmode pwfs1] -background grey
@@ -140,6 +141,8 @@ itcl::body GuideLoop::constructor args {
    $w create text 92 54 -text FIGURE -tags m1 -font $font
    $w create rectangle 0 21 123 49 -fill white -tags "active mount mount_bg"
    $w create text 92 35 -text MOUNT -tags mount -font $font
+	$w create rectangle 0 21 123 49 -fill white -tags "active rotator rotator_bg"
+	$w create text 92 35 -text ROTAT -tags rotator -font $font
 
 # Controls for M1.
    itk_component add m1src {
@@ -207,6 +210,17 @@ itcl::body GuideLoop::constructor args {
    $w create window 2 25 -width 60 -window $itk_component(mt) -tags mount -anchor nw
    $itk_component(mt) add M2 -pady 0
 
+	# Controls for Cass-rotator.
+	itk_component add rotator {
+		SelectButton $w.rotator -orient horizontal \
+				-command [itcl::code $this crmode]
+	} {
+		usual
+		rename -offbackground -background background Background
+	}
+	$w create window 2 25 -width 60 -window $itk_component(rotator) -tags rotator -anchor nw
+	$itk_component(rotator) add AO -pady 0
+
 # Box for WFS probes.
    $w create rectangle 0 0 123 66 -fill white -tags "active probes probes_bg"
    $w create text 92 33 -text PROBES -tags probes -font $font
@@ -238,44 +252,43 @@ itcl::body GuideLoop::constructor args {
    $itk_component(prto) setState "0 1 2" disabled
 
 # Move boxes into position.
-   $w move m2 172 10
-   $w move m2xy 300 10
-   $w move m1 250 115
+   $w move m2 149 10
+   $w move m2xy 277 10
+   $w move m1 227 107
    $w move settled 480 40
-   $w move oiwfs 250 342
-   $w move pwfs_comb 31 215
-   $w move pwfs1 35 219
-   $w move pwfs2 35 270
-   $w move probes 250 242
-   $w move mount 250 400
+   $w move oiwfs 227 280
+   $w move pwfs_comb 31 175
+   $w move pwfs1 35 179
+   $w move pwfs2 35 230
+   $w move probes 227 204
+   $w move mount 227 339
+	$w move rotator 227 377
 
 # PWFS to M1
-   $w create line 100 215 100 138 252 138 -width 3 -fill white \
-         -tags {active pwfs1_m1 pwfs2_m2} -arrow last -arrowshape {20 20 7}
+   $w create line 118 174 118 131 226 131 -width 3 -fill white \
+         -tags {active pwfs1_m1 pwfs2_m1} -arrow last -arrowshape {20 20 7}
 
-   $w create line 251 370 215 370 215 169 251 169 -width 3 -fill white \
+   $w create line 226 315 191 315 191 161 226 161 -width 3 -fill white \
          -tags {active oiwfs_m1} -arrow last -arrowshape {20 20 7}
 
-
-
 # WFS to M2
-   $w create line 45 215 45 33 172 33 -width 3 -fill white \
+   $w create line 74 174 74 33 148 33 -width 3 -fill white \
          -tags {active pwfs1_m2 pwfs2_m2} -arrow last -arrowshape {20 20 7}
 
-   $w create line 251 389 205 389 205 97 -width 3 -fill white \
+   $w create line 226 338 181 338 181 97 -width 3 -fill white \
          -tags {active oiwfs_m2} -arrow last -arrowshape {20 20 7}
 
 # WFS to Probes
-   $w create line 162 265 251 265 -width 3 -fill white \
+   $w create line 163 228 226 228 -width 3 -fill white \
          -tags {active pwfs1_pr pwfs2_pr} -arrow last -arrowshape {20 20 7}
 
 
-   $w create line 251 351 225 351 225 296 251 296 -width 3 -fill white \
+   $w create line 226 292 201 292 201 257 226 257 -width 3 -fill white \
          -tags {active oiwfs_pr} -arrow last -arrowshape {20 20 7}
 
 
 # M2 to mount
-   $w create line 172 60  20  60  20 435 251 435 -width 3 -fill white \
+   $w create line 148 53 20 53 20 374 226 374 -width 3 -fill white \
          -tags {active m2_mt} -arrow last -arrowshape {20 20 7}
 
 
@@ -646,6 +659,17 @@ itcl::body GuideLoop::mtmode {val} {
    }
 }
 
+itcl::body GuideLoop::crmode {val} {
+	switch $val {
+		AO {
+			AO configure -crsource GAOS
+		}
+		"" {
+			AO configure -crsource none
+		}
+	}
+}
+
 itcl::body GuideLoop::probefrom {val} {
    $itk_component(prto) clear
    $itk_component(prto) setState "0 1 2" disabled
@@ -778,89 +802,6 @@ itcl::body GuideLoop::reset {} {
 	AO configure -probeto ""
 }
 
-#itcl::body GuideLoop::buildGaos {} {
-#	set w $itk_component(canv)
-#
-#	$w create rectangle -2 -2 129 237 -fill white -tags "active gaos gaos_bg"
-#	
-#	itk_component add gaoson {
-#		ToggleButton $w.gaoson -text AO -pushedbackground Green -pady 0 \
-#			-command [itcl::code $this gaos]
-#	} {
-#		usual
-#	}
-#	$w create window 64 1 -width 60 -window $w.gaoson -tags gaos -anchor n
-#
-#	# exposure time
-#	itk_component add gaos_ex {
-#		 iwidgets::combobox $w.gaos_ex -arrowrelief flat -width 5 \
-#		-validate real -labeltext "exp(s)"
-#	}
-#	$w create window 2 24 -window $w.gaos_ex -tag gaos -anchor nw
-#	$w.gaos_ex insert list end 0.02 0.01 0.005 0.002 0.001
-#	$w.gaos_ex insert entry end [AO cget -gaosExpose]
-#	[$w.gaos_ex component list] configure -hscrollmode none \
-#		 -vscrollmode none
-#
-#	# TTGS loop closed
-#	itk_component add ttao {
-#		ToggleButton $w.ttao -text TTGS -pushedbackground Green -pady 0 \
-#				-command [itcl::code $this ttgsloop]
-#	} {
-#		usual
-#	}
-#	$w create window 2 48 -width 60 -window $w.ttao -tags gaos -anchor nw
-#
-#	# SFO loop closed
-#	itk_component add sfao {
-#		ToggleButton $w.sfao -text SFO -pushedbackground Green -pady 0 \
-#				-command [itcl::code $this sfoloop]
-#	} {
-#		usual
-#	}
-#	$w create window 2 69 -width 60 -window $w.sfao -tags gaos -anchor nw
-#
-#	# OI Blending
-#	itk_component add oiao {
-#		ToggleButton $w.oiao -text OIWFS -pushedbackground Green -pady 0 \
-#				-command [itcl::code $this oiblend]
-#	} {
-#		usual
-#	}
-#	$w create window 2 90 -width 60 -window $w.oiao -tags gaos -anchor nw
-#
-#	# gaosTTGS
-#	itk_component add aottgs {
-#		ToggleButton $w.aottgs -text TTGS -pushedbackground Green -pady 0 \
-#				-command [itcl::code $this gaosTTGS]
-#	} {
-#		usual
-#	}
-#	$w create rectangle 2 113 125 182 -fill white -tags "active gaos gaos_ttgs"
-#	$w create window 64 116 -width 60 -window $w.aottgs -tags gaos -anchor n
-#	# TTGS exp
-#	itk_component add ttgs_ex {
-#		 iwidgets::combobox $w.ttgs_ex -arrowrelief flat -width 11 -selectioncommand [itcl::code $this configSfoEx] \
-#			-listheight 320 -editable 1 -labeltext "Mag(exp)" -labelpos nw
-#	}
-#	$w create window 4 139 -window $w.ttgs_ex -tags gaos -anchor nw
-#	$w.ttgs_ex insert list end 19.0(0.05) 18.5(0.05) 18.0(0.05) 17.5(0.02) 17.0(0.01) 16.5(0.005) 16.0(0.005) \
-#		 15.5(0.002) 15.0(0.001) 14.5(0.001) 14.0(0.001) 13.5(0.001) 13.0(0.001) 12.5(0.001) 12.0(0.001) 11.5(0.001) \
-#		 11.0(0.001) 10.5(0.001) 10.0(0.001)
-#	$w.ttgs_ex insert entry end 10.0(0.001)
-#	[$w.ttgs_ex component list] configure -hscrollmode none \
-#				-vscrollmode none
-#
-#	# gaosSFO
-#	itk_component add aosfo {
-#		WfsWidget $w.aosfo -label SFO -onswitchpress [itcl::code $this gaosSFO]
-#	}
-#	$w create window 2 185 -window $w.aosfo -tags gaos -anchor nw
-#	$itk_component(aosfo) expSet [AO cget -sfoExpose]
-#	
-#	$w move gaos 473 74
-#}
-
 itcl::body GuideLoop::buildGaos {} {
 	set w $itk_component(canv)
 	if { [calparam cget -site] eq "CP" } {
@@ -878,29 +819,31 @@ itcl::body GuideLoop::buildGaos {} {
 
 itcl::body GuideLoop::buildAltairArrows {} {
 	set w $itk_component(canv)
-	$w create line 471 85 373 85  -width 3 -fill white -tags {active gaos_m2} \
+	$w create line 470 85 351 85  -width 3 -fill white -tags {active gaos_m2} \
 		-arrow last -arrowshape {20 20 7}
-	$w create line 471 110 407 110 407 130 373 130 -width 3 -fill white \
+	$w create line 470 119 351 119 -width 3 -fill white \
 		-tags {active gaos_m1} -arrow last -arrowshape {20 20 7}
-	$w create line 374 377 407 377 407 174 473 174 -width 3 -fill white \
+	$w create line 351 315 425 315 425 173 470 173 -width 3 -fill white \
 		-tags {active oiwfs_gaos} -arrow last -arrowshape {20 20 7}
 
 	# GAOS internal
-	$w create line 475 216 425 216 425 132 473 132 -width 3 -fill white \
+	$w create line 470 221 435 221 435 131 470 131 -width 3 -fill white \
 		-tags {active ttgs_gaos} -arrow last -arrowshape {20 20 7}
-	$w create line 475 275 440 275 440 153 473 153 -width 3 -fill white \
+	$w create line 470 281 445 281 445 152 470 152 -width 3 -fill white \
 		-tags {active sfo_gaos} -arrow last -arrowshape {20 20 7}
 
 }
 
 itcl::body GuideLoop::buildGemsArrows {} {
 	set w $itk_component(canv)
-	$w create line 433 85 373 85  -width 3 -fill white -tags {active gaos_m2} \
+	$w create line 433 85 351 85  -width 3 -fill white -tags {active gaos_m2} \
 		-arrow last -arrowshape {20 20 7}
-	$w create line 433 95 398 95 398 130 373 130 -width 3 -fill white \
+	$w create line 433 125 351 125 -width 3 -fill white \
 		-tags {active gaos_m1} -arrow last -arrowshape {20 20 7}
-	$w create line 374 377 407 377 407 176 433 176 -width 3 -fill white \
+	$w create line 351 315 407 315 407 176 433 176 -width 3 -fill white \
 		-tags {active oiwfs_gaos} -arrow last -arrowshape {20 20 7}
+	$w create line 433 105 388 105 388 411 351 411 -width 3 -fill white \
+		-tags {active cr_gaos} -arrow last -arrowshape {20 20 7}
 
 	# GAOS internal
 	$w create line 433 238 398 238 398 156 433 156 -width 3 -fill white \

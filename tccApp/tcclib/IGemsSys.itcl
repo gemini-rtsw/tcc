@@ -1,0 +1,103 @@
+#+
+# IGemsSys
+#
+# Interface to the GeMS system. It is implementated by RealGems and SimGems.
+#
+# J Luhrs 01 April 2009
+#
+#  $Id: Exp $
+#+
+
+itcl::class IGemsSys {
+	public {
+		#Loop control commands
+		method openLGSLoop {}
+		method closeLGSLoop {}
+		method openTTLoop {}
+		method closeTTLoop {}
+		method openFocLoop {}
+		method closeFocLoop {}
+		method openFlexLoop {}
+		method closeFlexLoop {}
+		method openAniLoop {}
+		method closeAniLoop {}
+		method disableM1Offload {}
+		method enableM1Offload {}
+		method disableM2Offload {}
+		method enableM2Offload {}
+		method disableRotOffload {}
+		method enableRotOffload {}
+		method pauseLoops {}
+		method resumeLoops {}
+		method stopLoops {}
+		
+		#Loop configuration
+		method configureTTLoop {sources}
+		
+		#Astrometry
+		method setAstroMode {mode}
+		method startAstrometry {}
+		method stopAstrometry {}
+		
+		method moveADC {pos}
+		method startADC {}
+		method stopADC {}
+		method moveBeamSplitter {pos}
+
+		#WFS control commands
+		method startODGW {id}
+		method stopODGW {id}
+		method startTTWFS {id}
+		method stopTTWFS {id}
+		method startLGSWFS {}
+		method stopLGSWFS {}
+		method startSFS {}
+		method stopSFS {}
+		method setODGWExposure {id val}
+		method setTTWFSExposure {id val}
+		method setLGSWFSExposure {val}
+		method setSFSExposure {val}
+
+		#Configuration commands
+#		method connectActions {action}
+#		method clearActions {action}
+#		method confODGWWavelength { action value }
+
+		#States
+		method getLGSLoopState {}
+		method getTTLoopState {}
+		method getFocLoopState {}
+		method getFlexLoopState {}
+		method getAniLoopState {}
+		method getM1OffloadState {}
+		method getM2OffloadState {}
+		method getRotOffloadState {}
+		method getTTLoopSources {}
+		method getODGWActive {id}
+		method getTTWFSActive {id}
+		method getLGSWFSActive {}
+		method getSFSActive {}
+		method getODGWExposure {id}
+		method getTTWFSExposure {id}
+		method getLGSWFSExposure {}
+		method getSFSExposure {}
+		method getODGWCounts {id}
+		method getTTWFSCounts {id}
+		method getLGSWFSCounts {id}
+		method getSFSCounts {}
+		method getAstroMode {}
+		method getAstrometryState {}
+		method getADCPos {}
+		method getADCState {}
+		method getBeamSplitterPos {}
+		
+		#Command state
+		method getCommandState {}
+		method getLastError {}
+#		method getODGWWavelength {}
+
+		#Observable interface
+		method subscribe {observer}
+		method unsubscribe {observer}
+	}
+}

@@ -84,7 +84,7 @@
 *observePanel*control*niciframe*state:  disabled
 #*observePanel*control*lpath*1*state:    disabled
 #*observePanel*control*lpath*4*state:    disabled
-*observePanel*guideloop*m2ao*state:   disabled
+#*observePanel*guideloop*m2ao*state:   disabled
 *observePanel*guideloop*oiao*state:     disabled
 *observePanel*guideloop*ttao*state:     disabled
 *observePanel*guideloop*sfao*state:     disabled
@@ -95,5 +95,5 @@
 *observePanel*guideloop*ttgs_ex*state:     disabled
 #*observePanel*guideloop*gaoson*state:   disabled
 *observePanel*guideloop*gaos_ex*state:   disabled
-*observePanel*guideloop*m1src*3*state:  disabled
+#*observePanel*guideloop*m1src*3*state:  disabled
 *tcsSlewOptionsPanel*ltcscheck*state:   disabled

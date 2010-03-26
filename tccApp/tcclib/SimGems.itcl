@@ -1,0 +1,598 @@
+#+
+# SimGems
+#
+# Simulator implementation of IGemsSys
+#
+# J Luhrs 25 March 2010
+#
+#  $Id: Exp $
+#-
+
+itcl::class SimGems {
+	inherit GemsSys  
+	public {
+		#Loop control commands
+		method openLGSLoop {}
+		method closeLGSLoop {}
+		method openTTLoop {}
+		method closeTTLoop {}
+		method openFocLoop {}
+		method closeFocLoop {}
+		method openFlexLoop {}
+		method closeFlexLoop {}
+		method openAniLoop {}
+		method closeAniLoop {}
+		method disableM1Offload {}
+		method enableM1Offload {}
+		method disableM2Offload {}
+		method enableM2Offload {}
+		method disableRotOffload {}
+		method enableRotOffload {}
+		method pauseLoops {why}
+		method resumeLoops {}
+		method stopLoops {}
+		
+		#Loop configuration
+		method configureTTLoop {sources}
+		
+		#Astrometry
+		method setAstroMode {mode}
+		method startAstrometry {}
+		method stopAstrometry {}
+		
+		method moveADC {pos}
+		method startADC {}
+		method stopADC {}
+		method moveBeamSplitter {pos}
+
+		#WFS control commands
+		method startODGW {id}
+		method stopODGW {id}
+		method startTTWFS {id}
+		method stopTTWFS {id}
+		method startLGSWFS {}
+		method stopLGSWFS {}
+		method startSFS {}
+		method stopSFS {}
+		method setODGWExposure {id val}
+		method setTTWFSExposure {id }val
+		method setLGSWFSExposure {val}
+		method setSFSExposure {val}
+
+		#States
+		method getLGSLoopState {}
+		method getTTLoopState {}
+		method getFocLoopState {}
+		method getFlexLoopState {}
+		method getAniLoopState {}
+		method getM1OffloadState {}
+		method getM2OffloadState {}
+		method getRotOffloadState {}
+		method getTTLoopSources {}
+		method getODGWActive {id}
+		method getTTWFSActive {id}
+		method getLGSWFSActive {}
+		method getSFSActive {}
+		method getODGWExposure {id}
+		method getTTWFSExposure {id}
+		method getLGSWFSExposure {}
+		method getSFSExposure {}
+		method getODGWCounts {id}
+		method getTTWFSCounts {id}
+		method getLGSWFSCounts {id}
+		method getSFSCounts {}
+		method getAstroMode {}
+		method getAstrometryState {}
+		method getADCPos {}
+		method getADCState {}
+		method getBeamSplitterPos {}
+		
+		#Command state
+		method getCommandState {}
+		method getLastError {}
+#		method getODGWWavelength {}
+
+		#Observable interface
+		method subscribe {observer}
+		method unsubscribe {observer}
+		
+		variable logger logger
+
+		constructor {} {}
+		destructor {}
+	}
+	private {
+		variable lgsLoopState OPEN 
+		variable ttLoopState OPEN
+		variable focLoopState OPEN
+		variable flexLoopState OPEN
+		variable aniLoopState OPEN
+		variable m1OffloadState OFF
+		variable m2OffloadState OFF
+		variable rotOffloadState OFF
+		variable ttLoopSources ""
+		variable astroMode FAST
+		variable astroState OFF
+		variable adcPos OUT
+		variable adcState OFF
+		variable beamSplitterPos OUT
+		variable ttwfsExposure
+		variable odgwExposure
+		variable sfsExposure 100
+		variable lgswgsExposure 100
+		variable ttwfsActive
+		variable odgwActive
+		variable sfsActive OFF
+		variable lgswfsActive OFF
+		variable ttwfsCounts
+		variable odgwCounts
+		variable sfsCounts 0
+		variable lgswfsCounts
+		variable loopsSettled FALSE
+		
+		variable loopsSettling 0
+		variable loopsClosed 0 
+		
+		variable cmdState IDLE
+		variable errMsg ""
+
+		variable observerList {}
+		
+		method notify {reasons}
+		
+		method simDelayedChange { var value {reason ""} }
+		method simLoopStabilize { var delay {reason ""} }
+		method simLoopOpen {var {reason ""} }
+		method simLoopClose {var {reason ""} }
+		method openLoop {name var {reason ""}}
+		method closeLoop {name var {delay 2000} {reason ""}}
+		method configCmd { name var value {delay 200} {reason ""}}
+		method beginCmd {}
+		method endCmd {}
+		
+		#Simulation
+		variable timerId {}
+		method simCycle {}
+	}
+}
+
+itcl::body SimGems::constructor {} {
+	for { set i 1 } { $i <= 3 } { incr i } {
+		set $ttwfsExposure($i) 100
+		set $ttwfsActive($i) OFF
+		set $ttwfsCounts($i) 0
+	}
+	for { set i 1 } { $i <= 4 } { incr i } {
+		set $odgwExposure($i) 100
+		set $odgwActive($i) OFF
+		set $odgwCounts($i) 0
+	}
+	for { set i 1 } { $i <= 5 } { incr i } {
+		set $lgswfsCounts($i) 0
+	}
+	set timerId [after idle [itcl::code this simCycle] ]
+}
+
+itcl::body SimGems::destructor {} {
+	after cancel $timerId
+}
+
+#Loop control commands
+itcl::body SimGems::openLoop {name var {reason ""}} {
+	$logger log "SimGems: open $name loop command"
+	if { [beginCmd] } {
+		after 200 [itcl::code $this simLoopOpen $var $reason]
+	}
+}
+
+itcl::body SimGems::closeLoop {name var {delay 2000} {reason ""}} {
+	$logger log "SimGems: close $name loop command"
+	if { [beginCmd] } {
+		after 200 [itcl::code $this simLoopStabilize lgsLoopState $delay $reason]
+	}
+}
+
+itcl::body SimGems::openLGSLoop {} {
+	openLoop LGS lgsLoopState
+}
+
+itcl::body SimGems::closeLGSLoop {} {
+	closeLoop LGS lgsLoopState
+}
+
+itcl::body SimGems::openTTLoop {} {
+	openLoop TT ttLoopState
+}
+
+itcl::body SimGems::closeTTLoop {} {
+	closeLoop TT ttLoopState
+}
+
+itcl::body SimGems::openFocLoop {} {
+	openLoop Focus focLoopState
+}
+
+itcl::body SimGems::closeFocLoop {} {
+	closeLoop Focus focLoopState
+}
+
+itcl::body SimGems::openFlexLoop {} {
+	openLoop Flexure flexLoopState
+}
+
+itcl::body SimGems::closeFlexLoop {} {
+	closeLoop Flexure flexLoopState
+}
+
+itcl::body SimGems::openAniLoop {} {
+	openLoop Anisoplanetism aniLoopState
+}
+
+itcl::body SimGems::closeAniLoop {} {
+	closeLoop Anisoplanetism aniLoopState
+}
+
+itcl::body SimGems::disableM1Offload {} {
+	configCmd "M1 Loop" m1LoopState OFF
+}
+
+itcl::body SimGems::enableM1Offload {} {
+	configCmd "M1 Loop" m1LoopState ON
+}
+
+itcl::body SimGems::disableM2Offload {} {
+	configCmd "M2 Loop" m2LoopState OFF
+}
+
+itcl::body SimGems::enableM2Offload {} {
+	configCmd "M2 Loop" m2LoopState ON
+}
+
+itcl::body SimGems::disableRotOffload {} {
+	configCmd "Rotator Loop" rotLoopState OFF
+}
+
+itcl::body SimGems::enableRotOffload {} {
+	configCmd "Rotator Loop" rotLoopState ON
+}
+
+itcl::body SimGems::pauseLoops {why} {
+	#TODO: implementatin pendig
+}
+
+itcl::body SimGems::resumeLoops {} {
+	#TODO: implementatin pendig
+}
+
+itcl::body SimGems::stopLoops {} {
+	#TODO: implementatin pendig
+}
+
+#Loop configuration
+itcl::body SimGems::configureTTLoop {sources} {
+	configCmd "TT sources" ttLoopSources $sources
+}
+
+
+#Astrometry
+itcl::body SimGems::setAstroMode {mode} {
+	configCmd "Astrometry Mode" astroMode $mode
+}
+
+itcl::body SimGems::startAstrometry {} {
+	configCmd Astrometry astroState ON
+}
+
+itcl::body SimGems::stopAstrometry {} {
+	configCmd Astrometry astroState OFF
+}
+
+itcl::body SimGems::moveADC {pos} {
+	configCmd "ADC Position" adcPos $pos 4000
+}
+
+itcl::body SimGems::startADC {} {
+	configCmd "ADC" adcState ON 500
+}
+
+itcl::body SimGems::stopADC {} {
+	configCmd "ADC" adcState OFF
+}
+
+itcl::body SimGems::moveBeamSplitter {pos} {
+	configCmd "Beam Splitter Position" beamSplitterPos $pos 4000
+}
+
+#WFS control commands
+itcl::body SimGems::startODGW {id} {
+	configCmd "ODGW $id" odgwActive($id) ON
+}
+
+itcl::body SimGems::stopODGW {id} {
+	configCmd "ODGW $id" odgwActive($id) OFF
+}
+
+itcl::body SimGems::startTTWFS {id} {
+	configCmd "TTWFS $id" ttwfsActive($id) ON
+}
+
+itcl::body SimGems::stopTTWFS {id} {
+	configCmd "TTWFS $id" ttwfsActive($id) OFF
+}
+
+itcl::body SimGems::startLGSWFS {} {
+	configCmd LGSWFS lgswfsActive ON
+}
+
+itcl::body SimGems::stopLGSWFS {} {
+	configCmd LGSWFS lgswfsActive OFF
+}
+
+itcl::body SimGems::startSFS {} {
+	configCmd SFS sfsActive ON
+}
+
+itcl::body SimGems::stopSFS {} {
+	configCmd SFS sfsActive OFF
+}
+
+itcl::body SimGems::setODGWExposure {id val} {
+	configCmd "ODGW $id Exposure" odgwExposure($id) $val
+}
+
+itcl::body SimGems::setTTWFSExposure {id val} {
+	configCmd "TTWFS $id Exposure" ttwfsExposure($id) $val
+}
+
+itcl::body SimGems::setLGSWFSExposure {val} {
+	configCmd "LGSWFS Exposure" lgswgsExposure $val
+}
+
+itcl::body SimGems::setSFSExposure {val} {
+	configCmd "SFS Exposure" sfsExposure $val
+}
+
+
+#States
+itcl::body SimGems::getLGSLoopState {} {
+	return $lgsLoopState
+}
+
+itcl::body SimGems::getTTLoopState {} {
+	return $ttLoopState
+}
+
+itcl::body SimGems::getFocLoopState {} {
+	return $focLoopState
+}
+
+itcl::body SimGems::getFlexLoopState {} {
+	return $flexLoopState
+}
+
+itcl::body SimGems::getAniLoopState {} {
+	return $aniLoopState
+}
+
+itcl::body SimGems::getM1OffloadState {} {
+	return $m1LoopState
+}
+
+itcl::body SimGems::getM2OffloadState {} {
+	return $m2LoopState
+}
+
+itcl::body SimGems::getRotOffloadState {} {
+	return $
+}
+
+itcl::body SimGems::getTTLoopSources {} {
+	return $ttLoopSources
+}
+
+itcl::body SimGems::getODGWActive {id} {
+	return $rotLoopState($id)
+}
+
+itcl::body SimGems::getTTWFSActive {id} {
+	return $ttwfsActive($id)
+}
+
+itcl::body SimGems::getLGSWFSActive {} {
+	return $lgswfsActive
+}
+
+itcl::body SimGems::getSFSActive {} {
+	return $sfsActive
+}
+
+itcl::body SimGems::getODGWExposure {id} {
+	return $odgwExposure($id)
+}
+
+itcl::body SimGems::getTTWFSExposure {id} {
+	return $ttwfsExposure($id)
+}
+
+itcl::body SimGems::getLGSWFSExposure {} {
+	return $lgswgsExposure
+}
+
+itcl::body SimGems::getSFSExposure {} {
+	return $sfsExposure
+}
+
+itcl::body SimGems::getODGWCounts {id} {
+	return $odgwCounts($id)
+}
+
+itcl::body SimGems::getTTWFSCounts {id} {
+	return $ttwfsCounts($id)
+}
+
+itcl::body SimGems::getLGSWFSCounts {id} {
+	return $lgswfsCounts($id)
+}
+
+itcl::body SimGems::getSFSCounts {} {
+	return $sfsCounts
+}
+
+itcl::body SimGems::getAstroMode {} {
+	return $astroMode
+}
+
+itcl::body SimGems::getAstrometryState {} {
+	return $astroState
+}
+
+itcl::body SimGems::getADCPos {} {
+	return $adcPos
+}
+
+itcl::body SimGems::getADCState {} {
+	return $adcState
+}
+
+itcl::body SimGems::getBeamSplitterPos {} {
+	return $beamSplitterPos
+}
+
+
+#Command state
+itcl::body SimGems::getCommandState {} {
+	return $cmdState
+}
+
+itcl::body SimGems::getLastError {} {
+	return $errMsg
+}
+
+
+#Observable interface
+itcl::body SimGems::subscribe {observer} {
+# Check that the observer isn't already on the list.
+	if { [lsearch -exact $observerList $observer] == -1 } {
+# Append the observer to the list.
+		lappend observerList $observer
+	}
+}
+
+itcl::body SimGems::unsubscribe {observer} {
+# Check that the observer is registered.
+	set index [lsearch -exact $observerList $observer]
+	if { $index != -1 } {
+		set observerList [lreplace $observerList $index $index]
+	}
+}
+
+itcl::body SimGems::notify {reasons} {
+	foreach observer $observerList {
+		$observer $reasons
+	}
+}
+
+itcl::body SimGems::simDelayedChange { var value {reason ""} } {
+	set $var $value
+	if { $reason eq "" } {
+		notify $var 
+	} else {
+		notify $reason
+	}
+	endCmd
+}
+
+itcl::body SimGems::simLoopStabilize { var delay {reason ""} } {
+	endCmd
+	incr loopsSettling
+	if { $loopSettled eq "TRUE"}
+		set loopSettled FALSE
+		notify loopSettled
+	}
+	after $delay [itcl::code $this simLoopClose $var]
+}
+
+itcl::body SimGems::simLoopOpen {var {reason ""} } {
+	set $var OPEN
+	if { $reason eq "" } {
+		notify $var 
+	} else {
+		notify $reason
+	}
+	endCmd
+	incr loopClosed -1
+	if { $loopSettled eq "TRUE"  && $loopClosed == 0 } {
+		set loopsSettled FALSE
+		notify loopsSettled
+	}
+}
+
+itcl::body SimGems::simLoopClose {var {reason ""} } {
+	set $var CLOSED
+	if { $reason eq "" } {
+		notify $var 
+	} else {
+		notify $reason
+	}
+	incr loopClosed
+	incr loopSettling -1
+	if { $loopSettled eq "FALSE" && loopSettling == 0 } {
+		set loopsSettled TRUE
+		notify loopsSettled
+	}
+}
+
+itcl::body SimGems::simLoopOpen::beginCmd {} {
+	if { $cmdState eq "BUSY" } {
+		set cmdState ERROR
+		set errMsg "ERROR: GeMS command in progress."
+		set ret 0
+	} else {
+		set cmdState BUSY
+		set errMsg ""
+		set ret 1
+	}
+	notify cmdState
+	return $ret
+}
+
+itcl::body SimGems::simLoopOpen::endCmd {} {
+	if { $cmdState eq "BUSY" } {
+		set cmdState IDLE
+		notify cmdState
+	}
+}
+
+itcl::body SimGems::configCmd { name var value {delay 200} {reason ""}} {
+	$logger log "SimGems: configure $name to $value"
+	if { [beginCmd] } {
+		after $delay [itcl::code $this simDelayedChange $var $value $reason]
+	}
+}
+
+itcl::body SimGems::simCycle {} {
+	foreach {stateVar countVar} { ttwfsActive(1) ttwfsCounts(1)  \
+											ttwfsActive(2) ttwfsCounts(2)  \
+											ttwfsActive(3) ttwfsCounts(3)  \
+											odgwActive(1)  odgwCounts(1)   \
+											odgwActive(2)  odgwCounts(2)   \
+											odgwActive(3)  odgwCounts(3)   \
+											odgwActive(4)  odgwCounts(4)   \
+											sfsActive      sfsCounts       \
+											lgswfsActive   lgswfsCounts(1) \
+											lgswfsActive   lgswfsCounts(2) \
+											lgswfsActive   lgswfsCounts(3) \
+											lgswfsActive   lgswfsCounts(4) \
+											lgswfsActive   lgswfsCounts(5) } {
+		set oldVal [set $countVar]
+		if { $stateVar eq "ON" } {
+			set $countVar [expr "100 + round( rand() * 400 )"]
+		} else {
+			set $countVar 0
+		}
+		if { $oldVal != [set $countVar] } {
+			notify $countVar
+		}
+	}
+	set timerId [after 1000 [itcl::code this simCycle] ]
+}

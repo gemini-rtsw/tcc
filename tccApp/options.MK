@@ -74,3 +74,6 @@
 *observePanel*control*niciframe*state:  disabled
 *observePanel*wfsconfig*page4*nicifr*state:    disabled
 *observePanel*wfsconfig*page4*nicifr2*state:    disabled
+
+#Disable rotator guiding
+*observePanel*guideloop*rotator*0*state:  disabled

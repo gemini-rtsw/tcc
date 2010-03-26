@@ -1,0 +1,526 @@
+#+
+# GemsAO
+#
+# This class keeps the GeMS AO settings and sequences its commands.
+#
+# J Luhrs 01 April 2009
+#
+#  $Id: Exp $
+#+
+
+itcl::class GemsAO {
+public {
+	variable gaos 0
+	variable ttgs1Active 0
+	variable ttgs1Exp	10
+	variable ttgs2Active 0
+	variable ttgs2Exp	10
+	variable ttgs3Active 0
+	variable ttgs3Exp	10
+	variable sfsActive 0
+	variable sfsExp 10
+	variable odgw1Active 0
+	variable odgw1Exp	10
+	variable odgw2Active 0
+	variable odgw2Exp	10
+	variable odgw3Active 0
+	variable odgw3Exp	10
+	variable odgw4Active 0
+	variable odgw4Exp	10
+	variable oigsActive 0
+	variable oigsExp 10
+	variable lwfsActive 0
+	variable lwfsFreq 100
+	variable lwfsLoop 0
+	variable oigsLoop 0
+	variable odgwLoop 0
+	variable ttgsLoop 0
+	variable sfsLoop 0
+	
+	variable lastError ""
+	
+	method enable {}
+	method disable {}
+	
+	constructor {} {}
+}
+private {
+	variable sys
+	method waitFor {timeout outCondition}
+	method waitForCmdIdle {{timeout 1000}}
+	method waitForCmdComplete {idleTimeout settledTimeout settledCond timeoutMsg}
+	method startWFS {}
+	method startTTGS {id}
+	method startODGW {id}
+	method stopWFS {}
+	method stopTTGS {id}
+	method stopODGW {id}
+	method startLoops {}
+	method stopLoops {}
+	method disableWFS
+	method disableTTGS {id}
+	method disableODGW {id}
+	method disableLoops {}
+	method state {var}
+}
+}
+
+itcl::code GemsAO::constructor {} {
+	set sys [GemsSys::getSingleton]
+}
+
+itcl::code GemsAO::enable {} {
+	set lastError ""
+	#WFS are enabled first
+	if { [startWFS] } {
+		return 1
+	}
+
+	#Then close loops
+	if { [startLoops] } {
+		return 1
+	}
+	
+	#Then open loops that must be opened
+	if { [stopLoops] } {
+		return 1
+	}
+	#And finally disable WFS
+	if { [stopWFS] } {
+		return 1
+	}	
+
+	return 0
+}
+
+itcl::code GemsAO::disable {} {
+	set errMsg ""
+	set ret 0
+	
+	if  { [disableLoops] } {
+		set ret 1
+		set errMsg $lastError
+	}
+	if  { [disableWFS] } {
+		set ret 1
+		set errMsg "$errMsg\n$lastError"
+	}
+	
+	set lastError $errMsg
+	return $ret
+}
+
+itcl::body GemsAO::waitFor {timeout outCondition} {
+	set elapsedTime 0
+	while {$timeout==0 || $elapsedTime<$timeout} {
+		if {[eval $outCondition]} {
+			return ok
+		}
+		after 100
+		set elapsedTime [expr $elapsedTime + 100]
+		update
+	}
+	return timeout
+}
+
+itcl::body GemsAO::waitForCmd {{timeout 1000}} {
+	set elapsedTime 0
+	while {$timeout==0 || $elapsedTime<$timeout} {
+		if {[$sys getCommandState] eq "IDLE"} {
+			return ok
+		} elseif {[$sys getCommandState] eq "ERROR"} {
+			set lastError [$sys getLastError]
+			return error
+		}
+		after 100
+		set elapsedTime [expr $elapsedTime + 100]
+		update
+	}
+	return timeout
+}
+
+itcl::body GemsAO::waitForCmdComplete {idleTimeout settledTimeout settledCond timeoutMsg} {
+	set result [waitForCmd $idleTimeout]
+	if {$result eq "error"} {
+		return 1
+	} elseif {$result eq "timeout" || [waitFor $settledTimeout $settledCond] eq "timeout" } {
+		set lastError "Timed out waiting for $timeoutMsg"
+		return 1
+	}
+	return 0
+}
+
+itcl::body GemsAO::startWFS {} {
+	for {set i 1} {i <= 3} { incr i} {
+		if { [startTTGS $i] } {
+			return 1
+		}
+	}
+	if { $sfsActive && ![state sfs] } {
+		$sys startSFS
+		if { [waitForCmdComplete 1000 1000 "state sfs" "SFS to go ON"] } {
+			return 1
+		}
+	}
+	if { $lwfsActive && ![state lgswfs] } {
+		$sys startLGSWFS
+		if { [waitForCmdComplete 1000 1000 "state lgswfs" "LGSWFS to go ON"] } {
+			return 1
+		}
+	}
+	for {set i 1} {i <= 4} { incr i} {
+		if { [startODGW $i] } {
+			return 1
+		}
+	}
+	return 0
+}
+
+itcl::body GemsAO::startTTGS {id} {
+	if { [set ttgs${id}Active] && ![state ttgs${id}] } {
+		$sys startTTWFS $id
+		if { [waitForCmdComplete 1000 1000 "state ttgs${id}" "TTWFS${id} to go ON"] } {
+			return 1
+		}
+	}
+	return 0	
+}
+
+itcl::body GemsAO::startODGW {id} {
+	if { [set odgw${id}Active] && ![state odgw${id}] } {
+		$sys startODGW $id
+		if { [waitForCmdComplete 1000 1000 "state odgw${id}" "ODGW${id} to go ON"] } {
+			return 1
+		}
+	}
+	return 0	
+}
+
+itcl::body GemsAO::stopWFS {} {
+	set _errMsg ""
+	set ret 0
+	
+	for {set i 1} {i <= 4} { incr i} {
+		if { [stopODGW $i] } {
+			set ret 1
+			set _errMsg "$_errMsg\n$lastError"
+		}
+	}
+	if { !$lwfsActive && [state lgswfs] } {
+		$sys stopLGSWFS
+		if {[waitForCmdComplete 1000 1000 {expr ![state lgswfs]} "LGSWFS to go OFF"]} {
+			set ret 1
+			set _errMsg "$_errMsg\n$lastError"
+		}
+	}
+	if { !$sfsActive && [state sfs] } {
+		$sys stopSFS
+		if {[waitForCmdComplete 1000 1000 {expr ![state sfs]} "SFS to go OFF"]} {
+			set ret 1
+			set _errMsg "$_errMsg\n$lastError"
+		}
+	}
+	for {set i 1} {i <= 3} { incr i} {
+		if { [stopTTGS $i] } {
+			set ret 1
+			set _errMsg "$_errMsg\n$lastError"
+		}
+	}
+	set lastError $errMsg
+	return $ret
+}
+
+itcl::body GemsAO::stopTTGS {id} {
+	if { ![set ttgs${id}Active] && [state ttgs${id}] } {
+		$sys stopTTWFS $id
+		if {[waitForCmdComplete 1000 1000 "expr ![state ttgs"${id}"]" "TTWFS${id} to go OFF"]} {
+			return 1
+		}
+	}
+	return 0
+}
+
+itcl::body GemsAO::stopODGW {id} {
+	if { ![set odgw${id}Active] && [state odgw${id}] } {
+		$sys stopODGW $id
+		if {[waitForCmdComplete 1000 1000 "expr ![state odgw"${id}"]" "ODGW${id} to go OFF"]} {
+			return 1
+		}
+	}
+	return 0
+}
+
+itcl::body GemsAO::disableWFS {} {
+	set errMsg ""
+	set ret 0
+	
+	for {set i 1} {i <= 4} { incr i} {
+		if { [disableODGW $i] } {
+			set ret 1
+			set errMsg "$_errMsg\n$lastError"
+		}
+	}
+	if { [state lgswfs] } {
+		$sys stopLGSWFS
+		if {[waitForCmdComplete 1000 1000 {expr ![state lgswfs]} "LGSWFS to go OFF"]} {
+			set ret 1
+			set errMsg "$errMsg\n$lastError"
+		}
+	}
+	if { [state sfs] } {
+		$sys stopSFS
+		if {[waitForCmdComplete 1000 1000 {expr ![state sfs]} "SFS to go OFF"]} {
+			set ret 1
+			set errMsg "$errMsg\n$lastError"
+		}
+	}
+	for {set i 1} {i <= 3} { incr i} {
+		if { [disableTTGS $i] } {
+			set ret 1
+			set errMsg "$errMsg\n$lastError"
+		}
+	}
+	set lastError $errMsg
+	return $ret
+}
+
+itcl::body GemsAO::disableTTGS {id} {
+	if { [state ttgs${id}] } {
+		$sys stopTTWFS $id
+		if {[waitForCmdComplete 1000 1000 "expr ![state ttgs"${id}"]" "TTWFS${id} to go OFF"]} {
+			return 1
+		}
+	}
+	return 0
+}
+
+itcl::body GemsAO::disableODGW {id} {
+	if { [state odgw${id}] } {
+		$sys stopODGW $id
+		if {[waitForCmdComplete 1000 1000 "expr ![state odgw"${id}"]" "ODGW${id} to go OFF"]} {
+			return 1
+		}
+	}
+	return 0
+}
+
+itcl::body GemsAO::startLoops {} {
+	#Set TT loop sources
+	$sys configureTTLoop [defineTTSources]
+	if {[waitForCmdComplete 1000 1000 "expr 1" "TT sources configure"]} {
+		return 1
+	}
+	if {[state astromode] ne "NONE" && ![state astrometry]} {
+		$sys startAstrometry
+		if {[waitForCmdComplete 1000 132000 "state astrometry" "Astrometry to stabilize"]} {
+			return 1
+		}
+	}
+	if { $gaos && [AO cget -m1source] eq "GAOS" && ![state m1Offload] } {
+		$sys enableM1Offload
+		if {[waitForCmdComplete 1000 1000 "state m1Offload" "M1 Offload to go ON"]} {
+			return 1
+		}
+	}
+	if { $gaos && [AO cget -aoguide] eq "On" && ![state m2Offload] } {
+		$sys enableM2Offload
+		if {[waitForCmdComplete 1000 1000 "state m2Offload" "M2 Offload to go ON"]} {
+			return 1
+		}
+	}
+	if { $lwfsLoop && ![state lwfsLoop] } {
+		$sys closeLGSLoop
+		if {[waitForCmdComplete 1000 5000 "state lwfsLoop" "LGS Loop to close"]} {
+			return 1
+		}
+	}
+	set ttLoop [expr $ttgsLoop || ( $odgwLoop && \
+		( $odgw1Active + $odgw2Active + $odgw3Active + $odgw4Active ) >= 3 ) ]
+	if { $ttLoop && ![state ttgsLoop] } {
+		$sys closeTTLoop
+		if {[waitForCmdComplete 1000 5000 "state ttgsLoop" "TT Loop to close"]} {
+			return 1
+		}
+	}
+	if { $sfsLoop && ![state sfsLoop] } {
+		$sys closeFocLoop
+		if {[waitForCmdComplete 1000 5000 "state sfsLoop" "Focus Loop to close"]} {
+			return 1
+		}
+	}
+	if { ( $odgwLoop || $oiLoop ) && ![state flexLoop] } {
+		$sys closeFlexLoop
+		if {[waitForCmdComplete 1000 5000 "state flexLoop" "Flexure Loop to close"]} {
+			return 1
+		}
+	}
+	if { $ttLoop && ![state aniLoop] } {
+		$sys closeAniLoop
+		if {[waitForCmdComplete 1000 5000 "state aniLoop" "Anisoplanetism Loop to close"]} {
+			return 1
+		}
+	}
+	if { $gaos && [AO cget -rotsource] eq "On" && ![state rotOffload] } {
+		$sys enableRotOffload
+		if {[waitForCmdComplete 1000 1000 "state rotOffload" "Rotator Offload to go ON"]} {
+			return 1
+		}
+	}
+	return 0
+}
+
+itcl::body GemsAO::stopLoops {} {
+	if { ( !$gaos || [AO cget -rotsource] ne "On" ) && [state rotOffload] } {
+		$sys disableRotOffload
+		if {[waitForCmdComplete 1000 1000 {expr ![state rotOffload]} "Rotator Offload to go OFF"]} {
+			set ret 1
+			set errMsg 
+		}
+	}
+	set ttLoop [expr $ttgsLoop || ( $odgwLoop && \
+		( $odgw1Active + $odgw2Active + $odgw3Active + $odgw4Active ) >= 3 ) ]
+	if { !$ttLoop && [state aniLoop] } {
+		$sys openAniLoop
+		if {[waitForCmdComplete 1000 1000 {expr ![state aniLoop]} "Anisoplanetism Loop to open"]} {
+			return 1
+		}
+	}
+	if { ( !$odgwLoop && !$oiLoop ) && [state flexLoop] } {
+		$sys openFlexLoop
+		if {[waitForCmdComplete 1000 1000 {expr ![state flexLoop]} "Flexure Loop to open"]} {
+			return 1
+		}
+	}
+	if { !$sfsLoop && [state sfsLoop] } {
+		$sys openFocLoop
+		if {[waitForCmdComplete 1000 1000 {expr ![state sfsLoop]} "Focus Loop to open"]} {
+			return 1
+		}
+	}
+	if { !$ttLoop && [state ttgsLoop] } {
+		$sys openTTLoop
+		if {[waitForCmdComplete 1000 5000 {expr ![state ttgsLoop]} "TT Loop to open"]} {
+			return 1
+		}
+	}
+	if { $lwfsLoop && ![state lwfsLoop] } {
+		$sys openLGSLoop
+		if {[waitForCmdComplete 1000 1000 {expr ![state lwfsLoop]} "LGS Loop to open"]} {
+			return 1
+		}
+	}
+	if { ( !$gaos || [AO cget -aoguide] ne "On" ) && [state m2Offload] } {
+		$sys disableM2Offload
+		if {[waitForCmdComplete 1000 1000 {expr ![state m2Offload]} "M2 Offload to go OFF"]} {
+			return 1
+		}
+	}
+	if { ( !$gaos || [AO cget -m1source] ne "GAOS" ) && [state m1Offload] } {
+		$sys disableM1Offload
+		if {[waitForCmdComplete 1000 1000 {expr ![state m1Offload]} "M1 Offload to go OFF"]} {
+			return 1
+		}
+	}
+	if { [state astromode] eq "NONE" && [state astrometry]} {
+		$sys stopAstrometry
+		if {[waitForCmdComplete 1000 1000 {expr ![state astrometry]} "Astrometry to stop"]} {
+			return 1
+		}
+	}
+	return 0
+}
+
+itcl::body GemsAO::disableLoops {} {
+	set errMsg ""
+	set ret 0
+	
+	if { [state rotOffload] } {
+		$sys disableRotOffload
+		if {[waitForCmdComplete 1000 1000 {expr ![state rotOffload]} "Rotator Offload to go OFF"]} {
+			set ret 1
+			set errMsg "$errMsg\n$lastError"
+		}
+	}
+	if { [state aniLoop] } {
+		$sys openAniLoop
+		if {[waitForCmdComplete 1000 1000 {expr ![state aniLoop]} "Anisoplanetism Loop to open"]} {
+			set ret 1
+			set errMsg "$errMsg\n$lastError"
+		}
+	}
+	if { [state flexLoop] } {
+		$sys openFlexLoop
+		if {[waitForCmdComplete 1000 1000 {expr ![state flexLoop]} "Flexure Loop to open"]} {
+			set ret 1
+			set errMsg "$errMsg\n$lastError"
+		}
+	}
+	if { [state sfsLoop] } {
+		$sys openFocLoop
+		if {[waitForCmdComplete 1000 1000 {expr ![state sfsLoop]} "Focus Loop to open"]} {
+			set ret 1
+			set errMsg "$errMsg\n$lastError"
+		}
+	}
+	if { [state ttgsLoop] } {
+		$sys openTTLoop
+		if {[waitForCmdComplete 1000 5000 {expr ![state ttgsLoop]} "TT Loop to open"]} {
+			set ret 1
+			set errMsg "$errMsg\n$lastError"
+		}
+	}
+	if { [state lwfsLoop] } {
+		$sys openLGSLoop
+		if {[waitForCmdComplete 1000 1000 {expr ![state lwfsLoop]} "LGS Loop to open"]} {
+			set ret 1
+			set errMsg "$errMsg\n$lastError"
+		}
+	}
+	if { [state m2Offload] } {
+		$sys disableM2Offload
+		if {[waitForCmdComplete 1000 1000 {expr ![state m2Offload]} "M2 Offload to go OFF"]} {
+			set ret 1
+			set errMsg "$errMsg\n$lastError"
+		}
+	}
+	if { [state m1Offload] } {
+		$sys disableM1Offload
+		if {[waitForCmdComplete 1000 1000 {expr ![state m1Offload]} "M1 Offload to go OFF"]} {
+			set ret 1
+			set errMsg "$errMsg\n$lastError"
+		}
+	}
+	if { [state astrometry]} {
+		$sys stopAstrometry
+		if {[waitForCmdComplete 1000 1000 {expr ![state astrometry]} "Astrometry to stop"]} {
+			set ret 1
+			set errMsg "$errMsg\n$lastError"
+		}
+	}
+	return 0
+}
+
+itcl::body GemsAO::state {var} {
+	switch $var {
+	astrometry { return [expr [$sys getAstrometryState] eq "ON"] }
+	astromode  { return [$sys getAstroMode] }
+	m1Offload  { return [expr [$sys getM1OffloadState] eq "ON"] }
+	m2Offload  { return [expr [$sys getM2OffloadState] eq "ON"] }
+	lwfsLoop   { return [expr [$sys getLGSWFSActive] eq "CLOSED"] }
+	ttgsLoop   { return [expr [$sys getTTLoopState] eq "CLOSED"] }
+	sfsLoop    { return [expr [$sys getSFSActive] eq "CLOSED"] }
+	aniLoop    { return [expr [$sys getAniLoopState] eq "CLOSED"] }
+	rotOffload { return [expr [$sys getRotOffloadState] eq "ON"] }
+	flexLoop   { return [expr [$sys getFlexLoopState] eq "CLOSED"] }
+	lgswfs     { return [expr [$sys getLGSWFSActive] eq "ON"] }
+	sfswfs     { return [expr [$sys getSFSActive] eq "ON"] }
+	ttgs1      { return [expr [$sys getTTWFSActive 1] eq "ON"] }
+	ttgs2      { return [expr [$sys getTTWFSActive 2] eq "ON"] }
+	ttgs3      { return [expr [$sys getTTWFSActive 3] eq "ON"] }
+	odgw1      { return [expr [$sys getODGWActive 1] eq "ON"] }
+	odgw2      { return [expr [$sys getODGWActive 2] eq "ON"] }
+	odgw3      { return [expr [$sys getODGWActive 3] eq "ON"] }
+	odgw4      { return [expr [$sys getODGWActive 4] eq "ON"] }
+	}
+	return 0
+}

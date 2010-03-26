@@ -1,0 +1,52 @@
+#+
+# GemsSys
+#
+# This class provides access to the IGemsSys singleton. It can be the real Gems, 
+# or a simulator.
+#
+# J Luhrs 01 April 2009
+#
+#  $Id: Exp $
+#-
+
+itcl::class GemsSys {
+	public {		
+		proc getSingleton {}
+		proc useSimulator {{sim 1}}
+		proc getSimulationMode {} { return $simState }
+	}
+	protected {
+		common simState 0
+		common singleton ""
+	}
+}
+
+itcl::body GemsSys::getSingleton {} {
+	if { $singleton eq "" } {
+		if { $simState } {
+			set singleton [namespace current]::[SimGems #auto]
+		} else {
+			set singleton [namespace current]::[RealGems #auto]
+		}
+	}
+	return $singleton
+}
+
+# There is no provision for retaining state when changing simulation mode, so it
+# should be set just once, before any use of Gems (i.e. at startup)
+itcl::body GemsSys::useSimulator {{sim 1}} {
+	set simState $sim
+	if { $singleton ne "" } {
+		if {$sim} {
+			if { ![$singleton isa SimGems] } {
+				itcl::delete object $singleton
+				set singleton [namespace current]::[SimGems #auto]
+			}
+		} else {
+			if { ![$singleton isa RealGems] } {
+				itcl::delete object $singleton
+				set singleton [namespace current]::[RealGems #auto]
+			}
+		}
+	}
+}

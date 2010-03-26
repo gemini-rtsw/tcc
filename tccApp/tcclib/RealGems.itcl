@@ -1,0 +1,285 @@
+#+
+# RealGems
+#
+# This class encapsulates the configuration interactions with the real GEMS
+# through EPICS. It is a singleton.
+#
+# J Luhrs 01 April 2009
+#
+#  $Id: Exp $
+#-
+
+package require Ocspkg
+
+itcl::class RealGems {
+	inherit GemsSys  
+	public {
+		#Loop control commands
+		method openLGSLoop {{whendone ""}}
+		method closeLGSLoop {{whendone ""}}
+		method openTTLoop {{whendone ""}}
+		method closeTTLoop {{whendone ""}}
+		method openFocLoop {{whendone ""}}
+		method closeFocLoop {{whendone ""}}
+		method openFlexLoop {{whendone ""}}
+		method closeFlexLoop {{whendone ""}}
+		method openAniLoop {{whendone ""}}
+		method closeAniLoop {{whendone ""}}
+		method pauseLoops {why {whendone ""}}
+		method resumeLoops {why {whendone ""}}
+		method stopLoops {{whendone ""}}
+		#Configuration commands
+		method connectActions {action}
+		method clearActions {tcsaction}
+		method confODGWWavelength { tcsaction value }
+		#States
+		method getLGSLoopState {}
+		method getTTLoopState {}
+		method getFocLoopState {}
+		method getFlexLoopState {}
+		method getAniLoopState {}
+		method getODGWWavelength {}
+				
+		constructor {} {}
+		destructor {}
+	}
+	protected {
+		variable system ""
+		variable pauseaction ""
+		variable resumeaction ""
+		variable doneproc ""
+		variable sciReady 0
+		variable logger
+		
+		method onError {msg}
+		method onOK {}
+		method isReady {}
+	}
+}
+
+itcl::body RealGems::constructor {} {
+	if { [llength [info commands epics]] == 0 } {
+		error "unable to load package: EPICS ocs service does not exist"
+	}
+	
+	# Create a logging facility.
+	set logger [sqxlog #auto seqexec RealGems]
+
+	#Create required EPICS commands
+	epics cs gems::ttLoopCtrl
+	epics cs gems::focLoopCtrl
+	epics cs gems::flexLoopCtrl
+	epics cs gems::aniLoopCtrl
+	epics cs gems::lgsLoopCtrl
+	epics cs gems::seqLoopCtrl
+	epics sa gems::status
+	
+	sa gems::status link sciReady [itcl::scope sciReady]
+	
+	epics cs wavelG1
+	epics cs wavelG2
+	epics cs wavelG3
+	epics cs wavelG4
+	
+	set system [namespace current]::[seq::PrincipalSystem #auto gems::apply -debug $::Flags(traceinst) \
+		-simulate [expr $::Flags(simgems) == 1] -delay 1]
+	set pauseaction [namespace current]::[seq::Action #auto $system]
+	$pauseaction configure -onok [itcl::code $this onOK]
+	$pauseaction configure -onerror [itcl::code $this onError "problem trying to pause loops."]
+	$pauseaction connect gems::seqLoopCtrl
+	
+	set resumeaction [namespace current]::[seq::Action #auto $system]
+	$resumeaction configure -onok [itcl::code $this onOK]
+	$resumeaction configure -onerror [itcl::code $this onError "problem trying to resume loops."]
+	$resumeaction configure -waitvar [itcl::scope sciReady]
+	$resumeaction configure -oktest [itcl::code $this isReady]
+	$resumeaction configure -ontimeout [itcl::code $this onError "timeout while trying to resume loops."]
+	$resumeaction configure -timeout 10
+	$resumeaction connect gems::seqLoopCtrl
+
+	#G[1-4] wavelengths and map status is contained in the tcs status acceptor, so 
+	#make sure it exists.
+	if { [catch {sa tcsstate info}] } {
+		epics sa tcsstate
+	}
+}
+
+itcl::body RealGems::destructor {} {
+	itcl::delete object $resumeaction
+	itcl::delete object $pauseaction
+	itcl::delete object $system
+	
+	itcl::delete object $logger
+}
+
+itcl::body RealGems::openLGSLoop {{whendone ""}} {
+	$logger debug "open LGS loop"
+}
+
+itcl::body RealGems::closeLGSLoop {{whendone ""}} {
+	$logger debug "close LGS loop"
+}
+
+itcl::body RealGems::openTTLoop {{whendone ""}} {
+	$logger debug "open TT loop"
+}
+
+itcl::body RealGems::closeTTLoop {{whendone ""}} {
+	$logger debug "close TT loop"
+}
+
+itcl::body RealGems::openFocLoop {{whendone ""}} {
+	$logger debug "open Focus loop"
+}
+
+itcl::body RealGems::closeFocLoop {{whendone ""}} {
+	$logger debug "close Focus loop"
+}
+
+itcl::body RealGems::openFlexLoop {{whendone ""}} {
+	$logger debug "open Flex loop"
+}
+
+itcl::body RealGems::closeFlexLoop {{whendone ""}} {
+	$logger debug "close Flex loop"
+}
+
+itcl::body RealGems::openAniLoop {{whendone ""}} {
+	$logger debug "open Ani loop"
+}
+
+itcl::body RealGems::closeAniLoop {{whendone ""}} {
+	$logger debug "close Ani loop"
+}
+
+itcl::body RealGems::pauseLoops {why {whendone ""}} {
+	$pauseaction unset gems::seqLoopCtrl cmd
+	$pauseaction unset gems::seqLoopCtrl sky
+	$pauseaction unset gems::seqLoopCtrl dither
+	$pauseaction unset gems::seqLoopCtrl filter
+	
+	set doneproc $whendone
+
+	if { [lsearch $why filter] >= 0 } {
+		set filterChange 1
+		$pauseaction set gems::seqLoopCtrl filter CHANGE
+	} else {
+		set filterChange 0
+	}
+	if { [lsearch $why dither] >= 0 } {
+		set ditherChange 1
+		$pauseaction set gems::seqLoopCtrl dither CHANGE
+	} else {
+		set ditherChange 0
+	}
+	if { [lsearch $why sky] >= 0 } {
+		set skyChange 1
+		$pauseaction set gems::seqLoopCtrl sky CHANGE
+	} else {
+		set skyChange 0
+	}
+	if { $filterChange || $skyChange || $ditherChange } {
+		if { !$filterChange } {
+			$pauseaction set gems::seqLoopCtrl filter SAME
+		}			
+		if { !$skyChange } {
+			$pauseaction set gems::seqLoopCtrl sky SAME
+		}			
+		if { !$ditherChange } {
+			$pauseaction set gems::seqLoopCtrl dither SAME
+		}
+		$logger debug "pausing GeMS loops, reason is: $why"
+		$pauseaction set gems::seqLoopCtrl cmd PAUSE
+		$pauseaction start
+	} else {
+		after idle [itcl::code $this onOK]
+	}
+}
+
+itcl::body RealGems::resumeLoops {why {whendone ""}} {
+	$resumeaction unset gems::seqLoopCtrl cmd
+	$resumeaction unset gems::seqLoopCtrl sky
+	$resumeaction unset gems::seqLoopCtrl dither
+	$resumeaction unset gems::seqLoopCtrl filter
+	
+	$logger debug "resuming GeMS loops."
+	$resumeaction set gems::seqLoopCtrl cmd RESUME
+	set doneproc $whendone
+	
+	$resumeaction start
+}
+
+itcl::body RealGems::stopLoops {{whendone ""}} {
+}
+
+# Configuration
+itcl::body RealGems::connectActions {action} {
+	$action connect wavelG1
+	$action connect wavelG2
+	$action connect wavelG3
+	$action connect wavelG4
+}
+
+itcl::body RealGems::clearActions {action} {
+	$action unset wavelG1 wavel
+	$action unset wavelG2 wavel
+	$action unset wavelG3 wavel
+	$action unset wavelG4 wavel
+}
+
+itcl::body RealGems::confODGWWavelength { action value } {
+	set ret 0
+	for {set i 1} { $i <= 4 } { incr i } {
+		set map [sa tcsstate get g${i}MapName]
+		if { [string match "ODGW*" $map] } {
+			$logger debug "Setting G$i ($map) wavelength to $value"
+			$action set wavelG${i} wavel $value
+			set ret 1
+		}
+	}
+	return $ret
+}
+
+#States
+itcl::body RealGems::getLGSLoopState {} {
+}
+
+itcl::body RealGems::getTTLoopState {} {
+}
+
+itcl::body RealGems::getFocLoopState {} {
+}
+
+itcl::body RealGems::getFlexLoopState {} {
+}
+
+itcl::body RealGems::getAniLoopState {} {
+}
+
+#This code assumes all ODGW have the same wavelength set.
+itcl::body RealGems::getODGWWavelength {} {
+	set ret ""
+	for {set i 1} { $i <= 4 } { incr i } {
+		set map [sa tcsstate get g${i}MapName]
+		if { [string match "ODGW*" $map] } {
+			set ret [sa tcsstate get g${1}Wavelength]
+			break
+		}
+	}
+	return $ret
+}
+
+itcl::body RealGems::onOK {} {
+	if { ![string is space $doneproc] } {
+		$doneproc 1
+	}
+}
+
+itcl::body RealGems::onError {msg} {
+	lappend ::Sequence::errormsg "RealGems error: $msg"
+	$doneproc 0
+}
+
+itcl::body RealGems::isReady {} {
+	return [string equal $sciReady "Ready"]
+}

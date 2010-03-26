@@ -8,7 +8,7 @@
 #-
 
 apply gems::aomApply aom:apply aom:applyC Primary GeMS Apply Record
-apply gems::mystApply myst:apply myst:applyC Primary Myst Apply Record
+apply gems::mystApply mys1:apply mys1:applyC Primary Myst Apply Record
 
 command gems::adcMech gems::aomApply ADC Control
 {
@@ -27,7 +27,7 @@ command gems::beamSplitter gems::aomApply ADC Control
 
 command gems::astroMode gems::mystApply ADC Control
 {
-	mode	myst:astrometric.A 	Astrometric mode Off|Regular|Good|Best
+	mode	mys1:astrometric.A 	Astrometric mode Off|Regular|Good|Best
 }
 
 command gems::ngsPr1Ctrl	gems::aomApply	Canopus probe 1 control
@@ -47,23 +47,96 @@ command gems::ngsPr3Ctrl	gems::aomApply	Canopus probe 3 control
 
 status gemssad
 {
-	applyC		gems:applyC.VAL			0	Command Status
-	message		gems:applyC.OMSS			0	Command completion message
+	applyC		mys1:applyC.VAL			0	Command Status
+	message		mys1:applyC.OMSS			0	Command completion message
 
-	ngsConfig	gems:ngsConfigReady.VAL	0	NGS configuration status (Not Ready|Ready)
-	lgsMatrix	gems:lgsMatrixReady.VAL	0	LGS matrix calculation status (Not Ready|Ready)
-	ngsMatrix	gems:ngsMatrixReady.VAL	0	NGS matrix calculation status (Not Ready|Ready)
-	lgsLoop		gems:lgsLoopStatus.VAL	0	LGS loop status (OPEN|CLOSED|PAUSED)
-	ttLoop		gems:ttLoopStatus.VAL	0	TT loop status (OPEN|CLOSED|PAUSED)
-	focLoop		gems:focLoopStatus.VAL	0	Focus loop status (OPEN|CLOSED|PAUSED)
-	flexLoop		gems:flexLoopStatus.VAL	0	Flexure loop status (OPEN|CLOSED|PAUSED)
-	focZPoint	gems:focZeroPointReady.VAL	0	Focus zero-point calculation status (Not Ready|Ready)
-	astromMode	gems:astromModeReady.VAL	0	Astrometry calculation status (Not Ready|Ready)
-	aniLoop		gems:aniLoopStatus.VAL	0	ANI loop status (OPEN|CLOSED|PAUSED)
-	sciReady		gems:sciReady.VAL			0	Ready for science (Not Ready|Ready)
+	lgsMatrix	mys1:lgsMatrixReady.VAL	0	LGS matrix calculation status (Not Ready|Ready)
+	lgsLoop		mys1:lgsLoopStatus.VAL	0	LGS loop status (OPEN|CLOSED|PAUSED)
+	ttLoop		mys1:ttLoopStatus.VAL	0	TT loop status (OPEN|CLOSED|PAUSED)
+	focLoop		mys1:focLoopStatus.VAL	0	Focus loop status (OPEN|CLOSED|PAUSED)
+	flexLoop		mys1:flexLoopStatus.VAL	0	Flexure loop status (OPEN|CLOSED|PAUSED)
+	astromMode	mys1:astromModeReady.VAL	0	Astrometry calculation status (Not Ready|Ready)
+	aniLoop		mys1:aniLoopStatus.VAL	0	ANI loop status (OPEN|CLOSED|PAUSED)
+	sciReady		mys1:sciReady.VAL			0	Ready for science (Not Ready|Ready)
    laserProp	lis:lasPropProc.VALA		0	Is the Laser Propagating to the Sky
 
 	ngs1Follow	tc1:aom:ngsPr1followS.VAL	0	Canopus 1 in follow mode
 	ngs2Follow	tc1:aom:ngsPr2followS.VAL	0	Canopus 2 in follow mode
 	ngs3Follow	tc1:aom:ngsPr3followS.VAL	0	Canopus 3 in follow mode
+}
+
+command gems::slewReset gems::mystApply Reset ngs config, cmat optimization, astrometric mode, etc
+{
+	dummy mys1:slewReset.DIR	Dummy input
+}
+
+command gems::lgsLoopCtrl gems::mystApply HO loop 
+{
+	cmd mys1:lgsLoopCtrl.A		Command (START/PAUSE/RESUME/STOP) 
+}
+
+command gems::ttLoopCtrl gems::mystApply TT loop 
+{
+	cmd mys1:ttLoopCtrl.A		Command (START/PAUSE/RESUME/STOP) 
+}
+
+command gems::taLoopCtrl  gems::mystApply TA loop 
+{
+	cmd mys1:taLoopCtrl.A 		Command (START/PAUSE/RESUME/STOP) 
+}
+
+command gems::astrometricCtrl  gems::mystApply  astrometric aquisition sequence 
+{
+	cmd mys1:astrometricCtrl.A 		Command (START/PAUSE/RESUME/STOP) 
+}
+
+command gems::m1OffloadCtrl   gems::mystApply M1 offload
+{
+	cmd mys1:m1OffloadCtrl.A 		Command (START/PAUSE/RESUME/STOP) 
+}
+
+command gems::m2OffloadCtrl   gems::mystApply M2 offload
+{
+	cmd mys1:m2OffloadCtrl.A 		Command (START/PAUSE/RESUME/STOP) 
+}
+
+command gems::focusLoopCtrl   gems::mystApply SFS/zoom loop 
+{
+	cmd mys1:focusLoopCtrl.A 		Command (START/PAUSE/RESUME/STOP) 
+}
+
+command gems::flexLoopCtrl    gems::mystApply Setup/TCC - OD/OI Flex loop 
+{
+	cmd mys1:flexLoopCtrl.A 		Command (START/PAUSE/RESUME/STOP) 
+}
+
+command gems::crLoopCtrl    gems::mystApply Cassegrain offload
+{
+	cmd mys1:crLoopCtrl.A 		Command (START/PAUSE/RESUME/STOP) 
+}
+
+command gems::seqLoopCtrl     gems::mystApply SeqExec dither/filter/sky changes 
+{
+	cmd mys1:seqLoopCtrl.A 		Command (START/PAUSE/RESUME/STOP)
+	reason  mys1:seqLoopCtrl.B  Reason (Dither/Filter/Sky)
+}
+
+command gems::ngsConfig    gems::mystApply Myst configuration
+{
+	ngs1  mys1:ngsConfig.A   NGS1 active (Used/NotUsed) 
+	ngs2  mys1:ngsConfig.B   NGS2 active (Used/NotUsed)
+	ngs3  mys1:ngsConfig.C   NGS3 active (Used/NotUsed)
+	odgs1 mys1:ngsConfig.D   ODGS1 active (Used/NotUsed)
+	odgs2 mys1:ngsConfig.E   ODGS2 active (Used/NotUsed)
+	odgs3 mys1:ngsConfig.F   ODGS3 active (Used/NotUsed)
+	odgs4 mys1:ngsConfig.G   ODGS4 active (Used/NotUsed)
+	oigs  mys1:ngsConfig.H   OIGS active (Used/NotUsed)
+	ngs1Mag  mys1:ngsConfig.I  NGS1 Magnitude
+	ngs2Mag  mys1:ngsConfig.J  NGS2 Magnitude
+	ngs3Mag  mys1:ngsConfig.K  NGS3 Magnitude
+	odgs1Mag mys1:ngsConfig.L  ODGS1 Magnitude
+	odgs2Mag mys1:ngsConfig.M  ODGS2 Magnitude
+	odgs3Mag mys1:ngsConfig.N  ODGS3 Magnitude
+	odgs4Mag mys1:ngsConfig.O  ODGS4 Magnitude
+	oigsMag  mys1:ngsConfig.P  OIGS Magnitude
 }

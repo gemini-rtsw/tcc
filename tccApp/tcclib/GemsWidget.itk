@@ -147,25 +147,38 @@ itcl::body GemsWidget::constructor {args} {
 }
 
 itcl::body GemsWidget::init {} {
-	return
 	if { $itk_option(-aocontroller) ne "" } {
-		$itk_component(gaos) expSet [$itk_option(-aocontroller) cget -gaosExpose]
-		$itk_component(aosfo) expSet [$itk_option(-aocontroller) cget -sfoExpose]
+		$itk_component(lgswfs) expSet [$itk_option(-aocontroller) cget -lwfsFreq]
+		$itk_component(can1) expSet [$itk_option(-aocontroller) cget -ttgs1Mag]
+		$itk_component(can2) expSet [$itk_option(-aocontroller) cget -ttgs2Mag]
+		$itk_component(can3) expSet [$itk_option(-aocontroller) cget -ttgs3Mag]
+		$itk_component(sfs) expSet [$itk_option(-aocontroller) cget -sfsMag]
+		$itk_component(odgw1) expSet [$itk_option(-aocontroller) cget -odgw1Mag]
+		$itk_component(odgw2) expSet [$itk_option(-aocontroller) cget -odgw2Mag]
+		$itk_component(odgw3) expSet [$itk_option(-aocontroller) cget -odgw3Mag]
+		$itk_component(odgw4) expSet [$itk_option(-aocontroller) cget -odgw4Mag]
 	}
-	$itk_component(aottgs) expSet "10.0(0.001)"
 }
 
 itcl::body GemsWidget::reset {} {
-	return
-	$itk_component(oiao) pop
-   $itk_component(gaos) switchPop
-   $itk_component(ttao) pop
-   $itk_component(sfao) pop
-   $itk_component(aosfo) switchPop
-   $itk_component(aottgs) switchPop
+	$itk_component(gaoson) pop
+   $itk_component(ttgsloop) pop
+   $itk_component(oiloop) pop
+	$itk_component(sfsloop) pop
+	$itk_component(odgwloop) pop
+	$itk_component(can1) switchPop
+	$itk_component(can2) switchPop
+	$itk_component(can3) switchPop
+	$itk_component(sfs) switchPop
+	$itk_component(odgw1) switchPop
+	$itk_component(odgw2) switchPop
+	$itk_component(odgw3) switchPop
+	$itk_component(odgw4) switchPop
+	$itk_component(lgswfs) switchPop
 }
 
 itcl::body GemsWidget::recolor {} {
+	
 return
 #	 Disable LGS options unless useLwfs is true
    if {[$itk_option(-aocontroller) state useLwfs]} {
@@ -214,74 +227,32 @@ return
 }
 
 itcl::body GemsWidget::enable {} {
-	return
-   AO configure -gaosExpose [$itk_component(gaos) expGet]
+	$itk_option(-aocontroller) configure -ttgs1Active [expr \"[$itk_component(can1) switchGet]\" eq \"pushed\"] 
+	$itk_option(-aocontroller) configure -ttgs1Mag [$itk_component(can1) expGet]
+	$itk_option(-aocontroller) configure -ttgs2Active [expr \"[$itk_component(can2) switchGet]\" eq \"pushed\"]
+	$itk_option(-aocontroller) configure -ttgs2Mag	[$itk_component(can2) expGet]
+	$itk_option(-aocontroller) configure -ttgs3Active [expr \"[$itk_component(can3) switchGet]\" eq \"pushed\"]
+	$itk_option(-aocontroller) configure -ttgs3Mag	[$itk_component(can3) expGet]
+	$itk_option(-aocontroller) configure -sfsActive [expr \"[$itk_component(can1) switchGet]\" eq \"pushed\"]
+	$itk_option(-aocontroller) configure -sfsMag [$itk_component(sfs) expGet]
+	$itk_option(-aocontroller) configure -odgw1Active [expr \"[$itk_component(sfs) switchGet]\" eq \"pushed\"]
+	$itk_option(-aocontroller) configure -odgw1Mag	[$itk_component(odgw1) expGet]
+	$itk_option(-aocontroller) configure -odgw2Active [expr \"[$itk_component(odgw2) switchGet]\" eq \"pushed\"]
+	$itk_option(-aocontroller) configure -odgw2Mag	[$itk_component(odgw2) expGet]
+	$itk_option(-aocontroller) configure -odgw3Active [expr \"[$itk_component(odgw3) switchGet]\" eq \"pushed\"]
+	$itk_option(-aocontroller) configure -odgw3Mag	[$itk_component(odgw3) expGet]
+	$itk_option(-aocontroller) configure -odgw4Active [expr \"[$itk_component(odgw4) switchGet]\" eq \"pushed\"]
+	$itk_option(-aocontroller) configure -odgw4Mag	[$itk_component(odgw4) expGet]
+	$itk_option(-aocontroller) configure -lwfsActive [expr \"[$itk_component(lgswfs) switchGet]\" eq \"pushed\"]
+	$itk_option(-aocontroller) configure -lwfsFreq [$itk_component(lgswfs) expGet]
+	$itk_option(-aocontroller) configure -lwfsLoop [expr \"[$itk_component(lgswfs) switchGet]\" eq \"pushed\"]
+	$itk_option(-aocontroller) configure -oigsLoop [expr \"[$itk_component(oiloop) get]\" eq \"pushed\"]
+	$itk_option(-aocontroller) configure -odgwLoop [expr \"[$itk_component(odgwloop) get]\" eq \"pushed\"]
+	$itk_option(-aocontroller) configure -ttgsLoop [expr \"[$itk_component(ttgsloop) get]\" eq \"pushed\"]
+	$itk_option(-aocontroller) configure -sfsLoop [expr \"[$itk_component(sfsloop) get]\" eq \"pushed\"]
 
-   if { [string match "*LGS*" $::Config(tcs.gaos,value)] } {
-       set ttgsexp [$itk_component(aottgs) expGet]
-       set ind [string first "(" $ttgsexp]
-       set ttgsmag [string range $ttgsexp 0 [expr $ind-1]]
-       set ttgsexp [string trim [string range $ttgsexp $ind end] "()"]
-
-       AO configure -ttgsExpose $ttgsexp
-       AO configure -sfoExpose [$itk_component(aosfo) expGet]
-
-       switch $ttgsmag {
-	   10.0 -
-	   10.5 -
-	   11.0 -
-	   11.5 -
-	   12.0 -
-	   12.5 {
-	       AO configure -ttgsGain 0.2
-	       AO configure -ttgsFlux 1
-	   }
-	   13.0 -
-	   13.5 -
-	   14.0 -
-	   14.5 -
-	   15.0 -
-	   15.5 -
-	   16.0 {
-	       AO configure -ttgsGain 0.2
-	       AO configure -ttgsFlux 0
-	   }
-	   16.5 {
-	       AO configure -ttgsGain 0.4
-	       AO configure -ttgsFlux 0
-	   }
-	   17.0 {
-	       AO configure -ttgsGain 0.7
-	       AO configure -ttgsFlux 0
-	   }
-	   17.5 {
-	       AO configure -ttgsGain 1.1
-	       AO configure -ttgsFlux 0
-	   }
-	   18.0 {
-	       AO configure -ttgsGain 1.6
-	       AO configure -ttgsFlux 0
-	   }
-	   18.5 {
-	       AO configure -ttgsGain 2.0
-	       AO configure -ttgsFlux 0
-	   }
-	   19.0 {
-	       AO configure -ttgsGain 2.6
-	       AO configure -ttgsFlux 0
-	   }
-       }
-   }
-   if { [calparam cget -site] eq "MK" && $::Config(tcs.gaos,value) ne "No AO" && $::Config(tcs.gaos,value) != "" } {
-       switch [$itk_component(gaos_ex) get] {
-	   0.001 { $::Config(tcs.gaos,namespace)::$::Config(tcs.gaos,value) configure -gsmag 11 }
-	   0.002 { $::Config(tcs.gaos,namespace)::$::Config(tcs.gaos,value) configure -gsmag 12 }
-	   0.005 { $::Config(tcs.gaos,namespace)::$::Config(tcs.gaos,value) configure -gsmag 13 }
-	   0.01  { $::Config(tcs.gaos,namespace)::$::Config(tcs.gaos,value) configure -gsmag 14 }
-	   0.02  { $::Config(tcs.gaos,namespace)::$::Config(tcs.gaos,value) configure -gsmag 15 }
-	   default { $::Config(tcs.gaos,namespace)::$::Config(tcs.gaos,value) configure -gsmag 11 }
-       }
-   }
+	#$itk_option(-aocontroller) configure -oigsActive [expr \"[$itk_component(can1) switchGet]\" eq \"pushed\"]
+	#$itk_option(-aocontroller) configure -oigsMag [$itk_component(can1) expGet]
 }
 
 itcl::body GemsWidget::gaos {val} {
