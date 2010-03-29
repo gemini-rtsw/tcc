@@ -46,6 +46,7 @@ itcl::class SimGems {
 		method moveBeamSplitter {pos}
 
 		#WFS control commands
+		method getGemsActive {}
 		method startODGW {id}
 		method stopODGW {id}
 		method startTTWFS {id}
@@ -354,6 +355,18 @@ itcl::body SimGems::setSFSExposure {val} {
 
 
 #States
+itcl::body SimGems::getGemsActive {} {
+	foreach loop { ttLoopState aniLoopState flexLoopState focLoopState lgsLoopState } {
+		if { [set $loop] eq "CLOSED" } {
+			return ON
+		}
+	}
+	if { $astroState eq "ON" } {
+		return ON
+	}
+	return OFF
+}
+
 itcl::body SimGems::getLGSLoopState {} {
 	return $lgsLoopState
 }

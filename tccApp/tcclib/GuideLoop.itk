@@ -805,7 +805,7 @@ itcl::body GuideLoop::reset {} {
 itcl::body GuideLoop::buildGaos {} {
 	set w $itk_component(canv)
 	if { [calparam cget -site] eq "CP" } {
-		itk_component add gaos { GemsWidget $w.gaos -aocontroller AO }
+		itk_component add gaos { GemsWidget $w.gaos -aocontroller [AO getGaosObj] }
 		$w create window 433 72 -window $w.gaos -tags gaos -anchor nw
 		set gaosWidget $itk_component(gaos)
 		buildGemsArrows

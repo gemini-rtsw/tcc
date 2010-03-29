@@ -11,6 +11,7 @@
 
 itcl::class ActiveOptics {
    constructor {args} {}
+	destructor {}
    public {
       method enable {}
       method disable {}
@@ -23,6 +24,7 @@ itcl::class ActiveOptics {
       method setCanvas {canv}
       method process {state}
       method setTTGSFluxMode {}
+		method getGaosObj {} { return $gaosObj }
       variable processState IDLE
       variable canvas ""
       variable timeout 0
@@ -100,6 +102,8 @@ itcl::class ActiveOptics {
    }
 	private {
 		variable skip_strap
+		variable gaosObj ""
+		variable aoSys ""
 		method checkTemp {val ref}
 		method waitFor {timeout outCondition}
 		
@@ -118,7 +122,6 @@ itcl::class ActiveOptics {
 }
 
 itcl::body ActiveOptics::constructor {args} {
-
 # Create command senders.
    if { [catch {cs m1Guide info}] } {
       epics cs m1Guide
@@ -158,36 +161,17 @@ itcl::body ActiveOptics::constructor {args} {
 	}
 	
 	if { [calparam cget -site] eq "CP" } {
-		if { [catch {sa gemssad info}]} {
-			epics sa gemssad
-		}
-		if { [catch {cs gems::ngsConfig info}]} {
-			epics cs gems::ngsConfig
-		}
-		if { [catch {cs gems::focusLoopCtrl info}]} {
-			epics cs gems::focusLoopCtrl
-		}
-		if { [catch {cs gems::lgsLoopCtrl info}]} {
-			epics cs gems::lgsLoopCtrl
-		}
-		if { [catch {cs gems::ttLoopCtrl info}]} {
-			epics cs gems::ttLoopCtrl
-		}
-		if { [catch {cs gems::flexLoopCtrl info}]} {
-			epics cs gems::flexLoopCtrl
-		}
-		if { [catch {cs gems::m1OffloadCtrl info}]} {
-			epics cs gems::m1OffloadCtrl
-		}
-		if { [catch {cs gems::m2OffloadCtrl info}]} {
-			epics cs gems::m2OffloadCtrl
-		}
-		if { [catch {cs gems::crLoopCtrl info}]} {
-			epics cs gems::crLoopCtrl
-		}
+		set gaosObj [GemsAO #auto]
+		set aoSys [GemsSys::getSingleton]
 	}
 
    eval configure $args
+}
+
+itcl::body ActiveOptics::destructor {} {
+	if { [calparam cget -site] eq "CP" } {
+		itcl::delete $gaosObj
+	}	
 }
 
 itcl::body ActiveOptics::enableLgs {} {
@@ -539,7 +523,7 @@ puts "beam is $beam gonna wait for 1 second"
 			return
 		}
 	} else {
-		if { [startGemsLoops] } {
+		if { [$gaosObj enable] } {
 			process IDLE
 			return
 		}		
@@ -675,53 +659,61 @@ itcl::body ActiveOptics::disable {} {
       process IDLE
       return
    }
-
-   if { ![catch {cs gaosTTGS info}] } {
-		# turn off the TTGS
-		cs gaosTTGS set dem 0
-		cs gaosTTGS set dir 3
-   }
-
-   if { ![catch {cs gaosSFO info}] } {
-		# turn off the SFO
-		cs gaosSFO set stopDIR 0
-		cs gaosSFO set apply 3
-   }
-
-   if { ![catch {cs ttgsloop info}] } {
-		# turn off TTGS and SFO loops
-		cs ttgsloop set dem 0
-		cs ttgsloop set dir 3
-   }
-   if { ![catch {cs sfoloop info}] } {
-		cs sfoloop set dem 0
-   }
-
-# Stop GAOS
-	if { [state gaos] } {
-       #puts "turning GAOS off"
-
-       # turn off BTO when using LGS
-		if $useLwfs {
-		   cs gaosBTO set dem Off
-		   cs gaosBTO set clr On
-		   cs gaosBTO set fsaTip 0
-		   cs gaosBTO set fsaTilt 0
-		   cs gaosBTO set dir 3
+	
+	if { [calparam cget -site] eq "CP" } {
+		if {[$gaosObj disable]} {
+			tk_messageBox -icon error -parent [focus] -message \
+            "Error posting guide commands: GeMS reports \
+            \"[$gaosObj getLastError]\""
+		}
+	} else {
+      if { ![catch {cs gaosTTGS info}] } {
+   		# turn off the TTGS
+   		cs gaosTTGS set dem 0
+   		cs gaosTTGS set dir 3
       }
-
-      # Post GAOS correct command.
-      cs aoCorrect set correct OFF
-      logger command aoCorrect
-      if { [catch {cs tcsApply post} msg] } {
-	   	tk_messageBox -icon error -parent [focus] -message $msg
+   
+      if { ![catch {cs gaosSFO info}] } {
+   		# turn off the SFO
+   		cs gaosSFO set stopDIR 0
+   		cs gaosSFO set apply 3
       }
-      after 10
-       
-      # Flatten.
-      cs aoFlatten set dummy 1
-      logger command aoFlatten
-   }
+   
+      if { ![catch {cs ttgsloop info}] } {
+   		# turn off TTGS and SFO loops
+   		cs ttgsloop set dem 0
+   		cs ttgsloop set dir 3
+      }
+      if { ![catch {cs sfoloop info}] } {
+   		cs sfoloop set dem 0
+      }
+   
+   # Stop GAOS
+   	if { [state gaos] } {
+          #puts "turning GAOS off"
+   
+          # turn off BTO when using LGS
+   		if $useLwfs {
+   		   cs gaosBTO set dem Off
+   		   cs gaosBTO set clr On
+   		   cs gaosBTO set fsaTip 0
+   		   cs gaosBTO set fsaTilt 0
+   		   cs gaosBTO set dir 3
+         }
+   
+         # Post GAOS correct command.
+         cs aoCorrect set correct OFF
+         logger command aoCorrect
+         if { [catch {cs tcsApply post} msg] } {
+   	   	tk_messageBox -icon error -parent [focus] -message $msg
+         }
+         after 10
+          
+         # Flatten.
+         cs aoFlatten set dummy 1
+         logger command aoFlatten
+	   }
+	}
 
 # Set the state to "disabled"
    set enabled 0

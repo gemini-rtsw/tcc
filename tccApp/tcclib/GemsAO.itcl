@@ -27,8 +27,14 @@ public {
 	variable odgw3Exp	10
 	variable odgw4Active 0
 	variable odgw4Exp	10
-	variable oigsActive 0
-	variable oigsExp 10
+	variable ttgs1Mag	5
+	variable ttgs2Mag	5
+	variable ttgs3Mag	5
+	variable odgw1Mag 5
+	variable odgw2Mag 5
+	variable odgw3Mag 5
+	variable odgw4Mag 5
+	variable oigsMag 5
 	variable lwfsActive 0
 	variable lwfsFreq 100
 	variable lwfsLoop 0
@@ -197,33 +203,33 @@ itcl::body GemsAO::startODGW {id} {
 }
 
 itcl::body GemsAO::stopWFS {} {
-	set _errMsg ""
+	set errMsg ""
 	set ret 0
 	
 	for {set i 1} {i <= 4} { incr i} {
 		if { [stopODGW $i] } {
 			set ret 1
-			set _errMsg "$_errMsg\n$lastError"
+			set errMsg "$errMsg\n$lastError"
 		}
 	}
 	if { !$lwfsActive && [state lgswfs] } {
 		$sys stopLGSWFS
 		if {[waitForCmdComplete 1000 1000 {expr ![state lgswfs]} "LGSWFS to go OFF"]} {
 			set ret 1
-			set _errMsg "$_errMsg\n$lastError"
+			set errMsg "$errMsg\n$lastError"
 		}
 	}
 	if { !$sfsActive && [state sfs] } {
 		$sys stopSFS
 		if {[waitForCmdComplete 1000 1000 {expr ![state sfs]} "SFS to go OFF"]} {
 			set ret 1
-			set _errMsg "$_errMsg\n$lastError"
+			set errMsg "$errMsg\n$lastError"
 		}
 	}
 	for {set i 1} {i <= 3} { incr i} {
 		if { [stopTTGS $i] } {
 			set ret 1
-			set _errMsg "$_errMsg\n$lastError"
+			set errMsg "$errMsg\n$lastError"
 		}
 	}
 	set lastError $errMsg
@@ -257,7 +263,7 @@ itcl::body GemsAO::disableWFS {} {
 	for {set i 1} {i <= 4} { incr i} {
 		if { [disableODGW $i] } {
 			set ret 1
-			set errMsg "$_errMsg\n$lastError"
+			set errMsg "$errMsg\n$lastError"
 		}
 	}
 	if { [state lgswfs] } {
@@ -521,6 +527,42 @@ itcl::body GemsAO::state {var} {
 	odgw2      { return [expr [$sys getODGWActive 2] eq "ON"] }
 	odgw3      { return [expr [$sys getODGWActive 3] eq "ON"] }
 	odgw4      { return [expr [$sys getODGWActive 4] eq "ON"] }
+	gaos       { return [expr [$sys getGemsActive] eq "ON"] }
 	}
 	return 0
+}
+
+itcl::body GemsAO::defineTTSources {} {
+	set sources ""
+	
+	if { $ttgsLoop } {
+   	if { $ttgs1Active } {
+   		set sources [lappend sources ttgs1 $ttgs1Mag]
+   	}
+   	if { $ttgs2Active } {
+   		set sources [lappend sources ttgs2 $ttgs2Mag]
+   	}
+   	if { $ttgs3Active } {
+   		set sources [lappend sources ttgs3 $ttgs3Mag]
+   	}
+	}
+	if { $odgwLoop } {
+   	if { $odgw1Active } {
+   		set sources [lappend sources odgw1 $odgw1Mag]
+   	}
+   	if { $odgw2Active } {
+   		set sources [lappend sources odgw2 $odgw2Mag]
+   	}
+   	if { $odgw3Active } {
+   		set sources [lappend sources odgw3 $odgw3Mag]
+   	}
+   	if { $odgw4Active } {
+   		set sources [lappend sources odgw4 $odgw4Mag]
+   	}
+	}
+	if { $oigsLoop } {
+		set sources [lappend sources oigs $oigsMag]
+	}
+	
+	return $sources
 }

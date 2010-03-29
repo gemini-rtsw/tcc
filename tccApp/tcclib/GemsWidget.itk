@@ -26,12 +26,8 @@ public {
 	method init {}
 }
 private {
-	method gaos {val}
-	method gaosTTGS {val}
-	method gaosSFO {val}
-	method oiblend {val}
-	method ttgsloop {val}
-	method sfoloop {val}
+	variable sys
+	method onGemsChange {reasons}
 }
 }
 
@@ -144,6 +140,9 @@ itcl::body GemsWidget::constructor {args} {
 	grid $itk_component(odgw3) $itk_component(odgw4) -padx 1 -pady 1
 	pack $itk_component(odgwframe) -padx 2 -pady 2
 	eval itk_initialize $args
+	
+	set sys [GemsSys::getSingleton]
+	$sys subscribe [itcl::code $this onGemsChange]
 }
 
 itcl::body GemsWidget::init {} {
@@ -178,26 +177,6 @@ itcl::body GemsWidget::reset {} {
 }
 
 itcl::body GemsWidget::recolor {} {
-	
-return
-#	 Disable LGS options unless useLwfs is true
-   if {[$itk_option(-aocontroller) state useLwfs]} {
-       $itk_component(ttao) configure -state normal
-       $itk_component(sfao) configure -state normal
-       $itk_component(aosfo) configure -state normal
-       $itk_component(aottgs) configure -state normal
-   } else {
-       $itk_component(ttao) clear
-       $itk_component(ttao) configure -state disabled
-       $itk_component(sfao) clear
-       $itk_component(sfao) configure -state disabled
-       $itk_component(aosfo) clear
-       $itk_component(aosfo) configure -state disabled
-       $itk_component(aottgs) clear
-       $itk_component(aottgs) configure -state disabled
-   }
-
-#	 GAOS signals
 	if { [$itk_option(-aocontroller) state gaos] } {
 		$itk_component(gaos) configure -status on
 		$itk_component(mainframe) configure -background Green
@@ -206,43 +185,90 @@ return
 		$itk_component(gaos) configure -status off
 		$itk_component(mainframe) configure -background white
    }
-   if { [$itk_option(-aocontroller) state gaosTTGS] } {
-		$w itemconfigure gaos_ttgs -fill green
-      if { [$itk_option(-aocontroller) state ttgsloop] } {
-	  		$w itemconfigure ttgs_gaos -fill green
-      } else {
-	  		$w itemconfigure ttgs_gaos -fill yellow
-		}
-	}
-	if { [$itk_option(-aocontroller) state gaosSFO] } {
-		$itk_component(aosfo) configure -status on
-		if { [$itk_option(-aocontroller) state sfoloop] } {
-			$w itemconfigure sfo_gaos -fill green
-		} else {
-			$w itemconfigure sfo_gaos -fill yellow
-		}
+	if { [$itk_option(-aocontroller) state lgswfs] } {
+		$itk_component(lgswfs) configure -status on
 	} else {
-		$itk_component(aosfo) configure -status off
+		$itk_component(lgswfs) configure -status off
+	}
+	set ttFlag 0
+	if { [$itk_option(-aocontroller) state ttgs1] } {
+		$itk_component(can1) configure -status on
+		set ttFlag 1
+	} else {
+		$itk_component(can1) configure -status off
+	}
+	if { [$itk_option(-aocontroller) state ttgs2] } {
+		$itk_component(can2) configure -status on
+		set ttFlag 1
+	} else {
+		$itk_component(can2) configure -status off
+	}
+	if { [$itk_option(-aocontroller) state ttgs3] } {
+		$itk_component(can3) configure -status on
+		set ttFlag 1
+	} else {
+		$itk_component(can3) configure -status off
+	}
+	if { [$itk_option(-aocontroller) state sfs] } {
+		$itk_component(sfs) configure -status on
+	} else {
+		$itk_component(sfs) configure -status off
+	}
+	if { $ttFlag } {
+		$itk_component(canframe) configure -background Green
+	} else {
+		$itk_component(mainframe) configure -background white
+	}
+	set odgwFlag 0
+	if { [$itk_option(-aocontroller) state odgw1] } {
+		$itk_component(odgw1) configure -status on
+		set odgwFlag 1
+	} else {
+		$itk_component(odgw1) configure -status off
+	}
+	if { [$itk_option(-aocontroller) state odgw2] } {
+		$itk_component(odgw2) configure -status on
+		set odgwFlag 1
+	} else {
+		$itk_component(odgw2) configure -status off
+	}
+	if { [$itk_option(-aocontroller) state odgw3] } {
+		$itk_component(odgw3) configure -status on
+		set odgwFlag 1
+	} else {
+		$itk_component(odgw3) configure -status off
+	}
+	if { [$itk_option(-aocontroller) state odgw4] } {
+		$itk_component(odg41) configure -status on
+		set odgwFlag 1
+	} else {
+		$itk_component(odgw4) configure -status off
+	}
+	if { $odgwFlag } {
+		$itk_component(odgwframe) configure -background Green
+	} else {
+		$itk_component(odgwframe) configure -background white
 	}
 }
 
 itcl::body GemsWidget::enable {} {
+	$itk_option(-aocontroller) configure -gaos [expr \"[$itk_component(gaoson) switchGet]\" eq \"pushed\"] 
 	$itk_option(-aocontroller) configure -ttgs1Active [expr \"[$itk_component(can1) switchGet]\" eq \"pushed\"] 
-	$itk_option(-aocontroller) configure -ttgs1Mag [$itk_component(can1) expGet]
+	$itk_option(-aocontroller) configure -ttgs1Exp [$itk_component(can1) expGet]
 	$itk_option(-aocontroller) configure -ttgs2Active [expr \"[$itk_component(can2) switchGet]\" eq \"pushed\"]
-	$itk_option(-aocontroller) configure -ttgs2Mag	[$itk_component(can2) expGet]
+	$itk_option(-aocontroller) configure -ttgs2Exp	[$itk_component(can2) expGet]
 	$itk_option(-aocontroller) configure -ttgs3Active [expr \"[$itk_component(can3) switchGet]\" eq \"pushed\"]
-	$itk_option(-aocontroller) configure -ttgs3Mag	[$itk_component(can3) expGet]
+	$itk_option(-aocontroller) configure -ttgs3Exp	[$itk_component(can3) expGet]
 	$itk_option(-aocontroller) configure -sfsActive [expr \"[$itk_component(can1) switchGet]\" eq \"pushed\"]
-	$itk_option(-aocontroller) configure -sfsMag [$itk_component(sfs) expGet]
+	$itk_option(-aocontroller) configure -sfsExp [$itk_component(sfs) expGet]
 	$itk_option(-aocontroller) configure -odgw1Active [expr \"[$itk_component(sfs) switchGet]\" eq \"pushed\"]
-	$itk_option(-aocontroller) configure -odgw1Mag	[$itk_component(odgw1) expGet]
+	$itk_option(-aocontroller) configure -odgw1Exp	[$itk_component(odgw1) expGet]
 	$itk_option(-aocontroller) configure -odgw2Active [expr \"[$itk_component(odgw2) switchGet]\" eq \"pushed\"]
-	$itk_option(-aocontroller) configure -odgw2Mag	[$itk_component(odgw2) expGet]
+	$itk_option(-aocontroller) configure -odgw2Exp	[$itk_component(odgw2) expGet]
 	$itk_option(-aocontroller) configure -odgw3Active [expr \"[$itk_component(odgw3) switchGet]\" eq \"pushed\"]
-	$itk_option(-aocontroller) configure -odgw3Mag	[$itk_component(odgw3) expGet]
+	$itk_option(-aocontroller) configure -odgw3Exp	[$itk_component(odgw3) expGet]
 	$itk_option(-aocontroller) configure -odgw4Active [expr \"[$itk_component(odgw4) switchGet]\" eq \"pushed\"]
-	$itk_option(-aocontroller) configure -odgw4Mag	[$itk_component(odgw4) expGet]
+	$itk_option(-aocontroller) configure -odgw4Exp	[$itk_component(odgw4) expGet]
 	$itk_option(-aocontroller) configure -lwfsActive [expr \"[$itk_component(lgswfs) switchGet]\" eq \"pushed\"]
 	$itk_option(-aocontroller) configure -lwfsFreq [$itk_component(lgswfs) expGet]
 	$itk_option(-aocontroller) configure -lwfsLoop [expr \"[$itk_component(lgswfs) switchGet]\" eq \"pushed\"]
@@ -255,71 +281,6 @@ itcl::body GemsWidget::enable {} {
 	#$itk_option(-aocontroller) configure -oigsMag [$itk_component(can1) expGet]
 }
 
-itcl::body GemsWidget::gaos {val} {
-	
-	$itk_option(-aocontroller) configure -useLwfs [$itk_option(-aocontroller)  state useLwfs]
-	
-	switch $val {
-		push {
-			$itk_option(-aocontroller) configure -gaos 1
-		}
-		pop {
-			$itk_option(-aocontroller) configure -gaos 0
-		}
-	}
-}
-
-itcl::body GemsWidget::gaosTTGS {val} {
-	switch $val {
-		push {
-			$itk_option(-aocontroller) configure -gaosTTGS 1
-		}
-		pop {
-			$itk_option(-aocontroller) configure -gaosTTGS 0
-		}
-	}
-}
-
-itcl::body GemsWidget::ttgsloop {val} {
-	switch $val {
-		push {
-			$itk_option(-aocontroller) configure -ttgsloop 1
-		}
-		pop {
-			$itk_option(-aocontroller) configure -ttgsloop 0
-		}
-	}
-}
-
-itcl::body GemsWidget::gaosSFO {val} {
-	switch $val {
-		push {
-			$itk_option(-aocontroller) configure -gaosSFO 1
-		}
-		pop {
-			$itk_option(-aocontroller) configure -gaosSFO 0
-		}
-	}
-}
-
-itcl::body GemsWidget::sfoloop {val} {
-	switch $val {
-	push {
-		$itk_option(-aocontroller) configure -sfoloop 1
-	}
-	pop {
-		$itk_option(-aocontroller) configure -sfoloop 0
-	}
-	}
-}
-
-itcl::body GemsWidget::oiblend {val} {
-	switch $val {
-		push {
-			 $itk_option(-aocontroller) configure -oiblend 1
-		}
-		pop {
-			 $itk_option(-aocontroller) configure -oiblend 0
-		}
-	}
+itcl::body GemsWidget::onGemsChange {reasons} {
+	recolor
 }

@@ -33,6 +33,9 @@ global env
 		set calfile "/gemini/files/calparams/calparams.dat"
 	}
 
+	set simgems 0
+	set disablegems 0
+	
 	set ocsproxy ""
    foreach {opt val} $args {
       switch -- $opt {
@@ -47,6 +50,12 @@ global env
          }
 			-ocsproxy {
 				set ocsproxy "$val"
+			}
+			-simgems {
+				set simgems $val
+			}
+			-disablegems {
+				set disablegems $val
 			}
          default {
             tk_messageBox -icon warning -message \
@@ -75,7 +84,9 @@ global env
 		calparam configure -ocs_proxy $ocsproxy
 	}
 
-
+	GemsSys::useSimulator $simgems
+	set ::Flags(disablegems) $disablegems
+	
 # AWE use the site parameter to load site specific channels
    puts "site is [calparam cget -site]"
    switch [calparam cget -site] {
