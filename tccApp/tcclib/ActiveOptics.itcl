@@ -24,7 +24,7 @@ itcl::class ActiveOptics {
       method setCanvas {canv}
       method process {state}
       method setTTGSFluxMode {}
-		method getGaosObj {} { return $gaosObj }
+		method getGaosObj {} { return "[namespace current]::$gaosObj" }
       variable processState IDLE
       variable canvas ""
       variable timeout 0
@@ -122,6 +122,8 @@ itcl::class ActiveOptics {
 }
 
 itcl::body ActiveOptics::constructor {args} {
+	puts "ActiveOptics::constructor"
+	
 # Create command senders.
    if { [catch {cs m1Guide info}] } {
       epics cs m1Guide
@@ -160,7 +162,7 @@ itcl::body ActiveOptics::constructor {args} {
 		epics cs crGuide
 	}
 	
-	if { [calparam cget -site] eq "CP" } {
+	if { [calparam cget -site] eq "CP" } {		
 		set gaosObj [GemsAO #auto]
 		set aoSys [GemsSys::getSingleton]
 	}
@@ -280,11 +282,6 @@ itcl::body ActiveOptics::enable {} {
 # Start GAOS
 	if {[calparam cget -site] eq "MK" } {
 		if { [startAltairWFS] } {
-			process IDLE
-			return
-		}
-	} else {
-		if { [startGemsWFS] } {
 			process IDLE
 			return
 		}
@@ -465,10 +462,10 @@ puts "beam is $beam gonna wait for 1 second"
    }
 	
 # Cassegrain-rotator
-	if { [state rotator] && $crsource == "none" } {
+	if { [state rotator] && $crsource == "" } {
 		cs crGuide set state Off
 		logger command crGuide
-	} elseif { $crsource != "none" } {
+	} elseif { $crsource != "" } {
 		switch $crsource {
 			GAOS {
 				 cs crGuide set state On
@@ -524,6 +521,9 @@ puts "beam is $beam gonna wait for 1 second"
 		}
 	} else {
 		if { [$gaosObj enable] } {
+			tk_messageBox -icon error -parent [focus] -message \
+			"Error posting guide commands: GeMS reports \
+			\"[$gaosObj cget -lastError]\""
 			process IDLE
 			return
 		}		
@@ -643,6 +643,9 @@ itcl::body ActiveOptics::disable {} {
 # Turn off M1 AO
    cs m1Guide set mode Off
    logger command m1Guide
+# Turn off Cassegrain-rotator
+	cs crGuide set state Off
+	logger command crGuide
 
 # need to ensure that OIWFS Guide Output is set to SCS
 #    if {[sa aossad get oiOutGuide] == "AO"} {
@@ -663,8 +666,8 @@ itcl::body ActiveOptics::disable {} {
 	if { [calparam cget -site] eq "CP" } {
 		if {[$gaosObj disable]} {
 			tk_messageBox -icon error -parent [focus] -message \
-            "Error posting guide commands: GeMS reports \
-            \"[$gaosObj getLastError]\""
+			"Error posting guide commands: GeMS reports \
+			\"[$gaosObj cget -lastError]\""
 		}
 	} else {
       if { ![catch {cs gaosTTGS info}] } {
@@ -788,11 +791,15 @@ global env
          }      
       }
       gaos {
-         if { [sa guideConfig get aostate] == "On" } {
-            return 1
-         } else {
-            return 0
-         }
+			if {[calparam cget -site] eq "CP"} {
+				return [$gaosObj state gaos]
+			} else {
+				if { [sa guideConfig get aostate] == "On" } {
+            	return 1
+	         } else {
+	            return 0
+	         }
+			}
       }
       useLwfs {
          # changed to be taken from altair directly when not simulating
@@ -818,11 +825,7 @@ global env
       }
       aoSettled {
 			if { [calparam cget -site] eq "CP" } {
-				if { [sa gemssad get sciReady] == "Ready" } {
-					return 1
-				} else {
-					return 0
-				}
+				return [$gaosObj state aoSettled]
 			} else {
 	         if { [sa aossad get aoSettled] == "1" } {
 	            return 1
@@ -833,12 +836,12 @@ global env
       }
       ttgs -
       gaosTTGS {
-	 if {$env(TCC_TCSNAME) == "tc1" && [sa guideConfig get aoTTGS] == "No Value"} {
-	     return $gaosTTGS
-	 }
-         if { [sa guideConfig get aoTTGS] == "No Value" } {
-            return 0
-	 }
+			if {$env(TCC_TCSNAME) == "tc1" && [sa guideConfig get aoTTGS] == "No Value"} {
+		  		return $gaosTTGS
+	 		}
+			if { [sa guideConfig get aoTTGS] == "No Value" } {
+        		return 0
+			}
          if { [sa guideConfig get aoTTGS] >= "1" } {
             return 1
          } else {
@@ -938,7 +941,7 @@ global env
          }
       }
 		rotator {
-			if { [sa guideConfig get crGuide value] eq "ClosedLoop" } {
+			if { [sa guideConfig get crGuide value] eq "1" } {
 				return 1
 			} else {
 				return 0
