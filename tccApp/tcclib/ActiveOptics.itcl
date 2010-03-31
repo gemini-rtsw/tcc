@@ -68,33 +68,7 @@ itcl::class ActiveOptics {
 		variable simgaosTTGS 0
 		variable simsfoloop 0
 		variable simttgsloop 0
-		#GeMS settings
-		variable ttgs1Active 0
-		variable ttgs1Mag	10
-		variable ttgs2Active 0
-		variable ttgs2Mag	10
-		variable ttgs3Active 0
-		variable ttgs3Mag	10
-		variable sfsActive 0
-		variable sfsMag 10
-		variable odgw1Active 0
-		variable odgw1Mag	10
-		variable odgw2Active 0
-		variable odgw2Mag	10
-		variable odgw3Active 0
-		variable odgw3Mag	10
-		variable odgw4Active 0
-		variable odgw4Mag	10
-		variable oigsActive 0
-		variable oigsMag 10
-		variable lwfsActive 0
-		variable lwfsFreq 100
-		variable lwfsLoop 0
-		variable oigsLoop 0
-		variable odgwLoop 0
-		variable ttgsLoop 0
-		variable sfsLoop 0		
-						
+
 		common lowfluxTempLimit -29.0
 		common highfluxTempLimit -9.0
 		
@@ -244,6 +218,12 @@ itcl::body ActiveOptics::enable {} {
 		foreach item $config {
          lappend currentconfig [list [lindex $item 0] [lindex $item 2]]
       }
+		if { $gaosObj ne "" } {
+			set config [$gaosObj configure]
+			foreach item $config {
+				lappend currentconfig [list [lindex $item 0] [lindex $item 2]]
+			}
+		}
 	   logactions logmess  "ActiveOptics::enable: $currentconfig"
    }
 

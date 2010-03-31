@@ -97,7 +97,7 @@ public {
 	method subscribe {observer}
 	method unsubscribe {observer}
 		
-	variable logger logger
+	variable logger logactions
 
 	constructor {} {}
 	destructor {}
@@ -189,14 +189,14 @@ itcl::body SimGems::destructor {} {
 
 #Loop control commands
 itcl::body SimGems::openLoop {name var {reason ""}} {
-	$logger log "SimGems: open $name loop command"
+	$logger logmess "SimGems: open $name loop command"
 	if { [beginCmd] } {
 		after 200 [itcl::code $this simLoopOpen $var $reason]
 	}
 }
 
 itcl::body SimGems::closeLoop {name var {delay 2000} {reason ""}} {
-	$logger log "SimGems: close $name loop command"
+	$logger logmess "SimGems: close $name loop command"
 	if { [beginCmd] } {
 		after 200 [itcl::code $this simLoopStabilize $var $delay $reason]
 	}
@@ -290,21 +290,21 @@ itcl::body SimGems::setAstroMode {mode} {
 }
 
 itcl::body SimGems::startAstrometry {} {
-	$logger log "SimGems: start Astrometry"
+	$logger logmess "SimGems: start Astrometry"
 	if { [beginCmd] } {
 		after 200 [itcl::code $this simAstroStabilize]
 	}
 }
 
 itcl::body SimGems::stopAstrometry {} {
-	$logger log "SimGems: stop Astrometry"
+	$logger logmess  "SimGems: stop Astrometry"
 	if { [beginCmd] } {
 		after 200 [itcl::code $this simAstroStop]
 	}
 }
 
 itcl::body SimGems::moveADC {pos} {
-	$logger log "SimGems: move ADC to $pos"
+	$logger logmess "SimGems: move ADC to $pos"
 	if { [beginCmd] } {
 		after 200 [itcl::code $this simStartMove adcPos $pos 20000]
 	}
@@ -319,7 +319,7 @@ itcl::body SimGems::stopADC {} {
 }
 
 itcl::body SimGems::moveBeamSplitter {pos} {
-	$logger log "SimGems: move Beam Splitter to $pos"
+	$logger logmess "SimGems: move Beam Splitter to $pos"
 	if { [beginCmd] } {
 		after 200 [itcl::code $this simStartMove beamSplitterPos $pos 20000]
 	}
@@ -651,7 +651,7 @@ itcl::body SimGems::endCmd {} {
 }
 
 itcl::body SimGems::configCmd { name var value {delay 200} {reason ""}} {
-	$logger log "SimGems: configure $name to $value"
+	$logger logmess "SimGems: configure $name to $value"
 	if { [beginCmd] } {
 		after $delay [itcl::code $this simDelayedChange $var $value $reason]
 	}

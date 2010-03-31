@@ -50,6 +50,8 @@ public {
 	method state {var}
 
 	constructor {} {}
+
+	method configure {args} { if {[llength $args] > 0 } {logactions logmess "$this configure $args"} ; eval _itcl_config $args }
 }
 private {
 	variable sys
@@ -69,6 +71,8 @@ private {
 	method disableODGW {id}
 	method disableLoops {}
 	method defineTTSources {}
+	method _itcl_config {option args} \
+		@itcl-builtin-configure
 }
 }
 
