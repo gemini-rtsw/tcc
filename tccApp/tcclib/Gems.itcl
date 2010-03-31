@@ -30,35 +30,22 @@ itcl::class Gems {
 	inherit Paramset
 	constructor {} {}
 	destructor {}
-	public {
-		method apply {comp}
-		method init {}
-		method save {node}
-		
-		variable adc ""
-		variable dichroicBeamsplitter ""
-		variable astrometricMode ""
-	}	
+public {
+	method apply {comp}
+	method init {}
+	method save {node}
+	
+	variable adc ""
+	variable dichroicBeamsplitter ""
+	variable astrometricMode ""
+}
+private {
+	variable gemsSys
+}
 }
 
 itcl::body Gems::constructor {} {
-#	epics cs gems::aomApply
-#	epics cs gems::mystApply
-	if { [catch {cs gems::adcMech info}] } {
-		epics cs gems::adcMech
-	}
-	if { [catch {cs gems::adcLoop info}] } {
-		epics cs gems::adcLoop
-	}
-	if { [catch {cs gems::beamSplitter info}] } {
-		epics cs gems::beamSplitter
-	}
-	if { [catch {cs gems::astroMode info}] } {
-		epics cs gems::astroMode
-	}
-	
-	cs gems::aomApply setTimeout 3
-	cs gems::mystApply setTimeout 3
+	set gemsSys [GemsSys::getSingleton]
 }
 
 itcl::body Gems::destructor {} {

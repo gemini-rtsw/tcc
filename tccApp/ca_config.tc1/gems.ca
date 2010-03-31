@@ -7,22 +7,22 @@
 #
 #-
 
-apply gems::aomApply aom:apply aom:applyC Primary GeMS Apply Record
+apply gems::aomApply ao2:apply ao2:applyC Primary GeMS Apply Record
 apply gems::mystApply mys1:apply mys1:applyC Primary Myst Apply Record
 
-command gems::adcMech gems::aomApply ADC Control
+command gems::adcMech gems::aomApply ADC Position Control
 {
-	pos	aom:adcScCtrl.A		ADC unit position In/Out
+	pos	ao2:adcScCtrl.A		ADC unit position In/Out
 }
 
-command gems::adcLoop gems::aomApply ADC Control
+command gems::adcLoop gems::aomApply ADC Loop Control
 {
-	loop	aom:adcScLpCtrl.A		ADC loop control On/Off
+	loop	ao2:adcScLpCtrl.A		ADC loop control On/Off
 }
 
 command gems::beamSplitter gems::aomApply ADC Control
 {
-	pos	aom:bsCtrl.A			Dichroic beamsplitter position 1|2
+	pos	ao2:bsCtrl.A			Dichroic beamsplitter position 1|2
 }
 
 command gems::astroMode gems::mystApply ADC Control
@@ -32,17 +32,17 @@ command gems::astroMode gems::mystApply ADC Control
 
 command gems::ngsPr1Ctrl	gems::aomApply	Canopus probe 1 control
 {
-	command tc1:aom:ngsPr1Ctrl.A	Command Park|Datum
+	command ao2:ngsPr1Ctrl.A	Command Park|Datum
 }
 
 command gems::ngsPr2Ctrl	gems::aomApply	Canopus probe 2 control
 {
-	command tc1:aom:ngsPr2Ctrl.A	Command Park|Datum
+	command ao2:ngsPr2Ctrl.A	Command Park|Datum
 }
 
 command gems::ngsPr3Ctrl	gems::aomApply	Canopus probe 3 control
 {
-	command tc1:aom:ngsPr3Ctrl.A	Command Park|Datum
+	command ao2:ngsPr3Ctrl.A	Command Park|Datum
 }
 
 status gemssad
@@ -55,14 +55,27 @@ status gemssad
 	ttLoop		mys1:ttLoopStatus.VAL	0	TT loop status (OPEN|CLOSED|PAUSED)
 	focLoop		mys1:focLoopStatus.VAL	0	Focus loop status (OPEN|CLOSED|PAUSED)
 	flexLoop		mys1:flexLoopStatus.VAL	0	Flexure loop status (OPEN|CLOSED|PAUSED)
-	astromMode	mys1:astromModeReady.VAL	0	Astrometry calculation status (Not Ready|Ready)
+	astromReady	mys1:astromModeReady.VAL	0	Astrometry calculation status (Not Ready|Ready)
 	aniLoop		mys1:aniLoopStatus.VAL	0	ANI loop status (OPEN|CLOSED|PAUSED)
 	sciReady		mys1:sciReady.VAL			0	Ready for science (Not Ready|Ready)
    laserProp	lis:lasPropProc.VALA		0	Is the Laser Propagating to the Sky
+   
+   lgsFlux     mys1:lgsFlux.VAL 0 Average flux/LGS frame 
+   ngsFlux	   mys1:ngsFlux.VAL 0 Average flux/NGS frame 
+}
 
-	ngs1Follow	tc1:aom:ngsPr1followS.VAL	0	Canopus 1 in follow mode
-	ngs2Follow	tc1:aom:ngsPr2followS.VAL	0	Canopus 2 in follow mode
-	ngs3Follow	tc1:aom:ngsPr3followS.VAL	0	Canopus 3 in follow mode
+status aomsad
+{
+	applyC		ao2:applyC.VAL			0	Command Status
+	message		ao2:applyC.OMSS		0	Command completion message
+	
+	adcScState ao2:adcScState.VAL    0 Science ADC state (In|Out|Moving|Invalid)
+	beamSplitterState ao2:bsState.VAL 0 Beam splitter state (In|Out|Moving|Invalid)
+	adcScLoop	ao2:adcScLoop.VAL    0 Science ADC loop satus (OPEN|CLOSED)
+
+	ngs1Follow	ao2:ngsPr1followS.VAL	0	Canopus 1 in follow mode
+	ngs2Follow	ao2:ngsPr2followS.VAL	0	Canopus 2 in follow mode
+	ngs3Follow	ao2:ngsPr3followS.VAL	0	Canopus 3 in follow mode
 }
 
 command gems::slewReset gems::mystApply Reset ngs config, cmat optimization, astrometric mode, etc
@@ -100,7 +113,7 @@ command gems::m2OffloadCtrl   gems::mystApply M2 offload
 	cmd mys1:m2OffloadCtrl.A 		Command (START/PAUSE/RESUME/STOP) 
 }
 
-command gems::focusLoopCtrl   gems::mystApply SFS/zoom loop 
+command gems::focLoopCtrl   gems::mystApply SFS/zoom loop 
 {
 	cmd mys1:focusLoopCtrl.A 		Command (START/PAUSE/RESUME/STOP) 
 }
@@ -139,4 +152,12 @@ command gems::ngsConfig    gems::mystApply Myst configuration
 	odgs3Mag mys1:ngsConfig.N  ODGS3 Magnitude
 	odgs4Mag mys1:ngsConfig.O  ODGS4 Magnitude
 	oigsMag  mys1:ngsConfig.P  OIGS Magnitude
+}
+
+
+command gems::ttApdCtrl     gems::mystApply Canopus APD control
+{
+	apd1 mys1:ttApdCtrl.A	APD1 control (START/STOP)
+	apd2 mys1:ttApdCtrl.B	APD2 control (START/STOP)
+	apd3 mys1:ttApdCtrl.C	APD3 control (START/STOP)
 }

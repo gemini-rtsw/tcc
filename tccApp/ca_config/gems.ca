@@ -55,14 +55,27 @@ status gemssad
 	ttLoop		myst:ttLoopStatus.VAL	0	TT loop status (OPEN|CLOSED|PAUSED)
 	focLoop		myst:focLoopStatus.VAL	0	Focus loop status (OPEN|CLOSED|PAUSED)
 	flexLoop		myst:flexLoopStatus.VAL	0	Flexure loop status (OPEN|CLOSED|PAUSED)
-	astromMode	myst:astromModeReady.VAL	0	Astrometry calculation status (Not Ready|Ready)
+	astromReady	myst:astromModeReady.VAL	0	Astrometry calculation status (Not Ready|Ready)
 	aniLoop		myst:aniLoopStatus.VAL	0	ANI loop status (OPEN|CLOSED|PAUSED)
 	sciReady		myst:sciReady.VAL			0	Ready for science (Not Ready|Ready)
    laserProp	lis:lasPropProc.VALA		0	Is the Laser Propagating to the Sky
+   
+   lgsFlux     myst:lgsFlux.VAL 0 Average flux/LGS frame 
+   ngsFlux	   myst:ngsFlux.VAL 0 Average flux/NGS frame 
 
 	ngs1Follow	aom:ngsPr1followS.VAL	0	Canopus 1 in follow mode
 	ngs2Follow	aom:ngsPr2followS.VAL	0	Canopus 2 in follow mode
 	ngs3Follow	aom:ngsPr3followS.VAL	0	Canopus 3 in follow mode
+}
+
+status aomsad
+{
+	applyC		aom:applyC.VAL			0	Command Status
+	message		aom:applyC.OMSS		0	Command completion message
+	
+	adcScState aom:adcScState.VAL    0 Science ADC state (In|Out|Moving|Invalid)
+	beamSplitterState aom:bsState.VAL 0 Beam splitter state (In|Out|Moving|Invalid)
+	adcScLoop	aom:adcScLoop.VAL    0 Science ADC loop satus (OPEN|CLOSED)
 }
 
 command gems::slewReset gems::mystApply Reset ngs config, cmat optimization, astrometric mode, etc
@@ -100,7 +113,7 @@ command gems::m2OffloadCtrl   gems::mystApply M2 offload
 	cmd myst:m2OffloadCtrl.A 		Command (START/PAUSE/RESUME/STOP) 
 }
 
-command gems::focusLoopCtrl   gems::mystApply SFS/zoom loop 
+command gems::focLoopCtrl   gems::mystApply SFS/zoom loop 
 {
 	cmd myst:focusLoopCtrl.A 		Command (START/PAUSE/RESUME/STOP) 
 }
@@ -142,3 +155,9 @@ command gems::ngsConfig    gems::mystApply Myst configuration
 }
 
 
+command gems::ttApdCtrl     gems::mystApply Canopus APD control
+{
+	apd1 myst:ttApdCtrl.A	APD1 control (START/STOP)
+	apd2 myst:ttApdCtrl.B	APD2 control (START/STOP)
+	apd3 myst:ttApdCtrl.C	APD3 control (START/STOP)
+}
