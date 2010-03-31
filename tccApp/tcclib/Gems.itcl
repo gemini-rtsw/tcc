@@ -41,10 +41,16 @@ public {
 }
 private {
 	variable gemsSys
+	variable lastError ""
+	
+	method waitFor {timeout outCondition}
+	method waitForCmdIdle {{timeout 1000}}
+	method waitForCmdComplete {idleTimeout settledTimeout settledCond timeoutMsg}
 }
 }
 
 itcl::body Gems::constructor {} {
+	init
 	set gemsSys [GemsSys::getSingleton]
 }
 
@@ -55,19 +61,27 @@ itcl::body Gems::destructor {} {
 itcl::body Gems::apply {comp} {
 	#FIXME: Check configuration commands when the ICD is released.
 	logactions logmess "Applying GeMS ADC: (\"$adc\")"
-	set aomChange 0
-	set mystChange 0
 	if { ![string is space $adc] } {
 		switch $adc {
 			ON {
-				cs gems::adcMech set pos In
-				cs gems::adcLoop set loop On
-				set aomChange 1
+				$gemsSys moveADC In
+				if { [waitForCmdComplete 1000 40000 {expr {[$gemsSys getADCPos] eq "In"}} "ADC to reach In position"] } {
+					logactions logmess "Error applying GeMS ADC: $lastError"
+				}
+				$gemsSys startADC
+				if { [waitForCmdComplete 1000 10000 {expr {[$gemsSys getADCLoopState] eq "CLOSED"}} "ADC loop to close"] } {
+					logactions logmess "Error applying GeMS ADC: $lastError"
+				}
 			}
 			OFF {
-				cs gems::adcMech set pos Out
-				cs gems::adcLoop set loop Off
-				set aomChange 1
+				$gemsSys stopADC
+				if { [waitForCmdComplete 1000 10000 {expr {[$gemsSys getADCLoopState] eq "OPEN"}} "ADC loop to open"] } {
+					logactions logmess "Error applying GeMS ADC: $lastError"
+				}
+				$gemsSys moveADC Out
+				if { [waitForCmdComplete 1000 40000 {expr {[$gemsSys getADCPos] eq "Out"}} "ADC to reach Out position"] } {
+					logactions logmess "Error applying GeMS ADC: $lastError"
+				}
 			}
 			default {
 				error "Gems::apply: $adc is not a valid option for ADC"
@@ -77,50 +91,52 @@ itcl::body Gems::apply {comp} {
 
 	logactions logmess "Applying GeMS dichroic beamsplitter: (\"$dichroicBeamsplitter\")"
 	if { ![string is space $dichroicBeamsplitter] } {
+		set pos ""
 		switch $dichroicBeamsplitter {
 			WAVELENGTH_850NM {
-				cs gems::beamSplitter set pos 1
-				set aomChange 1
+				set pos 1
 			}
 			WAVELENGTH_1UM {
-				cs gems::beamSplitter set pos 2
-				set aomChange 1
+				set pos 2
 			}
 			default {
 				error "Gems::apply: $dichroicBeamsplitter is not a valid option for the Dichroic Beamsplitter"
+			}
+		}
+		if { $pos ne "" } {
+			$gemsSys moveBeamSplitter $pos
+			if { [waitForCmdComplete 1000 40000 "expr \{ \[$gemsSys getBeamSplitterPos\] eq \"$pos\" \}" "beamsplitter to reach position $pos"] } {
+				logactions logmess "Error applying GeMS beamsplitter: $lastError"
 			}
 		}
 	}
 	
 	logactions logmess "Applying GeMS astrometric mode: (\"$astrometricMode\")"
 	if { ![string is space $astrometricMode] } {
+		set mode ""
 		switch $astrometricMode {
 			OFF {
-				cs gems::astroMode set mode Off
-				set mystChange 1
+				set mode Off
 			}
 			REGULAR {
-				cs gems::astroMode set mode Regular
-				set mystChange 1
+				set mode Regular
 			}
 			GOOD {
-				cs gems::astroMode set mode Good
-				set mystChange 1
+				set mode Good
 			}
 			BEST {
-				cs gems::astroMode set mode Best
-				set mystChange 1
+				set mode Best
 			}
 			default {
 				error "Gems::apply: $astrometricMode is not a valid option for Astrometric Mode"
 			}
 		}
-	}
-	if { $aomChange && [catch {cs gems::aomApply post} msg] } {
-		error "Error posting commands for GeMS: \"$msg\""
-	}
-	if { $mystChange && [catch {cs gems::mystApply post} msg]} {
-		error "Error posting commands for GeMS (Myst): \"$msg\""
+		if { $mode ne "" } {
+			$gemsSys setAstroMode $mode
+			if { [waitForCmdComplete 1000 1000 {expr 1} "applying Astrometry mode $mode"] } {
+				logactions logmess "Error applying GeMS beamsplitter: $lastError"
+			}
+		}
 	}
 }
 
@@ -132,7 +148,47 @@ itcl::body Gems::save {node} {
 }
 	
 itcl::body Gems::init {} {
-	set adc ""
-	set dichroicBeamsplitter ""
-	set astrometricMode ""
+	set adc "OFF"
+	set dichroicBeamsplitter "WAVELENGTH_850NM"
+	set astrometricMode "OFF"
+}
+
+itcl::body Gems::waitFor {timeout outCondition} {
+	set elapsedTime 0
+	while {$timeout==0 || $elapsedTime<$timeout} {
+		if {[eval $outCondition]} {
+			return ok
+		}
+		after 100
+		set elapsedTime [expr $elapsedTime + 100]
+		update
+	}
+	return timeout
+}
+
+itcl::body Gems::waitForCmdIdle {{timeout 1000}} {
+	set elapsedTime 0
+	while {$timeout==0 || $elapsedTime<$timeout} {
+		if {[$gemsSys getCommandState] eq "IDLE"} {
+			return ok
+		} elseif {[$gemsSys getCommandState] eq "ERROR"} {
+			set lastError [$gemsSys getLastError]
+			return error
+		}
+		after 100
+		set elapsedTime [expr $elapsedTime + 100]
+		update
+	}
+	return timeout
+}
+
+itcl::body Gems::waitForCmdComplete {idleTimeout settledTimeout settledCond timeoutMsg} {
+	set result [waitForCmdIdle $idleTimeout]
+	if {$result eq "error"} {
+		return 1
+	} elseif {$result eq "timeout" || [waitFor $settledTimeout $settledCond] eq "timeout" } {
+		set lastError "Timed out waiting for $timeoutMsg"
+		return 1
+	}
+	return 0
 }

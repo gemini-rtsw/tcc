@@ -112,11 +112,11 @@ private {
 	variable m2OffloadState OFF
 	variable rotOffloadState OFF
 	variable ttLoopSources ""
-	variable astroMode REGULAR
+	variable astroMode Off
 	variable astroState OFF
-	variable adcPos OUT
+	variable adcPos Out
 	variable adcState OFF
-	variable beamSplitterPos OUT
+	variable beamSplitterPos Out
 	variable ttwfsExposure
 	variable odgwExposure
 	variable sfsExposure 100
@@ -150,6 +150,8 @@ private {
 	method simAstroStabilize {}
 	method simAstroStart {}
 	method simAstroStop {}
+	method simStartMove { var value delay {reason ""} }
+	method simEndMove { var value {reason ""} }
 	method openLoop {name var {reason ""}}
 	method closeLoop {name var {delay 2000} {reason ""}}
 	method configCmd { name var value {delay 200} {reason ""}}
@@ -302,7 +304,10 @@ itcl::body SimGems::stopAstrometry {} {
 }
 
 itcl::body SimGems::moveADC {pos} {
-	configCmd "ADC Position" adcPos $pos 4000
+	$logger log "SimGems: move ADC to $pos"
+	if { [beginCmd] } {
+		after 200 [itcl::code $this simStartMove adcPos $pos 20000]
+	}
 }
 
 itcl::body SimGems::startADC {} {
@@ -314,7 +319,10 @@ itcl::body SimGems::stopADC {} {
 }
 
 itcl::body SimGems::moveBeamSplitter {pos} {
-	configCmd "Beam Splitter Position" beamSplitterPos $pos 4000
+	$logger log "SimGems: move Beam Splitter to $pos"
+	if { [beginCmd] } {
+		after 200 [itcl::code $this simStartMove beamSplitterPos $pos 20000]
+	}
 }
 
 #WFS control commands
@@ -488,7 +496,7 @@ itcl::body SimGems::getADCPos {} {
 }
 
 itcl::body SimGems::getADCLoopState {} {
-	return $adcState
+	return [expr { ( $adcState eq "ON" ) ? "CLOSED" : "OPEN" } ]
 }
 
 itcl::body SimGems::getBeamSplitterPos {} {
@@ -588,7 +596,7 @@ itcl::body SimGems::simAstroStabilize {} {
 		notify loopsSettled
 	}
 	endCmd
-	switch $astroMode {
+	switch [string toupper $astroMode] {
 	REGULAR { set delay 15000 } 
 	GOOD { set delay 30000 }
 	BEST { set delay 120000 }
@@ -674,4 +682,28 @@ itcl::body SimGems::simCycle {} {
 		}
 	}
 	set timerId [after 1000 [itcl::code $this simCycle] ]
+}
+
+itcl::body SimGems::simStartMove { var value delay {reason ""} } {
+	if { [set $var] ne $value } {
+		set $var Moving
+		if { $reason eq "" } {
+			notify $var 
+		} else {
+			notify $reason
+		}
+		endCmd
+		after $delay [itcl::code $this simEndMove $var $value $reason]
+	} else {
+		endCmd
+	}
+}
+
+itcl::body SimGems::simEndMove { var value {reason ""} } {
+	set $var $value
+	if { $reason eq "" } {
+		notify $var 
+	} else {
+		notify $reason
+	}
 }

@@ -334,7 +334,9 @@ itcl::body GemsAO::startLoops {} {
 		if {[waitForCmdComplete 1000 1000 "expr 1" "TT sources configure"]} {
 			return 1
 		}
-		if {[state astromode] ne "NONE" && ( $ttgs1Active || $ttgs2Active || $ttgs3Active ) && ![state astrometry]} {
+		set astroMode [state astromode]
+		set useAstrometry [expr {$astroMode eq "Regular" || $astroMode eq "Good" || $astroMode eq "Best" } ]
+		if { $useAstrometry && ( $ttgs1Active || $ttgs2Active || $ttgs3Active ) && ![state astrometry]} {
 			$sys startAstrometry
 			if {[waitForCmdComplete 1000 132000 "state astrometry" "Astrometry to stabilize"]} {
 				return 1
@@ -449,7 +451,9 @@ itcl::body GemsAO::stopLoops {} {
 				return 1
 			}
 		}
-		if { ( [state astromode] eq "NONE" || !( $ttgs1Active || $ttgs2Active || $ttgs3Active ) ) && [state astrometry]} {
+		set astroMode [state astromode]
+		set useAstrometry [expr {$astroMode eq "Regular" || $astroMode eq "Good" || $astroMode eq "Best" } ]
+		if { ( !$useAstrometry || !( $ttgs1Active || $ttgs2Active || $ttgs3Active ) ) && [state astrometry]} {
 			$sys stopAstrometry
 			if {[waitForCmdComplete 1000 1000 {expr ![state astrometry]} "Astrometry to stop"]} {
 				return 1

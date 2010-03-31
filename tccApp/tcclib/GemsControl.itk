@@ -79,6 +79,9 @@ itcl::body GemsControl::reset {} {
 itcl::body GemsControl::load {name} {
 # Copy the contents of the specified GeMS object into the edit controls.
 	set adc [string toupper [$name cget -adc]]
+	if { [string is space $adc] } {
+		set adc OFF
+	}
 	set dichroicBeamsplitter [string toupper [$name cget -dichroicBeamsplitter]]
 	if { [string is space $dichroicBeamsplitter] } {
 		$itk_component(beamsplt) select WAVELENGTH_850NM
