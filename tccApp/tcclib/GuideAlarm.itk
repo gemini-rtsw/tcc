@@ -441,7 +441,7 @@ itcl::body GuideAlarm::scanLoop {} {
 				}
 			}
 			set sources [$gemsSys getTTLoopSources]
-			set test [expr {$odgwCount > 0 && ( [[AO getGaosObj] state flexLoop] && [string first oigs $sources] == -1 ) || ( [[AO getGaosObj] state ttgsLoop] && [string first odgw $sources] > -1 ) && $canguide}]
+			set test [expr {$odgwCount > 0 && ( ( [[AO getGaosObj] state flexLoop] && [string first oigs $sources] == -1 ) || ( [[AO getGaosObj] state ttgsLoop] && [string first odgw $sources] > -1 ) ) && $canguide}]
 		}
 		default { set test [expr {[AO state $wfs] && $canguide}] }
 		}

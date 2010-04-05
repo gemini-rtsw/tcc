@@ -60,7 +60,7 @@ itcl::body GuideLoop::constructor args {
 # Create canvas.
    itk_component add canv {
 #AWE      canvas $itk_interior.canv -width 630 -height 497 -borderwidth 2 
-      canvas $itk_interior.canv -width 650 -height 475 -borderwidth 2 \
+      canvas $itk_interior.canv -width 695 -height 475 -borderwidth 2 \
             -relief sunken
    }
    pack $itk_component(canv)
@@ -257,7 +257,7 @@ itcl::body GuideLoop::constructor args {
    $w move m2 149 10
    $w move m2xy 277 10
    $w move m1 227 107
-   $w move settled 480 40
+   $w move settled 480 30
    $w move oiwfs 227 280
    $w move pwfs_comb 31 175
    $w move pwfs1 35 179
@@ -819,7 +819,7 @@ itcl::body GuideLoop::buildGaos {} {
 	set w $itk_component(canv)
 	if { [calparam cget -site] eq "CP" } {
 		itk_component add gaos { GemsWidget $w.gaos -aocontroller [AO getGaosObj] }
-		$w create window 433 72 -window $w.gaos -tags gaos -anchor nw
+		$w create window 433 62 -window $w.gaos -tags gaos -anchor nw
 		set gaosWidget $itk_component(gaos)
 		buildGemsArrows
 	} else {
@@ -890,21 +890,21 @@ itcl::body GuideLoop::recolourAltairArrows {} {
 
 itcl::body GuideLoop::buildGemsArrows {} {
 	set w $itk_component(canv)
-	$w create line 433 85 351 85  -width 3 -fill white -tags {active gaos_m2} \
+	$w create line 433 66 351 66  -width 3 -fill white -tags {active gaos_m2} \
 		-arrow last -arrowshape {20 20 7}
-	$w create line 433 125 351 125 -width 3 -fill white \
+	$w create line 433 76 376 76 376 125 351 125 -width 3 -fill white \
 		-tags {active gaos_m1} -arrow last -arrowshape {20 20 7}
-	$w create line 351 315 407 315 407 176 433 176 -width 3 -fill white \
+	$w create line 351 315 407 315 407 120 433 120 -width 3 -fill white \
 		-tags {active oiwfs_gaos} -arrow last -arrowshape {20 20 7}
-	$w create line 433 105 388 105 388 411 351 411 -width 3 -fill white \
+	$w create line 433 86 388 86 388 411 351 411 -width 3 -fill white \
 		-tags {active gaos_cr} -arrow last -arrowshape {20 20 7}
 
 	# GAOS internal
-	$w create line 433 238 398 238 398 156 433 156 -width 3 -fill white \
+	$w create line 433 165 398 165 398 102 433 102 -width 3 -fill white \
 		-tags {active ttgs_gaos} -arrow last -arrowshape {20 20 7}
-	$w create line 608 266 633 266 633 156 608 156 -width 3 -fill white \
+	$w create line 640 225 665 225 665 102 640 102 -width 3 -fill white \
 		-tags {active sfs_gaos} -arrow last -arrowshape {20 20 7}
-	$w create line 608 341 643 341 643 176 608 176 -width 3 -fill white \
+	$w create line 640 335 675 335 675 120 640 120 -width 3 -fill white \
 	-tags {active odgw_gaos} -arrow last -arrowshape {20 20 7}
 
 }

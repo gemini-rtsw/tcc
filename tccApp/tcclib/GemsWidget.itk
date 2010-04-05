@@ -25,12 +25,11 @@ public {
 	method enable {} {}
 	method recolor {} {}
 	method init {}
-	
-	common odgwExpLUT
-	common sfsExpLUT
 }
 private {
 	variable sys
+	variable odgwExpLUT ""
+	variable sfsExpLUT ""
 	method onGemsChange {reasons}
 	method onLGSExpSel {}
 }
@@ -43,9 +42,10 @@ itk::usual GemsWidget {
 }
 
 itcl::body GemsWidget::constructor {args} {
-
+	set sfsExpLUT [calparam cget -sfsExpLUT]
+	set odgwExpLUT [calparam cget -odgwExpLUT]
 	if { [llength $sfsExpLUT] == 0 } {
-		set sfsExpLU { {15 800} {14 400} {13 200} {12 100} {11 50} }
+		set sfsExpLUT { {15 800} {14 400} {13 200} {12 100} {11 50} }
 	}
 	if { [llength $odgwExpLUT] == 0 } {
 		set odgwExpLUT { {15 800} {14 400} {13 200} {12 100} {11 50} }
@@ -59,7 +59,7 @@ itcl::body GemsWidget::constructor {args} {
 	set w $itk_component(mainframe)
 	
 	itk_component add gaoson {
-		ToggleButton $w.gaoson -text AO -pushedbackground Green -pady 0 -width 7
+		ToggleButton $w.gaoson -text AO -pushedbackground Green -pady 0 -width 9
 	} { ignore -width }
 	pack $itk_component(gaoson) -side top -anchor n -padx 2 -pady 2
 	
@@ -75,25 +75,26 @@ itcl::body GemsWidget::constructor {args} {
 	}
 	itk_component add ttgsloop {
 		ToggleButton $w.buttonframe.left.ttgsloop -text TTGS \
-			-pushedbackground Green -pady 0  -width 7
+			-pushedbackground Green -pady 0  -width 6
 	} { ignore -width }
 	itk_component add odgwloop {
 		ToggleButton $w.buttonframe.right.odgwloop -text ODGW \
-			-pushedbackground Green -pady 0 -width 7
+			-pushedbackground Green -pady 0 -width 6
 	} { ignore -width }
 	itk_component add oiloop {
 		ToggleButton $w.buttonframe.left.oiloop -text OI -pushedbackground Green \
-			-pady 0 -width 7
+			-pady 0 -width 6
 	} { ignore -width }
 	itk_component add sfsloop {
 		ToggleButton $w.buttonframe.right.sfsloop -text SFS -pushedbackground Green \
-			-pady 0 -width 7
+			-pady 0 -width 6
 	} { ignore -width }
 	itk_component add lgswfs {
-		WfsWidget $w.lgswfs -label LGSWFS -explabel Hz \
+		WfsWidget $w.buttonframe.lgswfs -label LGSWFS -explabel Hz \
 			-expvalues [list 50 100 200 500 800] \
-			-onexpselext [itcl::code $this onLGSExpSel]
+			-onexpselect [itcl::code $this onLGSExpSel]
 	}
+	[$itk_component(lgswfs) component exp] configure -width 4
 	pack $itk_component(ttgsloop) $itk_component(oiloop) -side top -anchor w
 	pack $itk_component(sfsloop) $itk_component(odgwloop) -side top -anchor e
 	pack $itk_component(buttonframeright) -side right
@@ -116,24 +117,24 @@ itcl::body GemsWidget::constructor {args} {
 	}
 	set sfsExpList ""
 	foreach { pair } $sfsExpLUT {
-		lappend sfsExpList "[format %.1f [lindex $pair 0]]([lindex $pair 0])"
+		lappend sfsExpList "[format %.1f [lindex $pair 0]]([lindex $pair 1])"
 	}
 	itk_component add sfs {
 		WfsWidget $w.canframe.sfs -label SFS -explabel Hz -expvalues $sfsExpList
 	}
-	[$itk_component(can1) component exp] configure -width 3
-	[$itk_component(can2) component exp] configure -width 3
-	[$itk_component(can3) component exp] configure -width 3
-	[$itk_component(sfs) component exp] configure -width 3
+	[$itk_component(can1) component exp] configure -width 5
+	[$itk_component(can2) component exp] configure -width 5
+	[$itk_component(can3) component exp] configure -width 5
+	[$itk_component(sfs) component exp] configure -width 8 -labelpos nw -labeltext "Mag(f\[Hz\])"
 				
 	grid $itk_component(can1) $itk_component(can2) -padx 1 -pady 1
 	grid $itk_component(can3) $itk_component(sfs) -padx 1 -pady 1
-	grid configure $itk_component(sfs) -padx 0 -pady 0 -sticky se
+	#grid configure $itk_component(sfs) -padx 0 -pady 0 -sticky se
 	pack $itk_component(canframe) -padx 2 -pady 2
 
 	set odgwExpList ""
 	foreach { pair } $odgwExpLUT {
-		lappend odgwExpList "[format %.1f [lindex $pair 0]]([lindex $pair 0])"
+		lappend odgwExpList "[format %.1f [lindex $pair 0]]([lindex $pair 1])"
 	}
 	itk_component add odgwframe {
 		frame $w.odgwframe -background white 
@@ -142,7 +143,6 @@ itcl::body GemsWidget::constructor {args} {
 	itk_component add odgw1 {
 		WfsWidget $w.odgwframe.odgw1 -label ODGW1 -explabel Hz -expvalues $odgwExpList
 	}
-	[$itk_component(odgw1) component exp] configure -width 3
 	itk_component add odgw2 {
 		WfsWidget $w.odgwframe.odgw2 -label ODGW2 -explabel Hz -expvalues $odgwExpList
 	}
@@ -152,10 +152,10 @@ itcl::body GemsWidget::constructor {args} {
 	itk_component add odgw4 {
 		WfsWidget $w.odgwframe.odgw4 -label ODGW4 -explabel Hz -expvalues $odgwExpList
 	}
-	[$itk_component(odgw1) component exp] configure -width 3
-	[$itk_component(odgw2) component exp] configure -width 3
-	[$itk_component(odgw3) component exp] configure -width 3
-	[$itk_component(odgw4) component exp] configure -width 3
+	[$itk_component(odgw1) component exp] configure -width 8 -labelpos nw -labeltext "Mag(f\[Hz\])"
+	[$itk_component(odgw2) component exp] configure -width 8 -labelpos nw -labeltext "Mag(f\[Hz\])"
+	[$itk_component(odgw3) component exp] configure -width 8 -labelpos nw -labeltext "Mag(f\[Hz\])"
+	[$itk_component(odgw4) component exp] configure -width 8 -labelpos nw -labeltext "Mag(f\[Hz\])"
 	
 	grid $itk_component(odgw1) $itk_component(odgw2) -padx 1 -pady 1
 	grid $itk_component(odgw3) $itk_component(odgw4) -padx 1 -pady 1
@@ -177,11 +177,12 @@ itcl::body GemsWidget::init {} {
 		$itk_component(can1) expSet [$sys getTTWFSExposure 1]
 		$itk_component(can2) expSet [$sys getTTWFSExposure 2]
 		$itk_component(can3) expSet [$sys getTTWFSExposure 3]
-		$itk_component(sfs) expSet [$sys getSFSExposure]
-		$itk_component(odgw1) expSet [$sys getODGWExposure 1]
-		$itk_component(odgw2) expSet [$sys getODGWExposure 2]
-		$itk_component(odgw3) expSet [$sys getODGWExposure 3]
-		$itk_component(odgw4) expSet [$sys getODGWExposure 4]
+		onLGSExpSel
+		#$itk_component(sfs) expSet [$sys getSFSExposure]
+		#$itk_component(odgw1) expSet [$sys getODGWExposure 1]
+		#$itk_component(odgw2) expSet [$sys getODGWExposure 2]
+		#$itk_component(odgw3) expSet [$sys getODGWExposure 3]
+		#$itk_component(odgw4) expSet [$sys getODGWExposure 4]
 	}
 }
 
@@ -286,26 +287,36 @@ itcl::body GemsWidget::enable {} {
 	$itk_option(-aocontroller) configure -ttgs2Exp	[$itk_component(can2) expGet]
 	$itk_option(-aocontroller) configure -ttgs3Active [expr \"[$itk_component(can3) switchGet]\" eq \"pushed\"]
 	$itk_option(-aocontroller) configure -ttgs3Exp	[$itk_component(can3) expGet]
+
 	$itk_option(-aocontroller) configure -sfsActive [expr \"[$itk_component(sfs) switchGet]\" eq \"pushed\"]
-	set pair [lindex $sfsExpLUT [[$itk_component(sfs) getExpCombo] curselection] ]
-	$itk_option(-aocontroller) configure -sfsMag [lindex $pair 0]
-	$itk_option(-aocontroller) configure -sfsExp [lindex $pair 1]
+	set magexp [$itk_component(sfs) expGet]
+	set ind [string first "(" $magexp]
+	$itk_option(-aocontroller) configure -sfsExp [string trim [string range $magexp $ind end] "()"]
+
 	$itk_option(-aocontroller) configure -odgw1Active [expr \"[$itk_component(odgw1) switchGet]\" eq \"pushed\"]
-	set pair [lindex $odgwExpLUT [[$itk_component(odgw1) getExpCombo] curselection] ]
-	$itk_option(-aocontroller) configure -odgw1Mag	[lindex $pair 0]
-	$itk_option(-aocontroller) configure -odgw1Exp	[lindex $pair 1]
+	set magexp [$itk_component(odgw1) expGet]
+	set ind [string first "(" $magexp]
+	$itk_option(-aocontroller) configure -odgw1Mag [string range $magexp 0 [expr $ind-1]]
+	$itk_option(-aocontroller) configure -odgw1Exp [string trim [string range $magexp $ind end] "()"]
+
 	$itk_option(-aocontroller) configure -odgw2Active [expr \"[$itk_component(odgw2) switchGet]\" eq \"pushed\"]
-	set pair [lindex $odgwExpLUT [[$itk_component(odgw2) getExpCombo] curselection] ]
-	$itk_option(-aocontroller) configure -odgw2Mag	[lindex $pair 0]
-	$itk_option(-aocontroller) configure -odgw2Exp	[lindex $pair 1]
+	set magexp [$itk_component(odgw2) expGet]
+	set ind [string first "(" $magexp]
+	$itk_option(-aocontroller) configure -odgw2Mag [string range $magexp 0 [expr $ind-1]]
+	$itk_option(-aocontroller) configure -odgw2Exp [string trim [string range $magexp $ind end] "()"]
+
 	$itk_option(-aocontroller) configure -odgw3Active [expr \"[$itk_component(odgw3) switchGet]\" eq \"pushed\"]
-	set pair [lindex $odgwExpLUT [[$itk_component(odgw3) getExpCombo] curselection] ]
-	$itk_option(-aocontroller) configure -odgw3Mag	[lindex $pair 0]
-	$itk_option(-aocontroller) configure -odgw3Exp	[lindex $pair 1]
+	set magexp [$itk_component(odgw3) expGet]
+	set ind [string first "(" $magexp]
+	$itk_option(-aocontroller) configure -odgw3Mag [string range $magexp 0 [expr $ind-1]]
+	$itk_option(-aocontroller) configure -odgw3Exp [string trim [string range $magexp $ind end] "()"]
+
 	$itk_option(-aocontroller) configure -odgw4Active [expr \"[$itk_component(odgw4) switchGet]\" eq \"pushed\"]
-	set pair [lindex $odgwExpLUT [[$itk_component(odgw4) getExpCombo] curselection] ]
-	$itk_option(-aocontroller) configure -odgw4Mag	[lindex $pair 0]
-	$itk_option(-aocontroller) configure -odgw4Exp	[lindex $pair 1]
+	set magexp [$itk_component(odgw4) expGet]
+	set ind [string first "(" $magexp]
+	$itk_option(-aocontroller) configure -odgw4Mag [string range $magexp 0 [expr $ind-1]]
+	$itk_option(-aocontroller) configure -odgw4Exp [string trim [string range $magexp $ind end] "()"]
+
 	$itk_option(-aocontroller) configure -lwfsActive [expr \"[$itk_component(lgswfs) switchGet]\" eq \"pushed\"]
 	$itk_option(-aocontroller) configure -lwfsFreq [$itk_component(lgswfs) expGet]
 	$itk_option(-aocontroller) configure -lwfsLoop [expr \"[$itk_component(lgswfs) switchGet]\" eq \"pushed\"]
@@ -338,16 +349,24 @@ itcl::body GemsWidget::onGemsChange {reasons} {
 }
 
 itcl::body GemsWidget::onLGSExpSel {} {
-	set lgsExp [$itk_component(lgswfs) switchGet]
+	set lgsExp [$itk_component(lgswfs) expGet]
 	set canExpList ""
 	for { set i 8 } { $i > 0 } { incr i -1 } {
-		lappend canExpList [format "%.1f" [expr "$lgsExp / $i"]]
+		lappend canExpList [format "%.1f" [expr "double($lgsExp) / $i"]]
 	}
 	for { set i 1 } { $i <= 3 } { incr i } {
-		set oldVal [$itk_component(can1) switchGet]
+		set oldVal [$itk_component(can1) expGet]
 		$itk_component(can$i) configure -expvalues $canExpList
-		if { [lsearch -exact $canExpList $oldVal] > -1 } {
-			$itk_component(can$i) expSel $oldVal
+		set delta [expr "abs($oldVal - [lindex $canExpList 0])"]
+		set newVal [lindex $canExpList 0]
+		foreach val $canExpList {
+			set d [expr "abs($oldVal - $val)"]
+			if { $d < $delta } {
+				set delta $d
+				set newVal $val
+			}
 		}
+		
+		$itk_component(can$i) expSet $newVal
 	}
 }

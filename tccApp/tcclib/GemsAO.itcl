@@ -167,24 +167,33 @@ itcl::body GemsAO::startWFS {} {
 			return 1
 		}
 	}
-	if { $sfsActive && ![state sfs] } {
-		$sys setSFSExposure $sfsExp 
-		if { [waitForCmdComplete 1000 1000 "expr 1" "SFS exposure setup"] } {
-			return 1
+	if { $sfsActive } {
+		if { $sfsExp ne "" && $sfsExp != [$sys getSFSExposure] } {
+			$sys setSFSExposure $sfsExp
+			if { [waitForCmdComplete 1000 1000 "expr 1" "SFS exposure setup"] } {
+				return 1
+			}
 		}
-		$sys startSFS
-		if { [waitForCmdComplete 1000 1000 "state sfs" "SFS to go ON"] } {
-			return 1
+		if { ![state sfs] } {
+			$sys startSFS
+			if { [waitForCmdComplete 1000 1000 "state sfs" "SFS to go ON"] } {
+				return 1
+			}
 		}
 	}
-	if { $lwfsActive && ![state lgswfs] } {
-		$sys setLGSWFSExposure $lwfsFreq 
-		if { [waitForCmdComplete 1000 1000 "expr 1" "LGSWFS exposure setup"] } {
-			return 1
+
+	if { $lwfsActive} {
+		if {$lwfsFreq ne "" && $lwfsFreq != [$sys getLGSWFSExposure]} {
+			$sys setLGSWFSExposure $lwfsFreq 
+			if { [waitForCmdComplete 1000 1000 "expr 1" "LGSWFS exposure setup"] } {
+				return 1
+			}			
 		}
-		$sys startLGSWFS
-		if { [waitForCmdComplete 1000 1000 "state lgswfs" "LGSWFS to go ON"] } {
-			return 1
+		if { ![state lgswfs] } {
+			$sys startLGSWFS
+			if { [waitForCmdComplete 1000 1000 "state lgswfs" "LGSWFS to go ON"] } {
+				return 1
+			}
 		}
 	}
 	for {set i 1} {$i <= 4} { incr i} {
@@ -196,28 +205,36 @@ itcl::body GemsAO::startWFS {} {
 }
 
 itcl::body GemsAO::startTTGS {id} {
-	if { [set ttgs${id}Active] && ![state ttgs${id}] } {
-		$sys setTTWFSExposure $id $ttgs1Exp 
-		if { [waitForCmdComplete 1000 1000 "expr 1" "TTWFS${id} exposure setup"] } {
-			return 1
+	if { [set ttgs${id}Active] } {
+		if {[set ttgs${id}Exp] ne "" && [set ttgs${id}Exp] != [$sys getTTWFSExposure $id]} {
+			$sys setTTWFSExposure $id [set ttgs${id}Exp] 
+			if { [waitForCmdComplete 1000 1000 "expr 1" "TTWFS${id} exposure setup"] } {
+				return 1
+			}
 		}
-		$sys startTTWFS $id
-		if { [waitForCmdComplete 1000 1000 "state ttgs${id}" "TTWFS${id} to go ON"] } {
-			return 1
+		if { ![state ttgs${id}] } {
+			$sys startTTWFS $id
+			if { [waitForCmdComplete 1000 1000 "state ttgs${id}" "TTWFS${id} to go ON"] } {
+				return 1
+			}
 		}
 	}
 	return 0	
 }
 
 itcl::body GemsAO::startODGW {id} {
-	if { [set odgw${id}Active] && ![state odgw${id}] } {
-		$sys setODGWExposure $id $odgw1Exp 
-		if { [waitForCmdComplete 1000 1000 "expr 1" "ODGW${id} exposure setup"] } {
-			return 1
+	if { [set odgw${id}Active] } {
+		if {[set odgw${id}Exp] ne "" && [set odgw${id}Exp] != [$sys getODGWExposure $id]} {
+			$sys setODGWExposure $id [set odgw${id}Exp] 
+			if { [waitForCmdComplete 1000 1000 "expr 1" "ODGW${id} exposure setup"] } {
+				return 1
+			}
 		}
-		$sys startODGW $id
-		if { [waitForCmdComplete 1000 1000 "state odgw${id}" "ODGW${id} to go ON"] } {
-			return 1
+		if { ![state odgw${id}] } {
+			$sys startODGW $id
+			if { [waitForCmdComplete 1000 1000 "state odgw${id}" "ODGW${id} to go ON"] } {
+				return 1
+			}
 		}
 	}
 	return 0	
