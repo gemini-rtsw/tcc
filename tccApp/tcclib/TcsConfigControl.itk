@@ -236,8 +236,8 @@ itcl::body TcsConfigControl::apply {} {
 	}
 
 # Check to make sure that the laser isn't propogating!
-	if {([calparam cget -site] eq "MK" && [string equal [sa aossad get laserProp] "SKY"]) ||
-			([calparam cget -site] eq "CP" && [string equal [sa gemssad get laserProp] "SKY"]) } {
+	if {([calparam cget -site] eq "MK" && [sa aossad get laserProp] eq "SKY") ||
+			([calparam cget -site] eq "CP" && [[::GemsSys::getSingleton] getLaserProp] eq "SKY") } {
 		logactions logmess "Warning The laser is propogating, aborting slew"
 		tk_messageBox -icon error \
 	   	-message "You cannot SLEW while the laser is propogating"
@@ -370,7 +370,10 @@ itcl::body TcsConfigControl::apply {} {
 		   }
 		}
 	}
-
+	
+	if {[calparam cget -site] eq "CP" && ![string match "No AO" $::Config(tcs.gaos,value)]} {
+		[::GemsSys::getSingleton] slewReset
+	}
 # Try setting Guide mode (chop states) first here to see if the P2>P2 MAx prob goes away
    #apply guide config (nod states) before point origin
    set fieldObj ${::Config(tcs.field,namespace)}::${::Config(tcs.field,value)}

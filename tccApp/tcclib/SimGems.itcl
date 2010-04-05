@@ -11,6 +11,7 @@
 itcl::class SimGems {
 	inherit IGemsSys  
 public {
+	method slewReset {}
 	#Loop control commands
 	method openLGSLoop {}
 	method closeLGSLoop {}
@@ -88,6 +89,7 @@ public {
 	method getADCPos {}
 	method getADCLoopState {}
 	method getBeamSplitterPos {}
+	method getLaserProp {}
 	
 	#Command state
 	method getCommandState {}
@@ -130,6 +132,7 @@ private {
 	variable sfsCounts 0
 	variable lgswfsCounts
 	variable loopsSettled FALSE
+	variable laserProp OFF
 	
 	variable gemsActive OFF
 	
@@ -185,6 +188,10 @@ itcl::body SimGems::constructor {} {
 
 itcl::body SimGems::destructor {} {
 	after cancel $timerId
+}
+
+itcl::body SimGems::slewReset {} {
+	$logger logmess "SimGems: slewReset"
 }
 
 #Loop control commands
@@ -503,6 +510,9 @@ itcl::body SimGems::getBeamSplitterPos {} {
 	return $beamSplitterPos
 }
 
+itcl::body SimGems::getLaserProp {} {
+	return $laserProp
+}
 
 #Command state
 itcl::body SimGems::getCommandState {} {

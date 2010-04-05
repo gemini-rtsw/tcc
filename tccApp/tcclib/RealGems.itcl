@@ -16,7 +16,8 @@ itcl::class RealGems {
 public {
 	constructor {} {}
 	destructor {}
-	
+
+	method slewReset {}
 	#Loop control commands
 	method openLGSLoop {}
 	method closeLGSLoop {}
@@ -94,6 +95,7 @@ public {
 	method getADCPos {}
 	method getADCLoopState {}
 	method getBeamSplitterPos {}
+	method getLaserProp {}
 	
 	#Command state
 	method getCommandState {}
@@ -181,114 +183,121 @@ itcl::body RealGems::destructor {} {
 	sa aomsad unproc adcScLoop [itcl::code $this OnStatusChange]
 }
 
+itcl::body RealGems::slewReset {} {
+	cs gems::slewReset set dummy MARK
+	$logger logmess gems::lgsLoopCtrl
+	set lastCmdSys gemssad
+	catch {cs gems::lgsLoopCtrl post}
+}
+
 itcl::body RealGems::openLGSLoop {} {
 	cs gems::lgsLoopCtrl set cmd STOP
-	$logger logmess gems::lgsLoopCtrl
+	$logger logmess "gems::lgsLoopCtrl STOP"
 	set lastCmdSys gemssad
 	catch {cs gems::lgsLoopCtrl post}
 }
 
 itcl::body RealGems::closeLGSLoop {} {
 	cs gems::lgsLoopCtrl set cmd START
-	$logger logmess gems::lgsLoopCtrl
+	$logger logmess "gems::lgsLoopCtrl START"
 	set lastCmdSys gemssad
 	catch {cs gems::lgsLoopCtrl post}
 }
 
 itcl::body RealGems::openTTLoop {} {
 	cs gems::ttLoopCtrl set cmd STOP
-	$logger logmess gems::ttLoopCtrl
+	$logger logmess "gems::ttLoopCtrl STOP"
 	set lastCmdSys gemssad
 	catch {cs gems::ttLoopCtrl post}
 }
 
 itcl::body RealGems::closeTTLoop {} {
 	cs gems::ttLoopCtrl set cmd START
-	$logger logmess gems::ttLoopCtrl
+	$logger logmess "gems::ttLoopCtrl START"
 	set lastCmdSys gemssad
 	catch {cs gems::ttLoopCtrl post}
 }
 
 itcl::body RealGems::openFocLoop {} {
 	cs gems::focLoopCtrl set cmd STOP
-	$logger logmess gems::focLoopCtrl
+	$logger logmess "gems::focLoopCtrl STOP"
 	set lastCmdSys gemssad
 	catch {cs gems::focLoopCtrl post}
 }
 
 itcl::body RealGems::closeFocLoop {} {
 	cs gems::focLoopCtrl set cmd START
-	$logger logmess gems::focLoopCtrl
+	$logger logmess "gems::focLoopCtrl START"
 	set lastCmdSys gemssad
 	catch {cs gems::focLoopCtrl post}
 }
 
 itcl::body RealGems::openFlexLoop {} {
 	cs gems::flexLoopCtrl set cmd STOP
-	$logger logmess gems::flexLoopCtrl
+	$logger logmess "gems::flexLoopCtrl STOP"
 	set lastCmdSys gemssad
 	catch {cs gems::flexLoopCtrl post}
 }
 
 itcl::body RealGems::closeFlexLoop {} {
 	cs gems::flexLoopCtrl set cmd START
-	$logger logmess gems::flexLoopCtrl
+	$logger logmess "gems::flexLoopCtrl START"
 	set lastCmdSys gemssad
 	catch {cs gems::flexLoopCtrl post}
 }
 
 itcl::body RealGems::openAniLoop {} {
 	cs gems::taLoopCtrl set cmd STOP
-	$logger logmess gems::taLoopCtrl
+	$logger logmess "gems::taLoopCtrl STOP"
 	set lastCmdSys gemssad
 	catch {cs gems::taLoopCtrl post}
 }
 
 itcl::body RealGems::closeAniLoop {} {
 	cs gems::taLoopCtrl set cmd START
-	$logger logmess gems::taLoopCtrl
+	$logger logmess "gems::taLoopCtrl START"
 	set lastCmdSys gemssad
 	catch {cs gems::taLoopCtrl post}
 }
 
 itcl::body RealGems::disableM1Offload {} {
 	cs gems::m1OffloadCtrl  set cmd STOP
-	$logger logmess gems::m1OffloadCtrl
+	$logger logmess "gems::m1OffloadCtrl STOP"
 	set lastCmdSys gemssad
 	catch {cs gems::m1OffloadCtrl  post}
 }
 
 itcl::body RealGems::enableM1Offload {} {
 	cs gems::m1OffloadCtrl  set cmd START
-	$logger logmess gems::m1OffloadCtrl
+	$logger logmess "gems::m1OffloadCtrl START"
 	set lastCmdSys gemssad
 	catch {cs gems::m1OffloadCtrl  post}
 }
 
 itcl::body RealGems::disableM2Offload {} {
 	cs gems::m2OffloadCtrl  set cmd STOP
-	$logger logmess gems::m2OffloadCtrl
+	$logger logmess "gems::m2OffloadCtrl STOP"
 	set lastCmdSys gemssad
 	catch {cs gems::m2OffloadCtrl  post}
 }
 
 itcl::body RealGems::enableM2Offload {} {
 	cs gems::m2OffloadCtrl  set cmd START
-	$logger logmess gems::m2OffloadCtrl
+	$logger logmess "gems::m2OffloadCtrl START"
 	set lastCmdSys gemssad
 	catch {cs gems::m2OffloadCtrl  post}
 }
 
 itcl::body RealGems::disableRotOffload {} {
 	cs gems::crLoopCtrl  set cmd STOP
-	$logger logmess gems::crLoopCtrl
+	$logger logmess "gems::crLoopCtrl STOP"
 	set lastCmdSys gemssad
 	catch {cs gems::crLoopCtrl  post}
 }
 
 itcl::body RealGems::enableRotOffload {} {
 	cs gems::crLoopCtrl  set cmd START
-	$logger logmess gems::crLoopCtrl
+	$logger logmess "gems::crLoopCtrl START"
 	set lastCmdSys gemssad
 	catch {cs gems::crLoopCtrl post}
 }
@@ -296,21 +305,21 @@ itcl::body RealGems::enableRotOffload {} {
 itcl::body RealGems::pauseLoops {why} {
 	cs gems::seqLoopCtrl set cmd PAUSE
 	cs gems::seqLoopCtrl set reason $why
-	$logger logmess gems::seqLoopCtrl
+	$logger logmess "gems::seqLoopCtrl PAUSE $why"
 	set lastCmdSys gemssad
 	catch {cs gems::seqLoopCtrl post}	
 }
 
 itcl::body RealGems::resumeLoops {} {
 	cs gems::seqLoopCtrl set cmd RESUME
-	$logger logmess gems::seqLoopCtrl
+	$logger logmess "gems::seqLoopCtrl RESUME"
 	set lastCmdSys gemssad
 	catch {cs gems::seqLoopCtrl post}	
 }
 
 itcl::body RealGems::stopLoops {} {
 	cs gems::seqLoopCtrl set cmd STOP
-	$logger logmess gems::seqLoopCtrl
+	$logger logmess "gems::seqLoopCtrl STOP"
 	set lastCmdSys gemssad
 	catch {cs gems::seqLoopCtrl post}
 }
@@ -370,14 +379,14 @@ itcl::body RealGems::setAstroMode {mode} {
 
 itcl::body RealGems::startAstrometry {} {
 	cs gems::astrometricCtrl set cmd START
-	$logger logmess gems::astrometricCtrl
+	$logger logmess "gems::astrometricCtrl START"
 	set lastCmdSys gemssad
 	catch {cs gems::astrometricCtrl  post}
 }
 
 itcl::body RealGems::stopAstrometry {} {
 	cs gems::astrometricCtrl set cmd STOP
-	$logger logmess gems::astrometricCtrl
+	$logger logmess "gems::astrometricCtrl STOP"
 	set lastCmdSys gemssad
 	catch {cs gems::astrometricCtrl  post}
 }
@@ -663,7 +672,11 @@ itcl::body RealGems::getADCLoopState {} {
 
 
 itcl::body RealGems::getBeamSplitterPos {} {
-	return [sa aomsad get beamSplitterState value]
+	return [[sa gemssad get astromReady value]]
+}
+
+itcl::body RealGems::getLaserProp {} {
+	return [sa gemssad get laserProp value]
 }
 
 #Command state
