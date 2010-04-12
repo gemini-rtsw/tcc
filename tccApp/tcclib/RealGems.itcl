@@ -149,45 +149,45 @@ itcl::body RealGems::constructor {} {
 	set lastTTFLux {0 0 0 0 0 0 0 0}
 	set lastLGSFlux {0 0 0 0 0 0}
 	
-	sa gemssad proc applyC [itcl::code $this OnStatusChange]
-	sa gemssad proc lgsLoop [itcl::code $this OnStatusChange]
-	sa gemssad proc ttLoop [itcl::code $this OnStatusChange]
-	sa gemssad proc focLoop [itcl::code $this OnStatusChange]
-	sa gemssad proc flexLoop [itcl::code $this OnStatusChange]
-	sa gemssad proc astromReady [itcl::code $this OnStatusChange]
-	sa gemssad proc aniLoop [itcl::code $this OnStatusChange]
-	sa gemssad proc sciReady [itcl::code $this OnStatusChange]
-	sa gemssad proc lgsFlux [itcl::code $this OnStatusChange]
-	sa gemssad proc ngsFlux [itcl::code $this OnStatusChange]
-	sa aomsad proc applyC [itcl::code $this OnStatusChange]
-	sa aomsad proc adcScState [itcl::code $this OnStatusChange]
-	sa aomsad proc beamSplitterState [itcl::code $this OnStatusChange]
-	sa aomsad proc adcScLoop [itcl::code $this OnStatusChange]
+	sa gemssad proc applyC [itcl::code $this onStatusChange]
+	sa gemssad proc lgsLoop [itcl::code $this onStatusChange]
+	sa gemssad proc ttLoop [itcl::code $this onStatusChange]
+	sa gemssad proc focLoop [itcl::code $this onStatusChange]
+	sa gemssad proc flexLoop [itcl::code $this onStatusChange]
+	sa gemssad proc astromReady [itcl::code $this onStatusChange]
+	sa gemssad proc aniLoop [itcl::code $this onStatusChange]
+	sa gemssad proc sciReady [itcl::code $this onStatusChange]
+	sa gemssad proc lgsFlux [itcl::code $this onStatusChange]
+	sa gemssad proc ngsFlux [itcl::code $this onStatusChange]
+	sa aomsad proc applyC [itcl::code $this onStatusChange]
+	sa aomsad proc adcScState [itcl::code $this onStatusChange]
+	sa aomsad proc beamSplitterState [itcl::code $this onStatusChange]
+	sa aomsad proc adcScLoop [itcl::code $this onStatusChange]
 	
 }
 
 itcl::body RealGems::destructor {} {
-	sa gemssad unproc applyC [itcl::code $this OnStatusChange]
-	sa gemssad unproc lgsLoop [itcl::code $this OnStatusChange]
-	sa gemssad unproc ttLoop [itcl::code $this OnStatusChange]
-	sa gemssad unproc focLoop [itcl::code $this OnStatusChange]
-	sa gemssad unproc flexLoop [itcl::code $this OnStatusChange]
-	sa gemssad unproc astromReady [itcl::code $this OnStatusChange]
-	sa gemssad unproc aniLoop [itcl::code $this OnStatusChange]
-	sa gemssad unproc sciReady [itcl::code $this OnStatusChange]
-	sa gemssad unproc lgsFlux [itcl::code $this OnStatusChange]
-	sa gemssad unproc ngsFlux [itcl::code $this OnStatusChange]
-	sa aomsad unproc applyC [itcl::code $this OnStatusChange]
-	sa aomsad unproc adcScState [itcl::code $this OnStatusChange]
-	sa aomsad unproc beamSplitterState [itcl::code $this OnStatusChange]
-	sa aomsad unproc adcScLoop [itcl::code $this OnStatusChange]
+	sa gemssad unproc applyC [itcl::code $this onStatusChange]
+	sa gemssad unproc lgsLoop [itcl::code $this onStatusChange]
+	sa gemssad unproc ttLoop [itcl::code $this onStatusChange]
+	sa gemssad unproc focLoop [itcl::code $this onStatusChange]
+	sa gemssad unproc flexLoop [itcl::code $this onStatusChange]
+	sa gemssad unproc astromReady [itcl::code $this onStatusChange]
+	sa gemssad unproc aniLoop [itcl::code $this onStatusChange]
+	sa gemssad unproc sciReady [itcl::code $this onStatusChange]
+	sa gemssad unproc lgsFlux [itcl::code $this onStatusChange]
+	sa gemssad unproc ngsFlux [itcl::code $this onStatusChange]
+	sa aomsad unproc applyC [itcl::code $this onStatusChange]
+	sa aomsad unproc adcScState [itcl::code $this onStatusChange]
+	sa aomsad unproc beamSplitterState [itcl::code $this onStatusChange]
+	sa aomsad unproc adcScLoop [itcl::code $this onStatusChange]
 }
 
 itcl::body RealGems::slewReset {} {
 	cs gems::slewReset set dummy MARK
-	$logger logmess gems::lgsLoopCtrl
+	$logger logmess gems::slewReset
 	set lastCmdSys gemssad
-	catch {cs gems::lgsLoopCtrl post}
+	catch {cs gems::slewReset post}
 }
 
 itcl::body RealGems::openLGSLoop {} {
@@ -732,22 +732,22 @@ itcl::body RealGems::onStatusChange {name alarm time value} {
 		}
 	}
 	gemssad.ttFlux {
-		foreach {i reason} {0 ttwfsCounts(1) 1 ttwfsCounts(2) 2 ttwfsCounts(3) 3 odgwCounts(1) 4 odgwCounts(2) 5 odgwCounts(3) 6 odgwCounts(4)}{
+		foreach {i reason} {0 ttwfsCounts(1) 1 ttwfsCounts(2) 2 ttwfsCounts(3) 3 odgwCounts(1) 4 odgwCounts(2) 5 odgwCounts(3) 6 odgwCounts(4)} {
 			if { [lindex $value $i] != [lindex lastTTFlux $j] } {
 				lappend reasons $reason
 			}
 		}
 	}
-	gemssad.lgsLoop { lappend reason lgsLoopState }
-	gemssad.ttLoop { lappend reason ttLoopState }
-	gemssad.focLoop { lappend reason focLoopState }
+	gemssad.lgsLoop { lappend reasons lgsLoopState }
+	gemssad.ttLoop { lappend reasons ttLoopState }
+	gemssad.focLoop { lappend reasons focLoopState }
 	gemssad.flexLoop { lappend reason flexLoopState }
-	gemssad.astromReady { lappend reason astroState }
-	gemssad.aniLoop { lappend reason aniLoopState }
-	gemssad.sciReady { lappend reason loopsSettled }
-	aomsad.adcScState { lappend reason adcPos }
-	aomsad.adcScLoop { lappend reason adcState }
-	aomsad.beamSplitterState { lappend reason beamSplitterPos }
+	gemssad.astromReady { lappend reasons astroState }
+	gemssad.aniLoop { lappend reasons aniLoopState }
+	gemssad.sciReady { lappend reasons loopsSettled }
+	aomsad.adcScState { lappend reasons adcPos }
+	aomsad.adcScLoop { lappend reasons adcState }
+	aomsad.beamSplitterState { lappend reasons beamSplitterPos }
 	}
 	switch $name {
 	gemssad.lgsLoop -

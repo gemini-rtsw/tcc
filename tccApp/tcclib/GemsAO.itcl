@@ -377,7 +377,7 @@ itcl::body GemsAO::startLoops {} {
 		}
 		if { $lwfsLoop && ![state lwfsLoop] } {
 			$sys closeLGSLoop
-			if {[waitForCmdComplete 1000 5000 "state lwfsLoop" "LGS Loop to close"]} {
+			if {[waitForCmdComplete 1000 10000 "state lwfsLoop" "LGS Loop to close"]} {
 				return 1
 			}
 		}
@@ -385,25 +385,25 @@ itcl::body GemsAO::startLoops {} {
 			( $odgw1Active + $odgw2Active + $odgw3Active + $odgw4Active ) >= 3 ) ]
 		if { $ttLoop && ![state ttgsLoop] } {
 			$sys closeTTLoop
-			if {[waitForCmdComplete 1000 5000 "state ttgsLoop" "TT Loop to close"]} {
+			if {[waitForCmdComplete 1000 10000 "state ttgsLoop" "TT Loop to close"]} {
 				return 1
 			}
 		}
 		if { $sfsLoop && ![state sfsLoop] } {
 			$sys closeFocLoop
-			if {[waitForCmdComplete 1000 5000 "state sfsLoop" "Focus Loop to close"]} {
+			if {[waitForCmdComplete 1000 10000 "state sfsLoop" "Focus Loop to close"]} {
 				return 1
 			}
 		}
 		if { ( $odgwLoop || $oigsLoop ) && ![state flexLoop] } {
 			$sys closeFlexLoop
-			if {[waitForCmdComplete 1000 5000 "state flexLoop" "Flexure Loop to close"]} {
+			if {[waitForCmdComplete 1000 10000 "state flexLoop" "Flexure Loop to close"]} {
 				return 1
 			}
 		}
 		if { $ttLoop && ![state aniLoop] } {
 			$sys closeAniLoop
-			if {[waitForCmdComplete 1000 5000 "state aniLoop" "Anisoplanetism Loop to close"]} {
+			if {[waitForCmdComplete 1000 10000 "state aniLoop" "Anisoplanetism Loop to close"]} {
 				return 1
 			}
 		}
