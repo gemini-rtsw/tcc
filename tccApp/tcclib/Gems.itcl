@@ -65,7 +65,7 @@ itcl::body Gems::apply {comp} {
 		switch $adc {
 			ON {
 				$gemsSys moveADC In
-				if { [waitForCmdComplete 1000 40000 {expr {[$gemsSys getADCPos] eq "In"}} "ADC to reach In position"] } {
+				if { [waitForCmdComplete 40000 40000 {expr {[$gemsSys getADCPos] eq "In"}} "ADC to reach In position"] } {
 					logactions logmess "Error applying GeMS ADC: $lastError"
 				}
 				$gemsSys startADC
@@ -79,7 +79,7 @@ itcl::body Gems::apply {comp} {
 					logactions logmess "Error applying GeMS ADC: $lastError"
 				}
 				$gemsSys moveADC Out
-				if { [waitForCmdComplete 1000 40000 {expr {[$gemsSys getADCPos] eq "Out"}} "ADC to reach Out position"] } {
+				if { [waitForCmdComplete 40000 40000 {expr {[$gemsSys getADCPos] eq "Out"}} "ADC to reach Out position"] } {
 					logactions logmess "Error applying GeMS ADC: $lastError"
 				}
 			}
@@ -105,7 +105,7 @@ itcl::body Gems::apply {comp} {
 		}
 		if { $pos ne "" } {
 			$gemsSys moveBeamSplitter $pos
-			if { [waitForCmdComplete 1000 40000 "expr \{ \[$gemsSys getBeamSplitterPos\] eq \"$pos\" \}" "beamsplitter to reach position $pos"] } {
+			if { [waitForCmdComplete 40000 40000 "expr \{\[$gemsSys getBeamSplitterPos\] eq \"$pos\" \}" "beamsplitter to reach position $pos"] } {
 				logactions logmess "Error applying GeMS beamsplitter: $lastError"
 			}
 		}
@@ -133,8 +133,8 @@ itcl::body Gems::apply {comp} {
 		}
 		if { $mode ne "" } {
 			$gemsSys setAstroMode $mode
-			if { [waitForCmdComplete 1000 1000 {expr 1} "applying Astrometry mode $mode"] } {
-				logactions logmess "Error applying GeMS beamsplitter: $lastError"
+			if { [waitForCmdComplete 1000 1000 {expr 1} "Astrometry mode to change to $mode"] } {
+				logactions logmess "Error applying Astrometry mode: $lastError"
 			}
 		}
 	}

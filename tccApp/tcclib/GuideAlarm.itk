@@ -411,10 +411,11 @@ itcl::body GuideAlarm::scanLoop {} {
 	set wfsList {pwfs1 pwfs2 oiwfs nici}
 	if { [calparam cget -site] eq "CP" } {
 		lappend wfsList ttwfs lgswfs sfs odgw
+		set sources [$gemsSys getTTLoopSources]
 	} else {
 		lappend wfsList gaos ttgs sfo
 	}
-
+	
 	foreach wfs $wfsList {
 		set test 0
 		switch $wfs {
@@ -428,7 +429,6 @@ itcl::body GuideAlarm::scanLoop {} {
 					incr ttwfsCount
 				}
 			}
-			set sources [$gemsSys getTTLoopSources]
 			set test [expr {$ttwfsCount > 0 && [[AO getGaosObj] state ttgsLoop ] && [string first ttgs $sources] > -1 && $canguide}]
 		}
 		lgswfs {set test [expr {[[AO getGaosObj] state $wfs] && [[AO getGaosObj] state lwfsLoop] && $canguide}] }
@@ -440,7 +440,6 @@ itcl::body GuideAlarm::scanLoop {} {
 					incr odgwCount
 				}
 			}
-			set sources [$gemsSys getTTLoopSources]
 			set test [expr {$odgwCount > 0 && ( ( [[AO getGaosObj] state flexLoop] && [string first oigs $sources] == -1 ) || ( [[AO getGaosObj] state ttgsLoop] && [string first odgw $sources] > -1 ) ) && $canguide}]
 		}
 		default { set test [expr {[AO state $wfs] && $canguide}] }
@@ -852,7 +851,7 @@ itcl::body GuideAlarm::buildGemsAlarms {} {
 
 itcl::body GuideAlarm::onGemsChange {reasons} {
 	global guideCounts
-
+	
 	foreach reason $reasons {
 		switch $reason {
 		sfsCounts {

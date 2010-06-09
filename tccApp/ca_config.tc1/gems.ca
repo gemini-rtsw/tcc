@@ -7,8 +7,10 @@
 #
 #-
 
-apply gems::aomApply ao2:apply ao2:applyC Primary GeMS Apply Record
-apply gems::mystApply myst:apply myst:applyC Primary Myst Apply Record
+apply gems::aomApply ao2:apply ao2:activeC Primary GeMS Apply Record
+apply gems::mystApply mys2:apply mys2:applyC Primary Myst Apply Record
+apply gems::rtcApply rt2:apply rt2:applyC Primary RTC Apply Record
+apply gems::sfsApply sf2:apply sf2:applyC Primary SFS Apply Record
 
 command gems::adcMech gems::aomApply ADC Position Control
 {
@@ -23,11 +25,6 @@ command gems::adcLoop gems::aomApply ADC Loop Control
 command gems::beamSplitter gems::aomApply ADC Control
 {
 	pos	ao2:bsCtrl.A			Dichroic beamsplitter position 1|2
-}
-
-command gems::astroMode gems::mystApply ADC Control
-{
-	mode	myst:astrometric.A 	Astrometric mode Off|Regular|Good|Best
 }
 
 command gems::ngsPr1Ctrl	gems::aomApply	Canopus probe 1 control
@@ -47,29 +44,70 @@ command gems::ngsPr3Ctrl	gems::aomApply	Canopus probe 3 control
 
 status gemssad
 {
-	applyC		myst:applyC.VAL			0	Command Status
-	message		myst:applyC.OMSS			0	Command completion message
+	applyC		mys2:applyC.VAL			0	Command Status
+	message		mys2:applyC.OMSS			0	Command completion message
 
-	lgsMatrix	myst:lgsMatrixReady.VAL	0	LGS matrix calculation status (Not Ready|Ready)
-	lgsLoop		myst:lgsLoopStatus.VAL	0	LGS loop status (OPEN|CLOSED|PAUSED)
-	ttLoop		myst:ttLoopStatus.VAL	0	TT loop status (OPEN|CLOSED|PAUSED)
-	focLoop		myst:focLoopStatus.VAL	0	Focus loop status (OPEN|CLOSED|PAUSED)
-	flexLoop		myst:flexLoopStatus.VAL	0	Flexure loop status (OPEN|CLOSED|PAUSED)
-	astromReady	myst:astromModeReady.VAL	0	Astrometry calculation status (Not Ready|Ready)
-	aniLoop		myst:aniLoopStatus.VAL	0	ANI loop status (OPEN|CLOSED|PAUSED)
-	sciReady		myst:sciReady.VAL			0	Ready for science (Not Ready|Ready)
+	lgsMatrix	mys2:lgsMatrixReady.VAL	0	LGS matrix calculation status (Not Ready|Ready)
+	lgsLoop		mys2:lgsLoopStatus.VAL	0	LGS loop status (OPEN|CLOSED|PAUSED)
+	ttLoop		mys2:ttLoopStatus.VAL	0	TT loop status (OPEN|CLOSED|PAUSED)
+	focLoop		mys2:focLoopStatus.VAL	0	Focus loop status (OPEN|CLOSED|PAUSED)
+	flexLoop		mys2:flexLoopStatus.VAL	0	Flexure loop status (OPEN|CLOSED|PAUSED)
+	astromReady	mys2:astromModeReady.VAL	0	Astrometry calculation status (Not Ready|Ready)
+	aniLoop		mys2:aniLoopStatus.VAL	0	ANI loop status (OPEN|CLOSED|PAUSED)
+	sciReady		mys2:sciReady.VAL			0	Ready for science (Not Ready|Ready)
    laserProp	lis:lasPropProc.VALA		0	Is the Laser Propagating to the Sky
    
-   lgsFlux     myst:lgsFlux.VAL 0 Average flux/LGS frame 
-   ngsFlux	   myst:ngsFlux.VAL 0 Average flux/NGS frame 
+   m1Offload	mys2:m1OffloadCtrl.VALA	0	GeMS is offloading to M1
+   m2Offload	mys2:m2OffloadCtrl.VALA	0	GeMS is offloading to M2
+   crOffload	mys2:crLoopCtrl.VALA		0	GeMS is offloading to Cass-rotator
+
+   astroMode   mys2:astrometricCtrl.VALB 0		Mode (None/Regular/Good/Best)
+   
+   lgsFlux     mys2:lgsFlux.VAL 0 Average flux/LGS frame 
+   ngsFlux	   mys2:ngsFlux.VAL 0 Average flux/NGS frame
+   
+   ngs1     mys2:ngsConfig.VALA 0  NGS1 active (Used/NotUsed) 
+	ngs2     mys2:ngsConfig.VALB 0  NGS2 active (Used/NotUsed)
+	ngs3     mys2:ngsConfig.VALC 0  NGS3 active (Used/NotUsed)
+	odgs1    mys2:ngsConfig.VALD 0  ODGS1 active (Used/NotUsed)
+	odgs2    mys2:ngsConfig.VALE 0  ODGS2 active (Used/NotUsed)
+	odgs3    mys2:ngsConfig.VALF 0  ODGS3 active (Used/NotUsed)
+	odgs4    mys2:ngsConfig.VALG 0  ODGS4 active (Used/NotUsed)
+	oigs     mys2:ngsConfig.VALH 0  OIGS active (Used/NotUsed)
+	ngs1Mag  mys2:ngsConfig.VALI 0  NGS1 Magnitude
+	ngs2Mag  mys2:ngsConfig.VALJ 0  NGS2 Magnitude
+	ngs3Mag  mys2:ngsConfig.VALK 0  NGS3 Magnitude
+	odgs1Mag mys2:ngsConfig.VALL 0  ODGS1 Magnitude
+	odgs2Mag mys2:ngsConfig.VALM 0  ODGS2 Magnitude
+	odgs3Mag mys2:ngsConfig.VALN 0  ODGS3 Magnitude
+	odgs4Mag mys2:ngsConfig.VALO 0  ODGS4 Magnitude
+	oigsMag  mys2:ngsConfig.VALP 0  OIGS Magnitude
+   
+}
+
+status odgwsad
+{	
+	applyC		gsaoi:applyC.VAL			0	Command Status
+	message		gsaoi:applyC.OMSS			0	Command completion message
+
+	baseExpTime gsaoi:sad:dc:exposedRQ.VAL		0 ODGW base exposure time
+	expMult1		gsaoi:sad:dc:gdr_expMult1.VAL 0 Exposure multiplier for ODGW1
+	expMult2		gsaoi:sad:dc:gdr_expMult2.VAL 0 Exposure multiplier for ODGW2
+	expMult3		gsaoi:sad:dc:gdr_expMult3.VAL 0 Exposure multiplier for ODGW3
+	expMult4		gsaoi:sad:dc:gdr_expMult4.VAL 0 Exposure multiplier for ODGW4
+	
+	counts1		gsaoi:sad:dc:gdr_count1.VAL 0 Counts for ODGW1
+	counts2		gsaoi:sad:dc:gdr_count2.VAL 0 Counts for ODGW2
+	counts3		gsaoi:sad:dc:gdr_count3.VAL 0 Counts for ODGW3
+	counts4		gsaoi:sad:dc:gdr_count4.VAL 0 Counts for ODGW4
 }
 
 status aomsad
 {
-	applyC		ao2:applyC.VAL			0	Command Status
-	message		ao2:applyC.OMSS		0	Command completion message
+	applyC		ao2:activeC.VAL			0	Command Status
+	message		ao2:activeC.OMSS		0	Command completion message
 	
-	adcScState ao2:adcScState.VAL    0 Science ADC state (In|Out|Moving|Invalid)
+	adcScState 	ao2:adcScState.VAL    0 Science ADC state (In|Out|Moving|Invalid)
 	beamSplitterState ao2:bsState.VAL 0 Beam splitter state (In|Out|Moving|Invalid)
 	adcScLoop	ao2:adcScLoop.VAL    0 Science ADC loop satus (OPEN|CLOSED)
 
@@ -78,86 +116,145 @@ status aomsad
 	ngs3Follow	ao2:ngsPr3followS.VAL	0	Canopus 3 in follow mode
 }
 
+status rtcsad
+{
+	applyC		rt2:applyC.VAL			0	Command Status
+	message		rt2:applyC.OMSS		0	Command completion message
+
+	tt1Active rt2:ngs:apd1 0 Canopus 1 APD active (ENABLED/DISABLED)
+	tt2Active rt2:ngs:apd2 0 Canopus 2 APD active (ENABLED/DISABLED)
+	tt3Active rt2:ngs:apd3 0 Canopus 3 APD active (ENABLED/DISABLED)
+	
+	lgsExp	rt2:lgs:expTime.VALA		0	LGSWFS exposure time
+	ngsExpMult rt2:ngs:expTime.VALA 	0	NGS exposure time multiplier
+}
+
+status sfssad
+{
+	applyC		sf2:applyC.VAL			0	Command Status
+	message		sf2:applyC.OMSS		0	Command completion message
+
+	sfsActive	sf2:observing.VAL		0	SFS active (0/1)
+	sfsCounts	sf2:dspGlobalIntensity	0	SFS counts
+	sfsExp		sf2:expTime.VAL 		0	SFS exposure time
+}
+
 command gems::slewReset gems::mystApply Reset ngs config, cmat optimization, astrometric mode, etc
 {
-	dummy myst:slewReset.DIR	Dummy input
+	dummy mys2:slewReset.DIR	Dummy input
 }
 
 command gems::lgsLoopCtrl gems::mystApply HO loop 
 {
-	cmd myst:lgsLoopCtrl.A		Command (START/PAUSE/RESUME/STOP) 
+	cmd mys2:lgsLoopCtrl.A		Command (START/PAUSE/RESUME/STOP) 
 }
 
 command gems::ttLoopCtrl gems::mystApply TT loop 
 {
-	cmd myst:ttLoopCtrl.A		Command (START/PAUSE/RESUME/STOP) 
+	cmd mys2:ttLoopCtrl.A		Command (START/PAUSE/RESUME/STOP) 
 }
 
 command gems::taLoopCtrl  gems::mystApply TA loop 
 {
-	cmd myst:taLoopCtrl.A 		Command (START/PAUSE/RESUME/STOP) 
+	cmd mys2:taLoopCtrl.A 		Command (START/PAUSE/RESUME/STOP) 
 }
 
 command gems::astrometricCtrl  gems::mystApply  astrometric aquisition sequence 
 {
-	cmd myst:astrometricCtrl.A 		Command (START/PAUSE/RESUME/STOP) 
+	cmd mys2:astrometricCtrl.A 		Command (START/PAUSE/RESUME/STOP) 
+	mode mys2:astrometricCtrl.B 		Mode (None/Regular/Good/Best)
 }
 
 command gems::m1OffloadCtrl   gems::mystApply M1 offload
 {
-	cmd myst:m1OffloadCtrl.A 		Command (START/PAUSE/RESUME/STOP) 
+	cmd mys2:m1OffloadCtrl.A 		Command (START/PAUSE/RESUME/STOP) 
 }
 
 command gems::m2OffloadCtrl   gems::mystApply M2 offload
 {
-	cmd myst:m2OffloadCtrl.A 		Command (START/PAUSE/RESUME/STOP) 
+	cmd mys2:m2OffloadCtrl.A 		Command (START/PAUSE/RESUME/STOP) 
 }
 
 command gems::focLoopCtrl   gems::mystApply SFS/zoom loop 
 {
-	cmd myst:focusLoopCtrl.A 		Command (START/PAUSE/RESUME/STOP) 
+	cmd mys2:focusLoopCtrl.A 		Command (START/PAUSE/RESUME/STOP) 
 }
 
 command gems::flexLoopCtrl    gems::mystApply Setup/TCC - OD/OI Flex loop 
 {
-	cmd myst:flexLoopCtrl.A 		Command (START/PAUSE/RESUME/STOP) 
+	cmd mys2:flexLoopCtrl.A 		Command (START/PAUSE/RESUME/STOP) 
 }
 
 command gems::crLoopCtrl    gems::mystApply Cassegrain offload
 {
-	cmd myst:crLoopCtrl.A 		Command (START/PAUSE/RESUME/STOP) 
+	cmd mys2:crLoopCtrl.A 		Command (START/PAUSE/RESUME/STOP) 
 }
 
 command gems::seqLoopCtrl     gems::mystApply SeqExec dither/filter/sky changes 
 {
-	cmd myst:seqLoopCtrl.A 		Command (START/PAUSE/RESUME/STOP)
-	reason  myst:seqLoopCtrl.B  Reason (Dither/Filter/Sky)
+	cmd mys2:seqLoopCtrl.A 		Command (START/PAUSE/RESUME/STOP)
+	reason  mys2:seqLoopCtrl.B  Reason (Dither/Filter/Sky)
 }
 
 command gems::ngsConfig    gems::mystApply Myst configuration
 {
-	ngs1  myst:ngsConfig.A   NGS1 active (Used/NotUsed) 
-	ngs2  myst:ngsConfig.B   NGS2 active (Used/NotUsed)
-	ngs3  myst:ngsConfig.C   NGS3 active (Used/NotUsed)
-	odgs1 myst:ngsConfig.D   ODGS1 active (Used/NotUsed)
-	odgs2 myst:ngsConfig.E   ODGS2 active (Used/NotUsed)
-	odgs3 myst:ngsConfig.F   ODGS3 active (Used/NotUsed)
-	odgs4 myst:ngsConfig.G   ODGS4 active (Used/NotUsed)
-	oigs  myst:ngsConfig.H   OIGS active (Used/NotUsed)
-	ngs1Mag  myst:ngsConfig.I  NGS1 Magnitude
-	ngs2Mag  myst:ngsConfig.J  NGS2 Magnitude
-	ngs3Mag  myst:ngsConfig.K  NGS3 Magnitude
-	odgs1Mag myst:ngsConfig.L  ODGS1 Magnitude
-	odgs2Mag myst:ngsConfig.M  ODGS2 Magnitude
-	odgs3Mag myst:ngsConfig.N  ODGS3 Magnitude
-	odgs4Mag myst:ngsConfig.O  ODGS4 Magnitude
-	oigsMag  myst:ngsConfig.P  OIGS Magnitude
+	ngs1  mys2:ngsConfig.A   NGS1 active (Used/NotUsed) 
+	ngs2  mys2:ngsConfig.B   NGS2 active (Used/NotUsed)
+	ngs3  mys2:ngsConfig.C   NGS3 active (Used/NotUsed)
+	odgs1 mys2:ngsConfig.D   ODGS1 active (Used/NotUsed)
+	odgs2 mys2:ngsConfig.E   ODGS2 active (Used/NotUsed)
+	odgs3 mys2:ngsConfig.F   ODGS3 active (Used/NotUsed)
+	odgs4 mys2:ngsConfig.G   ODGS4 active (Used/NotUsed)
+	oigs  mys2:ngsConfig.H   OIGS active (Used/NotUsed)
+	ngs1Mag  mys2:ngsConfig.I  NGS1 Magnitude
+	ngs2Mag  mys2:ngsConfig.J  NGS2 Magnitude
+	ngs3Mag  mys2:ngsConfig.K  NGS3 Magnitude
+	odgs1Mag mys2:ngsConfig.L  ODGS1 Magnitude
+	odgs2Mag mys2:ngsConfig.M  ODGS2 Magnitude
+	odgs3Mag mys2:ngsConfig.N  ODGS3 Magnitude
+	odgs4Mag mys2:ngsConfig.O  ODGS4 Magnitude
+	oigsMag  mys2:ngsConfig.P  OIGS Magnitude
 }
 
 
 command gems::ttApdCtrl     gems::mystApply Canopus APD control
 {
-	apd1 myst:ttApdCtrl.A	APD1 control (START/STOP)
-	apd2 myst:ttApdCtrl.B	APD2 control (START/STOP)
-	apd3 myst:ttApdCtrl.C	APD3 control (START/STOP)
+	apd1 mys2:ttApdCtrl.A	APD1 control (START/STOP)
+	apd2 mys2:ttApdCtrl.B	APD2 control (START/STOP)
+	apd3 mys2:ttApdCtrl.C	APD3 control (START/STOP)
+}
+
+
+command gems::ttExpCtrl	gems::rtcApply Canopus exposure control
+{
+	freqDiv	rt2:ngs:setExpTime.A Canopus WFS read frequency divisor (f = (LWFS Freq) / divisor)
+}
+
+command gems::sfsExpCtrl gems::sfsApply SFS exposure control
+{
+	expTime sf2:setExpTime.A SFS exposure time (s)
+}
+
+command gems::lgsExpCtrl	gems::rtcApply LGSWFS exposure control
+{
+	expTime	rt2:lgs:setExpTime.A LGSWFS exposure time (s)
+}
+
+command gems::sfsObserve gems::sfsApply SFS WFS start
+{
+	dir sf2:observe.DIR SFS start observe
+}
+
+command gems::sfsStopObserve gems::sfsApply SFS WFS start
+{
+	dir sf2:endObserve.DIR SFS start observe
+}
+
+command gems::odgwSetup tcsApply ODGW exposure setup
+{
+	baseExpTime tc1:gsaoiodgwSetup.D 0 ODGW base exposure time
+	expMult1		tc1:gsaoiodgwSetup.G 0 Exposure multiplier for ODGW1
+	expMult2		tc1:gsaoiodgwSetup.H 0 Exposure multiplier for ODGW2
+	expMult3		tc1:gsaoiodgwSetup.I 0 Exposure multiplier for ODGW3
+	expMult4		tc1:gsaoiodgwSetup.J 0 Exposure multiplier for ODGW4
 }

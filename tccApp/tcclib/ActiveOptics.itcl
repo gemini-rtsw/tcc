@@ -96,7 +96,6 @@ itcl::class ActiveOptics {
 }
 
 itcl::body ActiveOptics::constructor {args} {
-	puts "ActiveOptics::constructor"
 	
 # Create command senders.
    if { [catch {cs m1Guide info}] } {
@@ -139,6 +138,9 @@ itcl::body ActiveOptics::constructor {args} {
 	if { [calparam cget -site] eq "CP" } {		
 		set gaosObj [GemsAO #auto]
 		set aoSys [GemsSys::getSingleton]
+      if { [ catch {sa g1Guide info} ] } {
+	      epics sa g1Guide
+      }
 	}
 
    eval configure $args
@@ -296,6 +298,32 @@ itcl::body ActiveOptics::enable {} {
          }
       }
   }
+   
+   if { [calparam cget -site] eq "CP" } {
+      set $statevar ""
+      set sa g1Guide
+      set statevar m2aoguide
+      if { $aoguide eq "On" } {
+         switch [sa tcssad get nodState] {
+            A {
+               if { [sa $sa get nodachopa] eq "On" } {
+                  append $statevar A
+               } 
+               if { [sa $sa get nodachopb] eq "On" } {
+                  append $statevar B
+               } 
+            }
+            B {
+               if { [sa $sa get nodbchopa] eq "On" } {
+                  append $statevar A
+               } 
+               if { [sa $sa get nodbchopb] eq "On" } {
+                  append $statevar B
+               } 
+            }
+         }
+      }
+   }
 
 # M2 tip/tilt is on and we want it off.
    if { $m2p1guide eq "" && $m2p2guide eq "" && $m2aoguide eq "" && \
@@ -473,7 +501,7 @@ puts "beam is $beam gonna wait for 1 second"
              cs m1GuideConfig set source OIWFS
          }
          GAOS {
-             cs m1GuideConfig set source Altair
+             cs m1GuideConfig set source GAOS
          }
          HRWFS {
              cs m1GuideConfig set source HRWFS

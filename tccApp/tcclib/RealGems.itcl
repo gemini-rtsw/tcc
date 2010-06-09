@@ -112,7 +112,13 @@ private {
 	variable lastTTFLux
 	variable lastLGSFlux
 	variable gemsActive OFF
-	
+	variable astroMode None
+	variable odgwBaseExpTime 0.00125
+	variable odgw1ExpTime 0.00125
+	variable odgw2ExpTime 0.00125
+	variable odgw3ExpTime 0.00125
+	variable odgw4ExpTime 0.00125
+		
 	variable observerList {}
 	method notify {reasons}
 	
@@ -125,6 +131,7 @@ itcl::body RealGems::constructor {} {
 	if { [llength [info commands epics]] == 0 } {
 		error "unable to load package: EPICS ocs service does not exist"
 	}
+   epics cs gems::slewReset
 	epics cs gems::lgsLoopCtrl
 	epics cs gems::ttLoopCtrl
 	epics cs gems::focLoopCtrl
@@ -136,20 +143,30 @@ itcl::body RealGems::constructor {} {
 	epics cs gems::seqLoopCtrl
 	epics cs gems::ngsConfig
 	#epics cs gems::astroMode
+	epics cs gems::astrometricCtrl
 	epics cs gems::adcMech
 	epics cs gems::adcLoop
 	epics cs gems::beamSplitter
 	epics cs gems::ttApdCtrl
+	epics cs gems::ttExpCtrl
+	epics cs gems::sfsExpCtrl
+	epics cs gems::lgsExpCtrl
+	epics cs gems::sfsObserve
+	epics cs gems::sfsStopObserve
+	epics cs gems::odgwSetup
 	epics sa gemssad
 	epics sa aomsad
+	epics sa rtcsad
+	epics sa sfssad
+	epics sa odgwsad
 	
 	cs gems::aomApply setTimeout 3
 	cs gems::mystApply setTimeout 3
 	
-	set lastTTFLux {0 0 0 0 0 0 0 0}
-	set lastLGSFlux {0 0 0 0 0 0}
+	set lastTTFLux {-1 -1 -1 -1 -1 -1 -1 -1}
+	set lastLGSFlux {-1 -1 -1 -1 -1 -1}
 	
-	sa gemssad proc applyC [itcl::code $this onStatusChange]
+	#sa gemssad proc applyC [itcl::code $this onStatusChange]
 	sa gemssad proc lgsLoop [itcl::code $this onStatusChange]
 	sa gemssad proc ttLoop [itcl::code $this onStatusChange]
 	sa gemssad proc focLoop [itcl::code $this onStatusChange]
@@ -159,15 +176,51 @@ itcl::body RealGems::constructor {} {
 	sa gemssad proc sciReady [itcl::code $this onStatusChange]
 	sa gemssad proc lgsFlux [itcl::code $this onStatusChange]
 	sa gemssad proc ngsFlux [itcl::code $this onStatusChange]
-	sa aomsad proc applyC [itcl::code $this onStatusChange]
+
+	sa gemssad proc ngs1 [itcl::code $this onStatusChange]
+	sa gemssad proc ngs2 [itcl::code $this onStatusChange]
+	sa gemssad proc ngs3 [itcl::code $this onStatusChange]
+	sa gemssad proc odgs1 [itcl::code $this onStatusChange]
+	sa gemssad proc odgs2 [itcl::code $this onStatusChange]
+	sa gemssad proc odgs3 [itcl::code $this onStatusChange]
+	sa gemssad proc odgs4 [itcl::code $this onStatusChange]
+	sa gemssad proc oigs [itcl::code $this onStatusChange]
+	sa gemssad proc ngs1Mag [itcl::code $this onStatusChange]
+	sa gemssad proc ngs2Mag [itcl::code $this onStatusChange]
+	sa gemssad proc ngs3Mag [itcl::code $this onStatusChange]
+	sa gemssad proc odgs1Mag [itcl::code $this onStatusChange]
+	sa gemssad proc odgs2Mag [itcl::code $this onStatusChange]
+	sa gemssad proc odgs3Mag [itcl::code $this onStatusChange]
+	sa gemssad proc odgs4Mag [itcl::code $this onStatusChange]
+	sa gemssad proc oigsMag [itcl::code $this onStatusChange]
+	sa gemssad proc apd1Status [itcl::code $this onStatusChange]
+	sa gemssad proc apd2Status [itcl::code $this onStatusChange]
+	sa gemssad proc apd3Status [itcl::code $this onStatusChange]
+
+	#sa aomsad proc applyC [itcl::code $this onStatusChange]
 	sa aomsad proc adcScState [itcl::code $this onStatusChange]
 	sa aomsad proc beamSplitterState [itcl::code $this onStatusChange]
 	sa aomsad proc adcScLoop [itcl::code $this onStatusChange]
 	
+	sa sfssad proc sfsCounts [itcl::code $this onStatusChange]
+	sa sfssad proc sfsActive [itcl::code $this onStatusChange]
+	
+	sa rtcsad proc tt1Active [itcl::code $this onStatusChange]
+	sa rtcsad proc tt2Active [itcl::code $this onStatusChange]
+	sa rtcsad proc tt3Active [itcl::code $this onStatusChange]
+	
+	sa odgwsad proc counts1 [itcl::code $this onStatusChange]
+	sa odgwsad proc counts2 [itcl::code $this onStatusChange]
+	sa odgwsad proc counts3 [itcl::code $this onStatusChange]
+	sa odgwsad proc counts4 [itcl::code $this onStatusChange]
+	sa odgwsad proc expMult1 [itcl::code $this onStatusChange]
+	sa odgwsad proc expMult2 [itcl::code $this onStatusChange]
+	sa odgwsad proc expMult3 [itcl::code $this onStatusChange]
+	sa odgwsad proc expMult4 [itcl::code $this onStatusChange]
 }
 
 itcl::body RealGems::destructor {} {
-	sa gemssad unproc applyC [itcl::code $this onStatusChange]
+	#sa gemssad unproc applyC [itcl::code $this onStatusChange]
 	sa gemssad unproc lgsLoop [itcl::code $this onStatusChange]
 	sa gemssad unproc ttLoop [itcl::code $this onStatusChange]
 	sa gemssad unproc focLoop [itcl::code $this onStatusChange]
@@ -177,17 +230,51 @@ itcl::body RealGems::destructor {} {
 	sa gemssad unproc sciReady [itcl::code $this onStatusChange]
 	sa gemssad unproc lgsFlux [itcl::code $this onStatusChange]
 	sa gemssad unproc ngsFlux [itcl::code $this onStatusChange]
-	sa aomsad unproc applyC [itcl::code $this onStatusChange]
+	sa gemssad unproc ngs1 [itcl::code $this onStatusChange]
+	sa gemssad unproc ngs2 [itcl::code $this onStatusChange]
+	sa gemssad unproc ngs3 [itcl::code $this onStatusChange]
+	sa gemssad unproc odgs1 [itcl::code $this onStatusChange]
+	sa gemssad unproc odgs2 [itcl::code $this onStatusChange]
+	sa gemssad unproc odgs3 [itcl::code $this onStatusChange]
+	sa gemssad unproc odgs4 [itcl::code $this onStatusChange]
+	sa gemssad unproc oigs [itcl::code $this onStatusChange]
+	sa gemssad unproc ngs1Mag [itcl::code $this onStatusChange]
+	sa gemssad unproc ngs2Mag [itcl::code $this onStatusChange]
+	sa gemssad unproc ngs3Mag [itcl::code $this onStatusChange]
+	sa gemssad unproc odgs1Mag [itcl::code $this onStatusChange]
+	sa gemssad unproc odgs2Mag [itcl::code $this onStatusChange]
+	sa gemssad unproc odgs3Mag [itcl::code $this onStatusChange]
+	sa gemssad unproc odgs4Mag [itcl::code $this onStatusChange]
+	sa gemssad unproc oigsMag [itcl::code $this onStatusChange]
+	sa gemssad unproc apd1Status [itcl::code $this onStatusChange]
+	sa gemssad unproc apd2Status [itcl::code $this onStatusChange]
+	sa gemssad unproc apd3Status [itcl::code $this onStatusChange]
+
+	#sa aomsad unproc applyC [itcl::code $this onStatusChange]
 	sa aomsad unproc adcScState [itcl::code $this onStatusChange]
 	sa aomsad unproc beamSplitterState [itcl::code $this onStatusChange]
 	sa aomsad unproc adcScLoop [itcl::code $this onStatusChange]
+	sa sfssad unproc sfsCounts [itcl::code $this onStatusChange]
+	sa sfssad unproc sfsActive [itcl::code $this onStatusChange]
+	sa rtcsad unproc tt1Active [itcl::code $this onStatusChange]
+	sa rtcsad unproc tt2Active [itcl::code $this onStatusChange]
+	sa rtcsad unproc tt3Active [itcl::code $this onStatusChange]
+
+	sa odgwsad unproc counts1 [itcl::code $this onStatusChange]
+	sa odgwsad unproc counts2 [itcl::code $this onStatusChange]
+	sa odgwsad unproc counts3 [itcl::code $this onStatusChange]
+	sa odgwsad unproc counts4 [itcl::code $this onStatusChange]
+	sa odgwsad unproc expMult1 [itcl::code $this onStatusChange]
+	sa odgwsad unproc expMult2 [itcl::code $this onStatusChange]
+	sa odgwsad unproc expMult3 [itcl::code $this onStatusChange]
+	sa odgwsad unproc expMult4 [itcl::code $this onStatusChange]
 }
 
 itcl::body RealGems::slewReset {} {
 	cs gems::slewReset set dummy MARK
 	$logger logmess gems::slewReset
 	set lastCmdSys gemssad
-	catch {cs gems::slewReset post}
+   catch {cs gems::slewReset post}
 }
 
 itcl::body RealGems::openLGSLoop {} {
@@ -328,58 +415,69 @@ itcl::body RealGems::stopLoops {} {
 #Loop configuration
 itcl::body RealGems::configureTTLoop {sources} {
 	foreach wfs {ngs1 ngs2 ngs3 odgs1 odgs2 odgs3 odgs4 oigs} {
-		cs gems::ngsConfig set $wfs 0
+		cs gems::ngsConfig set $wfs "NotUsed"
+		after 200
 	}
 	foreach {wfs mag} $sources {
 		switch $wfs {
 		ttgs1 {
-			cs gems::ngsConfig set ngs1 1
+			cs gems::ngsConfig set ngs1 "Used"
 			cs gems::ngsConfig set ngs1Mag $mag
 		}
 		ttgs2 {
-			cs gems::ngsConfig set ngs2 1
+			cs gems::ngsConfig set ngs2 "Used"
 			cs gems::ngsConfig set ngs2Mag $mag
 		}
 		ttgs3 {
-			cs gems::ngsConfig set ngs3 1
+			cs gems::ngsConfig set ngs3 "Used"
 			cs gems::ngsConfig set ngs3Mag $mag
 		}
 		odgw1 {
-			cs gems::ngsConfig set odgs1 1
+			cs gems::ngsConfig set odgs1 "Used"
 			cs gems::ngsConfig set odgs1Mag $mag
 		}
 		odgw2 {
-			cs gems::ngsConfig set odgs2 1
+			cs gems::ngsConfig set odgs2 "Used"
 			cs gems::ngsConfig set odgs2Mag $mag
 		}
 		odgw3 {
-			cs gems::ngsConfig set odgs3 1
+			cs gems::ngsConfig set odgs3 "Used"
 			cs gems::ngsConfig set odgs3Mag $mag
 		}
 		odgw4 {
-			cs gems::ngsConfig set odgs4 1
+			cs gems::ngsConfig set odgs4 "Used"
 			cs gems::ngsConfig set odgs4Mag $mag
 		}
 		oigs {
-			cs gems::ngsConfig set oigs 1
+			cs gems::ngsConfig set oigs "Used"
 			cs gems::ngsConfig set oigsMag $mag
 		}
 		}
 	}
-	$logger logmess gems::ngsConfig
+	$logger logmess "gems::ngsConfig $sources"
 	set lastCmdSys gemssad
 	catch {cs gems::ngsConfig post}	
+#	cs gems::ngsConfig post	
 }
 
 #Astrometry
 itcl::body RealGems::setAstroMode {mode} {
-	$logger logmess "RealGems::setAstroMode Gems command undefined."
+	switch $mode {
+	None -
+	Regular -
+	Good -
+	Best { set astroMode $mode} 
+	default {
+		$logger logmess "RealGems::setAstroMode unknow mode $mode"
+	}
+	}
 	set lastCmdSys gemssad
 }
 
 itcl::body RealGems::startAstrometry {} {
 	cs gems::astrometricCtrl set cmd START
-	$logger logmess "gems::astrometricCtrl START"
+	cs gems::astrometricCtrl set mode $astroMode
+	$logger logmess "gems::astrometricCtrl START $astroMode"
 	set lastCmdSys gemssad
 	catch {cs gems::astrometricCtrl  post}
 }
@@ -393,42 +491,50 @@ itcl::body RealGems::stopAstrometry {} {
 
 itcl::body RealGems::moveADC {pos} {
 	cs gems::adcMech set pos $pos
-	$logger logmess gems::adcMech
+	$logger logmess "gems::adcMech $pos"
 	set lastCmdSys aomsad
 	catch {cs gems::adcMech post}
 }
 
 itcl::body RealGems::startADC {} {
 	cs gems::adcLoop set loop On
-	$logger logmess gems::adcLoop
+	$logger logmess "gems::adcLoop loop On"
 	set lastCmdSys aomsad
 	catch {cs gems::adcLoop post}
 }
 
 itcl::body RealGems::stopADC {} {
 	cs gems::adcLoop set loop Off
-	$logger logmess gems::adcLoop
+	$logger logmess "gems::adcLoop loop Off"
 	set lastCmdSys aomsad
 	catch {cs gems::adcLoop post}
 }
 
 itcl::body RealGems::moveBeamSplitter {pos} {
 	cs gems::beamSplitter set pos $pos
-	$logger logmess gems::beamSplitter
+	$logger logmess "gems::beamSplitter pos $pos"
 	set lastCmdSys aomsad
 	catch {cs gems::beamSplitter post}
 }
 
-
 #WFS control commands
 itcl::body RealGems::startODGW {id} {
-	$logger logmess "RealGems::startODGW $id Gems command undefined."
-	set lastCmdSys gemssad
+	set mult [expr "round(double([set odgw${id}ExpTime]) / $odgwBaseExpTime )"]
+	if { $mult < 1 } {
+		set mult 1
+	}
+	cs gems::odgwSetup set baseExpTime $odgwBaseExpTime
+	cs gems::odgwSetup set expMult${id} $mult
+	$logger logmess "gems::odgwSetup expMult${id} $mult"
+	set lastCmdSys odgwsad
+	catch {cs gems::odgwSetup post}
 }
 
 itcl::body RealGems::stopODGW {id} {
-	$logger logmess "RealGems::startODGW $id Gems command undefined."
-	set lastCmdSys gemssad
+	cs gems::odgwSetup set expMult${id} 0
+	$logger logmess "gems::odgwSetup expMult${id} 0"
+	set lastCmdSys odgwsad
+	catch {cs gems::odgwSetup post}
 }
 
 itcl::body RealGems::startTTWFS {id} {
@@ -441,7 +547,7 @@ itcl::body RealGems::startTTWFS {id} {
 		return
 	}
 	}
-	$logger logmess gems::ttApdCtrl
+	$logger logmess "gems::ttApdCtrl $id START"
 	set lastCmdSys gemssad
 	catch {cs gems::ttApdCtrl post}
 }
@@ -456,7 +562,7 @@ itcl::body RealGems::stopTTWFS {id} {
 		return
 	}
 	}
-	$logger logmess gems::ttApdCtrl
+	$logger logmess "gems::ttApdCtrl $id STOP"
 	set lastCmdSys gemssad
 	catch {cs gems::ttApdCtrl post}
 }
@@ -472,33 +578,45 @@ itcl::body RealGems::stopLGSWFS {} {
 }
 
 itcl::body RealGems::startSFS {} {
-	$logger logmess "RealGems::startSFS Gems command undefined."
-	set lastCmdSys gemssad
+	cs gems::sfsObserve set dir MARK
+	$logger logmess "gems::sfsObserve"
+	set lastCmdSys sfssad
+   after 100
+	catch {cs gems::sfsObserve post}
 }
 
 itcl::body RealGems::stopSFS {} {
-	$logger logmess "RealGems::stopSFS Gems command undefined."
-	set lastCmdSys gemssad
+	cs gems::sfsStopObserve set dir MARK
+	$logger logmess "gems::sfsStopObserve"
+	set lastCmdSys sfssad
+   after 100
+	catch {cs gems::sfsStopObserve post}
 }
 
 itcl::body RealGems::setODGWExposure {id val} {
-	$logger logmess "RealGems::setODGWExposure Gems command undefined."
-	set lastCmdSys gemssad
+	set odgw${id}ExpTime $val
+	set lastCmdSys ""
 }
 
 itcl::body RealGems::setTTWFSExposure {id val} {
-	$logger logmess "RealGems::setTTWFSExposure Gems command undefined."
-	set lastCmdSys gemssad
+	cs gems::ttExpCtrl set freqDiv $val
+	$logger logmess "gems::ttExpCtrl $val"
+	set lastCmdSys rtcsad
+	catch {cs gems::ttExpCtrl post}
 }
 
 itcl::body RealGems::setLGSWFSExposure {val} {
-	$logger logmess "RealGems::setLGSWFSExposure Gems command undefined."
-	set lastCmdSys gemssad
+	cs gems::lgsExpCtrl set expTime $val
+	$logger logmess "gems::lgsExpCtrl $val"
+	set lastCmdSys rtcsad
+	catch {cs gems::lgsExpCtrl post}
 }
 
 itcl::body RealGems::setSFSExposure {val} {
-	$logger logmess "RealGems::setSFSExposure Gems command undefined."
-	set lastCmdSys gemssad
+	cs gems::sfsExpCtrl set expTime $val
+	$logger logmess "gems::sfsExpCtrl $val"
+	set lastCmdSys sfssad
+	catch {cs gems::sfsExpCtrl post}
 }
 
 
@@ -532,67 +650,89 @@ itcl::body RealGems::getAniLoopState {} {
 }
 
 itcl::body RealGems::getM1OffloadState {} {
-#	$logger logmess "RealGems::getM1OffloadState Gems status undefined."
-	return OFF
+	return [string toupper [sa gemssad get m1Offload value]]
 }
 
 itcl::body RealGems::getM2OffloadState {} {
-#	$logger logmess "RealGems::getM2OffloadState Gems status undefined."
-	return OFF
+	return [string toupper [sa gemssad get m2Offload value]]
 }
 
 itcl::body RealGems::getRotOffloadState {} {
-#	$logger logmess "RealGems::getRotOffloadState Gems status undefined."
-	return OFF
+	return [string toupper [sa gemssad get crOffload value]]
 }
 
 itcl::body RealGems::getTTLoopSources {} {
-#	$logger logmess "RealGems::getTTLoopSources Gems status undefined."
-	return ""
+	set sources ""
+	for {set i 1} { $i <= 3} { incr i } {
+		if { [sa gemssad get ngs${i} value] eq "Used" } {
+			lappend sources ttgs${i} [sa gemssad get ngs${i}Mag value]
+		}
+	}
+	for {set i 1} { $i <= 4} { incr i } {
+		if { [sa gemssad get odgs${i} value] eq "Used" } {
+			lappend sources odgw${i} [sa gemssad get odgs${i}Mag value]
+		}
+	}
+	if { [sa gemssad get oigs value] eq "Used" } {
+		lappend sources oigs [sa gemssad get oigsMag value]
+	}
+	
+	return $sources
 }
 
 itcl::body RealGems::getODGWActive {id} {
-#	$logger logmess "RealGems::getODGWActive Gems status undefined."
+	if { [ sa odgwsad get expMult${id} value] > 0 } {
+		return ON
+	}
 	return OFF
 }
 
 itcl::body RealGems::getTTWFSActive {id} {
-#	$logger logmess "RealGems::getTTWFSActive Gems status undefined."
+	if { [string compare -nocase [sa rtcsad get tt${id}Active value] "ENABLED"] == 0} {
+		return ON
+	}
 	return OFF
 }
 
 itcl::body RealGems::getLGSWFSActive {} {
 #	$logger logmess "RealGems::getLGSWFSActive Gems status undefined."
-	return OFF
+	return ON
 }
 
 itcl::body RealGems::getSFSActive {} {
 #	$logger logmess "RealGems::getSFSActive Gems status undefined."
+	set sfsActive [sa sfssad get sfsActive value]
+	if { [string is integer -strict $sfsActive] && $sfsActive != 0 } {
+		return ON
+	}
 	return OFF
 }
 
 itcl::body RealGems::getODGWExposure {id} {
-#	$logger logmess "RealGems::getODGWExposure Gems status undefined."
-	return "100"
+   set base [sa odgwsad get baseExpTime value]
+   set mult [sa odgwsad get expMult${id} value]
+   
+   if {[string is double -strict $base] && [string is double -strict $mult] } {
+      return [expr "$base * $mult"]
+   } else {
+     return "0"
+   }
 }
 
 itcl::body RealGems::getTTWFSExposure {id} {
-#	$logger logmess "RealGems::getTTWFSExposure Gems status undefined."
-	return "100"
+   return [sa rtcsad get ngsExpMult value]
 }
 
 itcl::body RealGems::getLGSWFSExposure {} {
-#	$logger logmess "RealGems::getLGSWFSExposure Gems status undefined."
-	return "100"
+	return [sa rtcsad get lgsExp value]
 }
 
 itcl::body RealGems::getSFSExposure {} {
-#	$logger logmess "RealGems::getSFSExposure Gems status undefined."
-	return "100"
+	return [sa sfssad get sfsExp value]
 }
 
 itcl::body RealGems::getODGWCounts {id} {
-	switch id {
+	switch $id {
 	1 { set index 3 }
 	2 { set index 4 }
 	3 { set index 5 }
@@ -611,7 +751,7 @@ itcl::body RealGems::getODGWCounts {id} {
 }
 
 itcl::body RealGems::getTTWFSCounts {id} {
-	switch id {
+	switch $id {
 	1 { set index 0 }
 	2 { set index 1 }
 	3 { set index 2 }
@@ -629,7 +769,7 @@ itcl::body RealGems::getTTWFSCounts {id} {
 }
 
 itcl::body RealGems::getLGSWFSCounts {id} {
-	switch id {
+	switch $id {
 	1 { set index 1 }
 	2 { set index 2 }
 	3 { set index 3 }
@@ -650,12 +790,13 @@ itcl::body RealGems::getLGSWFSCounts {id} {
 
 itcl::body RealGems::getSFSCounts {} {
 #	$logger logmess "RealGems::getSFSCounts Gems status undefined."
-	return ""
+	return [sa sfssad get sfsCounts value]
 }
 
 itcl::body RealGems::getAstroMode {} {
 #	$logger logmess "RealGems::getAstroMode Gems status undefined."
-	return "Off"
+	#return [sa gemssad get astroMode value]
+	return $astroMode
 }
 
 itcl::body RealGems::getAstrometryState {} {
@@ -663,7 +804,7 @@ itcl::body RealGems::getAstrometryState {} {
 }
 
 itcl::body RealGems::getADCPos {} {
-	return [sa aomsad get adcSciState value]
+	return [sa aomsad get adcScState value]
 }
 
 itcl::body RealGems::getADCLoopState {} {
@@ -672,7 +813,7 @@ itcl::body RealGems::getADCLoopState {} {
 
 
 itcl::body RealGems::getBeamSplitterPos {} {
-	return [[sa gemssad get astromReady value]]
+	return [sa aomsad get beamSplitterState value]
 }
 
 itcl::body RealGems::getLaserProp {} {
@@ -731,13 +872,24 @@ itcl::body RealGems::onStatusChange {name alarm time value} {
 			}
 		}
 	}
-	gemssad.ttFlux {
+	gemssad.ngsFlux {
 		foreach {i reason} {0 ttwfsCounts(1) 1 ttwfsCounts(2) 2 ttwfsCounts(3) 3 odgwCounts(1) 4 odgwCounts(2) 5 odgwCounts(3) 6 odgwCounts(4)} {
-			if { [lindex $value $i] != [lindex lastTTFlux $j] } {
+			if { [lindex $value $i] != [lindex lastTTFlux $i] } {
 				lappend reasons $reason
 			}
 		}
 	}
+	gemssad.apd1Status { lappend reasons ttwfsActive1 }
+	gemssad.apd2Status { lappend reasons ttwfsActive2 }
+	gemssad.apd3Status { lappend reasons ttwfsActive3 }
+	gemssad.ngs1 -
+	gemssad.ngs2 -
+	gemssad.ngs3 -
+	gemssad.odgw1 -
+	gemssad.odgw2 -
+	gemssad.odgw3 -
+	gemssad.odgw4 -
+	gemssad.oigs { lappend reasons ttLoopSources }
 	gemssad.lgsLoop { lappend reasons lgsLoopState }
 	gemssad.ttLoop { lappend reasons ttLoopState }
 	gemssad.focLoop { lappend reasons focLoopState }
@@ -748,6 +900,19 @@ itcl::body RealGems::onStatusChange {name alarm time value} {
 	aomsad.adcScState { lappend reasons adcPos }
 	aomsad.adcScLoop { lappend reasons adcState }
 	aomsad.beamSplitterState { lappend reasons beamSplitterPos }
+	sfssad.sfsActive { lappend reasons sfsActive }
+	sfssad.sfsCounts { lappend reasons sfsCounts }
+	rtcsad.tt1Active { lappend reasons ttwfsActive(1) }
+	rtcsad.tt2Active { lappend reasons ttwfsActive(2) }
+	rtcsad.tt3Active { lappend reasons ttwfsActive(3) }
+	odgwsad.counts1 { lappend reasons odgwCounts(1) }
+	odgwsad.counts2 { lappend reasons odgwCounts(2) }
+	odgwsad.counts3 { lappend reasons odgwCounts(3) }
+	odgwsad.counts4 { lappend reasons odgwCounts(4) }
+	odgwsad.expMult1 { lappend reasons odgwActive(1) }
+	odgwsad.expMult2 { lappend reasons odgwActive(2) }
+	odgwsad.expMult3 { lappend reasons odgwActive(3) }
+	odgwsad.expMult4 { lappend reasons odgwActive(4) }
 	}
 	switch $name {
 	gemssad.lgsLoop -

@@ -7,8 +7,10 @@
 #
 #-
 
-apply gems::aomApply aom:apply aom:applyC Primary GeMS Apply Record
+apply gems::aomApply aom:apply aom:activeC Primary GeMS Apply Record
 apply gems::mystApply myst:apply myst:applyC Primary Myst Apply Record
+apply gems::rtcApply rtc:apply rtc:applyC Primary RTC Apply Record
+apply gems::sfsApply sfs:apply sfs:applyC Primary SFS Apply Record
 
 command gems::adcMech gems::aomApply ADC Control
 {
@@ -23,11 +25,6 @@ command gems::adcLoop gems::aomApply ADC Control
 command gems::beamSplitter gems::aomApply ADC Control
 {
 	pos	aom:bsCtrl.A			Dichroic beamsplitter position 1|2
-}
-
-command gems::astroMode gems::mystApply ADC Control
-{
-	mode	myst:astrometric.A 	Astrometric mode Off|Regular|Good|Best
 }
 
 command gems::ngsPr1Ctrl	gems::aomApply	Canopus probe 1 control
@@ -60,22 +57,81 @@ status gemssad
 	sciReady		myst:sciReady.VAL			0	Ready for science (Not Ready|Ready)
    laserProp	lis:lasPropProc.VALA		0	Is the Laser Propagating to the Sky
    
+   m1Offload	myst:m1OffloadCtrl.VALA	0	GeMS is offloading to M1
+   m2Offload	myst:m2OffloadCtrl.VALA	0	GeMS is offloading to M2
+   crOffload	myst:crLoopCtrl.VALA		0	GeMS is offloading to Cass-rotator
+
+   astroMode   myst:astrometricCtrl.VALB 0		Mode (None/Regular/Good/Best)
+   
    lgsFlux     myst:lgsFlux.VAL 0 Average flux/LGS frame 
    ngsFlux	   myst:ngsFlux.VAL 0 Average flux/NGS frame 
+
+   ngs1     myst:ngsConfig.VALA 0  NGS1 active (Used/NotUsed) 
+	ngs2     myst:ngsConfig.VALB 0  NGS2 active (Used/NotUsed)
+	ngs3     myst:ngsConfig.VALC 0  NGS3 active (Used/NotUsed)
+	odgs1    myst:ngsConfig.VALD 0  ODGS1 active (Used/NotUsed)
+	odgs2    myst:ngsConfig.VALE 0  ODGS2 active (Used/NotUsed)
+	odgs3    myst:ngsConfig.VALF 0  ODGS3 active (Used/NotUsed)
+	odgs4    myst:ngsConfig.VALG 0  ODGS4 active (Used/NotUsed)
+	oigs     myst:ngsConfig.VALH 0  OIGS active (Used/NotUsed)
+	ngs1Mag  myst:ngsConfig.VALI 0  NGS1 Magnitude
+	ngs2Mag  myst:ngsConfig.VALJ 0  NGS2 Magnitude
+	ngs3Mag  myst:ngsConfig.VALK 0  NGS3 Magnitude
+	odgs1Mag myst:ngsConfig.VALL 0  ODGS1 Magnitude
+	odgs2Mag myst:ngsConfig.VALM 0  ODGS2 Magnitude
+	odgs3Mag myst:ngsConfig.VALN 0  ODGS3 Magnitude
+	odgs4Mag myst:ngsConfig.VALO 0  ODGS4 Magnitude
+	oigsMag  myst:ngsConfig.VALP 0  OIGS Magnitude
+}
+
+status odgwsad
+{
+	baseExpTime gsaoi:sad:dc:exposedRQ.VAL		0 ODGW base exposure time
+	expMult1		gsaoi:sad:dc:gdr_expMult1.VAL 0 Exposure multiplier for ODGW1
+	expMult2		gsaoi:sad:dc:gdr_expMult2.VAL 0 Exposure multiplier for ODGW2
+	expMult3		gsaoi:sad:dc:gdr_expMult3.VAL 0 Exposure multiplier for ODGW3
+	expMult4		gsaoi:sad:dc:gdr_expMult4.VAL 0 Exposure multiplier for ODGW4
+	
+	counts1		gsaoi:sad:dc:gdr_count1.VAL 0 Counts for ODGW1
+	counts2		gsaoi:sad:dc:gdr_count2.VAL 0 Counts for ODGW2
+	counts3		gsaoi:sad:dc:gdr_count3.VAL 0 Counts for ODGW3
+	counts4		gsaoi:sad:dc:gdr_count4.VAL 0 Counts for ODGW4
+}
+
+status aomsad
+{
+	applyC		aom:activeC.VAL			0	Command Status
+	message		aom:activeC.OMSS		0	Command completion message
+	
+	adcScState aom:adcScState.VAL    0 Science ADC state (In|Out|Moving|Invalid)
+	beamSplitterState aom:bsState.VAL 0 Beam splitter state (In|Out|Moving|Invalid)
+	adcScLoop	aom:adcScLoop.VAL    0 Science ADC loop satus (OPEN|CLOSED)
 
 	ngs1Follow	aom:ngsPr1followS.VAL	0	Canopus 1 in follow mode
 	ngs2Follow	aom:ngsPr2followS.VAL	0	Canopus 2 in follow mode
 	ngs3Follow	aom:ngsPr3followS.VAL	0	Canopus 3 in follow mode
 }
 
-status aomsad
+status rtcsad
 {
-	applyC		aom:applyC.VAL			0	Command Status
-	message		aom:applyC.OMSS		0	Command completion message
+	applyC		rtc:applyC.VAL			0	Command Status
+	message		rtc:applyC.OMSS		0	Command completion message
+
+	tt1Active rtc:ngs:apd1 0 Canopus 1 APD active (ENABLED/DISABLED)
+	tt2Active rtc:ngs:apd2 0 Canopus 2 APD active (ENABLED/DISABLED)
+	tt3Active rtc:ngs:apd3 0 Canopus 3 APD active (ENABLED/DISABLED)
 	
-	adcScState aom:adcScState.VAL    0 Science ADC state (In|Out|Moving|Invalid)
-	beamSplitterState aom:bsState.VAL 0 Beam splitter state (In|Out|Moving|Invalid)
-	adcScLoop	aom:adcScLoop.VAL    0 Science ADC loop satus (OPEN|CLOSED)
+	lgsExp	rtc:lgs:expTime.VALA 0 LGSWFS exposure time
+	ngsExpMult rtc:ngs:expTime.VALA 0 NGS exposure time multiplier
+}
+
+status sfssad
+{
+	applyC		sfs:applyC.VAL			0	Command Status
+	message		sfs:applyC.OMSS		0	Command completion message
+
+	sfsActive	sfs:observing.VAL		 	0	SFS active (0/1)
+	sfsCounts	sfs:dspGlobalIntensity	0	SFS counts
 }
 
 command gems::slewReset gems::mystApply Reset ngs config, cmat optimization, astrometric mode, etc
@@ -100,12 +156,13 @@ command gems::taLoopCtrl  gems::mystApply TA loop
 
 command gems::astrometricCtrl  gems::mystApply  astrometric aquisition sequence 
 {
-	cmd myst:astrometricCtrl.A 		Command (START/PAUSE/RESUME/STOP) 
+	cmd myst:astrometricCtrl.A 		Command (START/PAUSE/RESUME/STOP)
+	mode myst:astrometricCtrl.B 		Mode (None/Regular/Good/Best)
 }
 
 command gems::m1OffloadCtrl   gems::mystApply M1 offload
 {
-	cmd myst:m1OffloadCtrl.A 		Command (START/PAUSE/RESUME/STOP) 
+	cmd myst:m1OffloadCtrl.A 		Command (START/PAUSE/RESUME/STOP)
 }
 
 command gems::m2OffloadCtrl   gems::mystApply M2 offload
@@ -160,4 +217,39 @@ command gems::ttApdCtrl     gems::mystApply Canopus APD control
 	apd1 myst:ttApdCtrl.A	APD1 control (START/STOP)
 	apd2 myst:ttApdCtrl.B	APD2 control (START/STOP)
 	apd3 myst:ttApdCtrl.C	APD3 control (START/STOP)
+}
+
+
+command gems::ttExpCtrl	gems::rtcApply Canopus exposure control
+{
+	freqDiv	rtc:ngs:setExpTime.A Canopus WFS read frequency divisor (f = (LWFS Freq) / divisor)
+}
+
+command gems::sfsExpCtrl gems::sfsApply SFS exposure control
+{
+	expTime sfs:setExpTime.A SFS exposure time (s)
+}
+
+command gems::lgsExpCtrl	gems::rtcApply LGSWFS exposure control
+{
+	expTime	rtc:lgs:setExpTime.A LGSWFS exposure time (s)
+}
+
+command gems::sfsObserve gems::sfsApply SFS WFS start
+{
+	dir sfs:observe.DIR SFS start observe
+}
+
+command gems::sfsStopObserve gems::sfsApply SFS WFS start
+{
+	dir sfs:endObserve.DIR SFS start observe
+}
+
+command gems::odgwSetup tcsApply ODGW exposure setup
+{
+	baseExpTime tcs:gsaoiodgwSetup.D 0 ODGW base exposure time
+	expMult1		tcs:gsaoiodgwSetup.G 0 Exposure multiplier for ODGW1
+	expMult2		tcs:gsaoiodgwSetup.H 0 Exposure multiplier for ODGW2
+	expMult3		tcs:gsaoiodgwSetup.I 0 Exposure multiplier for ODGW3
+	expMult4		tcs:gsaoiodgwSetup.J 0 Exposure multiplier for ODGW4
 }
