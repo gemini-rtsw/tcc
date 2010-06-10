@@ -58,16 +58,16 @@ private {
 	method waitForCmdIdle {{timeout 1000}}
 	method waitForCmdComplete {idleTimeout settledTimeout settledCond timeoutMsg}
 	method startWFS {}
-	method startTTGS {id}
-	method startODGW {id}
+	method startTTGS {}
+	method startODGW {}
 	method stopWFS {}
-	method stopTTGS {id}
-	method stopODGW {id}
+	method stopTTGS {}
+	method stopODGW {}
 	method startLoops {}
 	method stopLoops {}
 	method disableWFS
-	method disableTTGS {id}
-	method disableODGW {id}
+	method disableTTGS {}
+	method disableODGW {}
 	method disableLoops {}
 	method defineTTSources {}
 	method _itcl_config {option args} \
@@ -161,10 +161,8 @@ itcl::body GemsAO::waitForCmdComplete {idleTimeout settledTimeout settledCond ti
 }
 
 itcl::body GemsAO::startWFS {} {
-   for {set i 1} {$i <= 3} { incr i} {
-		if { [startTTGS $i] } {
-			return 1
-		}
+	if { [startTTGS] } {
+		return 1
 	}
 	if { $sfsActive } {
 		if { $sfsExp ne "" && $sfsExp != [$sys getSFSExposure] } {
@@ -194,27 +192,34 @@ itcl::body GemsAO::startWFS {} {
 			}
 		}
 	}
-	for {set i 1} {$i <= 4} { incr i} {
-		if { [startODGW $i] } {
-			return 1
-		}
+	if { [startODGW] } {
+		return 1
 	}
 	return 0
 }
 
-itcl::body GemsAO::startTTGS {id} {
-	if { [set ttgs${id}Active] } {
+itcl::body GemsAO::startTTGS {} {
+	if { $ttgs1Active || $ttgs2Active || $ttgs3Active } {
 		if {[set ttgs1Exp] ne "" && [set ttgs1Exp] != [$sys getTTWFSExposure 1]} {
-#			$sys setTTWFSExposure $id [set ttgs${id}Exp]
 			#TODO: The three canopus use the same value, so I'll use only ttgs1Exp
 			$sys setTTWFSExposure 1 [set ttgs1Exp]
-			if { [waitForCmdComplete 1000 1000 "expr 1" "TTWFS${id} exposure setup"] } {
+			if { [waitForCmdComplete 1000 1000 "expr 1" "TTWFS exposure setup"] } {
 				return 1
 			}
 		}
-		if { ![state ttgs${id}] } {
-			$sys startTTWFS $id
-			if { [waitForCmdComplete 1000 2000 "state ttgs${id}" "TTWFS${id} to go ON"] } {
+      set idList ""
+      set testExp "expr \{ 1"
+      for {set i 1} {$i <= 3} { incr i} {
+         if { [set ttgs${i}Active] && ![state ttgs${i}] } {
+            lappend idList $i
+            set testExp "$testExp && \[ state ttgs${i} \]"
+         }
+      }
+      set testExp "$testExp \}"
+      
+		if { [llength $idList] > 0 } {
+			$sys startTTWFS $idList
+			if { [waitForCmdComplete 1000 2000 $testExp "TTWFS $idList to go ON"] } {
 				return 1
 			}
 		}
@@ -222,21 +227,31 @@ itcl::body GemsAO::startTTGS {id} {
 	return 0	
 }
 
-itcl::body GemsAO::startODGW {id} {
-	if { [set odgw${id}Active] } {
-		if {[set odgw${id}Exp] ne "" && [set odgw${id}Exp] != [$sys getODGWExposure $id]} {
-			$sys setODGWExposure $id [set odgw${id}Exp] 
-			if { [waitForCmdComplete 10000 10000 "expr 1" "ODGW${id} exposure setup"] } {
-				return 1
+itcl::body GemsAO::startODGW {} {
+   set idList ""
+   set testExp "expr \{ 1"
+   for {set i 1} {$i <= 4} { incr i} {
+		if { [set odgw${i}Active] } {
+			if {[set odgw${i}Exp] ne "" && [set odgw${i}Exp] != [$sys getODGWExposure $i]} {
+				$sys setODGWExposure $i [set odgw${i}Exp] 
+				if { [waitForCmdComplete 10000 10000 "expr 1" "ODGW${i} exposure setup"] } {
+					return 1
+				}
+			}
+			if { ![state odgw${i}] } {
+            lappend idList $i
+            set testExp "$testExp && \[ state odgw${i} \]"
 			}
 		}
-		if { ![state odgw${id}] } {
-			$sys startODGW $id
-			if { [waitForCmdComplete 10000 10000 "state odgw${id}" "ODGW${id} to go ON"] } {
-				return 1
-			}
-		}
-	}
+   }
+   set testExp "$testExp \}"
+   if { [llength $idList] > 0 } {
+		$sys startODGW $idList
+      puts "GemsAO::startODGW $testExp"
+      if { [waitForCmdComplete 10000 10000 $testExp "ODGW $idList to go ON"] } {
+         return 1
+      }
+   }
 	return 0	
 }
 
@@ -244,12 +259,11 @@ itcl::body GemsAO::stopWFS {} {
 	set errMsg ""
 	set ret 0
 	
-	for {set i 1} {$i <= 4} { incr i} {
-		if { [stopODGW $i] } {
-			set ret 1
-			set errMsg "$errMsg\n$lastError"
-		}
+	if { [stopODGW] } {
+		set ret 1
+		set errMsg "$errMsg\n$lastError"
 	}
+	
 	if { !$lwfsActive && [state lgswfs] } {
 		$sys stopLGSWFS
 		if {[waitForCmdComplete 1000 2000 {expr ![state lgswfs]} "LGSWFS to go OFF"]} {
@@ -264,45 +278,61 @@ itcl::body GemsAO::stopWFS {} {
 			set errMsg "$errMsg\n$lastError"
 		}
 	}
-	for {set i 1} {$i <= 3} { incr i} {
-		if { [stopTTGS $i] } {
-			set ret 1
-			set errMsg "$errMsg\n$lastError"
-		}
+	if { [stopTTGS] } {
+		set ret 1
+		set errMsg "$errMsg\n$lastError"
 	}
 	set lastError $errMsg
 	return $ret
 }
 
-itcl::body GemsAO::stopTTGS {id} {
-	if { ![set ttgs${id}Active] && [state ttgs${id}] } {
-		$sys stopTTWFS $id
-		if {[waitForCmdComplete 2000 5000 "expr !\[state ttgs${id}\]" "TTWFS${id} to go OFF"]} {
-			return 1
-		}
-	}
+itcl::body GemsAO::stopTTGS {} {
+   set idList ""
+   set testExp "expr \{ 1"
+   for {set i 1} {$i <= 3} { incr i} {
+      if { ![set ttgs${i}Active] && [state ttgs${i}] } {
+         lappend idList $i
+         set testExp "$testExp && !\[ state ttgs${i} \]"
+      }
+   }
+   set testExp "$testExp \}"
+   
+   if { [llength $idList] > 0 } {
+      $sys stopTTWFS $idList
+      if { [waitForCmdComplete 1000 2000 $testExp "TTWFS $idList to go OFF"] } {
+         return 1
+      }
+   }
+   
 	return 0
 }
 
-itcl::body GemsAO::stopODGW {id} {
-	if { ![set odgw${id}Active] && [state odgw${id}] } {
-		$sys stopODGW $id
-		if {[waitForCmdComplete 10000 10000 "expr !\[state odgw${id}\]" "ODGW${id} to go OFF"]} {
-			return 1
-		}
-	}
-	return 0
+itcl::body GemsAO::stopODGW {} {
+   set idList ""
+   set testExp "expr \{ 1"
+   for {set i 1} {$i <= 4} { incr i} {
+      if { ![set odgw${i}Active] && [state odgw${i}] } {
+         lappend idList $i
+         set testExp "$testExp && !\[ state odgw${i} \]"
+      }
+   }
+   set testExp "$testExp \}"
+   if { [llength $idList] > 0 } {
+      $sys stopODGW $idList
+      if { [waitForCmdComplete 10000 10000 $testExp "ODGW $idList to go OFF"] } {
+         return 1
+      }
+   }
+   return 0 
 }
 
 itcl::body GemsAO::disableWFS {} {
 	set errMsg ""
 	set ret 0
 	
-	for {set i 1} {$i <= 4} { incr i} {
-		if { [disableODGW $i] } {
-			set ret 1
-			set errMsg "$errMsg\n$lastError"
-		}
+	if { [disableODGW] } {
+		set ret 1
+		set errMsg "$errMsg\n$lastError"
 	}
 #	if { [state lgswfs] } {
 #		$sys stopLGSWFS
@@ -318,34 +348,52 @@ itcl::body GemsAO::disableWFS {} {
 			set errMsg "$errMsg\n$lastError"
 		}
 	}
-	for {set i 1} {$i <= 3} { incr i} {
-		if { [disableTTGS $i] } {
-			set ret 1
-			set errMsg "$errMsg\n$lastError"
-		}
+	if { [disableTTGS] } {
+		set ret 1
+		set errMsg "$errMsg\n$lastError"
 	}
 	set lastError $errMsg
 	return $ret
 }
 
-itcl::body GemsAO::disableTTGS {id} {
-	if { [state ttgs${id}] } {
-		$sys stopTTWFS $id
-		if {[waitForCmdComplete 10000 10000 "expr !\[state ttgs${id}\]" "TTWFS${id} to go OFF"]} {
-			return 1
-		}
-	}
-	return 0
+itcl::body GemsAO::disableTTGS {} {
+   set idList ""
+   set testExp "expr \{ 1"
+   for {set i 1} {$i <= 3} { incr i} {
+      if { [state ttgs${i}] } {
+         lappend idList $i
+         set testExp "$testExp && !\[ state ttgs${i} \]"
+      }
+   }
+   set testExp "$testExp \}"
+   
+   if { [llength $idList] > 0 } {
+      $sys stopTTWFS $idList
+      if { [waitForCmdComplete 1000 2000 $testExp "TTWFS $idList to go OFF"] } {
+         return 1
+      }
+   }
+   
+   return 0
 }
 
-itcl::body GemsAO::disableODGW {id} {
-	if { [state odgw${id}] } {
-		$sys stopODGW $id
-		if {[waitForCmdComplete 10000 10000 "expr !\[state odgw${id}\]" "ODGW${id} to go OFF"]} {
-			return 1
-		}
-	}
-	return 0
+itcl::body GemsAO::disableODGW {} {
+   set idList ""
+   set testExp "expr \{ 1"
+   for {set i 1} {$i <= 4} { incr i} {
+      if { [state odgw${i}] } {
+         lappend idList $i
+         set testExp "$testExp && !\[ state odgw${i} \]"
+      }
+   }
+   set testExp "$testExp \}"
+   if { [llength $idList] > 0 } {
+      $sys stopODGW $idList
+      if { [waitForCmdComplete 10000 10000 $testExp "ODGW $idList to go OFF"] } {
+         return 1
+      }
+   }
+   return 0 
 }
 
 itcl::body GemsAO::startLoops {} {
@@ -586,31 +634,31 @@ itcl::body GemsAO::defineTTSources {} {
 	
 	if { $ttgsLoop } {
    	if { $ttgs1Active } {
-   		set sources [lappend sources ttgs1 $ttgs1Mag]
+   		lappend sources ttgs1 $ttgs1Mag
    	}
    	if { $ttgs2Active } {
-   		set sources [lappend sources ttgs2 $ttgs2Mag]
+   		lappend sources ttgs2 $ttgs2Mag
    	}
    	if { $ttgs3Active } {
-   		set sources [lappend sources ttgs3 $ttgs3Mag]
+   		lappend sources ttgs3 $ttgs3Mag
    	}
 	}
 	if { $odgwLoop } {
    	if { $odgw1Active } {
-   		set sources [lappend sources odgw1 $odgw1Mag]
+   		lappend sources odgw1 $odgw1Mag
    	}
    	if { $odgw2Active } {
-   		set sources [lappend sources odgw2 $odgw2Mag]
+   		lappend sources odgw2 $odgw2Mag
    	}
    	if { $odgw3Active } {
-   		set sources [lappend sources odgw3 $odgw3Mag]
+   		lappend sources odgw3 $odgw3Mag
    	}
    	if { $odgw4Active } {
-   		set sources [lappend sources odgw4 $odgw4Mag]
+   		lappend sources odgw4 $odgw4Mag
    	}
 	}
 	if { $oigsLoop } {
-		set sources [lappend sources oigs $oigsMag]
+		lappend sources oigs $oigsMag
 	}
 	
 	return $sources
