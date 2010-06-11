@@ -18,6 +18,10 @@ itcl::class TargetDetail {
 	method onGrabCommand {}
 	method save {taggedTarget} 
 	method saveTarget {target}
+   
+private {
+   method loadMagnitudes {target} {}
+}
 }
 
 itk::usual TargetDetail {
@@ -153,8 +157,32 @@ itcl::body TargetDetail::loadTarget {target} {
 			$itk_component(tabs) select RA/Dec
 		}
 	}
+   loadMagnitudes $target
+}
+
+itcl::body TargetDetail::loadMagnitudes {target} {
 	$itk_component(brightness) clear
-	$itk_component(brightness) insert end [$target cget -brightness]
+   set mags ""
+   set first 1
+   foreach band {U B V UC R I Y J H K L M N Q AB Jy} {
+      set val [$target getMagnitude $band]
+      if { [string is double -strict $val] } {
+	      if { $first } {
+	         set mags "$band=[format %g [$target getMagnitude $band]]"
+	         set first 0
+	      } else {
+	         set mags "$mags,$band=[format %g [$target getMagnitude $band]]"
+	      }
+      }
+   }
+   if { [$target cget -brightness] ne "" } {
+		if { $mags eq "" } {
+	      set mags [$target cget -brightness]
+	   } else {
+	      set mags "$mags,oldMag=[$target cget -brightness]"
+	   }
+   }
+	$itk_component(brightness) insert end $mags
 }
 
 itcl::body TargetDetail::cleanFields {} {

@@ -581,7 +581,6 @@ itcl::body TcsConfigFile::targetconf {field target node} {
 # and the name is "properMotion"..
       set name [dom::element getAttribute $node name]
       if { [string equal $name properMotion] } {
-
 # configure the -pmunits parameter of the target.
          if { [catch {$field subconfigure target $target -pmunits \
                   [dom::element getAttribute $node units]} msg] } {
@@ -589,7 +588,18 @@ itcl::body TcsConfigFile::targetconf {field target node} {
                return 1
             }
          }
-      }
-   }
+	   } elseif { [string equal $name magnitudes] } {
+			foreach band [dom::DOMImplementation selectNode $node \
+													descendant-or-self::node()/child::param] {
+				set bandName [dom::element getAttribute $band name]
+				set bandMag [dom::element getAttribute $band value]
+				if { [catch {$field subconfigureTargetMagnitude $target $bandName	$bandMag } msg] } {
+					if { [report $msg] } {
+						return 1
+					}
+				}
+			}
+	   }
+	}
 }
 

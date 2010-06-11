@@ -132,6 +132,11 @@ itcl::class Target {
       variable dailymot {}
       variable trackrate {}
       variable trackratens
+		variable magnitudes
+		
+		method setMagnitude { band val } { set magnitudes($band) $val }
+		method getMagnitude { band }
+      method getMagnitudeBands {} {return [array names magnitudes]}
    }
    private {
       method pmconvert {c1 c2 pm1 pm2 pmunits}
@@ -150,7 +155,7 @@ itcl::body Target::constructor {args} {
       set trackratens [string range ${targetns} 0 [incr i -1]]
       append trackratens TrackRateNames
    }
-
+   array set magnitudes {}
    eval configure $args
 }
 
@@ -350,6 +355,7 @@ itcl::body Target::init {} {
    set dailymot {}
    set brightness {}
 	set tag {}
+   array unset magnitudes
 }
 
 itcl::body Target::formatPreviewData {} {
@@ -640,6 +646,13 @@ itcl::body Target::grab {comp} {
    set parallax ""
    set trackrate ""
 		
+}
+
+itcl::body Target::getMagnitude {band} {
+	if { [info exists magnitudes($band)] } {
+		return $magnitudes($band)
+	}
+	return ""
 }
 
 itcl::configbody Target::cosys {

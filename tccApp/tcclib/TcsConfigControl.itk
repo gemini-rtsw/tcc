@@ -255,15 +255,25 @@ itcl::body TcsConfigControl::apply {} {
 # If we're using NICI, send the Star Magnitude to NICI
    set inst $::Config(tcs.instrument,value)
    set oiName [sa agssad get oiwfsName]
+	
    if { [string match "*NICI*" $inst] } {
 		set target $::Config(tcs.field.sciencetarget,value)
 		logactions logmess "Science Target: $target"
-		set magnitude [$::Config(tcs.field.oiwfstarget,namespace)::$target cget -brightness]
+		set magnitude [$::Config(tcs.field.oiwfstarget,namespace)::$target getMagnitude V]
+		set band "V band"
+		if { ![string is double -strict $magnitude] } {
+			set magnitude [$::Config(tcs.field.oiwfstarget,namespace)::$target getMagnitude R]
+			set band "R band"
+			if { ![string is double -strict $magnitude] } {
+				set magnitude [$::Config(tcs.field.oiwfstarget,namespace)::$target cget -brightness]
+				set band "brightness"
+			}
+		}
 		set magparts [split $magnitude " "]
 		set magnitude [lindex $magparts 0]
 		if {[string is double -strict $magnitude]} {
 			if { ![catch {cs niciMag info}] } {
-				logactions logmess "writing magnitude $magnitude to NICI"
+				logactions logmess "writing magnitude $magnitude \($band\) to NICI"
 				cs niciMag set mag $magnitude
 				cs niciMag set mode Auto
 				cs niciMag set conf config
@@ -273,7 +283,7 @@ itcl::body TcsConfigControl::apply {} {
 			}
 		} else {
 		   tk_messageBox -icon error \
-				-message "Attempting to send invalid Magnitude to NICI"
+				-message "Attempting to send invalid Magnitude to NICI \($magnitude\)"
 		   return
 		}
 	}

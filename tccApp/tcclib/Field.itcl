@@ -81,6 +81,7 @@ itcl::class Field {
       method add {type name args}
       method remove {type name}
       method subconfigure {type name args}
+		method subconfigureTargetMagnitude {target band val}
       method subinit {type name}
       method subcget {type name option}
       method plot {azelplot} {puts "plotting $this on $azelplot"}
@@ -625,6 +626,10 @@ itcl::body Field::subconfigure {type name args} {
    }
 }
 
+itcl::body Field::subconfigureTargetMagnitude {target band val} {
+	eval [list ${targetns}::$target] setMagnitude $band $val
+}
+
 itcl::body Field::subinit {type name} {
    switch $type {
       target {
@@ -872,7 +877,6 @@ itcl::body Field::clearDefaultTarget {tag} {
 }
 
 itcl::body Field::setDefaultTarget {tagtarget} {
-	
 	if {[string equal $tagtarget ""] || [string equal [$tagtarget cget -tagPrefix] ""]} {
 		return
 	}
@@ -912,45 +916,45 @@ itcl::body Field::setDefaultTarget {tagtarget} {
 			User {
 				set sciencetarget $tagtarget
 				if { [string is space [$tagtarget cget -target]] } {
-					set $::Config(tcs.field.sciencetarget,value) $::Config(tcs.field.sciencetarget,anon) 
-				} else {					
-					set $::Config(tcs.field.sciencetarget,value) [namespace tail [$tagtarget cget -target]]
+					set ::Config(tcs.field.sciencetarget,value) $::Config(tcs.field.sciencetarget,anon) 
+				} else {
+					set ::Config(tcs.field.sciencetarget,value) [namespace tail [$tagtarget cget -target]]
 				}
 				notify sciencetarget
 			}
 			PWFS1 {
 				set pwfs1target $tagtarget
 				if { [string is space [$tagtarget cget -target]] } {
-					set $::Config(tcs.field.pwfs1target,value) $::Config(tcs.field.pwfs1target,anon) 
+					set ::Config(tcs.field.pwfs1target,value) $::Config(tcs.field.pwfs1target,anon) 
 				} else {					
-					set $::Config(tcs.field.pwfs1target,value) [namespace tail [$tagtarget cget -target]]
+					set ::Config(tcs.field.pwfs1target,value) [namespace tail [$tagtarget cget -target]]
 				}
 				notify pwfs1target
 			}
 			PWFS2 {
 				set pwfs2target $tagtarget
 				if { [string is space [$tagtarget cget -target]] } {
-					set $::Config(tcs.field.pwfs2target,value) $::Config(tcs.field.pwfs2target,anon) 
+					set ::Config(tcs.field.pwfs2target,value) $::Config(tcs.field.pwfs2target,anon) 
 				} else {					
-					set $::Config(tcs.field.pwfs2target,value) [namespace tail [$tagtarget cget -target]]
+					set ::Config(tcs.field.pwfs2target,value) [namespace tail [$tagtarget cget -target]]
 				}
 				notify pwfs2target
 			}
 			OIWFS {
 				set oiwfstarget $tagtarget
 				if { [string is space [$tagtarget cget -target]] } {
-					set $::Config(tcs.field.oiwfstarget,value) $::Config(tcs.field.oiwfstarget,anon) 
+					set ::Config(tcs.field.oiwfstarget,value) $::Config(tcs.field.oiwfstarget,anon) 
 				} else {					
-					set $::Config(tcs.field.oiwfstarget,value) [namespace tail [$tagtarget cget -target]]
+					set ::Config(tcs.field.oiwfstarget,value) [namespace tail [$tagtarget cget -target]]
 				}
 				notify oiwfstarget
 			}
 			AOWFS {
 				set aowfstarget $tagtarget
 				if { [string is space [$tagtarget cget -target]] } {
-					set $::Config(tcs.field.aowfstarget,value) $::Config(tcs.field.aowfstarget,anon) 
+					set ::Config(tcs.field.aowfstarget,value) $::Config(tcs.field.aowfstarget,anon) 
 				} else {					
-					set $::Config(tcs.field.aowfstarget,value) [namespace tail [$tagtarget cget -target]]
+					set ::Config(tcs.field.aowfstarget,value) [namespace tail [$tagtarget cget -target]]
 				}
 				notify aowfstarget
 			}
