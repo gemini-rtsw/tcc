@@ -39,6 +39,8 @@ itcl::class WfsConfig {
 		method buildPwfsPage {wfs parent}
 		method configureODGWFilter {}
 		method onODGWChange {changeList}
+      method configureODGWSize {}
+      method onODGWSizeChange {changeList}
 	}
 }
 
@@ -53,7 +55,7 @@ itcl::body WfsConfig::constructor {args} {
    set w $itk_interior
 
    itk_component add tabbook {
-      iwidgets::tabnotebook $w.tabs -tabpos n -width 430 -height 180 -equaltabs true
+      iwidgets::tabnotebook $w.tabs -tabpos n -width 430 -height 190 -equaltabs true
    } {
       ignore -background -tabbackground
    }
@@ -534,15 +536,14 @@ itcl::body WfsConfig::buildPwfsPage {wfs parent} {
 
 itcl::body WfsConfig::buildGemsPage {parent} {
 	itk_component add odgwframe { iwidgets::labeledframe $parent.odgwframe \
-		-labeltext "ODGW" -labelpos nw } {ignore -background}
+		-labeltext "ODGW Filter" -labelpos nw } {ignore -background}
 	set w [$itk_component(odgwframe) childsite]
 	# An option menus for the ODGW filter.
 	itk_component add odgwsetframe {
 		frame $w.odgwsetframe
 	}  {ignore -background}
 	itk_component add odgwfilter {
-		iwidgets::optionmenu $w.odgwsetframe.odgwfilter -labeltext "filter" -labelpos w \
-			-width 150
+		iwidgets::optionmenu $w.odgwsetframe.odgwfilter
 	} {
 		 ignore -background
 	}
@@ -564,15 +565,40 @@ itcl::body WfsConfig::buildGemsPage {parent} {
 	foreach name [$odgw getFilterList] {
 		$itk_component(odgwfilter) insert end $name
 	}
+   
+   itk_component add odgwsizeframe { iwidgets::labeledframe $parent.odgwsizeframe \
+         -labeltext "ODGW Size" -labelpos nw } {ignore -background}
+    set w [$itk_component(odgwsizeframe) childsite]
+   itk_component add odgwsizesel {
+      iwidgets::optionmenu $w.odgwsizesel
+   } {
+      ignore -background
+   }
+   $itk_component(odgwsizesel) insert end 4 8 16 32
+   itk_component add odgwSizeApply {
+      button $w.odgwsizeapply -text "Apply Size" -command [itcl::code $this configureODGWSize]
+   } {
+      ignore -background
+   }
+   itk_component add odgwCurrSize { label $w.currsize -width 15 -relief sunken } { 
+      ignore -background }
 	
 	pack $itk_component(odgwfilter) $itk_component(odgwFilterApply) -side left -anchor w -pady 2
-	pack $itk_component(odgwsetframe) -side top -anchor w -pady 2
+	pack $itk_component(odgwsetframe) -side top -anchor w -pady 0
 	pack $itk_component(odgwlab1) $itk_component(odgwCurrFlt) \
 		$itk_component(odgwlab2) $itk_component(odgwCurrWavel) -side left \
-		-pady 2 -padx 2
-	pack $itk_component(odgwframe) -side top -pady 2 -expand yes -fill x
+		-pady 1 -padx 2
+   
+   pack $itk_component(odgwsizesel) $itk_component(odgwCurrSize) $itk_component(odgwSizeApply) -side left -anchor w -pady 2
+#   pack $itk_component(odgwsetsizeframe) -side top -anchor w -pady 2
+#   pack $itk_component(odgwlab3) $itk_component(odgwCurrSize) -side left \
+#      -pady 2 -padx 2
+   
+	pack $itk_component(odgwframe) $itk_component(odgwsizeframe) -side top -pady 0 -expand yes -fill x
 
 	[Odgw::getSingleton] subscribe [itcl::code $this onODGWChange]
+   [GemsSys::getSingleton] subscribe [itcl::code $this onODGWSizeChange]
+   onODGWSizeChange odgwSize
 }
 
 itcl::body WfsConfig::buildPageFrame {tabbook wfs label} {
@@ -614,4 +640,21 @@ itcl::body WfsConfig::onODGWChange {changeList} {
 			}
 		}
 	}
+}
+
+itcl::body WfsConfig::configureODGWSize {} {
+   set size [$itk_component(odgwsizesel) get]
+   if {![string is space $size]} {
+      [GemsSys::getSingleton] setODGWSize $size
+   }
+}
+
+itcl::body WfsConfig::onODGWSizeChange {changeList} {
+   foreach el $changeList {
+      switch $el {
+         odgwSize {
+            set size [[GemsSys::getSingleton] getODGWSize]
+            $itk_component(odgwCurrSize) configure -text $size         }
+      }
+   }
 }

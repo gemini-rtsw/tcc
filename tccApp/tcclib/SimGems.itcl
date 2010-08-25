@@ -60,6 +60,10 @@ public {
 	method setLGSWFSExposure {val}
 	method setSFSExposure {val}
 
+   #ODGW special commands
+   method setODGWSize { size }
+   method getODGWSize {}
+
 	#States
 	method getGemsActive {}
 	method getLoopsState {}
@@ -135,6 +139,8 @@ private {
 	variable laserProp OFF
 	
 	variable gemsActive OFF
+   
+   variable odgwSize 8
 	
 	variable loopsSettling 0
 	variable loopsClosed 0 
@@ -716,4 +722,12 @@ itcl::body SimGems::simEndMove { var value {reason ""} } {
 	} else {
 		notify $reason
 	}
+}
+
+itcl::body SimGems::setODGWSize { size } {
+   configCmd "ODGW Size" odgwSize $size
+}
+
+itcl::body SimGems::getODGWSize {} {
+   return $odgwSize
 }

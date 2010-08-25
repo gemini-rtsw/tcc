@@ -66,6 +66,10 @@ public {
 	method setLGSWFSExposure {val}
 	method setSFSExposure {val}
 
+   #ODGW special commands
+   method setODGWSize { size }
+   method getODGWSize {}
+
 	#States
 	method getGemsActive {}
 	method getLoopsState {}
@@ -996,4 +1000,16 @@ itcl::body RealGems::checkGemsActive {} {
 		return 1
 	}
 	return 0
+}
+
+#ODGW special commands
+itcl::body RealGems::setODGWSize { size } {
+   cs gems::odgwSetup set odgwSize $size
+   $logger logmess "gems::odgwSetup $size"
+   set lastCmdSys tcssad
+   catch {cs gems::odgwSetup post}
+}
+
+itcl::body RealGems::getODGWSize {} {
+   return [sa odgwsad get odgwSize value]
 }
