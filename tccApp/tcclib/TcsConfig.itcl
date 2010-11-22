@@ -51,6 +51,7 @@ itcl::class TcsConfig {
       variable slewOptions ""
       variable trackFrame ""
       variable instrument ""
+
    }
    private {
       variable current_field ""
@@ -128,6 +129,11 @@ itcl::body TcsConfig::apply {comp} {
    if { $gaos ne "" } {
 		logactions logmess "Applying Gaos Config: $gaos"
       ::GaosNames::$gaos apply $comp.gaos
+   }
+   set odgwSize [::FieldNames::$field cget -odgwSize]
+   if { [string match "*GSAOI*" $instrument] && $odgwSize ne "" } {
+      logactions logmess "Applying ODGW size: $odgwSize"
+      [GemsSys::getSingleton] setODGWSize $odgwSize 0
    }
 }
 

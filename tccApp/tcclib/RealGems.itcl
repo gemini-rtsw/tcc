@@ -67,7 +67,7 @@ public {
 	method setSFSExposure {val}
 
    #ODGW special commands
-   method setODGWSize { size }
+   method setODGWSize { size {apply 1} }
    method getODGWSize {}
 
 	#States
@@ -221,6 +221,7 @@ itcl::body RealGems::constructor {} {
 	sa odgwsad proc expMult2 [itcl::code $this onStatusChange]
 	sa odgwsad proc expMult3 [itcl::code $this onStatusChange]
 	sa odgwsad proc expMult4 [itcl::code $this onStatusChange]
+   sa odgwsad proc odgwSize [itcl::code $this onStatusChange]
 }
 
 itcl::body RealGems::destructor {} {
@@ -272,6 +273,7 @@ itcl::body RealGems::destructor {} {
 	sa odgwsad unproc expMult2 [itcl::code $this onStatusChange]
 	sa odgwsad unproc expMult3 [itcl::code $this onStatusChange]
 	sa odgwsad unproc expMult4 [itcl::code $this onStatusChange]
+   sa odgwsad unproc odgwSize [itcl::code $this onStatusChange]
 }
 
 itcl::body RealGems::slewReset {} {
@@ -967,6 +969,7 @@ itcl::body RealGems::onStatusChange {name alarm time value} {
 	odgwsad.expMult2 { lappend reasons odgwActive(2) }
 	odgwsad.expMult3 { lappend reasons odgwActive(3) }
 	odgwsad.expMult4 { lappend reasons odgwActive(4) }
+   odgwsad.odgwSize { lappend reasons odgwSize }
 	}
 	switch $name {
 	gemssad.lgsLoop -
@@ -1003,11 +1006,13 @@ itcl::body RealGems::checkGemsActive {} {
 }
 
 #ODGW special commands
-itcl::body RealGems::setODGWSize { size } {
+itcl::body RealGems::setODGWSize { size {apply 1}} {
    cs gems::odgwSetup set odgwSize $size
    $logger logmess "gems::odgwSetup $size"
    set lastCmdSys tcssad
-   catch {cs gems::odgwSetup post}
+   if { $apply } {
+      catch {cs gems::odgwSetup post}
+   }
 }
 
 itcl::body RealGems::getODGWSize {} {

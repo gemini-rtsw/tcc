@@ -240,7 +240,7 @@ itcl::body TcsConfigFile::createField {node} {
 	
 	# Configure the component from the child nodes of type param.
 	foreach node [dom::DOMImplementation selectNode $node \
-			descendant-or-self::node()/child::param] {
+			descendant-or-self::node()/child::param|paramset] {
 		fieldConf $component $node
 	}
 	
@@ -521,39 +521,61 @@ itcl::body TcsConfigFile::fieldConf {component node} {
 # Get the attribute name.
 	set name [dom::element getAttribute $node name]
 
+   if { [elementis $node param] } {
 # If the component has an option of that name.
-	if { ! [catch {$component cget -$name}] } {
-		switch $name {
-			sciencetarget {
-				set tagtarget [$component addTaggedTarget Base [$component cget -targetns]::[dom::element getAttribute $node value]]
-				$component setDefaultTarget $tagtarget
-			}
-			pwfs1target {
-				set tagtarget [$component addTaggedTarget PWFS1 [$component cget -targetns]::[dom::element getAttribute $node value]]
-				$component setDefaultTarget $tagtarget
-			}
-			pwfs2target {
-				set tagtarget [$component addTaggedTarget PWFS2 [$component cget -targetns]::[dom::element getAttribute $node value]]
-				$component setDefaultTarget $tagtarget
-			}
-			oiwfstarget {
-				set tagtarget [$component addTaggedTarget OIWFS [$component cget -targetns]::[dom::element getAttribute $node value]]
-				$component setDefaultTarget $tagtarget
-			}
-			aowfstarget {
-				set tagtarget [$component addTaggedTarget AOWFS [$component cget -targetns]::[dom::element getAttribute $node value]]
-				$component setDefaultTarget $tagtarget
-			}
-			default {
-				if { [catch {$component configure \
-						-$name [dom::element getAttribute $node value]} msg ]} {
-					if { [report $msg] } {
-						return 1
-					}
-				}
-			}
-		}
-	}
+   	if { ! [catch {$component cget -$name}] } {
+   		switch $name {
+   			sciencetarget {
+   				set tagtarget [$component addTaggedTarget Base [$component cget -targetns]::[dom::element getAttribute $node value]]
+   				$component setDefaultTarget $tagtarget
+   			}
+   			pwfs1target {
+   				set tagtarget [$component addTaggedTarget PWFS1 [$component cget -targetns]::[dom::element getAttribute $node value]]
+   				$component setDefaultTarget $tagtarget
+   			}
+   			pwfs2target {
+   				set tagtarget [$component addTaggedTarget PWFS2 [$component cget -targetns]::[dom::element getAttribute $node value]]
+   				$component setDefaultTarget $tagtarget
+   			}
+   			oiwfstarget {
+   				set tagtarget [$component addTaggedTarget OIWFS [$component cget -targetns]::[dom::element getAttribute $node value]]
+   				$component setDefaultTarget $tagtarget
+   			}
+   			aowfstarget {
+   				set tagtarget [$component addTaggedTarget AOWFS [$component cget -targetns]::[dom::element getAttribute $node value]]
+   				$component setDefaultTarget $tagtarget
+   			}
+   			default {
+   				if { [catch {$component configure \
+   						-$name [dom::element getAttribute $node value]} msg ]} {
+   					if { [report $msg] } {
+   						return 1
+   					}
+   				}
+   			}
+   		}
+   	}
+   } elseif { $name eq "guideConfig" } {
+      foreach subnode [dom::DOMImplementation selectNode $node \
+            {/descendant::node()/child::param|paramset}] {
+         set name [dom::element getAttribute $subnode name]
+         if { $name eq "guideWith" } {
+            if { [catch {$component configure \
+                   -guide "[dom::element getAttribute $subnode value]"} msg ]} {
+               if { [report $msg] } {
+                  return 1
+               }
+            }
+         } elseif { $name eq "size" } {
+            if { [catch {$component configure \
+                -odgwSize "[dom::element getAttribute $subnode value]"} msg ]} {
+               if { [report $msg] } {
+                  return 1
+               }
+            }
+         }
+      }
+   }
 }
 
 itcl::body TcsConfigFile::targetconf {field target node} {
