@@ -606,20 +606,34 @@ itcl::body GemsWidget::calcMagForWavelength {wavel mags brightness} {
 }
 
 itcl::body GemsWidget::calcMagForTarget {wavel target} {
-   set bands {{U 0.35} {B 0.43} {V 0.55} {UC 0.59} {R 0.64} {I 0.8} {Y 1.0} {J 1.25} {H 1.282} {K 2.2} {L 3.45} {M 4.7} {N 10.0} {Q 20.0} {AB 40.0} {Jy 80.0} }
+   set bands { {U 0.36} {B 0.44} {V 0.55} {UC 0.6} {R 0.67} {I 0.87} {Y 1.0} \
+               {J 1.25} {H 1.65} {K 2.2}  {L 3.8}  {M 4.8}  {N 10.5} {Q 20.5} }
    set brightness [$target cget -brightness]
    set targetBands  [$target getMagnitudeBands]
    set dummy {}
+   set magAB ""
+   set magJy ""
    
    foreach targetBand $targetBands {
-      foreach band $bands {
-         if { [lindex $band 0] eq $targetBand } {
-            lappend dummy [list [lindex $band 1] [$target getMagnitude $targetBand]]
-            break
+      if { $targetBand eq "AB" } {\
+         set magAB [$target getMagnitude AB ]
+      } elseif { $targetBand eq "Jy" } {\
+         set magAB [$target getMagnitude Jy ]
+      } else {
+         foreach band $bands {
+            if { [lindex $band 0] eq $targetBand } {
+               lappend dummy [list [lindex $band 1] [$target getMagnitude $targetBand]]
+               break
+            }
          }
       }
    }
-   return [calcMagForWavelength $wavel $dummy $brightness]
+   if { [llength $dummy] > 0 } {
+      return [calcMagForWavelength $wavel $dummy $brightness]
+   } elseif { $magAB ne "" } {
+      return $magAB
+   }
+   return $magJy
 }
 
 itcl::body GemsWidget::lookup { val lut {index 0} } {
