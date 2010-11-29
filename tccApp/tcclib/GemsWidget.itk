@@ -451,7 +451,7 @@ itcl::body GemsWidget::onFieldChange {name1 name2 op} {
    if { [llength [itcl::find objects $fieldname] ] > 0 } {
       setFieldSubscription $fieldname
       onTargetChange { ttgs3target odgw1target odgw2target odgw3target \
-         odgw3target }
+         odgw4target }
    }
 }
 
@@ -462,7 +462,7 @@ itcl::body GemsWidget::onTargetChange {changes} {
          odgw1target { onODGW1Change }
          odgw2target { onODGW2Change }
          odgw3target { onODGW3Change }
-         odgw3target { onODGW4Change }
+         odgw4target { onODGW4Change }
       }
    }
 }
@@ -493,24 +493,88 @@ itcl::body GemsWidget::onTTGS3Change {} {
    }
    if { [llength [itcl::find objects $target] ] > 0 } {
       set mag [calcMagForTarget 0.65 $target]
-      set index [nearest $mag $sfsExpLUT ]
-      [$itk_component(sfs) component exp] selection set $index
+      if { [string is double -strict $mag] } {
+         set index [nearest $mag $sfsExpLUT ]
+         [$itk_component(sfs) component exp] selection set $index
+      }
    }
 }
 
 itcl::body GemsWidget::onODGW1Change {} {
-   
+   set tagtarget [$linkedField getDefaultTarget ODGW1]
+   if { $tagtarget ne "" } {
+      set target [$tagtarget cget -target]
+   } else {
+      set target ""
+   }
+   if { [llength [itcl::find objects $target] ] > 0 } {
+      set wavel ::WavelengthNames::[$linkedField cget -wavelength]
+      if { [llength [itcl::find objects $target] ] > 0 } {
+         set mag [calcMagForTarget [$wavel cget -wavel] $target]
+         if { [string is double -strict $mag] } {
+            set index [nearest $mag $odgwExpLUT ]
+            [$itk_component(odgw1) component exp] selection set $index
+         }
+      }
+   }
 }
 
 itcl::body GemsWidget::onODGW2Change {} {
-   
+   set tagtarget [$linkedField getDefaultTarget ODGW2]
+   if { $tagtarget ne "" } {
+      set target [$tagtarget cget -target]
+   } else {
+      set target ""
+   }
+   if { [llength [itcl::find objects $target] ] > 0 } {
+      set wavel ::WavelengthNames::[$linkedField cget -wavelength]
+      if { [llength [itcl::find objects $target] ] > 0 } {
+         set mag [calcMagForTarget [$wavel cget -wavel] $target]
+         if { [string is double -strict $mag] } {
+            set index [nearest $mag $odgwExpLUT ]
+            [$itk_component(odgw2) component exp] selection set $index
+         }
+      }
+   }
 }
 
 itcl::body GemsWidget::onODGW3Change {} {
+   set tagtarget [$linkedField getDefaultTarget ODGW3]
+   if { $tagtarget ne "" } {
+      set target [$tagtarget cget -target]
+   } else {
+      set target ""
+   }
+   if { [llength [itcl::find objects $target] ] > 0 } {
+      set wavel ::WavelengthNames::[$linkedField cget -wavelength]
+      if { [llength [itcl::find objects $target] ] > 0 } {
+         set mag [calcMagForTarget [$wavel cget -wavel] $target]
+         if { [string is double -strict $mag] } {
+            set index [nearest $mag $odgwExpLUT ]
+            [$itk_component(odgw3) component exp] selection set $index
+         }
+      }
+   }
    
 }
 
 itcl::body GemsWidget::onODGW4Change {} {
+   set tagtarget [$linkedField getDefaultTarget ODGW4]
+   if { $tagtarget ne "" } {
+      set target [$tagtarget cget -target]
+   } else {
+      set target ""
+   }
+   if { [llength [itcl::find objects $target] ] > 0 } {
+      set wavel ::WavelengthNames::[$linkedField cget -wavelength]
+      if { [llength [itcl::find objects $target] ] > 0 } {
+         set mag [calcMagForTarget [$wavel cget -wavel] $target]
+         if { [string is double -strict $mag] } {
+            set index [nearest $mag $odgwExpLUT ]
+            [$itk_component(odgw4) component exp] selection set $index
+         }
+      }
+   }
    
 }
 
