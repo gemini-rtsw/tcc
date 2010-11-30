@@ -129,6 +129,8 @@ itcl::class Field {
 		method getSwapTarget {}
 		method subscribe {observer}
       method unsubscribe {observer}
+      
+      common cwfsWavelength 0.65
 	}
    private {
       variable current_sciencetarget ""
@@ -305,27 +307,21 @@ itcl::body Field::apply {comp} {
 								if { $guide != ""} { 
 									"::GuideNames::$guide" applyGems g${gId}
 								}
-								#HACK: until Canopus wavel are defined
-								set wavel ["::WavelengthNames::Acq Cam neutral" cget -wavel]
-								cs wavelG${gId} set wavel $wavel
+								cs wavelG${gId} set wavel $cwfsWavelength
 							}
 							CWFS2 {
 								cs guidersMapping set G${gId}guider TTGS2
 								if { $guide != ""} {								
 									"::GuideNames::$guide" applyGems g${gId}
 								}
-								#HACK: until Canopus wavel are defined
-								set wavel ["::WavelengthNames::Acq Cam neutral" cget -wavel]
-								cs wavelG${gId} set wavel $wavel
+								cs wavelG${gId} set wavel $cwfsWavelength
 							}
 							CWFS3 {
 								cs guidersMapping set G${gId}guider TTGS3
 								if { $guide != ""} {
 									"::GuideNames::$guide" applyGems g${gId}
 								}
-								#HACK: until Canopus wavel are defined
-								set wavel ["::WavelengthNames::Acq Cam neutral" cget -wavel]
-								cs wavelG${gId} set wavel $wavel
+								cs wavelG${gId} set wavel $cwfsWavelength
 							}
 							ODGW1 -
 							ODGW2 -
