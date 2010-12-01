@@ -158,6 +158,8 @@ itcl::body RealGems::constructor {} {
 	epics cs gems::sfsObserve
 	epics cs gems::sfsStopObserve
 	epics cs gems::odgwSetup
+   epics cs gems::odgwGuide
+   epics cs gems::odgwEndGuide
 	epics sa gemssad
 	epics sa aomsad
 	epics sa rtcsad
@@ -222,6 +224,7 @@ itcl::body RealGems::constructor {} {
 	sa odgwsad proc expMult3 [itcl::code $this onStatusChange]
 	sa odgwsad proc expMult4 [itcl::code $this onStatusChange]
    sa odgwsad proc odgwSize [itcl::code $this onStatusChange]
+   sa odgwsad proc notGuiding [itcl::code $this onStatusChange]
 }
 
 itcl::body RealGems::destructor {} {
@@ -535,9 +538,16 @@ itcl::body RealGems::startODGW {idList} {
       set logmult "$logmult $id:$mult"
    }
    cs gems::odgwSetup set baseExpTime $odgwBaseExpTime
+
    $logger logmess "gems::odgwSetup $odgwBaseExpTime $logmult"
-	set lastCmdSys odgwsad
+	set lastCmdSys applyC
+   
+   #TODO review timing
 	catch {cs gems::odgwSetup post}
+   if { [sa odgwsad get notGuiding value] } {
+      catch {cs gems::odgwGuide set command MARK}
+      catch {cs gems::odgwGuide set command START}
+   }
 }
 
 itcl::body RealGems::stopODGW {idList} {
@@ -547,8 +557,23 @@ itcl::body RealGems::stopODGW {idList} {
       set logmsg "$logmsg $id:0"
    }
 	$logger logmess "gems::odgwSetup $logmsg"
-	set lastCmdSys odgwsad
+	set lastCmdSys applyC
+   
+   #TODO review timing
 	catch {cs gems::odgwSetup post}
+   if { ![sa odgwsad get notGuiding value] } {
+      set noneActive 1
+      foreach field {expMult1 expMult2 expMult3 expMult4} {
+         if { [sa odgwsad get $field value] > 0 } {
+            set noneActive 0
+            break
+         }
+      }
+      if { $noneActive } { 
+         catch {cs gems::odgwEndGuide set command MARK}
+         catch {cs gems::odgwEndGuide set command START}
+      }
+   }
 }
 
 itcl::body RealGems::startTTWFS {idList} {
@@ -737,7 +762,7 @@ itcl::body RealGems::getTTLoopSources {} {
 }
 
 itcl::body RealGems::getODGWActive {id} {
-	if { [ sa odgwsad get expMult${id} value] > 0 } {
+	if { ![ sa odgwsad get notGuiding value] && [ sa odgwsad get expMult${id} value] > 0 } {
 		return ON
 	}
 	return OFF
@@ -970,6 +995,7 @@ itcl::body RealGems::onStatusChange {name alarm time value} {
 	odgwsad.expMult3 { lappend reasons odgwActive(3) }
 	odgwsad.expMult4 { lappend reasons odgwActive(4) }
    odgwsad.odgwSize { lappend reasons odgwSize }
+   odgwsad.notGuiding { lappend reasons odgwActive(1) odgwActive(2) odgwActive(3) odgwActive(4) }
 	}
 	switch $name {
 	gemssad.lgsLoop -
@@ -1009,7 +1035,7 @@ itcl::body RealGems::checkGemsActive {} {
 itcl::body RealGems::setODGWSize { size {apply 1}} {
    cs gems::odgwSetup set odgwSize $size
    $logger logmess "gems::odgwSetup $size"
-   set lastCmdSys tcssad
+   set lastCmdSys applyC
    if { $apply } {
       catch {cs gems::odgwSetup post}
    }

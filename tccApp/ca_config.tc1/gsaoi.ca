@@ -36,14 +36,23 @@ command gsaoi::abort gsaoi::dcapply Abort observation
 
 command gsaoi::pause gsaoi::dcapply Pause observation
 {
-   dummy      gsaoi:dc:pause.A
+   dummy      gsaoi:dc:pause.A                         Dummy
 }
 
 command gsaoi::continue gsaoi::dcapply Continue observation
 {
-   dummy      gsaoi:dc:continue.A
+   dummy      gsaoi:dc:continue.A                      Dummy
 }
 
+command gsaoi::guide gsaoi::dcapply Continue observation
+{
+   dir      gsaoi:dc:guide.DIR                         DIR
+}
+
+command gsaoi::endGuide gsaoi::dcapply Continue observation
+{
+   dir      gsaoi:dc:endGuide.DIR                      DIR
+}
 
 command gsaoi::config gsaoi::apply Setup a Configuration
 {
@@ -68,7 +77,6 @@ command gsaoi::dcconfig gsaoi::dcapply Setup a DC Configuration
 	#readMode			     gsaoi:dc:obs_readMode   Read mode (DCS|FOWLER|SINGLE)	
  	#numberOfResets  	  gsaoi:dc:obs_nresets    Number of resets
 	#numberOfFowSamples  gsaoi:dc:obs_nfowler    Number of fowler samples
-		
 }
 
 
@@ -111,4 +119,5 @@ status gsaoi::dcstatus gsaoi status
 	timeMode			gsaoi:sad:dc:obs_timeMode   0 	Which variable (0=exposure time, 1=period, 2=nr of periods) to calculate
    countdown    gsaoi:sad:dc:s_obs_timeLeft    0    countdown
    dhcConnected gsaoi:sad:dc:dhsConnO    0    dhs connection
+   notGuiding     gsaoi:sad:dc:guiding.VAL 0 ODGW (not) guiding 
 }

@@ -11,6 +11,7 @@ apply gems::aomApply aom:apply aom:activeC Primary GeMS Apply Record
 apply gems::mystApply myst:apply myst:applyC Primary Myst Apply Record
 apply gems::rtcApply rtc:apply rtc:applyC Primary RTC Apply Record
 apply gems::sfsApply sfs:apply sfs:applyC Primary SFS Apply Record
+apply gems::odgwApply gsaoi:dc:apply gsaoi:dc:applyC GSAOI DC Apply Record
 
 command gems::adcMech gems::aomApply ADC Control
 {
@@ -98,6 +99,7 @@ status odgwsad
 	counts4		gsaoi:sad:dc:gdr_count4.VAL 0 Counts for ODGW4
    
    odgwSize   gsaoi:sad:dc:d_gdr_winSizeS.VAL 0 ODGW size
+	notGuiding     gsaoi:sad:dc:guiding.VAL 0 ODGW (not) guiding 	
 }
 
 status aomsad
@@ -255,4 +257,14 @@ command gems::odgwSetup tcsApply ODGW exposure setup
 	expMult3		tcs:gsaoiodgwSetup.I 0 Exposure multiplier for ODGW3
 	expMult4		tcs:gsaoiodgwSetup.J 0 Exposure multiplier for ODGW4
    odgwSize    tcs:gsaoiodgwSetup.K 0 ODGW size
+}
+
+command gems::odgwGuide gems::odgwApply ODGW start exposure
+{
+   command gsaoi:dc:guide.DIR ODGW start command
+}
+
+command gems::odgwEndGuide gems::odgwApply ODGW start exposure
+{
+   command gsaoi:dc:endGuide.DIR ODGW stop command
 }
