@@ -540,7 +540,7 @@ itcl::body RealGems::startODGW {idList} {
    cs gems::odgwSetup set baseExpTime $odgwBaseExpTime
 
    $logger logmess "gems::odgwSetup $odgwBaseExpTime $logmult"
-	set lastCmdSys applyC
+	set lastCmdSys odgwsad
    
    #TODO review timing
 	catch {cs gems::odgwSetup post}
@@ -557,11 +557,11 @@ itcl::body RealGems::stopODGW {idList} {
       set logmsg "$logmsg $id:0"
    }
 	$logger logmess "gems::odgwSetup $logmsg"
-	set lastCmdSys applyC
+	set lastCmdSys odgwsad
    
    #TODO review timing
 	catch {cs gems::odgwSetup post}
-   if { ![sa odgwsad get notGuiding value] } {
+   if { [sa odgwsad get notGuiding value] == 0 } {
       set noneActive 1
       foreach field {expMult1 expMult2 expMult3 expMult4} {
          if { [sa odgwsad get $field value] > 0 } {
@@ -762,7 +762,7 @@ itcl::body RealGems::getTTLoopSources {} {
 }
 
 itcl::body RealGems::getODGWActive {id} {
-	if { ![ sa odgwsad get notGuiding value] && [ sa odgwsad get expMult${id} value] > 0 } {
+	if { [ sa odgwsad get notGuiding value] == 0 && [ sa odgwsad get expMult${id} value] > 0 } {
 		return ON
 	}
 	return OFF
