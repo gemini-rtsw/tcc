@@ -283,18 +283,6 @@ itcl::body TcsControl::constructor args {
 			ApplyButton $w.ngs3datum -command ngsPr3Ctrl -text Datum \
 				-state disabled -parcommand [itcl::code $this ngsDatum]
 		}
-		itk_component add odgw1datum {
-				ApplyButton $w.odgw1datum -command odgw1Datum -text Datum -state disabled
-		}
-		itk_component add odgw2datum {
-				ApplyButton $w.odgw2datum -command odgw2Datum -text Datum -state disabled
-		}
-		itk_component add odgw3datum {
-				ApplyButton $w.odgw3datum -command odgw3Datum -text Datum -state disabled
-		}
-		itk_component add odgw4datum {
-				ApplyButton $w.odgw4datum -command odgw4Datum -text Datum -state disabled
-		}
    }
 #   itk_component add aodatum {
 #      ApplyButton $w.aodatum -command aoDatum -text Unpark
@@ -402,14 +390,19 @@ itcl::body TcsControl::constructor args {
 			-sticky ew -padx 5 -pady 1
 		grid $itk_component(ngs3) $itk_component(ngs3datum) $itk_component(ngs3park) \
 			-sticky ew -padx 5 -pady 1
-		grid $itk_component(odgw1) $itk_component(odgw1datum) $itk_component(odgw1park) \
-			-sticky ew -padx 5 -pady 1
-		grid $itk_component(odgw2) $itk_component(odgw2datum) $itk_component(odgw2park) \
-			-sticky ew -padx 5 -pady 1
-		grid $itk_component(odgw3) $itk_component(odgw3datum) $itk_component(odgw3park) \
-			-sticky ew -padx 5 -pady 1
-		grid $itk_component(odgw4) $itk_component(odgw4datum) $itk_component(odgw4park) \
-			-sticky ew -padx 5 -pady 1
+		grid $itk_component(odgw1) $itk_component(odgw1park) 
+		grid $itk_component(odgw1) -column 0 -sticky e -padx 5 -pady 1
+		grid $itk_component(odgw1park) -column 2 -sticky w -padx 5 -pady 1
+      grid $itk_component(odgw2) $itk_component(odgw2park) 
+      grid $itk_component(odgw2) -column 0 -sticky e -padx 5 -pady 1
+      grid $itk_component(odgw2park) -column 2 -sticky w -padx 5 -pady 1
+      grid $itk_component(odgw3) $itk_component(odgw3park) 
+      grid $itk_component(odgw3) -column 0 -sticky e -padx 5 -pady 1
+      grid $itk_component(odgw3park) -column 2 -sticky w -padx 5 -pady 1
+      grid $itk_component(odgw4) $itk_component(odgw4park) 
+      grid $itk_component(odgw4) -column 0 -sticky e -padx 5 -pady 1
+      grid $itk_component(odgw4park) -column 2 -sticky w -padx 5 -pady 1
+
 	}
    grid $itk_component(alarm) - - \
          -sticky ew -padx 10 -pady 3
@@ -931,10 +924,6 @@ itcl::body TcsControl::lockIndex {} {
 			$itk_component(ngs1datum) configure -state [checkState $itk_component(ngs1datum) ]
 			$itk_component(ngs2datum) configure -state [checkState $itk_component(ngs2datum) ]
 			$itk_component(ngs3datum) configure -state [checkState $itk_component(ngs3datum) ]
-			$itk_component(odgw1datum) configure -state [checkState $itk_component(odgw1datum) ]
-			$itk_component(odgw2datum) configure -state [checkState $itk_component(odgw2datum) ]
-			$itk_component(odgw3datum) configure -state [checkState $itk_component(odgw3datum) ]
-			$itk_component(odgw4datum) configure -state [checkState $itk_component(odgw4datum) ]
 		}
 	} else {
 		$itk_component(mcsdatum) configure -state disabled
@@ -951,10 +940,6 @@ itcl::body TcsControl::lockIndex {} {
 			$itk_component(ngs1datum) configure -state disabled
 			$itk_component(ngs2datum) configure -state disabled
 			$itk_component(ngs3datum) configure -state disabled
-			$itk_component(odgw1datum) configure -state disabled
-			$itk_component(odgw2datum) configure -state disabled
-			$itk_component(odgw3datum) configure -state disabled
-			$itk_component(odgw4datum) configure -state disabled
 		}
 	}
 }
