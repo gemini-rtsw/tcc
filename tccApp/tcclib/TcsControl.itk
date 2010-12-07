@@ -205,6 +205,38 @@ itcl::body TcsControl::constructor args {
 					-offvalue {OFF Off Disabled} \
 					-sadrecord {agssad ngs3Follow}
 		}
+		itk_component add odgw1 {
+			OnOffButton $w.odgw1 -text ODGW1 \
+					-oncommand {odgw1Follow followState On } \
+					-offcommand {odgw1Follow followState Off } \
+					-onvalue {ON On Enabled} \
+					-offvalue {OFF Off Disabled} \
+					-sadrecord {agssad odgw1Follow}
+		}
+		itk_component add odgw2 {
+			OnOffButton $w.odgw2 -text ODGW2 \
+					-oncommand {odgw2Follow followState On } \
+					-offcommand {odgw2Follow followState Off } \
+					-onvalue {ON On Enabled} \
+					-offvalue {OFF Off Disabled} \
+					-sadrecord {agssad odgw2Follow}
+		}
+		itk_component add odgw3 {
+			OnOffButton $w.odgw3 -text ODGW3 \
+					-oncommand {odgw3Follow followState On } \
+					-offcommand {odgw3Follow followState Off } \
+					-onvalue {ON On Enabled} \
+					-offvalue {OFF Off Disabled} \
+					-sadrecord {agssad odgw3Follow}
+		}
+		itk_component add odgw4 {
+			OnOffButton $w.odgw4 -text ODGW4 \
+					-oncommand {odgw4Follow followState On } \
+					-offcommand {odgw4Follow followState Off } \
+					-onvalue {ON On Enabled} \
+					-offvalue {OFF Off Disabled} \
+					-sadrecord {agssad odgw4Follow}
+		}
    }
 
 # Commands for datuming, initing or unparking mechanisms.
@@ -250,6 +282,18 @@ itcl::body TcsControl::constructor args {
 		itk_component add ngs3datum {
 			ApplyButton $w.ngs3datum -command ngsPr3Ctrl -text Datum \
 				-state disabled -parcommand [itcl::code $this ngsDatum]
+		}
+		itk_component add odgw1datum {
+				ApplyButton $w.odgw1datum -command odgw1Datum -text Datum -state disabled
+		}
+		itk_component add odgw2datum {
+				ApplyButton $w.odgw2datum -command odgw2Datum -text Datum -state disabled
+		}
+		itk_component add odgw3datum {
+				ApplyButton $w.odgw3datum -command odgw3Datum -text Datum -state disabled
+		}
+		itk_component add odgw4datum {
+				ApplyButton $w.odgw4datum -command odgw4Datum -text Datum -state disabled
 		}
    }
 #   itk_component add aodatum {
@@ -299,6 +343,18 @@ itcl::body TcsControl::constructor args {
 			ApplyButton $w.ngs3park -command ngsPr3Ctrl -text Park -state disabled \
 				-parcommand [itcl::code $this ngsPark]
 		}
+		itk_component add odgw1park {
+			ApplyButton $w.odgw1park -command odgw1Park -text Park -state disabled
+		}
+		itk_component add odgw2park {
+			ApplyButton $w.odgw2park -command odgw2Park -text Park -state disabled
+		}
+		itk_component add odgw3park {
+			ApplyButton $w.odgw3park -command odgw3Park -text Park -state disabled
+		}
+		itk_component add odgw4park {
+			ApplyButton $w.odgw4park -command odgw4Park -text Park -state disabled
+		}
 	}
 
 # implement locks for the index and park columns
@@ -345,6 +401,14 @@ itcl::body TcsControl::constructor args {
 		grid $itk_component(ngs2) $itk_component(ngs2datum) $itk_component(ngs2park) \
 			-sticky ew -padx 5 -pady 1
 		grid $itk_component(ngs3) $itk_component(ngs3datum) $itk_component(ngs3park) \
+			-sticky ew -padx 5 -pady 1
+		grid $itk_component(odgw1) $itk_component(odgw1datum) $itk_component(odgw1park) \
+			-sticky ew -padx 5 -pady 1
+		grid $itk_component(odgw2) $itk_component(odgw2datum) $itk_component(odgw2park) \
+			-sticky ew -padx 5 -pady 1
+		grid $itk_component(odgw3) $itk_component(odgw3datum) $itk_component(odgw3park) \
+			-sticky ew -padx 5 -pady 1
+		grid $itk_component(odgw4) $itk_component(odgw4datum) $itk_component(odgw4park) \
 			-sticky ew -padx 5 -pady 1
 	}
    grid $itk_component(alarm) - - \
@@ -867,6 +931,10 @@ itcl::body TcsControl::lockIndex {} {
 			$itk_component(ngs1datum) configure -state [checkState $itk_component(ngs1datum) ]
 			$itk_component(ngs2datum) configure -state [checkState $itk_component(ngs2datum) ]
 			$itk_component(ngs3datum) configure -state [checkState $itk_component(ngs3datum) ]
+			$itk_component(odgw1datum) configure -state [checkState $itk_component(odgw1datum) ]
+			$itk_component(odgw2datum) configure -state [checkState $itk_component(odgw2datum) ]
+			$itk_component(odgw3datum) configure -state [checkState $itk_component(odgw3datum) ]
+			$itk_component(odgw4datum) configure -state [checkState $itk_component(odgw4datum) ]
 		}
 	} else {
 		$itk_component(mcsdatum) configure -state disabled
@@ -883,6 +951,10 @@ itcl::body TcsControl::lockIndex {} {
 			$itk_component(ngs1datum) configure -state disabled
 			$itk_component(ngs2datum) configure -state disabled
 			$itk_component(ngs3datum) configure -state disabled
+			$itk_component(odgw1datum) configure -state disabled
+			$itk_component(odgw2datum) configure -state disabled
+			$itk_component(odgw3datum) configure -state disabled
+			$itk_component(odgw4datum) configure -state disabled
 		}
 	}
 }
@@ -903,6 +975,10 @@ itcl::body TcsControl::lockPark {} {
 			$itk_component(ngs1park) configure -state [checkState $itk_component(ngs1park) ]
 			$itk_component(ngs2park) configure -state [checkState $itk_component(ngs2park) ]
 			$itk_component(ngs3park) configure -state [checkState $itk_component(ngs3park) ]
+			$itk_component(odgw1park) configure -state [checkState $itk_component(odgw1park) ]
+			$itk_component(odgw2park) configure -state [checkState $itk_component(odgw2park) ]
+			$itk_component(odgw3park) configure -state [checkState $itk_component(odgw3park) ]
+			$itk_component(odgw4park) configure -state [checkState $itk_component(odgw4park) ]
 		}
 	} else {
 		$itk_component(mcspark) configure -state disabled
@@ -919,6 +995,10 @@ itcl::body TcsControl::lockPark {} {
 			$itk_component(ngs1park) configure -state disabled
 			$itk_component(ngs2park) configure -state disabled
 			$itk_component(ngs3park) configure -state disabled
+			$itk_component(odgw1park) configure -state disabled
+			$itk_component(odgw2park) configure -state disabled
+			$itk_component(odgw3park) configure -state disabled
+			$itk_component(odgw4park) configure -state disabled
 		}
 	}
 }
