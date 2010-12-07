@@ -38,6 +38,7 @@ public {
 	method pauseLoops {why}
 	method resumeLoops {}
 	method stopLoops {}
+   method setupLoops {loopList sources}
 	
 	#Loop configuration
 	method configureTTLoop {sources}
@@ -128,6 +129,8 @@ private {
 	
 	method onStatusChange {name alarm time value}
 	method checkGemsActive {}
+   method waitForCmdIdle {{timeout 1000}}
+   method setTTLoopInputs {sources}
 }
 }
 
@@ -423,6 +426,13 @@ itcl::body RealGems::stopLoops {} {
 
 #Loop configuration
 itcl::body RealGems::configureTTLoop {sources} {
+   set lastCmdSys gemssad
+   if { [setTTLoopInputs] } {
+      catch {cs gems::ngsConfig post}
+   } 
+}
+
+itcl::body RealGems::setTTLoopInputs {sources} {
 	foreach wfs {ngs1 ngs2 ngs3 odgs1 odgs2 odgs3 odgs4 oigs} {
 		cs gems::ngsConfig set $wfs "NotUsed"
 		after 200
@@ -464,9 +474,8 @@ itcl::body RealGems::configureTTLoop {sources} {
 		}
 	}
 	$logger logmess "gems::ngsConfig $sources"
-	set lastCmdSys gemssad
-	catch {cs gems::ngsConfig post}	
-#	cs gems::ngsConfig post	
+   
+   return 1
 }
 
 #Astrometry
@@ -543,10 +552,16 @@ itcl::body RealGems::startODGW {idList} {
 	set lastCmdSys odgwsad
    
    #TODO review timing
+   set startGuide [sa odgwsad get notGuiding value]
 	catch {cs gems::odgwSetup post}
-   if { [sa odgwsad get notGuiding value] } {
-      catch {cs gems::odgwGuide set command MARK}
-      catch {cs gems::odgwGuide set command START}
+   if { $startGuide} {
+      after 500
+      if { [waitForCmdIdle 10000] eq "ok"} {
+         puts "RealGems::startODGW sending Guide"
+         catch {cs gems::odgwGuide set command MARK}
+         after 100
+         catch {cs gems::odgwGuide set command START}
+      }
    }
 }
 
@@ -561,19 +576,20 @@ itcl::body RealGems::stopODGW {idList} {
    
    #TODO review timing
 	catch {cs gems::odgwSetup post}
-   if { [sa odgwsad get notGuiding value] == 0 } {
-      set noneActive 1
-      foreach field {expMult1 expMult2 expMult3 expMult4} {
-         if { [sa odgwsad get $field value] > 0 } {
-            set noneActive 0
-            break
-         }
-      }
-      if { $noneActive } { 
-         catch {cs gems::odgwEndGuide set command MARK}
-         catch {cs gems::odgwEndGuide set command START}
-      }
-   }
+# Not need to call endGuide, guiding stops automatically if all expMult go to 0.
+#   if { [sa odgwsad get notGuiding value] == 0 } {
+#      set noneActive 1
+#      foreach field {expMult1 expMult2 expMult3 expMult4} {
+#         if { [sa odgwsad get $field value] > 0 } {
+#            set noneActive 0
+#            break
+#         }
+#      }
+#      if { $noneActive } { 
+#         catch {cs gems::odgwEndGuide set command MARK}
+#         catch {cs gems::odgwEndGuide set command START}
+#      }
+#   }
 }
 
 itcl::body RealGems::startTTWFS {idList} {
@@ -1043,4 +1059,119 @@ itcl::body RealGems::setODGWSize { size {apply 1}} {
 
 itcl::body RealGems::getODGWSize {} {
    return [sa odgwsad get odgwSize value]
+}
+
+itcl::body RealGems::waitForCmdIdle {{timeout 1000}} {
+   set elapsedTime 0
+   while {$timeout==0 || $elapsedTime<$timeout} {
+      if {[getCommandState] eq "IDLE"} {
+         return ok
+      } elseif {[getCommandState] eq "ERROR"} {
+         return error
+      }
+      after 100
+      set elapsedTime [expr $elapsedTime + 100]
+      update
+   }
+   return timeout
+}
+
+itcl::body RealGems::setupLoops {loopList sources} {
+   puts "RealGems::setupLoops $loopList $sources"
+   set change [setTTLoopInputs $sources]
+   
+   if { [lsearch $loopList lwfs] >= 0 } {
+      if { [getLGSLoopState] ne "CLOSED" } {
+         cs gems::lgsLoopCtrl set cmd START
+         set change 1
+      }
+   } else {
+      if { [getLGSLoopState] eq "CLOSED" } {
+         cs gems::lgsLoopCtrl set cmd STOP
+         set change 1
+      }
+   }
+   if { [lsearch $loopList ani] >= 0 } {
+      if { [getAniLoopState] ne "CLOSED" } {
+         cs gems::taLoopCtrl set cmd START
+         set change 1
+      }
+   } else {
+      if { [getAniLoopState] eq "CLOSED" } {
+         cs gems::taLoopCtrl set cmd STOP
+         set change 1
+      }
+   }
+   if { [lsearch $loopList tt] >= 0 } {
+      if { [getTTLoopState] ne "CLOSED" } {
+         cs gems::ttLoopCtrl set cmd START
+         set change 1
+      }
+   } else {
+      if { [getTTLoopState] eq "CLOSED" } {
+         cs gems::ttLoopCtrl set cmd STOP
+         set change 1
+      }
+   }
+   if { [lsearch $loopList flex] >= 0 } {
+      if { [getFlexLoopState] ne "CLOSED" } {
+         cs gems::flexLoopCtrl set cmd START
+         set change 1
+      }
+   } else {
+      if { [getFlexLoopState] eq "CLOSED" } {
+         cs gems::flexLoopCtrl set cmd STOP
+         set change 1
+      }
+   }
+   if { [lsearch $loopList sfs] >= 0 } {
+      puts "RealGems::setupLoops sfs found, current state is [getFocLoopState]"
+      if { [getFocLoopState] ne "CLOSED" } {
+         cs gems::focLoopCtrl set cmd START
+         set change 1
+      }
+   } else {
+      puts "RealGems::setupLoops sfs not found, current state is [getFocLoopState]"
+      if { [getFocLoopState] eq "CLOSED" } {
+         cs gems::focLoopCtrl set cmd STOP
+         set change 1
+      }
+   }
+   if { [lsearch $loopList m1] >= 0 } {
+      if { [getM1OffloadState] ne "START" } {
+         cs gems::m1OffloadCtrl set cmd START
+         set change 1
+      }
+   } else {
+      if { [getM1OffloadState] eq "START" } {
+         cs gems::m1OffloadCtrl set cmd STOP
+         set change 1
+      }
+   }
+   if { [lsearch $loopList m2] >= 0 } {
+      if { [getM2OffloadState] ne "START" } {
+         cs gems::m2OffloadCtrl set cmd START
+         set change 1
+      }
+   } else {
+      if { [getM2OffloadState] eq "START" } {
+         cs gems::m2OffloadCtrl set cmd STOP
+         set change 1
+      }
+   }
+   if { [lsearch $loopList rot] >= 0 } {
+      if { [getRotOffloadState] ne "START" } {
+         cs gems::crLoopCtrl set cmd START
+         set change 1
+      }
+   } else {
+      if { [getRotOffloadState] eq "START" } {
+         cs gems::crLoopCtrl set cmd STOP
+         set change 1
+      }
+   }
+   set lastCmdSys gemssad
+   if { $change } {
+      catch {cs gems::lgsLoopCtrl post}
+   }
 }

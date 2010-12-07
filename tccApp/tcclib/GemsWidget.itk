@@ -90,16 +90,16 @@ itcl::body GemsWidget::constructor {args} {
 	itk_component add buttonframeleft {
 		frame $w.buttonframe.left -background white 
 	}
-	itk_component add ttgsloop {
-		ToggleButton $w.buttonframe.left.ttgsloop -text TTGS \
+	itk_component add aniloop {
+		ToggleButton $w.buttonframe.left.aniloop -text ANI \
 			-pushedbackground Green -pady 0  -width 6
 	} {ignore -width }
-	itk_component add odgwloop {
-		ToggleButton $w.buttonframe.right.odgwloop -text ODGW \
+	itk_component add ttloop {
+		ToggleButton $w.buttonframe.right.ttloop -text TT \
 			-pushedbackground Green -pady 0 -width 6
 	} {ignore -width }
-	itk_component add oiloop {
-		ToggleButton $w.buttonframe.left.oiloop -text OI -pushedbackground Green \
+	itk_component add flexloop {
+		ToggleButton $w.buttonframe.left.flexloop -text FLEX -pushedbackground Green \
 			-pady 0 -width 6
 	} {ignore -width }
 	itk_component add sfsloop {
@@ -114,8 +114,8 @@ itcl::body GemsWidget::constructor {args} {
 	[$itk_component(lgswfs) component exp] configure -width 4
 	$itk_component(lgswfs) switchPush
 	$itk_component(lgswfs) configure -onswitchpress "if \{\[$itk_component(lgswfs) switchGet\] eq \"popped\" \} \{[$itk_component(lgswfs) component onoff] mark \}"
-	pack $itk_component(ttgsloop) $itk_component(oiloop) -side top -anchor w
-	pack $itk_component(sfsloop) $itk_component(odgwloop) -side top -anchor e
+	pack $itk_component(aniloop) $itk_component(flexloop) -side top -anchor w
+	pack $itk_component(sfsloop) $itk_component(ttloop) -side top -anchor e
 	pack $itk_component(buttonframeright) -side right
 	pack $itk_component(buttonframeleft) -side left
 	pack $itk_component(lgswfs) -padx 2 -pady 2
@@ -248,10 +248,10 @@ itcl::body GemsWidget::init {} {
 
 itcl::body GemsWidget::reset {} {
 	$itk_component(gaoson) pop
-   $itk_component(ttgsloop) pop
-   $itk_component(oiloop) pop
+   $itk_component(ttloop) pop
+   $itk_component(flexloop) pop
 	$itk_component(sfsloop) pop
-	$itk_component(odgwloop) pop
+	$itk_component(aniloop) pop
 	$itk_component(can1) switchPop
 	$itk_component(can2) switchPop
 	$itk_component(can3) switchPop
@@ -264,7 +264,7 @@ itcl::body GemsWidget::reset {} {
 }
 
 itcl::body GemsWidget::recolor {} {
-	if {[$itk_option(-aocontroller) state gaos] } {
+	if {[$itk_option(-aocontroller) state lwfsLoop] } {
 		#$itk_component(gaoson) configure -status on
 		$itk_component(mainframe) configure -background Green
 		$itk_component(buttonframe) configure -background Green
@@ -340,7 +340,7 @@ itcl::body GemsWidget::recolor {} {
 }
 
 itcl::body GemsWidget::enable {} {
-	$itk_option(-aocontroller) configure -gaos [expr \"[$itk_component(gaoson) get]\" eq \"pushed\"] 
+	#$itk_option(-aocontroller) configure -gaos [expr \"[$itk_component(gaoson) get]\" eq \"pushed\"] 
 	$itk_option(-aocontroller) configure -ttgs1Active [expr \"[$itk_component(can1) switchGet]\" eq \"pushed\"] 
 	$itk_option(-aocontroller) configure -ttgs1Exp [expr "$ttExpCount - [lindex [[[$itk_component(can1) component exp] component list] curselection ] 0 ]"]
 	$itk_option(-aocontroller) configure -ttgs2Active [expr \"[$itk_component(can2) switchGet]\" eq \"pushed\"]
@@ -399,14 +399,11 @@ itcl::body GemsWidget::enable {} {
 
 	$itk_option(-aocontroller) configure -lwfsActive [expr \"[$itk_component(lgswfs) switchGet]\" eq \"pushed\"]
 	$itk_option(-aocontroller) configure -lwfsFreq [expr "1.0 / [$itk_component(lgswfs) expGet]" ]
-	$itk_option(-aocontroller) configure -lwfsLoop [expr \"[$itk_component(lgswfs) switchGet]\" eq \"pushed\"]
-	$itk_option(-aocontroller) configure -oigsLoop [expr \"[$itk_component(oiloop) get]\" eq \"pushed\"]
-	$itk_option(-aocontroller) configure -odgwLoop [expr \"[$itk_component(odgwloop) get]\" eq \"pushed\"]
-	$itk_option(-aocontroller) configure -ttgsLoop [expr \"[$itk_component(ttgsloop) get]\" eq \"pushed\"]
+	$itk_option(-aocontroller) configure -lwfsLoop [expr \"[$itk_component(gaoson) get]\" eq \"pushed\"]
+	$itk_option(-aocontroller) configure -flexLoop [expr \"[$itk_component(flexloop) get]\" eq \"pushed\"]
+	$itk_option(-aocontroller) configure -ttLoop [expr \"[$itk_component(ttloop) get]\" eq \"pushed\"]
+	$itk_option(-aocontroller) configure -aniLoop [expr \"[$itk_component(aniloop) get]\" eq \"pushed\"]
 	$itk_option(-aocontroller) configure -sfsLoop [expr \"[$itk_component(sfsloop) get]\" eq \"pushed\"]
-
-	#$itk_option(-aocontroller) configure -oigsActive [expr \"[$itk_component(can1) switchGet]\" eq \"pushed\"]
-	#$itk_option(-aocontroller) configure -oigsMag [$itk_component(can1) expGet]
 }
 
 itcl::body GemsWidget::onGemsChange {reasons} {
@@ -417,6 +414,7 @@ itcl::body GemsWidget::onGemsChange {reasons} {
 		ttwfsActive* -
 		odgwActive* -
 		sfsActive -
+      lgsLoopState -
 		lgswfsActive {
 			set shouldRecolor 1
 			break

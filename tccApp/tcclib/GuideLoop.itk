@@ -254,43 +254,43 @@ itcl::body GuideLoop::constructor args {
    $itk_component(prto) setState "0 1 2" disabled
 
 # Move boxes into position.
-   $w move m2 149 10
-   $w move m2xy 277 10
-   $w move m1 227 107
-   $w move settled 480 30
-   $w move oiwfs 227 280
-   $w move pwfs_comb 31 175
-   $w move pwfs1 35 179
-   $w move pwfs2 35 230
-   $w move probes 227 204
-   $w move mount 227 339
-	$w move rotator 227 377
+   $w move m2 141 10
+   $w move m2xy 269 10
+   $w move m1 219 107
+   $w move settled 472 30
+   $w move oiwfs 219 280
+   $w move pwfs_comb 23 175
+   $w move pwfs1 27 179
+   $w move pwfs2 27 230
+   $w move probes 219 204
+   $w move mount 219 339
+	$w move rotator 219 377
 
 # PWFS to M1
-   $w create line 118 174 118 131 226 131 -width 3 -fill white \
+   $w create line 110 174 110 131 218 131 -width 3 -fill white \
          -tags {active pwfs1_m1 pwfs2_m1} -arrow last -arrowshape {20 20 7}
 
-   $w create line 226 315 191 315 191 161 226 161 -width 3 -fill white \
+   $w create line 218 315 183 315 183 161 218 161 -width 3 -fill white \
          -tags {active oiwfs_m1} -arrow last -arrowshape {20 20 7}
 
 # WFS to M2
-   $w create line 74 174 74 33 148 33 -width 3 -fill white \
+   $w create line 66 174 66 33 140 33 -width 3 -fill white \
          -tags {active pwfs1_m2 pwfs2_m2} -arrow last -arrowshape {20 20 7}
 
-   $w create line 226 338 181 338 181 97 -width 3 -fill white \
+   $w create line 218 338 173 338 173 97 -width 3 -fill white \
          -tags {active oiwfs_m2} -arrow last -arrowshape {20 20 7}
 
 # WFS to Probes
-   $w create line 163 228 226 228 -width 3 -fill white \
+   $w create line 155 228 218 228 -width 3 -fill white \
          -tags {active pwfs1_pr pwfs2_pr} -arrow last -arrowshape {20 20 7}
 
 
-   $w create line 226 292 201 292 201 257 226 257 -width 3 -fill white \
+   $w create line 218 292 193 292 193 257 218 257 -width 3 -fill white \
          -tags {active oiwfs_pr} -arrow last -arrowshape {20 20 7}
 
 
 # M2 to mount
-   $w create line 148 53 20 53 20 374 226 374 -width 3 -fill white \
+   $w create line 140 53 12 53 12 374 218 374 -width 3 -fill white \
          -tags {active m2_mt} -arrow last -arrowshape {20 20 7}
 
 
@@ -832,11 +832,11 @@ itcl::body GuideLoop::buildGaos {} {
 
 itcl::body GuideLoop::buildAltairArrows {} {
 	set w $itk_component(canv)
-	$w create line 470 85 351 85  -width 3 -fill white -tags {active gaos_m2} \
+	$w create line 470 85 343 85  -width 3 -fill white -tags {active gaos_m2} \
 		-arrow last -arrowshape {20 20 7}
-	$w create line 470 119 351 119 -width 3 -fill white \
+	$w create line 470 119 343 119 -width 3 -fill white \
 		-tags {active gaos_m1} -arrow last -arrowshape {20 20 7}
-	$w create line 351 315 425 315 425 173 470 173 -width 3 -fill white \
+	$w create line 343 315 425 315 425 173 470 173 -width 3 -fill white \
 		-tags {active oiwfs_gaos} -arrow last -arrowshape {20 20 7}
 
 	# GAOS internal
@@ -890,22 +890,30 @@ itcl::body GuideLoop::recolourAltairArrows {} {
 
 itcl::body GuideLoop::buildGemsArrows {} {
 	set w $itk_component(canv)
-	$w create line 433 66 351 66  -width 3 -fill white -tags {active gaos_m2} \
+	$w create line 433 66 343 66  -width 3 -fill white -tags {active gaos_m2} \
 		-arrow last -arrowshape {20 20 7}
-	$w create line 433 76 376 76 376 125 351 125 -width 3 -fill white \
+	$w create line 433 76 368 76 368 125 343 125 -width 3 -fill white \
 		-tags {active gaos_m1} -arrow last -arrowshape {20 20 7}
-	$w create line 351 315 407 315 407 120 433 120 -width 3 -fill white \
-		-tags {active oiwfs_gaos} -arrow last -arrowshape {20 20 7}
-	$w create line 433 86 388 86 388 411 351 411 -width 3 -fill white \
+	$w create line 343 315 388 315 388 120 408 120 -width 3 -fill white \
+		-tags {active oiwfs_gaos}
+	$w create line 433 86 378 86 378 411 343 411 -width 3 -fill white \
 		-tags {active gaos_cr} -arrow last -arrowshape {20 20 7}
 
 	# GAOS internal
+   $w create line 408 120 433 120 -width 3 -fill white \
+   -tags {active flexend_gaos} -arrow last -arrowshape {20 20 7}
 	$w create line 433 165 398 165 398 102 433 102 -width 3 -fill white \
-		-tags {active ttgs_gaos} -arrow last -arrowshape {20 20 7}
-	$w create line 640 225 665 225 665 102 640 102 -width 3 -fill white \
+		-tags {active cwfsani_gaos} -arrow last -arrowshape {20 20 7}
+	$w create line 640 225 675 225 675 102 640 102 -width 3 -fill white \
 		-tags {active sfs_gaos} -arrow last -arrowshape {20 20 7}
-	$w create line 640 335 675 335 675 120 640 120 -width 3 -fill white \
-	-tags {active odgw_gaos} -arrow last -arrowshape {20 20 7}
+	$w create line 640 335 685 335 685 120 665 120 -width 3 -fill white \
+	-tags {active odgwtt_gaos}
+   $w create line 665 120 640 120 -width 3 -fill white \
+   -tags {active ttend_gaos} -arrow last -arrowshape {20 20 7}
+   $w create line 433 335 408 335 408 120 -width 3 -fill white \
+   -tags {active odgwflex_gaos}
+   $w create line 640 165 665 165 665 120 -width 3 -fill white \
+   -tags {active cwfstt_gaos}
 
 }
 
@@ -934,34 +942,64 @@ itcl::body GuideLoop::recolourGemsArrows {} {
 			incr ttwfsCount
 		}
 	}
+   set tttail white
+   set flextail white
 	if { $odgwCount > 0 } {
 		if { ( [$gemsSys getFlexLoopState] eq "CLOSED" && [string first oigs $sources] == -1 ) || \
 			( [$gemsSys getTTLoopState] eq "CLOSED" && [string first odgw $sources] > -1 ) } {
-			$w itemconfigure odgw_gaos -fill green
+			$w itemconfigure odgwflex_gaos -fill green
+         set flextail green
 		} else {
-			$w itemconfigure odgw_gaos -fill yellow
+			$w itemconfigure odgwflex_gaos -fill yellow
+         set flextail yellow
 		}
+      if { [$gemsSys getTTLoopState] eq "CLOSED" && $ttwfsCount < 3 && $odgwCount > $ttwfsCount } {
+         $w itemconfigure odgwtt_gaos -fill green
+         set tttail green
+      } else {
+         $w itemconfigure odgwtt_gaos -fill yellow
+         set tttail yellow
+      }
 	} else {
-		$w itemconfigure odgw_gaos -fill white
+		$w itemconfigure odgwflex_gaos -fill white
+      $w itemconfigure odgwtt_gaos -fill white
 	}
 	if { $ttwfsCount > 0 } {
-		if { [$gemsSys getTTLoopState] eq "CLOSED" && [string first ttgs $sources] > -1} {
-			$w itemconfigure ttgs_gaos -fill green
+		if { [$gemsSys getTTLoopState] eq "CLOSED" && ( $ttwfsCount == 3 || $odgwCount <= $ttwfsCount ) } {
+			$w itemconfigure cwfstt_gaos -fill green
+         set tttail green
 		} else {
-			$w itemconfigure ttgs_gaos -fill yellow
+			$w itemconfigure cwfstt_gaos -fill yellow
+         if {$tttail ne "green"} {
+            set tttail yellow
+         }
 		}
+      if { [$gemsSys getAniLoopState] eq "CLOSED" } {
+         $w itemconfigure cwfsani_gaos -fill green
+      } else {
+         $w itemconfigure cwfsani_gaos -fill yellow
+      }
 	} else {
-		$w itemconfigure ttgs_gaos -fill white
+		$w itemconfigure cwfsani_gaos -fill white
+      $w itemconfigure cwfstt_gaos -fill white
 	}
 	if { [AO state oiwfs] } {
 		if {[$gemsSys getFlexLoopState] eq "CLOSED" && [string first oigs $sources] > -1 } {
 			$w itemconfigure oiwfs_gaos -fill green
+         set flextail green
 		} else {
 			$w itemconfigure oiwfs_gaos -fill yellow
+         if { $flextail ne "green" } {
+            set flextail yellow
+         }
 		}
 	} else {
 		$w itemconfigure oiwfs_gaos -fill white
 	}
+   
+   $w itemconfigure ttend_gaos -fill $tttail
+   $w itemconfigure flexend_gaos -fill $flextail
+   
 	if {[AO state gaos]} {
 		if {[AO state m1] && [AO source m1 GAOS]} {
 			$w itemconfigure gaos_m1 -fill green
@@ -1034,11 +1072,12 @@ itcl::body GuideLoop::onGemsChange {reasons} {
 		ttLoopState -
 		flexLoopState -
 		focLoopState -
+      aniLoopState -
+      lwfsLoopState -
 		m1OffloadState -
 		m2OffloadState -
 		rotOffloadState -
 		ttLoopSources -
-		gemsActive -
 		ttwfsActive* -
 		odgwActive* -
 		sfsActive -
