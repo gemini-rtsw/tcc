@@ -283,7 +283,7 @@ itcl::body RealGems::destructor {} {
 }
 
 itcl::body RealGems::slewReset {} {
-	cs gems::slewReset set dummy MARK
+	cs gems::slewReset set astroMode $astroMode
 	$logger logmess gems::slewReset
 	set lastCmdSys gemssad
    catch {cs gems::slewReset post}
@@ -484,12 +484,16 @@ itcl::body RealGems::setAstroMode {mode} {
 	None -
 	Regular -
 	Good -
-	Best { set astroMode $mode} 
+	Best { 
+      set astroMode $mode 
+      cs gems::slewReset set astroMode $mode
+	} 
 	default {
 		$logger logmess "RealGems::setAstroMode unknow mode $mode"
 	}
 	}
 	set lastCmdSys gemssad
+   catch {cs gems::slewReset post}
 }
 
 itcl::body RealGems::startAstrometry {} {
