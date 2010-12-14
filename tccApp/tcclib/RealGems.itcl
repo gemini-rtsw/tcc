@@ -561,7 +561,6 @@ itcl::body RealGems::startODGW {idList} {
    if { $startGuide} {
       after 500
       if { [waitForCmdIdle 10000] eq "ok"} {
-         puts "RealGems::startODGW sending Guide"
          catch {cs gems::odgwGuide set command MARK}
          after 100
          catch {cs gems::odgwGuide set command START}
@@ -1081,8 +1080,11 @@ itcl::body RealGems::waitForCmdIdle {{timeout 1000}} {
 }
 
 itcl::body RealGems::setupLoops {loopList sources} {
-   puts "RealGems::setupLoops $loopList $sources"
-   set change [setTTLoopInputs $sources]
+   if { [llength $sources] > 0 } {
+      set change [setTTLoopInputs $sources]
+   } else {
+      set change 0
+   }
    
    if { [lsearch $loopList lwfs] >= 0 } {
       if { [getLGSLoopState] ne "CLOSED" } {
@@ -1129,13 +1131,11 @@ itcl::body RealGems::setupLoops {loopList sources} {
       }
    }
    if { [lsearch $loopList sfs] >= 0 } {
-      puts "RealGems::setupLoops sfs found, current state is [getFocLoopState]"
       if { [getFocLoopState] ne "CLOSED" } {
          cs gems::focLoopCtrl set cmd START
          set change 1
       }
    } else {
-      puts "RealGems::setupLoops sfs not found, current state is [getFocLoopState]"
       if { [getFocLoopState] eq "CLOSED" } {
          cs gems::focLoopCtrl set cmd STOP
          set change 1
