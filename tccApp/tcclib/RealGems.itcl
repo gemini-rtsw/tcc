@@ -185,6 +185,9 @@ itcl::body RealGems::constructor {} {
 	sa gemssad proc sciReady [itcl::code $this onStatusChange]
 	sa gemssad proc lgsFlux [itcl::code $this onStatusChange]
 	sa gemssad proc ngsFlux [itcl::code $this onStatusChange]
+   sa gemssad proc m1Offload [itcl::code $this onStatusChange]
+   sa gemssad proc m2Offload [itcl::code $this onStatusChange]
+   sa gemssad proc crOffload [itcl::code $this onStatusChange]
 
 	sa gemssad proc ngs1 [itcl::code $this onStatusChange]
 	sa gemssad proc ngs2 [itcl::code $this onStatusChange]
@@ -997,6 +1000,9 @@ itcl::body RealGems::onStatusChange {name alarm time value} {
 	gemssad.astromReady { lappend reasons astroState }
 	gemssad.aniLoop { lappend reasons aniLoopState }
 	gemssad.sciReady { lappend reasons loopsSettled }
+   gemssad.m1Offload { lappend reasons m1OffloadState }
+   gemssad.m2Offload { lappend reasons m2OffloadState }
+   gemssad.crOffload { lappend reasons rotOffloadState }
 	aomsad.adcScState { lappend reasons adcPos }
 	aomsad.adcScLoop { lappend reasons adcState }
 	aomsad.beamSplitterState { lappend reasons beamSplitterPos }
@@ -1142,34 +1148,34 @@ itcl::body RealGems::setupLoops {loopList sources} {
       }
    }
    if { [lsearch $loopList m1] >= 0 } {
-      if { [getM1OffloadState] ne "START" } {
+      if { [getM1OffloadState] ne "RUNNING" } {
          cs gems::m1OffloadCtrl set cmd START
          set change 1
       }
    } else {
-      if { [getM1OffloadState] eq "START" } {
+      if { [getM1OffloadState] eq "RUNNING" } {
          cs gems::m1OffloadCtrl set cmd STOP
          set change 1
       }
    }
    if { [lsearch $loopList m2] >= 0 } {
-      if { [getM2OffloadState] ne "START" } {
+      if { [getM2OffloadState] ne "RUNNING" } {
          cs gems::m2OffloadCtrl set cmd START
          set change 1
       }
    } else {
-      if { [getM2OffloadState] eq "START" } {
+      if { [getM2OffloadState] eq "RUNNING" } {
          cs gems::m2OffloadCtrl set cmd STOP
          set change 1
       }
    }
    if { [lsearch $loopList rot] >= 0 } {
-      if { [getRotOffloadState] ne "START" } {
+      if { [getRotOffloadState] ne "RUNNING" } {
          cs gems::crLoopCtrl set cmd START
          set change 1
       }
    } else {
-      if { [getRotOffloadState] eq "START" } {
+      if { [getRotOffloadState] eq "RUNNING" } {
          cs gems::crLoopCtrl set cmd STOP
          set change 1
       }
