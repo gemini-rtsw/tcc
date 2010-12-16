@@ -411,7 +411,8 @@ itcl::body GuideAlarm::scanLoop {} {
 	set wfsList {pwfs1 pwfs2 oiwfs nici}
 	if { [calparam cget -site] eq "CP" } {
 		lappend wfsList ttwfs lgswfs sfs odgw
-		set sources [$gemsSys getTTLoopSources]
+		set ttSources [$gemsSys getTTLoopSources]
+      set flexSources [$gemsSys getFlexLoopSources]
 	} else {
 		lappend wfsList gaos ttgs sfo
 	}
@@ -429,7 +430,7 @@ itcl::body GuideAlarm::scanLoop {} {
 					incr ttwfsCount
 				}
 			}
-			set test [expr {$ttwfsCount > 0 && ( [[AO getGaosObj] state ttLoop] || [[AO getGaosObj] state aniLoop] ) && [string first ttgs $sources] > -1 && $canguide}]
+			set test [expr {$ttwfsCount > 0 && ( [[AO getGaosObj] state ttLoop] || [[AO getGaosObj] state aniLoop] ) && [string first ttgs $ttSources] > -1 && $canguide}]
 		}
 		lgswfs {set test [expr {[[AO getGaosObj] state $wfs] && [[AO getGaosObj] state lwfsLoop] && $canguide}] }
 		sfs { set test [expr {[[AO getGaosObj] state $wfs] && [[AO getGaosObj] state sfsLoop] && $canguide}] }
@@ -440,7 +441,7 @@ itcl::body GuideAlarm::scanLoop {} {
 					incr odgwCount
 				}
 			}
-			set test [expr {$odgwCount > 0 && ( ( [[AO getGaosObj] state flexLoop] && [string first oigs $sources] == -1 ) || ( [[AO getGaosObj] state ttLoop] && [string first odgw $sources] > -1 ) ) && $canguide}]
+			set test [expr {$odgwCount > 0 && ( ( [[AO getGaosObj] state flexLoop] && [string first odgw $flexSources] > -1 ) || ( [[AO getGaosObj] state ttLoop] && [string first odgw $ttSources] > -1 ) ) && $canguide}]
 		}
 		default { set test [expr {[AO state $wfs] && $canguide}] }
 		}

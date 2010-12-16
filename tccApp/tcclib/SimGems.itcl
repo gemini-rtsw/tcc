@@ -34,7 +34,7 @@ public {
 	method stopLoops {}
 	
 	#Loop configuration
-	method configureTTLoop {sources}
+	method configureNGS {sources}
 	
 	#Astrometry
 	method setAstroMode {mode}
@@ -76,6 +76,7 @@ public {
 	method getM2OffloadState {}
 	method getRotOffloadState {}
 	method getTTLoopSources {}
+   method getFlexLoopSources {}
 	method getODGWActive {id}
 	method getTTWFSActive {id}
 	method getLGSWFSActive {}
@@ -292,8 +293,8 @@ itcl::body SimGems::stopLoops {} {
 }
 
 #Loop configuration
-itcl::body SimGems::configureTTLoop {sources} {
-	configCmd "TT sources" ttLoopSources $sources
+itcl::body SimGems::configureNGS {sources} {
+	configCmd "NGS config" ttLoopSources $sources
 }
 
 
@@ -445,7 +446,25 @@ itcl::body SimGems::getRotOffloadState {} {
 }
 
 itcl::body SimGems::getTTLoopSources {} {
-	return $ttLoopSources
+   set sources ""
+   
+   foreach {source loop mag} $ttLoopSources {
+      if { $loop eq "Fast" } {
+         lappend sources $source $mag
+      }
+   }
+	return $sources
+}
+
+itcl::body SimGems::getFlexLoopSources {} {
+   set sources ""
+   
+   foreach {source loop mag} $ttLoopSources {
+      if { $loop eq "Flex" } {
+         lappend sources $source $mag
+      }
+   }
+   return $sources
 }
 
 itcl::body SimGems::getODGWActive {id} {

@@ -41,7 +41,7 @@ public {
    method setupLoops {loopList sources}
 	
 	#Loop configuration
-	method configureTTLoop {sources}
+	method configureNGS {sources}
 	
 	#Astrometry
 	method setAstroMode {mode}
@@ -83,6 +83,7 @@ public {
 	method getM2OffloadState {}
 	method getRotOffloadState {}
 	method getTTLoopSources {}
+   method getFlexLoopSources {}
 	method getODGWActive {id}
 	method getTTWFSActive {id}
 	method getLGSWFSActive {}
@@ -428,57 +429,111 @@ itcl::body RealGems::stopLoops {} {
 
 
 #Loop configuration
-itcl::body RealGems::configureTTLoop {sources} {
+itcl::body RealGems::configureNGS {sources} {
    set lastCmdSys gemssad
-   if { [setTTLoopInputs] } {
+   if { [setTTLoopInputs $sources] } {
       catch {cs gems::ngsConfig post}
    } 
 }
 
 itcl::body RealGems::setTTLoopInputs {sources} {
-	foreach wfs {ngs1 ngs2 ngs3 odgs1 odgs2 odgs3 odgs4 oigs} {
-		cs gems::ngsConfig set $wfs "NotUsed"
-		after 200
+   set notUsed ""
+	foreach wfs {ttgs1 ttgs2 ttgs3 odgw1 odgw2 odgw3 odgw4 oigs} {
+      if {[string first $wfs $sources] == -1} {
+         lappend notUsed $wfs
+      }
 	}
-	foreach {wfs mag} $sources {
+   foreach wfs $notUsed {
+      lappend sources $wfs NotUsed 15.0
+   }
+   set change 0
+	foreach {wfs loop mag} $sources {
 		switch $wfs {
 		ttgs1 {
-			cs gems::ngsConfig set ngs1 "Used"
-			cs gems::ngsConfig set ngs1Mag $mag
+         if {[sa gemssad get ngs1 value] ne $loop} {
+   			cs gems::ngsConfig set ngs1 $loop
+            set change 1
+         }
+         if { $loop ne "NotUsed" && [sa gemssad get ngs1Mag value] != $mag} {
+   			cs gems::ngsConfig set ngs1Mag $mag
+            set change 1
+         }
 		}
 		ttgs2 {
-			cs gems::ngsConfig set ngs2 "Used"
-			cs gems::ngsConfig set ngs2Mag $mag
+         if {[sa gemssad get ngs2 value] ne $loop} {
+            cs gems::ngsConfig set ngs2 $loop
+            set change 1
+         }
+         if { $loop ne "NotUsed" && [sa gemssad get ngs2Mag value] != $mag} {
+            cs gems::ngsConfig set ngs2Mag $mag
+            set change 1
+         }
 		}
 		ttgs3 {
-			cs gems::ngsConfig set ngs3 "Used"
-			cs gems::ngsConfig set ngs3Mag $mag
+         if {[sa gemssad get ngs3 value] ne $loop} {
+            cs gems::ngsConfig set ngs3 $loop
+            set change 1
+         }
+         if { $loop ne "NotUsed" && [sa gemssad get ngs3Mag value] != $mag} {
+            cs gems::ngsConfig set ngs3Mag $mag
+            set change 1
+         }
 		}
 		odgw1 {
-			cs gems::ngsConfig set odgs1 "Used"
-			cs gems::ngsConfig set odgs1Mag $mag
+         if {[sa gemssad get odgs1 value] ne $loop} {
+            cs gems::ngsConfig set odgs1 $loop
+            set change 1
+         }
+         if { $loop ne "NotUsed" && [sa gemssad get odgs1Mag value] != $mag} {
+            cs gems::ngsConfig set odgs1Mag $mag
+            set change 1
+         }
 		}
 		odgw2 {
-			cs gems::ngsConfig set odgs2 "Used"
-			cs gems::ngsConfig set odgs2Mag $mag
+         if {[sa gemssad get odgs2 value] ne $loop} {
+            cs gems::ngsConfig set odgs2 $loop
+            set change 1
+         }
+         if { $loop ne "NotUsed" && [sa gemssad get odgs2Mag value] != $mag} {
+            cs gems::ngsConfig set odgs2Mag $mag
+            set change 1
+         }
 		}
 		odgw3 {
-			cs gems::ngsConfig set odgs3 "Used"
-			cs gems::ngsConfig set odgs3Mag $mag
+         if {[sa gemssad get odgs3 value] ne $loop} {
+            cs gems::ngsConfig set odgs3 $loop
+            set change 1
+         }
+         if { $loop ne "NotUsed" && [sa gemssad get odgs3Mag value] != $mag} {
+            cs gems::ngsConfig set odgs3Mag $mag
+            set change 1
+         }
 		}
 		odgw4 {
-			cs gems::ngsConfig set odgs4 "Used"
-			cs gems::ngsConfig set odgs4Mag $mag
+         if {[sa gemssad get odgs4 value] ne $loop} {
+            cs gems::ngsConfig set odgs4 $loop
+            set change 1
+         }
+         if { $loop ne "NotUsed" && [sa gemssad get odgs4Mag value] != $mag} {
+            cs gems::ngsConfig set odgs4Mag $mag
+            set change 1
+         }
 		}
 		oigs {
-			cs gems::ngsConfig set oigs "Used"
-			cs gems::ngsConfig set oigsMag $mag
+         if {[sa gemssad get oigs value] ne $loop} {
+            cs gems::ngsConfig set oigs $loop
+            set change 1
+         }
+         if { $loop ne "NotUsed" && [sa gemssad get oigs value] != $mag} {
+            cs gems::ngsConfig set oigsMag $mag
+            set change 1
+         }
 		}
 		}
 	}
 	$logger logmess "gems::ngsConfig $sources"
    
-   return 1
+   return $change
 }
 
 #Astrometry
@@ -544,44 +599,87 @@ itcl::body RealGems::moveBeamSplitter {pos} {
 
 #WFS control commands
 itcl::body RealGems::startODGW {idList} {
+   set change 0
    set logmult ""
    foreach id $idList {
 		set mult [expr "round(double([set odgw${id}ExpTime]) / $odgwBaseExpTime )"]
 		if { $mult < 1 } {
 			set mult 1
 		}
-		cs gems::odgwSetup set expMult${id} $mult
+      set currentMult [sa odgwsad get expMult${id} value]
+      if { ![string is integer -strict $currentMult] || $currentMult != $mult } {
+   		cs gems::odgwSetup set expMult${id} $mult
+         set change 1
+      }
       set logmult "$logmult $id:$mult"
    }
-   cs gems::odgwSetup set baseExpTime $odgwBaseExpTime
-
-   $logger logmess "gems::odgwSetup $odgwBaseExpTime $logmult"
-	set lastCmdSys odgwsad
+   set currentBaseExpTime [sa odgwsad get baseExpTime]
+   puts "RealGems::startODGW currentBaseExpTime $currentBaseExpTime"
+   if { ![string is double -strict $currentBaseExpTime] || $currentBaseExpTime != $odgwBaseExpTime } {
+      cs gems::odgwSetup set baseExpTime $odgwBaseExpTime
+      set change 1
+   }
    
-   #TODO review timing
-   set startGuide [sa odgwsad get notGuiding value]
-	catch {cs gems::odgwSetup post}
-   if { $startGuide} {
-      after 500
-      if { [waitForCmdIdle 10000] eq "ok"} {
-         catch {cs gems::odgwGuide set command MARK}
+   if { $change } {
+      if {![sa odgwsad get notGuiding value]} {
+         puts "RealGems::startODGW Stoping guide"
+         catch {cs gems::odgwEndGuide set command MARK}
          after 100
-         catch {cs gems::odgwGuide set command START}
+         catch {cs gems::odgwEndGuide set command START}
+         set lastCmdSys odgwsad
+         after 500
+         if { [waitForCmdIdle 10000] eq "ok"} {
+            puts "RealGems::startODGW configuring ODGW"
+            catch {cs gems::odgwSetup post}
+         }
+         after 500
+         if { [waitForCmdIdle 10000] eq "ok"} {
+            puts "RealGems::startODGW restarting guide"
+            catch {cs gems::odgwGuide set command MARK}
+            after 100
+            catch {cs gems::odgwGuide set command START}
+         }
       }
+      $logger logmess "gems::odgwSetup $odgwBaseExpTime $logmult"
+      set lastCmdSys ""
    }
 }
 
 itcl::body RealGems::stopODGW {idList} {
    set logmsg ""
+   set change 0
    foreach id $idList {
+      set currentMult [sa odgwsad get expMult${id} value]
+      if { ![string is integer -strict $currentMult] || $currentMult != 0 } {
+         cs gems::odgwSetup set expMult${id} 0
+         set change 1
+      }
 	   cs gems::odgwSetup set expMult${id} 0
       set logmsg "$logmsg $id:0"
    }
-	$logger logmess "gems::odgwSetup $logmsg"
-	set lastCmdSys odgwsad
+   if { $change } {
+      if {![sa odgwsad get notGuiding value]} {
+         catch {cs gems::odgwEndGuide set command MARK}
+         after 100
+         catch {cs gems::odgwEndGuide set command START}
+         set lastCmdSys odgwsad
+         after 500
+         if { [waitForCmdIdle 10000] eq "ok"} {
+            catch {cs gems::odgwSetup post}
+         }
+         after 500
+         if { [waitForCmdIdle 10000] eq "ok"} {
+            catch {cs gems::odgwGuide set command MARK}
+            after 100
+            catch {cs gems::odgwGuide set command START}
+         }
+      }
+      $logger logmess "gems::odgwSetup $logmsg"
+      set lastCmdSys ""
+   }
    
    #TODO review timing
-	catch {cs gems::odgwSetup post}
+#	catch {cs gems::odgwSetup post}
 # Not need to call endGuide, guiding stops automatically if all expMult go to 0.
 #   if { [sa odgwsad get notGuiding value] == 0 } {
 #      set noneActive 1
@@ -767,20 +865,34 @@ itcl::body RealGems::getRotOffloadState {} {
 itcl::body RealGems::getTTLoopSources {} {
 	set sources ""
 	for {set i 1} { $i <= 3} { incr i } {
-		if { [sa gemssad get ngs${i} value] eq "Used" } {
+		if { [sa gemssad get ngs${i} value] eq "Fast" } {
 			lappend sources ttgs${i} [sa gemssad get ngs${i}Mag value]
 		}
 	}
 	for {set i 1} { $i <= 4} { incr i } {
-		if { [sa gemssad get odgs${i} value] eq "Used" } {
+		if { [sa gemssad get odgs${i} value] eq "Fast" } {
 			lappend sources odgw${i} [sa gemssad get odgs${i}Mag value]
 		}
 	}
-	if { [sa gemssad get oigs value] eq "Used" } {
+	if { [sa gemssad get oigs value] eq "Fast" } {
 		lappend sources oigs [sa gemssad get oigsMag value]
 	}
 	
 	return $sources
+}
+
+itcl::body RealGems::getFlexLoopSources {} {
+   set sources ""
+   for {set i 1} { $i <= 4} { incr i } {
+      if { [sa gemssad get odgs${i} value] eq "Flex" } {
+         lappend sources odgw${i} [sa gemssad get odgs${i}Mag value]
+      }
+   }
+   if { [sa gemssad get oigs value] eq "Flex" } {
+      lappend sources oigs [sa gemssad get oigsMag value]
+   }
+   
+   return $sources
 }
 
 itcl::body RealGems::getODGWActive {id} {
@@ -835,6 +947,9 @@ itcl::body RealGems::getSFSExposure {} {
 }
 
 itcl::body RealGems::getODGWCounts {id} {
+   #TODO: put ODGW counts
+   return ""
+   
 	switch $id {
 	1 { set index 3 }
 	2 { set index 4 }

@@ -505,31 +505,82 @@ itcl::body GemsAO::state {var} {
 itcl::body GemsAO::defineTTSources {} {
 	set sources ""
 	
+   set ttgsCount 0
 	if { $ttLoop || $aniLoop } {
    	if { $ttgs1Active } {
-   		lappend sources ttgs1 $ttgs1Mag
-   	}
+   		lappend sources ttgs1 Fast $ttgs1Mag
+         incr ttgsCount
+   	} else {
+         lappend sources ttgs1 NotUsed $ttgs1Mag
+      } 
    	if { $ttgs2Active } {
-   		lappend sources ttgs2 $ttgs2Mag
+   		lappend sources ttgs2 Fast $ttgs2Mag
+         incr ttgsCount
+   	} else {
+         lappend sources ttgs2 NotUsed $ttgs2Mag
    	}
    	if { $ttgs3Active } {
-   		lappend sources ttgs3 $ttgs3Mag
+   		lappend sources ttgs3 Fast $ttgs3Mag
+         incr ttgsCount
+   	} else {
+         lappend sources ttgs3 NotUsed $ttgs3Mag
    	}
-   	if { $odgw1Active } {
-   		lappend sources odgw1 $odgw1Mag
-   	}
-   	if { $odgw2Active } {
-   		lappend sources odgw2 $odgw2Mag
-   	}
-   	if { $odgw3Active } {
-   		lappend sources odgw3 $odgw3Mag
-   	}
-   	if { $odgw4Active } {
-   		lappend sources odgw4 $odgw4Mag
-   	}
+      if { !$ttgs1Active && !$ttgs2Active && !$ttgs3Active } {
+      	if { $odgw1Active } {
+      		lappend sources odgw1 $odgw1Mag
+      	}
+      	if { $odgw2Active } {
+      		lappend sources odgw2 $odgw2Mag
+      	}
+      	if { $odgw3Active } {
+      		lappend sources odgw3 $odgw3Mag
+      	}
+      	if { $odgw4Active } {
+      		lappend sources odgw4 $odgw4Mag
+      	}
+      }
 	}
-	if { $flexLoop && [AO state oiwfs] } {
-		lappend sources oigs $oigsMag
+   
+   set odgwCount 0
+   for {set i 1} { $i <= 4 } { incr i } {
+      if { [set odgw${i}Active] } {
+         incr odgwCount
+      }
+   }
+   set odgwLoop NotUsed
+   if { $flexLoop && $odgwCount <= 1 } {
+      set odgwLoop Flex
+   } elseif { $ttLoop && $ttgsCount == 0 } {
+      set odgwLoop Fast
+   } elseif { $flexLoop } {
+      set odgwLoop Flex
+   }
+   
+   if { $odgwLoop ne "NotUsed" } {
+      if { $odgw1Active } {
+         lappend sources odgw1 $odgwLoop $odgw1Mag
+      } else {
+         lappend sources odgw1 NotUsed $odgw1Mag
+      }
+      if { $odgw2Active } {
+         lappend sources odgw2 $odgwLoop $odgw2Mag
+      } else {
+         lappend sources odgw2 NotUsed $odgw2Mag
+      }
+      if { $odgw3Active } {
+         lappend sources odgw3 $odgwLoop $odgw3Mag
+      } else {
+         lappend sources odgw3 NotUsed $odgw3Mag
+      }
+      if { $odgw4Active } {
+         lappend sources odgw4 $odgwLoop $odgw4Mag
+      } else {
+         lappend sources odgw4 NotUsed $odgw4Mag
+      }
+   }
+   
+	if { $flexLoop && [AO cget -oiwfsActive] && $odgwCount == 0 } {
+		lappend sources oigs Flex $oigsMag
 	}
 	
 	return $sources

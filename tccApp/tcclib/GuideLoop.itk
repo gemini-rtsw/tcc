@@ -929,7 +929,8 @@ itcl::body GuideLoop::recolourGemsArrows {} {
 	} else {
 		$w itemconfigure sfs_gaos -fill white
 	}
-	set sources [$gemsSys getTTLoopSources]
+	set ttSources [$gemsSys getTTLoopSources]
+   set flexSources [$gemsSys getFlexLoopSources]
 	set odgwCount 0
 	for {set i 1} {$i <= 4} {incr i} {
 		if {[$gemsSys getODGWActive $i] eq "ON"} {
@@ -945,15 +946,14 @@ itcl::body GuideLoop::recolourGemsArrows {} {
    set tttail white
    set flextail white
 	if { $odgwCount > 0 } {
-		if { ( [$gemsSys getFlexLoopState] eq "CLOSED" && [string first oigs $sources] == -1 ) || \
-			( [$gemsSys getTTLoopState] eq "CLOSED" && [string first odgw $sources] > -1 ) } {
+		if { ( [$gemsSys getFlexLoopState] eq "CLOSED" && [string first odgw $flexSources] > -1 ) } {
 			$w itemconfigure odgwflex_gaos -fill green
          set flextail green
 		} else {
 			$w itemconfigure odgwflex_gaos -fill yellow
          set flextail yellow
 		}
-      if { [$gemsSys getTTLoopState] eq "CLOSED" && $ttwfsCount < 3 && $odgwCount > $ttwfsCount } {
+      if { [$gemsSys getTTLoopState] eq "CLOSED" && [string first odgw $ttSources] > -1 } {
          $w itemconfigure odgwtt_gaos -fill green
          set tttail green
       } else {
@@ -965,7 +965,7 @@ itcl::body GuideLoop::recolourGemsArrows {} {
       $w itemconfigure odgwtt_gaos -fill white
 	}
 	if { $ttwfsCount > 0 } {
-		if { [$gemsSys getTTLoopState] eq "CLOSED" && ( $ttwfsCount == 3 || $odgwCount <= $ttwfsCount ) } {
+		if { [$gemsSys getTTLoopState] eq "CLOSED" && [string first ttgs $ttSources] > -1 } {
 			$w itemconfigure cwfstt_gaos -fill green
          set tttail green
 		} else {
@@ -984,7 +984,7 @@ itcl::body GuideLoop::recolourGemsArrows {} {
       $w itemconfigure cwfstt_gaos -fill white
 	}
 	if { [AO state oiwfs] } {
-		if {[$gemsSys getFlexLoopState] eq "CLOSED" && [string first oigs $sources] > -1 } {
+		if {[$gemsSys getFlexLoopState] eq "CLOSED" && [string first oigs $flexSources] > -1 } {
 			$w itemconfigure oiwfs_gaos -fill green
          set flextail green
 		} else {
