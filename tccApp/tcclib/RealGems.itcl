@@ -639,9 +639,25 @@ itcl::body RealGems::startODGW {idList} {
             after 100
             catch {cs gems::odgwGuide set command START}
          }
+      } else {
+			puts "RealGems::startODGW configuring ODGW"
+         catch {cs gems::odgwSetup post}
+			after 500
+         if { [waitForCmdIdle 10000] eq "ok"} {
+            puts "RealGems::startODGW restarting guide"
+            catch {cs gems::odgwGuide set command MARK}
+            after 100
+            catch {cs gems::odgwGuide set command START}
+         }
       }
       $logger logmess "gems::odgwSetup $odgwBaseExpTime $logmult"
       set lastCmdSys ""
+   } else {
+		puts "RealGems::startODGW restarting guide"
+      catch {cs gems::odgwGuide set command MARK}
+      after 100
+      catch {cs gems::odgwGuide set command START}
+		set lastCmdSys ""
    }
 }
 
