@@ -160,13 +160,13 @@ itcl::body GemsAO::startWFS {} {
 		return 1
 	}
 	if { $sfsActive } {
-		if { $sfsExp ne "" && $sfsExp != [$sys getSFSExposure] } {
-			$sys setSFSExposure $sfsExp
-			if { [waitForCmdComplete 1000 1000 "expr 1" "SFS exposure setup"] } {
-				return 1
-			}
-		}
 		if { ![state sfs] } {
+   		if { $sfsExp ne "" && $sfsExp != [$sys getSFSExposure] } {
+   			$sys setSFSExposure $sfsExp
+   			if { [waitForCmdComplete 1000 1000 "expr 1" "SFS exposure setup"] } {
+   				return 1
+   			}
+   		}
 			$sys startSFS
 			if { [waitForCmdComplete 1000 2000 "state sfs" "SFS to go ON"] } {
 				return 1
