@@ -400,7 +400,7 @@ itcl::body TcsConfigControl::apply {} {
 	}
 
 # Set OIWFS mode in the TCS
-   set guide $::Config(tcs.field.guide,value)
+   set guide [$fieldObj cget -guide]
    if { ! [string equal $guide ""] } {
 		set inst $::Config(tcs.instrument,value)
 		if {([string equal $guide "AO-OI"]) && [string match "*NIFS*" $inst]} {
@@ -609,15 +609,20 @@ itcl::body TcsConfigControl::apply {} {
 		}
 	}
 	
-	if {[string match "*GEMS*" $guide] && [string match "*GSAOI*" $inst]} {
-		set field [$::Config($comp,namespace)::$::Config($comp,value) cget -field]
+	if {[string match -nocase "*GEMS*" $guide] && [string match -nocase "*GSAOI*" $inst]} {
 		foreach odgwtarget {odgw1target odgw2target odgw3target odgw4target} {
-			if {[$field cget -$odgwtarget] ne ""} {
-				set scienceWavel [::WavelengthNames::[$field cget -wavelength] cget -wavel]
-				[Gsaoi::getSingleton] configureWavelength $scienceWavel
+			if {[$fieldObj cget -$odgwtarget] ne ""} {
+				set scienceWavel [::WavelengthNames::[$fieldObj cget -wavelength] cget -wavel]
+            logactions logmess "Configuring GSAOI filter"
+				[Odgw::getSingleton] configureWavelength $scienceWavel
 				break
 			}
 		}
+      set odgwSize [$fieldObj cget -odgwSize]
+      if { $odgwSize ne "" } {
+         logactions logmess "Applying ODGW size: $odgwSize"
+         [GemsSys::getSingleton] setODGWSize $odgwSize 1
+      }
 	}
 
 # Reinvoke the sf to auto conf inst origin and wavelength

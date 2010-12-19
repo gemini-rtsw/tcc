@@ -1001,7 +1001,8 @@ itcl::body GuideLoop::recolourGemsArrows {} {
    $w itemconfigure flexend_gaos -fill $flextail
    
 	if {[AO state gaos]} {
-		if {[AO state m1] && [AO source m1 GAOS] && [$gemsSys getM1OffloadState] eq "START"} {
+      set m1Offload [$gemsSys getM1OffloadState]
+		if {[AO state m1] && [AO source m1 GAOS] && ( $m1Offload eq "START" || $m1Offload eq "RESUME" ) } {
 			$w itemconfigure gaos_m1 -fill green
 		} else {
 			$w itemconfigure gaos_m1 -fill yellow
@@ -1010,7 +1011,8 @@ itcl::body GuideLoop::recolourGemsArrows {} {
 		$w itemconfigure gaos_m1 -fill white
 	}
 	if {[AO state gaos]} {
-		if {[AO state m2] && [AO source m2 GAOS A] && [$gemsSys getM2OffloadState] eq "START"} {
+      set m2Offload [$gemsSys getM2OffloadState]
+		if {[AO state m2] && [AO source m2 GAOS A] && ( $m2Offload eq "START" || $m2Offload eq "RESUME" ) } {
 			$w itemconfigure gaos_m2 -fill green
 		} else {
 			$w itemconfigure gaos_m2 -fill yellow
@@ -1019,7 +1021,8 @@ itcl::body GuideLoop::recolourGemsArrows {} {
 		$w itemconfigure gaos_m2 -fill white
 	}
 	if {[AO state gaos]} {
-		if {[AO state rotator] && [$gemsSys getRotOffloadState] eq "START"} {
+      set rotOffload [$gemsSys getRotOffloadState]
+		if {[AO state rotator] && ( $rotOffload eq "START" || $rotOffload eq "RESUME" ) } {
 			$w itemconfigure gaos_cr -fill green
 		} else {
 			$w itemconfigure gaos_cr -fill yellow

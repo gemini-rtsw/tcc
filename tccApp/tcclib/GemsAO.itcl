@@ -116,8 +116,12 @@ itcl::body GemsAO::disable {} {
 }
 
 itcl::body GemsAO::waitFor {timeout outCondition} {
+   #puts "GemsAO::waitFor $timeout $outCondition"
 	set elapsedTime 0
 	while {$timeout==0 || $elapsedTime<$timeout} {
+#      if { [llength $outCondition] == 2 && [lindex $outCondition 0] eq "expr" } {
+#         eval "puts \"GemsAO::waitFor: [lindex $outCondition 1]\""
+#      }
 		if {[eval $outCondition]} {
 			return ok
 		}
@@ -267,7 +271,7 @@ itcl::body GemsAO::stopWFS {} {
 	}
 	if { !$sfsActive && [state sfs] } {
 		$sys stopSFS
-		if {[waitForCmdComplete 1000 15000 {expr ![state sfs]} "SFS to go OFF"]} {
+		if {[waitForCmdComplete 1000 35000 {expr ![state sfs]} "SFS to go OFF"]} {
 			set ret 1
 			set errMsg "$errMsg\n$lastError"
 		}
@@ -293,7 +297,7 @@ itcl::body GemsAO::stopTTGS {} {
    
    if { [llength $idList] > 0 } {
       $sys stopTTWFS $idList
-      if { [waitForCmdComplete 1000 2000 $testExp "TTWFS $idList to go OFF"] } {
+      if { [waitForCmdComplete 1000 5000 $testExp "TTWFS $idList to go OFF"] } {
          return 1
       }
    }
@@ -400,15 +404,11 @@ itcl::body GemsAO::setupLoops {} {
 
    if { [AO cget -m1source] eq "GAOS" } {
       lappend loopList m1
-      set testExp "$testExp && \[ state m1Offload \]"
    } else {
-      set testExp "$testExp && !\[ state m1Offload \]"
    }
    if { [AO cget -aoguide] eq "On" } {
       lappend loopList m2
-      set testExp "$testExp && \[ state m2Offload \]"
    } else {
-      set testExp "$testExp && !\[ state m2Offload \]"
    }
    if { $lwfsLoop } {
       lappend loopList lwfs
@@ -442,9 +442,7 @@ itcl::body GemsAO::setupLoops {} {
    }
    if { [AO cget -crsource] eq "GAOS" } {
       lappend loopList rot
-      set testExp "$testExp && \[ state rotOffload \]"
    } else {
-      set testExp "$testExp && !\[ state rotOffload \]"
    }
 
    set testExp "$testExp \}"
@@ -458,14 +456,11 @@ itcl::body GemsAO::setupLoops {} {
 
 itcl::body GemsAO::disableLoops {} {
    set testExp "expr \{ 1"
-   set testExp "$testExp && !\[ state m1Offload \]"
-   set testExp "$testExp && !\[ state m2Offload \]"
    set testExp "$testExp && !\[ state lwfsLoop \]"
    set testExp "$testExp && !\[ state ttLoop \]"
    set testExp "$testExp && !\[ state sfsLoop \]"
    set testExp "$testExp && !\[ state flexLoop \]"
    set testExp "$testExp && !\[ state aniLoop \]"
-   set testExp "$testExp && !\[ state rotOffload \]"
    set testExp "$testExp \}"
    
    $sys setupLoops {} {}
@@ -480,13 +475,22 @@ itcl::body GemsAO::state {var} {
 	switch $var {
 	astrometry { return [expr {[$sys getAstrometryState] eq "READY"}] }
 	astromode  { return [$sys getAstroMode] }
-	m1Offload  { return [expr {[$sys getM1OffloadState] eq "START"}] }
-	m2Offload  { return [expr {[$sys getM2OffloadState] eq "START"}] }
+	m1Offload  { 
+      set state [$sys getM1OffloadState]
+      return [expr { $state eq "START" || $state eq "RESUME" } ]
+   }
+	m2Offload  { 
+      set state [$sys getM2OffloadState]
+      return [expr { $state eq "START" || $state eq "RESUME" } ]
+   }
 	lwfsLoop   { return [expr {[$sys getLGSLoopState] eq "CLOSED"}] }
 	ttLoop     { return [expr {[$sys getTTLoopState] eq "CLOSED"}] }
 	sfsLoop    { return [expr {[$sys getFocLoopState] eq "CLOSED"}] }
 	aniLoop    { return [expr {[$sys getAniLoopState] eq "CLOSED"}] }
-	rotOffload { return [expr {[$sys getRotOffloadState] eq "START"}] }
+	rotOffload { 
+      set state [$sys getRotOffloadState]
+      return [expr { $state eq "START" || $state eq "RESUME" } ]
+   }
 	flexLoop   { return [expr {[$sys getFlexLoopState] eq "CLOSED"}] }
 	lgswfs     { return [expr {[$sys getLGSWFSActive] eq "ON"}] }
 	sfs        { return [expr {[$sys getSFSActive] eq "ON"}] }

@@ -61,7 +61,8 @@ itcl::class GuideAlarm {
 		method buildGaosAlarms {}
 		method buildAltairAlarms {}
 		method buildGemsAlarms {}
-		method onGemsChange {reasons}
+		#method onGemsChange {reasons}
+      method retrieveGeMSCounts {}
 		
 		variable tid 0
 		
@@ -410,6 +411,7 @@ itcl::body GuideAlarm::scanLoop {} {
 	
 	set wfsList {pwfs1 pwfs2 oiwfs nici}
 	if { [calparam cget -site] eq "CP" } {
+      retrieveGeMSCounts
 		lappend wfsList ttwfs lgswfs sfs odgw
 		set ttSources [$gemsSys getTTLoopSources]
       set flexSources [$gemsSys getFlexLoopSources]
@@ -847,66 +849,100 @@ itcl::body GuideAlarm::buildGemsAlarms {} {
 		$itk_component(sfsframe) $itk_component(odgwframe) -side top -padx 3 \
 		-pady 3 -ipadx 3 -ipady 3 -fill x -expand 1
 
-	$gemsSys subscribe [itcl::code $this onGemsChange]
+	#$gemsSys subscribe [itcl::code $this onGemsChange]
 }
+#
+#itcl::body GuideAlarm::onGemsChange {reasons} {
+#	global guideCounts
+#   
+#   puts "GuideAlarm::onGemsChange $reasons"
+#	
+#	foreach reason $reasons {
+#		switch $reason {
+#		sfsCounts {
+#			set guideCounts(sfs) [$gemsSys getSFSCounts]
+#			alarmCheck sfs
+#		}
+#		ttwfsCounts(1) {
+#			set guideCounts(ttwfs1) [$gemsSys getTTWFSCounts 1]
+#			alarmCheck ttwfs
+#		}
+#		ttwfsCounts(2) {
+#			set guideCounts(ttwfs2) [$gemsSys getTTWFSCounts 2]
+#			alarmCheck ttwfs
+#		}
+#		ttwfsCounts(3) {
+#			set guideCounts(ttwfs3) [$gemsSys getTTWFSCounts 3]
+#			alarmCheck ttwfs
+#		}
+#		lgswfsCounts(1) {
+#			set guideCounts(lgswfs1) [$gemsSys getLGSWFSCounts 1]
+#			alarmCheck lgswfs
+#		}
+#		lgswfsCounts(2) {
+#			set guideCounts(lgswfs2) [$gemsSys getLGSWFSCounts 2]
+#			alarmCheck lgswfs
+#		}
+#		lgswfsCounts(3) {
+#			set guideCounts(lgswfs3) [$gemsSys getLGSWFSCounts 3]
+#			alarmCheck lgswfs
+#		}
+#		lgswfsCounts(4) {
+#			set guideCounts(lgswfs4) [$gemsSys getLGSWFSCounts 4]
+#			alarmCheck lgswfs
+#		}
+#		lgswfsCounts(5) {
+#			set guideCounts(lgswfs5) [$gemsSys getLGSWFSCounts 5]
+#			alarmCheck lgswfs
+#		}
+#		odgwCounts(1) {
+#			set guideCounts(odgw1) [$gemsSys getODGWCounts 1]
+#			alarmCheck odgw
+#		}
+#		odgwCounts(2) {
+#			set guideCounts(odgw2) [$gemsSys getODGWCounts 2]
+#			alarmCheck odgw
+#		}
+#		odgwCounts(3) {
+#			set guideCounts(odgw3) [$gemsSys getODGWCounts 3]
+#			alarmCheck odgw
+#		}
+#		odgwCounts(4) {
+#			set guideCounts(odgw4) [$gemsSys getODGWCounts 4]
+#			alarmCheck odgw
+#		}
+#		}
+#	}
+#}
 
-itcl::body GuideAlarm::onGemsChange {reasons} {
-	global guideCounts
-	
-	foreach reason $reasons {
-		switch $reason {
-		sfsCounts {
-			set guideCounts(sfs) [$gemsSys getSFSCounts]
-			alarmCheck sfs
-		}
-		ttwfsCounts(1) {
-			set guideCounts(ttwfs1) [$gemsSys getTTWFSCounts 1]
-			alarmCheck ttwfs
-		}
-		ttwfsCounts(2) {
-			set guideCounts(ttwfs2) [$gemsSys getTTWFSCounts 2]
-			alarmCheck ttwfs
-		}
-		ttwfsCounts(3) {
-			set guideCounts(ttwfs3) [$gemsSys getTTWFSCounts 3]
-			alarmCheck ttwfs
-		}
-		lgswfsCounts(1) {
-			set guideCounts(lgswfs1) [$gemsSys getLGSWFSCounts 1]
-			alarmCheck lgswfs
-		}
-		lgswfsCounts(2) {
-			set guideCounts(lgswfs2) [$gemsSys getLGSWFSCounts 2]
-			alarmCheck lgswfs
-		}
-		lgswfsCounts(3) {
-			set guideCounts(lgswfs3) [$gemsSys getLGSWFSCounts 3]
-			alarmCheck lgswfs
-		}
-		lgswfsCounts(4) {
-			set guideCounts(lgswfs4) [$gemsSys getLGSWFSCounts 4]
-			alarmCheck lgswfs
-		}
-		lgswfsCounts(5) {
-			set guideCounts(lgswfs5) [$gemsSys getLGSWFSCounts 5]
-			alarmCheck lgswfs
-		}
-		odgwCounts(1) {
-			set guideCounts(odgw1) [$gemsSys getODGWCounts 1]
-			alarmCheck odgw
-		}
-		odgwCounts(2) {
-			set guideCounts(odgw2) [$gemsSys getODGWCounts 2]
-			alarmCheck odgw
-		}
-		odgwCounts(3) {
-			set guideCounts(odgw3) [$gemsSys getODGWCounts 3]
-			alarmCheck odgw
-		}
-		odgwCounts(4) {
-			set guideCounts(odgw4) [$gemsSys getODGWCounts 4]
-			alarmCheck odgw
-		}
-		}
-	}
+
+itcl::body GuideAlarm::retrieveGeMSCounts {} {
+   global guideCounts
+   
+   set guideCounts(sfs) [$gemsSys getSFSCounts]
+   alarmCheck sfs
+   set guideCounts(ttwfs1) [$gemsSys getTTWFSCounts 1]
+   alarmCheck ttwfs
+   set guideCounts(ttwfs2) [$gemsSys getTTWFSCounts 2]
+   alarmCheck ttwfs
+   set guideCounts(ttwfs3) [$gemsSys getTTWFSCounts 3]
+   alarmCheck ttwfs
+   set guideCounts(lgswfs1) [$gemsSys getLGSWFSCounts 1]
+   alarmCheck lgswfs
+   set guideCounts(lgswfs2) [$gemsSys getLGSWFSCounts 2]
+   alarmCheck lgswfs
+   set guideCounts(lgswfs3) [$gemsSys getLGSWFSCounts 3]
+   alarmCheck lgswfs
+   set guideCounts(lgswfs4) [$gemsSys getLGSWFSCounts 4]
+   alarmCheck lgswfs
+   set guideCounts(lgswfs5) [$gemsSys getLGSWFSCounts 5]
+   alarmCheck lgswfs
+   set guideCounts(odgw1) [$gemsSys getODGWCounts 1]
+   alarmCheck odgw
+   set guideCounts(odgw2) [$gemsSys getODGWCounts 2]
+   alarmCheck odgw
+   set guideCounts(odgw3) [$gemsSys getODGWCounts 3]
+   alarmCheck odgw
+   set guideCounts(odgw4) [$gemsSys getODGWCounts 4]
+   alarmCheck odgw
 }

@@ -54,21 +54,23 @@ itcl::body Gsaoi::destructor {} {
 }
 
 itcl::body Gsaoi::configureFilter {filter} {
-	cs gsaoi::config set filter $filter
-	logactions logmess "Applying GSAOI filter: (\"$filter\")"
-	if { [catch {cs gsaoi::config post} msg] } {
-		logactions logmess "Error posting gsaoi::config: GSAOI reports \"$msg\""		
-	}
+   if { $filter ne "" } {
+   	cs gsaoi::config set filter $filter
+   	logactions logmess "Applying GSAOI filter: (\"$filter\")"
+   	if { [catch {cs gsaoi::config post} msg] } {
+   		logactions logmess "Error posting gsaoi::config: GSAOI reports \"$msg\""		
+   	}
+   }
 }
 
 itcl::body Gsaoi::findFilter {wavelength} {
 	if { [string is double -strict $wavelength] } {
-		for {set i 0} {$i<[$::Config($comp,list) length]} {incr i} {
+		for {set i 1} { $i < [$::Config($comp,list) length] } {incr i} {
 			set fullname $::Config($comp,namespace)::[$::Config($comp,list) get $i]
 			set w [$fullname cget -wavel]
 			if { [string is double -strict $wavelength] } {
 				if { $wavelength == $w } {
-					return $wavel
+					return [$::Config($comp,list) get $i]
 				}
 			}
 		}

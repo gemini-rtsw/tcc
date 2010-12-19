@@ -91,7 +91,8 @@ itcl::body Odgw::setInstrument {instr} {
 }
 
 itcl::body Odgw::configureFilter {filter} {
-	if {$instrument ne ""} {
+   puts "Odgw::configureFilter $filter $instrument"
+	if {$instrument ne "" && $filter ne "" } {
 		$instrument configureFilter $filter
 		set wavel [$instrument getFilterWavelength $filter]
 		if { [string is double -strict $wavel] } {
@@ -134,7 +135,7 @@ itcl::body Odgw::configureTargetWavelength {wavel} {
 
 itcl::body Odgw::configureWavelength {wavel} {
 	if {$instrument ne ""} {
-		set filter $instrument findFilter $wavel
+		set filter [$instrument findFilter $wavel]
 		if { ![string is space $filter] } {
 			$instrument configureFilter $filter
 		}	
