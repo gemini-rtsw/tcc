@@ -90,6 +90,10 @@ itcl::class ActiveOptics {
 		method unparkAltair {}
 		method startAltairWFS {}
 		method startAltairLoops {}
+      
+      proc messageBox {icon message args}
+      proc errorBox {message} {return [messageBox error $message]}
+      proc questionBox {message} {return [messageBox question $message -type yesno -default no]}
 	}
 }
 
@@ -229,8 +233,7 @@ itcl::body ActiveOptics::enable {} {
 
 # check to make sure we're not using OI probe guiding with GMOS
    if { ($probeto == "OIWFS") && [string match "*GMOS*" $::Config(tcs.instrument,value)]} {
-      tk_messageBox -icon error -parent [focus] \
-         -message "You cannot use OIWFS probe guiding with GMOS"
+      errorBox "You cannot use OIWFS probe guiding with GMOS"
       process IDLE
       return
    }
@@ -358,9 +361,7 @@ itcl::body ActiveOptics::enable {} {
          cs m2Guide set state Off
          logger command m2Guide
          if { [catch {cs m2Guide post} msg] } {
-            tk_messageBox -icon error -parent [focus] -message \
-                  "Error posting m2Guide command: TCS reports \
-                  \"$msg\""
+            errorBox "Error posting m2Guide command: TCS reports \"$msg\""
 	    process IDLE
             return
          }
@@ -370,10 +371,9 @@ itcl::body ActiveOptics::enable {} {
             cs m2GuideReset set dummy 1
             logger command m2GuideReset
             if { [catch {cs m2GuideReset post} msg] } {
-               tk_messageBox -icon error -parent [focus] -message \
-                     "Error posting m2GuideReset command: TCS reports \
+               errorBox "Error posting m2GuideReset command: TCS reports \
                      \"$msg\""
-	       process IDLE
+      	      process IDLE
                return
             }
          }
@@ -389,8 +389,7 @@ itcl::body ActiveOptics::enable {} {
                }
                logger command oiwfsSelect
                if { [catch { cs oiwfsSelect post} msg] } {
-                 tk_messageBox -icon error -parent [focus] -message \
-                     "Error posting oiwfsSelect command: TCS reports \
+                  errorBox "Error posting oiwfsSelect command: TCS reports \
                      \"$msg\""
 		  process IDLE
                   return
@@ -411,8 +410,7 @@ puts "beam is $beam gonna wait for 1 second"
                after 1000
                logger command m2GuideConfig
                if { [catch {cs m2GuideConfig post} msg] } {
-                  tk_messageBox -icon error -parent [focus] -message \
-                        "Error posting m2GuideConfig command: TCS reports \
+                  errorBox "Error posting m2GuideConfig command: TCS reports \
                         \"$msg\""
 		  process IDLE
                   return
@@ -512,8 +510,7 @@ puts "beam is $beam gonna wait for 1 second"
 
 # Post the commands.
    if { [catch {cs tcsApply post} msg] } {
-      tk_messageBox -icon error -parent [focus] -message \
-            "Error posting guide commands: TCS reports \
+      errorBox "Error posting guide commands: TCS reports \
             \"$msg\""
       process IDLE
       return
@@ -526,15 +523,13 @@ puts "beam is $beam gonna wait for 1 second"
 			return
 		}
 	} else {
-		if { [$gaosObj enable] } {
-			tk_messageBox -icon error -parent [focus] -message \
-			"Error posting guide commands: GeMS reports \
-			\"[$gaosObj cget -lastError]\""
+		if { [catch {$gaosObj enable} gaosRet ] || $gaosRet } {
+         errorBox "Error posting guide commands: GeMS reports \
+                                       			\"[$gaosObj cget -lastError]\""
 			process IDLE
 			return
 		}		
 	}
-
 # Probe guiding.
 	if { $probeguide == "OFF" && ( [state p1guide] || [state p2guide] || [state oiguide]) } {
       cs wfsGuideMode set state Off
@@ -545,7 +540,6 @@ puts "beam is $beam gonna wait for 1 second"
       cs wfsGuideMode set to $probeto
       logger command wfsGuideMode
    }
-
    if { $oiao && $oiaoLoop } {
 # Actually closing of the AO loop was moved to after the closing of P2
 
@@ -587,9 +581,7 @@ puts "beam is $beam gonna wait for 1 second"
 
 # Post the commands.
    if { [catch {cs tcsApply post} msg] } {
-      tk_messageBox -icon error -parent [focus] -message \
-            "Error posting guide commands: TCS reports \
-            \"$msg\""
+      errorBox "Error posting guide commands: TCS reports \"$msg\""
       process IDLE
       return
    }
@@ -662,8 +654,7 @@ itcl::body ActiveOptics::disable {} {
 
 # Post the command.
    if { [catch {cs tcsApply post} msg] } {
-      tk_messageBox -icon error -parent [focus] -message \
-            "Error posting guide commands: TCS reports \
+      errorBox "Error posting guide commands: TCS reports \
             \"$msg\""
       process IDLE
       return
@@ -671,9 +662,8 @@ itcl::body ActiveOptics::disable {} {
 	
 	if { [calparam cget -site] eq "CP" } {
 		if {[$gaosObj disable]} {
-			tk_messageBox -icon error -parent [focus] -message \
-			"Error posting guide commands: GeMS reports \
-			\"[$gaosObj cget -lastError]\""
+         errorBox "Error posting guide commands: GeMS reports \
+                                       			\"[$gaosObj cget -lastError]\""
 		}
 	} else {
       if { ![catch {cs gaosTTGS info}] } {
@@ -714,7 +704,7 @@ itcl::body ActiveOptics::disable {} {
          cs aoCorrect set correct OFF
          logger command aoCorrect
          if { [catch {cs tcsApply post} msg] } {
-   	   	tk_messageBox -icon error -parent [focus] -message $msg
+            errorBox  $msg
          }
          after 10
           
@@ -1067,8 +1057,7 @@ itcl::body ActiveOptics::timeout {} {
     # raise a warning popup and open the loops.
     puts "ActiveOptics::timeout"
     logactions logmess "ActiveOptics::Timed out waiting for $timeout_reason. Opening loops"
-    tk_messageBox -icon error -parent [focus] \
-	-message "Timed out waiting for $timeout_reason. Opening loops"
+    errorBox "Timed out waiting for $timeout_reason. Opening loops"
 
     set timeout 1
     if {[string match "*STRAP*" $timeout_reason]} {
@@ -1149,8 +1138,7 @@ itcl::body ActiveOptics::setTTGSFluxMode {} {
 	if {[setTimeout "sa aossad get strapSFXBusy" BUSY 10000 200 "STRAP SFXBusy to be IDLE"]} {return 1}
 	after 500
 	if {[sa aossad get strapSFXBusy] == "ERR"} {
-		tk_messageBox -icon error -parent [focus] -message \
-	    	"Error Setting STRAP Flux Mode: MESS: [sa aossad get strapSFXMess]"
+      errorBox "Error Setting STRAP Flux Mode: MESS: [sa aossad get strapSFXMess]"
 		return 1
 	}
 	after 500
@@ -1228,8 +1216,7 @@ itcl::body ActiveOptics::unparkAltair {} {
       logger command aoExitShutter
 
       if { [catch {cs tcsApply post} msg] } {
-         tk_messageBox -icon error -parent [focus] -message \
-            "Error posting GAOS mechanism command: TCS reports \
+         errorBox "Error posting GAOS mechanism command: TCS reports \
             \"$msg\""
       }
    }
@@ -1283,8 +1270,7 @@ itcl::body ActiveOptics::configureOIBlending {} {
 	# Post the Blending Command.
 	# The blending command must be finished before the loops are closed.
 	if { [catch {cs tcsApply post} msg] } {
-		tk_messageBox -icon error -message -parent [focus] \
-			"Error posting guide commands: TCS reports \
+      errorBox "Error posting guide commands: TCS reports \
 			  \"$msg\""
 			return 1
 	}
@@ -1321,8 +1307,7 @@ itcl::body ActiveOptics::startAltairWFS {} {
 					( [sa aossad get strapHVStat] == 0) || \
 					( [sa aossad get strapSFXMode] != $ttgsFlux) } {
 				if {[$this setTTGSFluxMode]} {
-					if {[tk_messageBox -icon question -type yesno -parent [focus] -default no -message \
-						"There was an Error Configuring STRAP\nShould I open the Loops?"] == "yes"} {
+					if {[questionBox "There was an Error Configuring STRAP\nShould I open the Loops?"] == "yes"} {
 						process IDLE
 						$this disable 
 						return 1
@@ -1343,8 +1328,7 @@ itcl::body ActiveOptics::startAltairWFS {} {
 					if {[setTimeout "sa aossad get strapSEXBusy" BUSY 10000 200 "Strap Set Exp time to be IDLE"]} return
 					after 200
 					 if {[sa aossad get strapSEXBusy] == "ERR"} {
-						tk_messageBox -icon error -parent [focus] -message \
-							 "Error Setting STRAP Exposure Time: MESS: [sa aossad get strapSEXMess]"
+                  errorBox "Error Setting STRAP Exposure Time: MESS: [sa aossad get strapSEXMess]"
 						process IDLE
 						return 1
 					 }
@@ -1397,7 +1381,7 @@ itcl::body ActiveOptics::startAltairWFS {} {
 		cs aoPrepareCm set gsmag $gsmag
 		logger command aoPrepareCm
 		if { [catch {cs tcsApply post} msg] } {
-			tk_messageBox -icon error -parent [focus] -message $msg
+         errorBox $msg
 		}
 		#wait for prepareCm to go idle
 		if {[setTimeout "sa aossad get prepareBusy" BUSY 10000 200 "prepareCm to go idle"]} {
@@ -1443,8 +1427,7 @@ itcl::body ActiveOptics::startAltairWFS {} {
 		
 		# Post the command.
 		if { [catch {cs tcsApply post} msg] } {
-			 tk_messageBox -icon error -parent [focus] -message \
-			"Error posting guide commands: TCS reports \
+          errorBox "Error posting guide commands: TCS reports \
 					\"$msg\""
 			 return 1
 		}
@@ -1459,7 +1442,7 @@ itcl::body ActiveOptics::startAltairWFS {} {
 		cs aoCorrect set gains $AOreuseGains
 		logger command aoCorrect
 		if { [catch {cs tcsApply post} msg] } {
-			tk_messageBox -icon error -parent [focus] -message $msg
+         errorBox $msg
 		}
 		
 		#wait for gaos Loop to be on
@@ -1486,7 +1469,7 @@ itcl::body ActiveOptics::startAltairWFS {} {
 		cs aoCorrect set correct OFF
 		logger command aoCorrect
 		if { [catch {cs tcsApply post} msg] } {
-			tk_messageBox -icon error -parent [focus] -message $msg
+         errorBox $msg
 		}
 		after 10
 		 
@@ -1520,3 +1503,11 @@ itcl::body ActiveOptics::startAltairLoops {} {
 	return 0
 }
 
+itcl::body ActiveOptics::messageBox {icon message args} {
+   set focus [focus]
+   if { [winfo exists $focus] } {
+      return [eval "tk_messageBox -icon error -parent {$focus} -message {$message} $args"]
+   } else {
+      return [eval "tk_messageBox -icon error -message {$message} $args"]
+   }
+}

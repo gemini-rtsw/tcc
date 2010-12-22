@@ -1,6 +1,5 @@
 #+
 #
-# This class keeps the GeMS AO settings and sequences its commands.
 #
 # J Luhrs 01 April 2009
 #
@@ -227,8 +226,13 @@ itcl::body GemsAO::startTTGS {} {
 }
 
 itcl::body GemsAO::startODGW {} {
+   puts "GemsAO::startODGW called, ODGW activity: [state odgwActive]"
+   if {[state odgwActive]} {
+      return 0
+   }
+
    set idList ""
-   set testExp "expr \{ 1"
+#   set testExp "expr \{ 1"
    for {set i 1} {$i <= 4} { incr i} {
 		if { [set odgw${i}Active] } {
 			if {[set odgw${i}Exp] ne "" && [set odgw${i}Exp] != [$sys getODGWExposure $i]} {
@@ -237,19 +241,24 @@ itcl::body GemsAO::startODGW {} {
 					return 1
 				}
 			}
-			if { ![state odgw${i}] } {
-            lappend idList $i
-            set testExp "$testExp && \[ state odgw${i} \]"
-			}
+         lappend idList $i
+ #           set testExp "$testExp && \[ state odgw${i} \]"
 		}
    }
-   set testExp "$testExp \}"
+#   set testExp "$testExp \}"
+   puts "GemsAO::startODGW setupODGW $idList"
+   $sys setupODGW $idList
+   if { [waitForCmdComplete 10000 10000 "expr 1" "setup ODGW $idList"] } {
+      return 1
+   }
    if { [llength $idList] > 0 } {
+      puts "GemsAO::startODGW startODGW"
 		$sys startODGW $idList
-      if { [waitForCmdComplete 10000 10000 $testExp "ODGW $idList to go ON"] } {
+      if { [waitForCmdComplete 10000 10000 "state odgwActive" "ODGW to start"] } {
          return 1
       }
    }
+   puts "GemsAO::startODGW completed"
 	return 0	
 }
 
@@ -306,18 +315,14 @@ itcl::body GemsAO::stopTTGS {} {
 }
 
 itcl::body GemsAO::stopODGW {} {
-   set idList ""
-   set testExp "expr \{ 1"
    for {set i 1} {$i <= 4} { incr i} {
-      if { ![set odgw${i}Active] && [state odgw${i}] } {
-         lappend idList $i
-         set testExp "$testExp && !\[ state odgw${i} \]"
+      if {[set odgw${i}Active]} {
+         return 0
       }
    }
-   set testExp "$testExp \}"
-   if { [llength $idList] > 0 } {
-      $sys stopODGW $idList
-      if { [waitForCmdComplete 10000 10000 $testExp "ODGW $idList to go OFF"] } {
+   if { [state odgwActive] } {
+      $sys stopODGW {}
+      if { [waitForCmdComplete 10000 10000 {expr ![state odgwActive]} "ODGW to stop"] } {
          return 1
       }
    }
@@ -376,22 +381,13 @@ itcl::body GemsAO::disableTTGS {} {
 }
 
 itcl::body GemsAO::disableODGW {} {
-   set idList ""
-   set testExp "expr \{ 1"
-   for {set i 1} {$i <= 4} { incr i} {
-      if { [state odgw${i}] } {
-         lappend idList $i
-         set testExp "$testExp && !\[ state odgw${i} \]"
-      }
-   }
-   set testExp "$testExp \}"
-   if { [llength $idList] > 0 } {
-      $sys stopODGW $idList
-      if { [waitForCmdComplete 10000 10000 $testExp "ODGW $idList to go OFF"] } {
+   if { [state odgwActive] } {
+      $sys stopODGW {}
+      if { [waitForCmdComplete 10000 10000 {expr ![state odgwActive]} "ODGW to stop"] } {
          return 1
       }
    }
-   return 0 
+   return 0
 }
 
 itcl::body GemsAO::setupLoops {} {
@@ -497,10 +493,15 @@ itcl::body GemsAO::state {var} {
 	ttgs1      { return [expr {[$sys getTTWFSActive 1] eq "ON"}] }
 	ttgs2      { return [expr {[$sys getTTWFSActive 2] eq "ON"}] }
 	ttgs3      { return [expr {[$sys getTTWFSActive 3] eq "ON"}] }
-	odgw1      { return [expr {[$sys getODGWActive 1] eq "ON"}] }
-	odgw2      { return [expr {[$sys getODGWActive 2] eq "ON"}] }
-	odgw3      { return [expr {[$sys getODGWActive 3] eq "ON"}] }
-	odgw4      { return [expr {[$sys getODGWActive 4] eq "ON"}] }
+	odgw1      { return [expr {[$sys getODGWActive 1] eq "ON" && [$sys getODGWEnabled 1] eq "ON"}] }
+	odgw2      { return [expr {[$sys getODGWActive 2] eq "ON" && [$sys getODGWEnabled 2] eq "ON"}] }
+	odgw3      { return [expr {[$sys getODGWActive 3] eq "ON" && [$sys getODGWEnabled 3] eq "ON"}] }
+	odgw4      { return [expr {[$sys getODGWActive 4] eq "ON" && [$sys getODGWEnabled 4] eq "ON"}] }
+   odgw1Enabled      { return [expr {[$sys getODGWEnabled 1] eq "ON"}] }
+   odgw2Enabled      { return [expr {[$sys getODGWEnabled 2] eq "ON"}] }
+   odgw3Enabled      { return [expr {[$sys getODGWEnabled 3] eq "ON"}] }
+   odgw4Enabled      { return [expr {[$sys getODGWEnabled 4] eq "ON"}] }
+   odgwActive {return [expr {[$sys getODGWActive 1] eq "ON"}] }
 	aoSettled  { return [expr {[$sys getLoopsState] eq "READY"}] }
 	}
 	return 0

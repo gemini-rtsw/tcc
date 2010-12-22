@@ -360,7 +360,7 @@ itcl::body TcsConfigControl::apply {} {
 
 # Configure UseAO flag in the TCS
 	if { ![catch {cs configForAO info}] } {
-		if {[calparam cget -site] eq "CP" || [string match "No AO" $::Config(tcs.gaos,value)] || [string match "" $::Config(tcs.gaos,value)]} {
+		if { [string match "No AO" $::Config(tcs.gaos,value)] || [string match "" $::Config(tcs.gaos,value)]} {
 			cs configForAO set useAO "No"
 		   logger command configForAO
 		   logactions logmess "Applying configForAO No"

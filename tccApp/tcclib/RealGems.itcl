@@ -54,6 +54,7 @@ public {
 	method moveBeamSplitter {pos}
 
 	#WFS control commands
+   method setupODGW {idList}
 	method startODGW {idList}
 	method stopODGW {idList}
 	method startTTWFS {idList}
@@ -85,6 +86,7 @@ public {
 	method getTTLoopSources {}
    method getFlexLoopSources {}
 	method getODGWActive {id}
+   method getODGWEnabled {id}
 	method getTTWFSActive {id}
 	method getLGSWFSActive {}
 	method getSFSActive {}
@@ -598,14 +600,18 @@ itcl::body RealGems::moveBeamSplitter {pos} {
 }
 
 #WFS control commands
-itcl::body RealGems::startODGW {idList} {
+itcl::body RealGems::setupODGW {idList} {
    set change 0
    set logmult ""
-   foreach id $idList {
-		set mult [expr "round(double([set odgw${id}ExpTime]) / $odgwBaseExpTime )"]
-		if { $mult < 1 } {
-			set mult 1
-		}
+   foreach id {1 2 3 4} {
+      if {[lsearch $idList $id] == -1} {
+         set mult 0
+      } else {
+   		set mult [expr "round(double([set odgw${id}ExpTime]) / $odgwBaseExpTime )"]
+   		if { $mult < 1 } {
+   			set mult 1
+   		}
+      }
       set currentMult [sa odgwsad get expMult${id} value]
       if { ![string is integer -strict $currentMult] || $currentMult != $mult } {
    		cs gems::odgwSetup set expMult${id} $mult
@@ -621,95 +627,32 @@ itcl::body RealGems::startODGW {idList} {
    }
    
    if { $change } {
-      if {![sa odgwsad get notGuiding value]} {
-         puts "RealGems::startODGW Stoping guide"
-         catch {cs gems::odgwEndGuide set command MARK}
-         after 100
-         catch {cs gems::odgwEndGuide set command START}
-         set lastCmdSys odgwsad
-         after 500
-         if { [waitForCmdIdle 10000] eq "ok"} {
-            puts "RealGems::startODGW configuring ODGW"
-            catch {cs gems::odgwSetup post}
-         }
-         after 500
-         if { [waitForCmdIdle 10000] eq "ok"} {
-            puts "RealGems::startODGW restarting guide"
-            catch {cs gems::odgwGuide set command MARK}
-            after 100
-            catch {cs gems::odgwGuide set command START}
-         }
-      } else {
-			puts "RealGems::startODGW configuring ODGW"
-         catch {cs gems::odgwSetup post}
-			after 500
-         if { [waitForCmdIdle 10000] eq "ok"} {
-            puts "RealGems::startODGW restarting guide"
-            catch {cs gems::odgwGuide set command MARK}
-            after 100
-            catch {cs gems::odgwGuide set command START}
-         }
-      }
-      $logger logmess "gems::odgwSetup $odgwBaseExpTime $logmult"
-      set lastCmdSys ""
+      set lastCmdSys odgwsad
+      puts "RealGems::startODGW configuring ODGW"
+      $logger logmess "gems::odgwSetup multipliers $logmult"
+      catch {cs gems::odgwSetup post}
+      after 1000
    } else {
-		puts "RealGems::startODGW restarting guide"
-      catch {cs gems::odgwGuide set command MARK}
-      after 100
-      catch {cs gems::odgwGuide set command START}
-		set lastCmdSys ""
+      set lastCmdSys ""
    }
 }
 
+itcl::body RealGems::startODGW {idList} {
+   catch {cs gems::odgwGuide set command MARK}
+   after 100
+   catch {cs gems::odgwGuide set command START}
+   set lastCmdSys ""
+   $logger logmess "gems::odgwGuide"
+   after 1000
+}
+
 itcl::body RealGems::stopODGW {idList} {
-   set logmsg ""
-   set change 0
-   foreach id $idList {
-      set currentMult [sa odgwsad get expMult${id} value]
-      if { ![string is integer -strict $currentMult] || $currentMult != 0 } {
-         cs gems::odgwSetup set expMult${id} 0
-         set change 1
-      }
-	   cs gems::odgwSetup set expMult${id} 0
-      set logmsg "$logmsg $id:0"
-   }
-   if { $change } {
-      if {![sa odgwsad get notGuiding value]} {
-         catch {cs gems::odgwEndGuide set command MARK}
-         after 100
-         catch {cs gems::odgwEndGuide set command START}
-         set lastCmdSys odgwsad
-         after 500
-         if { [waitForCmdIdle 10000] eq "ok"} {
-            catch {cs gems::odgwSetup post}
-         }
-         after 500
-         if { [waitForCmdIdle 10000] eq "ok"} {
-            catch {cs gems::odgwGuide set command MARK}
-            after 100
-            catch {cs gems::odgwGuide set command START}
-         }
-      }
-      $logger logmess "gems::odgwSetup $logmsg"
-      set lastCmdSys ""
-   }
-   
-   #TODO review timing
-#	catch {cs gems::odgwSetup post}
-# Not need to call endGuide, guiding stops automatically if all expMult go to 0.
-#   if { [sa odgwsad get notGuiding value] == 0 } {
-#      set noneActive 1
-#      foreach field {expMult1 expMult2 expMult3 expMult4} {
-#         if { [sa odgwsad get $field value] > 0 } {
-#            set noneActive 0
-#            break
-#         }
-#      }
-#      if { $noneActive } { 
-#         catch {cs gems::odgwEndGuide set command MARK}
-#         catch {cs gems::odgwEndGuide set command START}
-#      }
-#   }
+   catch {cs gems::odgwEndGuide set command MARK}
+   after 100
+   catch {cs gems::odgwEndGuide set command START}
+   set lastCmdSys ""
+   $logger logmess "gems::odgwEndGuide"
+   after 1000
 }
 
 itcl::body RealGems::startTTWFS {idList} {
@@ -912,10 +855,18 @@ itcl::body RealGems::getFlexLoopSources {} {
 }
 
 itcl::body RealGems::getODGWActive {id} {
-	if { [ sa odgwsad get notGuiding value] == 0 && [ sa odgwsad get expMult${id} value] > 0 } {
-		return ON
+   set val [sa odgwsad get notGuiding value]
+	if { ![string is boolean -strict $val] || $val } {
+		return OFF
 	}
-	return OFF
+	return ON
+}
+
+itcl::body RealGems::getODGWEnabled {id} {
+   if { [ sa odgwsad get expMult${id} value] > 0 } {
+      return ON
+   }
+   return OFF
 }
 
 itcl::body RealGems::getTTWFSActive {id} {
