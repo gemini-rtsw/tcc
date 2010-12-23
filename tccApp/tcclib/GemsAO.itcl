@@ -240,6 +240,8 @@ itcl::body GemsAO::startTTGS {} {
 }
 
 itcl::body GemsAO::startODGW {} {
+   return 0
+   
    puts "GemsAO::startODGW called, ODGW activity: [state odgwActive]"
    if {[state odgwActive]} {
       return 0
@@ -329,6 +331,8 @@ itcl::body GemsAO::stopTTGS {} {
 }
 
 itcl::body GemsAO::stopODGW {} {
+   return 0
+   
    for {set i 1} {$i <= 4} { incr i} {
       if {[set odgw${i}Active]} {
          return 0
@@ -395,6 +399,8 @@ itcl::body GemsAO::disableTTGS {} {
 }
 
 itcl::body GemsAO::disableODGW {} {
+   return 0
+   
    if { [state odgwActive] } {
       $sys stopODGW {}
       if { [waitForCmdComplete 10000 10000 {expr ![state odgwActive]} "ODGW to stop"] } {
@@ -422,33 +428,43 @@ itcl::body GemsAO::setupLoops {} {
    }
    if { $lwfsLoop } {
       lappend loopList lwfs
-      set testExp "$testExp && \[ state lwfsLoop \]"
+      if {![state lwfsLoop]} {
+         set testExp "$testExp && \[ state lwfsLoop \]"
+      }
    } else {
-      set testExp "$testExp && !\[ state lwfsLoop \]"
+#      set testExp "$testExp && !\[ state lwfsLoop \]"
    }
    if { $ttLoop } {
       lappend loopList tt
-      set testExp "$testExp && \[ state ttLoop \]"
+      if {![state ttLoop]} {
+         set testExp "$testExp && \[ state ttLoop \]"
+      }
    } else {
-      set testExp "$testExp && !\[ state ttLoop \]"
+#      set testExp "$testExp && !\[ state ttLoop \]"
    }
    if { $sfsLoop } {
       lappend loopList sfs
-      set testExp "$testExp && \[ state sfsLoop \]"
+      if {![state sfsLoop]} {
+         set testExp "$testExp && \[ state sfsLoop \]"
+      }
    } else {
-      set testExp "$testExp && !\[ state sfsLoop \]"
+#      set testExp "$testExp && !\[ state sfsLoop \]"
    }
    if { $flexLoop } {
       lappend loopList flex
-      set testExp "$testExp && \[ state flexLoop \]"
+      if {![state flexloop]} {
+         set testExp "$testExp && \[ state flexLoop \]"
+      }
    } else {
-      set testExp "$testExp && !\[ state flexLoop \]"
+#      set testExp "$testExp && !\[ state flexLoop \]"
    }
    if { $aniLoop } {
       lappend loopList ani
-      set testExp "$testExp && \[ state aniLoop \]"
+      if {![state aniLoop]} {
+         set testExp "$testExp && \[ state aniLoop \]"
+      }
    } else {
-      set testExp "$testExp && !\[ state aniLoop \]"
+#      set testExp "$testExp && !\[ state aniLoop \]"
    }
    if { [AO cget -crsource] eq "GAOS" } {
       lappend loopList rot
