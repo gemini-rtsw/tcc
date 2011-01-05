@@ -620,7 +620,6 @@ itcl::body RealGems::setupODGW {idList} {
       set logmult "$logmult $id:$mult"
    }
    set currentBaseExpTime [sa odgwsad get baseExpTime]
-   puts "RealGems::startODGW currentBaseExpTime $currentBaseExpTime"
    if { ![string is double -strict $currentBaseExpTime] || $currentBaseExpTime != $odgwBaseExpTime } {
       cs gems::odgwSetup set baseExpTime $odgwBaseExpTime
       set change 1
@@ -628,7 +627,6 @@ itcl::body RealGems::setupODGW {idList} {
    
    if { $change } {
       set lastCmdSys odgwsad
-      puts "RealGems::startODGW configuring ODGW"
       $logger logmess "gems::odgwSetup multipliers $logmult"
       catch {cs gems::odgwSetup post}
       after 1000
@@ -1036,7 +1034,7 @@ itcl::body RealGems::notify {reasons} {
       if {$observer ne ""} {
    		$observer $reasons
       } else {
-         puts "RealGems::notify: found invalid subscriptor"
+         $logger logmess "RealGems::notify: found invalid subscriptor"
       }
 	}
 }

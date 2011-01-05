@@ -213,7 +213,6 @@ itcl::body GemsAO::startTTGS {} {
          } else {
             set ttDiv 1
          }
-         puts "GemsAO::startTTGS $lwfsFreq / $ttExp $ttDiv"
 			$sys setTTWFSExposure 1 $ttDiv
 			if { [waitForCmdComplete 1000 1000 "expr 1" "TTWFS exposure setup"] } {
 				return 1
@@ -240,15 +239,10 @@ itcl::body GemsAO::startTTGS {} {
 }
 
 itcl::body GemsAO::startODGW {} {
-   return 0
    
-   puts "GemsAO::startODGW called, ODGW activity: [state odgwActive]"
-   if {[state odgwActive]} {
-      return 0
-   }
+   set odgwActive [state odgwActive]
 
    set idList ""
-#   set testExp "expr \{ 1"
    for {set i 1} {$i <= 4} { incr i} {
 		if { [set odgw${i}Active] } {
 			if {[set odgw${i}Exp] ne "" && [set odgw${i}Exp] != [$sys getODGWExposure $i]} {
@@ -258,23 +252,20 @@ itcl::body GemsAO::startODGW {} {
 				}
 			}
          lappend idList $i
- #           set testExp "$testExp && \[ state odgw${i} \]"
 		}
    }
-#   set testExp "$testExp \}"
-   puts "GemsAO::startODGW setupODGW $idList"
    $sys setupODGW $idList
    if { [waitForCmdComplete 10000 10000 "expr 1" "setup ODGW $idList"] } {
       return 1
    }
    if { [llength $idList] > 0 } {
-      puts "GemsAO::startODGW startODGW"
-		$sys startODGW $idList
+      if { !$odgwActive } {
+   		$sys startODGW $idList
+      }
       if { [waitForCmdComplete 10000 10000 "state odgwActive" "ODGW to start"] } {
          return 1
       }
    }
-   puts "GemsAO::startODGW completed"
 	return 0	
 }
 
@@ -331,19 +322,17 @@ itcl::body GemsAO::stopTTGS {} {
 }
 
 itcl::body GemsAO::stopODGW {} {
-   return 0
-   
-   for {set i 1} {$i <= 4} { incr i} {
-      if {[set odgw${i}Active]} {
-         return 0
-      }
-   }
-   if { [state odgwActive] } {
-      $sys stopODGW {}
-      if { [waitForCmdComplete 10000 10000 {expr ![state odgwActive]} "ODGW to stop"] } {
-         return 1
-      }
-   }
+#   for {set i 1} {$i <= 4} { incr i} {
+#      if {[set odgw${i}Active]} {
+#         return 0
+#      }
+#   }
+#   if { [state odgwActive] } {
+#      $sys stopODGW {}
+#      if { [waitForCmdComplete 10000 10000 {expr ![state odgwActive]} "ODGW to stop"] } {
+#         return 1
+#      }
+#   }
    return 0 
 }
 
@@ -398,9 +387,7 @@ itcl::body GemsAO::disableTTGS {} {
    return 0
 }
 
-itcl::body GemsAO::disableODGW {} {
-   return 0
-   
+itcl::body GemsAO::disableODGW {} {   
    if { [state odgwActive] } {
       $sys stopODGW {}
       if { [waitForCmdComplete 10000 10000 {expr ![state odgwActive]} "ODGW to stop"] } {
