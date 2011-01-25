@@ -523,12 +523,16 @@ puts "beam is $beam gonna wait for 1 second"
 			return
 		}
 	} else {
-		if { [catch {$gaosObj enable} gaosRet ] || $gaosRet } {
+		if { [catch {$gaosObj enable} gaosRet ] } {
+         errorBox "Error posting guide commands: $::errorInfo"
+         process IDLE
+         return
+		} elseif { $gaosRet } {
          errorBox "Error posting guide commands: GeMS reports \
                                        			\"[$gaosObj cget -lastError]\""
 			process IDLE
 			return
-		}		
+		}
 	}
 # Probe guiding.
 	if { $probeguide == "OFF" && ( [state p1guide] || [state p2guide] || [state oiguide]) } {

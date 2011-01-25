@@ -115,7 +115,7 @@ itcl::body GemsAO::disable {} {
 }
 
 itcl::body GemsAO::waitFor {timeout outCondition} {
-   #puts "GemsAO::waitFor $timeout $outCondition"
+#   puts "GemsAO::waitFor $timeout $outCondition"
 	set elapsedTime 0
 	while {$timeout==0 || $elapsedTime<$timeout} {
 #      if { [llength $outCondition] == 2 && [lindex $outCondition 0] eq "expr" } {
@@ -528,82 +528,75 @@ itcl::body GemsAO::defineTTSources {} {
 	set sources ""
 	
    set ttgsCount 0
-	if { $ttLoop || $aniLoop } {
-   	if { $ttgs1Active } {
-   		lappend sources ttgs1 Fast $ttgs1Mag
+   foreach ttgs {ttgs1Active ttgs2Active ttgs3Active} {
+      if {[set $ttgs]} {
          incr ttgsCount
-   	} else {
-         lappend sources ttgs1 NotUsed $ttgs1Mag
-      } 
-   	if { $ttgs2Active } {
-   		lappend sources ttgs2 Fast $ttgs2Mag
-         incr ttgsCount
-   	} else {
-         lappend sources ttgs2 NotUsed $ttgs2Mag
-   	}
-   	if { $ttgs3Active } {
-   		lappend sources ttgs3 Fast $ttgs3Mag
-         incr ttgsCount
-   	} else {
-         lappend sources ttgs3 NotUsed $ttgs3Mag
-   	}
-      if { !$ttgs1Active && !$ttgs2Active && !$ttgs3Active } {
-      	if { $odgw1Active } {
-      		lappend sources odgw1 $odgw1Mag
-      	}
-      	if { $odgw2Active } {
-      		lappend sources odgw2 $odgw2Mag
-      	}
-      	if { $odgw3Active } {
-      		lappend sources odgw3 $odgw3Mag
-      	}
-      	if { $odgw4Active } {
-      		lappend sources odgw4 $odgw4Mag
-      	}
       }
-	}
-   
+   }
    set odgwCount 0
-   for {set i 1} { $i <= 4 } { incr i } {
-      if { [set odgw${i}Active] } {
+   foreach odgw {odgw1Active odgw2Active odgw3Active odgw4Active} {
+      if {[set $odgw]} {
          incr odgwCount
       }
    }
-   set odgwLoop NotUsed
-   if { $flexLoop && $odgwCount <= 1 } {
-      set odgwLoop Flex
-   } elseif { $ttLoop && $ttgsCount == 0 } {
-      set odgwLoop Fast
-   } elseif { $flexLoop } {
-      set odgwLoop Flex
+   set ttgsUse NotUsed
+   set odgwUse NotUsed
+   if { $aniLoop } {
+      set ttgsUse Fast 
+   } elseif { $ttLoop } {
+      if { $ttgsCount > 1 || $odgwCount <= 1 } {
+         set ttgsUse Fast
+      } else {
+         set odgwUse Fast
+      }
    }
-   
-   if { $odgwLoop ne "NotUsed" } {
-      if { $odgw1Active } {
-         lappend sources odgw1 $odgwLoop $odgw1Mag
-      } else {
-         lappend sources odgw1 NotUsed $odgw1Mag
-      }
-      if { $odgw2Active } {
-         lappend sources odgw2 $odgwLoop $odgw2Mag
-      } else {
-         lappend sources odgw2 NotUsed $odgw2Mag
-      }
-      if { $odgw3Active } {
-         lappend sources odgw3 $odgwLoop $odgw3Mag
-      } else {
-         lappend sources odgw3 NotUsed $odgw3Mag
-      }
-      if { $odgw4Active } {
-         lappend sources odgw4 $odgwLoop $odgw4Mag
-      } else {
-         lappend sources odgw4 NotUsed $odgw4Mag
-      }
+   if { $flexLoop && $odgwCount > 0 && $odgwUse eq "NotUsed" } {
+      set odgwUse Flex
+   }
+	if { $ttgs1Active } {
+		lappend sources ttgs1 $ttgsUse $ttgs1Mag
+      incr ttgsCount
+	} else {
+      lappend sources ttgs1 NotUsed $ttgs1Mag
+   } 
+	if { $ttgs2Active } {
+		lappend sources ttgs2 $ttgsUse $ttgs2Mag
+      incr ttgsCount
+	} else {
+      lappend sources ttgs2 NotUsed $ttgs2Mag
+	}
+	if { $ttgs3Active } {
+		lappend sources ttgs3 $ttgsUse $ttgs3Mag
+      incr ttgsCount
+	} else {
+      lappend sources ttgs3 NotUsed $ttgs3Mag
+	}
+
+   if { $odgw1Active } {
+      lappend sources odgw1 $odgwUse $odgw1Mag
+   } else {
+      lappend sources odgw1 NotUsed $odgw1Mag
+   }
+   if { $odgw2Active } {
+      lappend sources odgw2 $odgwUse $odgw2Mag
+   } else {
+      lappend sources odgw2 NotUsed $odgw2Mag
+   }
+   if { $odgw3Active } {
+      lappend sources odgw3 $odgwUse $odgw3Mag
+   } else {
+      lappend sources odgw3 NotUsed $odgw3Mag
+   }
+   if { $odgw4Active } {
+      lappend sources odgw4 $odgwUse $odgw4Mag
+   } else {
+      lappend sources odgw4 NotUsed $odgw4Mag
    }
    
 	if { $flexLoop && [AO cget -oiwfsActive] && $odgwCount == 0 } {
 		lappend sources oigs Flex $oigsMag
+	} else {
+      lappend sources oigs NotUsed $oigsMag
 	}
-	
 	return $sources
 }

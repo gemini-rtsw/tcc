@@ -32,6 +32,7 @@ public {
 	method pauseLoops {why}
 	method resumeLoops {}
 	method stopLoops {}
+   method setupLoops {loopList sources}
 	
 	#Loop configuration
 	method configureNGS {sources}
@@ -47,8 +48,9 @@ public {
 	method moveBeamSplitter {pos}
 
 	#WFS control commands
-	method startODGW {idList}
-	method stopODGW {idList}
+   method setupODGW {idList}
+   method startODGW {idList}
+   method stopODGW {idList}
 	method startTTWFS {idList}
 	method stopTTWFS {idList}
 	method startLGSWFS {}
@@ -78,7 +80,8 @@ public {
 	method getTTLoopSources {}
    method getFlexLoopSources {}
 	method getODGWActive {id}
-	method getTTWFSActive {id}
+   method getODGWEnabled {id}
+   method getTTWFSActive {id}
 	method getLGSWFSActive {}
 	method getSFSActive {}
 	method getODGWExposure {id}
@@ -127,9 +130,10 @@ private {
 	variable ttwfsExposure
 	variable odgwExposure
 	variable sfsExposure 100
-	variable lgswgsExposure 100
+	variable lgswgsExposure 0.01
 	variable ttwfsActive
-	variable odgwActive
+	variable odgwActive 0
+   variable odgwEnabled
 	variable sfsActive OFF
 	variable lgswfsActive OFF
 	variable ttwfsCounts
@@ -162,9 +166,10 @@ private {
 	method simAstroStop {}
 	method simStartMove { var value delay {reason ""} }
 	method simEndMove { var value {reason ""} }
+   method simSetupODGW {states}
 	method openLoop {name var {reason ""}}
 	method closeLoop {name var {delay 2000} {reason ""}}
-	method configCmd { name var value {delay 200} {reason ""}}
+	method configCmd { name var value {delay 200} {reasons ""}}
 	method beginCmd {}
 	method endCmd {}
 	
@@ -184,7 +189,7 @@ itcl::body SimGems::constructor {} {
 	}
 	for { set i 1 } { $i <= 4 } { incr i } {
 		set odgwExposure($i) 100
-		set odgwActive($i) OFF
+		set odgwEnabled($i) OFF
 		set odgwCounts($i) 0
 	}
 	for { set i 1 } { $i <= 5 } { incr i } {
@@ -292,6 +297,103 @@ itcl::body SimGems::stopLoops {} {
 	#TODO: pendig implementation
 }
 
+itcl::body SimGems::setupLoops {loopList sources} {
+   if { [beginCmd] } {
+      if { [llength $sources] > 0 } {
+         $logger logmess "SimGems: configure NGS config to $sources"
+         after 200 "[itcl::code $this simDelayedChange ttLoopSources $sources]"
+      }
+      if { [lsearch $loopList lwfs] >= 0 } {
+         if { [getLGSLoopState] ne "CLOSED" } {
+            $logger logmess "SimGems: close LGS loop command"
+            after 200 [itcl::code $this simLoopStabilize lgsLoopState 2000]
+         }
+      } else {
+         if { [getLGSLoopState] eq "CLOSED" } {
+            $logger logmess "SimGems: open LGS loop command"
+            after 200 [itcl::code $this simLoopOpen lgsLoopState]
+         }
+      }
+      if { [lsearch $loopList ani] >= 0 } {
+         if { [getAniLoopState] ne "CLOSED" } {
+            $logger logmess "SimGems: close Ani loop command"
+            after 200 [itcl::code $this simLoopStabilize aniLoopState 2000]
+         }
+      } else {
+         if { [getAniLoopState] eq "CLOSED" } {
+            $logger logmess "SimGems: open Ani loop command"
+            after 200 [itcl::code $this simLoopOpen aniLoopState]
+         }
+      }
+      if { [lsearch $loopList tt] >= 0 } {
+         if { [getTTLoopState] ne "CLOSED" } {
+            $logger logmess "SimGems: close TT loop command"
+            after 200 [itcl::code $this simLoopStabilize ttLoopState 2000]
+         }
+      } else {
+         if { [getTTLoopState] eq "CLOSED" } {
+            $logger logmess "SimGems: open TT loop command"
+            after 200 [itcl::code $this simLoopOpen ttLoopState]
+         }
+      }
+      if { [lsearch $loopList flex] >= 0 } {
+         if { [getFlexLoopState] ne "CLOSED" } {
+            $logger logmess "SimGems: close Flex loop command"
+            after 200 [itcl::code $this simLoopStabilize flexLoopState 2000]
+         }
+      } else {
+         if { [getFlexLoopState] eq "CLOSED" } {
+            $logger logmess "SimGems: open Flex loop command"
+            after 200 [itcl::code $this simLoopOpen flexLoopState]
+         }
+      }
+      if { [lsearch $loopList sfs] >= 0 } {
+         if { [getFocLoopState] ne "CLOSED" } {
+            $logger logmess "SimGems: close SFS loop command"
+            after 200 [itcl::code $this simLoopStabilize focLoopState 2000]
+         }
+      } else {
+         if { [getFocLoopState] eq "CLOSED" } {
+            $logger logmess "SimGems: open SFS loop command"
+            after 200 [itcl::code $this simLoopOpen focLoopState]
+         }
+      }
+      if { [lsearch $loopList m1] >= 0 } {
+         if { [getM1OffloadState] ne "START" } {
+            $logger logmess "SimGems: configure M1 Offload to ON"
+            after 200 "[itcl::code $this simDelayedChange m1OffloadState ON]"
+         }
+      } else {
+         if { [getM1OffloadState] eq "START" } {
+            $logger logmess "SimGems: configure M1 Offload to OFF"
+            after 200 "[itcl::code $this simDelayedChange m1OffloadState OFF]"
+         }
+      }
+      if { [lsearch $loopList m2] >= 0 } {
+         if { [getM2OffloadState] ne "START" } {
+            $logger logmess "SimGems: configure M2 Offload to ON"
+            after 200 "[itcl::code $this simDelayedChange m2OffloadState ON]"
+         }
+      } else {
+         if { [getM2OffloadState] eq "START" } {
+            $logger logmess "SimGems: configure M2 Offload to OFF"
+            after 200 "[itcl::code $this simDelayedChange m2OffloadState OFF]"
+         }
+      }
+      if { [lsearch $loopList rot] >= 0 } {
+         if { [getRotOffloadState] ne "START" } {
+            $logger logmess "SimGems: configure Rotator Offload to ON"
+            after 200 "[itcl::code $this simDelayedChange rotOffloadState ON]"
+         }
+      } else {
+         if { [getRotOffloadState] eq "START" } {
+            $logger logmess "SimGems: configure Rotator Offload to OFF"
+            after 200 "[itcl::code $this simDelayedChange rotOffloadState OFF]"
+         }
+      }
+   }
+}
+
 #Loop configuration
 itcl::body SimGems::configureNGS {sources} {
 	configCmd "NGS config" ttLoopSources $sources
@@ -340,20 +442,58 @@ itcl::body SimGems::moveBeamSplitter {pos} {
 }
 
 #WFS control commands
+itcl::body SimGems::setupODGW {idList} {
+   if {[beginCmd]} {
+      set val {}
+      foreach id {1 2 3 4} {
+         if {[lsearch $idList $id] == -1} {
+            lappend val $id OFF
+         } else {
+            lappend val $id ON
+         }
+      }
+      $logger logmess "SimGems: configure odgwEnabled to $val"
+      after 200 [itcl::code $this simSetupODGW $val]
+      #configCmd "ODGW enabling" odgwEnabled $val 200 "odgwActive(1) odgwActive(2) odgwActive(3) odgwActive(4)"      
+   }
+}
+
+itcl::body SimGems::simSetupODGW {states} {
+   array set odgwEnabled $states
+   endCmd
+   
+   if { !$odgwEnabled(1) && !$odgwEnabled(2) && !$odgwEnabled(3) && !$odgwEnabled(4) } {
+      set odgwActive 0
+   }
+   notify "odgwActive(1) odgwActive(2) odgwActive(3) odgwActive(4)"
+}
+
 itcl::body SimGems::startODGW {idList} {
-	configCmd "ODGW $id" odgwActive($id) ON
+   if { $odgwEnabled(1) || $odgwEnabled(2) || $odgwEnabled(3) || $odgwEnabled(4) } {
+   	configCmd "ODGW guide" odgwActive 1 200 "odgwActive(1) odgwActive(2) odgwActive(3) odgwActive(4)"
+   } else {
+      configCmd "ODGW guide" odgwActive 0 200 "odgwActive(1) odgwActive(2) odgwActive(3) odgwActive(4)"
+   }
 }
 
 itcl::body SimGems::stopODGW {idList} {
-	configCmd "ODGW $id" odgwActive($id) OFF
+	configCmd "ODGW guide" odgwActive 0 200 "odgwActive(1) odgwActive(2) odgwActive(3) odgwActive(4)"
 }
 
 itcl::body SimGems::startTTWFS {idList} {
-	configCmd "TTWFS $id" ttwfsActive($id) ON
+   if {[beginCmd]} {
+      foreach id $idList {
+         after 200 "[itcl::code $this simDelayedChange ttwfsActive($id) ON]"
+      }
+   }
 }
 
 itcl::body SimGems::stopTTWFS {idList} {
-	configCmd "TTWFS $id" ttwfsActive($id) OFF
+   if {[beginCmd]} {
+      foreach id $idList {
+         after 200 "[itcl::code $this simDelayedChange ttwfsActive($id) OFF]"
+      }
+   }
 }
 
 itcl::body SimGems::startLGSWFS {} {
@@ -468,7 +608,14 @@ itcl::body SimGems::getFlexLoopSources {} {
 }
 
 itcl::body SimGems::getODGWActive {id} {
-	return $odgwActive($id)
+   if { $odgwActive } {
+      return ON
+   }
+   return OFF
+}
+
+itcl::body SimGems::getODGWEnabled {id} {
+   return $odgwEnabled($id)
 }
 
 itcl::body SimGems::getTTWFSActive {id} {
@@ -573,7 +720,11 @@ itcl::body SimGems::notify {reasons} {
 }
 
 itcl::body SimGems::simDelayedChange { var value {reason ""} } {
-	set $var $value
+   if { [array exists $var] } {
+      array set $var $value
+   } else {
+   	set $var $value
+   }
 	if { $reason eq "" } {
 		notify $var 
 	} else {
@@ -685,10 +836,10 @@ itcl::body SimGems::endCmd {} {
 	}
 }
 
-itcl::body SimGems::configCmd { name var value {delay 200} {reason ""}} {
+itcl::body SimGems::configCmd { name var value {delay 200} {reasons ""}} {
 	$logger logmess "SimGems: configure $name to $value"
 	if { [beginCmd] } {
-		after $delay [itcl::code $this simDelayedChange $var $value $reason]
+		after $delay "[itcl::code $this simDelayedChange $var $value $reasons]"
 	}
 }
 
@@ -696,10 +847,10 @@ itcl::body SimGems::simCycle {} {
 	foreach {stateVar countVar} { ttwfsActive(1) ttwfsCounts(1)  \
 											ttwfsActive(2) ttwfsCounts(2)  \
 											ttwfsActive(3) ttwfsCounts(3)  \
-											odgwActive(1)  odgwCounts(1)   \
-											odgwActive(2)  odgwCounts(2)   \
-											odgwActive(3)  odgwCounts(3)   \
-											odgwActive(4)  odgwCounts(4)   \
+											odgwEnabled(1) odgwCounts(1)   \
+                                 odgwEnabled(2) odgwCounts(2)   \
+                                 odgwEnabled(3) odgwCounts(3)   \
+                                 odgwEnabled(4) odgwCounts(4)   \
 											sfsActive      sfsCounts       \
 											lgswfsActive   lgswfsCounts(1) \
 											lgswfsActive   lgswfsCounts(2) \
