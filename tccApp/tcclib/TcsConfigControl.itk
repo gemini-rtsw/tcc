@@ -587,10 +587,17 @@ itcl::body TcsConfigControl::apply {} {
 		   if { ![catch {cs aoSFOdefocus info}] } {
 				cs aoSFOdefocus set offset [calparam cget -nifs_sfo_defocus]
 		   }
+		} elseif {[string match "*GNIRS*" $inst]} {
+	      set instr GNIRS
+	      set port [sa agssad get portGnirs]
+	      #set the defocus offset
+	      if { ![catch {cs aoSFOdefocus info}] } {
+	         cs aoSFOdefocus set offset [calparam cget -gnirs_sfo_defocus]
+	      }
 		}
-		if {$port == 0} {
+      if {![string is integer -strict $port ] || $port == 0} {
 		   tk_messageBox -icon error \
-				-message "The AGS has specified an invalid port (0) for $inst"
+				-message "The AGS has specified an invalid port ($port) for $inst"
 		   return
 		}
 		set port "p$port"

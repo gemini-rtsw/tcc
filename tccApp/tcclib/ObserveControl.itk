@@ -308,15 +308,15 @@ itcl::body ObserveControl::setfold {path {configISS 1}} {
    set sfPos $path
    logactions logmess "ObserveControl::setfold moving Science Fold to $path"
    switch $path {
-      "Sky>Instr" {
-	  openloop
-	  if {$configISS} {iss configure -source SKY -sink INSTR -ao OUT}
-	  if {$set_instr_orig} {
+   "Sky>Instr" {
+	  	openloop
+	  	if {$configISS} {iss configure -source SKY -sink INSTR -ao OUT}
+	  	if {$set_instr_orig} {
 	      global instPO
 	      set ::Config(tcs.pointorig,value) $instPO
 	      $::Config(tcs.pointorig,namespace)::$::Config(tcs.pointorig,value) apply tcs.pointorig
-	  }
-	  if {$set_wavelength} {
+	  	}
+	  	if {$set_wavelength} {
 	      # reset the observing wavelength
 	      set fieldObj ${::Config(tcs.field,namespace)}::${::Config(tcs.field,value)}
  	      set old_wavelength [$fieldObj cget -wavelength]
@@ -324,112 +324,112 @@ itcl::body ObserveControl::setfold {path {configISS 1}} {
 	      set wavelObj ::WavelengthNames::$old_wavelength
  	      #puts "wavelObj: $wavelObj"
 	      $wavelObj apply tcs.field.wavelength
-	  }
-      }
-      "Sky>AO>Inst" {
-	  if {$configISS} {iss configure -source AO -sink INSTR -ao IN}
-	  if {$set_instr_orig} {
-	      global instPO
-	      puts "instPO is $instPO"
-	      if {$instPO == "ao2nifs"} {
-		  set ::Config(tcs.pointorig,value) $instPO
-		  $::Config(tcs.pointorig,namespace)::$::Config(tcs.pointorig,value) apply tcs.pointorig
-	      } else {
-		  # set pointing origin to rotator_axis
-		  set ::Config(tcs.pointorig,value) "rotator_axis"
-		  # apply
-		  $::Config(tcs.pointorig,namespace)::$::Config(tcs.pointorig,value) apply tcs.pointorig
-	      }
-	  }
-	  if {$set_wavelength} {
-	      # reset the observing wavelength
-	      set fieldObj ${::Config(tcs.field,namespace)}::${::Config(tcs.field,value)}
-	      set old_wavelength [$fieldObj cget -wavelength]
-	      #puts "old wavelength: $old_wavelength"
-	      set wavelObj ::WavelengthNames::$old_wavelength
- 	      #puts "wavelObj: $wavelObj"
-	      $wavelObj apply tcs.field.wavelength
-	  }
-      }
-      "GCAL>Instr" {
-	  if {$configISS} {iss configure -source CAL -sink INSTR}
-      }
-      "Sky>AC/HR" {
-	  openloop
-	  if {$configISS} {iss configure -source SKY -sink HRWFS -ao OUT}
-	  if {$set_instr_orig} {
+	  	}
+   }
+   "Sky>AO>Inst" {
+		if {$configISS} {iss configure -source AO -sink INSTR -ao IN}
+  		if {$set_instr_orig} {
+      	global instPO
+      	#puts "instPO is $instPO"
+      	if { [regexp ^(ngs|lgs|ao)2 $instPO] } {
+	  			set ::Config(tcs.pointorig,value) $instPO
+	  			$::Config(tcs.pointorig,namespace)::$::Config(tcs.pointorig,value) apply tcs.pointorig
+      	} else {
+	  			# set pointing origin to rotator_axis
+	  			set ::Config(tcs.pointorig,value) "rotator_axis"
+	  			# apply
+	  			$::Config(tcs.pointorig,namespace)::$::Config(tcs.pointorig,value) apply tcs.pointorig
+      	}
+  		}
+  		if {$set_wavelength} {
+      	# reset the observing wavelength
+      	set fieldObj ${::Config(tcs.field,namespace)}::${::Config(tcs.field,value)}
+      	set old_wavelength [$fieldObj cget -wavelength]
+      	#puts "old wavelength: $old_wavelength"
+      	set wavelObj ::WavelengthNames::$old_wavelength
+      	#puts "wavelObj: $wavelObj"
+      	$wavelObj apply tcs.field.wavelength
+  		}
+   }
+   "GCAL>Instr" {
+		if {$configISS} {iss configure -source CAL -sink INSTR}
+   }
+   "Sky>AC/HR" {
+		openloop
+	  	if {$configISS} {iss configure -source SKY -sink HRWFS -ao OUT}
+	  	if {$set_instr_orig} {
 	      # set pointing origin to rotator_axis
 	      set ::Config(tcs.pointorig,value) "rotator_axis"
 	      # apply
 	      $::Config(tcs.pointorig,namespace)::$::Config(tcs.pointorig,value) apply tcs.pointorig
-	  }
-	  if {$set_wavelength} {
+	  	}
+	  	if {$set_wavelength} {
 	      global env
 	      # configure wavelength based on AC col filter
 	      if {$env(TCC_TCSNAME) == "tcs"} {
-		  set ac_filt [$wfsConfigObj getValue HrwfsColFilt]
+		  		set ac_filt [$wfsConfigObj getValue HrwfsColFilt]
 	      } else {
-		  set ac_filt [.observePanel.frame.control.botframe.wfsconfig.tabs.canvas.notebook.cs.page1.cs.hrwfs.col get]
+		  		set ac_filt [.observePanel.frame.control.botframe.wfsconfig.tabs.canvas.notebook.cs.page1.cs.hrwfs.col get]
 	      }
 	      #puts "got ac filter: $ac_filt"
  	      switch $ac_filt {
- 		  "U-red1"  { set new_wavelength "Acq Cam U" }
- 		  "B-blue"  { set new_wavelength "Acq Cam B" }
- 		  "V-green" { set new_wavelength "Acq Cam V" }
- 		  "R-red2"  { set new_wavelength "Acq Cam R" }
- 		  "I-red3"  { set new_wavelength "Acq Cam I" }
- 		  "neutral" { set new_wavelength "Acq Cam neutral" }
-		  default {
+ 		  	"U-red1"  { set new_wavelength "Acq Cam U" }
+ 		  	"B-blue"  { set new_wavelength "Acq Cam B" }
+ 		  	"V-green" { set new_wavelength "Acq Cam V" }
+ 		  	"R-red2"  { set new_wavelength "Acq Cam R" }
+ 		  	"I-red3"  { set new_wavelength "Acq Cam I" }
+ 		  	"neutral" { set new_wavelength "Acq Cam neutral" }
+		  	default {
 		      tk_messageBox -icon warning -parent $itk_interior \
-			  -message "Warning, no valid HRWFS/AC color filter"
+			  		-message "Warning, no valid HRWFS/AC color filter"
 		      set new_wavelength "invalid"
-		  }
+		  	}
  	      }
  	      #puts "new wavelength: $new_wavelength"
 	      if {$new_wavelength != "invalid"} {
-		  set wavelObj ::WavelengthNames::$new_wavelength
-		  #puts "wavelObj: $wavelObj"
-		  $wavelObj apply tcs.field.wavelength
+		  		set wavelObj ::WavelengthNames::$new_wavelength
+		  		#puts "wavelObj: $wavelObj"
+		  		$wavelObj apply tcs.field.wavelength
 	      }
-	  }
+	  	}
       }
       "Sky>AO>AC/HR" {
-	  if {$configISS} {iss configure -source AO -sink HRWFS -ao IN}
-	  if {$set_instr_orig} {
-	      # set pointing origin to rotator_axis
-	      set ::Config(tcs.pointorig,value) "rotator_axis"
-	      # apply
-	      $::Config(tcs.pointorig,namespace)::$::Config(tcs.pointorig,value) apply tcs.pointorig
-	  }
-	  if {$set_wavelength} {
-	      global env
-	      # configure wavelength based on AC col filter
-	      if {$env(TCC_TCSNAME) == "tcs"} {
-		  set ac_filt [$wfsConfigObj getValue HrwfsColFilt]
-	      } else {
-		  set ac_filt [.observePanel.frame.control.botframe.wfsconfig.tabs.canvas.notebook.cs.page1.cs.hrwfs.col get]
-	      }
- 	      #puts "got ac filter: $ac_filt"
- 	      switch $ac_filt {
- 		  "U-red1"  { set new_wavelength "Acq Cam U" }
- 		  "B-blue"  { set new_wavelength "Acq Cam B" }
- 		  "V-green" { set new_wavelength "Acq Cam V" }
- 		  "R-red2"  { set new_wavelength "Acq Cam R" }
- 		  "I-red3"  { set new_wavelength "Acq Cam I" }
- 		  "neutral" { set new_wavelength "Acq Cam neutral" }
-		  default {
-		      tk_messageBox -icon warning -parent $itk_interior \
-			  -message "Warning, no valid HRWFS/AC color filter"
-		      set new_wavelength "invalid"
-		  }
- 	      }
- 	      #puts "new wavelength: $new_wavelength"
-	      if {$new_wavelength != "invalid"} {
-		  set wavelObj ::WavelengthNames::$new_wavelength
-		  #puts "wavelObj: $wavelObj"
-		  $wavelObj apply tcs.field.wavelength
-	      }
-	  }
+	  		if {$configISS} {iss configure -source AO -sink HRWFS -ao IN}
+	  		if {$set_instr_orig} {
+   	      # set pointing origin to rotator_axis
+   	      set ::Config(tcs.pointorig,value) "rotator_axis"
+   	      # apply
+   	      $::Config(tcs.pointorig,namespace)::$::Config(tcs.pointorig,value) apply tcs.pointorig
+	  		}
+	  		if {$set_wavelength} {
+	      	global env
+	      	# configure wavelength based on AC col filter
+	      	if {$env(TCC_TCSNAME) == "tcs"} {
+		  			set ac_filt [$wfsConfigObj getValue HrwfsColFilt]
+	      	} else {
+		  			set ac_filt [.observePanel.frame.control.botframe.wfsconfig.tabs.canvas.notebook.cs.page1.cs.hrwfs.col get]
+	      	}
+ 	      	#puts "got ac filter: $ac_filt"
+ 	      	switch $ac_filt {
+ 		  		"U-red1"  { set new_wavelength "Acq Cam U" }
+ 		  		"B-blue"  { set new_wavelength "Acq Cam B" }
+ 		  		"V-green" { set new_wavelength "Acq Cam V" }
+ 		  		"R-red2"  { set new_wavelength "Acq Cam R" }
+ 		  		"I-red3"  { set new_wavelength "Acq Cam I" }
+ 		  		"neutral" { set new_wavelength "Acq Cam neutral" }
+		  		default {
+		      	tk_messageBox -icon warning -parent $itk_interior \
+			  			-message "Warning, no valid HRWFS/AC color filter"
+		      	set new_wavelength "invalid"
+		  		}
+ 	      	}
+ 	      	#puts "new wavelength: $new_wavelength"
+	      	if {$new_wavelength != "invalid"} {
+		  			set wavelObj ::WavelengthNames::$new_wavelength
+		  			#puts "wavelObj: $wavelObj"
+		  			$wavelObj apply tcs.field.wavelength
+	      	}
+	  		}
       }
    }
 # AWE removed because these have no real use
@@ -437,13 +437,12 @@ itcl::body ObserveControl::setfold {path {configISS 1}} {
 #      "AO cal>AC/HR" {iss configure -source AO -sink HRWFS}
 
 #   puts "configISS2: $configISS"
-    if {$configISS} {
-	iss update
-    }
-    if { [catch {cs tcsApply post} msg] } {
-	tk_messageBox -icon error -parent $itk_interior -message $msg
-    }
-
+	if {$configISS} {
+		iss update
+   }
+   if { [catch {cs tcsApply post} msg] } {
+		tk_messageBox -icon error -parent $itk_interior -message $msg
+   }
 }
 
 itcl::body ObserveControl::setnod state {
