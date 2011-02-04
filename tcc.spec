@@ -22,6 +22,10 @@ Prefix: %{_prefix}
 # BuildRequires:
 Requires: epics_module-timelib epics_module-slalib epics_module-astlib
 Requires: ocswish seqexec tcldom-libxml2 skycalc
+#
+# FIXME: Need 2.5.1 b/c the api's changed for 3.x.
+#
+Requires: tcldom-libxml2 = 2.5.1
 ## Switch dependency checking off
 # AutoReqProv: no
 
