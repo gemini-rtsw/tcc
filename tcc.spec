@@ -25,7 +25,7 @@ Requires: ocswish seqexec skycalc
 #
 # FIXME: Need 2.5.1 b/c the api's changed for 3.x.
 #
-Requires: tcldom-libxml2 = 2.5-1
+Requires: tcldom-libxml2 = 2.5
 ## Switch dependency checking off
 # AutoReqProv: no
 
