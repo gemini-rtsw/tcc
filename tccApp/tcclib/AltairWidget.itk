@@ -123,10 +123,10 @@ itcl::body AltairWidget::constructor {args} {
 
 itcl::body AltairWidget::init {} {
 	if { $itk_option(-aocontroller) ne "" } {
-		$itk_component(gaos) expSet [$itk_option(-aocontroller) cget -gaosExpose]
-		$itk_component(aosfo) expSet [$itk_option(-aocontroller) cget -sfoExpose]
+		$itk_component(gaos) setExp [$itk_option(-aocontroller) cget -gaosExpose]
+		$itk_component(aosfo) setExp [$itk_option(-aocontroller) cget -sfoExpose]
 	}
-	$itk_component(aottgs) expSet "10.0(0.001)"
+	$itk_component(aottgs) setExp "10.0(0.001)"
 }
 
 itcl::body AltairWidget::reset {} {
@@ -179,16 +179,16 @@ itcl::body AltairWidget::recolor {} {
 }
 
 itcl::body AltairWidget::enable {} {
-   AO configure -gaosExpose [$itk_component(gaos) expGet]
+   AO configure -gaosExpose [$itk_component(gaos) getExp]
 
    if { [string match "*LGS*" $::Config(tcs.gaos,value)] } {
-       set ttgsexp [$itk_component(aottgs) expGet]
+       set ttgsexp [$itk_component(aottgs) getExp]
        set ind [string first "(" $ttgsexp]
        set ttgsmag [string range $ttgsexp 0 [expr $ind-1]]
        set ttgsexp [string trim [string range $ttgsexp $ind end] "()"]
 
        AO configure -ttgsExpose $ttgsexp
-       AO configure -sfoExpose [$itk_component(aosfo) expGet]
+       AO configure -sfoExpose [$itk_component(aosfo) getExp]
 
        switch $ttgsmag {
 	   10.0 -

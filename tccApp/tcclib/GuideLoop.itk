@@ -79,14 +79,14 @@ itcl::body GuideLoop::constructor args {
 	} {
 		usual
 	}
-	$itk_component(pwfs1) expSet [AO cget -pwfs1Expose]
+	$itk_component(pwfs1) setExp [AO cget -pwfs1Expose]
 	$w create window 0 0 -window $w.pwfs1 -tags pwfs1 -anchor nw
 	itk_component add pwfs2 {
 		WfsWidget $w.pwfs2 -label P2 -onswitchpress [itcl::code $this wfsmode pwfs2]
 	} {
 		usual
 	}
-	$itk_component(pwfs2) expSet [AO cget -pwfs2Expose]
+	$itk_component(pwfs2) setExp [AO cget -pwfs2Expose]
 	$w create window 0 0 -window $w.pwfs2 -tags pwfs2 -anchor nw
 
 # OIWFS including an AO mode for NICI
@@ -744,8 +744,8 @@ itcl::body GuideLoop::wfsmode {wfs val} {
 }
 
 itcl::body GuideLoop::enable {} {
-   AO configure -pwfs1Expose [$itk_component(pwfs1) expGet ]
-   AO configure -pwfs2Expose [$itk_component(pwfs2) expGet]
+   AO configure -pwfs1Expose [$itk_component(pwfs1) getExp ]
+   AO configure -pwfs2Expose [$itk_component(pwfs2) getExp]
    AO configure -oiwfsExpose [$itk_component(oiwfs_ex) get]
 
 	enableGaos

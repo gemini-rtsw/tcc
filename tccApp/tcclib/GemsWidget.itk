@@ -205,7 +205,7 @@ itcl::body GemsWidget::init {} {
 	if {$itk_option(-aocontroller) ne "" } {
       set lgsExp [$sys getLGSWFSExposure]
       if {[string is double -strict $lgsExp] && $lgsExp > 0 } {
-			$itk_component(lgswfs) expSet [expr "1.0 / $lgsExp"]
+			$itk_component(lgswfs) setExp [expr "1.0 / $lgsExp"]
       } else {
          [$itk_component(lgswfs) component exp] selection set 0
       }
@@ -232,11 +232,11 @@ itcl::body GemsWidget::init {} {
       }
 		
 		if { $linkedField eq "" } {
-   		#$itk_component(sfs) expSet [$sys getSFSExposure]
-   		#$itk_component(odgw1) expSet [$sys getODGWExposure 1]
-   		#$itk_component(odgw2) expSet [$sys getODGWExposure 2]
-   		#$itk_component(odgw3) expSet [$sys getODGWExposure 3]
-   		#$itk_component(odgw4) expSet [$sys getODGWExposure 4]
+   		#$itk_component(sfs) setExp [$sys getSFSExposure]
+   		#$itk_component(odgw1) setExp [$sys getODGWExposure 1]
+   		#$itk_component(odgw2) setExp [$sys getODGWExposure 2]
+   		#$itk_component(odgw3) setExp [$sys getODGWExposure 3]
+   		#$itk_component(odgw4) setExp [$sys getODGWExposure 4]
    		[$itk_component(sfs) component exp] selection set 0
    		[$itk_component(odgw1) component exp] selection set 0
    		[$itk_component(odgw2) component exp] selection set 0
@@ -344,12 +344,12 @@ itcl::body GemsWidget::enable {} {
 	$itk_option(-aocontroller) configure -ttgs1Active [expr \"[$itk_component(can1) switchGet]\" eq \"pushed\"] 
 	#$itk_option(-aocontroller) configure -ttgs1Exp [expr "$ttExpCount - [lindex [[[$itk_component(can1) component exp] component list] curselection ] 0 ]"]
 	$itk_option(-aocontroller) configure -ttgs2Active [expr \"[$itk_component(can2) switchGet]\" eq \"pushed\"]
-	#$itk_option(-aocontroller) configure -ttgs2Exp	[$itk_component(can2) expGet]
+	#$itk_option(-aocontroller) configure -ttgs2Exp	[$itk_component(can2) getExp]
 	$itk_option(-aocontroller) configure -ttgs3Active [expr \"[$itk_component(can3) switchGet]\" eq \"pushed\"]
-	$itk_option(-aocontroller) configure -ttgs3Exp	[$itk_component(can3) expGet]
+	$itk_option(-aocontroller) configure -ttgs3Exp	[$itk_component(can3) getExp]
 
 	$itk_option(-aocontroller) configure -sfsActive [expr \"[$itk_component(sfs) switchGet]\" eq \"pushed\"]
-	set magexp [$itk_component(sfs) expGet]
+	set magexp [$itk_component(sfs) getExp]
 	set ind [string first "(" $magexp]
 	set sfsExp [string trim [string range $magexp $ind end] "()"]
 	if {![string is double -strict $sfsExp] } {
@@ -358,7 +358,7 @@ itcl::body GemsWidget::enable {} {
 	$itk_option(-aocontroller) configure -sfsExp $sfsExp
 
 	$itk_option(-aocontroller) configure -odgw1Active [expr \"[$itk_component(odgw1) switchGet]\" eq \"pushed\"]
-	set magexp [$itk_component(odgw1) expGet]
+	set magexp [$itk_component(odgw1) getExp]
 	set ind [string first "(" $magexp]
 	$itk_option(-aocontroller) configure -odgw1Mag [string range $magexp 0 [expr $ind-1]]
 	set odgw1Freq [string trim [string range $magexp $ind end] "()"]
@@ -368,7 +368,7 @@ itcl::body GemsWidget::enable {} {
 	$itk_option(-aocontroller) configure -odgw1Exp [expr "1.0 / $odgw1Freq"]
 
 	$itk_option(-aocontroller) configure -odgw2Active [expr \"[$itk_component(odgw2) switchGet]\" eq \"pushed\"]
-	set magexp [$itk_component(odgw2) expGet]
+	set magexp [$itk_component(odgw2) getExp]
 	set ind [string first "(" $magexp]
 	$itk_option(-aocontroller) configure -odgw2Mag [string range $magexp 0 [expr $ind-1]]
 	set odgw2Freq [string trim [string range $magexp $ind end] "()"]
@@ -378,7 +378,7 @@ itcl::body GemsWidget::enable {} {
 	$itk_option(-aocontroller) configure -odgw2Exp [expr "1.0 / $odgw2Freq"]
 
 	$itk_option(-aocontroller) configure -odgw3Active [expr \"[$itk_component(odgw3) switchGet]\" eq \"pushed\"]
-	set magexp [$itk_component(odgw3) expGet]
+	set magexp [$itk_component(odgw3) getExp]
 	set ind [string first "(" $magexp]
 	$itk_option(-aocontroller) configure -odgw3Mag [string range $magexp 0 [expr $ind-1]]
 	set odgw3Freq [string trim [string range $magexp $ind end] "()"]
@@ -388,7 +388,7 @@ itcl::body GemsWidget::enable {} {
 	$itk_option(-aocontroller) configure -odgw3Exp [expr "1.0 / $odgw3Freq"]
 
 	$itk_option(-aocontroller) configure -odgw4Active [expr \"[$itk_component(odgw4) switchGet]\" eq \"pushed\"]
-	set magexp [$itk_component(odgw4) expGet]
+	set magexp [$itk_component(odgw4) getExp]
 	set ind [string first "(" $magexp]
 	$itk_option(-aocontroller) configure -odgw4Mag [string range $magexp 0 [expr $ind-1]]
 	set odgw4Freq [string trim [string range $magexp $ind end] "()"]
@@ -398,7 +398,7 @@ itcl::body GemsWidget::enable {} {
 	$itk_option(-aocontroller) configure -odgw4Exp [expr "1.0 / $odgw4Freq"]
 
 	$itk_option(-aocontroller) configure -lwfsActive [expr \"[$itk_component(lgswfs) switchGet]\" eq \"pushed\"]
-	$itk_option(-aocontroller) configure -lwfsFreq [$itk_component(lgswfs) expGet]
+	$itk_option(-aocontroller) configure -lwfsFreq [$itk_component(lgswfs) getExp]
 	$itk_option(-aocontroller) configure -lwfsLoop [expr \"[$itk_component(gaoson) get]\" eq \"pushed\"]
 	$itk_option(-aocontroller) configure -flexLoop [expr \"[$itk_component(flexloop) get]\" eq \"pushed\"]
 	$itk_option(-aocontroller) configure -ttLoop [expr \"[$itk_component(ttloop) get]\" eq \"pushed\"]
@@ -427,7 +427,7 @@ itcl::body GemsWidget::onGemsChange {reasons} {
 }
 
 itcl::body GemsWidget::onLGSExpSel {} {
-	set lgsExp [$itk_component(lgswfs) expGet]
+	set lgsExp [$itk_component(lgswfs) getExp]
 	set canExpList ""
 	for {set i $ttExpCount } {$i > 0 } {incr i -1 } {
 		lappend canExpList [format "%.1f" [expr "double($lgsExp) / $i"]]
