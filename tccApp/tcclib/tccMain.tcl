@@ -54,7 +54,7 @@ global env
 			-simgems {
 				set simgems $val
 			}
-			-disablegems {
+			-nogems {
 				set disablegems $val
 			}
          default {

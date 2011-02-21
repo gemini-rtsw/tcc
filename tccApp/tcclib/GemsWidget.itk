@@ -20,6 +20,7 @@ public {
 	destructor {}
 	
 	itk_option define -aocontroller aoController AoController {} {init }
+   itk_option define -state state State {}
 	
 	method reset {} {}
 	method enable {} {}
@@ -49,13 +50,15 @@ private {
    method calcMagForTarget {wavel target }
    method lookup { val lut {index 0} }
    method nearest { val lut {index 0} }
+   
+   method forceLGSOn {op}
 }
 }
 
 itk::usual GemsWidget {
 #	keep -background -cursor -foreground -highlightcolor \
 #		-highlightthickness
-	keep -background -cursor
+	keep -background -cursor -state
 }
 
 itcl::body GemsWidget::constructor {args} {
@@ -113,7 +116,7 @@ itcl::body GemsWidget::constructor {args} {
 	}
 	[$itk_component(lgswfs) component exp] configure -width 4
 	$itk_component(lgswfs) switchPush
-	$itk_component(lgswfs) configure -onswitchpress "if \{\[$itk_component(lgswfs) switchGet\] eq \"popped\" \} \{[$itk_component(lgswfs) component onoff] mark \}"
+	$itk_component(lgswfs) configure -onswitchpress [itcl::code $this forceLGSOn]
 	pack $itk_component(aniloop) $itk_component(flexloop) -side top -anchor w
 	pack $itk_component(sfsloop) $itk_component(ttloop) -side top -anchor e
 	pack $itk_component(buttonframeright) -side right
@@ -657,4 +660,33 @@ itcl::body GemsWidget::nearest { val lut {index 0} } {
       }
    }
    return $ret
+}
+
+itcl::configbody GemsWidget::state {
+   switch $itk_option(-state) {
+      normal -
+      active -
+      disabled {
+         $itk_component(gaoson) configure -state $itk_option(-state)
+         $itk_component(aniloop) configure -state $itk_option(-state)
+         $itk_component(ttloop) configure -state $itk_option(-state)
+         $itk_component(flexloop) configure -state $itk_option(-state)
+         $itk_component(sfsloop) configure -state $itk_option(-state)
+         $itk_component(can1) configure -state $itk_option(-state)
+         $itk_component(can2) configure -state $itk_option(-state)
+         $itk_component(can3) configure -state $itk_option(-state)
+         $itk_component(sfs) configure -state $itk_option(-state)
+         $itk_component(odgw1) configure -state $itk_option(-state)
+         $itk_component(odgw2) configure -state $itk_option(-state)
+         $itk_component(odgw3) configure -state $itk_option(-state)
+         $itk_component(odgw4) configure -state $itk_option(-state)
+         $itk_component(lgswfs) configure -state $itk_option(-state)
+      }
+   } 
+}
+
+itcl::body GemsWidget::forceLGSOn {op} {
+   if { [$itk_component(lgswfs) cget -state] ne "disabled" && [$itk_component(lgswfs) switchGet] eq "popped" } {
+      [$itk_component(lgswfs) component onoff] mark
+   }
 }

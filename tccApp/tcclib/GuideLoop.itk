@@ -821,6 +821,9 @@ itcl::body GuideLoop::buildGaos {} {
 		$w create window 433 62 -window $w.gaos -tags gaos -anchor nw
 		set gaosWidget $itk_component(gaos)
 		buildGemsArrows
+      if { $::Flags(disablegems) } {
+         $gaosWidget configure -state disabled
+      }
 	} else {
 		itk_component add gaos { AltairWidget $w.gaos -aocontroller AO }
 		$w create window 471 72 -window $w.gaos -tags gaos -anchor nw
@@ -917,6 +920,7 @@ itcl::body GuideLoop::buildGemsArrows {} {
 }
 
 itcl::body GuideLoop::recolourGemsArrows {} {
+   
 	set w $itk_component(canv)
 
 	if { [$gemsSys getSFSActive] eq "ON" } {
@@ -1035,26 +1039,36 @@ itcl::body GuideLoop::recolourGaos {} {
    global AOtryingToReuseGain AOreuseGains
 
 	set w $itk_component(canv)
-
-	if { [AO state gaos] } {
-		if { [AO state aoSettled] } {
-			$w itemconfigure aoSettled -fill green
-			if {[calparam cget -site] eq "MK" && $AOtryingToReuseGain} {
-				set AOreuseGains 1
-				set AOtryingToReuseGain 0
-			}
-		} else {
-			  $w itemconfigure aoSettled -fill yellow
-		}
-	}
-	if { $gaosWidget ne "" } {
-			$gaosWidget recolor
-	}
-	if { [calparam cget -site] eq "CP" } {
-		recolourGemsArrows
-	} else {
-		recolourAltairArrows
-	}
+   
+   if { [calparam cget -site] eq "MK" } {
+      if { [AO state gaos] } {
+         if { [AO state aoSettled] } {
+            $w itemconfigure aoSettled -fill green
+            if {$AOtryingToReuseGain} {
+               set AOreuseGains 1
+               set AOtryingToReuseGain 0
+            }
+         } else {
+            $w itemconfigure aoSettled -fill yellow
+         }
+      }
+      if { $gaosWidget ne "" } {
+         $gaosWidget recolor
+      }
+      recolourAltairArrows
+   } elseif { ! $::Flags(disablegems) } {
+      if { [AO state gaos] } {
+   		if { [AO state aoSettled] } {
+   			$w itemconfigure aoSettled -fill green
+   		} else {
+   			  $w itemconfigure aoSettled -fill yellow
+   		}
+   	}
+   	if { $gaosWidget ne "" } {
+         $gaosWidget recolor
+   	}
+   	recolourGemsArrows
+   }
 }
 
 itcl::body GuideLoop::enableGaos {} {

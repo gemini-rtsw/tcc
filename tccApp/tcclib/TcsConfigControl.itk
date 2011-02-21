@@ -119,6 +119,9 @@ itcl::body TcsConfigControl::constructor {args} {
       rename -textfont -majorfont majorFont Font
       rename -labelfont -majorfont majorFont Font
    }
+   if { [calparam cget -site] eq "CP" && $::Flags(disablegems) } {
+      $itk_component(gaos) configure -state disabled
+   }
    itk_component add slewOptions {
       ComponentSelector $w.slewOptions -labeltext "Slew Options" \
             -component tcs.slewoptions \
@@ -381,7 +384,7 @@ itcl::body TcsConfigControl::apply {} {
 		}
 	}
 	
-	if {[calparam cget -site] eq "CP" && ![string match "No AO" $::Config(tcs.gaos,value)]} {
+	if {[calparam cget -site] eq "CP" && !$::Flags(disablegems) && ![string match "No AO" $::Config(tcs.gaos,value)]} {
 		[::GemsSys::getSingleton] slewReset
 	}
 # Try setting Guide mode (chop states) first here to see if the P2>P2 MAx prob goes away
@@ -616,7 +619,7 @@ itcl::body TcsConfigControl::apply {} {
 		}
 	}
 	
-	if {[string match -nocase "*GEMS*" $guide] && [string match -nocase "*GSAOI*" $inst]} {
+	if {!$::Flags(disablegems) && [string match -nocase "*GEMS*" $guide] && [string match -nocase "*GSAOI*" $inst]} {
 		foreach odgwtarget {odgw1target odgw2target odgw3target odgw4target} {
 			if {[$fieldObj cget -$odgwtarget] ne ""} {
 				set scienceWavel [::WavelengthNames::[$fieldObj cget -wavelength] cget -wavel]

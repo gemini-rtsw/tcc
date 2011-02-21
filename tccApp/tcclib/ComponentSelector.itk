@@ -30,6 +30,7 @@ itcl::class ComponentSelector {
    destructor {}
    itk_option define -active active Active 0 {set enable $itk_option(-active)}
    itk_option define -source source Source ""
+   itk_option define -state state State {}
    public {
       method select {name}
    }
@@ -99,4 +100,12 @@ itcl::body ComponentSelector::enableTrace {n1 n2 op} {
 
 # Set the state of the active option as the checkbutton variable changes.
    set itk_option(-active) $enable
+}
+
+itcl::configbody ComponentSelector::state {
+   if { $itk_option(-state) ne "" } {
+      $itk_component(source) configure -state $itk_option(-state)
+      $itk_component(enable) configure -state $itk_option(-state)
+      $itk_component(selector) configure -state $itk_option(-state)
+   }
 }

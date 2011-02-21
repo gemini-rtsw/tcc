@@ -522,7 +522,7 @@ puts "beam is $beam gonna wait for 1 second"
 			process IDLE
 			return
 		}
-	} else {
+	} elseif { ! $::Flags(disablegems) } {
 		if { [catch {$gaosObj enable} gaosRet ] } {
          errorBox "Error posting guide commands: $::errorInfo"
          process IDLE
@@ -665,10 +665,14 @@ itcl::body ActiveOptics::disable {} {
    }
 	
 	if { [calparam cget -site] eq "CP" } {
-		if {[$gaosObj disable]} {
-         errorBox "Error posting guide commands: GeMS reports \
-                                       			\"[$gaosObj cget -lastError]\""
-		}
+      if { ! $::Flags(disablegems) } {
+         if { [catch {$gaosObj disable} gaosRet ] } {
+            errorBox "Error posting guide commands: $::errorInfo"
+         } elseif { $gaosRet } {
+            errorBox "Error posting guide commands: GeMS reports \
+                                                   \"[$gaosObj cget -lastError]\""
+         }
+      }
 	} else {
       if { ![catch {cs gaosTTGS info}] } {
    		# turn off the TTGS
