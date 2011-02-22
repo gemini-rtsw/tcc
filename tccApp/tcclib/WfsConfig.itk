@@ -137,34 +137,34 @@ itcl::body WfsConfig::aondsel {} {
 itcl::body WfsConfig::aoflenssel {} {
 #puts "WfsConfig::aoflenssel sending [$itk_component(aoflens) get]"
 # Select GAOS Field Lens IN/OUT
-    if { ![catch {cs aoFlens info}] } {
-	set demand [$itk_component(aoflens) get]
-	logactions logmess "WfsConfig::aoflenssel moving Field Lens to $demand"
-	switch $demand {
-	    IN {
-		cs aoFLens set pos FLENS
-		cs aoFLens set mode 1
-		cs aoFLens set dir 3
-		cs aoFLens set flens 1
-		cs aoPrepareCm set flens 1
-	    }
-	    OUT {
-		cs aoFLens set pos PARK
-		cs aoFLens set mode 1
-		cs aoFLens set dir 3
-		cs aoFLens set flens 0
-		cs aoPrepareCm set flens 0
-	    }
-	}
-	if { [calparam cget -site] eq "MK" && $::Config(tcs.gaos,value) != "" } {
-	    $::Config(tcs.gaos,namespace)::$::Config(tcs.gaos,value) configure -fldLens [$itk_component(aoflens) get]
-	}
-    }
+   if { ![catch {cs aoFLens info}] } {
+   	set demand [$itk_component(aoflens) get]
+   	logactions logmess "WfsConfig::aoflenssel moving Field Lens to $demand"
+   	switch $demand {
+      IN {
+         cs aoFLens set pos FLENS
+         cs aoFLens set mode 1
+         cs aoFLens set dir 3
+         cs aoFLens set flens 1
+         cs aoPrepareCm set flens 1
+      }
+      OUT {
+         cs aoFLens set pos PARK
+         cs aoFLens set mode 1
+         cs aoFLens set dir 3
+         cs aoFLens set flens 0
+         cs aoPrepareCm set flens 0
+      }
+   	}
+      if { [calparam cget -site] eq "MK" && $::Config(tcs.gaos,value) != "" } {
+   	   $::Config(tcs.gaos,namespace)::$::Config(tcs.gaos,value) configure -fldLens [$itk_component(aoflens) get]
+   	}
+   }
 # Apply preparing the CM
    if { [catch {cs tcsApply post} msg] } {
       tk_messageBox -icon error -message \
-            "Error posting GAOS commands: TCS reports \
-           \"$msg\""
+                                    "Error posting GAOS commands: TCS reports \
+                                    \"$msg\""
       process IDLE
       return
    }
