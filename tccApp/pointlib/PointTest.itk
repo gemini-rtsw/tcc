@@ -21,6 +21,7 @@ itcl::class PointTest {
       method setoffloaddelay {name1 name2 op}
       method setlogrepeat {name1 name2 op}
       method loadcat {}
+      method slew {}
       variable Options
       variable PointObs
       variable StarCat
@@ -179,7 +180,7 @@ itcl::body PointTest::constructor {args} {
 
    itk_component add slew {
       button $w.slew -text "Slew to target" -underline 0 \
-            -command "[namespace code "$PointObs slew"]"
+            -command "[itcl::code $this slew]"
    }
    bind all <s> "$itk_component(slew) invoke"
 
@@ -223,7 +224,9 @@ itcl::body PointTest::selectstar {cat index} {
    $itk_component(azelplot) mark pointing $index
    $StarCat select $index
 
-   if $Options(slew) "$PointObs slew"
+   if { $Options(slew) } {
+      slew
+   }
    return
 }
 
@@ -326,4 +329,11 @@ itcl::body PointTest::loadcat {} {
 # Restore the default directory
    cd $pwd
    return
+}
+
+itcl::body PointTest::slew {} {
+   #Abort any pending action before slewing
+   tcs cancel {}
+
+   $PointObs slew
 }
