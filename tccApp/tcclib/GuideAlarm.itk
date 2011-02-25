@@ -411,10 +411,12 @@ itcl::body GuideAlarm::scanLoop {} {
 	
 	set wfsList {pwfs1 pwfs2 oiwfs nici}
 	if { [calparam cget -site] eq "CP" } {
-      retrieveGeMSCounts
-		lappend wfsList ttwfs lgswfs sfs odgw
-		set ttSources [$gemsSys getTTLoopSources]
-      set flexSources [$gemsSys getFlexLoopSources]
+      if { !$::FLags(disablegems) } {
+         retrieveGeMSCounts
+   		lappend wfsList ttwfs lgswfs sfs odgw
+   		set ttSources [$gemsSys getTTLoopSources]
+         set flexSources [$gemsSys getFlexLoopSources]
+      }
 	} else {
 		lappend wfsList gaos ttgs sfo
 	}

@@ -125,7 +125,7 @@ itcl::body PoManager::selectcmd {po} {
          cs absorbPoOffset set vt [list "SOURCE A"]
          cs absorbPoOffset set index all
          logger command absorbPoOffset
-         if { [catch {cs tcsApply post} msg] } {
+         if { [catch {cs tcsApply postWait} msg] } {
             tk_messageBox -icon error -parent $itk_interior -message \
                   "Error absorbing pointing origin offsets: TCS reports \"$msg\""
          }
@@ -134,13 +134,13 @@ itcl::body PoManager::selectcmd {po} {
          cs absorbPoOffset set vt [list "SOURCE B"]
          cs absorbPoOffset set index all
          logger command absorbPoOffset
-         if { [catch {cs tcsApply post} msg] } {
+         if { [catch {cs tcsApply postWait} msg] } {
             tk_messageBox -icon error -parent $itk_interior -message \
                   "Error absorbing pointing origin offsets: TCS reports \"$msg\""
          }
          cs absorbPoOffset set vt [list "SOURCE C"]
          logger command absorbPoOffset
-         if { [catch {cs tcsApply post} msg] } {
+         if { [catch {cs tcsApply postWait} msg] } {
             tk_messageBox -icon error -parent $itk_interior -message \
                   "Error absorbing pointing origin offsets: TCS reports \"$msg\""
          }
@@ -158,7 +158,7 @@ itcl::body PoManager::selectcmd {po} {
             cs poriginB set y $ymm
             logger command poriginB
          }
-         if { [catch {cs tcsApply post} msg] } {
+         if { [catch {cs tcsApply postWait} msg] } {
             tk_messageBox -icon error -parent $itk_interior -message \
                   "Error setting pointing origin: TCS reports \"$msg\""
          }

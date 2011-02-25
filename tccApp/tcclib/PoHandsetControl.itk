@@ -300,13 +300,14 @@ itcl::body PoHandsetControl::refresh {} {
 
 itcl::body PoHandsetControl::update {} {
    $itk_component(pomgr) update $vt
-   if {$lock} {
-      copya
-   }
+# This is redundant, and can cause problems if the values read for target A have
+# not yet been updated by the previous command.
+#   if {$lock} {
+#      copya
+#   }
 }
 
 itcl::body PoHandsetControl::setlock {} {
-
    if {$lock} {
 
 # Select A and disable the B radio button.
