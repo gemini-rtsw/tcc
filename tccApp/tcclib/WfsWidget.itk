@@ -23,7 +23,7 @@ public {
 		$itk_component(exp) configure -labeltext $itk_option(-explabel) }
 	itk_option define -expvalues expValues ExpValues \
 		[list 1.0 0.5 0.1 0.05 0.02 0.01 0.005] {
-			$itk_component(exp) delete list 0 end
+			$itk_component(exp) clear list
 			eval $itk_component(exp) insert list end $itk_option(-expvalues) }
 	itk_option define -status status Status off {
 		if {$itk_option(-status) eq "off"} {
@@ -48,12 +48,12 @@ public {
 	
 	method clear {} { 
 		$itk_component(onoff) clear 
-		$itk_component(exp) clear 
+		#$itk_component(exp) clear entry 
 	}
 	method switchPush {} { $itk_component(onoff) push }  
 	method switchPop {} { $itk_component(onoff) pop }  
 	method switchGet {} { return [$itk_component(onoff) get] }
-	method setExp { val } { $itk_component(exp) insert entry end $val }
+	method setExp { val } { $itk_component(exp) insert entry end $val	}
 	method getExp {} { return [$itk_component(exp) get ] }
 	method getButton {} { return $itk_component(onoff) }
 	method getExpCombo {} { return $itk_component(exp) }

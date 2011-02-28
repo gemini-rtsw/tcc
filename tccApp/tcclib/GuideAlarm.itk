@@ -319,6 +319,8 @@ itcl::body GuideAlarm::alarmCheck {wfs} {
 			}
 		}
 		}
+	} else {
+      set alarmOn($wfs) 0
 	}
 }
 
@@ -411,7 +413,7 @@ itcl::body GuideAlarm::scanLoop {} {
 	
 	set wfsList {pwfs1 pwfs2 oiwfs nici}
 	if { [calparam cget -site] eq "CP" } {
-      if { !$::FLags(disablegems) } {
+      if { !$::Flags(disablegems) } {
          retrieveGeMSCounts
    		lappend wfsList ttwfs lgswfs sfs odgw
    		set ttSources [$gemsSys getTTLoopSources]
