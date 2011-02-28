@@ -125,8 +125,12 @@ itcl::body Odgw::configureTargetWavelength {wavel} {
 		}
 	}
 	if { $change } {
+      #HACK: change main target wavelength
+      cs wavelSourceA set wavel $wavel
+      logger command wavelSourceA
+
 		logactions logmess "Applying ODGW target wavelength: (\"$wavel\")"
-		if { [catch {cs wavelG2 post} msg] } {
+		if { [catch {cs tcsApply post} msg] } {
 			logactions logmess "Error posting ODGW target wavelegth: TCS reports \"$msg\""		
 		}
 	}
