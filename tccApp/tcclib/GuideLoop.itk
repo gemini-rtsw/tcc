@@ -222,6 +222,10 @@ itcl::body GuideLoop::constructor args {
 	}
 	$w create window 2 25 -width 60 -window $itk_component(rotator) -tags rotator -anchor nw
 	$itk_component(rotator) add AO -pady 0
+   
+   if { $::Flags(disablegems) } {
+      $itk_component(rotator) configure -state disabled
+   } 
 
 # Box for WFS probes.
    $w create rectangle 0 0 123 66 -fill white -tags "active probes probes_bg"
@@ -476,11 +480,13 @@ itcl::body GuideLoop::recolour args {
       } else {
          $w itemconfigure oiwfs_pr -fill yellow
       }
-      if { [AO state oiblend] } {
-         $w itemconfigure oiwfs_gaos -fill green
-      } else {
-         $w itemconfigure oiwfs_gaos -fill yellow
-      }	  
+      if {[calparam cget -site] ne "CP" || !$::Flags(disablegems)} {
+         if { [AO state oiblend] } {
+            $w itemconfigure oiwfs_gaos -fill green
+         } else {
+            $w itemconfigure oiwfs_gaos -fill yellow
+         }
+      }
    } else {
       # enable the regular oiwfs guide alarm and disable the nici guide alarm
 		$itk_option(-wfsAlarmObj) disableWfs nici
@@ -920,119 +926,120 @@ itcl::body GuideLoop::buildGemsArrows {} {
 }
 
 itcl::body GuideLoop::recolourGemsArrows {} {
+   if { ! $::Flags(disablegems) } {
+   	set w $itk_component(canv)
    
-	set w $itk_component(canv)
-
-	if { [$gemsSys getSFSActive] eq "ON" } {
-		if { [$gemsSys getFocLoopState] eq "CLOSED" } {
-			$w itemconfigure sfs_gaos -fill green
-		} else {
-			$w itemconfigure sfs_gaos -fill yellow
-		}
-	} else {
-		$w itemconfigure sfs_gaos -fill white
-	}
-	set ttSources [$gemsSys getTTLoopSources]
-   set flexSources [$gemsSys getFlexLoopSources]
-	set odgwCount 0
-	for {set i 1} {$i <= 4} {incr i} {
-		if {[$gemsSys getODGWActive $i] eq "ON"} {
-			incr odgwCount
-		}
-	}
-	set ttwfsCount 0
-	for {set i 1} {$i <= 3} {incr i} {
-		if {[$gemsSys getTTWFSActive $i] eq "ON"} {
-			incr ttwfsCount
-		}
-	}
-   set tttail white
-   set flextail white
-	if { $odgwCount > 0 } {
-		if { ( [$gemsSys getFlexLoopState] eq "CLOSED" && [string first odgw $flexSources] > -1 ) } {
-			$w itemconfigure odgwflex_gaos -fill green
-         set flextail green
-		} else {
-			$w itemconfigure odgwflex_gaos -fill yellow
-         set flextail yellow
-		}
-      if { [$gemsSys getTTLoopState] eq "CLOSED" && [string first odgw $ttSources] > -1 } {
-         $w itemconfigure odgwtt_gaos -fill green
-         set tttail green
-      } else {
-         $w itemconfigure odgwtt_gaos -fill yellow
-         set tttail yellow
-      }
-	} else {
-		$w itemconfigure odgwflex_gaos -fill white
-      $w itemconfigure odgwtt_gaos -fill white
-	}
-	if { $ttwfsCount > 0 } {
-		if { [$gemsSys getTTLoopState] eq "CLOSED" && [string first ttgs $ttSources] > -1 } {
-			$w itemconfigure cwfstt_gaos -fill green
-         set tttail green
-		} else {
-			$w itemconfigure cwfstt_gaos -fill yellow
-         if {$tttail ne "green"} {
+   	if { [$gemsSys getSFSActive] eq "ON" } {
+   		if { [$gemsSys getFocLoopState] eq "CLOSED" } {
+   			$w itemconfigure sfs_gaos -fill green
+   		} else {
+   			$w itemconfigure sfs_gaos -fill yellow
+   		}
+   	} else {
+   		$w itemconfigure sfs_gaos -fill white
+   	}
+   	set ttSources [$gemsSys getTTLoopSources]
+      set flexSources [$gemsSys getFlexLoopSources]
+   	set odgwCount 0
+   	for {set i 1} {$i <= 4} {incr i} {
+   		if {[$gemsSys getODGWActive $i] eq "ON"} {
+   			incr odgwCount
+   		}
+   	}
+   	set ttwfsCount 0
+   	for {set i 1} {$i <= 3} {incr i} {
+   		if {[$gemsSys getTTWFSActive $i] eq "ON"} {
+   			incr ttwfsCount
+   		}
+   	}
+      set tttail white
+      set flextail white
+   	if { $odgwCount > 0 } {
+   		if { ( [$gemsSys getFlexLoopState] eq "CLOSED" && [string first odgw $flexSources] > -1 ) } {
+   			$w itemconfigure odgwflex_gaos -fill green
+            set flextail green
+   		} else {
+   			$w itemconfigure odgwflex_gaos -fill yellow
+            set flextail yellow
+   		}
+         if { [$gemsSys getTTLoopState] eq "CLOSED" && [string first odgw $ttSources] > -1 } {
+            $w itemconfigure odgwtt_gaos -fill green
+            set tttail green
+         } else {
+            $w itemconfigure odgwtt_gaos -fill yellow
             set tttail yellow
          }
-		}
-      if { [$gemsSys getAniLoopState] eq "CLOSED" } {
-         $w itemconfigure cwfsani_gaos -fill green
-      } else {
-         $w itemconfigure cwfsani_gaos -fill yellow
-      }
-	} else {
-		$w itemconfigure cwfsani_gaos -fill white
-      $w itemconfigure cwfstt_gaos -fill white
-	}
-	if { [AO state oiwfs] } {
-		if {[$gemsSys getFlexLoopState] eq "CLOSED" && [string first oigs $flexSources] > -1 } {
-			$w itemconfigure oiwfs_gaos -fill green
-         set flextail green
-		} else {
-			$w itemconfigure oiwfs_gaos -fill yellow
-         if { $flextail ne "green" } {
-            set flextail yellow
+   	} else {
+   		$w itemconfigure odgwflex_gaos -fill white
+         $w itemconfigure odgwtt_gaos -fill white
+   	}
+   	if { $ttwfsCount > 0 } {
+   		if { [$gemsSys getTTLoopState] eq "CLOSED" && [string first ttgs $ttSources] > -1 } {
+   			$w itemconfigure cwfstt_gaos -fill green
+            set tttail green
+   		} else {
+   			$w itemconfigure cwfstt_gaos -fill yellow
+            if {$tttail ne "green"} {
+               set tttail yellow
+            }
+   		}
+         if { [$gemsSys getAniLoopState] eq "CLOSED" } {
+            $w itemconfigure cwfsani_gaos -fill green
+         } else {
+            $w itemconfigure cwfsani_gaos -fill yellow
          }
-		}
-	} else {
-		$w itemconfigure oiwfs_gaos -fill white
-	}
-   
-   $w itemconfigure ttend_gaos -fill $tttail
-   $w itemconfigure flexend_gaos -fill $flextail
-   
-	if {[AO state gaos]} {
-      set m1Offload [$gemsSys getM1OffloadState]
-		if {[AO state m1] && [AO source m1 GAOS] && ( $m1Offload eq "START" || $m1Offload eq "RESUME" ) } {
-			$w itemconfigure gaos_m1 -fill green
-		} else {
-			$w itemconfigure gaos_m1 -fill yellow
-		}
-	} else {
-		$w itemconfigure gaos_m1 -fill white
-	}
-	if {[AO state gaos]} {
-      set m2Offload [$gemsSys getM2OffloadState]
-		if {[AO state m2] && [AO source m2 GAOS A] && ( $m2Offload eq "START" || $m2Offload eq "RESUME" ) } {
-			$w itemconfigure gaos_m2 -fill green
-		} else {
-			$w itemconfigure gaos_m2 -fill yellow
-		}
-	} else {
-		$w itemconfigure gaos_m2 -fill white
-	}
-	if {[AO state gaos]} {
-      set rotOffload [$gemsSys getRotOffloadState]
-		if {[AO state rotator] && ( $rotOffload eq "START" || $rotOffload eq "RESUME" ) } {
-			$w itemconfigure gaos_cr -fill green
-		} else {
-			$w itemconfigure gaos_cr -fill yellow
-		}
-	} else {
-		$w itemconfigure gaos_cr -fill white
-	}
+   	} else {
+   		$w itemconfigure cwfsani_gaos -fill white
+         $w itemconfigure cwfstt_gaos -fill white
+   	}
+   	if { [AO state oiwfs] } {
+   		if {[$gemsSys getFlexLoopState] eq "CLOSED" && [string first oigs $flexSources] > -1 } {
+   			$w itemconfigure oiwfs_gaos -fill green
+            set flextail green
+   		} else {
+   			$w itemconfigure oiwfs_gaos -fill yellow
+            if { $flextail ne "green" } {
+               set flextail yellow
+            }
+   		}
+   	} else {
+   		$w itemconfigure oiwfs_gaos -fill white
+   	}
+      
+      $w itemconfigure ttend_gaos -fill $tttail
+      $w itemconfigure flexend_gaos -fill $flextail
+      
+   	if {[AO state gaos]} {
+         set m1Offload [$gemsSys getM1OffloadState]
+   		if {[AO state m1] && [AO source m1 GAOS] && ( $m1Offload eq "START" || $m1Offload eq "RESUME" ) } {
+   			$w itemconfigure gaos_m1 -fill green
+   		} else {
+   			$w itemconfigure gaos_m1 -fill yellow
+   		}
+   	} else {
+   		$w itemconfigure gaos_m1 -fill white
+   	}
+   	if {[AO state gaos]} {
+         set m2Offload [$gemsSys getM2OffloadState]
+   		if {[AO state m2] && [AO source m2 GAOS A] && ( $m2Offload eq "START" || $m2Offload eq "RESUME" ) } {
+   			$w itemconfigure gaos_m2 -fill green
+   		} else {
+   			$w itemconfigure gaos_m2 -fill yellow
+   		}
+   	} else {
+   		$w itemconfigure gaos_m2 -fill white
+   	}
+   	if {[AO state gaos]} {
+         set rotOffload [$gemsSys getRotOffloadState]
+   		if {[AO state rotator] && ( $rotOffload eq "START" || $rotOffload eq "RESUME" ) } {
+   			$w itemconfigure gaos_cr -fill green
+   		} else {
+   			$w itemconfigure gaos_cr -fill yellow
+   		}
+   	} else {
+   		$w itemconfigure gaos_cr -fill white
+   	}
+   }
 }
 
 itcl::body GuideLoop::recolourGaos {} {
