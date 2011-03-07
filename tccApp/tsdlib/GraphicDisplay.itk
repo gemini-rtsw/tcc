@@ -206,6 +206,7 @@ itcl::body GraphicDisplay::constructor args {
          $itk_component(opticsview) configure -portCnumber 3
          $itk_component(opticsview) configure -portDnumber 2
          $itk_component(opticsview) configure -portEnumber 5
+         $itk_component(opticsview) configure -aopresent 1
       }
    }
 
@@ -388,12 +389,19 @@ itcl::body GraphicDisplay::update {} {
          -aofoldhealth [sa agssad get aoHealth value] \
          -scfoldhealth [sa agssad get sfHealth value] \
          -hrwfshealth [sa agssad get hwHealth value] \
-         -aoentrance [sa aossad get entShutterOpen value] \
-         -aoexit [sa aossad get exitShutterOpen value] \
          -hrwfs [sa agssad get hwName value] \
          -m1cover [sa gissad get m1cover value] \
          -holecover [sa gissad get m1inst value] \
          -calunit $calunit
+   if { $::env(GEMINI_SITE) eq "CP" } {
+      $itk_component(opticsview) configure \
+              -aoentrance [expr {[sa aomsad get inShutterState value] eq "Open"}]\
+              -aoexit [expr {[sa aomsad get outShutterState value] eq "Open"}]
+   } else {
+      $itk_component(opticsview) configure \
+              -aoentrance [sa aossad get entShutterOpen value] \
+              -aoexit [sa aossad get exitShutterOpen value]
+   }
    $itk_component(opticsview) update
 
 # Update the ao configuration.

@@ -727,7 +727,7 @@ itcl::body OpticsView::renumber {port} {
 }
 
 itcl::configbody OpticsView::aopresent {
-   if { $itk_option(-aopresent) == 1 } {
+   if { $::env(GEMINI_SITE) ne "CP" && $itk_option(-aopresent) == 1 } {
       $itk_component(canvas) itemconfigure portBlabel -text AO
    } else {
       relabel B
@@ -735,7 +735,7 @@ itcl::configbody OpticsView::aopresent {
 }
 
 itcl::configbody OpticsView::portBlabel {
-   if { $itk_option(-aopresent) == 0 } {
+   if { $::env(GEMINI_SITE) eq "CP" || $itk_option(-aopresent) == 0 } {
       relabel B
    }
 }

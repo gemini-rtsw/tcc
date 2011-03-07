@@ -45,6 +45,10 @@ proc tsdMain args {
    epics sa gcalsad
    epics sa gpolsad
    epics sa systemoverride
+   
+   if { $::env(GEMINI_SITE) eq "CP" } {
+      epics sa aomsad
+   }
 
 # Wait to get connected to the TCS.
    waitConnect
