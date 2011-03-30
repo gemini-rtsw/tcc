@@ -53,7 +53,7 @@ public {
 	method switchPush {} { $itk_component(onoff) push }  
 	method switchPop {} { $itk_component(onoff) pop }  
 	method switchGet {} { return [$itk_component(onoff) get] }
-	method setExp { val } { $itk_component(exp) insert entry end $val	}
+	method setExp { val }
 	method getExp {} { return [$itk_component(exp) get ] }
 	method getButton {} { return $itk_component(onoff) }
 	method getExpCombo {} { return $itk_component(exp) }
@@ -91,4 +91,9 @@ itcl::body WfsWidget::constructor {args} {
 	pack $itk_component(exp) -side top -anchor w -pady 1 -padx 1
 
 	eval itk_initialize $args
+}
+
+itcl::body WfsWidget::setExp { val } {
+   $itk_component(exp) clear entry
+   $itk_component(exp) insert entry end $val
 }
