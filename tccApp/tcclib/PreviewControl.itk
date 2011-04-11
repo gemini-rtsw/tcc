@@ -568,10 +568,14 @@ itcl::body PreviewControl::update {} {
 				clearProbeAlarm oiwfsx oiwfsy oiwfsr
          }
 			if {[calparam cget -site] eq "CP"} {
+            set coeffs { 0.0 -1.0 0.0 0.0 0.0 1.0 }
 				set ttgs1 [$view cget -ttgs1xy]
 				if { ! [string equal $ttgs1 ""] } {
 					set x [lindex $ttgs1 0]
 					set y [lindex $ttgs1 1]
+               set coords [transformCoordinates $x $y $coeffs]
+               set x [lindex $coords 0]
+               set y [lindex $coords 1]
 					updateProbeTarget ttgs1x ttgs1y ttgs1r $x $y
 					set rmax [sa tcssad get ttgs1Rmax]
 					set rmin [sa tcssad get ttgs1Rmin]
@@ -587,6 +591,9 @@ itcl::body PreviewControl::update {} {
 				if { ! [string equal $ttgs2 ""] } {
 					set x [lindex $ttgs2 0]
 					set y [lindex $ttgs2 1]
+               set coords [transformCoordinates $x $y $coeffs]
+               set x [lindex $coords 0]
+               set y [lindex $coords 1]
 					updateProbeTarget ttgs2x ttgs2y ttgs2r $x $y
 					set rmax [sa tcssad get ttgs2Rmax]
 					set rmin [sa tcssad get ttgs2Rmin]
@@ -602,6 +609,9 @@ itcl::body PreviewControl::update {} {
 				if { ! [string equal $ttgs3 ""] } {
 					set x [lindex $ttgs3 0]
 					set y [lindex $ttgs3 1]
+               set coords [transformCoordinates $x $y $coeffs]
+               set x [lindex $coords 0]
+               set y [lindex $coords 1]
 					updateProbeTarget ttgs3x ttgs3y ttgs3r $x $y
 					set rmax [sa tcssad get ttgs3Rmax]
 					set rmin [sa tcssad get ttgs3Rmin]
