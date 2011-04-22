@@ -30,9 +30,11 @@ itcl::class GuideLoop {
 		method probefrom {val}
       method probeto {val}
       method wfsmode {wfs val}
+      method configP1Ex {}
+      method configP2Ex {}
+      method configOiEx {}
       method enable {}
       method m1mode {state}
-      method configSfoEx {}
       variable monids
 		variable gemsSys ""
 		
@@ -75,14 +77,16 @@ itcl::body GuideLoop::constructor args {
    $w create rectangle 0 0 131 106 -fill white -tags "active pwfs1_bg pwfs2_bg pwfs_comb"
 
 	itk_component add pwfs1 {
-		WfsWidget $w.pwfs1 -label P1 -onswitchpress [itcl::code $this wfsmode pwfs1] -background grey
+		WfsWidget $w.pwfs1 -label P1 -onswitchpress [itcl::code $this wfsmode pwfs1] -background grey \
+		    -onexpselect [itcl::code $this configP1Ex]
 	} {
 		usual
 	}
 	$itk_component(pwfs1) setExp [AO cget -pwfs1Expose]
 	$w create window 0 0 -window $w.pwfs1 -tags pwfs1 -anchor nw
 	itk_component add pwfs2 {
-		WfsWidget $w.pwfs2 -label P2 -onswitchpress [itcl::code $this wfsmode pwfs2]
+		WfsWidget $w.pwfs2 -label P2 -onswitchpress [itcl::code $this wfsmode pwfs2] \
+		    -onexpselect [itcl::code $this configP2Ex]
 	} {
 		usual
 	}
@@ -107,7 +111,7 @@ itcl::body GuideLoop::constructor args {
 # WFS controls.
    itk_component add oiwfs_ex {
       iwidgets::combobox $w.oiwfs_ex -arrowrelief flat -width 5 \
-            -validate real -labeltext "exp(s)"
+            -validate real -labeltext "exp(s)" -selectioncommand [itcl::code $this configOiEx]
    }
 
    $w create window 2 48 -window $w.oiwfs_ex -tag oiwfs -anchor nw
@@ -748,31 +752,22 @@ itcl::body GuideLoop::wfsmode {wfs val} {
    }
 }
 
-itcl::body GuideLoop::enable {} {
-   AO configure -pwfs1Expose [$itk_component(pwfs1) getExp ]
+itcl::body GuideLoop::configP1Ex {} {
+   AO configure -pwfs1Expose [$itk_component(pwfs1) getExp]
+   Pwfs1 configure -exposetime [$itk_component(pwfs1) getExp]
+}
+itcl::body GuideLoop::configP2Ex {} {
    AO configure -pwfs2Expose [$itk_component(pwfs2) getExp]
+   Pwfs2 configure -exposetime [$itk_component(pwfs2) getExp]
+}
+itcl::body GuideLoop::configOiEx {} {
    AO configure -oiwfsExpose [$itk_component(oiwfs_ex) get]
-
-	enableGaos
-   AO enable
+   Oiwfs configure -exposetime [$itk_component(oiwfs_ex) get]
 }
 
-itcl::body GuideLoop::configSfoEx {} {
-    set exp [$itk_component(ttgs_ex) get]
-    set exp [string trim [string range $exp [string first "(" $exp] end] "()"]
-    if {[string length $exp] > 0} {
-	set ttgsLimit [expr 1.65*$exp*1000]
-	.observePanel.frame.control.alarm configure -ttgsLimit $ttgsLimit
-    }
-    $itk_component(sfo_ex) clear entry
-    switch $exp {
-	0.001 {$itk_component(sfo_ex) insert entry end 1.0}
-	0.002 {$itk_component(sfo_ex) insert entry end 2.0}
-	0.005 {$itk_component(sfo_ex) insert entry end 5.0}
-	0.01  {$itk_component(sfo_ex) insert entry end 10.0}
-	0.02  {$itk_component(sfo_ex) insert entry end 20.0}
-	0.05  {$itk_component(sfo_ex) insert entry end 50.0}
-    }
+itcl::body GuideLoop::enable {} {
+   enableGaos
+   AO enable
 }
 
 itcl::body GuideLoop::m1mode {state} {
