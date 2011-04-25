@@ -30,6 +30,7 @@ private {
 	method gaosTTGS {val}
 	method gaosSFO {val}
 	method oiblend {val}
+	method p1blend {val}
 	method ttgsloop {val}
 	method sfoloop {val}
         method configSfoEx {}
@@ -80,6 +81,17 @@ itcl::body AltairWidget::constructor {args} {
 	#$w create window 2 69 -width 60 -window $w.sfao -tags gaos -anchor nw
 	pack $itk_component(sfao) -side top -anchor nw
 
+	# P1 Blending
+	itk_component add p1ao {
+		ToggleButton $w.p1ao -text PWFS1 -pushedbackground Green -pady 0  -width 7 \
+				-command [itcl::code $this p1blend]
+	} {
+		usual
+		ignore -width
+	}
+	#$w create window 2 90 -width 60 -window $w.oiao -tags gaos -anchor nw
+	pack $itk_component(p1ao) -side top -anchor nw
+
 	# OI Blending
 	itk_component add oiao {
 		ToggleButton $w.oiao -text OIWFS -pushedbackground Green -pady 0  -width 7 \
@@ -88,9 +100,7 @@ itcl::body AltairWidget::constructor {args} {
 		usual
 		ignore -width
 	}
-	#$w create window 2 90 -width 60 -window $w.oiao -tags gaos -anchor nw
 	pack $itk_component(oiao) -side top -anchor nw
-
 
 	itk_component add wfsframe {
 		frame $w.wfsframe -background white
@@ -135,6 +145,7 @@ itcl::body AltairWidget::init {} {
 
 itcl::body AltairWidget::reset {} {
    $itk_component(oiao) pop
+   $itk_component(p1ao) pop
    $itk_component(gaos) switchPop
    $itk_component(ttao) pop
    $itk_component(sfao) pop
@@ -333,6 +344,17 @@ itcl::body AltairWidget::oiblend {val} {
 		}
 		pop {
 			 $itk_option(-aocontroller) configure -oiblend 0
+		}
+	}
+}
+
+itcl::body AltairWidget::p1blend {val} {
+	switch $val {
+		push {
+			 $itk_option(-aocontroller) configure -p1blend 1
+		}
+		pop {
+			 $itk_option(-aocontroller) configure -p1blend 0
 		}
 	}
 }

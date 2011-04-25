@@ -45,6 +45,7 @@ itcl::class ActiveOptics {
       variable mountguide none
       variable gaos 0
       variable oiblend 0
+      variable p1blend 0
       variable pwfs1Expose 0.01
       variable pwfs1Active 0
       variable pwfs2Expose 0.005
@@ -86,8 +87,8 @@ itcl::class ActiveOptics {
 		
 		#helper methods
 		method enableOIAO {}
-		method configureOIBlending {}
-		method unparkAltair {}
+		method configureBlending {}
+      method unparkAltair {}
 		method startAltairWFS {}
 		method startAltairLoops {}
       
@@ -174,12 +175,15 @@ global env
 
 # this will be called by the handset to open the loop before an offset in LGS mode
     process BUSY
-    if {[state useLwfs] && $enabled} {
-	if {$env(TCC_TCSNAME) == "tc1"} {
+  if {[state useLwfs] && $enabled} {
+    if {$env(TCC_TCSNAME) == "tc1"} {
 	    #simulating ... but not yet simulated in the tcs
 	    if { $oiblend } {
 		Oiwfs stop
 	    }
+	    if { $p1blend } {
+	    Pwfs1 stop
+      }
 	    set simgaosTTGS $gaosTTGS
 	    set simsfoloop $sfoloop
 	    set simttgsloop $ttgsloop
@@ -191,6 +195,9 @@ global env
 		if { $oiblend } {
 			Oiwfs stop
 		}
+		if { $p1blend } {
+	    Pwfs1 stop
+      }
 	    # turn off TTGS and SFO loops
 	    cs ttgsloop set dem 0
 	    cs ttgsloop set dir 3
@@ -256,7 +263,7 @@ itcl::body ActiveOptics::enable {} {
 # only have a possibility of OI Blending if we're actually using Altair
    if {[calparam cget -site] eq "MK" && $::Config(tcs.gaos,value) ne "No AO" && !($::Config(tcs.gaos,value) == "")} {
 		# Configure OIWFS Blending in AO
-		if { [configureOIBlending] } {
+		if { [configureBlending] } {
 			process IDLE
 			return
 		}
@@ -884,7 +891,14 @@ global env
          }
       }
       oiblend {
-	  if {( [sa guideConfig get oiblend] == "1") || ([sa guideConfig get oiblend] == "ON") } {
+	      if {( [sa guideConfig get oiblend] == "1") || ([sa guideConfig get oiblend] == "ON") } {
+            return 1
+         } else {
+            return 0
+         }
+      }
+      p1blend {
+         if {( [sa guideConfig get p1blend] == "1") || ([sa guideConfig get p1blend] == "ON") } {
             return 1
          } else {
             return 0
@@ -1254,19 +1268,20 @@ itcl::body ActiveOptics::enableOIAO {} {
 	return 0
 }
 
-itcl::body ActiveOptics::configureOIBlending {} {
-	if { $oiblend } {
-		# first disable all loops if neccesary
-		 if {$enabled} {
-			process IDLE
+itcl::body ActiveOptics::configureBlending {} {
+   if { $oiblend || $p1blend } {
+      # first disable all loops if neccesary
+		if {$enabled} {
+         process IDLE
 			$this disable
 			process BUSY
-		 }
+		}
 	 
-		 # make sure correctM is Idle
-		 if {[setTimeout "sa aossad get correctBusy" BUSY 10000 200 \
-		  "Altair to stop correcting"]} { return 1 }
-	 
+		# make sure correctM is Idle
+		if {[setTimeout "sa aossad get correctBusy" BUSY 10000 200 \
+		   "Altair to stop correcting"]} { return 1 }
+   }
+	if { $oiblend } {
 		 cs aoOiwfsSource set state ON
 	} else {
 		# need to ensure that OIWFS Guide Output is set to SCS
@@ -1282,12 +1297,32 @@ itcl::body ActiveOptics::configureOIBlending {} {
 			  \"$msg\""
 			return 1
 	}
-
 	# need to wait for aoOiwfsSource to go idle
 	if {[setTimeout "sa aossad get oiblendBusy" BUSY 10000 200 \
 		"aoOiwfsSource to go idle"]} {
 		return 1
 	}
+   
+   if { $p1blend } {
+       cs aoPwfs1Source set state ON
+   } else {
+      # need to ensure that OIWFS Guide Output is set to SCS
+       cs aoPwfs1Source set state OFF
+       cs aoPwfs1Source set bandwidth -1
+   }
+   logger command aoPwfs1Source
+   # Post the Blending Command.
+   # The blending command must be finished before the loops are closed.
+   if { [catch {cs tcsApply post} msg] } {
+      errorBox "Error posting guide commands: TCS reports \
+           \"$msg\""
+         return 1
+   }
+   # need to wait for aoOiwfsSource to go idle
+   if {[setTimeout "sa aossad get p1blendBusy" BUSY 10000 200 \
+      "aoPwfs1Source to go idle"]} {
+      return 1
+   }
 	return 0
 }
 

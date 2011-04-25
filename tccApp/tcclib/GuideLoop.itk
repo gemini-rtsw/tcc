@@ -50,8 +50,11 @@ itcl::class GuideLoop {
 		method onGemsChange {reasons}
    }
    itk_option define -wfsConfigObj wfsConfigObj WfsConfigObj "" {
+   	if { $itk_option(-wfsConfigObj) ne "" } { recolour }
    }
-	itk_option define -wfsAlarmObj wfsAlarmObj WfsAlarmObj ""
+	itk_option define -wfsAlarmObj wfsAlarmObj WfsAlarmObj "" { 
+		if { $itk_option(-wfsAlarmObj) ne "" } { recolour }
+	}
 }
 
 itk::usual GuideLoop {
@@ -399,6 +402,13 @@ itcl::body GuideLoop::recolour args {
       } else {
          $w itemconfigure pwfs1_mt -fill yellow
       }
+      if {[calparam cget -site] eq "MK"} {
+         if { [AO state p1blend] } {
+            $w itemconfigure pwfs1_gaos -fill green
+         } else {
+            $w itemconfigure pwfs1_gaos -fill yellow
+         }
+      }
    } else {
 		$itk_component(pwfs1) configure -status off
    }
@@ -436,15 +446,19 @@ itcl::body GuideLoop::recolour args {
 # OIWFS signals
    if { [AO state oiao] } {
       # disable the regular oiwfs guide alarm and enable the nici guide alarm
-		$itk_option(-wfsAlarmObj) disableWfs oiwfs
-		$itk_option(-wfsAlarmObj) enableWfs nici
+      if { $itk_option(-wfsAlarmObj) ne "" } {
+			$itk_option(-wfsAlarmObj) disableWfs oiwfs
+			$itk_option(-wfsAlarmObj) enableWfs nici
+		}
 
       $w itemconfigure oiwfs_ao -outline black 
       $w itemconfigure oiwfs_wfs -outline grey
       $w itemconfigure oiwfs_aotxt -fill black 
       $w itemconfigure oiwfs_wfstxt -fill grey
       $itk_component(oiwfs_ex) configure -state disabled
-      $itk_option(-wfsConfigObj) niciState normal
+      if { $itk_option(-wfsConfigObj) ne "" } {
+      	$itk_option(-wfsConfigObj) niciState normal
+		}
       if { [AO state oiaoAPD] } {
          $w itemconfigure oiwfs_ao -fill green
       }
@@ -458,8 +472,10 @@ itcl::body GuideLoop::recolour args {
       }
    } elseif { [AO state oiwfs] } {
       # enable the regular oiwfs guide alarm and disable the nici guide alarm
-		$itk_option(-wfsAlarmObj) disableWfs nici
-		$itk_option(-wfsAlarmObj) enableWfs oiwfs
+      if { $itk_option(-wfsAlarmObj) ne "" } {
+			$itk_option(-wfsAlarmObj) disableWfs nici
+			$itk_option(-wfsAlarmObj) enableWfs oiwfs
+		}
 
       $w itemconfigure oiwfs_bg -fill green
       $w itemconfigure oiwfs_ao -outline grey
@@ -467,7 +483,9 @@ itcl::body GuideLoop::recolour args {
       $w itemconfigure oiwfs_aotxt -fill grey 
       $w itemconfigure oiwfs_wfstxt -fill black
       $itk_component(oiwfs_ex) configure -state disabled
-      $itk_option(-wfsConfigObj) niciState normal
+      if { $itk_option(-wfsConfigObj) ne "" } {
+			$itk_option(-wfsConfigObj) niciState normal
+		}
       if { [AO state m1] && [AO source m1 OIWFS] } {
          $w itemconfigure oiwfs_m1 -fill green
       } else {
@@ -493,15 +511,19 @@ itcl::body GuideLoop::recolour args {
       }
    } else {
       # enable the regular oiwfs guide alarm and disable the nici guide alarm
-		$itk_option(-wfsAlarmObj) disableWfs nici
-		$itk_option(-wfsAlarmObj) enableWfs oiwfs
+      if { $itk_option(-wfsAlarmObj) ne "" } {
+			$itk_option(-wfsAlarmObj) disableWfs nici
+			$itk_option(-wfsAlarmObj) enableWfs oiwfs
+		}
       
       $w itemconfigure oiwfs_ao -outline grey
       $w itemconfigure oiwfs_wfs -outline black
       $w itemconfigure oiwfs_aotxt -fill grey 
       $w itemconfigure oiwfs_wfstxt -fill black
       $itk_component(oiwfs_ex) configure -state normal
-      $itk_option(-wfsConfigObj) niciState disabled
+      if { $itk_option(-wfsConfigObj) ne "" } {
+			$itk_option(-wfsConfigObj) niciState disabled
+		}
    }
 
 	recolourGaos
@@ -839,13 +861,15 @@ itcl::body GuideLoop::buildAltairArrows {} {
 		-arrow last -arrowshape {20 20 7}
 	$w create line 470 119 343 119 -width 3 -fill white \
 		-tags {active gaos_m1} -arrow last -arrowshape {20 20 7}
-	$w create line 343 315 425 315 425 173 470 173 -width 3 -fill white \
+	$w create line 343 315 425 315 425 194 470 194 -width 3 -fill white \
 		-tags {active oiwfs_gaos} -arrow last -arrowshape {20 20 7}
+	$w create line 155 199 415 199 415 173 470 173 -width 3 -fill white \
+		-tags {active pwfs1_gaos} -arrow last -arrowshape {20 20 7}
 
 	# GAOS internal
-	$w create line 470 221 435 221 435 131 470 131 -width 3 -fill white \
+	$w create line 470 242 435 242 435 131 470 131 -width 3 -fill white \
 		-tags {active ttgs_gaos} -arrow last -arrowshape {20 20 7}
-	$w create line 470 281 445 281 445 152 470 152 -width 3 -fill white \
+	$w create line 470 302 445 302 445 152 470 152 -width 3 -fill white \
 		-tags {active sfo_gaos} -arrow last -arrowshape {20 20 7}
 
 }
