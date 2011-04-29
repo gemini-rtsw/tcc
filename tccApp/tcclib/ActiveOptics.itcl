@@ -719,13 +719,19 @@ itcl::body ActiveOptics::disable {} {
          cs aoCorrect set correct OFF
          logger command aoCorrect
          if { [catch {cs tcsApply post} msg] } {
-            errorBox  $msg
+            errorBox $msg
          }
          after 10
-          
+         if {[setTimeout "state gaos" 1 20000 200 "gaos Loop to be off"]} { 
+            process IDLE
+            return
+         }
          # Flatten.
          cs aoFlatten set dummy 1
          logger command aoFlatten
+         if { [catch {cs tcsApply post} msg] } {
+            errorBox $msg
+         }
 	   }
 	}
 
