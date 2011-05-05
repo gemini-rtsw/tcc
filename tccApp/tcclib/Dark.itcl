@@ -122,11 +122,25 @@ itcl::body Dark::take {} {
          $probeaction set ${wfs}Guide $chopnod [sa ${wfs}Guide get $chopnod]
       }
    }
+   if { [calparam cget -site] eq "CP" } {
+      foreach wfs {g1 g2 g3 g4} {
+         foreach chopnod {nodachopa nodbchopa nodbchopa nodbchopb} {
+            $probeaction set ${wfs}Guide $chopnod [sa ${wfs}Guide get $chopnod]
+         }
+      }      
+   }
 
 # Configure the disable action to disable movement of the WFS probes
    foreach wfs {pwfs1 pwfs2 oiwfs} {
       foreach chopnod {nodachopa nodbchopa nodbchopa nodbchopb} {
          $disableaction set ${wfs}Guide $chopnod off
+      }
+   }
+   if { [calparam cget -site] eq "CP" } {
+      foreach wfs {g1 g2 g3 g4} {
+         foreach chopnod {nodachopa nodbchopa nodbchopa nodbchopb} {
+            $disableaction set ${wfs}Guide $chopnod off
+         }
       }
    }
 
@@ -135,7 +149,11 @@ itcl::body Dark::take {} {
    foreach wfs {pwfs1 pwfs2 oiwfs} {
       logger command ${wfs}Guide
    }
-
+   if { [calparam cget -site] eq "CP" } {
+      foreach wfs {g1 g2 g3 g4} {
+         logger command ${wfs}Guide
+      }
+   }
    
 }
 
