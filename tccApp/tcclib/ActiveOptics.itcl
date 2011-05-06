@@ -1318,26 +1318,26 @@ itcl::body ActiveOptics::configureBlending {} {
 		return 1
 	}
    
-   if { $p1blend } {
-       cs aoPwfs1Source set state ON
-   } else {
-      # need to ensure that OIWFS Guide Output is set to SCS
-       cs aoPwfs1Source set state OFF
-       cs aoPwfs1Source set bandwidth -1
-   }
-   logger command aoPwfs1Source
-   # Post the Blending Command.
-   # The blending command must be finished before the loops are closed.
-   if { [catch {cs tcsApply post} msg] } {
-      errorBox "Error posting guide commands: TCS reports \
-           \"$msg\""
-         return 1
-   }
-   # need to wait for aoOiwfsSource to go idle
-   if {[setTimeout "sa aossad get p1blendBusy" BUSY 10000 200 \
-      "aoPwfs1Source to go idle"]} {
-      return 1
-   }
+#   if { $p1blend } {
+#       cs aoPwfs1Source set state ON
+#   } else {
+#      # need to ensure that OIWFS Guide Output is set to SCS
+#       cs aoPwfs1Source set state OFF
+#       cs aoPwfs1Source set bandwidth -1
+#   }
+#   logger command aoPwfs1Source
+#   # Post the Blending Command.
+#   # The blending command must be finished before the loops are closed.
+#   if { [catch {cs tcsApply post} msg] } {
+#      errorBox "Error posting guide commands: TCS reports \
+#           \"$msg\""
+#         return 1
+#   }
+#   # need to wait for aoPwfs1Source to go idle
+#   if {[setTimeout "sa aossad get p1blendBusy" BUSY 10000 200 \
+#      "aoPwfs1Source to go idle"]} {
+#      return 1
+#   }
 	return 0
 }
 
