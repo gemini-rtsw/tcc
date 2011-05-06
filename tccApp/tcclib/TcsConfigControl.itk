@@ -24,6 +24,9 @@ itcl::class TcsConfigControl {
       method wrap {par}
       method applyP1M2Gains {instName wfs}
       method applyP2M2Gains {instName wfs}
+      method ltcsQuerySidereal {}
+      method ltcsQueryNonSidereal {}
+      method ltcsQuery {ra dec epoch fov}
       variable components {
          field pointOrig slewOptions chop gaos trackFrame instrument
       }
@@ -260,7 +263,7 @@ itcl::body TcsConfigControl::apply {} {
    set oiName [sa agssad get oiwfsName]
 	
    if { [string match "*NICI*" $inst] } {
-		set target $::Config(tcs.field.oiwfstarget,value)
+		set target $::Config(tcs.field.sciencetarget,value)
 		logactions logmess "Science Target: $target"
 		set magnitude [$::Config(tcs.field.oiwfstarget,namespace)::$target getMagnitude V]
 		set band "V band"
@@ -295,98 +298,56 @@ itcl::body TcsConfigControl::apply {} {
 # rather, if NICI is on the telescope
 
    if { [calparam cget -site] eq "CP" && ([sa agssad get portNici] != "No Value") && ([sa agssad get portNici] > 0) } {
-		if { ![catch {sa nici info}] } {
-			set niciFilter [sa nici get ndfilt]
-		   puts "NICI ndfilter is set to $niciFilter"
-		   if {![string match "*Block*" $niciFilter]} {
+	if { ![catch {sa nici info}] } {
+		set niciFilter [sa nici get ndfilt]
+		# puts "NICI ndfilter is set to $niciFilter"
+		if {![string match "*Block*" $niciFilter]} {
 				tk_messageBox -icon error \
 			   	-message "Warning The NICI ndFilter is not set to Block"
 				return
-			}
 		}
 	}
+    }
 
 # If this is an AO target and we're using the Laser, check for a collision
-	set slewoptions $::Config(tcs.slewoptions,value)
-   #puts "ltcscheck is [::SlewOptionsNames::$slewoptions cget -ltcscheck]" 
-   if {([string match "*LGS*" $::Config(tcs.gaos,value)]) && [::SlewOptionsNames::$slewoptions cget -ltcscheck]} {
-		logactions logmess "LGS target ... checking for collisions"
-		logactions logmess "have target: $::Config(tcs.field.sciencetarget,value)"
-		set laserTarget ${::Config(tcs.field.sciencetarget,namespace)}::${::Config(tcs.field.sciencetarget,value)}
-		set ra [$laserTarget cget -c1]
-		set ra [string trim $ra " "]
-		set dec [$laserTarget cget -c2]
-		set dec [string trim $dec " "]
-		set epoch [$laserTarget cget -cosys]
-		set epoch [string trimleft $epoch "FK54/JB"]
-		# fov is in the range 1 to 1.67
-		set fov 1.67 
-		# convert ra and dec to the format needed by the script
-		set found [string first " " $ra]
-		while {$found != -1} {
-			set ra [string replace $ra $found $found ":"]
-		   set found [string first " " $ra]
-		}
-		set found [string first " " $dec]
-		while {$found != -1} {
-			set dec [string replace $dec $found $found ":"]
-		   set found [string first " " $dec]
-		}
-		logactions logmess "sending: ltcsQuery $ra $dec $epoch $fov"
-		if { [catch {exec ltcsQuery $ra $dec $epoch $fov} result ] } {
-			set choice [tk_messageBox -icon warning \
-				-message "Checking for a collision using: ltcsQuery $ra $dec $epoch $fov\nReturned error: $result\nContinue with slew anyway?" \
-				-type yesno -default yes ]
-			if {$choice == "no"} {
-				return
-			}
-		} else {
-			logactions logmess "ltcsQuery returned: $result"
-			#set result { { "UH2.2M" "Wed Jan 24 11:24:17 2007" "Wed Jan 24 14:26:32 2007" "03:02:15" } }
-			#puts "result: $result"
-			set result [string trim $result " {}"]
-			if {[llength $result] > 0} {
-				#we have a collision
-				set telescope [lindex $result 0]
-				set start [lindex $result 1]
-				set end [lindex $result 2]
-				set duration [lindex $result 3]
-				set choice [tk_messageBox -icon warning \
-					-message "Collision detected with $telescope from $start until $end for $duration\nContinue with slew anyway?" \
-					-type yesno -default no ]
-				if {$choice == "no"} {
-					return
-				}
-			}
-		}
-	}
+
+   set slewoptions $::Config(tcs.slewoptions,value)
+   set laserTarget ${::Config(tcs.field.sciencetarget,namespace)}::${::Config(tcs.field.sciencetarget,value)}
+
+   if { ([string match "hmsdegTarget" [$laserTarget cget -type]]) && \
+        ([string match "*LGS*" $::Config(tcs.gaos,value)]) && \
+        [::SlewOptionsNames::$slewoptions cget -ltcscheck] && \
+        ! [ ltcsQuerySidereal ] } {
+      return
+   }
 
 # Configure UseAO flag in the TCS
-	if { ![catch {cs configForAO info}] } {
-		if { [string match "No AO" $::Config(tcs.gaos,value)] || [string match "" $::Config(tcs.gaos,value)]} {
-			cs configForAO set useAO "No"
-		   logger command configForAO
-		   logactions logmess "Applying configForAO No"
-		   iss configure -source SKY -ao OUT
-		   if { [catch {cs tcsApply post} msg] } {
-				tk_messageBox -icon error -message $msg
-				return
-		   }
-		} else {
-		   cs configForAO set useAO "Yes"
-		   logger command configForAO
-		   logactions logmess "Applying configForAO Yes"
-		   iss configure -source AO -ao IN
-		   if { [catch {cs tcsApply post} msg] } {
-				tk_messageBox -icon error -message $msg
-				return
-		   }
-		}
-	}
+   if { ![catch {cs configForAO info}] } {
+      if { [string match "No AO" $::Config(tcs.gaos,value)] || [string match "" $::Config(tcs.gaos,value)]} {
+         cs configForAO set useAO "No"
+         logger command configForAO
+	 logactions logmess "Applying configForAO No"
+	 iss configure -source SKY -ao OUT
+	 if { [catch {cs tcsApply post} msg] } {
+	    tk_messageBox -icon error -message $msg
+            return
+         }
+      } else {
+         cs configForAO set useAO "Yes"
+	 logger command configForAO
+	 logactions logmess "Applying configForAO Yes"
+         iss configure -source AO -ao IN
+	 if { [catch {cs tcsApply post} msg] } {
+	    tk_messageBox -icon error -message $msg
+	    return
+         }
+      }
+   }
 	
-	if {[calparam cget -site] eq "CP" && !$::Flags(disablegems) && ![string match "No AO" $::Config(tcs.gaos,value)]} {
-		[::GemsSys::getSingleton] slewReset
-	}
+   if {[calparam cget -site] eq "CP" && !$::Flags(disablegems) && ![string match "No AO" $::Config(tcs.gaos,value)]} {
+      [::GemsSys::getSingleton] slewReset
+   }
+
 # Try setting Guide mode (chop states) first here to see if the P2>P2 MAx prob goes away
    #apply guide config (nod states) before point origin
    set fieldObj ${::Config(tcs.field,namespace)}::${::Config(tcs.field,value)}
@@ -395,12 +356,12 @@ itcl::body TcsConfigControl::apply {} {
    set guideObj ::GuideNames::$guide
    #puts "guideObj: $guideObj"
    $guideObj apply tcs.field.guide
-	if {[calparam cget -site] eq "CP"} {
-		$guideObj disableGems g1
-		$guideObj disableGems g2
-		$guideObj disableGems g3
-		$guideObj disableGems g4
-	}
+   if {[calparam cget -site] eq "CP"} {
+      $guideObj disableGems g1
+      $guideObj disableGems g2
+      $guideObj disableGems g3
+      $guideObj disableGems g4
+   }
 
 # Set OIWFS mode in the TCS
    set guide [$fieldObj cget -guide]
@@ -557,8 +518,20 @@ itcl::body TcsConfigControl::apply {} {
        set ::Config(tcs.pointorig,value) $instPO
    }
 
+
 # Call the normal apply function.
    $this ComponentControl::doapply
+
+#
+# If it was a non-sidereal target, then we do the ltcsQuery here after the tcs
+# has been sent the ephemeris data and computed the current ra & dec.
+#
+   if { ( ! [string match "hmsdegTarget" [$laserTarget cget -type]]) && \
+        ([string match "*LGS*" $::Config(tcs.gaos,value)]) && \
+        [::SlewOptionsNames::$slewoptions cget -ltcscheck] && \
+        ! [ ltcsQueryNonSidereal ] } {
+      return
+   }
 
 # Configure default filters, fieldstop for the WFS, and AO Flexture Model
 	if {[string match "*AO*" $guide]} {
@@ -701,7 +674,7 @@ itcl::body TcsConfigControl::load {name} {
 					}
 				}
 	      }
-		}
+	}
    }
 }
 
@@ -761,6 +734,106 @@ itcl::body TcsConfigControl::applyP1M2Gains {instName wfs} {
    cs pwfs1m2Gain dir 0
    after 100
    cs pwfs1m2Gain dir 3
+}
+
+#
+# Query the ltcs for a laser collision with another telescope if we slew
+# to the target. Will return true if it is ok to do the slew. This could
+# be either because there is no collision, or the user said it's ok to go
+# ahead anyway.
+#
+#
+
+itcl::body TcsConfigControl::ltcsQuerySidereal {} {
+   logactions logmess "LGS target ... checking for collisions"
+   logactions logmess "have target: $::Config(tcs.field.sciencetarget,value)"
+
+   set laserTarget ${::Config(tcs.field.sciencetarget,namespace)}::${::Config(tcs.field.sciencetarget,value)}
+   set ra [$laserTarget cget -c1]
+   set ra [string trim $ra " "]
+   set dec [$laserTarget cget -c2]
+   set dec [string trim $dec " "]
+   set epoch [$laserTarget cget -cosys]
+   set epoch [string trimleft $epoch "FK54/JB"]
+   # fov is in the range 1 to 1.67
+   set fov 1.67 
+   # convert ra and dec to the format needed by the script
+   set found [string first " " $ra]
+   while {$found != -1} {
+      set ra [string replace $ra $found $found ":"]
+      set found [string first " " $ra]
+   }
+   set found [string first " " $dec]
+   while {$found != -1} {
+      set dec [string replace $dec $found $found ":"]
+      set found [string first " " $dec]
+   }
+
+   if { [ catch { ltcsQuery $ra $dec $epoch $fov } errmsg ] } {
+      set errmsg "$errmsg\n Continue with slew anyway?"
+      set choice [tk_messageBox -icon warning -type yesno -default yes -message $errmsg ]
+      if {$choice == "no"} {
+          return 0
+      }
+   }
+
+   return 1
+}
+
+#
+# Query the ltcs for a laser collision with another telescope
+# if we slew to the target. Will always return true because this
+# version does not prompt the user to continue or not if there is a
+# collision. ltcsQueryNonSidereal {} must be called after the ::doapply
+# because it extracts the ra and dec from the tcs. The tcs needs the slew
+# applied in order to compute the ra and dec.
+#
+#
+
+itcl::body TcsConfigControl::ltcsQueryNonSidereal {} {
+   set ra  [ sa tcssad get demandRA  value ]
+   set dec [ sa tcssad get demandDec value ]
+   if { [ catch { ltcsQuery $ra $dec 2000 1.67 } errmsg ] } {
+      set errmsg "Warning:\n$errmsg" 
+      set choice [tk_messageBox -icon warning -type ok -message $errmsg ]
+   }
+   return 1
+}
+
+#
+# Routine that actually does the query. If there's an error doing
+# the query, or there's a collision, return an error code and an
+# appropriate error message.
+#
+
+itcl::body TcsConfigControl::ltcsQuery {ra dec epoch fov} { 
+   logactions logmess "ltcsQuery sending: $ra $dec $epoch $fov"
+
+   if { [catch {exec ltcsQuery $ra $dec $epoch $fov} result ] } {
+      return -code error "ltcsQuery $ra $dec $epoch returned error: \"$result\"."
+   }
+   
+   # Possible return values from ltcsQuery script. Modify ltcsQuery script to echo these values to test.
+   #set result { { "UH2.2M" "Wed Jan 24 11:24:17 2007" "Wed Jan 24 14:26:32 2007" "03:02:15" } }
+   #set result {}
+   #set result "LTCS is not running."
+
+   logactions logmess "ltcsQuery result:  $result"
+   
+   if { [ regexp {\{.*\}} $result ] } {
+      set result [string trim $result " {}"]
+      if {[llength $result] > 0} {
+         #we have a collision
+         set telescope [lindex $result 0]
+         set start [lindex $result 1]
+         set end [lindex $result 2]
+         set duration [lindex $result 3]
+         return -code error "Collision detected with $telescope from $start until $end for $duration."
+      }
+   } else  {
+      return -code error "LTCS Query returned, \"$result\"."
+   }
+   return 1
 }
 
 itcl::body TcsConfigControl::applyP2M2Gains {instName wfs} {
