@@ -322,27 +322,29 @@ itcl::body TcsConfigControl::apply {} {
    }
 
 # Configure UseAO flag in the TCS
-   if { ![catch {cs configForAO info}] } {
-      if { [string match "No AO" $::Config(tcs.gaos,value)] || [string match "" $::Config(tcs.gaos,value)]} {
-         cs configForAO set useAO "No"
-         logger command configForAO
-	 logactions logmess "Applying configForAO No"
-	 iss configure -source SKY -ao OUT
-	 if { [catch {cs tcsApply post} msg] } {
-	    tk_messageBox -icon error -message $msg
-            return
-         }
-      } else {
-         cs configForAO set useAO "Yes"
-	 logger command configForAO
-	 logactions logmess "Applying configForAO Yes"
-         iss configure -source AO -ao IN
-	 if { [catch {cs tcsApply post} msg] } {
-	    tk_messageBox -icon error -message $msg
-	    return
-         }
-      }
-   }
+
+	if { ![catch {cs configForAO info}] } {
+		if { [string match "No AO" $::Config(tcs.gaos,value)] || [string match "" $::Config(tcs.gaos,value)]} {
+			cs configForAO set useAO "No"
+		   logger command configForAO
+		   logactions logmess "Applying configForAO No"
+		   iss configure -source SKY -ao OUT
+		   if { [catch {cs tcsApply post} msg] } {
+				tk_messageBox -icon error -message $msg
+				return
+		   }
+		} else {
+		   cs configForAO set useAO "Yes"
+		   logger command configForAO
+		   logactions logmess "Applying configForAO Yes"
+         #HACK: disable AO IN for GeMS commissioning.
+		   #iss configure -source AO -ao IN
+		   if { [catch {cs tcsApply post} msg] } {
+				tk_messageBox -icon error -message $msg
+				return
+		   }
+		}
+	}
 	
    if {[calparam cget -site] eq "CP" && !$::Flags(disablegems) && ![string match "No AO" $::Config(tcs.gaos,value)]} {
       [::GemsSys::getSingleton] slewReset

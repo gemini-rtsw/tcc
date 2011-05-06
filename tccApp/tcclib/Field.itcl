@@ -239,6 +239,25 @@ itcl::body Field::apply {comp} {
 
 		[$swaptarget cget -target] apply science
 		"::GuideNames::$swapguide" apply $comp.guide
+      if {[calparam cget -site] eq "CP"} {
+         foreach vguider {g1 g2 g3 g4} {
+            set value [[TcsVirtualMap::getSingleton] getMap $vguider]
+            switch $value {
+            TTGS1 -
+            TTGS2 -
+            TTGS3 -
+            ODGW1 -
+            ODGW2 -
+            ODGW3 -
+            ODGW4 {
+               "::GuideNames::$swapguide" applyGems $vguider
+            }
+            default {
+               "::GuideNames::$swapguide" disableGems $vguider
+            }
+            }
+         }
+      }
 	   if { ! [string equal $rotator ""] } {
 	      ::RotatorNames::$rotator apply $comp.rotator
 	   }
