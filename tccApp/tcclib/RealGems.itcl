@@ -925,17 +925,22 @@ itcl::body RealGems::getTTWFSCounts {id} {
    if { $id >= 1 && $id <= 3 } {
       incr id -1
       set vals [sa gemssad get ngsFlux value]
-      set mask [sa rtcsad get sourceMask value]
-      if { [llength $mask] < 3 || [llength $vals] < 3 || ![lindex $mask $id] } {
+#      set mask [sa rtcsad get sourceMask value]
+#      if { [llength $mask] < 3 || [llength $vals] < 3 || ![lindex $mask $id] } {
+#         return ""
+#      } else {
+#         set index 0
+#         for { set i 0 } { $i < $id } {incr i} {
+#            if { [lindex $mask $i] } {
+#               incr index
+#            }
+#         }
+#         return [lindex $vals $index ]
+#      }
+      if { [llength $vals] < 3 } {
          return ""
       } else {
-         set index 0
-         for { set i 0 } { $i < $id } {incr i} {
-            if { [lindex $mask $i] } {
-               incr index
-            }
-         }
-         return [lindex $vals $index ]
+         return [lindex $vals $id ]
       }
    } else {
 		$logger logmess "RealGems::getTTWFSCounts invalid index $id"
