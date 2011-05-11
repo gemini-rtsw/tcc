@@ -112,11 +112,16 @@ itcl::body AltairWidget::constructor {args} {
 		WfsWidget $w.wfsframe.aottgs -label TTGS -onswitchpress [itcl::code $this gaosTTGS]
 	}
 	[$itk_component(aottgs) getExpCombo] configure -labeltext "Mag(exp)" \
-		-labelpos nw -width 11 
-	$itk_component(aottgs) configure -expvalues [list 19.0(0.05) 18.5(0.05) \
-		18.0(0.05) 17.5(0.02) 17.0(0.01) 16.5(0.005) 16.0(0.005) 15.5(0.002) \
-		15.0(0.001) 14.5(0.001) 14.0(0.001) 13.5(0.001) 13.0(0.001) 12.5(0.001) \
-		12.0(0.001) 11.5(0.001) 11.0(0.001) 10.5(0.001) 10.0(0.001)]
+		-labelpos nw -width 11 -vscrollmode dynamic
+   set ttgsValues [list 19.0(0.05) 18.5(0.05) \
+         18.0(0.05) 17.5(0.02) 17.0(0.01) 16.5(0.005) 16.0(0.005) 15.5(0.002) \
+         15.0(0.001) 14.5(0.001) 14.0(0.001) 13.5(0.001) 13.0(0.001) 12.5(0.001) \
+         12.0(0.001) 11.5(0.001) 11.0(0.001) 10.5(0.001) 10.0(0.001)]
+	$itk_component(aottgs) configure -expvalues $ttgsValues
+   set expFont [[$itk_component(aottgs) getExpCombo] cget -textfont]
+   set ttgsListHeight [expr [llength $ttgsValues] * [font metrics $expFont -linespace] ]
+   [$itk_component(aottgs) getExpCombo] configure -listheight ${ttgsListHeight}p
+   
 
 	$itk_component(aottgs) configure -onexpselect [itcl::code $this configSfoEx]
 
