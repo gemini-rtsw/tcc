@@ -908,7 +908,6 @@ itcl::body NumericDisplay::chopping {} {
 }
 
 itcl::body NumericDisplay::inposreason {} {
-
 # Determines the reason for the TCS being out of position.
    if { ! [sa tcssad get tcsInPos] } {
       return [sa tcssad get outPosReason]
@@ -924,6 +923,12 @@ itcl::body NumericDisplay::inposreason {} {
       return "A&G or A&G Seq not in position"
    } elseif { [sa aossad get inPosition] ne 1 } {
       return "Adaptive Optics not in position"
+   } elseif { $::env(GEMINI_SITE) eq "CP" && \
+         ( [string equal -nocase [sa aomsad get ngs1Follow] "On"] || \
+           [string equal -nocase [sa aomsad get ngs2Follow] "On"] || \
+           [string equal -nocase [sa aomsad get ngs3Follow] "On"] ) && \
+         [sa aomsad get inPosition] ne 1 } {
+      return "Canopus not in position"
    } else {
       return ""
    }
