@@ -71,6 +71,7 @@ public {
    #ODGW special commands
    method setODGWSize { size {apply 1} }
    method getODGWSize {}
+   method setODGWDisplay { opt {apply 1} }
 
 	#States
 	method getGemsActive {}
@@ -1149,6 +1150,15 @@ itcl::body RealGems::setODGWSize { size {apply 1}} {
 
 itcl::body RealGems::getODGWSize {} {
    return [sa odgwsad get odgwSize value]
+}
+
+itcl::body RealGems::setODGWDisplay { opt {apply 1} } {
+   cs gems::odgwSetup set odgwDisplay $opt
+   $logger logmess "gems::odgwDisplay $opt"
+   set lastCmdSys applyC
+   if { $apply } {
+      catch {cs gems::odgwSetup post}
+   }
 }
 
 itcl::body RealGems::waitForCmdIdle {{timeout 1000}} {
