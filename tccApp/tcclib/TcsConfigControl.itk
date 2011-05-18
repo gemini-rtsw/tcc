@@ -314,8 +314,8 @@ itcl::body TcsConfigControl::apply {} {
    set slewoptions $::Config(tcs.slewoptions,value)
    set laserTarget ${::Config(tcs.field.sciencetarget,namespace)}::${::Config(tcs.field.sciencetarget,value)}
 
-   if { ([string match "hmsdegTarget" [$laserTarget cget -type]]) && \
-        ([string match "*LGS*" $::Config(tcs.gaos,value)]) && \
+   if { ([string match "*LGS*" $::Config(tcs.gaos,value)]) && \
+        ([string match "hmsdegTarget" [$laserTarget cget -type]]) && \
         [::SlewOptionsNames::$slewoptions cget -ltcscheck] && \
         ! [ ltcsQuerySidereal ] } {
       return
@@ -528,8 +528,9 @@ itcl::body TcsConfigControl::apply {} {
 # If it was a non-sidereal target, then we do the ltcsQuery here after the tcs
 # has been sent the ephemeris data and computed the current ra & dec.
 #
-   if { ( ! [string match "hmsdegTarget" [$laserTarget cget -type]]) && \
-        ([string match "*LGS*" $::Config(tcs.gaos,value)]) && \
+
+   if { ([string match "*LGS*" $::Config(tcs.gaos,value)]) && \
+        ( ! [string match "hmsdegTarget" [$laserTarget cget -type]]) && \
         [::SlewOptionsNames::$slewoptions cget -ltcscheck] && \
         ! [ ltcsQueryNonSidereal ] } {
       return
