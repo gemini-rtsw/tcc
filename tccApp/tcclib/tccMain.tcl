@@ -287,6 +287,12 @@ global env
 
 # Create the object that controls the active optics.
    ActiveOptics AO
+   #Set P1 default for MK
+   if {[calparam cget -site] eq "MK"}  {
+      AO configure -pwfs1Expose 0.005
+   } else {
+      AO configure -pwfs1Expose 0.01
+   }
 
 # Create the objects that control the wave-front sensors
    WaveFrontSensor Pwfs1 pwfs1
