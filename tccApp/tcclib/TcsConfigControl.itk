@@ -338,7 +338,9 @@ itcl::body TcsConfigControl::apply {} {
 		   logger command configForAO
 		   logactions logmess "Applying configForAO Yes"
          #HACK: disable AO IN for GeMS commissioning.
-		   #iss configure -source AO -ao IN
+			if { [calparam cget -site] ne "CP" } {
+		   	iss configure -source AO -ao IN
+			}
 		   if { [catch {cs tcsApply post} msg] } {
 				tk_messageBox -icon error -message $msg
 				return
