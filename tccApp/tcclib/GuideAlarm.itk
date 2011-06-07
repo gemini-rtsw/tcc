@@ -347,14 +347,16 @@ itcl::body GuideAlarm::updateProc {name alarm time values} {
 
 itcl::body GuideAlarm::updateProc2 {name alarm time values} {
     global guideCentroid
-    
-    #puts [format "updateProc: %s %-20s\n%s\n" $time $name $values]
+
     set tname [lrange [split $name "." ] 1 1 ]
     set tnamev [format "%s%s" $tname "(value)"]
     set $tnamev $values
     set tname [string trimright $tname "cent"]
+   set oldValue $guideCentroid($tname)
     set guideCentroid($tname) [format "%.0f" [set $tnamev]]
-    logger log "GuideAlarm::updateProc2: set guideCentroid($tname) to $guideCentroid($tname)"
+   if { $guideCentroid($tname) != $oldValue } {
+       logger log "GuideAlarm::updateProc2: set guideCentroid($tname) to $guideCentroid($tname)"
+   }
 
     if {$guideCentroid($tname)} {
         $itk_component(${tname}centroid) configure -text "Subaperture BAD"
