@@ -629,6 +629,26 @@ itcl::body WfsConfig::buildPageFrame {tabbook wfs label} {
 
 itcl::body WfsConfig::configureODGWFilter {} {
 	set filter [$itk_component(odgwfilter) get]
+   
+   #HACK to change the Wavelength for the current field
+   set gsaoi [Gsaoi::getSingleton]
+   set wavel [$gsaoi getFilterWavelength $filter]
+   set sciWavel ""
+   for {set i 1} { $i < [$::Config(tcs.field.wavelength,list) length] } {incr i} {
+      set fullname $::Config(tcs.field.wavelength,namespace)::[$::Config(tcs.field.wavelength,list) get $i]
+      set w [$fullname cget -wavel]
+      if { $wavel == $w } {
+         set sciWavel [$::Config(tcs.field.wavelength,list) get $i]
+      }
+   }
+   if { $sciWavel eq "" } {
+      set sciWavel [format "%.3f" wavel]
+      Wavelength $::Config(tcs.field.wavelength,namespace)::$sciWavel ::WavelengthNames
+      $::Config(tcs.field.wavelength,namespace)::$sciWavel configure -wavel $wavel
+   }
+   $::Config(tcs.field,namespace)::$::Config(tcs.field,value) configure -wavelength $sciWavel
+   set $::Config(tcs.field.wavelength,value) $sciWavel   
+   
 	if {![string is space $filter]} {
 		[Odgw::getSingleton] configureFilter $filter
 	}
