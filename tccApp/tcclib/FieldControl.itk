@@ -139,9 +139,14 @@ itcl::body FieldControl::constructor args {
       SubComponentSelector $w.wavelength -labeltext "Observing wavelength" \
             -labelpos w -width 30
    }
+   itk_component add selGrpLab {label $w.selgrplab -width 20 -anchor e -text "Guide Group"} { 
+      ignore -background }
+   itk_component add selGroup { label $w.selgroup -width 30 -relief sunken -anchor w } { 
+      ignore -background }
    pack $itk_component(subsel) -anchor w
    pack $itk_component(guide) $itk_component(rotator) \
          $itk_component(wavelength) -side top -pady 3 -anchor e
+   pack $itk_component(selGrpLab) $itk_component(selGroup) -side left -pady 3 -anchor e
 
 # Data entry widgets.
    itk_component add data {
@@ -618,6 +623,8 @@ itcl::body FieldControl::load {name} {
    $itk_component(airmass) clear
    $itk_component(progid) insert end [$name cget -programid]
    $itk_component(airmass) insert end [$name cget -airmassLimit]
+   
+   $itk_component(selGroup) configure -text [$name cget -selectedGroup]
 
 	$currentname subscribe [itcl::code $this onFieldChange]
 }
