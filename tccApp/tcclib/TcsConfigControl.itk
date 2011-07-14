@@ -264,7 +264,7 @@ itcl::body TcsConfigControl::apply {} {
 	
    if { [string match "*NICI*" $inst] } {
 		set target $::Config(tcs.field.oiwfstarget,value)
-		logactions logmess "Science Target: $target"
+		logactions logmess "NICI AO Target: $target"
 		set magnitude [$::Config(tcs.field.oiwfstarget,namespace)::$target getMagnitude V]
 		set band "V band"
 		if { ![string is double -strict $magnitude] } {
@@ -668,7 +668,7 @@ itcl::body TcsConfigControl::load {name} {
          }
       }
       set name ::FieldNames::[$name cget -field]
-		if { [info exists $name] } {
+		if { [llength [itcl::find objects $name]] > 0 } {
 	      foreach subcomponent $fieldcomponents suboption $fieldoptions {
 				set comp [$name cget $suboption]
 				if { ! [string equal $comp ""] } {

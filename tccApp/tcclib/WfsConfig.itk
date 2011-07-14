@@ -639,15 +639,19 @@ itcl::body WfsConfig::configureODGWFilter {} {
       set w [$fullname cget -wavel]
       if { $wavel == $w } {
          set sciWavel [$::Config(tcs.field.wavelength,list) get $i]
+         break
       }
    }
    if { $sciWavel eq "" } {
-      set sciWavel [format "%.3f" wavel]
-      Wavelength $::Config(tcs.field.wavelength,namespace)::$sciWavel ::WavelengthNames
+      set sciWavel [format "%.3f" $wavel]
+      WavelengthComponent $::Config(tcs.field.wavelength,namespace)::$sciWavel $::Config(tcs.field.wavelength,list)
       $::Config(tcs.field.wavelength,namespace)::$sciWavel configure -wavel $wavel
    }
-   $::Config(tcs.field,namespace)::$::Config(tcs.field,value) configure -wavelength $sciWavel
-   set $::Config(tcs.field.wavelength,value) $sciWavel   
+   set fieldName $::Config(tcs.field,namespace)::$::Config(tcs.field,value)
+   if { [llength [itcl::find objects $fieldName]] > 0 } {
+      $fieldName configure -wavelength $sciWavel
+   }
+   set ::Config(tcs.field.wavelength,value) $sciWavel   
    
 	if {![string is space $filter]} {
 		[Odgw::getSingleton] configureFilter $filter
@@ -667,7 +671,6 @@ itcl::body WfsConfig::onODGWChange {changeList} {
 }
 
 itcl::body WfsConfig::configureODGW {} {
-   puts "WfsConfig::configureODGW"
    set gems [GemsSys::getSingleton]
    set size [$itk_component(odgwsizesel) get]
    if {![string is space $size]} {
