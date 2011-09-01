@@ -145,17 +145,11 @@ itcl::body WfsConfig::aoflenssel {} {
    	switch $demand {
       IN {
          cs aoFLens set pos FLENS
-         cs aoFLens set mode 1
-         cs aoFLens set dir 3
          cs aoFLens set flens 1
-         cs aoPrepareCm set flens 1
       }
       OUT {
          cs aoFLens set pos PARK
-         cs aoFLens set mode 1
-         cs aoFLens set dir 3
          cs aoFLens set flens 0
-         cs aoPrepareCm set flens 0
       }
    	}
       if { [calparam cget -site] eq "MK" && $::Config(tcs.gaos,value) != "" } {
@@ -167,7 +161,6 @@ itcl::body WfsConfig::aoflenssel {} {
       tk_messageBox -icon error -message \
                                     "Error posting GAOS commands: TCS reports \
                                     \"$msg\""
-      process IDLE
       return
    }
 }

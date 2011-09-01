@@ -172,7 +172,11 @@ itcl::body Altair::apply {comp} {
 
    if {[winfo exists .observePanel.frame.control.botframe.wfsconfig.tabs.canvas.notebook.cs.page5.cs.aowfs.flens] && 
        [winfo ismapped .observePanel.frame.control.botframe.wfsconfig.tabs.canvas.notebook.cs.page5.cs.aowfs.flens]} {
-       .observePanel.frame.control.botframe.wfsconfig.tabs.canvas.notebook.cs.page5.cs.aowfs.flens select $fldLens
+          # Disable selection command to avoid configuring the field lens twice
+          set cmd [.observePanel.frame.control.botframe.wfsconfig.tabs.canvas.notebook.cs.page5.cs.aowfs.flens cget -command]
+          .observePanel.frame.control.botframe.wfsconfig.tabs.canvas.notebook.cs.page5.cs.aowfs.flens configure -command ""
+          .observePanel.frame.control.botframe.wfsconfig.tabs.canvas.notebook.cs.page5.cs.aowfs.flens select $fldLens
+          .observePanel.frame.control.botframe.wfsconfig.tabs.canvas.notebook.cs.page5.cs.aowfs.flens configure -command $cmd
    }
     #puts "Altair::apply setting fldlens to $fldLens"
     logactions logmess "Altair::apply setting fldlens to $fldLens"
