@@ -44,7 +44,6 @@ proc tsdMain args {
    epics sa aossad
    epics sa gcalsad
    epics sa gpolsad
-   epics sa systemoverride
    
    if { $::env(GEMINI_SITE) eq "CP" } {
       epics sa aomsad

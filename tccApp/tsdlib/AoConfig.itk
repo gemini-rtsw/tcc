@@ -22,6 +22,7 @@ itcl::class AoConfig {
 
 itk::usual AoConfig {
    keep -background -cursor -font 
+   keep -background -cursor -foreground -font -labelfont
 }
 
 itcl::body AoConfig::constructor args {
@@ -31,42 +32,64 @@ itcl::body AoConfig::constructor args {
       epics sa guideConfig
    }
 
-# Frame for border.
+   if { [catch {sa miscstatus info}] } {
+      epics sa miscstatus
+   }
+
+# Frame for chop/nod border.
    itk_component add frame {
       frame $itk_interior.frame -borderwidth 2 -relief ridge
    }
    set w $itk_component(frame)
 
+
+
+
+# Chop/Nod state
+   itk_component add chnod {
+      StatusField $w.chnod -entryborder 3 -entryrelief groove -labeltext "Chop/Nod:" -labelpos w
+   }
+
+
+
+
+
 # M1 figure.
    itk_component add m1fig {
-      label $w.m1fig -borderwidth 2 -relief groove
+      StatusField $w.m1fig -entryborder 3 -entryrelief groove -labeltext "M1Fig:" -labelpos w
    }
-
-# Mount absorb tip/tilt
-#   itk_component add mtabs {
-#      label $w.mtabs -borderwidth 2 -relief groove
-#   }
 
 # M2 configuration in both chop states
-   itk_component add m2chopa {
-      label $w.m2chopa -borderwidth 2 -relief groove
-   }
-   itk_component add m2chopb {
-      label $w.m2chopb -borderwidth 2 -relief groove
+   itk_component add ttf {
+      StatusField $w.ttf -entryborder 3 -entryrelief groove -labeltext "TTF:" -labelpos w
    }
 
 # Coma correction.   
    itk_component add coma {
-      label $w.m2coma -borderwidth 2 -relief groove
+       StatusField $w.coma -entryborder 3 -entryrelief groove -labeltext "Coma:" -labelpos w
    }
 
-   pack $itk_component(m2chopa) -fill x -expand y -padx 2 -pady 1
-   pack $itk_component(m2chopb) -fill x -expand y -padx 2 -pady 1
-   pack $itk_component(m1fig) -fill x -expand y -padx 2 -pady 1
-   pack $itk_component(coma) -fill x -expand y -padx 2 -pady 1
-   pack $itk_component(m1fig) -fill x -expand y -padx 2 -pady 1
-#   pack $itk_component(mtabs) -fill x -expand y -padx 2 -pady 1
-   pack $itk_component(frame) -fill x -expand y -expand y
+   grid $itk_component(chnod) -sticky e -row 0 -column 0
+   grid $itk_component(ttf)   -sticky w -row 0 -column 1 
+   grid $itk_component(m1fig) -sticky e -row 1 -column 0
+   grid $itk_component(coma)  -sticky w -row 1 -column 1
+
+   pack $itk_component(frame)
+
+
+
+# Inposition Override Enabled Message
+   itk_component add aomesg {
+      label $itk_interior.aomesg -borderwidth 0
+   }
+
+   itk_component add agmesg {
+      label $itk_interior.agmesg -borderwidth 0
+   }
+
+   pack $itk_component(agmesg)
+   pack $itk_component(aomesg)
+
 
    eval itk_initialize $args
 }
@@ -74,77 +97,114 @@ itcl::body AoConfig::constructor args {
 
 itcl::body AoConfig::update {} {
 
+
+
+   # Chop/Nod
+
+
+   set p1chnod [sa miscstatus get p1 value]
+   set p2chnod [sa miscstatus get p2 value]
+   set oichnod [sa miscstatus get oi value]
+   set aochnod [sa miscstatus get ao value]
+
+   set source ""
+   if { [string match *Yes* $aochnod] } {
+       set source "GAOS"
+   } else {
+      if { [string match *On* $p1chnod] } {
+         append source "P1" 
+      }
+      if { [string match *On* $p2chnod] } {
+         append source "P2"
+      }
+      if { [string match *On* $oichnod] } {
+         append source "OI"
+      }
+   }
+
+   if { $source eq "" } {
+      $itk_component(chnod) configure -text "OFF" -status none
+   } else {
+      $itk_component(chnod) configure -text "$source" -status ok
+   }
+
+
+
+
+   # TTF
+
+
+   set p1guide [sa m2ssad get p1GuideConfig value]
+   set p2guide [sa m2ssad get p2GuideConfig value]
+   set oiguide [sa m2ssad get oiGuideConfig value]
+   set aoguide [sa m2ssad get aoGuideConfig value]
+
+
+   if { [sa miscstatus get on value] == "On" } {
+      set source ""
+
+      if { [string match *A-AUTO* $p1guide] } {
+         append source "P1" 
+      }
+      if { [string match *A-AUTO* $p2guide] } {
+         append source "P2"
+      }
+      if { [string match *A-AUTO* $oiguide] } {
+         append source "OI"
+      }
+      if { [string match *A-AUTO* $aoguide] } {
+         append source "AO"
+      }
+      $itk_component(ttf) configure -text "$source" -status ok
+   } else {
+      $itk_component(ttf) configure -text "OFF" -status none
+   }
+
+
+
+
+
+   # aO
+
+
    if { [sa guideConfig get m1state value] == "On" } {
-      $itk_component(m1fig) configure \
-            -text "M1 figure from [sa guideConfig get m1GuideSource]"
+      $itk_component(m1fig) configure -text "[sa guideConfig get m1GuideSource value]" -status ok
    } else {
-      $itk_component(m1fig) configure -text "No M1 figure updates"
+      $itk_component(m1fig) configure -text "OFF" -status none
    }
 
-#   switch [sa guideConfig get absorbtilt] {
-#      0 {
-#         $itk_component(mtabs) configure -text "No mount guiding"
-#      }
-#      3 {
-#         $itk_component(mtabs) configure -text "Mount guiding from M2"
-#      }
-#      4 {
-#         $itk_component(mtabs) configure -text "Mount guiding from PWFS"
-#      }
-#      default {
-#         $itk_component(mtabs) configure -text ""
-#      }
-#   }
 
-   set p1guide [sa m2ssad get p1GuideConfig]
-   set p2guide [sa m2ssad get p2GuideConfig]
-   set oiguide [sa m2ssad get oiGuideConfig]
-   set aoguide [sa m2ssad get aoGuideConfig]
 
-   set source ""
-   if { [string match *A-AUTO* $p1guide] } {
-      append source " P1"
-   }
-   if { [string match *A-AUTO* $p2guide] } {
-      append source " P2"
-   }
-   if { [string match *A-AUTO* $oiguide] } {
-      append source " OI"
-   }
-   if { [string match *A-AUTO* $aoguide] } {
-      append source " AO"
-   }
-   if { $source eq "" } {
-      $itk_component(m2chopa) configure -text "No M2 guiding in chop A"
-   } else {
-      $itk_component(m2chopa) configure -text "M2 ttf from$source in chop A"
-   }
+   # Coma
 
-   set source ""
-   if { [string match *B-AUTO* $p1guide] } {
-      append source " P1"
-   }
-   if { [string match *B-AUTO* $p2guide] } {
-      append source " P2"
-   }
-   if { [string match *B-AUTO* $oiguide] } {
-      append source " OI"
-   }
-   if { [string match *B-AUTO* $aoguide] } {
-      append source " AO"
-   }
-   if { $source eq "" } {
-      $itk_component(m2chopb) configure -text "No M2 guiding in chop B"
-   } else {
-      $itk_component(m2chopb) configure -text "M2 ttf from$source in chop B"
-   }
-  
-   set coma_status [sa guideConfig get coma]
+
+   set coma_status [sa guideConfig get coma value]
 
    if { $coma_status eq "On" } {
-      $itk_component(coma) configure -text "Coma correction on"
+      $itk_component(coma) configure -text "ON" -status ok
    } else {
-      $itk_component(coma) configure -text "Coma correction off"
+      $itk_component(coma) configure -text "OFF" -status none
+   }
+
+
+
+
+   # Inposition overrides enabled warnings
+
+
+   if { [sa miscstatus get aoov value] == "enabled" } {
+       $itk_component(aomesg) configure -text "AO Inpos Override Enabled"
+       $itk_component(aomesg) configure -background red
+   } else {
+       $itk_component(agmesg) configure -text ""
+       $itk_component(agmesg) configure -background [$itk_interior cget -background]
+   }
+
+   if { [sa miscstatus get agov value] == "enabled" } {
+       $itk_component(agmesg) configure -text "A&G Inpos Override Enabled"
+       $itk_component(agmesg) configure -background red
+   } else {
+       $itk_component(aomesg) configure -text ""
+       $itk_component(aomesg) configure -background [$itk_interior cget -background]
    }
 }
-

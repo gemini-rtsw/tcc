@@ -34,6 +34,10 @@ itk::usual WrapView {
 
 itcl::body WrapView::constructor args {
 
+   if { [catch {sa miscstatus info}] } {
+      epics sa miscstatus
+   }
+
    itk_component add azwrap {
       canvas $itk_interior.azwrap -width 250 -height 200
    }
@@ -133,7 +137,7 @@ itcl::body WrapView::update {} {
       }
    }
 
-   switch [sa systemoverride get mcs] {
+   switch [sa miscstatus get mcsov] {
        "enabled" {
 	   $itk_component(mcsoverr) configure -text "MCS inPosition Override"
 	   $itk_component(mcsoverr) configure -background red
@@ -170,7 +174,7 @@ itcl::body WrapView::update {} {
       }
    }
 
-   switch [sa systemoverride get crcs] {
+   switch [sa miscstatus get crcsov] {
        "enabled" {
 	   $itk_component(crcsoverr) configure -text "CRCS inPosition Override"
 	   $itk_component(crcsoverr) configure -background red

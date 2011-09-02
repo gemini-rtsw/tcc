@@ -719,21 +719,40 @@ itcl::body NumericDisplay::update {} {
    $itk_component(lst) configure -text [tccTime last]
 
 # Seeing
+   set p1guide [sa m2ssad get p1GuideConfig]
+   set p2guide [sa m2ssad get p2GuideConfig]
+   set oiguide [sa m2ssad get oiGuideConfig]
+   set aoguide [sa m2ssad get aoGuideConfig]
+
    set seeing [sa agssad get p2seeing]
    if { [string is double -strict $seeing] } {
-      $itk_component(seep2) configure -text [format %.2f $seeing] -status ok
+      if { [string match *A-AUTO* $p2guide] } {
+          $itk_component(seep2) configure -text [format %.2f $seeing] -status ok
+      } else {
+          $itk_component(seep2) configure -text [format %.2f $seeing] -status none
+      }
    } else {
       $itk_component(seep2) configure -text $seeing -status error
    }
+
    set seeing [sa agssad get oiseeing]
    if { [string is double -strict $seeing] } {
-      $itk_component(seeoi) configure -text [format %.2f $seeing] -status ok
+      if { [string match *A-AUTO* $oiguide] } {
+          $itk_component(seeoi) configure -text [format %.2f $seeing] -status ok
+      } else {
+          $itk_component(seeoi) configure -text [format %.2f $seeing] -status none
+      }
    } else {
       $itk_component(seeoi) configure -text $seeing -status error
    }
+
    set seeing [sa agssad get aoseeing]
    if { [string is double -strict $seeing] } {
-      $itk_component(seeao) configure -text [format %.2f $seeing] -status ok
+      if { [string match *A-AUTO* $aoguide] } {
+         $itk_component(seeao) configure -text [format %.2f $seeing] -status ok
+      } else {
+         $itk_component(seeao) configure -text [format %.2f $seeing] -status none
+      }
    } else {
       $itk_component(seeao) configure -text $seeing -status error
    }
