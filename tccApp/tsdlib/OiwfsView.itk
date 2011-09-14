@@ -199,6 +199,18 @@ itcl::body OiwfsView::oi2tcs {x y} {
 # Get the TCS to OIWFS conversion coefficients.
    set coeffs [sa agssad get oiwfsCoeffs]
    foreach {a b c d e f} $coeffs {}
+   
+   # Check that all variables have proper values
+   if {  ![string is double -strict $x] \ 
+      || ![string is double -strict $y] \
+      || ![string is double -strict $a] \
+      || ![string is double -strict $b] \
+      || ![string is double -strict $c] \
+      || ![string is double -strict $d] \
+      || ![string is double -strict $e] \
+      || ![string is double -strict $f] } {
+      return [list 0 0 ]
+   }
 
 # Invert them to get the OIWFS to TCS coefficients.
    set det [expr {$b * $f - $c * $e}]
