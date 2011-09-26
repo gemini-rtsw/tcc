@@ -18,6 +18,8 @@ itcl::class AoConfig {
    public {
       method update {}
    }
+   
+   protected method isGuideActive {guideSA}
 }
 
 itk::usual AoConfig {
@@ -35,6 +37,28 @@ itcl::body AoConfig::constructor args {
    if { [catch {sa miscstatus info}] } {
       epics sa miscstatus
    }
+   
+   if { [catch {sa pwfs1Guide info}] } {
+      epics sa pwfs1Guide
+   }
+   if { [catch {sa pwfs2Guide info}] } {
+      epics sa pwfs2Guide
+   }
+   if { [catch {sa oiwfsGuide info}] } {
+      epics sa oiwfsGuide
+   }
+   if { [catch {sa g1Guide info}] } {
+      epics sa g1Guide
+   }
+   if { [catch {sa g2Guide info}] } {
+      epics sa g2Guide
+   }
+   if { [catch {sa g3Guide info}] } {
+      epics sa g3Guide
+   }
+   if { [catch {sa g4Guide info}] } {
+      epics sa g4Guide
+   }
 
 # Frame for chop/nod border.
    itk_component add frame {
@@ -42,21 +66,14 @@ itcl::body AoConfig::constructor args {
    }
    set w $itk_component(frame)
 
-
-
-
 # Chop/Nod state
    itk_component add chnod {
       StatusField $w.chnod -entryborder 3 -entryrelief groove -labeltext "Chop/Nod:" -labelpos w
    }
 
-
-
-
-
 # M1 figure.
    itk_component add m1fig {
-      StatusField $w.m1fig -entryborder 3 -entryrelief groove -labeltext "M1Fig:" -labelpos w
+      StatusField $w.m1fig -entryborder 3 -entryrelief groove -labeltext "M1 Fig:" -labelpos w
    }
 
 # M2 configuration in both chop states
@@ -70,13 +87,11 @@ itcl::body AoConfig::constructor args {
    }
 
    grid $itk_component(chnod) -sticky e -row 0 -column 0
-   grid $itk_component(ttf)   -sticky w -row 0 -column 1 
+   grid $itk_component(ttf)   -sticky e -row 0 -column 1 
    grid $itk_component(m1fig) -sticky e -row 1 -column 0
-   grid $itk_component(coma)  -sticky w -row 1 -column 1
+   grid $itk_component(coma)  -sticky e -row 1 -column 1
 
    pack $itk_component(frame)
-
-
 
 # Inposition Override Enabled Message
    itk_component add aomesg {
@@ -90,36 +105,57 @@ itcl::body AoConfig::constructor args {
    pack $itk_component(agmesg)
    pack $itk_component(aomesg)
 
-
    eval itk_initialize $args
 }
 
+# Check if guider is active in for any nod/chop position
+itcl::body AoConfig::isGuideActive {guideSA} {
+   set ret false
+   foreach ch {nodachopa nodachopb nodbchopa nodbchopb} {
+      if {"[sa $guideSA get $ch]" eq "On"} {
+         set ret true
+         break
+      }
+   }
+   return $ret
+}
 
 itcl::body AoConfig::update {} {
 
-
-
    # Chop/Nod
-
-
-   set p1chnod [sa miscstatus get p1 value]
-   set p2chnod [sa miscstatus get p2 value]
-   set oichnod [sa miscstatus get oi value]
-   set aochnod [sa miscstatus get ao value]
+   set p1chnod [isGuideActive pwfs1Guide]
+   set p2chnod [isGuideActive pwfs2Guide] 
+   set oichnod [isGuideActive oiwfsGuide]
+   
+   if {[sa miscstatus get ao] eq "Yes"} {
+      if {"$::env(GEMINI_SITE)" eq "CP"} {
+         set aochnod false
+         foreach {guider guiderMap} {g1Guide g1MapName g2Guide g2MapName g3Guide g3MapName g4Guide g4MapName } {
+            if { "[sa tcssad get $guiderMap]" ne "NONE" && [isGuideActive $guider] } {
+               set aochnod true
+               break
+            }
+         }
+      } else {
+         set aochnod $p2chnod
+      }
+      set p2chnod false
+   } else {
+      set aochnod false
+   }
 
    set source ""
-   if { [string match *Yes* $aochnod] } {
+   if { $aochnod } {
        set source "GAOS"
-   } else {
-      if { [string match *On* $p1chnod] } {
-         append source "P1" 
-      }
-      if { [string match *On* $p2chnod] } {
-         append source "P2"
-      }
-      if { [string match *On* $oichnod] } {
-         append source "OI"
-      }
+   }
+   if { $p1chnod } {
+      append source "P1" 
+   }
+   if { $p2chnod } {
+      append source "P2"
+   }
+   if { $oichnod } {
+      append source "OI"
    }
 
    if { $source eq "" } {
@@ -128,17 +164,11 @@ itcl::body AoConfig::update {} {
       $itk_component(chnod) configure -text "$source" -status ok
    }
 
-
-
-
    # TTF
-
-
    set p1guide [sa m2ssad get p1GuideConfig value]
    set p2guide [sa m2ssad get p2GuideConfig value]
    set oiguide [sa m2ssad get oiGuideConfig value]
    set aoguide [sa m2ssad get aoGuideConfig value]
-
 
    if { [sa miscstatus get on value] == "On" } {
       set source ""
@@ -160,24 +190,21 @@ itcl::body AoConfig::update {} {
       $itk_component(ttf) configure -text "OFF" -status none
    }
 
-
-
-
-
    # aO
-
-
    if { [sa guideConfig get m1state value] == "On" } {
-      $itk_component(m1fig) configure -text "[sa guideConfig get m1GuideSource value]" -status ok
+      set source "[sa guideConfig get m1GuideSource value]"
+      switch $source {
+      PWFS1 {set source P1}
+      PWFS2 {set source P2}
+      OIWFS {set source OI}
+      HRWFS {set source HR}
+      }
+      $itk_component(m1fig) configure -text $source -status ok
    } else {
       $itk_component(m1fig) configure -text "OFF" -status none
    }
 
-
-
    # Coma
-
-
    set coma_status [sa guideConfig get coma value]
 
    if { $coma_status eq "On" } {
@@ -186,12 +213,7 @@ itcl::body AoConfig::update {} {
       $itk_component(coma) configure -text "OFF" -status none
    }
 
-
-
-
    # Inposition overrides enabled warnings
-
-
    if { [sa miscstatus get aoov value] == "enabled" } {
        $itk_component(aomesg) configure -text "AO Inpos Override Enabled"
        $itk_component(aomesg) configure -background red
