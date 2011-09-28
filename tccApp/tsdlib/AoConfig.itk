@@ -17,6 +17,7 @@ itcl::class AoConfig {
    constructor args {}
    public {
       method update {}
+      method isLoopClosed {}
    }
    
    protected method isGuideActive {guideSA}
@@ -108,7 +109,7 @@ itcl::body AoConfig::constructor args {
    eval itk_initialize $args
 }
 
-# Check if guider is active in for any nod/chop position
+# Check if guider is active for any nod/chop position
 itcl::body AoConfig::isGuideActive {guideSA} {
    set ret false
    foreach ch {nodachopa nodachopb nodbchopa nodbchopb} {
@@ -161,7 +162,11 @@ itcl::body AoConfig::update {} {
    if { $source eq "" } {
       $itk_component(chnod) configure -text "OFF" -status none
    } else {
-      $itk_component(chnod) configure -text "$source" -status ok
+      if { [isLoopClosed] } {
+         $itk_component(chnod) configure -text "$source" -status ok
+      } else {
+         $itk_component(chnod) configure -text "$source" -status none
+      }
    }
 
    # TTF
@@ -170,22 +175,25 @@ itcl::body AoConfig::update {} {
    set oiguide [sa m2ssad get oiGuideConfig value]
    set aoguide [sa m2ssad get aoGuideConfig value]
 
+   set ttfSource ""
    if { [sa miscstatus get on value] == "On" } {
-      set source ""
-
       if { [string match *A-AUTO* $p1guide] } {
-         append source "P1" 
+         append ttfSource "P1" 
       }
       if { [string match *A-AUTO* $p2guide] } {
-         append source "P2"
+         append ttfSource "P2"
       }
       if { [string match *A-AUTO* $oiguide] } {
-         append source "OI"
+         append ttfSource "OI"
       }
       if { [string match *A-AUTO* $aoguide] } {
-         append source "AO"
+         append ttfSource "AO"
       }
-      $itk_component(ttf) configure -text "$source" -status ok
+      if { [isLoopClosed] } {
+         $itk_component(ttf) configure -text "$ttfSource" -status ok
+      } else {
+         $itk_component(ttf) configure -text "$ttfSource" -status none
+      }
    } else {
       $itk_component(ttf) configure -text "OFF" -status none
    }
@@ -208,18 +216,22 @@ itcl::body AoConfig::update {} {
    set coma_status [sa guideConfig get coma value]
 
    if { $coma_status eq "On" } {
-      $itk_component(coma) configure -text "ON" -status ok
+      if {[string match *P1* $ttfSource] || [string match *AO* $ttfSource] } {
+         $itk_component(coma) configure -text "ON" -status ok
+      } else {
+         $itk_component(coma) configure -text "ON" -status none
+      } 
+      
    } else {
       $itk_component(coma) configure -text "OFF" -status none
    }
 
    # Inposition overrides enabled warnings
-   if { [sa miscstatus get aoov value] == "enabled" } {
-       $itk_component(aomesg) configure -text "AO Inpos Override Enabled"
-       $itk_component(aomesg) configure -background red
+   if { ( $::env(GEMINI_SITE) eq "CP" && [sa miscstatus get aomov value] == "enabled" ) \
+      || ( $::env(GEMINI_SITE) eq "MK" && [sa miscstatus get aoov value] == "enabled" ) } {
+       $itk_component(aomesg) configure -text "AO Inpos Override Enabled" -background red
    } else {
-       $itk_component(aomesg) configure -text ""
-       $itk_component(aomesg) configure -background [$itk_interior cget -background]
+       $itk_component(aomesg) configure -text "" -background [$itk_interior cget -background]
    }
 
    if { [sa miscstatus get agov value] == "enabled" } {
@@ -229,4 +241,17 @@ itcl::body AoConfig::update {} {
        $itk_component(agmesg) configure -text ""
        $itk_component(agmesg) configure -background [$itk_interior cget -background]
    }
+}
+
+itcl::body AoConfig::isLoopClosed {} {
+   #Check M2
+   if { [sa guideConfig get m2state value] != "On" } {
+         return false
+   }
+   #Check mount offload
+   set flag [sa guideConfig get absorbtilt value]
+   if { ![string is integer -strict $flag] || $flag <= 0 } {
+      return false
+   }
+   return true
 }
