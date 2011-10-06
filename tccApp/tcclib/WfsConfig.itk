@@ -557,6 +557,7 @@ itcl::body WfsConfig::buildGemsPage {parent} {
 		} { ignore -background }
 			
 	set odgw [Odgw::getSingleton]
+   $itk_component(odgwfilter) insert end Blocked
 	foreach name [$odgw getFilterList] {
 		$itk_component(odgwfilter) insert end $name
 	}
@@ -625,27 +626,29 @@ itcl::body WfsConfig::configureODGWFilter {} {
    
    #HACK to change the Wavelength for the current field
    set gsaoi [Gsaoi::getSingleton]
-   set wavel [$gsaoi getFilterWavelength $filter]
-   set sciWavel ""
-   for {set i 1} { $i < [$::Config(tcs.field.wavelength,list) length] } {incr i} {
-      set fullname $::Config(tcs.field.wavelength,namespace)::[$::Config(tcs.field.wavelength,list) get $i]
-      set w [$fullname cget -wavel]
-      if { $wavel == $w } {
-         set sciWavel [$::Config(tcs.field.wavelength,list) get $i]
-         break
+   if { [string toupper $filter] ne "BLOCKED" } {
+      set wavel [$gsaoi getFilterWavelength $filter]
+      set sciWavel ""
+      for {set i 1} { $i < [$::Config(tcs.field.wavelength,list) length] } {incr i} {
+         set fullname $::Config(tcs.field.wavelength,namespace)::[$::Config(tcs.field.wavelength,list) get $i]
+         set w [$fullname cget -wavel]
+         if { $wavel == $w } {
+            set sciWavel [$::Config(tcs.field.wavelength,list) get $i]
+            break
+         }
       }
+      if { $sciWavel eq "" } {
+         set sciWavel [format "%.3f" $wavel]
+         WavelengthComponent $::Config(tcs.field.wavelength,namespace)::$sciWavel $::Config(tcs.field.wavelength,list)
+         $::Config(tcs.field.wavelength,namespace)::$sciWavel configure -wavel $wavel
+      }
+      set fieldName $::Config(tcs.field,namespace)::$::Config(tcs.field,value)
+      if { [llength [itcl::find objects $fieldName]] > 0 } {
+         $fieldName configure -wavelength $sciWavel
+      }
+      set ::Config(tcs.field.wavelength,value) $sciWavel   
    }
-   if { $sciWavel eq "" } {
-      set sciWavel [format "%.3f" $wavel]
-      WavelengthComponent $::Config(tcs.field.wavelength,namespace)::$sciWavel $::Config(tcs.field.wavelength,list)
-      $::Config(tcs.field.wavelength,namespace)::$sciWavel configure -wavel $wavel
-   }
-   set fieldName $::Config(tcs.field,namespace)::$::Config(tcs.field,value)
-   if { [llength [itcl::find objects $fieldName]] > 0 } {
-      $fieldName configure -wavelength $sciWavel
-   }
-   set ::Config(tcs.field.wavelength,value) $sciWavel   
-   
+
 	if {![string is space $filter]} {
 		[Odgw::getSingleton] configureFilter $filter
 	}

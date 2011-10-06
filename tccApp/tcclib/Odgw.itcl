@@ -93,10 +93,12 @@ itcl::body Odgw::setInstrument {instr} {
 itcl::body Odgw::configureFilter {filter} {
 	if {$instrument ne "" && $filter ne "" } {
 		$instrument configureFilter $filter
-		set wavel [$instrument getFilterWavelength $filter]
-		if { [string is double -strict $wavel] } {
-			configureTargetWavelength $wavel
-		}	
+      if { [string toupper $filter] ne "BLOCKED" } {
+   		set wavel [$instrument getFilterWavelength $filter]
+   		if { [string is double -strict $wavel] } {
+   			configureTargetWavelength $wavel
+   		}
+      }
 	}
 }
 
