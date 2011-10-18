@@ -1086,8 +1086,17 @@ itcl::body Field::setSwapTarget tagtarget {
 	#Check we are swapping with a WFS star
 	if { ![string equal $tag Base] && ![string equal $tag User] && \
 		[string equal $tagtarget [getDefaultTarget $tag]] && ![string equal $swaptarget $tagtarget]} {
-			set swaptarget $tagtarget
-			set swapguide "No guiding"
+	    set swaptarget $tagtarget
+	    # AWE when using AO, allow closing the loop before swapping back ... 
+	    # This meanss that we have to leave the chop/nod states on.
+	    #puts "in setSwapTarget, have guide: $guide"
+	    if {[string match "*AO*" $guide]} {
+		set swapguide $guide
+	    } else {
+		set swapguide "No guiding"
+	    }
+	    #puts "in setSwapTarget, set swapguide: $swapguide"
+
 			if {$env(TCC_TCSNAME) == "tcs"} {
 				 set guide_wl [.observePanel.frame.control.botframe.wfsconfig getValue HrwfsColFilt]
 			} else {
