@@ -61,7 +61,6 @@ itcl::class ActiveOptics {
       variable ttgsFlux 0
       variable ttgsGain 0.2
       variable sfoExpose 1.0
-		variable useLwfs 0
 		variable gaosTTGS 0
 		variable gaosSFO 0
 		variable ttgsloop 0
@@ -76,6 +75,8 @@ itcl::class ActiveOptics {
 		method configure {args} { if {[llength $args] > 0 } {logactions logmess "$this configure $args"} ; eval _itcl_config $args }
    }
 	private {
+      variable useLwfs 0
+      
 		variable skip_strap
 		variable gaosObj ""
 		variable aoSys ""
@@ -714,6 +715,7 @@ itcl::body ActiveOptics::disable {} {
    # Stop GAOS
    	if { [state gaos] } {
           #puts "turning GAOS off"
+          set useLwfs [state useLwfs]
    
           # turn off BTO when using LGS
    		if $useLwfs {
@@ -1343,6 +1345,8 @@ itcl::body ActiveOptics::configureBlending {} {
 
 itcl::body ActiveOptics::startAltairWFS {} {
 	global AOtryingToReuseGain AOreuseGains
+   
+   set useLwfs [state useLwfs]
 
 	if { ![catch {cs gaosTTGS info}] } {
 		if { $gaosTTGS && ![state gaosTTGS]} {
