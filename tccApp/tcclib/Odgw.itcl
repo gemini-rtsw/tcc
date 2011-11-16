@@ -126,12 +126,16 @@ itcl::body Odgw::configureTargetWavelength {wavel} {
 			set change 1 
 		}
 	}
-	if { $change } {
-      #HACK: change main target wavelength
+
+   #HACK: change main target wavelength if instrument is GSAOI
+   if { [iss cget -instrument] eq "gsaoi" } {
       cs wavelSourceA set wavel $wavel
       logger command wavelSourceA
-
-		logactions logmess "Applying ODGW target wavelength: (\"$wavel\")"
+      set change 1
+   }
+   
+	if { $change } {
+		logactions logmess "Applying ODGW/Science target wavelength: (\"$wavel\")"
 		if { [catch {cs tcsApply post} msg] } {
 			logactions logmess "Error posting ODGW target wavelegth: TCS reports \"$msg\""		
 		}
