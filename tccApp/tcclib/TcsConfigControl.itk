@@ -434,12 +434,13 @@ itcl::body TcsConfigControl::apply {} {
 			cs oiwfsSelect set output WFS
 		   logger command oiwfsSelect
 		}
-		#Force configuration of oiwfsSelect, so the target configuration finds the
-		#right parameters
-		# Removed because it was causing problems with Altair in the North
-		#cs oiwfsSelect set dir 3
-		#after 500
 	}
+   #HACK to have the OI selected before configuring the telescope.
+   if { [catch {cs tcsApply post} msg] } {
+      tk_messageBox -icon error -message $msg
+      return
+   }
+   after 500 
 
 # Configure default filters, fieldstop for the WFS
 
