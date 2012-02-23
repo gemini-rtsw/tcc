@@ -264,14 +264,12 @@ itcl::body ObserveControl::constructor args {
    set Pwfs1Dark [Dark #auto p1]
    set Pwfs2Dark [Dark #auto p2]
    set OiwfsDark [Dark #auto oi]
-
    if {! $mon_inpos} {
        set mon_inpos 1
        global inPosition followS INPOS FOLLOW
        set INPOS ""
        set FOLLOW ""
        set varName "inPosition\(value\)"
-       #puts " varName  $varName this:[itcl::code $this] traceProc"
        trace variable $varName w "[itcl::code $this] traceProc"
        
        set $varName [sa tcssad get inPosition]
@@ -282,8 +280,7 @@ itcl::body ObserveControl::constructor args {
        set $varName [sa mcssad get followS]
        sa mcssad link followS followS
    }
-		  
-		  
+
    eval itk_initialize $args
 }
 
@@ -296,6 +293,7 @@ itcl::body ObserveControl::destructor {} {
 	trace remove variable inPosition(value) write "[itcl::code $this] traceProc"
 	sa mcssad unlink followS followS
 	trace remove variable followS(value) write "[itcl::code $this] traceProc"
+       set mon_inpos 0
     }
 
    itcl::delete object $Pwfs1Dark
@@ -303,7 +301,6 @@ itcl::body ObserveControl::destructor {} {
 }
 
 itcl::body ObserveControl::setfold {path {configISS 1}} {
-   # puts "ObserveControl::setfold configISS: $configISS path: $path"
    global sfPos
    set sfPos $path
    logactions logmess "ObserveControl::setfold moving Science Fold to $path"
@@ -561,10 +558,10 @@ itcl::body ObserveControl::traceProc {name index op} {
 	   set FOLLOW [set $gVar]
        }
    }
-   #puts "INPOS: $INPOS   FOLLOW: $FOLLOW"
 
    if { $need_to_close_loop} {
        if {[string match TRUE $INPOS] && [string match ON $FOLLOW]} {
+          logger log "ObserveControl::traceProc: closing loops."
 	   AO enable
 	   set need_to_close_loop 0
        }  else {
@@ -576,27 +573,26 @@ itcl::body ObserveControl::traceProc {name index op} {
 }
 
 itcl::body ObserveControl::timeout {} {
-    #puts "timeout callback"
     # will get here if the telescope did not go out of position
     # assume the move was too fast, close the loop
    if { $need_to_close_loop } {
-       #puts "closing loop in timeout"
-       AO enable
-       set need_to_close_loop 0
+      #puts "closing loop in timeout"
+      logger log "ObserveControl::timeout: closing loops."
+      AO enable
+      set need_to_close_loop 0
    }
 }
 
 itcl::body ObserveControl::openloop {} {
     global INPOS
 # Open loop if neccesary
-    if {[AO cget -enabled]} {
-	#puts "opening loop"
-	AO disable
-	set need_to_close_loop 1
-	# start timeout process
-	if {[string match TRUE $INPOS]} {
-	    set tid [after 10000 "$this timeout"]
-	}
-	#puts "tid: $tid"
-    }
+   if {[AO cget -enabled]} {
+      logger log "ObserveControl::openloop: opening loops."
+      AO disable
+      set need_to_close_loop 1
+# start timeout process
+	   if {[string match TRUE $INPOS]} {
+	      set tid [after 10000 "$this timeout"]
+	   }
+   }
 }
