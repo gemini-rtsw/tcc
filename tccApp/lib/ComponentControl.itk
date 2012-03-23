@@ -245,6 +245,9 @@ itcl::body ComponentControl::doapply {} {
 
 # Post the command.
 	if { ![string is space $itk_option(-apply)] && [catch {cs $itk_option(-apply) post} msg] } {
+		if {[string is space $msg]} {
+			set msg "no error message"
+		}
 		tk_messageBox -icon error -parent $itk_interior -message \
 			"Error posting command: $itk_option(-system) reports \"$msg\""
 	}

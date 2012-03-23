@@ -47,6 +47,7 @@ proc tsdMain args {
    
    if { $::env(GEMINI_SITE) eq "CP" } {
       epics sa aomsad
+		epics sa gemssad
    }
 
 # Wait to get connected to the TCS.

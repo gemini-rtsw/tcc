@@ -32,6 +32,7 @@ itcl::class SlewOptionsControl {
       variable instrOffset
       variable resetao
       variable disableao
+      variable ignoreao
       variable ltcscheck
    }
 }
@@ -126,6 +127,13 @@ itcl::body SlewOptionsControl::constructor args {
          $itk_component(guiding) $itk_component(guideOffset) \
          $itk_component(instrOffset) $itk_component(resetao) \
          $itk_component(disableao) $itk_component(ltcscheck) -pady 2 -anchor w
+   if { [calparam cget -site] eq "CP" } {
+      itk_component add ignoreao {
+         checkbutton $w.ignoreao -variable [itcl::scope ignoreao] \
+               -text "Don't apply adaptive optics configuration"
+      }
+      pack $itk_component(ignoreao) -pady 2 -anchor w
+   }
 
 # Set the object description.
    set description "slew options"
@@ -151,6 +159,9 @@ itcl::body SlewOptionsControl::load {name} {
    set resetao [$name cget -resetao]
    set disableao [$name cget -disableao]
    set ltcscheck [$name cget -ltcscheck]
+   if { [calparam cget -site] eq "CP" } {
+      set ignoreao [$name cget -ignoreao]
+   }
 }
 
 itcl::body SlewOptionsControl::save {name} {
@@ -162,4 +173,7 @@ itcl::body SlewOptionsControl::save {name} {
          -guiding $guiding -guideOffset $guideOffset \
          -instrOffset $instrOffset -resetao $resetao \
          -disableao $disableao -ltcscheck $ltcscheck
+   if { [calparam cget -site] eq "CP" } {
+       $name configure -ignoreao $ignoreao
+   }
 }

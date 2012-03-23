@@ -137,6 +137,9 @@ itcl::body Odgw::configureTargetWavelength {wavel} {
 	if { $change } {
 		logactions logmess "Applying ODGW/Science target wavelength: (\"$wavel\")"
 		if { [catch {cs tcsApply post} msg] } {
+			if {[string is space $msg]} {
+				set msg "no error message"
+			}
 			logactions logmess "Error posting ODGW target wavelegth: TCS reports \"$msg\""		
 		}
 	}

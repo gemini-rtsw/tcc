@@ -123,7 +123,10 @@ itcl::body ApplyButton::apply {} {
 
 # Post the command.
       if { [catch {cs $itk_option(-command) post} msg] } {
-         tk_messageBox -icon error -parent $itk_interior -message \
+			if {[string is space $msg]} {
+				set msg "no error message"
+			}
+				tk_messageBox -icon error -parent $itk_interior -message \
    "Error posting $itk_option(-command) command: $itk_option(-system) reports \
                \"$msg\""
       }

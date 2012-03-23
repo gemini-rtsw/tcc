@@ -34,7 +34,7 @@ global env
 	}
 
 	set simgems 0
-	set disablegems 0
+	set ignoreao ""
 	
 	set ocsproxy ""
    foreach {opt val} $args {
@@ -55,7 +55,7 @@ global env
 				set simgems $val
 			}
 			-nogems {
-				set disablegems $val
+				set ignoreao $val
 			}
          default {
             tk_messageBox -icon warning -message \
@@ -85,7 +85,6 @@ global env
 	}
 
 	GemsSys::useSimulator $simgems
-	set ::Flags(disablegems) $disablegems
 	
 # AWE use the site parameter to load site specific channels
    puts "site is [calparam cget -site]"
@@ -271,6 +270,7 @@ global env
    epics cs filter1
    epics cs filter2
    epics cs oiwfsSelect
+	epics cs zeroRotCorr
 
 # Set the timeout period for posting commands to the TCS.
    cs tcsApply setTimeout 3
@@ -322,6 +322,13 @@ global env
    itcl::delete object $config
    close $file
 
+   #Command line option -nogems overrides default slew options
+   if { $ignoreao ne "" } {
+      ::SlewOptionsNames::Normal configure -ignoreao $ignoreao
+   }
+   set ::Flags(ignoreao) [::SlewOptionsNames::Normal cget -ignoreao]
+      
+   
 # Load initialisation files.
    if { ! [string equal $init ""] } {
       foreach filespec $init {

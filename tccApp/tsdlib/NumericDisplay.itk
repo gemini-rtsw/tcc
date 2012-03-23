@@ -746,7 +746,16 @@ itcl::body NumericDisplay::update {} {
       $itk_component(seeoi) configure -text $seeing -status error
    }
 
-   set seeing [sa agssad get aoseeing]
+	if { $::env(GEMINI_SITE) eq "CP" } {
+		set r0 [sa gemssad get r0]
+		if { [string is double -strict $r0] } {
+			set seeing [expr "0.976 * 0.5e-6 / ( $r0 * 1e-2 ) * 206265.0"]
+		} else {
+			set seeing $r0
+		}
+	} else {
+		set seeing [sa agssad get aoseeing]
+	}
    if { [string is double -strict $seeing] } {
       if { [string match *A-AUTO* $aoguide] } {
          $itk_component(seeao) configure -text [format %.2f $seeing] -status ok

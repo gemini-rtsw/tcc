@@ -57,10 +57,11 @@ status gemssad
 	aniLoop		mys2:aniLoopStatus.VAL	0	ANI loop status (OPEN|CLOSED|PAUSED)
 	sciReady		mys2:sciReady.VAL			0	Ready for science (Not Ready|Ready)
    laserProp	lis:lasPropProc.VALA		0	Is the Laser Propagating to the Sky
+   rtcHealth	rtc:health.VALA			0	RTC health
    
-   m1Offload	mys2:m1OffloadCtrl.VALA	0	GeMS is offloading to M1
-   m2Offload	mys2:m2OffloadCtrl.VALA	0	GeMS is offloading to M2
-   crOffload	mys2:crLoopCtrl.VALA		0	GeMS is offloading to Cass-rotator
+   m1Offload    mys2:m1OffloadStatus.VAL    0   GeMS is offloading to M1 (OPEN|CLOSED|PAUSED)
+   m2Offload    mys2:m2OffloadStatus.VAL    0   GeMS is offloading to M2 (OPEN|CLOSED|PAUSED)
+   crOffload    mys2:crOffloadStatus.VAL    0   GeMS is offloading to Cass-rotator (OPEN|CLOSED|PAUSED)
 
    astroMode   mys2:slewReset.VALA 0		Mode (None/Regular/Good/Best)
    
@@ -101,8 +102,10 @@ status odgwsad
 	counts3		gsaoi:sad:dc:d_gdr_flux3.VAL 0 Counts for ODGW3
 	counts4		gsaoi:sad:dc:d_gdr_flux4.VAL 0 Counts for ODGW4
 	
-	odgwSize   gsaoi:sad:dc:d_gdr_winSizeS.VAL 0 ODGW size
-	notGuiding     gsaoi:sad:dc:guiding.VAL 0 ODGW (not) guiding 	
+	odgwSize	gsaoi:sad:dc:d_gdr_winSizeS.VAL 0 ODGW size
+	numIdleRows	gsaoi:sad:dc:gdr_idleRows.VAL	0 Number of idle rows for interleaved guiding
+	numSciRows	gsaoi:sad:dc:gdr_sciRows.VAL	0 Number of science rows for interleaved guiding
+	notGuiding  gsaoi:sad:dc:guiding.VAL		0 ODGW (not) guiding 	
 }
 
 status aomsad
@@ -260,6 +263,8 @@ command gems::sfsStopObserve gems::sfsApply SFS WFS start
 command gems::odgwSetup tcsApply ODGW exposure setup
 {
 	baseExpTime tc1:gsaoiodgwSetup.D	ODGW base exposure time
+	numSciRows	tc1:gsaoiodgwSetup.E	Number of science rows for interleaved guiding
+	numIdleRows	tc1:gsaoiodgwSetup.F	Number of idle rows for interleaved guiding
 	expMult1	tc1:gsaoiodgwSetup.G	Exposure multiplier for ODGW1
 	expMult2	tc1:gsaoiodgwSetup.H	Exposure multiplier for ODGW2
 	expMult3	tc1:gsaoiodgwSetup.I	Exposure multiplier for ODGW3

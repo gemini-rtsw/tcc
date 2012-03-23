@@ -65,6 +65,16 @@ itcl::class CalParam {
 		
 		variable sfsExpLUT ""
 		variable odgwExpLUT ""
+      variable odgwParamLUT
+		
+		variable lgsExpDefault 200
+		variable ngsExpDefault 200
+		variable sfsExpDefault 10
+		variable odgwExpDefault 100
+		variable lgsAlarmDefault 50
+		variable ngsAlarmDefault 100
+		variable sfsAlarmDefault 100
+		variable odgwAlarmDefault 100
 
       method p1m2TipGain {instrument wfs}
       method p1m2TiltGain {instrument wfs}
@@ -72,6 +82,9 @@ itcl::class CalParam {
       method p2m2TipGain {instrument wfs}
       method p2m2TiltGain {instrument wfs}
       method p2m2FocusGain {instrument wfs}
+      
+      method odgwGetSciRows { size }
+      method odgwGetIdleRows { size }
    }
 }
 
@@ -150,5 +163,21 @@ itcl::body CalParam::p2m2FocusGain {instrument wfs} {
       return <undefined>
    } else {
       return $p2m2FocusGain($key)
+   }
+}
+
+itcl::body CalParam::odgwGetSciRows { size } {
+   if { [array names odgwParamLUT -exact $size] == "" } {
+      return 16
+   } else {
+      return [lindex $odgwParamLUT($size) 0]
+   }
+}
+
+itcl::body CalParam::odgwGetIdleRows { size } {
+   if { [array names odgwParamLUT -exact $size] == "" } {
+      return 16
+   } else {
+      return [lindex $odgwParamLUT($size) 1]
    }
 }

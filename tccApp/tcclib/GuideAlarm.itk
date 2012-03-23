@@ -79,7 +79,10 @@ itcl::body GuideAlarm::constructor {args} {
     global guideCounts pwfs1CountLimit pwfs2CountLimit oiwfsCountLimit gaosCountLimit ttgsCountLimit sfoCountLimit niciCountLimit
     global pwfs1silent pwfs2silent oiwfssilent gaossilent ttgssilent sfosilent nicisilent guideCentroid
     
-    #puts "GuideAlarm this: $this"
+	set odgwLimit [calparam cget -odgwAlarmDefault]
+   set sfsLimit [calparam cget -sfsAlarmDefault]
+	set lgswfsLimit [calparam cget -lgsAlarmDefault]
+	set ttwfsLimit [calparam cget -ngsAlarmDefault]
     
     itk_component add frame {
         frame $itk_interior.fr
@@ -415,7 +418,7 @@ itcl::body GuideAlarm::scanLoop {} {
 	
 	set wfsList {pwfs1 pwfs2 oiwfs nici}
 	if { [calparam cget -site] eq "CP" } {
-      if { !$::Flags(disablegems) } {
+      if { !$::Flags(ignoreao) } {
          retrieveGeMSCounts
    		lappend wfsList ttwfs lgswfs sfs odgw
    		set ttSources [$gemsSys getTTLoopSources]
@@ -928,27 +931,18 @@ itcl::body GuideAlarm::retrieveGeMSCounts {} {
    set guideCounts(sfs) [$gemsSys getSFSCounts]
    alarmCheck sfs
    set guideCounts(ttwfs1) [$gemsSys getTTWFSCounts 1]
-   alarmCheck ttwfs
    set guideCounts(ttwfs2) [$gemsSys getTTWFSCounts 2]
-   alarmCheck ttwfs
    set guideCounts(ttwfs3) [$gemsSys getTTWFSCounts 3]
    alarmCheck ttwfs
    set guideCounts(lgswfs1) [$gemsSys getLGSWFSCounts 1]
-   alarmCheck lgswfs
    set guideCounts(lgswfs2) [$gemsSys getLGSWFSCounts 2]
-   alarmCheck lgswfs
    set guideCounts(lgswfs3) [$gemsSys getLGSWFSCounts 3]
-   alarmCheck lgswfs
    set guideCounts(lgswfs4) [$gemsSys getLGSWFSCounts 4]
-   alarmCheck lgswfs
    set guideCounts(lgswfs5) [$gemsSys getLGSWFSCounts 5]
    alarmCheck lgswfs
    set guideCounts(odgw1) [$gemsSys getODGWCounts 1]
-   alarmCheck odgw
    set guideCounts(odgw2) [$gemsSys getODGWCounts 2]
-   alarmCheck odgw
    set guideCounts(odgw3) [$gemsSys getODGWCounts 3]
-   alarmCheck odgw
    set guideCounts(odgw4) [$gemsSys getODGWCounts 4]
    alarmCheck odgw
 }

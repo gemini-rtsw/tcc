@@ -18,7 +18,7 @@ CFLAGS = -fPIC -Wall -DUSE_TCL_STUBS -DUSE_TK_STUBS \
          -I${HLPG_EXT_RUNTIME_BASE}/tcl$(TCL_VERS)/include \
          -I${EPICS}/modules/slalib/include \
          -I${EPICS}/modules/timelib/include \
-         -I${EPICS}/modules/astlib/include
+         -I${EPICS}/modules/astlib/include -m32
 
 LDFLAGS = -shared \
 	  -L${EPICS}/modules/slalib/lib/${EPICS_HOST_ARCH} \
@@ -30,7 +30,7 @@ LDFLAGS = -shared \
           -L${EPICS}/base/lib/${EPICS_HOST_ARCH} \
           -Wl,-rpath=${EPICS}/base/lib/${EPICS_HOST_ARCH} \
           -L${HLPG_EXT_RUNTIME_BASE}/tcl$(TCL_VERS)/lib \
-          -ltclstub$(TCL_VERS) -ltkstub$(TCL_VERS) -lregistryIoc -last -ltime -lsla #-lposix4
+          -ltclstub$(TCL_VERS) -ltkstub$(TCL_VERS) -lregistryIoc -last -ltime -lsla -m32 #-lposix4
 
 tcccmn.so : $(CMNOBJ)
 	$(LD) -o $@ $(CMNOBJ) $(LDFLAGS) 

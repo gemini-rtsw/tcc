@@ -48,6 +48,7 @@ itcl::class GuideLoop {
 		method enableGaos {}
 		method resetGaos {}
 		method onGemsChange {reasons}
+      method onIgnoreAOChange {name1 name2 op}
    }
    itk_option define -wfsConfigObj wfsConfigObj WfsConfigObj "" {
    	if { $itk_option(-wfsConfigObj) ne "" } { recolour }
@@ -107,9 +108,9 @@ itcl::body GuideLoop::constructor args {
       usual
    }
    $w create window 62 3 -width 60 -window $w.oiwfs -tags oiwfs -anchor n
-   itk_component add oiwfs_label {
-      label $w.oiwfs_label -text [string toupper oiwfs]
-   }
+#   itk_component add oiwfs_label {
+#      label $w.oiwfs_label -text [string toupper oiwfs]
+#   }
    $w create rectangle 0 0 123 70 -fill white -tags "active oiwfs oiwfs_bg"
    $w create rectangle 2 26 60 47 -fill white -tags "active oiwfs oiwfs_ao"
    $w create rectangle 63 26 121 47 -fill white -tags "active oiwfs oiwfs_wfs"
@@ -232,10 +233,6 @@ itcl::body GuideLoop::constructor args {
 	}
 	$w create window 2 25 -width 60 -window $itk_component(rotator) -tags rotator -anchor nw
 	$itk_component(rotator) add AO -pady 0
-   
-   if { $::Flags(disablegems) } {
-      $itk_component(rotator) configure -state disabled
-   } 
 
 # Box for WFS probes.
    $w create rectangle 0 0 123 66 -fill white -tags "active probes probes_bg"
@@ -347,6 +344,9 @@ itcl::body GuideLoop::constructor args {
 		set gemsSys [::GemsSys::getSingleton]
 		$gemsSys subscribe [itcl::code $this onGemsChange]
 	}
+   
+   trace add variable ::Flags(ignoreao) write [itcl::code $this onIgnoreAOChange]
+   onIgnoreAOChange ::Flags ignoreao w
 
 # Schedule an update once the channels have connected.
    after 1000 [itcl::code $this recolour]
@@ -355,6 +355,7 @@ itcl::body GuideLoop::constructor args {
 }
 
 itcl::body GuideLoop::destructor {} {
+   trace remove variable ::Flags(ignoreao) write [itcl::code $this onIgnoreAOChange]
    foreach rec {p1state p2state oistate aostate m2state absorbtilt m1state \
       	m1source p1guide p2guide oiguide p1mweight p2mweight m2p1guide m2p2guide \
 	 		m2oiguide m2aoguide coma oiblend aoTTGS aoSFO ttgsloop sfoloop useLwfs niciAOloop niciAPD crGuide} mon $monids {
@@ -505,7 +506,7 @@ itcl::body GuideLoop::recolour args {
       } else {
          $w itemconfigure oiwfs_pr -fill yellow
       }
-      if {[calparam cget -site] ne "CP" || !$::Flags(disablegems)} {
+      if {[calparam cget -site] ne "CP" || !$::Flags(ignoreao)} {
          if { [AO state oiblend] } {
             $w itemconfigure oiwfs_gaos -fill green
          } else {
@@ -533,10 +534,10 @@ itcl::body GuideLoop::recolour args {
 
 # M1
    if { [AO state m1] } {
-      if { ( [AO source m1 PWFS1] && [AO state pwfs1] ) ||
-            ( [AO source m1 PWFS2] && [AO state pwfs2] ) ||
-            ( [AO source m1 OIWFS] && [AO state oiwfs] ) ||
-            ( [AO source m1 GAOS] && [AO state gaos] ) } {
+      if { ( [AO source m1 PWFS1] && [AO state pwfs1] ) ||	\
+            ( [AO source m1 PWFS2] && [AO state pwfs2] ) ||	\
+            ( [AO source m1 OIWFS] && [AO state oiwfs] ) ||	\
+            ( [AO source m1 GAOS] && [AO state gaos] && ([calparam cget -site] ne "CP" || [[AO getGaosObj] state m1Offload]) )  } {
          $w itemconfigure m1_bg -fill green
       } else {
          $w itemconfigure m1_bg -fill yellow
@@ -545,14 +546,15 @@ itcl::body GuideLoop::recolour args {
 
 # M2
    if { [AO state m2] } {
-      if { (( [AO source m2 PWFS1 A] || [AO source m2 PWFS1 B] ) && \
+      if { ( ( [AO source m2 PWFS1 A] || [AO source m2 PWFS1 B] ) && \
             [AO state pwfs1] ) || \
-            (( [AO source m2 PWFS2 A] || [AO source m2 PWFS2 B] ) && \
+            ( ( [AO source m2 PWFS2 A] || [AO source m2 PWFS2 B] ) && \
             [AO state pwfs2] ) || \
-            (( [AO source m2 OIWFS A] || [AO source m2 OIWFS B] ) && \
+            ( ( [AO source m2 OIWFS A] || [AO source m2 OIWFS B] ) && \
             [AO state oiwfs] ) || \
-            (( [AO source m2 GAOS A] || [AO source m2 GAOS B] ) && \
-            [AO state gaos] ) } {
+            ( ( [AO source m2 GAOS A] || [AO source m2 GAOS B] ) && \
+            ( ( [calparam cget -site] eq "MK" && [AO state gaos] ) || \
+				  ( [calparam cget -site] eq "CP" && [AO state ttgsloop] && [[AO getGaosObj] state m2Offload]) ) )  } {
          $w itemconfigure m2_bg -fill green
          if { [AO source mount M2] && [AO state mount] } {
             $w itemconfigure m2_mt -fill green
@@ -568,7 +570,7 @@ itcl::body GuideLoop::recolour args {
 
 # M2 Coma
    if { [AO state coma] } {
-      if { [AO state pwfs1] || [AO state gaos] } {
+      if { [AO state pwfs1] || ( [AO state gaos] && ([calparam cget -site] ne "CP" || [[AO getGaosObj] state m2Offload])) } {
          $w itemconfigure m2xy_bg -fill green
       } else {
          $w itemconfigure m2xy_bg -fill yellow
@@ -598,8 +600,8 @@ itcl::body GuideLoop::recolour args {
       }
    }
 #Rotator
-	if { [AO state rotator] } {
-		if { [AO state gaos] } {
+	if { [calparam cget -site] eq "CP" && [AO state rotator] } {
+		if { [AO state ttgsloop] && [[AO getGaosObj] state rotOffload]} {
 			$w itemconfigure rotator_bg -fill green
 		} else {
 			$w itemconfigure rotator_bg -fill yellow
@@ -847,9 +849,6 @@ itcl::body GuideLoop::buildGaos {} {
 		$w create window 433 62 -window $w.gaos -tags gaos -anchor nw
 		set gaosWidget $itk_component(gaos)
 		buildGemsArrows
-      if { $::Flags(disablegems) } {
-         $gaosWidget configure -state disabled
-      }
 	} else {
 		itk_component add gaos { AltairWidget $w.gaos -aocontroller AO }
 		$w create window 471 72 -window $w.gaos -tags gaos -anchor nw
@@ -924,31 +923,29 @@ itcl::body GuideLoop::buildGemsArrows {} {
 		-arrow last -arrowshape {20 20 7}
 	$w create line 433 76 368 76 368 125 343 125 -width 3 -fill white \
 		-tags {active gaos_m1} -arrow last -arrowshape {20 20 7}
-	$w create line 343 315 388 315 388 120 408 120 -width 3 -fill white \
+	$w create line 343 315 388 315 -width 3 -fill white \
 		-tags {active oiwfs_gaos}
 	$w create line 433 86 378 86 378 411 343 411 -width 3 -fill white \
 		-tags {active gaos_cr} -arrow last -arrowshape {20 20 7}
 
 	# GAOS internal
-   $w create line 408 120 433 120 -width 3 -fill white \
+   $w create line 388 315 388 97 433 97 -width 3 -fill white \
    -tags {active flexend_gaos} -arrow last -arrowshape {20 20 7}
-	$w create line 433 165 398 165 398 102 433 102 -width 3 -fill white \
+	$w create line 433 248 398 248 398 116 433 116 -width 3 -fill white \
 		-tags {active cwfsani_gaos} -arrow last -arrowshape {20 20 7}
-	$w create line 640 225 675 225 675 102 640 102 -width 3 -fill white \
+	$w create line 433 192 408 192 408 135 433 135 -width 3 -fill white \
 		-tags {active sfs_gaos} -arrow last -arrowshape {20 20 7}
-	$w create line 640 335 685 335 685 120 665 120 -width 3 -fill white \
-	-tags {active odgwtt_gaos}
-   $w create line 665 120 640 120 -width 3 -fill white \
-   -tags {active ttend_gaos} -arrow last -arrowshape {20 20 7}
-   $w create line 433 335 408 335 408 120 -width 3 -fill white \
+	$w create line 635 343 670 343 670 160 635 160 -width 3 -fill white \
+	-tags {active odgwtt_gaos} -arrow last -arrowshape {20 20 7}
+   $w create line 433 343 388 343 388 315 -width 3 -fill white \
    -tags {active odgwflex_gaos}
-   $w create line 640 165 665 165 665 120 -width 3 -fill white \
-   -tags {active cwfstt_gaos}
+   $w create line 635 248 660 248 660 123 635 123 -width 3 -fill white \
+   -tags {active cwfstt_gaos} -arrow last -arrowshape {20 20 7}
 
 }
 
 itcl::body GuideLoop::recolourGemsArrows {} {
-   if { ! $::Flags(disablegems) } {
+   if { ! $::Flags(ignoreao) } {
    	set w $itk_component(canv)
    
    	if { [$gemsSys getSFSActive] eq "ON" } {
@@ -974,7 +971,6 @@ itcl::body GuideLoop::recolourGemsArrows {} {
    			incr ttwfsCount
    		}
    	}
-      set tttail white
       set flextail white
    	if { $odgwCount > 0 } {
    		if { ( [$gemsSys getFlexLoopState] eq "CLOSED" && [string first odgw $flexSources] > -1 ) } {
@@ -986,10 +982,8 @@ itcl::body GuideLoop::recolourGemsArrows {} {
    		}
          if { [$gemsSys getTTLoopState] eq "CLOSED" && [string first odgw $ttSources] > -1 } {
             $w itemconfigure odgwtt_gaos -fill green
-            set tttail green
          } else {
             $w itemconfigure odgwtt_gaos -fill yellow
-            set tttail yellow
          }
    	} else {
    		$w itemconfigure odgwflex_gaos -fill white
@@ -998,12 +992,8 @@ itcl::body GuideLoop::recolourGemsArrows {} {
    	if { $ttwfsCount > 0 } {
    		if { [$gemsSys getTTLoopState] eq "CLOSED" && [string first ttgs $ttSources] > -1 } {
    			$w itemconfigure cwfstt_gaos -fill green
-            set tttail green
    		} else {
    			$w itemconfigure cwfstt_gaos -fill yellow
-            if {$tttail ne "green"} {
-               set tttail yellow
-            }
    		}
          if { [$gemsSys getAniLoopState] eq "CLOSED" } {
             $w itemconfigure cwfsani_gaos -fill green
@@ -1028,12 +1018,10 @@ itcl::body GuideLoop::recolourGemsArrows {} {
    		$w itemconfigure oiwfs_gaos -fill white
    	}
       
-      $w itemconfigure ttend_gaos -fill $tttail
       $w itemconfigure flexend_gaos -fill $flextail
       
    	if {[AO state gaos]} {
-         set m1Offload [$gemsSys getM1OffloadState]
-   		if {[AO state m1] && [AO source m1 GAOS] && ( $m1Offload eq "START" || $m1Offload eq "RESUME" ) } {
+   		if {[AO state m1] && [AO source m1 GAOS] && [$gemsSys getM1OffloadState] eq "CLOSED"} {
    			$w itemconfigure gaos_m1 -fill green
    		} else {
    			$w itemconfigure gaos_m1 -fill yellow
@@ -1041,9 +1029,8 @@ itcl::body GuideLoop::recolourGemsArrows {} {
    	} else {
    		$w itemconfigure gaos_m1 -fill white
    	}
-   	if {[AO state gaos]} {
-         set m2Offload [$gemsSys getM2OffloadState]
-   		if {[AO state m2] && [AO source m2 GAOS A] && ( $m2Offload eq "START" || $m2Offload eq "RESUME" ) } {
+   	if {[AO state gaos] || [AO state ttgsloop]} {
+   		if {[AO state m2] && [AO source m2 GAOS A] && [$gemsSys getM2OffloadState] eq "CLOSED" } {
    			$w itemconfigure gaos_m2 -fill green
    		} else {
    			$w itemconfigure gaos_m2 -fill yellow
@@ -1051,9 +1038,8 @@ itcl::body GuideLoop::recolourGemsArrows {} {
    	} else {
    		$w itemconfigure gaos_m2 -fill white
    	}
-   	if {[AO state gaos]} {
-         set rotOffload [$gemsSys getRotOffloadState]
-   		if {[AO state rotator] && ( $rotOffload eq "START" || $rotOffload eq "RESUME" ) } {
+   	if {[AO state ttgsloop]} {
+   		if {[AO state rotator] && [$gemsSys getRotOffloadState] eq "CLOSED" } {
    			$w itemconfigure gaos_cr -fill green
    		} else {
    			$w itemconfigure gaos_cr -fill yellow
@@ -1085,7 +1071,7 @@ itcl::body GuideLoop::recolourGaos {} {
          $gaosWidget recolor
       }
       recolourAltairArrows
-   } elseif { ! $::Flags(disablegems) } {
+   } elseif { ! $::Flags(ignoreao) } {
       if { [AO state gaos] } {
    		if { [AO state aoSettled] } {
    			$w itemconfigure aoSettled -fill green
@@ -1138,4 +1124,18 @@ itcl::body GuideLoop::onGemsChange {reasons} {
 	if { $shouldRecolor } {
 		recolour
 	}
+}
+
+itcl::body GuideLoop::onIgnoreAOChange {name1 name2 op} {
+   if { [calparam cget -site ] eq "CP" } {
+      if { $::Flags(ignoreao) } {
+         $itk_component(rotator) configure -state disabled
+         $gaosWidget configure -state disabled
+      } else {
+         $itk_component(rotator) configure -state normal
+         $gaosWidget configure -state normal         
+      }
+   } else {
+      $itk_component(rotator) configure -state disabled
+   }
 }

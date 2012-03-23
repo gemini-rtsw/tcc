@@ -58,6 +58,9 @@ itcl::body Gsaoi::configureFilter {filter} {
    	cs gsaoi::config set filter $filter
    	logactions logmess "Applying GSAOI filter: (\"$filter\")"
    	if { [catch {cs gsaoi::config post} msg] } {
+			if {[string is space $msg]} {
+				set msg "no error message"
+			}
    		logactions logmess "Error posting gsaoi::config: GSAOI reports \"$msg\""		
    	}
    }

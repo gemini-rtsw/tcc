@@ -17,7 +17,7 @@
 itcl::class TcsControl {
    inherit itk::Widget
    constructor args {}
-   destructor {destroy $alarmObj}
+   destructor {}
    public {
       method setTimeout {chanStr value time incr reason}
       method timeout {}
@@ -45,6 +45,7 @@ itcl::class TcsControl {
       method checkState {win}
 		method ngsPark {par} {return Park}
 		method ngsDatum {par} {return Datum}
+      method onIgnoreAOChange {name1 name2 op}
 		variable dome
       variable shutter
       variable alarmObj
@@ -188,7 +189,7 @@ itcl::body TcsControl::constructor args {
 					-onvalue {ON On Enabled} \
 					-offvalue {OFF Off Disabled} \
 					-sadrecord {agssad ngs1Follow} \
-               -state [expr {$::Flags(disablegems) ? "disabled" : "normal"} ]
+               -state [expr {$::Flags(ignoreao) ? "disabled" : "normal"} ]
 		}
 		itk_component add ngs2 {
 			OnOffButton $w.ngs2 -text CWFS2 \
@@ -197,7 +198,7 @@ itcl::body TcsControl::constructor args {
 					-onvalue {ON On Enabled} \
 					-offvalue {OFF Off Disabled} \
 					-sadrecord {agssad ngs2Follow} \
-               -state [expr {$::Flags(disablegems) ? "disabled" : "normal"} ]
+               -state [expr {$::Flags(ignoreao) ? "disabled" : "normal"} ]
 		}
 		itk_component add ngs3 {
 			OnOffButton $w.ngs3 -text CWFS3 \
@@ -206,7 +207,7 @@ itcl::body TcsControl::constructor args {
 					-onvalue {ON On Enabled} \
 					-offvalue {OFF Off Disabled} \
 					-sadrecord {agssad ngs3Follow} \
-               -state [expr {$::Flags(disablegems) ? "disabled" : "normal"} ]
+               -state [expr {$::Flags(ignoreao) ? "disabled" : "normal"} ]
 		}
 		itk_component add odgw1 {
 			OnOffButton $w.odgw1 -text ODGW1 \
@@ -215,7 +216,7 @@ itcl::body TcsControl::constructor args {
 					-onvalue {ON On Enabled} \
 					-offvalue {OFF Off Disabled} \
 					-sadrecord {agssad odgw1Follow} \
-               -state [expr {$::Flags(disablegems) ? "disabled" : "normal"} ]
+               -state [expr {$::Flags(ignoreao) ? "disabled" : "normal"} ]
 		}
 		itk_component add odgw2 {
 			OnOffButton $w.odgw2 -text ODGW2 \
@@ -224,7 +225,7 @@ itcl::body TcsControl::constructor args {
 					-onvalue {ON On Enabled} \
 					-offvalue {OFF Off Disabled} \
 					-sadrecord {agssad odgw2Follow} \
-               -state [expr {$::Flags(disablegems) ? "disabled" : "normal"} ]
+               -state [expr {$::Flags(ignoreao) ? "disabled" : "normal"} ]
 		}
 		itk_component add odgw3 {
 			OnOffButton $w.odgw3 -text ODGW3 \
@@ -233,7 +234,7 @@ itcl::body TcsControl::constructor args {
 					-onvalue {ON On Enabled} \
 					-offvalue {OFF Off Disabled} \
 					-sadrecord {agssad odgw3Follow} \
-               -state [expr {$::Flags(disablegems) ? "disabled" : "normal"} ]
+               -state [expr {$::Flags(ignoreao) ? "disabled" : "normal"} ]
 		}
 		itk_component add odgw4 {
 			OnOffButton $w.odgw4 -text ODGW4 \
@@ -242,7 +243,7 @@ itcl::body TcsControl::constructor args {
 					-onvalue {ON On Enabled} \
 					-offvalue {OFF Off Disabled} \
 					-sadrecord {agssad odgw4Follow} \
-               -state [expr {$::Flags(disablegems) ? "disabled" : "normal"} ]
+               -state [expr {$::Flags(ignoreao) ? "disabled" : "normal"} ]
 		}
    }
 
@@ -617,8 +618,16 @@ itcl::body TcsControl::constructor args {
       set open 0
    }
    $itk_component(west) set $open
+   
+   trace add variable ::Flags(ignoreao) write [itcl::code $this onIgnoreAOChange]
+   onIgnoreAOChange ::Flags ignoreao w
 
 }
+itcl::body TcsControl::destructor {} {
+   trace add variable ::Flags(ignoreao) write [itcl::code $this onIgnoreAOChange]
+   destroy $alarmObj
+}
+
 
 itcl::body TcsControl::enable par {
 #+
@@ -919,7 +928,7 @@ itcl::body TcsControl::lockIndex {} {
 		if {[calparam cget -site] eq "MK"} {
 			$itk_component(aodatum) configure -state [checkState $itk_component(aodatum) ]
 		} else {
-         if { !$::Flags(disablegems) } {
+         if { !$::Flags(ignoreao) } {
    			$itk_component(ngs1datum) configure -state [checkState $itk_component(ngs1datum) ]
    			$itk_component(ngs2datum) configure -state [checkState $itk_component(ngs2datum) ]
    			$itk_component(ngs3datum) configure -state [checkState $itk_component(ngs3datum) ]
@@ -957,7 +966,7 @@ itcl::body TcsControl::lockPark {} {
 		if {[calparam cget -site] eq "MK"} {
 			$itk_component(aopark) configure -state [checkState $itk_component(aopark) ]
 		} else {
-         if { !$::Flags(disablegems) } {
+         if { !$::Flags(ignoreao) } {
    			$itk_component(ngs1park) configure -state [checkState $itk_component(ngs1park) ]
    			$itk_component(ngs2park) configure -state [checkState $itk_component(ngs2park) ]
    			$itk_component(ngs3park) configure -state [checkState $itk_component(ngs3park) ]
@@ -996,4 +1005,26 @@ itcl::body TcsControl::checkState { win } {
 	set state normal
     }
     return $state
+}
+
+itcl::body TcsControl::onIgnoreAOChange {name1 name2 op} {
+   if { [calparam cget -site ] eq "CP" } {
+      if { $::Flags(ignoreao) } {
+         $itk_component(ngs1) configure -state disabled
+         $itk_component(ngs2) configure -state disabled
+         $itk_component(ngs3) configure -state disabled
+         $itk_component(odgw1) configure -state disabled
+         $itk_component(odgw2) configure -state disabled
+         $itk_component(odgw3) configure -state disabled
+         $itk_component(odgw4) configure -state disabled
+      } else {
+         $itk_component(ngs1) configure -state normal
+         $itk_component(ngs2) configure -state normal
+         $itk_component(ngs3) configure -state normal
+         $itk_component(odgw1) configure -state normal
+         $itk_component(odgw2) configure -state normal
+         $itk_component(odgw3) configure -state normal
+         $itk_component(odgw4) configure -state normal
+      }
+   }
 }

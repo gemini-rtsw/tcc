@@ -2156,3 +2156,138 @@ M tccApp/tcclib/Handset.itk: Removed some debug messages.
 M tccApp/tcclib/ObserveControl.itk: Fixed bug where object was not starting 
 	monitor on in-position flag if created a second time (e.g. if A&G panel was
 	closed and opened again) 
+
+5.9
+20120221 JLU
+GEMS-1
+M tccApp/tcclib/GemsAO.itcl: startODGW: Don't change multipliers if all ODGW are
+    to be disabled.
+    stopODGW: Only if all ODGW are to be disabled, deactive GSAOI guide and
+    clear ODGW multipliers.
+
+20120222 JLU
+GEMS-3
+M tccApp/tcclib/RealGems.itcl: Optimized base ODGW exposure time. Use biggest 
+    value that keeps exposure times within tolerance of requested values.
+    
+20120223 JLU
+GEMS-2
+M tccApp/ca_config.tc1/gems.ca: -
+M tccApp/ca_config/gems.ca: Added channels to ODGW config command to set number
+    of science and idle rows for interleaved read.
+M tccApp/lib/CalParam.itcl: Added LUT for ODGW interleaved read parameters.
+M tccApp/tcclib/IGemsSys.itcl: Added methods to set and read ODGW read  interleaved
+    read parameters.
+M tccApp/tcclib/RealGems.itcl: Implemented new methods. Used new param LUT to
+    automatically set ODGW read  interleaved read parameters when changing size.
+M tccApp/tcclib/SimGems.itcl: Implemented new methods.
+M tccApp/tcclib/WfsConfig.itk: Updated ODGW sizes list.
+
+20120227 JLU
+GEMS-5
+M tccApp/tcclib/GuideLoop.itk: Modified aroow lines for GeMS.
+M tccApp/tcclib/GemsWidget.itk: Added buttons to select Canopus WFS and ODGW as 
+    TT sources.
+M tccApp/tcclib/GemsAO.itcl: Added configuration items to select Canopus WFS and
+    ODGW as TT sources, modified method that sets the TT sources.
+
+20120228 JLU
+GEMS-4
+M tccApp/tcclib/ActiveOptics.itcl: -
+M tccApp/tcclib/Gems.itcl: -
+M tccApp/tcclib/GuideAlarm.itk: Changed flag name for ignoring GeMS from 
+    "disablegems" to "ignoreao".
+M tccApp/tcclib/SlewOptions.itcl: Added option "ignoreao". Linked to global flag
+    "ignoreao"
+M tccApp/tcclib/GuideLoop.itk: Trace flag "ignoreao" to set state of GeMS widget 
+    and Rotator control.
+M tccApp/tcclib/TcsControl.itk: Trace flag "ignoreao" to set state of GeMS 
+    buttons.
+M tccApp/tcclib/tccMain.tcl: Changed flag name for ignoring GeMS from 
+    "disablegems" to "ignoreao". Override default value in "Normal" SlewParams 
+    if command line option -nogems is used.
+M tccApp/tcclib/TcsConfigControl.itk: Trace flag "ignoreao" to set state of 
+    "Adaptive Optics" control (only CP)
+M tccApp/tcclib/SlewOptionsControl.itk: Added control to set new option
+    "ignoreao" (only CP).
+
+20120229 JLU
+GEMS-4
+M tccApp/tcclib/GuideLoop.itk: Don't try to disable GAOS widget for MK.
+
+M tccApp/tcclib/GemsWidget.itk: Removed LGSWFS activation button, replaced it 
+    with a label.
+M tccApp/ca_config.tc1/gems.ca: -
+M tccApp/ca_config/gems.ca: Added channel for RTC health
+M tccApp/tcclib/RealGems.itcl: Used RTC health for LGSWFS activity.
+M tccApp/tcclib/GemsWidget.itk: Forced LGS active on GeMS AO configuration.
+    TT box color linked to TT loop state.  Selection of TT sources of one kind
+    pop the buttons of the other.
+
+5.9.2
+20120307 JLU
+M tccApp/tcclib/GemsWidget.itk: Fixed missing body for switch option ttLoopState.
+
+5.9.3
+M tccApp/tcclib/Gsaoi.itk: Hack to disable configuration of GSAOI filter.
+
+5.9.4
+20120310 JLU
+M tccApp/tcclib/ActiveOptics.itcl: Declare GeMS active if TT loop is closed.
+	Fixed bug in determining M2 configurarion for GeMS.
+M tccApp/tcclib/RealGems.itcl: Monitored sciReady status. Open loops when 
+	paused.
+M tccApp/tcclib/SlewOptionsControl.itk: Corrected text for "ignore AO" option.
+
+5.9.5
+20120311 JLU
+M tccApp/tcclib/GuideLoop.itk:  System box and arrow colors now properly
+	depend on GeMS AO or TT status.
+M tccApp/tcclib/ActiveOptics.itcl:Reverted previous change to Gaos state, added
+	GeMS TT to ttgsLoop state.
+M tccApp/tcclib/GemsAO.itcl: Don't configure offloading to M1, M2 or rotator if
+	data sources are not active.
+	Increased timeout to start Canopus APD.
+	Modified waitForCommandComplete to iterate over a list of conditions, with
+	individual descriptions for the error message. Used for TTGS commands and
+	loops setup.
+M tccApp/ca_config.tc1/gems_tsd.ca: -
+M tccApp/ca_config/gems_tsd.ca: Added SA gemssad for r0.
+M tccApp/tsdlib/tsdMain.tcl: Create SA gemssad.
+M tccApp/tsdlib/NumericDisplay.itk: Calculate AO seeing for CP, using GeMS r0.
+
+5.9.6
+M tccApp/tcclib/TcsConfigControl.itk: Clear rotator corrections on slew.
+M tccApp/ca_config.tc1/tcsGuide.ca: -
+M tccApp/ca_config/tcsGuide.ca: Defined command to clear rotator corrections.
+M tccApp/tcclib/tccMain.tcl: Created command to clear rotator corrections.
+
+5.9.7
+20120314 JLU
+M tccApp/lib/CalParam.itcl: Added parameters for default exposure times and 
+	alarm limits for GeMS WFS.
+M tccApp/tcclib/GuideAlarm.itk: Use alarm limits read from calparams for GeMS WFS.
+M tccApp/tcclib/GuideLoop.itk: For CP, only use AO TT loop state to color M2 box
+	green if using AO.
+	Updated to use new values for offloading states.
+	Adjusted arrows to changes in GemsWidget.
+M tccApp/tcclib/RealGems.itcl: Hacked Canopus WFS counts, divided value by 100.
+    Updated to use new values for offloading states.
+M tccApp/tcclib/GemsWidget.itk: Use defaults from calparams for LGS and Canopus
+	WFS default exposure time.
+	Split C1/C2 TT selection button, reordered elements.
+M tccApp/ca_config.tc1/gems.ca: -
+M tccApp/ca_config/gems.ca: Redefined channels for GeMS offloading statuses.
+M tccApp/tcclib/GemsAO.itcl: Updated to use new values for offloading states.
+
+5.9.8
+20120315 JLU
+M tccApp/ca_config.tc1/gems.ca: -
+M tccApp/ca_config/gems.ca: Corrected channel name for rotator offloading
+	status.
+M tccApp/tcclib/GuideLoop.itk: Fixed calling the wrong method to check M1 and M2
+	offloading for coloring arrows.
+	Consider offloading statuses for coloring M1, M2 and rotator boxes.
+
+20120323 JLU
+Merged in changes from GeMS branch, GeMSRuns 43201.

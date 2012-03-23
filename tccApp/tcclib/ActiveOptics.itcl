@@ -315,12 +315,12 @@ itcl::body ActiveOptics::enable {} {
             }
          }
       }
-  }
+   }
    
    if { [calparam cget -site] eq "CP" } {
-      set $statevar ""
       set sa g1Guide
       set statevar m2aoguide
+      set $statevar ""
       if { $aoguide eq "On" } {
          switch [sa tcssad get nodState] {
             A {
@@ -539,14 +539,18 @@ puts "beam is $beam gonna wait for 1 second"
 			process IDLE
 			return
 		}
-	} elseif { ! $::Flags(disablegems) } {
+	} elseif { ! $::Flags(ignoreao) } {
 		if { [catch {$gaosObj enable} gaosRet ] } {
          errorBox "Error posting guide commands: $::errorInfo"
          process IDLE
          return
 		} elseif { $gaosRet } {
+			set msg [$gaosObj cget -lastError]
+			if {[string is space $msg]} {
+				set msg "no error message"
+			}
          errorBox "Error posting guide commands: GeMS reports \
-                                       			\"[$gaosObj cget -lastError]\""
+                                       			\"$msg\""
 			process IDLE
 			return
 		}
@@ -682,7 +686,7 @@ itcl::body ActiveOptics::disable {} {
    }
 	
 	if { [calparam cget -site] eq "CP" } {
-      if { ! $::Flags(disablegems) } {
+      if { ! $::Flags(ignoreao) } {
          if { [catch {$gaosObj disable} gaosRet ] } {
             errorBox "Error posting guide commands: $::errorInfo"
          } elseif { $gaosRet } {
@@ -888,14 +892,18 @@ global env
          }
       }
       ttgsloop {
-	 if {$env(TCC_TCSNAME) == "tc1" && [sa guideConfig get ttgsloop] == "No Value"} {
-	     return $ttgsloop
-	 }
-         if { [sa guideConfig get ttgsloop] == "1" } {
-            return 1
-         } else {
-            return 0
+         if {$env(TCC_TCSNAME) == "tc1" && [calparam cget -site] eq "MK" && [sa guideConfig get ttgsloop] == "No Value"} {
+            return $ttgsloop
          }
+			if { [calparam cget -site] eq "MK" } {
+            if { [sa guideConfig get ttgsloop] == "1" } {
+               return 1
+            } else {
+               return 0
+            }
+			} else {
+				return [$gaosObj state ttLoop]
+			}
       }
       sfoloop {
 	 if {$env(TCC_TCSNAME) == "tc1" && [sa guideConfig get sfoloop] == "No Value"} {

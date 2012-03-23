@@ -27,6 +27,7 @@ itcl::class TcsConfigControl {
       method ltcsQuerySidereal {}
       method ltcsQueryNonSidereal {}
       method ltcsQuery {ra dec epoch fov}
+      method onIgnoreAOChange {name1 name2 op}
       variable components {
          field pointOrig slewOptions chop gaos trackFrame instrument
       }
@@ -122,9 +123,6 @@ itcl::body TcsConfigControl::constructor {args} {
       rename -textfont -majorfont majorFont Font
       rename -labelfont -majorfont majorFont Font
    }
-   if { [calparam cget -site] eq "CP" && $::Flags(disablegems) } {
-      $itk_component(gaos) configure -state disabled
-   }
    itk_component add slewOptions {
       ComponentSelector $w.slewOptions -labeltext "Slew Options" \
             -component tcs.slewoptions \
@@ -219,11 +217,15 @@ itcl::body TcsConfigControl::constructor {args} {
 
 # Set the object description.
    set description configuration
+   
+   trace add variable ::Flags(ignoreao) write [itcl::code $this onIgnoreAOChange]
+   onIgnoreAOChange ::Flags ignoreao w
 
    eval itk_initialize $args
 }
 
 itcl::body TcsConfigControl::destructor {} {
+   trace remove variable ::Flags(ignoreao) write [itcl::code $this onIgnoreAOChange]
    trace vdelete ::Config(tcs.field,value) w [itcl::code $this newfield]
 }
 
@@ -348,7 +350,7 @@ itcl::body TcsConfigControl::apply {} {
 		}
 	}
 	
-   if {[calparam cget -site] eq "CP" && !$::Flags(disablegems) && ![string match "No AO" $::Config(tcs.gaos,value)]} {
+   if {[calparam cget -site] eq "CP" && !$::Flags(ignoreao) && ![string match "No AO" $::Config(tcs.gaos,value)]} {
       [::GemsSys::getSingleton] slewReset
    }
 
@@ -498,7 +500,11 @@ itcl::body TcsConfigControl::apply {} {
 		    cs aoGimOffsets set zoff 0
 		}
 	}
-
+# Zero the rotation correction
+	if { ![catch {cs zeroRotCorr info}] } {
+		cs zeroRotCorr set dummy 0
+	}
+	
 # this is a slew ... reset wrap controls
    $itk_component(azwrap) select 1
    $itk_component(rotwrap) select 1
@@ -598,7 +604,7 @@ itcl::body TcsConfigControl::apply {} {
 		}
 	}
 	
-	if {!$::Flags(disablegems) && [string match -nocase "*GEMS*" $guide] && [string match -nocase "*GSAOI*" $inst]} {
+	if {!$::Flags(ignoreao) && [string match -nocase "*GEMS*" $guide] && [string match -nocase "*GSAOI*" $inst]} {
 		foreach odgwtarget {odgw1target odgw2target odgw3target odgw4target} {
 			if {[$fieldObj cget -$odgwtarget] ne ""} {
 				set scienceWavel [::WavelengthNames::[$fieldObj cget -wavelength] cget -wavel]
@@ -857,4 +863,14 @@ itcl::body TcsConfigControl::applyP2M2Gains {instName wfs} {
    cs pwfs2m2Gain dir 0
    after 100
    cs pwfs2m2Gain dir 3
+}
+
+itcl::body TcsConfigControl::onIgnoreAOChange {name1 name2 op} {
+   if { [calparam cget -site ] eq "CP" } {
+      if { $::Flags(ignoreao) } {
+         $itk_component(gaos) configure -state disabled
+      } else {
+         $itk_component(gaos) configure -state normal
+      }
+   }
 }

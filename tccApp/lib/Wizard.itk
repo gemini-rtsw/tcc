@@ -162,6 +162,9 @@ itcl::body Wizard::next {} {
 }
 
 itcl::body Wizard::errorrep {msg} {
+	if {[string is space $msg]} {
+		set msg "no error message"
+	}
    tk_messageBox -icon error -parent $itk_interior -message \
          "Error posting commands: TCS reports \
          \"$msg\""
