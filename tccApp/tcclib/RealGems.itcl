@@ -76,6 +76,8 @@ public {
    method setODGWIdleRows { num {apply 1} }
    method getODGWIdleRows {}
    method setODGWDisplay { opt {apply 1} }
+   method getODGWDisplayRate {}
+   method setODGWDisplayRate { val {apply 1} }
 
 	#States
 	method getGemsActive {}
@@ -1158,6 +1160,7 @@ itcl::body RealGems::setODGWSize { size {apply 1}} {
    #Autoset idleRows and sciRows
    setODGWSciRows [calparam odgwGetSciRows $size] 0
    setODGWIdleRows [calparam odgwGetIdleRows $size] 0
+   setODGWDisplayRate [calparam odgwGetDisplayRate $size] 0
 
    set lastCmdSys applyC
    if { $apply } {
@@ -1198,6 +1201,18 @@ itcl::body RealGems::getODGWIdleRows {} {
 itcl::body RealGems::setODGWDisplay { opt {apply 1} } {
    cs gems::odgwSetup set odgwDisplay $opt
    $logger logmess "gems::odgwDisplay $opt"
+   set lastCmdSys applyC
+   if { $apply } {
+      catch {cs gems::odgwSetup post}
+   }
+}
+itcl::body RealGems::getODGWDisplayRate {} {
+   return [sa odgwsad get odgwDisplayRate value]
+}
+
+itcl::body RealGems::setODGWDisplayRate { val {apply 1}} {
+   cs gems::odgwSetup set odgwDisplayRate $val
+   $logger logmess "gems::setODGWDisplayRate $val"
    set lastCmdSys applyC
    if { $apply } {
       catch {cs gems::odgwSetup post}

@@ -85,6 +85,7 @@ itcl::class CalParam {
       
       method odgwGetSciRows { size }
       method odgwGetIdleRows { size }
+      method odgwGetDisplayRate { size }
    }
 }
 
@@ -179,5 +180,13 @@ itcl::body CalParam::odgwGetIdleRows { size } {
       return 16
    } else {
       return [lindex $odgwParamLUT($size) 1]
+   }
+}
+
+itcl::body CalParam::odgwGetDisplayRate { size } {
+   if { [array names odgwParamLUT -exact $size] == "" } {
+      return 16
+   } else {
+      return [lindex $odgwParamLUT($size) 2]
    }
 }
