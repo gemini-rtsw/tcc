@@ -749,7 +749,11 @@ itcl::body NumericDisplay::update {} {
 	if { $::env(GEMINI_SITE) eq "CP" } {
 		set r0 [sa gemssad get r0]
 		if { [string is double -strict $r0] } {
-			set seeing [expr "0.976 * 0.5e-6 / ( $r0 * 1e-2 ) * 206265.0"]
+         if { $r0 != 0.0 } {
+            set seeing [expr "0.976 * 0.5e-6 / ( $r0 * 1e-2 ) * 206265.0"]
+         } else { 
+            set seeing ""
+         }
 		} else {
 			set seeing $r0
 		}
