@@ -21,6 +21,7 @@ itcl::class NumericDisplay {
    constructor args {}
    destructor {}
    itk_option define -eng eng Eng 0 {}
+   itk_option define -dst dst DST 0 {}
    public {
       method update {}
    }
@@ -709,7 +710,7 @@ itcl::body NumericDisplay::update {} {
 # Time.
    $itk_component(utc) configure -text [tccTime utc]
    $itk_component(hst) configure -text [tccTime localtime -10]
-   if { $::CHILE_DAYLIGHT_SAVING } {
+   if { $::CHILE_DAYLIGHT_SAVING || $itk_option(-dst) == 1} {
       $itk_component(clt) configure -text [tccTime localtime -3] \
             -labeltext CDT:
    } else {
