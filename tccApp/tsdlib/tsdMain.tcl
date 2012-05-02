@@ -21,6 +21,7 @@ proc tsdMain args {
    #puts "args: $args"
    set eng 0
    set dst 0
+   set calfile [file join $::env(GEMINI_TOP) etc tcc calparams calparams.dat]
    foreach {arg val} [join $args] {
        #puts "$arg is set to $val"
        if {[string equal $arg "-eng"] } {
@@ -37,6 +38,31 @@ proc tsdMain args {
 	       set dst $val
            }
        }
+       if {[string equal $arg "-cal"] } {
+           if {[string length $val] > 0} {
+          set calfile $val
+           }
+       }
+   }
+   
+   
+   # Create the CalParam object.
+   CalParam calparam  -calFile $calfile
+   
+   set skycalc_path [calparam cget -skycalc_dir]
+   puts "using skycalc path: $skycalc_path"
+   
+   if { [catch {set fid [open "|$skycalc_path/skycalc < lib/skycalc_input_file" r]}]} {
+      puts "Unable to determine whether Chile is using daylight saving time \
+            - assuming not. Please specify skycalc dir in calparams.<site>."
+      set ::CHILE_DAYLIGHT_SAVING 0
+   } else {
+      set almanac [read $fid]
+      if { [string first CDT $almanac] == -1 } {
+         set ::CHILE_DAYLIGHT_SAVING 0
+      } else {
+         set ::CHILE_DAYLIGHT_SAVING 1
+      }
    }
 
 # Create the epics service.
