@@ -484,28 +484,40 @@ itcl::body OpticsView::update {} {
       }
    }
 
-# Configure the AO fold mirror
+# Configure the AO fold mirror.
    switch $itk_option(-aofoldhealth) {
        GOOD {
 	   set AoFoldBckCol green
        }
        WARNING {
-	   set AoFoldBckCol red
+	   set AoFoldBckCol yellow
        }
        BAD {
 	   set AoFoldBckCol red
        }
        default {
-	   set AoFoldBckCol ""
+	   set AoFoldBckCol blue
        }
    }
 
-   if { $itk_option(-aofold) == "IN" } {
-      $c itemconfigure AoFold -fill white
-      $c itemconfigure AoFoldBck -outline black -fill $AoFoldBckCol
-   } else {
-      $c itemconfigure AoFold -fill ""
-      $c itemconfigure AoFoldBck -outline "" -fill ""
+
+   switch $itk_option(-aofold) {
+       IN {		# 
+           $c itemconfigure AoFold -fill white
+           $c itemconfigure AoFoldBck -outline black -fill $AoFoldBckCol
+       }
+       MOVING {		# Used for blinking.
+           $c itemconfigure AoFold -fill ""
+           $c itemconfigure AoFoldBck -outline black -fill ""
+       }
+       OUT {		# Makes it disappear.
+           $c itemconfigure AoFold -fill ""
+           $c itemconfigure AoFoldBck -outline "" -fill ""
+       }
+       default {	# OUT and health is bad.
+           $c itemconfigure AoFold -fill white
+           $c itemconfigure AoFoldBck -outline black -fill $AoFoldBckCol
+       }
    }
 
 # Configure the science fold mirror

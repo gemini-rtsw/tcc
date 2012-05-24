@@ -276,6 +276,50 @@ itcl::body GraphicDisplay::update {} {
       $itk_component(opticsview) configure -pcsstate OFF
    }
 
+# Get the ao fold health from an, "OR" of three process variables. Make sure worst case wins.
+   set aohealth "unknown"
+   if { [sa agssad get aoHealth value] == "GOOD" &&  [sa agssad get pa3aoHealth value] == "GOOD" && [sa agssad get rt34Health value] == "GOOD" } {
+        set aohealth "GOOD"
+   }
+   if { [sa agssad get aoHealth value] == "WARNING" ||  [sa agssad get pa3aoHealth value] == "WARNING" || [sa agssad get rt34Health value] == "WARNING" } {
+        set aohealth "WARNING"
+   }
+   if { [sa agssad get aoHealth value] == "BAD" ||  [sa agssad get pa3aoHealth value] == "BAD" || [sa agssad get rt34Health value] == "BAD" } {
+        set aohealth "BAD"
+   }
+   $itk_component(opticsview) configure -aofoldhealth $aohealth
+
+
+# Determine what to show.
+#    If aofold is IN show it's health
+#    If aofold is moving blink it's health
+#    If aofold is OUT show it's health if it's not good.
+
+   switch [sa agssad get aoName] {
+       IN {
+           $itk_component(opticsview) configure -aofold "IN"
+       }
+       OUT {
+           if { $aohealth == "GOOD" } {
+               $itk_component(opticsview) configure -aofold "OUT"
+           } else {
+               if { $flash } {
+                   $itk_component(opticsview) configure -aofold "MOVING"
+               } else {
+                   $itk_component(opticsview) configure -aofold "unknown"
+               }
+           }
+       }
+       default {		# Moving
+           if { $flash } {
+               $itk_component(opticsview) configure -aofold "MOVING"
+           } else {
+               $itk_component(opticsview) configure -aofold "unknown"
+           }
+       }
+   }
+
+
 # Configure the science fold position.
    set sfmoving 0
    set lin [sadVal agssad sfLin 1000.0]
@@ -385,8 +429,6 @@ itcl::body GraphicDisplay::update {} {
    $itk_component(opticsview) configure \
          -deployablebaffle [sa m2ssad get deployBafflePos value] \
          -centralbaffle [sa m2ssad get centralBafflePos value] \
-         -aofold [sa agssad get aoName value] \
-         -aofoldhealth [sa agssad get aoHealth value] \
          -scfoldhealth [sa agssad get sfHealth value] \
          -hrwfshealth [sa agssad get hwHealth value] \
          -hrwfs [sa agssad get hwName value] \
