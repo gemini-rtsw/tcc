@@ -295,7 +295,13 @@ itcl::body GraphicDisplay::update {} {
 #    If aofold is moving blink it's health
 #    If aofold is OUT show it's health if it's not good.
 
-   switch [sa agssad get aoName] {
+   if  { [ sa agssad get aoInPosition ] } {
+      set aoPlace [sa agssad get aoName]
+   } else {
+      set aoPlace "unknown"
+   }
+
+   switch $aoPlace {
        IN {
            $itk_component(opticsview) configure -aofold "IN"
        }
