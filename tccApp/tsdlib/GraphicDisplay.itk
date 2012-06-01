@@ -276,38 +276,41 @@ itcl::body GraphicDisplay::update {} {
       $itk_component(opticsview) configure -pcsstate OFF
    }
 
-# Get the ao fold health from an, "OR" of three process variables. Make sure worst case wins.
-   set aohealth "unknown"
-   if { [sa agssad get aoHealth value] == "GOOD" &&  [sa agssad get pa3aoHealth value] == "GOOD" && [sa agssad get rt34Health value] == "GOOD" } {
-        set aohealth "GOOD"
-   }
-   if { [sa agssad get aoHealth value] == "WARNING" ||  [sa agssad get pa3aoHealth value] == "WARNING" || [sa agssad get rt34Health value] == "WARNING" } {
-        set aohealth "WARNING"
-   }
-   if { [sa agssad get aoHealth value] == "BAD" ||  [sa agssad get pa3aoHealth value] == "BAD" || [sa agssad get rt34Health value] == "BAD" } {
-        set aohealth "BAD"
-   }
-   $itk_component(opticsview) configure -aofoldhealth $aohealth
 
 
-# Determine what to show.
-#    If aofold is IN show it's health
-#    If aofold is moving blink it's health
-#    If aofold is OUT show it's health if it's not good.
 
-   if  { [ sa agssad get aoInPosition ] } {
-      set aoPlace [sa agssad get aoName]
+
+# Ao fold animation.
+
+   if { [sa agssad get pa3aoBusy] == "IDLE" && [ sa agssad get pa3aoInPosition ] } {
+       set aoIdle 1
+   } else {
+       set aoIdle 0
+   }
+
+   if { $aoIdle && [ sa agssad get pa3aoName] == "undefined" } {
+       puts "AO Health bad because the aofold is idle in an undefined position."
+       set aoHealth "BAD"
+   } else {
+       set aoHealth [ sa agssad get pa3aoHealth]
+   }
+
+   if  { $aoIdle } {
+      set aoPlace [sa agssad get pa3aoName]
    } else {
       set aoPlace "unknown"
    }
+
+   $itk_component(opticsview) configure -aofoldhealth $aoHealth
 
    switch $aoPlace {
        IN {
            $itk_component(opticsview) configure -aofold "IN"
        }
+       "datum-pos." -
        "park-pos." -
        OUT {
-           if { $aohealth == "GOOD" } {
+           if { $aoHealth == "GOOD" } {
                $itk_component(opticsview) configure -aofold "OUT"
            } else {
                if { $flash } {
