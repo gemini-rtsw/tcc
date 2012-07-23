@@ -311,6 +311,21 @@ itcl::body TcsConfigControl::apply {} {
 	}
     }
 
+# Turn off nod/chop states, must now happen before configure for AO
+   #apply guide config (nod states) before point origin
+   set fieldObj ${::Config(tcs.field,namespace)}::${::Config(tcs.field,value)}
+   set guide "No guiding"
+   #puts "guide: $guide"
+   set guideObj ::GuideNames::$guide
+   #puts "guideObj: $guideObj"
+   $guideObj apply tcs.field.guide
+   if {[calparam cget -site] eq "CP"} {
+      $guideObj disableGems g1
+      $guideObj disableGems g2
+      $guideObj disableGems g3
+      $guideObj disableGems g4
+   }
+
 # If this is an AO target and we're using the Laser, check for a collision
 
    set slewoptions $::Config(tcs.slewoptions,value)
@@ -349,21 +364,6 @@ itcl::body TcsConfigControl::apply {} {
 	
    if {[calparam cget -site] eq "CP" && !$::Flags(ignoreao) && ![string match "No AO" $::Config(tcs.gaos,value)]} {
       [::GemsSys::getSingleton] slewReset
-   }
-
-# Try setting Guide mode (chop states) first here to see if the P2>P2 MAx prob goes away
-   #apply guide config (nod states) before point origin
-   set fieldObj ${::Config(tcs.field,namespace)}::${::Config(tcs.field,value)}
-   set guide "No guiding"
-   #puts "guide: $guide"
-   set guideObj ::GuideNames::$guide
-   #puts "guideObj: $guideObj"
-   $guideObj apply tcs.field.guide
-   if {[calparam cget -site] eq "CP"} {
-      $guideObj disableGems g1
-      $guideObj disableGems g2
-      $guideObj disableGems g3
-      $guideObj disableGems g4
    }
 
 # Set OIWFS mode in the TCS
