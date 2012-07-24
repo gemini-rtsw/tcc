@@ -487,6 +487,9 @@ itcl::body ObserveControl::wfsql {} {
 
 # Start the selected WFS with the quick-look tool.
    $wfs configure -quicklook 1
+   if { [$wfs cget -mode] eq "sky" } {
+      $wfs configure -mode seq
+   }
    $wfs start -1
 }
 
