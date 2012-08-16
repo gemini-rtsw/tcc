@@ -59,29 +59,6 @@ proc tsdMain args {
          }
       }
    }
-#   foreach {arg val} [join $args] {
-#       #puts "$arg is set to $val"
-#       if {[string equal $arg "-eng"] } {
-#           if {[string length $val] < 1} {
-#	       set eng 0
-#           } else {
-#	       set eng $val
-#           }
-#       }
-#       if {[string equal $arg "-dst"] } {
-#           if {[string length $val] < 1} {
-#	       set dst 0
-#           } else {
-#	       set dst $val
-#           }
-#       }
-#       if {[string equal $arg "-cal"] } {
-#           if {[string length $val] > 0} {
-#          set calfile $val
-#           }
-#       }
-#   }
-   
    
    # Create the CalParam object.
    CalParam calparam  -calFile $calfile
