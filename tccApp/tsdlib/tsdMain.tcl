@@ -22,28 +22,65 @@ proc tsdMain args {
    set eng 0
    set dst 0
    set calfile [file join $::env(GEMINI_TOP) etc tcc calparams calparams.dat]
-   foreach {arg val} [join $args] {
-       #puts "$arg is set to $val"
-       if {[string equal $arg "-eng"] } {
-           if {[string length $val] < 1} {
-	       set eng 0
-           } else {
-	       set eng $val
-           }
-       }
-       if {[string equal $arg "-dst"] } {
-           if {[string length $val] < 1} {
-	       set dst 0
-           } else {
-	       set dst $val
-           }
-       }
-       if {[string equal $arg "-cal"] } {
-           if {[string length $val] > 0} {
-          set calfile $val
-           }
-       }
+   
+   set args [ join $args ]
+   
+   for { set i 0 } { $i < [llength $args] } { incr i } {
+      set arg [lindex $args $i]
+      switch -- $arg {
+         -eng {
+            set eng 1
+            if { [ expr "$i + 1" ] < [ llength $args ] } {
+               set val [lindex $args [expr "$i + 1" ] ]
+               if { [ string is integer -strict $val ]} {
+                  set eng $val
+                  incr i
+               }
+            }
+         }
+         -dst {
+            set dst 1
+            if { [ expr "$i + 1" ] < [ llength $args ] } {
+               set val [lindex $args [expr "$i + 1" ] ]
+               if { [ string is integer -strict $val ]} {
+                  set dst $val
+                  incr i
+               }
+            }
+         }
+         -cal {
+            if { [ expr "$i + 1" ] < [ llength $args ] } {
+               set val [lindex $args [expr "$i + 1" ] ]
+               if { [string length $val] > 0 && [ string index $val 0 ] ne "-" } {
+                  set calfile $val
+                  incr i
+               }
+            }
+         }
+      }
    }
+#   foreach {arg val} [join $args] {
+#       #puts "$arg is set to $val"
+#       if {[string equal $arg "-eng"] } {
+#           if {[string length $val] < 1} {
+#	       set eng 0
+#           } else {
+#	       set eng $val
+#           }
+#       }
+#       if {[string equal $arg "-dst"] } {
+#           if {[string length $val] < 1} {
+#	       set dst 0
+#           } else {
+#	       set dst $val
+#           }
+#       }
+#       if {[string equal $arg "-cal"] } {
+#           if {[string length $val] > 0} {
+#          set calfile $val
+#           }
+#       }
+#   }
    
    
    # Create the CalParam object.
