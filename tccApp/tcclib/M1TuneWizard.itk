@@ -54,7 +54,13 @@ itcl::body M1TuneWizard::constructor {args} {
    itk_component add ndfilt {
       iwidgets::optionmenu $w.ndfilt -labeltext "neutral density filter"
    }
-   $itk_component(ndfilt) insert end nd100 nd1000 filt04 filt08 open
+
+   if {[calparam cget -site] eq "CP"} {
+       $itk_component(nd) insert end open ND3 ND2 ND1 filt06 filt08
+   } else {
+       $itk_component(nd) insert end open nd100 nd1000 filt04 filt06 filt08
+   }
+
    itk_component add test {
       button $w.test -text "Take test exposure" \
             -command [itcl::code $this test]
