@@ -113,7 +113,7 @@ global env
 	   epics cs aoCentreWfs
 	   epics cs aoCorrect
 	   epics cs aoOiwfsSource
-      epics cs aoPwfs1Source
+           epics cs aoLgsP1Source
 	   epics cs aoGimOffsets
 	   epics cs aongsNDFilter
 	   epics cs aolgsNDFilter
