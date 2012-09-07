@@ -1089,13 +1089,18 @@ itcl::body Field::setSwapTarget tagtarget {
 	    set swaptarget $tagtarget
 	    # AWE when using AO, allow closing the loop before swapping back ... 
 	    # This meanss that we have to leave the chop/nod states on.
-	    #puts "in setSwapTarget, have guide: $guide"
-	    if {[string match "*AO*" $guide]} {
+            # AWE: in LGS+P1 mode, we want to leave AO guiding, but not P1 (nod/chop states should be off for both)
+	    logactions logmess "in setSwapTarget, have guide: $guide"
+	    if {[string match "AO-P1" $guide]} {
+		#set swapguide $guide
+		set swapguide "AO-LGS"
+	    } elseif {[string match "*AO*" $guide]} {
 		set swapguide $guide
+		#set swapguide "AO"
 	    } else {
 		set swapguide "No guiding"
 	    }
-	    #puts "in setSwapTarget, set swapguide: $swapguide"
+	    logactions logmess "in setSwapTarget, set swapguide: $swapguide"
 
 			if {$env(TCC_TCSNAME) == "tcs"} {
 				 set guide_wl [.observePanel.frame.control.botframe.wfsconfig getValue HrwfsColFilt]
