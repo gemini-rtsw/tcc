@@ -52,6 +52,7 @@ itcl::class FieldControl {
       variable curr_wavelength ""
       variable new_wavelength ""
 		method onSelectTarget {target} {}
+
 		method deleteTarget {taggedTarget} {}
 		method onDeleteTarget {} {}
 		method addNewTarget {} {}
@@ -911,13 +912,15 @@ itcl::body FieldControl::onSwapTarget {} {
 		#set light path
 		set swaptarget [$::Config(tcs.field,namespace)::$::Config(tcs.field,value) getSwapTarget]
 		if { [string is space $swaptarget]} {
+
+
+
 			set guide [$::Config(tcs.field,namespace)::$::Config(tcs.field,value) cget -guide]
 			if {$guide ne "" } {
 				switch $guide {
-					"No guiding" -
+				   "No guiding" -
 				   "P1-P2" -
 				   "P1-OI" -
-				   "AO-P1" -
 				   "P1" -
 				   "P2-OI" -
 				   "P2" -
@@ -925,15 +928,16 @@ itcl::body FieldControl::onSwapTarget {} {
 					   set lpath "Sky>Instr"
 					}
 				   "AO-OI" -
+				   "AO-P1" -
 				   "AO" -
-					"GeMS" -
-					"GeMS-OI" -
-               "GeMS-P1" {
+				   "GeMS" -
+				   "GeMS-OI" -
+               			   "GeMS-P1" {
 					   set lpath "Sky>AO>Inst"
 					}
-               default {
-                  set lpath "Sky>Instr"
-               }
+               			    default {
+                  			   set lpath "Sky>Instr"
+               				}
 				}
 				if [winfo exists .observePanel] {
 				    ::.observePanel.frame.control.botframe.mirrors.lpath select $lpath
@@ -941,12 +945,25 @@ itcl::body FieldControl::onSwapTarget {} {
 			}		
 		} else {
 			set tag [$swaptarget cget -tagPrefix]
+			#AWE: if swapping a PWFS1 star in LGS+P1 mode, we want Sky>AO>AC/HR
+			set guide [$::Config(tcs.field,namespace)::$::Config(tcs.field,value) cget -guide]
 			switch -regexp $tag {
 				"CWFS[1-3]" -
 				"ODGW[1-4]" -
-			   "AOWFS" {
-			       set lpath "Sky>AO>AC/HR"
-			   }
+			        "AOWFS" {
+					set lpath "Sky>AO>AC/HR"
+					}
+				"PWFS1" {
+					  if {[string match "*AO*" $guide]} {
+					    set lpath "Sky>AO>AC/HR"
+					    #AWE: not sure if this is the best place, need to shortCircuit the target filter
+					    #AWE: only get here when we're swapping to a P1 star and using Altair
+					    #cs filter1 set shortCircuit Closed
+					    #logger command filter1
+					  } else {
+					    set lpath "Sky>AC/HR"
+					  }
+					}
 			   default {
 			       set lpath "Sky>AC/HR"
 			   }
