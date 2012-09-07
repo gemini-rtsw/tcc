@@ -561,26 +561,49 @@ itcl::body TcsConfigControl::apply {} {
 		if {[string match "*NIRI*" $inst] || [string match "*niri*" $instname]} {
 		   set instr NIRI
 		   set port [sa agssad get portNiri]
-		   #set the deocus offset
+		   #set the deocus offset for Sfo or P1
 		   if { ![catch {cs aoSFOdefocus info}] } {
-				cs aoSFOdefocus set offset [calparam cget -niri_sfo_defocus]
+			if {[string match "*P1*" $guide]} {
+		 	    cs aoSFOdefocus set offset [calparam cget -niri_p1_defocus]
+			} else {
+			    cs aoSFOdefocus set offset [calparam cget -niri_sfo_defocus]
+                        }
 		   }
 		} elseif {[string match "*NIFS*" $inst]} {
 		   set instr NIFS
 		   set port [sa agssad get portNifs]
-		   #set the deocus offset
+		   #set the deocus offset for Sfo or P1
 		   if { ![catch {cs aoSFOdefocus info}] } {
-				cs aoSFOdefocus set offset [calparam cget -nifs_sfo_defocus]
+			if {[string match "*P1*" $guide]} {
+		 	    cs aoSFOdefocus set offset [calparam cget -nifs_p1_defocus]
+			} else {
+			    cs aoSFOdefocus set offset [calparam cget -nifs_sfo_defocus]
+                        }
 		   }
 		} elseif {[string match "*GNIRS*" $inst]} {
-	      set instr GNIRS
-	      set port [sa agssad get portGnirs]
-	      #set the defocus offset
-	      if { ![catch {cs aoSFOdefocus info}] } {
-	         cs aoSFOdefocus set offset [calparam cget -gnirs_sfo_defocus]
-	      }
+	      	   set instr GNIRS
+	      	   set port [sa agssad get portGnirs]
+	      	   #set the defocus offset for Sfo or P1
+	      	   if { ![catch {cs aoSFOdefocus info}] } {
+			if {[string match "*P1*" $guide]} {
+		 	    cs aoSFOdefocus set offset [calparam cget -gnirs_p1_defocus]
+			} else {
+			    cs aoSFOdefocus set offset [calparam cget -gnirs_sfo_defocus]
+                        }
+	      	   }
+		} elseif {[string match "*GMOS*" $inst]} {
+	      	   set instr GMOS
+	      	   set port [sa agssad get portGmos]
+	      	   #set the defocus offset for Sfo or P1
+	      	   if { ![catch {cs aoSFOdefocus info}] } {
+			if {[string match "*P1*" $guide]} {
+		 	    cs aoSFOdefocus set offset [calparam cget -gmos_p1_defocus]
+			} else {
+			    cs aoSFOdefocus set offset [calparam cget -gmos_sfo_defocus]
+                        }
+	      	   }
 		}
-      if {![string is integer -strict $port ] || $port == 0} {
+	        if {![string is integer -strict $port ] || $port == 0} {
 		   tk_messageBox -icon error \
 				-message "The AGS has specified an invalid port ($port) for $inst"
 		   return
