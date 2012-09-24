@@ -1114,9 +1114,15 @@ itcl::body Field::setSwapTarget tagtarget {
 				"R-red2"  { set swapwavelength "Acq Cam R" }
 				"I-red3"  { set swapwavelength "Acq Cam I" }
 				"neutral" { set swapwavelength "Acq Cam neutral" }
-				default   { 
-					tk_messageBox -icon warning -parent $itk_interior \
-						-message "No guide wavelength found ... using 0.5 (Acq Cam neutral)"
+				default   {
+               set focus [focus]
+               if { [winfo exists $focus] } {
+                  tk_messageBox -icon warning -parent $focus \
+                  -message "Cannot determine wavelenght for current HRWFS/AC filter \"$guide_wl\"\nUsing 0.5 (Acq Cam neutral)"
+               } else {
+                  tk_messageBox -icon warning \
+                  -message "Cannot determine wavelenght for current HRWFS/AC filter \"$guide_wl\"\nUsing 0.5 (Acq Cam neutral)"
+               }
 					set swapwavelength "Acq Cam neutral"
 				}
 			}
