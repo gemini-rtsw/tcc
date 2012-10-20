@@ -292,7 +292,10 @@ itcl::body GemsAO::startTTGS {} {
 }
 
 itcl::body GemsAO::startODGW {} {
-   
+	if { ! [string match "*GSAOI*" $::Config(tcs.instrument,value)] } {
+		return 0
+	}
+
    set odgwActive [state odgwActive]
 
    set idList ""
@@ -376,6 +379,10 @@ itcl::body GemsAO::stopTTGS {} {
 }
 
 itcl::body GemsAO::stopODGW {} {
+	if { ! [string match "*GSAOI*" $::Config(tcs.instrument,value)] } {
+		return 0
+	}
+	
 # If only some ODGW are stopped, they are stopped in startODGW.
 # They are stopped here only if all are to be inactive.
    for {set i 1} {$i <= 4} { incr i} {
@@ -448,7 +455,11 @@ itcl::body GemsAO::disableTTGS {} {
    return 0
 }
 
-itcl::body GemsAO::disableODGW {} {   
+itcl::body GemsAO::disableODGW {} {
+	if { ! [string match "*GSAOI*" $::Config(tcs.instrument,value)] } {
+		return 0
+	}
+
    if { [state odgwActive] } {
       $sys stopODGW {}
       if { [waitForCmdComplete 10000 10000 {expr ![state odgwActive]} "ODGW to stop"] } {
