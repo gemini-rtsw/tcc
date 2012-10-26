@@ -226,8 +226,13 @@ itcl::body AoControl::aoenable {} {
 }
 
 itcl::body AoControl::preparecm {apply} {
-   cs aoPrepareCm set x [sa tcssad get aoDemandx]
-   cs aoPrepareCm set y [sa tcssad get aoDemandy]
+   if { [AO state useLwfs] || [string match "*LGS*" $::Config(tcs.gaos,value)] } {
+       cs aoPrepareCm set x 0.0
+       cs aoPrepareCm set y 0.0
+   } else {
+       cs aoPrepareCm set x [sa tcssad get aoDemandx]
+       cs aoPrepareCm set y [sa tcssad get aoDemandy]
+   }
    logger command aoPrepareCm
    if { $apply } {
       if { [catch {cs tcsApply post} msg] } {
