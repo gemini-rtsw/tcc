@@ -102,6 +102,7 @@ global env
 	   epics cs aoFlex
 	   epics cs aoSFOdefocus
 	   epics cs aoMoveAdc
+	   epics cs aoMoveGim
 	   epics cs aoFollow
 	   epics cs aoExitShutter
 	   epics cs aoEntShutter
