@@ -912,9 +912,6 @@ itcl::body FieldControl::onSwapTarget {} {
 		#set light path
 		set swaptarget [$::Config(tcs.field,namespace)::$::Config(tcs.field,value) getSwapTarget]
 		if { [string is space $swaptarget]} {
-
-
-
 			set guide [$::Config(tcs.field,namespace)::$::Config(tcs.field,value) cget -guide]
 			if {$guide ne "" } {
 				switch $guide {
@@ -945,7 +942,7 @@ itcl::body FieldControl::onSwapTarget {} {
 			}		
 		} else {
 			set tag [$swaptarget cget -tagPrefix]
-			#AWE: if swapping a PWFS1 star in LGS+P1 mode, we want Sky>AO>AC/HR
+			#AWE: if swapping a PWFS1 star in LGS+P1 mode, we want Sky>AC/HR
 			set guide [$::Config(tcs.field,namespace)::$::Config(tcs.field,value) cget -guide]
 			switch -regexp $tag {
 				"CWFS[1-3]" -
@@ -954,17 +951,17 @@ itcl::body FieldControl::onSwapTarget {} {
 					set lpath "Sky>AO>AC/HR"
 					}
 				"PWFS1" {
-					  if {[string match "*AO*" $guide]} {
-					    set lpath "Sky>AO>AC/HR"
-					    #AWE: not sure if this is the best place, need to shortCircuit the target filter
-					    #AWE: only get here when we're swapping to a P1 star and using Altair
-					    #cs filter1 set shortCircuit Closed
-					    #logger command filter1
-					  } else {
-					    set lpath "Sky>AC/HR"
-					  }
-					}
-			   default {
+				    if {[string match "*AO*" $guide] && [string match "*LGS*" $::Config(tcs.gaos,value)]} {
+					#AWE: not sure if this is the best place, need to shortCircuit the target filter
+					#AWE: only get here when we're swapping to a P1 star and guiding with Altair
+					#     but, the new policy is to not swap while closed loop on the laser.
+					#     so, I'll shortCircuit it just in case this mode is ever used closed loop.
+					cs filter1 set shortCircuit Closed
+					logger command filter1
+				    }
+				    set lpath "Sky>AC/HR"
+				}
+			    default {
 			       set lpath "Sky>AC/HR"
 			   }
 			}
