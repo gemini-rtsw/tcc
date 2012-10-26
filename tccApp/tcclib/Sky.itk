@@ -143,7 +143,8 @@ itcl::body Sky::apply {} {
    }
 
 # Offset the telescope.
-   if { [string equal -nocase Open $filter] } {
+# AWE: After a TCS reboot, the target filter could be blank and we still want to shortCircuit here.
+   if { ![string equal -nocase Closed $filter] } {
       cs filter1 set shortCircuit Closed
       logger command filter1
    }
