@@ -260,6 +260,13 @@ itcl::body TcsConfigControl::apply {} {
 		return
 	}
 
+# If we are leaving LGS+P1 mode active and slewing to a non LGS+P1 configuration, turn it off in the TCS now
+
+	if { [AO state lgsp1source] && !([string match "*LGS*" $::Config(tcs.gaos,value)] && [string match "*P1*" [$fieldObj cget -guide]])} {
+	    cs aoLgsP1Source set state OFF
+	    logger command aoLgsP1Source
+	}
+
 # If we're using NICI, send the Star Magnitude to NICI
    set inst $::Config(tcs.instrument,value)
    set oiName [sa agssad get oiwfsName]
@@ -430,7 +437,7 @@ itcl::body TcsConfigControl::apply {} {
 		} else {
 		   #puts "no OIWFS"
 		   cs oiwfsSelect set oiwfs None
-			cs oiwfsSelect set output WFS
+		   cs oiwfsSelect set output WFS
 		   logger command oiwfsSelect
 		}
 	}
@@ -548,9 +555,19 @@ itcl::body TcsConfigControl::apply {} {
 		set ::Config(tcs.field.guide.aowfswavelength,value) "GAOS"
 	#	pwfs filter pwfs2 "AOWFS"
 		# set the NCPA and Flexure config file names for altair
-		if {[AO state useLwfs]} {
+		if {[string match "*LGS*" $::Config(tcs.gaos,value)]} {
 		    logactions logmess "using LGS"
 		    set wfs Lgs
+		    # Move the gimbals to (0,0,0)
+		    logactions logmess "moving the gimbals to 0,0,0"
+		    cs aoMoveGim set x 0.0
+		    cs aoMoveGim set y 0.0
+		    cs aoMoveGim set z 0.0
+		    logger command aoMoveGim
+		    if { [catch {cs tcsApply post} msg] } {
+			tk_messageBox -icon error -message $msg
+			return
+		    }
 		} else {
 		    set wfs Ngs
 		}
