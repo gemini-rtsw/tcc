@@ -36,8 +36,9 @@ itcl::class ActiveOptics {
       variable aoguide ""
       variable oiguide ""
       variable comacorr 0
+      variable m1corr 0
       variable m1source ""
-      variable m1filename ""
+      variable m1filename "AO.dat"
 		variable crsource ""
       variable probefrom ""
       variable probeto ""
@@ -50,6 +51,8 @@ itcl::class ActiveOptics {
       variable pwfs1Active 0
       variable pwfs2Expose 0.005
       variable pwfs2Active 0
+      variable hrwfsExpose 1
+      variable hrwfsActive 0
       variable oiwfsExpose 0.005
       variable oiwfsActive 0
       variable oiao 0
@@ -462,9 +465,32 @@ puts "beam is $beam gonna wait for 1 second"
    if { [state coma] &&  ! $comacorr } {
       cs m2GuideMode set coma Off
       logger command m2GuideMode
-   } elseif {  ! [state coma] &&  $comacorr } {
-			cs m2GuideMode set coma On
-			logger command m2GuideMode
+   } elseif { $comacorr } {
+      cs m1GuideConfig set weighting none
+      cs m1GuideConfig set frames 1
+      switch $m1source {
+         PWFS1 {
+             cs m1GuideConfig set source PWFS1
+         }
+         PWFS2 {
+             cs m1GuideConfig set source PWFS2
+         }
+         OIWFS {
+             cs m1GuideConfig set source OIWFS
+         }
+         GAOS {
+             cs m1GuideConfig set source GAOS
+         }
+         HRWFS {
+             cs m1GuideConfig set source HRWFS
+             cs m1GuideConfig set filename $m1filename
+         }
+      }
+      logger command m1GuideConfig
+      if { ! [state coma] } {
+   		cs m2GuideMode set coma On
+   		logger command m2GuideMode
+      }
    }
 
 # Mount guide mode.
@@ -507,10 +533,10 @@ puts "beam is $beam gonna wait for 1 second"
 	}
 	
 # M1 figure.
-   if { [state m1] && $m1source eq "" } {
+   if { [state m1] && ! $m1corr } {
       cs m1Guide set mode Off
       logger command m1Guide
-   } elseif { $m1source ne "" } {
+   } elseif { $m1corr } {
       cs m1Guide set mode On
       cs m1GuideConfig set weighting none
       cs m1GuideConfig set frames 1
@@ -614,6 +640,28 @@ puts "beam is $beam gonna wait for 1 second"
 			$wfsobj start -1
 		}
 	}
+   
+   # Take care of HRWFS
+   if { [state hrwfs] && ! $hrwfsActive } {
+      hrwfs stop
+   }
+   if { $hrwfsActive } { 
+      #Make sure the lens is set
+      if { [sa hrwfs::currStatus get lens] ne "HR" } {
+         hrwfs lenssel HR
+      }
+#      if { $guide eq "" } {
+#         set mode seqnz
+#      } else {
+#         set mode seq
+#      }
+      if { ! [state hrwfs ] } {
+         hrwfs window full
+         hrwfs expose $hrwfsExpose
+         hrwfs output DHS
+         hrwfs start -1
+      }
+   }
 
 # Post the commands.
    if { [catch {cs tcsApply post} msg] } {
@@ -795,6 +843,13 @@ global env
             return 0
          }
       }
+      hrwfs {
+         if { [sa hrwfs::observeC get observe value] == "BUSY" } {
+            return 1
+         } else {
+            return 0
+         }
+      }
       oiao {
 	 # AWE for now, will assume oiao mode when NICI is the instrument
 	 set inst $::Config(tcs.instrument,value)
@@ -929,7 +984,6 @@ global env
       oiblend {
 	      if {[sa guideConfig get oiblend] == "1" } {
             return 1
-         } else {
             return 0
          }
       }

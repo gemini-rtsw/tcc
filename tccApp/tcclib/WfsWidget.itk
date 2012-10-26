@@ -19,7 +19,7 @@ public {
 	itk_option define -label label Label "" { 
 		$itk_component(onoff) configure -text $itk_option(-label)
 	}
-	itk_option define -explabel expLabel ExpLabel "exp(s)" {
+	itk_option define -explabel expLabel ExpLabel "Sec/Hz" {
 		$itk_component(exp) configure -labeltext $itk_option(-explabel) }
 	itk_option define -expvalues expValues ExpValues \
 		[list 1.0 0.5 0.1 0.05 0.02 0.01 0.005] {
@@ -78,7 +78,7 @@ itcl::body WfsWidget::constructor {args} {
 	
 	set w $itk_component(frame) 
 	itk_component add onoff {
-		ToggleButton $w.onoff -pushedbackground Green -width 7 -pady 0
+		ToggleButton $w.onoff -pushedbackground Green -width 5 -pady 0
 	} { ignore -width -pady -padx}
 	itk_component add exp {
 		iwidgets::combobox $itk_interior.mainframe.exp -arrowrelief flat -width 5
@@ -88,7 +88,7 @@ itcl::body WfsWidget::constructor {args} {
 	pack $itk_component(mainframe) -expand yes -fill both
 	pack $itk_component(onoff) -pady 1 -padx 1
 	pack $itk_component(frame) -side top -anchor n -pady 1 -padx 1 
-	pack $itk_component(exp) -side top -anchor w -pady 1 -padx 1
+	pack $itk_component(exp) -side top -anchor s -pady 1 -padx 1
 
 	eval itk_initialize $args
 }

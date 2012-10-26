@@ -38,8 +38,6 @@ private {
 }
 
 itk::usual AltairWidget {
-#	keep -background -cursor -foreground -highlightcolor \
-#		-highlightthickness
 	keep -background -cursor
 }
 
@@ -58,50 +56,69 @@ itcl::body AltairWidget::constructor {args} {
 	$itk_component(gaos) configure -expvalues [list 0.02 0.01 0.005 0.002 0.001]
 	
 	pack $itk_component(gaos) -side top -anchor n
+   
+   itk_component add buttonfrm1 {
+      frame $w.buttonfrm1 -background white
+   } {
+      usual
+      ignore -background
+   }
+   itk_component add buttonfrm2 {
+      frame $w.buttonfrm2 -background white
+   } {
+      usual
+      ignore -background
+   }
 
 	# TTGS loop closed
 	itk_component add ttao {
-		ToggleButton $w.ttao -text STRAP -pushedbackground Green -pady 0 -width 7 \
+		ToggleButton $w.buttonfrm2.ttao -text STRAP -pushedbackground Green -pady 0 -width 6 \
 				-command [itcl::code $this ttgsloop]
 	} {
 		usual
 		ignore -width
 	}
 	#$w create window 2 48 -width 60 -window $w.ttao -tags gaos -anchor nw
-	pack $itk_component(ttao) -side top -anchor nw
+	#pack $itk_component(ttao) -side top -anchor nw
 
 	# SFO loop closed
 	itk_component add sfao {
-		ToggleButton $w.sfao -text FOCUS -pushedbackground Green -pady 0  -width 7 \
+		ToggleButton $w.buttonfrm1.sfao -text FOCUS -pushedbackground Green -pady 0  -width 6 \
 				-command [itcl::code $this sfoloop]
 	} {
 		usual
 		ignore -width
 	}
 	#$w create window 2 69 -width 60 -window $w.sfao -tags gaos -anchor nw
-	pack $itk_component(sfao) -side top -anchor nw
+	#pack $itk_component(sfao) -side top -anchor nw
 
 	# P1 Blending
 	itk_component add p1ao {
-		ToggleButton $w.p1ao -text PWFS1 -pushedbackground Green -pady 0  -width 7 \
+		ToggleButton $w.buttonfrm1.p1ao -text PWFS1 -pushedbackground Green -pady 0  -width 7 \
 				-command [itcl::code $this lgsp1source]
 	} {
 		usual
 		ignore -width
 	}
 	#$w create window 2 90 -width 60 -window $w.oiao -tags gaos -anchor nw
-	pack $itk_component(p1ao) -side top -anchor nw
+	#pack $itk_component(p1ao) -side top -anchor nw
 
 	# OI Blending
 	itk_component add oiao {
-		ToggleButton $w.oiao -text OIWFS -pushedbackground Green -pady 0  -width 7 \
+		ToggleButton $w.buttonfrm2.oiao -text OIWFS -pushedbackground Green -pady 0  -width 7 \
 				-command [itcl::code $this oiblend]
 	} {
 		usual
 		ignore -width
 	}
-	pack $itk_component(oiao) -side top -anchor nw
-
+	#pack $itk_component(oiao) -side top -anchor nw
+   pack $itk_component(p1ao) -side left
+   pack $itk_component(sfao) -side right
+   pack $itk_component(oiao) -side left
+   pack $itk_component(ttao) -side right
+   pack $itk_component(buttonfrm1) -side top -expand yes -fill x
+   pack $itk_component(buttonfrm2) -side top -expand yes -fill x
+         
 	itk_component add wfsframe {
 		frame $w.wfsframe -background white
 	} {
@@ -188,10 +205,14 @@ itcl::body AltairWidget::recolor {} {
 	if { [$itk_option(-aocontroller) state gaos] } {
 		$itk_component(gaos) configure -status on
 		$itk_component(mainframe) configure -background Green
+      $itk_component(buttonfrm1) configure -background Green
+      $itk_component(buttonfrm2) configure -background Green
       # aoSettled
    } else {
 		$itk_component(gaos) configure -status off
 		$itk_component(mainframe) configure -background white
+      $itk_component(buttonfrm1) configure -background white
+      $itk_component(buttonfrm2) configure -background white
    }
    if { [$itk_option(-aocontroller) state gaosTTGS] } {
 		$itk_component(aottgs) configure -status on
