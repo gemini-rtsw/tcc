@@ -114,7 +114,7 @@ global env
 	   epics cs aoCentreWfs
 	   epics cs aoCorrect
 	   epics cs aoOiwfsSource
-           epics cs aoLgsP1Source
+      epics cs aoLgsP1Source
 	   epics cs aoGimOffsets
 	   epics cs aongsNDFilter
 	   epics cs aolgsNDFilter
@@ -272,6 +272,7 @@ global env
    epics cs filter2
    epics cs oiwfsSelect
 	epics cs zeroRotCorr
+   epics cs m1ModelRestore
 
 # Set the timeout period for posting commands to the TCS.
    cs tcsApply setTimeout 3

@@ -34,6 +34,7 @@ itcl::class SlewOptionsControl {
       variable disableao
       variable ignoreao
       variable ltcscheck
+      variable restoreM1
    }
 }
 
@@ -120,13 +121,18 @@ itcl::body SlewOptionsControl::constructor args {
       checkbutton $w.ltcscheck -variable [itcl::scope ltcscheck] \
             -text "Check for collisions when using LGS"
    }
+   itk_component add restorefig {
+      checkbutton $w.restorefig -variable [itcl::scope restoreM1] \
+            -text "Automatically restore M1 and M2 after using GAOS"
+   }
    pack $itk_component(chopThrow) $itk_component(sourceOffset) \
          $itk_component(sourceDifTr) $itk_component(mountOffset) \
          $itk_component(mountDifTr) $itk_component(filter1) \
          $itk_component(filter2) $itk_component(pointing) \
          $itk_component(guiding) $itk_component(guideOffset) \
          $itk_component(instrOffset) $itk_component(resetao) \
-         $itk_component(disableao) $itk_component(ltcscheck) -pady 2 -anchor w
+         $itk_component(disableao) $itk_component(ltcscheck) \
+         $itk_component(restorefig) -pady 2 -anchor w
    if { [calparam cget -site] eq "CP" } {
       itk_component add ignoreao {
          checkbutton $w.ignoreao -variable [itcl::scope ignoreao] \
@@ -162,6 +168,7 @@ itcl::body SlewOptionsControl::load {name} {
    if { [calparam cget -site] eq "CP" } {
       set ignoreao [$name cget -ignoreao]
    }
+   set restoreM1 [$name cget -restoreFigure]
 }
 
 itcl::body SlewOptionsControl::save {name} {
@@ -172,7 +179,8 @@ itcl::body SlewOptionsControl::save {name} {
          -filter2 $filter2 -pointing $pointing \
          -guiding $guiding -guideOffset $guideOffset \
          -instrOffset $instrOffset -resetao $resetao \
-         -disableao $disableao -ltcscheck $ltcscheck
+         -disableao $disableao -ltcscheck $ltcscheck \
+         -restoreFigure $restoreM1
    if { [calparam cget -site] eq "CP" } {
        $name configure -ignoreao $ignoreao
    }

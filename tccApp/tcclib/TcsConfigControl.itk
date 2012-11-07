@@ -349,6 +349,14 @@ itcl::body TcsConfigControl::apply {} {
 
 	if { ![catch {cs configForAO info}] } {
 		if { [string match "No AO" $::Config(tcs.gaos,value)] || [string match "" $::Config(tcs.gaos,value)]} {
+
+         #Restore M1 and M2 figure to pre-GAOS state
+         if { [::SlewOptionsNames::$slewoptions cget -restoreFigure] } {
+            if { [sa tcssad get useAO] eq "Yes" && [sa tcssad get m1ModelValid] eq "Valid" } {
+               cs m1ModelRestore set model non-AO
+            }
+         }
+         
 			cs configForAO set useAO "No"
 		   logger command configForAO
 		   logactions logmess "Applying configForAO No"

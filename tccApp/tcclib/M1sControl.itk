@@ -24,6 +24,8 @@ itcl::class M1sControl {
       method updateon {par} {return ON}
       method updateoff {par} {return OFF}
       method zeroset {par} {return FIGURE}
+      method restoreAO {par} {return AO}
+      method restoreNonAO {par} {return non-AO}
    }
 }
 
@@ -67,15 +69,20 @@ itcl::body M1sControl::constructor args {
             -parcommand [itcl::code $this zeroset]
    }
    itk_component add reload {
-      ApplyButton $w.reload -command m1ModelRestore -text Restore
+      ApplyButton $w.reload -command m1ModelRestore -text "Restore non AO"\
+                  -parcommand [itcl::code $this restoreNonAO]
+   }
+   itk_component add reloadao {
+      ApplyButton $w.reloadao -command m1ModelRestore -text "Restore AO" \
+                  -parcommand [itcl::code $this restoreAO]
    }
    grid $itk_component(park) $itk_component(unpark) -sticky ew \
          -padx 5 -pady 3
    grid columnconfigure $itk_component(top) {0 1} -weight 1 -uniform 1
-   grid $itk_component(model) -
-   grid $itk_component(updateon) $itk_component(updateoff) -sticky ew \
+   grid $itk_component(model) - -
+   grid $itk_component(updateon) $itk_component(updateoff) x -sticky ew \
          -padx 5 -pady 3
-   grid $itk_component(zero) $itk_component(reload) -sticky ew \
+   grid $itk_component(zero) $itk_component(reload) $itk_component(reloadao) -sticky ew \
          -padx 5 -pady 3
    grid columnconfigure $itk_component(bot) {0 1} -weight 1 -uniform 1
    grid $itk_component(top) -sticky ew

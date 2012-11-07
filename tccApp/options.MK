@@ -77,3 +77,6 @@
 
 #Disable rotator guiding
 *observePanel*guideloop*rotator*0*state:  disabled
+
+#Disable M1/M2 restore option
+*tcsSlewOptionsPanel*restorefig*state:   disabled
