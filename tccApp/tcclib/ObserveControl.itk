@@ -502,7 +502,10 @@ itcl::body ObserveControl::expose {} {
 itcl::body ObserveControl::lenssel {} {
 
 # Select hrwfs lens.
-   hrwfs lenssel [$itk_component(hracsel) get]
+   switch [$itk_component(hracsel) get] {
+   AC { hrwfs lenssel AC }
+   HR { hrwfs lenssel HRWFS }
+   }
 }
 
 itcl::body ObserveControl::hrstop {} {
@@ -512,7 +515,19 @@ itcl::body ObserveControl::hrstop {} {
 }
 
 itcl::body ObserveControl::hrstart {} {
-
+# Make sure the right lens is configured
+   switch [$itk_component(hracsel) get] {
+   AC {
+      if { [sa hrwfs::currStatus get lens] ne "AC" } {
+         hrwfs lenssel AC
+      }
+   }
+   HR {
+      if { [sa hrwfs::currStatus get lens] ne "HRWFS" } {
+         hrwfs lenssel HRWFS
+      }
+   }
+   }
 # Start continuous exposures to DHS.
    hrwfs expose [$itk_component(expose) get]
    hrwfs output DHS
