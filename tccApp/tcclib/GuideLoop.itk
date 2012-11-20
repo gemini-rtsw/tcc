@@ -350,6 +350,11 @@ itcl::body GuideLoop::constructor args {
 		set gemsSys [::GemsSys::getSingleton]
 		$gemsSys subscribe [itcl::code $this onGemsChange]
 	}
+   #Add monitor for HRWFS
+   if { [llength [itcl::find objects ::hrwfs::observeC.observe]] == 0 } {
+      RecordMonitor ::hrwfs::observeC.observe hrwfs::observeC observe
+   }
+   lappend monids [::hrwfs::observeC.observe add [itcl::code $this recolour]]
    
    trace add variable ::Flags(ignoreao) write [itcl::code $this onIgnoreAOChange]
    onIgnoreAOChange ::Flags ignoreao w
@@ -362,6 +367,8 @@ itcl::body GuideLoop::constructor args {
 
 itcl::body GuideLoop::destructor {} {
    trace remove variable ::Flags(ignoreao) write [itcl::code $this onIgnoreAOChange]
+   ::hrwfs::observeC.observe remove [lindex $monids end]
+   set monids [lreplace $monids end end]
    foreach rec {p1state p2state oistate aostate m2state absorbtilt m1state \
       	m1source p1guide p2guide oiguide p1mweight p2mweight m2p1guide m2p2guide \
 	 		m2oiguide m2aoguide coma oiblend aoTTGS aoSFO ttgsloop sfoloop useLwfs niciAOloop niciAPD crGuide} mon $monids {
