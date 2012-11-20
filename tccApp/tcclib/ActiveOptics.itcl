@@ -649,6 +649,7 @@ puts "beam is $beam gonna wait for 1 second"
       #Make sure the lens is set
       if { [sa hrwfs::currStatus get lens] ne "HRWFS" } {
          hrwfs lenssel HRWFS
+         hrwfs wait applyC 60
       }
 #      if { $guide eq "" } {
 #         set mode seqnz
@@ -707,6 +708,7 @@ itcl::body ActiveOptics::disable {} {
    } else {
       Oiwfs stop
    }
+   hrwfs stop 
 
 # Turn off M2.
    cs m2Guide set state Off

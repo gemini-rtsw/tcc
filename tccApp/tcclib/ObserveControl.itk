@@ -500,11 +500,18 @@ itcl::body ObserveControl::expose {} {
 }
 
 itcl::body ObserveControl::lenssel {} {
-
 # Select hrwfs lens.
    switch [$itk_component(hracsel) get] {
-   AC { hrwfs lenssel AC }
-   HR { hrwfs lenssel HRWFS }
+   AC {
+      if { [sa hrwfs::currStatus get lens] ne "AC" } {
+         hrwfs lenssel AC
+      }
+   }
+   HR {
+      if { [sa hrwfs::currStatus get lens] ne "HRWFS" } {
+         hrwfs lenssel HRWFS
+      }
+   }
    }
 }
 
@@ -520,11 +527,13 @@ itcl::body ObserveControl::hrstart {} {
    AC {
       if { [sa hrwfs::currStatus get lens] ne "AC" } {
          hrwfs lenssel AC
+         hrwfs wait applyC 60
       }
    }
    HR {
       if { [sa hrwfs::currStatus get lens] ne "HRWFS" } {
          hrwfs lenssel HRWFS
+         hrwfs wait applyC 60
       }
    }
    }
