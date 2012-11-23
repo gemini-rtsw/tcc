@@ -130,6 +130,7 @@ private {
 	variable astroMode None
 	variable odgwBaseExpTime 0.00125
 	variable odgwExpTime
+   variable validLGSWFSCounts 1
    
    common minExpTime 0.00125
    common expTimeTolerance 0.1
@@ -970,15 +971,22 @@ itcl::body RealGems::getLGSWFSCounts {id} {
 	4 { set index 3 }
 	5 { set index 4 }
 	default {
-		$logger logmess "RealGems::getLGSWFSCounts invalid index $id"
-		return
+	   if { $validLGSWFSCounts } {
+	      $logger logmess "RealGems::getLGSWFSCounts invalid index $id"
+         set validLGSWFSCounts 0
+	   }
+		return 0
 	}
 	}
 	set vals [sa gemssad get lgsFlux value]
 	if { [llength $vals] < 6 } {
-		$logger logmess "RealGems::getLGSWFSCounts invalid values read from Myst $vals"
+      if { $validLGSWFSCounts } {
+         $logger logmess "RealGems::getLGSWFSCounts invalid values read from Myst $vals"
+         set validLGSWFSCounts 0
+      }
 		return 0
 	}
+   set validLGSWFSCounts 1
 	return [lindex $vals $index]
 }
 
