@@ -62,7 +62,8 @@ private {
 	variable sys
 	method waitFor {timeout outCondition}
 	method waitForCmdIdle {{timeout 1000}}
-	method waitForCmdComplete {idleTimeout settledTimeout settledCond timeoutMsg {multi 0}}
+	method waitForCmdComplete {idleTimeout settledTimeout settledCond  timeoutMsg {multi 0} }
+   method waitForLoopsSettle { timeout loopList }
 	method startWFS {}
 	method startTTGS {}
 	method startODGW {}
@@ -472,8 +473,6 @@ itcl::body GemsAO::disableODGW {} {
 itcl::body GemsAO::setupLoops {} {
    set loopList {}
    set sources {}
-   set testExp ""
-	set errMsg ""
 
    #Set TT loop sources
    set sources [defineTTSources]
@@ -488,66 +487,131 @@ itcl::body GemsAO::setupLoops {} {
    }
    if { $lwfsLoop } {
       lappend loopList lwfs
-      if {![state lwfsLoop]} {
-			lappend testExp "state lwfsLoop"
-			lappend errMsg "LGWFS loop start"
-      }
-   } else {
-#      set testExp "$testExp && !\[ state lwfsLoop \]"
    }
    if { $ttLoop } {
       lappend loopList tt
-      if {![state ttLoop]} {
-			lappend testExp "state ttLoop"
-			lappend errMsg "TT loop start"
-      }
-   } else {
-#      set testExp "$testExp && !\[ state ttLoop \]"
    }
    if { $sfsLoop } {
       lappend loopList sfs
-      if {![state sfsLoop]} {
-			lappend testExp "state sfsLoop"
-			lappend errMsg "SF loop start"
-      }
-   } else {
-#      set testExp "$testExp && !\[ state sfsLoop \]"
    }
    if { $flexLoop } {
       lappend loopList flex
-      if {![state flexloop]} {
-			lappend testExp "state flexLoop"
-			lappend errMsg "Flex loop start"
-      }
-   } else {
-#      set testExp "$testExp && !\[ state flexLoop \]"
    }
    if { $aniLoop } {
       lappend loopList ani
-      if {![state aniLoop]} {
-			lappend testExp "state aniLoop"
-			lappend errMsg "Ani loop start"
-      }
-   } else {
-#      set testExp "$testExp && !\[ state aniLoop \]"
    }
    if { [AO cget -crsource] eq "GAOS" && $ttLoop } {
       lappend loopList rot
-   } else {
    }
+   
+   if { [ llength $loopList] > 0 || [ llength $sources] > 0 } {
 	
-	if {[llength $testExp] == 0} {
-		set testExp "{expr 1}"
-		set errMsg "{GeMS loops setup}"
-	} 
-
-   $sys setupLoops $loopList $sources
-   if { [waitForCmdComplete 10000 150000 $testExp $errMsg 1] } {
-      return 1
+   	if {[llength $testExp] == 0} {
+   		set testExp "{expr 1}"
+   		set errMsg "{GeMS loops setup}"
+   	} 
+   
+      $sys setupLoops $loopList $sources
+      
+      set idleTimeout 10000
+      set result [waitForCmdIdle $idleTimeout]
+      if {$result eq "error"} {
+         return 1
+      } elseif {$result eq "timeout"} {
+         set lastError "Timed out waiting for GeMS loop configuration command to complete."
+         return 1
+      }
+      
+      return [waitForLoopsSettle 150000 $loopList]
+      
    } else {
       return 0
    }
 }
+
+itcl::body GemsAO::waitForLoopsSettle { timeout loopList } {
+   if { [ llength $loopList ] == 0 } {
+      return 0
+   }
+
+   set condExp
+   foreach loop $loopList {
+      set exp ""
+      switch $loop {
+         lwfs {
+            set exp "\[state lwfsLoop\]"
+         }
+         tt {
+            set exp "\[state ttLoop\]"  
+         }
+         sfs {
+            set exp "\[state sfsLoop\]"  
+         }
+         flex {
+            set exp "\[state flexLoop\]"  
+         }
+         ani {
+            set exp "\[state aniLoop\]"   
+         }
+      }
+      if { $exp ne "" } {
+         if { $condExp eq "" } {
+            set condExp $exp
+         } else {
+            set condExp "$condExp && $exp"
+         }
+      }  
+   }
+   if { $condExp ne "" } {
+      set elapsedTime 0
+      while { $timeout==0 || $elapsedTime<$timeout } {
+         if { [expr $condExp] } {
+            return 0
+         }
+         foreach loop $loopList {
+            set exp ""
+            switch $loop {
+               lwfs {
+                  if { [ $sys getLGSCmdState ] eq "ERROR" } {
+                     set lastError "Error while closing LGS loop: [$sys getLGSCmdMess]"
+                     return 1
+                  }
+               }
+               tt {
+                  if { [ $sys getTTCmdState ] eq "ERROR" } {
+                     set lastError "Error while closing TT loop: [$sys getTTCmdMess]"
+                     return 1
+                  }  
+               }
+               sfs {
+                  if { [ $sys getFocCmdState ] eq "ERROR" } {
+                     set lastError "Error while closing Focus loop: [$sys getFocCmdMess]"
+                     return 1
+                  }  
+               }
+               flex {
+                  if { [ $sys getFlexCmdState ] eq "ERROR" } {
+                     set lastError "Error while closing Flexure loop: [$sys getFlexCmdMess]"
+                     return 1
+                  }  
+               }
+               ani {
+                  if { [ $sys getAniCmdState ] eq "ERROR" } {
+                     set lastError "Error while closing Anisoplanetism loop: [$sys getAniCmdMess]"
+                     return 1
+                  }   
+               }
+            }
+         }
+         after 100
+         set elapsedTime [expr $elapsedTime + 100]
+         update
+      }
+      set lastError "Timed out waiting for GeMS loops to close."
+      return 1
+   }
+   return 0
+} 
 
 itcl::body GemsAO::disableLoops {} {
    set testExp "{expr !\[ state lwfsLoop \]} {expr !\[ state ttLoop \]} {expr !\[ state sfsLoop \]} {expr !\[ state flexLoop \]} {expr !\[ state aniLoop \]}"
