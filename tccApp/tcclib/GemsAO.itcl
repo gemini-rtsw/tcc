@@ -505,11 +505,6 @@ itcl::body GemsAO::setupLoops {} {
    }
    
    if { [ llength $loopList] > 0 || [ llength $sources] > 0 } {
-	
-   	if {[llength $testExp] == 0} {
-   		set testExp "{expr 1}"
-   		set errMsg "{GeMS loops setup}"
-   	} 
    
       $sys setupLoops $loopList $sources
       
@@ -534,7 +529,7 @@ itcl::body GemsAO::waitForLoopsSettle { timeout loopList } {
       return 0
    }
 
-   set condExp
+   set condExp ""
    foreach loop $loopList {
       set exp ""
       switch $loop {
