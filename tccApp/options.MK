@@ -80,3 +80,5 @@
 
 #Disable M1/M2 restore option
 *tcsSlewOptionsPanel*restorefig*state:   disabled
+
+*control*bot*reload*state: disabled
