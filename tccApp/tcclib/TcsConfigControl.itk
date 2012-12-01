@@ -261,7 +261,7 @@ itcl::body TcsConfigControl::apply {} {
 	}
 
 # If we are leaving LGS+P1 mode active and slewing to a non LGS+P1 configuration, turn it off in the TCS now
-
+	set fieldObj ${::Config(tcs.field,namespace)}::${::Config(tcs.field,value)}
 	if { [AO state lgsp1source] && !([string match "*LGS*" $::Config(tcs.gaos,value)] && [string match "*P1*" [$fieldObj cget -guide]])} {
 	    cs aoLgsP1Source set state OFF
 	    logger command aoLgsP1Source
