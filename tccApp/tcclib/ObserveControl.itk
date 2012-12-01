@@ -472,6 +472,15 @@ itcl::body ObserveControl::center {p par} {
 }
 
 itcl::body ObserveControl::wfssky {} {
+# Short circuit the probe target filter
+    cs filter1 set shortCircuit Closed
+    logger command filter1
+
+    if { [catch {cs tcsApply post} msg] } {
+	tk_messageBox -icon error -parent $itk_interior -message \
+            "Error posting commands: TCS reports \
+            \"$msg\""
+    }
 
 # Take a dark with the selected WFS
    [set ${wfs}Dark] take
