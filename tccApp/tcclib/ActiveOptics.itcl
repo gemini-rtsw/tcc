@@ -643,13 +643,13 @@ puts "beam is $beam gonna wait for 1 second"
    
    # Take care of HRWFS
    if { [state hrwfs] && ! $hrwfsActive } {
-      if { [sa hrwfs::currStatus get lens] eq "HRWFS" } {
+      if { [sa hrwfs::currStatus get lensdem] eq "HRWFS" } {
          hrwfs stop
       }
    }
    if { $hrwfsActive } { 
       #Make sure the lens is set
-      if { [sa hrwfs::currStatus get lens] ne "HRWFS" } {
+      if { [sa hrwfs::currStatus get lensdem] ne "HRWFS" } {
          hrwfs lenssel HRWFS
          hrwfs wait applyC 60
       }
@@ -711,7 +711,7 @@ itcl::body ActiveOptics::disable {} {
       Oiwfs stop
    }
    #Only stop HRWFS if it is not used as Acquisition Camera
-   if { [sa hrwfs::currStatus get lens] eq "HRWFS" } {
+   if { [sa hrwfs::currStatus get lensdem] eq "HRWFS" } {
       hrwfs stop
    }
 

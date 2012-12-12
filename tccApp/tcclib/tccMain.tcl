@@ -177,6 +177,9 @@ global env
    epics sa applyC
    epics sa errMessage
 
+# other status acceptors
+   epics sa hrwfs::currStatus
+
 # AWE monitor Shutter Drive Currents
    epics sa shutterDriveCurrents
 
