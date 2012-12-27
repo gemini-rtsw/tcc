@@ -1370,62 +1370,62 @@ itcl::body ActiveOptics::configureBlending {} {
 
    logactions logmess "ActiveOptics::configureBlending oiblend: $oiblend lgsp1source: $lgsp1source"
    if { ($oiblend != [state oiblend]) || ($lgsp1source != [state lgsp1source])} {
-      # first disable all loops if neccesary
-		if {$enabled} {
-                      process IDLE
-		      $this disable
-		      process BUSY
-		}
-	 
-		# make sure correctM is Idle
-		if {[setTimeout "sa aossad get correctBusy" BUSY 10000 200 \
-		   "Altair to stop correcting"]} { return 1 }
-        }
-
-	if { $oiblend } {
-		 cs aoOiwfsSource set state ON
-	} else {
-		# need to ensure that OIWFS Guide Output is set to SCS
-		 logactions logmess "ActiveOptics::configureBlending turning off blending"
-		 cs aoOiwfsSource set state OFF
-		 cs aoOiwfsSource set bandwidth -1
-	}
-	logger command aoOiwfsSource
-
-	# Post the Blending Command.
-	# The blending command must be finished before the loops are closed.
-	if { [catch {cs tcsApply post} msg] } {
-            errorBox "Error posting guide commands: TCS reports \
+       # first disable all loops if neccesary
+       if {$enabled} {
+	   process IDLE
+	   $this disable
+	   process BUSY
+       }
+       
+       # make sure correctM is Idle
+       if {[setTimeout "sa aossad get correctBusy" BUSY 10000 200 \
+		"Altair to stop correcting"]} { return 1 }
+       
+       if { $oiblend } {
+	   cs aoOiwfsSource set state ON
+       } else {
+	   # need to ensure that OIWFS Guide Output is set to SCS
+	   logactions logmess "ActiveOptics::configureBlending turning off blending"
+	   cs aoOiwfsSource set state OFF
+	   cs aoOiwfsSource set bandwidth -1
+       }
+       logger command aoOiwfsSource
+       
+       # Post the Blending Command.
+       # The blending command must be finished before the loops are closed.
+       if { [catch {cs tcsApply post} msg] } {
+	   errorBox "Error posting guide commands: TCS reports \
 			  \"$msg\""
-			return 1
-	}
-	# need to wait for aoOiwfsSource to go idle
-	if {[setTimeout "sa aossad get oiblendBusy" BUSY 10000 200 \
+	   return 1
+       }
+       # need to wait for aoOiwfsSource to go idle
+       if {[setTimeout "sa aossad get oiblendBusy" BUSY 10000 200 \
 		"aoOiwfsSource to go idle"]} {
-		return 1
-	}
-
-# AWE: lgsp1 command goes through the TCS
+	   return 1
+       }
+       
+       # AWE: lgsp1 command goes through the TCS
        if { $lgsp1source } {
            cs aoLgsP1Source set state ON
        } else {
            cs aoLgsP1Source set state OFF
        }
        logger command aoLgsP1Source
-
+       
        # Post the Blending Command.
        # The blending command must be finished before the loops are closed.
        if { [catch {cs tcsApply post} msg] } {
-          errorBox "Error posting guide commands: TCS reports \
+	   errorBox "Error posting guide commands: TCS reports \
                \"$msg\""
-          return 1
+	   return 1
        }
        # need to wait for aoLgsP1Source to go idle
        if {[setTimeout "sa aossad get lgsp1SourceBusy" BUSY 10000 200 \
-          "aoLgsP1Source to go idle"]} {
-          return 1
+		"aoLgsP1Source to go idle"]} {
+	   return 1
        }
-    return 0
+   }
+   return 0
 }
 
 itcl::body ActiveOptics::startAltairWFS {} {
