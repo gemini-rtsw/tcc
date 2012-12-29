@@ -472,6 +472,7 @@ itcl::body GemsAO::disableODGW {} {
 
 itcl::body GemsAO::setupLoops {} {
    set loopList {}
+   set checkLoopList {}
    set sources {}
 
    #Set TT loop sources
@@ -487,24 +488,39 @@ itcl::body GemsAO::setupLoops {} {
    }
    if { $lwfsLoop } {
       lappend loopList lwfs
+      if {![state lwfsLoop]} {
+         lappend checkLoopList lwfs
+      }
    }
    if { $ttLoop } {
       lappend loopList tt
+      if {![state ttLoop]} {
+         lappend checkLoopList tt
+      }
    }
    if { $sfsLoop } {
       lappend loopList sfs
+      if {![state sfsLoop]} {
+         lappend checkLoopList sfs
+      }
    }
    if { $flexLoop } {
       lappend loopList flex
+      if {![state flexloop]} {
+         lappend checkLoopList flex
+      }
    }
    if { $aniLoop } {
       lappend loopList ani
+      if {![state aniLoop]} {
+         lappend checkLoopList ani
+      }
    }
    if { [AO cget -crsource] eq "GAOS" && $ttLoop } {
       lappend loopList rot
    }
    
-   if { [ llength $loopList] > 0 || [ llength $sources] > 0 } {
+   #if { [ llength $loopList] > 0 || [ llength $sources] > 0 } {
    
       $sys setupLoops $loopList $sources
       
@@ -517,11 +533,11 @@ itcl::body GemsAO::setupLoops {} {
          return 1
       }
       
-      return [waitForLoopsSettle 150000 $loopList]
+      return [waitForLoopsSettle 150000 $checkLoopList]
       
-   } else {
-      return 0
-   }
+#   } else {
+#      return 0
+#   }
 }
 
 itcl::body GemsAO::waitForLoopsSettle { timeout loopList } {
