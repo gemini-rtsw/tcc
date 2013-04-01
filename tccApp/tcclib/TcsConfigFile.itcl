@@ -21,12 +21,14 @@ itcl::class TcsConfigFile {
 		method createField {node}
 		method createTrackrate {node}
 		method createTaggedTarget {node}
+      method createTcsConfig {node}
       method report {msg}
       method findcomp {node}
       method elementis {node name}
       method compconf {component node}
 		method fieldConf {component node}
 		method targetconf {field target node}
+      method tcsConf {component node}
       variable w
       variable nodelist
    }
@@ -108,7 +110,7 @@ itcl::body TcsConfigFile::constructor {xml parent} {
 		}
 	}
 	foreach node $nodelist(tcsconfig) {
-		if { [createComponent tcsconfig $node] } break
+		if { [createTcsConfig $node] } break
 	}
    foreach node $nodelist(targetgroup) {
 		if { [createTaggedTarget $node] } break
@@ -199,11 +201,6 @@ itcl::body TcsConfigFile::createComponent {type node} {
          set namespace ::ChopNames
          set list ChopList
       }
-      tcsconfig {
-         set class TcsConfigComponent
-         set namespace ::TcsConfigNames
-         set list TcsConfigList
-      }
    }
 
 # Create or init the component. We can't simply delete a component and 
@@ -247,6 +244,31 @@ itcl::body TcsConfigFile::createField {node} {
 	# Keep the display alive.
 	update
 	return 0
+}
+
+itcl::body TcsConfigFile::createTcsConfig {node} {
+   # The node must have a name attribute.
+   if { [dom::element getAttribute $node name] == "" } {
+      return [report "$type with no name"]
+   }
+   set name [dom::element getAttribute $node name]
+   set class TcsConfigComponent
+   set namespace ::TcsConfigNames
+   set list TcsConfigList
+   set component ${namespace}::$name
+   if { [catch {$class $component $list}] } {
+      $component init
+   }
+   
+   # Configure the component from the child nodes of type param.
+   foreach node [dom::DOMImplementation selectNode $node \
+         descendant-or-self::node()/child::param|paramset] {
+      tcsConf $component $node
+   }
+   
+   # Keep the display alive.
+   update
+   return 0
 }
 
 itcl::body TcsConfigFile::createTarget {node} {
@@ -576,6 +598,34 @@ itcl::body TcsConfigFile::fieldConf {component node} {
          }
       }
    }
+}
+
+itcl::body TcsConfigFile::tcsConf {component node} {
+# Get the attribute name.
+   set name [dom::element getAttribute $node name]
+
+# If the component has an option of that name.
+   if { ! [catch {$component cget -$name}] } {
+      set value [dom::element getAttribute $node value]
+      
+      if { $name eq "instrument" } {
+         if { $value eq "VISITOR" } {
+            #Find port for visitor instrument
+            set agSys [::AcqGuideSys::getSingleton]
+            set port [ $agSys getPort $value ]
+            if { $port > 1 } {
+               set value "$value$port"
+            }
+         }
+      }
+
+# Configure the option value.
+      if { [catch {$component configure -$name $value} msg ]} {
+         if { [report $msg] } {
+            return 1
+         }
+      }
+   }      
 }
 
 itcl::body TcsConfigFile::targetconf {field target node} {
