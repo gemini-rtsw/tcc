@@ -278,7 +278,7 @@ itcl::body GuideAlarm::alarmCheck {wfs} {
 		ttwfs {
 			set alarmOn(ttwfs) 0
 			for { set i 1 } { $i <= 3 } { incr i } {
-				if { [[AO getGaosObj] state ttgs${i}] && $guideCounts(ttwfs${i}) < $ttwfsLimit } {
+				if { [[AO getGaosObj] state ttgs${i}] && [[AO getGaosObj] isTTSource ttgs${i}] && $guideCounts(ttwfs${i}) < $ttwfsLimit } {
 					set alarmOn(ttwfs) 1
 					break
 				}
@@ -287,7 +287,7 @@ itcl::body GuideAlarm::alarmCheck {wfs} {
 		odgw {
 			set alarmOn(odgw) 0
 			for { set i 1 } { $i <= 4 } { incr i } {
-				if { [[AO getGaosObj] state odgw${i}] && $guideCounts(odgw${i}) < $odgwLimit } {
+				if { [[AO getGaosObj] state odgw${i}] && ( [[AO getGaosObj] isTTSource odgw${i}] || [[AO getGaosObj] isFlexSource odgw${i}] ) && $guideCounts(odgw${i}) < $odgwLimit } {
 					set alarmOn(odgw) 1
 					break
 				}
@@ -421,8 +421,6 @@ itcl::body GuideAlarm::scanLoop {} {
       if { !$::Flags(ignoreao) } {
          retrieveGeMSCounts
    		lappend wfsList ttwfs lgswfs sfs odgw
-   		set ttSources [$gemsSys getTTLoopSources]
-         set flexSources [$gemsSys getFlexLoopSources]
       }
 	} else {
 		lappend wfsList gaos ttgs sfo
@@ -437,22 +435,27 @@ itcl::body GuideAlarm::scanLoop {} {
 		ttwfs {
 			set ttwfsCount 0
 			for {set i 1} {$i <= 3} {incr i} {
-				if {[[AO getGaosObj] state ttgs${i}]} {
+				if {[[AO getGaosObj] state ttgs${i}] && [[AO getGaosObj] isTTSource ttgs${i}]} {
 					incr ttwfsCount
 				}
 			}
-			set test [expr {$ttwfsCount > 0 && ( [[AO getGaosObj] state ttLoop] || [[AO getGaosObj] state aniLoop] ) && [string first ttgs $ttSources] > -1 && $canguide}]
+			set test [expr {$ttwfsCount > 0 && ( [[AO getGaosObj] state ttLoop] || [[AO getGaosObj] state aniLoop] ) && $canguide}]
 		}
 		lgswfs {set test [expr {[[AO getGaosObj] state $wfs] && [[AO getGaosObj] state lwfsLoop] && $canguide}] }
 		sfs { set test [expr {[[AO getGaosObj] state $wfs] && [[AO getGaosObj] state sfsLoop] && $canguide}] }
 		odgw {
-			set odgwCount 0
+			set odgwCountTT 0
+         set odgwCountFlex 0
 			for {set i 1} {$i <= 4} {incr i} {
 				if {[[AO getGaosObj] state odgw${i}]} {
-					incr odgwCount
+               if { [[AO getGaosObj] isTTSource odgw${i}] } {
+                  incr odgwCountTT
+               } elseif { [[AO getGaosObj] isFlexSource odgw${i}] } {
+                  incr odgwCountFlex
 				}
 			}
-			set test [expr {$odgwCount > 0 && ( ( [[AO getGaosObj] state flexLoop] && [string first odgw $flexSources] > -1 ) || ( [[AO getGaosObj] state ttLoop] && [string first odgw $ttSources] > -1 ) ) && $canguide}]
+			}
+			set test [expr { ( ( [[AO getGaosObj] state flexLoop] && $odgwCountFlex > 0 ) || ( [[AO getGaosObj] state ttLoop] && $odgwCountTT > 0 ) ) && $canguide}]
 		}
 		default { set test [expr {[AO state $wfs] && $canguide}] }
 		}

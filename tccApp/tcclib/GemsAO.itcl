@@ -53,6 +53,8 @@ public {
 	method enable {}
 	method disable {}
 	method state {var}
+   method isTTSource {src}
+   method isFlexSource {src}
 
 	constructor {} {}
 
@@ -123,12 +125,8 @@ itcl::body GemsAO::disable {} {
 }
 
 itcl::body GemsAO::waitFor {timeout outCondition} {
-#   puts "GemsAO::waitFor $timeout $outCondition"
 	set elapsedTime 0
 	while {$timeout==0 || $elapsedTime<$timeout} {
-#      if { [llength $outCondition] == 2 && [lindex $outCondition 0] eq "expr" } {
-#         eval "puts \"GemsAO::waitFor: [lindex $outCondition 1]\""
-#      }
 		if {[eval $outCondition]} {
 			break
 		}
@@ -478,13 +476,11 @@ itcl::body GemsAO::setupLoops {} {
    #Set TT loop sources
    set sources [defineTTSources]
 
-   if { [AO cget -m1source] eq "GAOS" && $lwfsLoop} {
+   if { ( [AO cget -m1corr] || [AO cget -comacorr] ) && [AO cget -m1source] eq "GAOS" && $lwfsLoop} {
       lappend loopList m1
-   } else {
    }
    if { [AO cget -aoguide] eq "On" && ( $lwfsLoop || $ttLoop ) } {
       lappend loopList m2
-   } else {
    }
    if { $lwfsLoop } {
       lappend loopList lwfs
@@ -664,6 +660,14 @@ itcl::body GemsAO::state {var} {
 	aoSettled  { return [expr {[$sys getLoopsState] eq "READY"}] }
 	}
 	return 0
+}
+
+itcl::body GemsAO::isTTSource {src} {
+   return [expr "[lsearch [$sys getTTLoopSources] $src] >= 0" ]
+}
+
+itcl::body GemsAO::isFlexSource {src} {
+   return [expr "[lsearch [$sys getFlexLoopSources] $src] >= 0" ]
 }
 
 itcl::body GemsAO::defineTTSources {} {

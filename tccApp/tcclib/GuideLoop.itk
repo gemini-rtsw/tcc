@@ -590,17 +590,19 @@ itcl::body GuideLoop::recolour args {
 
 # M2
    if { [AO state m2] } {
-      if { ( ( [AO source m2 PWFS1 A] || [AO source m2 PWFS1 B] ) && \
-            [AO state pwfs1] ) || \
-            ( ( [AO source m2 PWFS2 A] || [AO source m2 PWFS2 B] ) && \
-            [AO state pwfs2] ) || \
-            ( ( [AO source m2 OIWFS A] || [AO source m2 OIWFS B] ) && \
-            [AO state oiwfs] ) || \
-            ( ( [AO source m2 GAOS A] || [AO source m2 GAOS B] ) && \
-            ( ( [calparam cget -site] eq "MK" && [AO state gaos] ) || \
-				  ( [calparam cget -site] eq "CP" && [AO state ttgsloop] && [[AO getGaosObj] state m2Offload]) ) )  } {
+      set isGaosSrc [expr { ( [AO source m2 GAOS A] || [AO source m2 GAOS B] ) && \
+                  ( ( [calparam cget -site] eq "MK" && [AO state gaos] ) || \
+                    ( [calparam cget -site] eq "CP" && ([AO state ttgsloop] || [AO state gaos]) && [[AO getGaosObj] state m2Offload]) ) } ]
+      set isOtherSrc [expr { ( ( [AO source m2 PWFS1 A] || [AO source m2 PWFS1 B] ) && \
+                  [AO state pwfs1] ) || \
+                  ( ( [AO source m2 PWFS2 A] || [AO source m2 PWFS2 B] ) && \
+                  [AO state pwfs2] ) || \
+                  ( ( [AO source m2 OIWFS A] || [AO source m2 OIWFS B] ) && \
+                  [AO state oiwfs] ) } ]
+      if { $isOtherSrc || $isGaosSrc  } {
          $w itemconfigure m2_bg -fill green
-         if { [AO source mount M2] && [AO state mount] } {
+         #GeMS can correct focus without tip/tilt, in which case nothing goes to Mount
+         if { [AO source mount M2] && [AO state mount] && ( [calparam cget -site] eq "MK" || $isOtherSrc || [AO state ttgsloop] ) } {
             $w itemconfigure m2_mt -fill green
             set mount 1
          } else {
@@ -616,7 +618,7 @@ itcl::body GuideLoop::recolour args {
    if { [AO state coma] } {
       if { ( [AO state pwfs1] && [AO source m1 PWFS1] ) \
             || ( [AO state hrwfs] && [AO source m1 HRWFS] ) \
-            || ( ( [AO state gaos] && ([calparam cget -site] ne "CP" || [[AO getGaosObj] state m2Offload])) && [AO source m1 GAOS] ) } {
+            || ( ( [AO state gaos] && ([calparam cget -site] ne "CP" || [[AO getGaosObj] state m1Offload])) && [AO source m1 GAOS] ) } {
          $w itemconfigure m2xy_bg -fill green
       } else {
          $w itemconfigure m2xy_bg -fill yellow
@@ -1088,7 +1090,8 @@ itcl::body GuideLoop::recolourGemsArrows {} {
    		$w itemconfigure gaos_m1 -fill white
    	}
    	if {[AO state gaos] || [AO state ttgsloop]} {
-   		if {[AO state m2] && [AO source m2 GAOS A] && [$gemsSys getM2OffloadState] eq "CLOSED" } {
+   		if { ( [AO state m2] && [AO source m2 GAOS A] && [$gemsSys getM2OffloadState] eq "CLOSED" ) \
+            || ( [AO state coma] && [AO source m1 GAOS] ) } {
    			$w itemconfigure gaos_m2 -fill green
    		} else {
    			$w itemconfigure gaos_m2 -fill yellow

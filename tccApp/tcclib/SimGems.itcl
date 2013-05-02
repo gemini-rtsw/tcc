@@ -378,38 +378,39 @@ itcl::body SimGems::setupLoops {loopList sources} {
          }
       }
       if { [lsearch $loopList m1] >= 0 } {
-         if { [getM1OffloadState] ne "START" } {
+         if { [getM1OffloadState] ne "CLOSED" } {
             $logger logmess "SimGems: configure M1 Offload to ON"
             after 200 "[itcl::code $this simDelayedChange m1OffloadState ON]"
          }
       } else {
-         if { [getM1OffloadState] eq "START" } {
+         if { [getM1OffloadState] eq "CLOSED" } {
             $logger logmess "SimGems: configure M1 Offload to OFF"
             after 200 "[itcl::code $this simDelayedChange m1OffloadState OFF]"
          }
       }
       if { [lsearch $loopList m2] >= 0 } {
-         if { [getM2OffloadState] ne "START" } {
+         if { [getM2OffloadState] ne "CLOSED" } {
             $logger logmess "SimGems: configure M2 Offload to ON"
             after 200 "[itcl::code $this simDelayedChange m2OffloadState ON]"
          }
       } else {
-         if { [getM2OffloadState] eq "START" } {
+         if { [getM2OffloadState] eq "CLOSED" } {
             $logger logmess "SimGems: configure M2 Offload to OFF"
             after 200 "[itcl::code $this simDelayedChange m2OffloadState OFF]"
          }
       }
       if { [lsearch $loopList rot] >= 0 } {
-         if { [getRotOffloadState] ne "START" } {
+         if { [getRotOffloadState] ne "CLOSED" } {
             $logger logmess "SimGems: configure Rotator Offload to ON"
             after 200 "[itcl::code $this simDelayedChange rotOffloadState ON]"
          }
       } else {
-         if { [getRotOffloadState] eq "START" } {
+         if { [getRotOffloadState] eq "CLOSED" } {
             $logger logmess "SimGems: configure Rotator Offload to OFF"
             after 200 "[itcl::code $this simDelayedChange rotOffloadState OFF]"
          }
       }
+      after 1000 "[itcl::code $this endCmd]"
    }
 }
 
@@ -593,15 +594,15 @@ itcl::body SimGems::getAniLoopState {} {
 }
 
 itcl::body SimGems::getM1OffloadState {} {
-	return [expr { ( $m1OffloadState eq "ON" ) ? "START" : "STOP" } ]
+	return [expr { ( $m1OffloadState eq "ON" ) ? "CLOSED" : "OPEN" } ]
 }
 
 itcl::body SimGems::getM2OffloadState {} {
-   return [expr { ( $m2OffloadState eq "ON" ) ? "START" : "STOP" } ]
+   return [expr { ( $m2OffloadState eq "ON" ) ? "CLOSED" : "OPEN" } ]
 }
 
 itcl::body SimGems::getRotOffloadState {} {
-   return [expr { ( $rotOffloadState eq "ON" ) ? "START" : "STOP" } ]
+   return [expr { ( $rotOffloadState eq "ON" ) ? "CLOSED" : "OPEN" } ]
 }
 
 itcl::body SimGems::getTTLoopSources {} {
@@ -863,22 +864,22 @@ itcl::body SimGems::configCmd { name var value {delay 200} {reasons ""}} {
 }
 
 itcl::body SimGems::simCycle {} {
-	foreach {stateVar countVar} { ttwfsActive(1) ttwfsCounts(1)  \
-											ttwfsActive(2) ttwfsCounts(2)  \
-											ttwfsActive(3) ttwfsCounts(3)  \
-											odgwEnabled(1) odgwCounts(1)   \
-                                 odgwEnabled(2) odgwCounts(2)   \
-                                 odgwEnabled(3) odgwCounts(3)   \
-                                 odgwEnabled(4) odgwCounts(4)   \
-											sfsActive      sfsCounts       \
-											lgswfsActive   lgswfsCounts(1) \
-											lgswfsActive   lgswfsCounts(2) \
-											lgswfsActive   lgswfsCounts(3) \
-											lgswfsActive   lgswfsCounts(4) \
-											lgswfsActive   lgswfsCounts(5) } {
+	foreach {stateVar countVar base range} { ttwfsActive(1) ttwfsCounts(1)  1000 1000 \
+											           ttwfsActive(2) ttwfsCounts(2)  1000 1000 \
+											           ttwfsActive(3) ttwfsCounts(3)  1000 1000 \
+											           odgwEnabled(1) odgwCounts(1)   1000 1000 \
+											           odgwEnabled(2) odgwCounts(2)   1000 1000 \
+											           odgwEnabled(3) odgwCounts(3)   1000 1000 \
+											           odgwEnabled(4) odgwCounts(4)   1000 1000 \
+											           sfsActive      sfsCounts       1000 1000 \
+											           lgswfsActive   lgswfsCounts(1) 1000 1000 \
+											           lgswfsActive   lgswfsCounts(2) 1000 1000 \
+											           lgswfsActive   lgswfsCounts(3) 1000 1000 \
+											           lgswfsActive   lgswfsCounts(4) 1000 1000 \
+											           lgswfsActive   lgswfsCounts(5) 1000 1000 } {
 		set oldVal [set $countVar]
 		if { [set $stateVar] eq "ON" } {
-			set $countVar [expr "1000 + round( rand() * 1000 )"]
+			set $countVar [expr "$base + round( rand() * $range )"]
 		} else {
 			set $countVar 0
 		}

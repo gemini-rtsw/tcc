@@ -332,27 +332,30 @@ if { ($probeto == "OIWFS") && [string match "*GMOS*" $::Config(tcs.instrument,va
    }
 
    if { [calparam cget -site] eq "CP" } {
-      set sa g1Guide
-      set statevar m2aoguide
-      set $statevar ""
+      set m2aoguide ""
       if { $aoguide eq "On" } {
          switch [sa tcssad get nodState] {
             A {
-               if { [sa $sa get nodachopa] eq "On" } {
-                  append $statevar A
+               if { [sa g1Guide get nodachopa] eq "On" } {
+                  append m2aoguide A
                } 
-               if { [sa $sa get nodachopb] eq "On" } {
-                  append $statevar B
+               if { [sa g1Guide get nodachopb] eq "On" } {
+                  append m2aoguide B
                } 
             }
             B {
-               if { [sa $sa get nodbchopa] eq "On" } {
-                  append $statevar A
+               if { [sa g1Guide get nodbchopa] eq "On" } {
+                  append m2aoguide A
                } 
-               if { [sa $sa get nodbchopb] eq "On" } {
-                  append $statevar B
-               } 
+               if { [sa g1Guide get nodbchopb] eq "On" } {
+                  append m2aoguide B
+               }
             }
+         }
+         #Even if no target is used for GeMS, it must be able to do focus
+         #correction with LGS loop.
+         if { [$gaosObj cget -lwfsLoop] && $m2aoguide eq "" } {
+            set m2aoguide A
          }
       }
    }
@@ -385,7 +388,6 @@ if { ($probeto == "OIWFS") && [string match "*GMOS*" $::Config(tcs.instrument,va
             }
          }
       }
-
       if { $needreset || [llength $addlist] != 0 } {
 
 # We need to change the setup of M2. Turn it off first.
@@ -427,7 +429,6 @@ if { ($probeto == "OIWFS") && [string match "*GMOS*" $::Config(tcs.instrument,va
                }
             }
             if { $beam ne "" } {
-puts "beam is $beam gonna wait for 1 second"
                cs m2GuideConfig set reset Off
                cs m2GuideConfig set samplefreq 200
                cs m2GuideConfig set filter raw
@@ -699,7 +700,6 @@ itcl::body ActiveOptics::disable {} {
    Pwfs2 stop
    if {$oiao} {
        if { ![catch {cs niciAOLoop info}] } {
-	   puts "Turn off NICI OIAO Loop"
 	   cs niciAOLoop set dem open
 	   cs niciAOLoop set dir 0
 	   after 100
@@ -1344,7 +1344,6 @@ itcl::body ActiveOptics::unparkAltair {} {
 
 itcl::body ActiveOptics::enableOIAO {} {
 	if { $oiao && $oiaoLoop } {
-		puts "Turn ON NICI OIAO Loop"
 #We have to wait for P1 or P2  loop to be closed before closing NICI AO
 		if { $pwfs1Active } {
 			 if { [setTimeout {expr \

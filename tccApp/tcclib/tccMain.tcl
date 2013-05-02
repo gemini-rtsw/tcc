@@ -83,7 +83,7 @@ global env
 	if { ![string is space $ocsproxy] } {
 		calparam configure -ocs_proxy $ocsproxy
 	}
-
+   
 	GemsSys::useSimulator $simgems
 	
 # AWE use the site parameter to load site specific channels
