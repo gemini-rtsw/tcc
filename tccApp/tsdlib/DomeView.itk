@@ -31,6 +31,17 @@ itk::usual DomeView {
 
 itcl::body DomeView::constructor args {
 
+   if { [catch {sa ecssad info}] } {
+      epics sa ecssad
+   }
+   itk_component add vign {
+      label $itk_interior.vign
+   }
+   
+   itk_component add ecsFault {
+      label $itk_interior.ecsFault
+   }
+
    itk_component add domeview {
       canvas $itk_interior.domeview -width 340 -height 340
    }
@@ -45,12 +56,14 @@ itcl::body DomeView::constructor args {
          -width 2
    $itk_component(domeview) create text 310 0 -anchor n -text WIND -tags wind
 
-   pack $itk_component(domeview)
+   pack $itk_component(domeview) $itk_component(vign) $itk_component(ecsFault)
 
    eval itk_initialize $args
 }
 
 itcl::body DomeView::update {} {
+
+
 
 # Update dome view.
    $itk_component(domeview) itemconfigure domeview -display 1
@@ -72,4 +85,44 @@ itcl::body DomeView::update {} {
    } else {
       $itk_component(domeview) itemconfigure wind -fill black
    }
+
+# Determine whether there is any vignetting from the enclosure.
+   set v [expr {[sadVal tcssad domeVignette -1] * 100.}]
+
+   if { $v > 0.0 } {
+      $itk_component(vign) configure -foreground black
+      $itk_component(vign) configure -text "Dome Vignetting ${v} %"
+   } elseif { $v == 0 } {
+      $itk_component(vign) configure -foreground green
+      $itk_component(vign) configure -text "No Dome Vignetting" 
+   }
+   
+   set domeF [sa ecssad get domeFault ] 
+   set evgF  [sa ecssad get evgFault ] 
+   set wvgF  [sa ecssad get wvgFault ] 
+   set tshF  [sa ecssad get tshFault ] 
+   set bshF  [sa ecssad get bshFault ] 
+   set fltMes ""
+   if { $domeF == 1 } {
+   	set fltMes "$fltMes Dome, "
+   }
+   if { $evgF == 1 } {
+   	set fltMes "$fltMes EVG, "
+   } 
+   if { $wvgF == 1 } {
+   	set fltMes "$fltMes WVG, "
+   } 
+   if { $tshF == 1 } {
+   	set fltMes "$fltMes TSH, "
+   } 
+   if { $bshF == 1 } {
+   	set fltMes "$fltMes BST "
+   } 
+   if { $fltMes != "" } {
+      set fltMes "$fltMes Fault "
+      $itk_component(ecsFault) configure -foreground red
+   }       
+
+   $itk_component(ecsFault) configure -text $fltMes
+   
 }
