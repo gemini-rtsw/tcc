@@ -944,17 +944,17 @@ itcl::body NumericDisplay::inposreason {} {
 # Determines the reason for the TCS being out of position.
    if { ! [sa tcssad get tcsInPos] } {
       return [sa tcssad get outPosReason]
-   } elseif { [sa mcssad get inPositionAz] ne 1 } {
+   } elseif { [sa mcssad get inPositionAz] ne 1 && [string equal [sa tcssad get mcsInposOverr] disabled]} {
       return "Azimuth axis not in position"
-   } elseif { [sa mcssad get inPositionEl] ne 1} {
+   } elseif { [sa mcssad get inPositionEl] ne 1 && [string equal [sa tcssad get mcsInposOverr] disabled]} {
       return "Elevation axis not in position"
-   } elseif { [sa mcssad get inPosition] ne 1 } {
+   } elseif { [sa tcssad get mcsInPosition] ne 1 } {
       return "Mount not in position"
-   } elseif { [sa crssad get inPosition] ne 1 } {
+   } elseif { [sa tcssad get crcsInPosition] ne 1 } {
       return "Rotator not in position"
-   } elseif { [sa agssad get inPosition] ne 1 } {
+   } elseif { [sa tcssad get agInPosition] ne 1 } {
       return "A&G or A&G Seq not in position"
-   } elseif { [sa aossad get inPosition] ne 1 } {
+   } elseif { [sa tcssad get aoInPosition] ne 1 } {
       return "Adaptive Optics not in position"
    } elseif { $::env(GEMINI_SITE) eq "CP" && \
          ( [string equal -nocase [sa aomsad get ngs1Follow] "On"] || \
