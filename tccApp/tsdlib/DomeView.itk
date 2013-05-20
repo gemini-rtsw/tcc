@@ -92,9 +92,11 @@ itcl::body DomeView::update {} {
    if { $v > 0.0 } {
       $itk_component(vign) configure -foreground black
       $itk_component(vign) configure -text "Dome Vignetting ${v} %"
+      $itk_component(vign) configure -foreground red
    } elseif { $v == 0 } {
       $itk_component(vign) configure -foreground green
       $itk_component(vign) configure -text "No Dome Vignetting" 
+      $itk_component(vign) configure -foreground green
    }
    
    set domeF [sa ecssad get domeFault ] 
@@ -103,8 +105,16 @@ itcl::body DomeView::update {} {
    set tshF  [sa ecssad get tshFault ] 
    set bshF  [sa ecssad get bshFault ] 
    set fltMes ""
-   if { $domeF == 1 } {
-   	set fltMes "$fltMes Dome, "
+   if { $domeF == 0 || $domeF == 1 } {
+   	set fltMes "$fltMes Dome=STP, "
+   } else if { $domeF == 2 } {
+   	set fltMes "$fltMes Dome=MOV, "
+   } else if { $domeF == 3 } {
+   	set fltMes "$fltMes Dome=PRK, "
+   } else if { $domeF == 4 } {
+   	set fltMes "$fltMes Dome=OFL, "
+   } else if { $domeF == 5 } {
+   	set fltMes "$fltMes Dome=ERR, "
    }
    if { $evgF == 1 } {
    	set fltMes "$fltMes EVG, "
@@ -116,7 +126,7 @@ itcl::body DomeView::update {} {
    	set fltMes "$fltMes TSH, "
    } 
    if { $bshF == 1 } {
-   	set fltMes "$fltMes BST "
+   	set fltMes "$fltMes BSH "
    } 
    if { $fltMes != "" } {
       set fltMes "$fltMes Fault "
