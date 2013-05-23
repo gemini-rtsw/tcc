@@ -105,34 +105,36 @@ itcl::body DomeView::update {} {
    set tshF  [sa ecssad get tshFault ] 
    set bshF  [sa ecssad get bshFault ] 
    set fltMes ""
-   if { $domeF == 0 || $domeF == 1 } {
-   	set fltMes "$fltMes Dome=STP, "
-   } else if { $domeF == 2 } {
-   	set fltMes "$fltMes Dome=MOV, "
-   } else if { $domeF == 3 } {
-   	set fltMes "$fltMes Dome=PRK, "
-   } else if { $domeF == 4 } {
-   	set fltMes "$fltMes Dome=OFL, "
-   } else if { $domeF == 5 } {
-   	set fltMes "$fltMes Dome=ERR, "
+   if { $domeF == 4 } {
+   	set fltMes "$fltMes Dome:OFL, "
+   } elseif { $domeF == 5 } {
+   	set fltMes "$fltMes Dome:ERR, "
    }
-   if { $evgF == 1 } {
-   	set fltMes "$fltMes EVG, "
-   } 
-   if { $wvgF == 1 } {
-   	set fltMes "$fltMes WVG, "
-   } 
-   if { $tshF == 1 } {
-   	set fltMes "$fltMes TSH, "
-   } 
-   if { $bshF == 1 } {
-   	set fltMes "$fltMes BSH "
-   } 
+   if { $evgF == 4 } {
+   	set fltMes "$fltMes EVG:OFL, "
+   } elseif { $evgF == 5 } {
+   	set fltMes "$fltMes EVG:ERR, "
+   }
+   if { $wvgF == 4 } {
+   	set fltMes "$fltMes WVG:OFL, "
+   } elseif { $wvgF == 5 } {
+   	set fltMes "$fltMes WVG:ERR, "
+   }
+   if { $tshF == 4 } {
+   	set fltMes "$fltMes TSH:OFL, "
+   } elseif { $tshF == 5 } {
+   	set fltMes "$fltMes TSH:ERR, "
+   }
+   if { $bshF == 4 } {
+   	set fltMes "$fltMes BSH:OFL "
+   } elseif { $bshF == 5 } {
+   	set fltMes "$fltMes BSH:ERR "
+   }
    if { $fltMes != "" } {
-      set fltMes "$fltMes Fault "
       $itk_component(ecsFault) configure -foreground red
    }       
 
    $itk_component(ecsFault) configure -text $fltMes
-   
+   $itk_component(ecsFault) configure -text $fltMes
+  
 }
