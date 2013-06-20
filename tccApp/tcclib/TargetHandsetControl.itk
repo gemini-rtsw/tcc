@@ -31,6 +31,7 @@ itcl::class TargetHandsetControl {
 		method onMapChange {reasons}
 		method changeState {target state}
 		method refreshGLabel {vguide}
+      method mapGValue { val }
    }
 }
 
@@ -84,16 +85,16 @@ itcl::body TargetHandsetControl::constructor args {
 
 # Labels.
    itk_component add scilab {
-      StatusField $w.scilab -text Sci -width 4 -background grey
+      StatusField $w.scilab -text Sci -width 8 -background grey
    }
    itk_component add p1lab {
-      StatusField $w.p1lab -text P1 -width 4
+      StatusField $w.p1lab -text P1 -width 8
    }
    itk_component add p2lab {
-      StatusField $w.p2lab -text P2/AO -width 4
+      StatusField $w.p2lab -text P2/AO -width 8
    }
    itk_component add oilab {
-      StatusField $w.oilab -text OIWFS -width 4
+      StatusField $w.oilab -text OIWFS -width 8
    }
 	
 
@@ -177,16 +178,16 @@ itcl::body TargetHandsetControl::constructor args {
 															-command [itcl::code $this setvt]
 		}
 		itk_component add g1lab {
-			StatusField $w.g1lab -width 9 -background grey
+			StatusField $w.g1lab -width 8 -background grey
 		}
 		itk_component add g2lab {
-			StatusField $w.g2lab -width 9 -background grey
+			StatusField $w.g2lab -width 8 -background grey
 		}
 		itk_component add g3lab {
-			StatusField $w.g3lab -width 9 -background grey
+			StatusField $w.g3lab -width 8 -background grey
 		}
 		itk_component add g4lab {
-			StatusField $w.g4lab -width 9 -background grey
+			StatusField $w.g4lab -width 8 -background grey
 		}
 		itk_component add g1ra {
 				label $w.g1ra -width 12 -borderwidth 2 -relief groove
@@ -493,7 +494,7 @@ itcl::body TargetHandsetControl::onMapChange {reasons} {
 		switch $reason {
 		g1 {
 			set value [[TcsVirtualMap::getSingleton] getMap g1] 
-			$itk_component(g1lab) configure -text G1($value)
+			$itk_component(g1lab) configure -text [mapGValue $value]
 			if { $value eq "NONE" } {
 				changeState g1 disabled
 				
@@ -504,7 +505,7 @@ itcl::body TargetHandsetControl::onMapChange {reasons} {
 		}
 		g2 {
 			set value [[TcsVirtualMap::getSingleton] getMap g2] 
-			$itk_component(g2lab) configure -text G2($value)
+			$itk_component(g2lab) configure -text [mapGValue $value]
 			if { $value eq "NONE" } {
 				changeState g2 disabled
 			} else {
@@ -514,7 +515,7 @@ itcl::body TargetHandsetControl::onMapChange {reasons} {
 		}
 		g3 {
 			set value [[TcsVirtualMap::getSingleton] getMap g3] 
-			$itk_component(g3lab) configure -text G3($value)
+			$itk_component(g3lab) configure -text [mapGValue $value]
 			if { $value eq "NONE" } {
 				changeState g3 disabled
 			} else {
@@ -524,7 +525,7 @@ itcl::body TargetHandsetControl::onMapChange {reasons} {
 		}
 		g4 {
 			set value [[TcsVirtualMap::getSingleton] getMap g4] 
-			$itk_component(g4lab) configure -text G4($value)
+			$itk_component(g4lab) configure -text [mapGValue $value]
 			if { $value eq "NONE" } {
 				changeState g4 disabled
 			} else {
@@ -602,4 +603,14 @@ itcl::body TargetHandsetControl::refreshGLabel {vguide} {
 	}
 	}
 	$itk_component(${vguide}lab) configure -status $status
+}
+
+itcl::body TargetHandsetControl::mapGValue { val } {
+   switch $val {
+   TTGS1 { return CWFS1 }
+   TTGS2 { return CWFS2 }
+   TTGS3 { return CWFS3 }
+   NONE { return "" }
+   default { return $val } 
+   }
 }

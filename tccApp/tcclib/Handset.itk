@@ -61,6 +61,7 @@ itcl::class Handset {
       common tid ""
 
       method onMapChange {reasons}
+      method mapGValue { val }
 
       variable oiAngle 138.94
 	}
@@ -674,7 +675,7 @@ itcl::body Handset::onMapChange {reasons} {
 		switch $reason {
 		g1 {
 			set value [[TcsVirtualMap::getSingleton] getMap g1] 
-			$itk_component(orient) buttonconfigure g1 -text G1($value)
+			$itk_component(orient) buttonconfigure g1 -text [mapGValue $value]
 			if { $value eq "NONE" } {
 				$itk_component(orient) buttonconfigure g1 -state disabled
 			} else {
@@ -683,7 +684,7 @@ itcl::body Handset::onMapChange {reasons} {
 		}		
 		g2 {
 			set value [[TcsVirtualMap::getSingleton] getMap g2] 
-			$itk_component(orient) buttonconfigure g2 -text G2($value)
+			$itk_component(orient) buttonconfigure g2 -text [mapGValue $value]
 			if { $value eq "NONE" } {
 				$itk_component(orient) buttonconfigure g2 -state disabled
 			} else {
@@ -692,7 +693,7 @@ itcl::body Handset::onMapChange {reasons} {
 		}
 		g3 {
 			set value [[TcsVirtualMap::getSingleton] getMap g3] 
-			$itk_component(orient) buttonconfigure g3 -text G3($value)
+			$itk_component(orient) buttonconfigure g3 -text [mapGValue $value]
 			if { $value eq "NONE" } {
 				$itk_component(orient) buttonconfigure g3 -state disabled
 			} else {
@@ -701,7 +702,7 @@ itcl::body Handset::onMapChange {reasons} {
 		}
 		g4 {
 			set value [[TcsVirtualMap::getSingleton] getMap g4] 
-			$itk_component(orient) buttonconfigure g4 -text G4($value)
+			$itk_component(orient) buttonconfigure g4 -text [mapGValue $value]
 			if { $value eq "NONE" } {
 				$itk_component(orient) buttonconfigure g4 -state disabled
 			} else {
@@ -729,4 +730,14 @@ itcl::body Handset::getCurrentFrame {} {
 	g4 {set frame [string tolower [[TcsVirtualMap::getSingleton] getMap $frame]]}
 	}
 	return $frame
+}
+
+itcl::body Handset::mapGValue { val } {
+   switch $val {
+   TTGS1 { return CWFS1 }
+   TTGS2 { return CWFS2 }
+   TTGS3 { return CWFS3 }
+   NONE { return "" }
+   default { return $val } 
+   }
 }
