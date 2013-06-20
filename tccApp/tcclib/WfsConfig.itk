@@ -578,25 +578,24 @@ itcl::body WfsConfig::buildGemsPage {parent} {
    }
    $itk_component(odgwsizesel) insert end 2 4 6 8 10 12 16 24 32 64 128
    itk_component add odgwSizeApply {
-      button $w.odgwsizeapply -text "Apply" -command [itcl::code $this configureODGW]
+      button $w.odgwsizeapply -text "Apply Size" -command [itcl::code $this configureODGW]
    } {
       ignore -background
    }
    itk_component add odgwCurrSize { label $w.currsize -width 5 -relief sunken } { 
       ignore -background }
-   itk_component add odgwDisplay { checkbutton $w.odgwdisplay -text Display -onvalue YES -offvalue NO -variable [itcl::scope odgwDisplay]} { 
-         ignore -background }
+#   itk_component add odgwDisplay { checkbutton $w.odgwdisplay -text Display -onvalue YES -offvalue NO -variable [itcl::scope odgwDisplay]} { 
+#         ignore -background }
 	pack $itk_component(odgwfilter) $itk_component(odgwFilterApply) -side left -anchor w -pady 2 
 	pack $itk_component(odgwsetframe) -side top -anchor w -pady 0
 	pack $itk_component(odgwlab1) $itk_component(odgwCurrFlt) \
 		$itk_component(odgwlab2) $itk_component(odgwCurrWavel) -side left \
 		-pady 1 -padx 2
    
-   pack $itk_component(odgwsizesel) $itk_component(odgwCurrSize) $itk_component(odgwDisplay) $itk_component(odgwSizeApply) -side left -anchor w -pady 2
-   pack configure $itk_component(odgwDisplay) -padx 5
-#   pack $itk_component(odgwsetsizeframe) -side top -anchor w -pady 2
-#   pack $itk_component(odgwlab3) $itk_component(odgwCurrSize) -side left \
-#      -pady 2 -padx 2
+   pack $itk_component(odgwsizesel) $itk_component(odgwCurrSize) $itk_component(odgwSizeApply) -side left -anchor w -pady 2
+   pack configure $itk_component(odgwSizeApply) -padx 5
+#   pack $itk_component(odgwsizesel) $itk_component(odgwCurrSize) $itk_component(odgwDisplay) $itk_component(odgwSizeApply) -side left -anchor w -pady 2
+#   pack configure $itk_component(odgwDisplay) -padx 5
    
 	pack $itk_component(odgwframe) $itk_component(odgwsizeframe) -side top -pady 0 -expand yes -fill x
 
@@ -679,7 +678,7 @@ itcl::body WfsConfig::configureODGW {} {
       $gems setODGWSize $size 0
    }
    
-   $gems setODGWDisplay $odgwDisplay
+#   $gems setODGWDisplay $odgwDisplay
 }
 
 itcl::body WfsConfig::onODGWSizeChange {changeList} {
