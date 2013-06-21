@@ -45,6 +45,9 @@ public {
 	itk_option define -relief relief Relief solid {
 		$itk_component(mainframe) configure -relief $itk_option(-relief)
 	}
+   itk_option define -orientation orientation Orientation vert {
+      changeOrientation $itk_option(-orientation)
+   }  
 	
 	method clear {} { 
 		$itk_component(onoff) clear 
@@ -59,6 +62,11 @@ public {
 	method getExpCombo {} { return $itk_component(exp) }
 								
 	constructor {args} {}
+   
+   private {
+      variable old_orientation vert
+      method changeOrientation { new_orientation }
+   }
 }
 }
 
@@ -96,4 +104,22 @@ itcl::body WfsWidget::constructor {args} {
 itcl::body WfsWidget::setExp { val } {
    $itk_component(exp) clear entry
    $itk_component(exp) insert entry end $val
+}
+
+itcl::body WfsWidget::changeOrientation { new_orientation } {
+   if { $new_orientation == $old_orientation } {
+      return
+   }
+   pack forget $itk_component(onoff) $itk_component(frame) $itk_component(exp)
+   if { $new_orientation eq "vert" } {
+      $itk_component(exp) configure -labelpos nw
+      pack $itk_component(onoff) -side top -pady 1 -padx 1
+      pack $itk_component(frame) -side top -anchor n -pady 1 -padx 1 
+      pack $itk_component(exp) -side top -anchor s -pady 1 -padx 1
+   } else {
+      $itk_component(exp) configure -labelpos w
+      pack $itk_component(onoff) -side left -pady 1 -padx 1
+      pack $itk_component(frame) -side left -anchor n -pady 1 -padx 1 
+      pack $itk_component(exp) -side left -anchor s -pady 1 -padx 1
+   }
 }
