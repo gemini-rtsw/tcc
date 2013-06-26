@@ -76,7 +76,7 @@ itcl::body GemsWidget::constructor {args} {
    }
 
    itk_component add mainframe {
-		frame $itk_interior.mainframe -relief solid -borderwidth 1 -background white
+		frame $itk_interior.mainframe -relief solid -borderwidth 0 -background white
 	} {usual
 		ignore -background }
    pack $itk_component(mainframe)
@@ -218,7 +218,7 @@ itcl::body GemsWidget::constructor {args} {
 		WfsWidget $w.buttonframe.sfs -label SFS -explabel Hz -expvalues $sfsExpList
 	}
    [$itk_component(sfs) component exp] configure -width 2 -labelpos w -labeltext "exp\[s\]"
-   pack $itk_component(sfs) -side bottom -anchor s -padx 2 -pady 1
+   pack $itk_component(sfs) -side bottom -anchor s -padx 0 -pady 0
 
    set odgwExpList ""
    foreach {pair } $odgwExpLUT {
@@ -250,20 +250,21 @@ itcl::body GemsWidget::constructor {args} {
    [$itk_component(odgw4) component exp] configure -width 3 -labeltext "f\[Hz\]"
 
    pack $itk_component(odgw1) $itk_component(odgw2) $itk_component(odgw3) $itk_component(odgw4) \
-      -fill x -expand yes -anchor n -padx 1 -pady 1
-
+      -fill x -expand yes -anchor n -padx 1 -pady {0 1}
+   pack configure $itk_component(odgw1) -pady 1
+ 
    [$itk_component(sfs) component exp] selection set 0
    [$itk_component(odgw1) component exp] selection set 0
    [$itk_component(odgw2) component exp] selection set 0
    [$itk_component(odgw3) component exp] selection set 0
    [$itk_component(odgw4) component exp] selection set 0
 
-   pack $itk_component(gaoson) -side top -anchor n -padx 3 -pady 3
-   pack $itk_component(odgwframe) -padx 4 -pady 4 -side bottom -expand yes -fill x
-   pack $itk_component(canframe) -padx 2 -pady 1 -side bottom -fill x -expand yes
-   pack $itk_component(buttonframe) -fill x -side left -fill y
+   pack $itk_component(gaoson) -side top -anchor n -padx 0 -pady {0 1}
+   pack $itk_component(odgwframe) -padx 0 -pady 0 -side bottom -expand yes -fill x
+   pack $itk_component(canframe) -padx 0 -pady 1 -side bottom -fill x -expand yes
+   pack $itk_component(buttonframe) -fill x -side left -fill y -pady 1 -padx {0 1}
    pack $itk_component(ttframe) -side top -anchor e
-   pack $itk_component(lgswfsframe) -side top -anchor e -padx 2 -pady 1
+   pack $itk_component(lgswfsframe) -side top -anchor e -padx {1 0} -pady 1 
    #pack $itk_component(sfs) -padx 1 -pady 1 -side bottom -anchor w
 
    set sys [GemsSys::getSingleton]
@@ -271,7 +272,7 @@ itcl::body GemsWidget::constructor {args} {
 
    trace variable ::Config(tcs.field,value) w [itcl::code $this onFieldChange]
 
-   foreach wd { ttframe ttcan3 ttodgw4 } {
+   foreach wd { ttframe ttcan3 ttodgw4 odgwframe odgw1 odgw4 sfs buttonframe canframe sfsloop aniloop flexloop} {
       bind $itk_component($wd) <Configure> [itcl::code $this onLayoutChange]
    }
 
@@ -720,7 +721,6 @@ itcl::body GemsWidget::onTTCxPress {op} {
 }
 
 itcl::body GemsWidget::getMagnetPoint { type } {
-   puts "[winfo x $itk_component(ttframe)] + [winfo reqwidth $itk_component(ttframe)]"
    switch $type {
       TT_CAN_IN {
          set x [ expr [winfo x $itk_component(ttframe)] + [winfo width $itk_component(ttframe)] ]
@@ -732,21 +732,44 @@ itcl::body GemsWidget::getMagnetPoint { type } {
       }
       ODGW_OUTR {
          set x [ expr [winfo x $itk_component(odgwframe)] + \
-            [winfo x $itk_component(odgw1)] + [winfo width $itk_component(odgw1)] ]
+            [winfo x $itk_component(odgw1)] + [winfo width $itk_component(odgw1)] +1 ]
          set y [ expr [winfo y $itk_component(odgwframe)] + ( [winfo y $itk_component(odgw1)] \
             + [winfo y $itk_component(odgw4)] + [winfo height $itk_component(odgw4)] ) / 2 ]
       }
+      ODGW_OUTL {
+         set x [expr [winfo x $itk_component(odgwframe)] ]
+         set y [ expr [winfo y $itk_component(odgwframe)] + ( [winfo y $itk_component(odgw1)] \
+            + [winfo y $itk_component(odgw4)] + [winfo height $itk_component(odgw4)] ) / 2 ]
+      }
+      CAN_OUTR  {
+         set x [ expr [winfo x $itk_component(canframe)] + [winfo width $itk_component(canframe)] ] 
+         set y [ expr [winfo y $itk_component(canframe)] + [winfo height $itk_component(canframe)] / 2 ]
+      }
+      CAN_OUTL  {
+         set x [winfo x $itk_component(canframe)] 
+         set y [ expr [winfo y $itk_component(canframe)] + [winfo height $itk_component(canframe)] / 2 ]
+      }
+      SFS_OUT {
+         set x [ expr [winfo x $itk_component(buttonframe)] + [winfo x $itk_component(sfs)] ]
+         set y [ expr [winfo y $itk_component(buttonframe)] + [winfo y $itk_component(sfs)] + [winfo height $itk_component(sfs)] / 2 ]
+      }
+      SF_IN {
+         set x [ expr [winfo x $itk_component(buttonframe)] + [winfo x $itk_component(sfsloop)] ]
+         set y [ expr [winfo y $itk_component(buttonframe)] + [winfo y $itk_component(sfsloop)] + [winfo height $itk_component(sfsloop)] / 2 ]
+      }
+      ANI_IN {
+         set x [ expr [winfo x $itk_component(buttonframe)] + [winfo x $itk_component(aniloop)] ]
+         set y [ expr [winfo y $itk_component(buttonframe)] + [winfo y $itk_component(aniloop)] + [winfo height $itk_component(aniloop)] / 2 ]
+      }
+      FLEX_IN {
+         set x [ expr [winfo x $itk_component(buttonframe)] + [winfo x $itk_component(flexloop)] ]
+         set y [ expr [winfo y $itk_component(buttonframe)] + [winfo y $itk_component(flexloop)] + [winfo height $itk_component(flexloop)] / 2 ]
+      }
       default {
-         set x -1
-         set y -1
+         return {-1 -1}
       }
    }
-   puts "GemsWidget::getMagnetPoint $type ($x, $y)"
-   if { $x >= 0 } {
-      return [ list [expr [winfo x $itk_interior] + $x ] [expr [winfo y $itk_interior] + $y ] ]
-   } else {
-      return [ list $x $y ]
-   }
+   return [ list [expr [winfo x $itk_interior] + $x ] [expr [winfo y $itk_interior] + $y ] ]
 }
 
 itcl::body GemsWidget::onLayoutChange {} {

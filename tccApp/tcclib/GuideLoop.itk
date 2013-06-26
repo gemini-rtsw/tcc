@@ -26,7 +26,7 @@ itcl::class GuideLoop {
       method comacorr {op}
       method m2mode {probe val}
       method mtmode {val}
-		method crmode {val}
+      method crmode {val}
       method configProbeTracking {}
       method wfsmode {wfs val}
       method configP1Ex {}
@@ -36,37 +36,39 @@ itcl::class GuideLoop {
       method enable {}
       method m1mode {state}
       variable monids
-		variable gemsSys ""
-		
-		variable gaosWidget ""
-		method buildGaos {}
-		method buildAltairArrows {}
-		method buildGemsArrows {}
-		method recolourAltairArrows {}
-		method recolourGemsArrows {}
-		method recolourGaos {}
-		method enableGaos {}
-		method resetGaos {}
-		method onGemsChange {reasons}
+      variable gemsSys ""
+
+      variable gaosWidget ""
+      method buildGaos {}
+      method buildAltairArrows {}
+      method buildGemsArrows {}
+      method recolourAltairArrows {}
+      method recolourGemsArrows {}
+      method recolourGaos {}
+      method enableGaos {}
+      method resetGaos {}
+      method onGemsChange {reasons}
       method onIgnoreAOChange {name1 name2 op}
-      
+
       variable arrowHeadSpace 25
       variable interLineSpace 10
-      variable arrowLenghth 17
-      variable arrowHalfWidht 6
+      variable arrowLength 15
+      variable arrowHalfWidth 6
       variable arrowBorder 1
+      variable lineWidth 3
+
       variable arrowOffset
       variable arrowBorderOffset
       variable arrowShape
       variable arrowBorderShape
-      
+
       method resize {}
       method resizeGemsArrows {}
    }
    itk_option define -wfsConfigObj wfsConfigObj WfsConfigObj "" {
    	if { $itk_option(-wfsConfigObj) ne "" } { recolour }
    }
-	itk_option define -wfsAlarmObj wfsAlarmObj WfsAlarmObj "" { 
+   itk_option define -wfsAlarmObj wfsAlarmObj WfsAlarmObj "" {
 		if { $itk_option(-wfsAlarmObj) ne "" } { recolour }
 	}
 }
@@ -76,16 +78,18 @@ itk::usual GuideLoop {
 }
 
 itcl::body GuideLoop::constructor args {
-   
-   set arrowShape { $arrowLenghth $arrowLength $arrowHalfWidht }
-   set a1 [expr $arrowBorder * sqrt( $arrowLenghth * ( $arrowLenghth + $arrowHalfWidht ) ) / $arrowHalfWidht ]
-   set a2 [expr $arrowLenghth + $arrowBorder + $a1]
-   set a3 [expr ($arrowBorder + $a1) * $arrowHalfWidht / $arrowLenghth]
-   
-   
-# Create canvas.
+
+   set arrowShape [list $arrowLength $arrowLength $arrowHalfWidth ]
+   set a1 [expr $arrowBorder * sqrt( $arrowLength * ( $arrowLength + $arrowHalfWidth ) ) / $arrowHalfWidth ]
+   set a2 [expr $arrowLength + $arrowBorder + $a1]
+   set a3 [expr ($arrowBorder + $a1) * $arrowHalfWidth / $arrowLength]
+   set arrowBorderShape [list $a2 $a2 [expr $arrowHalfWidth + $a3]]
+   set arrowOffset 2
+   set arrowBorderOffset [ expr $arrowOffset - $a1 ]
+
+   # Create canvas.
    itk_component add canv {
-#AWE      canvas $itk_interior.canv -width 630 -height 497 -borderwidth 2 
+#AWE      canvas $itk_interior.canv -width 630 -height 497 -borderwidth 2
       canvas $itk_interior.canv -width 695 -height 475 -borderwidth 2 \
             -relief sunken
    }
@@ -99,7 +103,7 @@ itcl::body GuideLoop::constructor args {
    # rectangle to group WFS
    $w create rectangle 0 0 337 156 -tags "wfs_comb"
    # PWFS1 box
-	itk_component add pwfs1 {
+   itk_component add pwfs1 {
 		WfsWidget $w.pwfs1 -label P1 -onswitchpress [itcl::code $this wfsmode pwfs1] -background grey \
 		    -onexpselect [itcl::code $this configP1Ex]
 	} {
@@ -109,8 +113,8 @@ itcl::body GuideLoop::constructor args {
    if { [calparam cget -site] eq "CP" } {
       $itk_component(pwfs1) configure -expvalues [list 1.0 0.5 0.1 0.05 0.02 0.01]
    }
-	$itk_component(pwfs1) setExp [AO cget -pwfs1Expose]
-	$w create window 0 0 -window $w.pwfs1 -tags "wfs_comb pwfs1" -anchor nw
+   $itk_component(pwfs1) setExp [AO cget -pwfs1Expose]
+   $w create window 0 0 -window $w.pwfs1 -tags "wfs_comb pwfs1" -anchor nw
    # PWFS2 box
    itk_component add pwfs2 {
 		WfsWidget $w.pwfs2 -label P2 -onswitchpress [itcl::code $this wfsmode pwfs2] \
@@ -119,8 +123,8 @@ itcl::body GuideLoop::constructor args {
 		usual
 	}
    [$itk_component(pwfs2) component exp] configure -labelpos nw
-	$itk_component(pwfs2) setExp [AO cget -pwfs2Expose]
-	$w create window 0 0 -window $w.pwfs2 -tags "wfs_comb pwfs2" -anchor nw
+   $itk_component(pwfs2) setExp [AO cget -pwfs2Expose]
+   $w create window 0 0 -window $w.pwfs2 -tags "wfs_comb pwfs2" -anchor nw
    # HRWFS box
    itk_component add hrwfs {
       WfsWidget $w.hrwfs -label HR -explabel Sec -onswitchpress [itcl::code $this wfsmode hrwfs] \
@@ -132,16 +136,18 @@ itcl::body GuideLoop::constructor args {
    $itk_component(hrwfs) setExp [AO cget -hrwfsExpose]
    $w create window 0 0 -window $w.hrwfs -tags "wfs_comb hrwfs" -anchor nw
    # OIWFS including an AO mode for NICI
-#   itk_component add oiwfs {
-#      WfsWidget $w.oiwfs -label OI -onswitchpress [itcl::code $this wfsmode oiwfs] \
-#          -onexpselect [itcl::code $this configOiEx]
-#   } {
-#      usual
-#   }
-#   [$itk_component(oiwfs) component exp] configure -labelpos nw
-#   $itk_component(oiwfs) setExp [AO cget -oiwfsExpose]
-#   $w create window 0 0 -width 100 -window $w.oiwfs -tags "wfs_comb oiwfs" -anchor nw
-   
+   #   itk_component add oiwfs {
+   #      WfsWidget $w.oiwfs -label OI -onswitchpress [itcl::code $this wfsmode
+   # oiwfs] \
+   #          -onexpselect [itcl::code $this configOiEx]
+   #   } {
+   #      usual
+   #   }
+   #   [$itk_component(oiwfs) component exp] configure -labelpos nw
+   #   $itk_component(oiwfs) setExp [AO cget -oiwfsExpose]
+   #   $w create window 0 0 -width 100 -window $w.oiwfs -tags "wfs_comb oiwfs"
+   # -anchor nw
+
    itk_component add oiwfs {
 	  ToggleButton $w.oiwfs -text OI -pushedbackground Green -pady 0 \
         -command [itcl::code $this wfsmode oiwfs]
@@ -150,12 +156,14 @@ itcl::body GuideLoop::constructor args {
    }
    $w create window 32 2 -width 48 -window $w.oiwfs -tags "wfs_comb oiwfs" -anchor nw
    $w create rectangle 0 0 110 68 -fill white -tags "active wfs_comb oiwfs oiwfs_bg"
-#   $w create rectangle 2 26 60 47 -fill white -tags "active wfs_comb oiwfs oiwfs_ao"
-#   $w create rectangle 63 26 121 47 -fill white -tags "active wfs_comb oiwfs oiwfs_wfs"
+   #   $w create rectangle 2 26 60 47 -fill white -tags "active wfs_comb oiwfs
+   # oiwfs_ao"
+   #   $w create rectangle 63 26 121 47 -fill white -tags "active wfs_comb oiwfs
+   # oiwfs_wfs"
    $w create rectangle 2 2 30 20 -fill white -tags "active wfs_comb oiwfs oiwfs_ao"
    $w create rectangle 80 2 108 20 -fill white -tags "active wfs_comb oiwfs oiwfs_wfs"
 
-# OIWFS controls.
+   # OIWFS controls.
    itk_component add oiwfs_ex {
       iwidgets::combobox $w.oiwfs_ex -arrowrelief flat -width 5 \
             -validate real -labeltext "Sec/Hz" -labelpos nw -selectioncommand [itcl::code $this configOiEx]
@@ -165,36 +173,36 @@ itcl::body GuideLoop::constructor args {
    $w.oiwfs_ex insert list end 1.0 0.5 0.1 0.05 0.02 0.01 0.005
    $w.oiwfs_ex insert entry end [AO cget -oiwfsExpose]
    [$w.oiwfs_ex component list] configure -hscrollmode none \
-         -vscrollmode none
+      -vscrollmode none
 
-	set font [$itk_component(oiwfs) cget -font]
+   set font [$itk_component(oiwfs) cget -font]
    $w create text 16 11 -text AO -tags "wfs_comb oiwfs oiwfs_aotxt" -font $font
    $w create text 94 11 -text WFS -tags "wfs_comb oiwfs oiwfs_wfstxt" -font $font
 
-# display aoSettled state
+   # display aoSettled state
    $w create rectangle 0 0 100 20 -fill white -tags "settled aoSettled active"
    $w create text 50 10 -text "AO Settled" -tags settled -font $font
 
-	buildGaos
-	
-	$w create text 168 12 -text WFS -tags wfs_comb -font $font
+   buildGaos
 
-# M1, M2 and Mount boxes.
-   $w create rectangle 0 0 227 111 -fill white -tags "active m2 m2_bg"
+   $w create text 168 12 -text WFS -tags wfs_comb -font $font
+
+   # M1, M2 and Mount boxes.
+   $w create rectangle 0 0 227 111 -fill white -tags "active m2box m2 m2_bg"
    $w create text 113 10 -text M2 -tags m2 -font $font
    $w create rectangle 4 20 123 107 -fill white -tags "active m2 m2_bg"
    $w create text 89 52 -text TIP/TILT -tags m2 -font $font
    $w create text 89 72 -text FOCUS -tags m2 -font $font
    $w create rectangle 123 20 223 107 -fill white -tags "active m2 m2xy m2xy_bg"
    $w create text 147 63 -text "COMA" -tags "m2 m2xy" -font $font
-   $w create rectangle 0 0 244 44 -fill white -tags "active m1 m1_bg"
+   $w create rectangle 0 0 244 44 -fill white -tags "active m1 m1box m1_bg"
    $w create text 122 12 -text "M1 Figure" -tags m1 -font $font
    $w create rectangle 0 0 85 44 -fill white -tags "active mount mount_bg"
    $w create text 42 12 -text Mount -tags mount -font $font
-	$w create rectangle 0 0 75 44 -fill white -tags "active rotator rotator_bg"
-	$w create text 37 12 -text "Cass Rot" -tags rotator -font $font
+   $w create rectangle 0 0 75 44 -fill white -tags "active rotator rotator_bg"
+   $w create text 37 12 -text "Cass Rot" -tags rotator -font $font
 
-# Controls for M1.
+   # Controls for M1.
    itk_component add m1src {
       SelectButton $w.m1src -orient horizontal \
             -command [itcl::code $this m1mode]
@@ -209,7 +217,7 @@ itcl::body GuideLoop::constructor args {
    $itk_component(m1src) add OI -pady 0
    $itk_component(m1src) add AO -pady 0
 
-# Controls for M2
+   # Controls for M2
    itk_component add m2p1 {
 		ToggleButton $w.m2p1 -text P1 -pushedbackground Green -pady 0 -padx 0 \
             -command [itcl::code $this m2mode p1]
@@ -254,7 +262,7 @@ itcl::body GuideLoop::constructor args {
    $itk_component(m2coma) add HR -pady 0
    $itk_component(m2coma) add AO -pady 0
 
-# Controls for Mount.
+   # Controls for Mount.
    itk_component add mt {
 		SelectButton $w.mt -orient horizontal \
             -command [itcl::code $this mtmode]
@@ -265,22 +273,22 @@ itcl::body GuideLoop::constructor args {
    $w create window 43 22 -width 60 -window $itk_component(mt) -tags mount -anchor n
    $itk_component(mt) add M2 -pady 0
 
-	# Controls for Cass-rotator.
-	itk_component add rotator {
+   # Controls for Cass-rotator.
+   itk_component add rotator {
 		SelectButton $w.rotator -orient horizontal \
 				-command [itcl::code $this crmode]
 	} {
 		usual
 		rename -offbackground -background background Background
 	}
-	$w create window 38 22 -width 50 -window $itk_component(rotator) -tags rotator -anchor n
-	$itk_component(rotator) add AO -pady 0
+   $w create window 38 22 -width 50 -window $itk_component(rotator) -tags rotator -anchor n
+   $itk_component(rotator) add AO -pady 0
 
-# Box for WFS probes.
+   # Box for WFS probes.
    $w create rectangle 0 0 82 44 -fill white -tags "active probes probes_bg wfs_comb"
    $w create text 41 12 -text PROBES -tags "probes wfs_comb" -font $font
 
-# Controls for probes.
+   # Controls for probes.
    itk_component add prsel {
       iwidgets::combobox $w.prsel -arrowrelief flat -width 6 \
             -selectioncommand [itcl::code $this configProbeTracking]
@@ -289,10 +297,10 @@ itcl::body GuideLoop::constructor args {
    $w.prsel insert list end None "P1->P1" "P2->P2" "OI->P1" "OI->P2" "OI->OI"
    $w.prsel insert entry end None
    [$w.prsel component list] configure -hscrollmode none \
-         -vscrollmode none
+      -vscrollmode none
    $w create window 2 22 -window $w.prsel -tag "probes wfs_comb" -anchor nw
 
-# Move boxes into position.
+   # Move boxes into position.
    $w move m2 88 10
    #$w move m2xy 269 10
    $w move m1 79 296
@@ -304,35 +312,48 @@ itcl::body GuideLoop::constructor args {
    $w move probes 127 108
    $w move wfs_comb 33 130
    $w move mount 159 404
-	$w move rotator 164 350
+   $w move rotator 164 350
 
-# PWFS to M1 and M2
-   $w create line 33 184 23 184 -width 3 -fill white \
+   # PWFS to M1 and M2
+   $w create line 33 184 23 184 -width [expr $lineWidth + 2 * $arrowBorder] -fill black
+   $w create line 23 184 23 318 [expr 79 - $arrowBorderOffset] 318 \
+      -width [expr $lineWidth + 2 * $arrowBorder] -fill black -arrow last -arrowshape $arrowBorderShape
+   $w create line 23 184 23 52 [expr 88 - $arrowBorderOffset] 52 \
+      -width [expr $lineWidth + 2 * $arrowBorder] -fill black -arrow last -arrowshape $arrowBorderShape
+
+   $w create line 23 184 23 318 [expr 79 - $arrowOffset] 318 -width $lineWidth -fill white \
+      -tags {active wfs_m1} -arrow last -arrowshape $arrowShape
+   $w create line 23 184 23 52 [expr 88 - $arrowOffset] 52 -width $lineWidth -fill white \
+      -tags {active wfs_m2} -arrow last -arrowshape $arrowShape
+   $w create line 33 184 23 184 -width $lineWidth -fill white \
       -tags {active wfs_head}
-   $w create line 23 184 23 318 79 318 -width 3 -fill white \
-      -tags {active wfs_m1} -arrow last -arrowshape {20 20 7}
-   $w create line 23 184 23 52 88 52 -width 3 -fill white \
-      -tags {active wfs_m2} -arrow last -arrowshape {20 20 7}
 
-# WFS to Probes
-   $w create line 201 228 201 238 -width 3 -fill white \
+   # WFS to Probes
+   $w create line 201 228 201 238 -width [expr $lineWidth + 2 * $arrowBorder] -fill black
+   $w create line 73 219 73 228 146 228 -width [expr $lineWidth + 2 * $arrowBorder] -fill black
+   $w create line 146 219 146 228 -width [expr $lineWidth + 2 * $arrowBorder] -fill black
+   $w create line 146 228 201 228 -width [expr $lineWidth + 2 * $arrowBorder] -fill black
+   $w create line 311 219 311 228 201 228 -width [expr $lineWidth + 2 * $arrowBorder] -fill black
+
+   $w create line 201 228 201 238 -width $lineWidth -fill white \
       -tags {active wfs_pr_tail}
-   $w create line 73 219 73 228 146 228 -width 3 -fill white \
+   $w create line 73 219 73 228 146 228 -width $lineWidth -fill white \
       -tags {active pwfs1_pr}
-   $w create line 146 219 146 228 -width 3 -fill white \
+   $w create line 146 219 146 228 -width $lineWidth -fill white \
       -tags {active pwfs2_pr}
-   $w create line 146 228 201 228 -width 3 -fill white \
+   $w create line 146 228 201 228 -width $lineWidth -fill white \
       -tags {active pwfs12_pr}
-   $w create line 311 219 311 228 201 228 -width 3 -fill white \
+   $w create line 311 219 311 228 201 228 -width $lineWidth -fill white \
       -tags {active oiwfs_pr}
 
-# M2 to mount
-   $w create line 88 20 12 20 12 426 159 426 -width 3 -fill white \
-         -tags {active m2_mt} -arrow last -arrowshape {20 20 7}
+   # M2 to mount
+   $w create line 88 20 12 20 12 426 [expr 159 - $arrowBorderOffset] 426 -width [expr $lineWidth + 2 * $arrowBorder] \
+      -fill black -arrow last -arrowshape $arrowBorderShape
+   $w create line 88 20 12 20 12 426 [expr 159 - $arrowOffset] 426 -width $lineWidth -fill white \
+      -tags {active m2_mt} -arrow last -arrowshape $arrowShape
 
-
-# ENABLE/DISABLE/RESET buttons.
-# display loopProcessing state
+   # ENABLE/DISABLE/RESET buttons.
+   # display loopProcessing state
    $w create rectangle 0 0 100 20 -fill white -tags "processing processing_bg"
    $w create text 50 10 -text IDLE -tags "processingText processing" -font $font
    $w move processing 420 420
@@ -350,7 +371,7 @@ itcl::body GuideLoop::constructor args {
    $w create window 510 459 -window $itk_component(off)
    $w create window 620 459 -window $itk_component(reset)
 
-# Monitor the guide states
+   # Monitor the guide states
    foreach rec {p1state p2state oistate aostate m2state absorbtilt m1state \
          m1source p1guide p2guide oiguide p1mweight p2mweight m2p1guide m2p2guide \
          m2oiguide m2aoguide coma oiblend aoTTGS aoSFO ttgsloop sfoloop useLwfs} {
@@ -359,31 +380,32 @@ itcl::body GuideLoop::constructor args {
       }
       lappend monids [::guideConfig.$rec add [itcl::code $this recolour]]
    }
-	if { [calparam cget -site] eq "CP" } {
-		foreach rec {niciAOloop niciAPD crGuide} {
-			if { [llength [itcl::find objects ::guideConfig.$rec]] == 0 } {
-				RecordMonitor ::guideConfig.$rec guideConfig $rec
-			}
-			lappend monids [::guideConfig.$rec add [itcl::code $this recolour]]
-		}
-		
-		set gemsSys [::GemsSys::getSingleton]
-		$gemsSys subscribe [itcl::code $this onGemsChange]
-	}
+   if { [calparam cget -site] eq "CP" } {
+      foreach rec {niciAOloop niciAPD crGuide} {
+         if { [llength [itcl::find objects ::guideConfig.$rec]] == 0 } {
+            RecordMonitor ::guideConfig.$rec guideConfig $rec
+         }
+         lappend monids [::guideConfig.$rec add [itcl::code $this recolour]]
+      }
+
+      set gemsSys [::GemsSys::getSingleton]
+      $gemsSys subscribe [itcl::code $this onGemsChange]
+   }
    #Add monitor for HRWFS
    if { [llength [itcl::find objects ::hrwfs.observeC]] == 0 } {
       RecordMonitor ::hrwfs.observeC hrwfs::observeC observe
    }
    lappend monids [::hrwfs.observeC add [itcl::code $this recolour]]
-   
+
    trace add variable ::Flags(ignoreao) write [itcl::code $this onIgnoreAOChange]
    onIgnoreAOChange ::Flags ignoreao w
 
-   #bind [winfo toplevel $itk_interior ] <Configure> [itcl::code $this resize %h %w ]
+   #bind [winfo toplevel $itk_interior ] <Configure> [itcl::code $this resize %h
+   # %w ]
 
-# Schedule an update once the channels have connected.
+   # Schedule an update once the channels have connected.
    after 1000 [itcl::code $this recolour]
-   
+
    eval itk_initialize $args
 }
 
@@ -394,23 +416,23 @@ itcl::body GuideLoop::destructor {} {
    foreach rec {p1state p2state oistate aostate m2state absorbtilt m1state \
       	m1source p1guide p2guide oiguide p1mweight p2mweight m2p1guide m2p2guide \
 	 		m2oiguide m2aoguide coma oiblend aoTTGS aoSFO ttgsloop sfoloop useLwfs niciAOloop niciAPD crGuide} mon $monids {
-		if { ( $rec ne "niciAOloop" && $rec ne "niciAPD" && $rec ne "crGuide") || [calparam cget -site] eq "CP" } {
-			::guideConfig.$rec remove $mon
-		}
-	}
+      if { ( $rec ne "niciAOloop" && $rec ne "niciAPD" && $rec ne "crGuide") || [calparam cget -site] eq "CP" } {
+         ::guideConfig.$rec remove $mon
+      }
+   }
 }
 
 itcl::body GuideLoop::recolour args {
 
-	set w $itk_component(canv)
-	
-# Assume no signal to mount
+   set w $itk_component(canv)
+
+   # Assume no signal to mount
    set mount 0
 
-# Set everything to white.
+   # Set everything to white.
    $w itemconfigure active -fill white
 
-# P1 signals.
+   # P1 signals.
    set wfs12_pr ""
    set pr_tail ""
    set wfs_head ""
@@ -418,25 +440,25 @@ itcl::body GuideLoop::recolour args {
    set wfs_m2 ""
 
    if { [AO state pwfs1] } {
-		$itk_component(pwfs1) configure -status on
-		$w itemconfigure pwfs1_bg -fill green
+      $itk_component(pwfs1) configure -status on
+      $w itemconfigure pwfs1_bg -fill green
 
       set wfs12_pr yellow
       set pr_tail yellow
       set wfs_head yellow
       set wfs_m1 yellow
-      set wfs_m2 yellow      
-      
+      set wfs_m2 yellow
+
       if { [AO state m1] && [AO source m1 PWFS1] } {
          set wfs_head green
          set wfs_m1 green
       }
       if { ( [AO state m2] && ([AO source m2 PWFS1 A] || [AO source m2 PWFS1 B]) ) \
-         || ( [AO state coma] && [AO source m1 PWFS1] ) } {
+            || ( [AO state coma] && [AO source m1 PWFS1] ) } {
          set wfs_head green
          set wfs_m2 green
       }
-      
+
       if { [AO state p1guide] } {
          $w itemconfigure pwfs1_pr -fill green
          set wfs12_pr green
@@ -451,20 +473,20 @@ itcl::body GuideLoop::recolour args {
          $w itemconfigure pwfs1_mt -fill yellow
       }
    } else {
-		$itk_component(pwfs1) configure -status off
+      $itk_component(pwfs1) configure -status off
    }
 
-# P2 signals
+   # P2 signals
    if { [AO state pwfs2] } {
-		$itk_component(pwfs2) configure -status on
+      $itk_component(pwfs2) configure -status on
       $w itemconfigure pwfs2_bg -fill green
-      
+
       if { $wfs12_pr eq "" } { set wfs12_pr yellow }
       if { $pr_tail eq "" } { set pr_tail yellow }
       if { $wfs_head eq "" } { set wfs_head yellow }
       if { $wfs_m1 eq "" } { set wfs_m1 yellow }
       if { $wfs_m2 eq "" } { set wfs_m2 yellow }
-      
+
       if { [AO state m1] && [AO source m1 PWFS2] } {
          set wfs_head green
          set wfs_m1 green
@@ -487,17 +509,17 @@ itcl::body GuideLoop::recolour args {
          $w itemconfigure pwfs2_mt -fill yellow
       }
    } else {
-		$itk_component(pwfs2) configure -status off
-	}
-# HR signals
+      $itk_component(pwfs2) configure -status off
+   }
+   # HR signals
    if { [AO state hrwfs] } {
       $itk_component(hrwfs) configure -status on
       $w itemconfigure hrwfs_bg -fill green
-      
+
       if { $wfs_head eq "" } { set wfs_head yellow }
       if { $wfs_m1 eq "" } { set wfs_m1 yellow }
       if { $wfs_m2 eq "" } { set wfs_m2 yellow }
-      
+
       if { [AO state m1] && [AO source m1 HRWFS] } {
          set wfs_head green
          set wfs_m1 green
@@ -509,50 +531,51 @@ itcl::body GuideLoop::recolour args {
    } else {
       $itk_component(hrwfs) configure -status off
    }
-# OIWFS signals
+   # OIWFS signals
    if { [AO state oiao] } {
       # disable the regular oiwfs guide alarm and enable the nici guide alarm
       if { $itk_option(-wfsAlarmObj) ne "" } {
-			$itk_option(-wfsAlarmObj) disableWfs oiwfs
-			$itk_option(-wfsAlarmObj) enableWfs nici
-		}
+         $itk_option(-wfsAlarmObj) disableWfs oiwfs
+         $itk_option(-wfsAlarmObj) enableWfs nici
+      }
 
-      $w itemconfigure oiwfs_ao -outline black 
+      $w itemconfigure oiwfs_ao -outline black
       $w itemconfigure oiwfs_wfs -outline grey
-      $w itemconfigure oiwfs_aotxt -fill black 
+      $w itemconfigure oiwfs_aotxt -fill black
       $w itemconfigure oiwfs_wfstxt -fill grey
       $itk_component(oiwfs_ex) configure -state disabled
       if { $itk_option(-wfsConfigObj) ne "" } {
-      	$itk_option(-wfsConfigObj) niciState normal
-		}
+         $itk_option(-wfsConfigObj) niciState normal
+      }
       if { [AO state oiaoAPD] } {
          $w itemconfigure oiwfs_ao -fill green
       }
       if { [AO state oiaoLoop] } {
          $w itemconfigure oiwfs_bg -fill green
-#         if { [$itk_component(prfrom) get] == "OI" && [$itk_component(prto) get] == "P2" } {
-#            $w itemconfigure oiwfs_pr -fill green
-#         } else {
-#            $w itemconfigure oiwfs_pr -fill yellow
-#         }
+         #         if { [$itk_component(prfrom) get] == "OI" &&
+         # [$itk_component(prto) get] == "P2" } {
+         #            $w itemconfigure oiwfs_pr -fill green
+         #         } else {
+         #            $w itemconfigure oiwfs_pr -fill yellow
+         #         }
       }
    } elseif { [AO state oiwfs] } {
       # enable the regular oiwfs guide alarm and disable the nici guide alarm
       if { $itk_option(-wfsAlarmObj) ne "" } {
-			$itk_option(-wfsAlarmObj) disableWfs nici
-			$itk_option(-wfsAlarmObj) enableWfs oiwfs
-		}
+         $itk_option(-wfsAlarmObj) disableWfs nici
+         $itk_option(-wfsAlarmObj) enableWfs oiwfs
+      }
 
       $w itemconfigure oiwfs_bg -fill green
       $w itemconfigure oiwfs_ao -outline grey
       $w itemconfigure oiwfs_wfs -outline black
-      $w itemconfigure oiwfs_aotxt -fill grey 
+      $w itemconfigure oiwfs_aotxt -fill grey
       $w itemconfigure oiwfs_wfstxt -fill black
       $itk_component(oiwfs_ex) configure -state disabled
       if { $itk_option(-wfsConfigObj) ne "" } {
-			$itk_option(-wfsConfigObj) niciState normal
-		}
-      
+         $itk_option(-wfsConfigObj) niciState normal
+      }
+
       if { $pr_tail eq "" } { set pr_tail yellow }
       if { $wfs_head eq "" } { set wfs_head yellow }
       if { $wfs_m1 eq "" } { set wfs_m1 yellow }
@@ -576,29 +599,29 @@ itcl::body GuideLoop::recolour args {
    } else {
       # enable the regular oiwfs guide alarm and disable the nici guide alarm
       if { $itk_option(-wfsAlarmObj) ne "" } {
-			$itk_option(-wfsAlarmObj) disableWfs nici
-			$itk_option(-wfsAlarmObj) enableWfs oiwfs
-		}
-      
+         $itk_option(-wfsAlarmObj) disableWfs nici
+         $itk_option(-wfsAlarmObj) enableWfs oiwfs
+      }
+
       $w itemconfigure oiwfs_ao -outline grey
       $w itemconfigure oiwfs_wfs -outline black
-      $w itemconfigure oiwfs_aotxt -fill grey 
+      $w itemconfigure oiwfs_aotxt -fill grey
       $w itemconfigure oiwfs_wfstxt -fill black
       $itk_component(oiwfs_ex) configure -state normal
       if { $itk_option(-wfsConfigObj) ne "" } {
-			$itk_option(-wfsConfigObj) niciState disabled
-		}
+         $itk_option(-wfsConfigObj) niciState disabled
+      }
    }
-   
+
    if { $wfs12_pr ne "" } { $w itemconfigure pwfs12_pr -fill $wfs12_pr }
    if { $pr_tail ne "" } { $w itemconfigure wfs_pr_tail -fill $pr_tail }
    if { $wfs_head ne "" } { $w itemconfigure wfs_head -fill $wfs_head }
    if { $wfs_m1 ne "" } { $w itemconfigure wfs_m1 -fill $wfs_m1 }
    if { $wfs_m2 ne "" } { $w itemconfigure wfs_m2 -fill $wfs_m2 }
-   
-	recolourGaos
 
-# M1
+   recolourGaos
+
+   # M1
    if { [AO state m1] } {
       if { ( [AO source m1 PWFS1] && [AO state pwfs1] ) ||	\
             ( [AO source m1 PWFS2] && [AO state pwfs2] ) ||	\
@@ -610,7 +633,7 @@ itcl::body GuideLoop::recolour args {
       }
    }
 
-# M2
+   # M2
    if { [AO state m2] } {
       set isGaosSrc [expr { ( [AO source m2 GAOS A] || [AO source m2 GAOS B] ) && \
                   ( ( [calparam cget -site] eq "MK" && [AO state gaos] ) || \
@@ -623,7 +646,8 @@ itcl::body GuideLoop::recolour args {
                   [AO state oiwfs] ) } ]
       if { $isOtherSrc || $isGaosSrc  } {
          $w itemconfigure m2_bg -fill green
-         #GeMS can correct focus without tip/tilt, in which case nothing goes to Mount
+         #GeMS can correct focus without tip/tilt, in which case nothing goes to
+         # Mount
          if { [AO source mount M2] && [AO state mount] && ( [calparam cget -site] eq "MK" || $isOtherSrc || [AO state ttgsloop] ) } {
             $w itemconfigure m2_mt -fill green
             set mount 1
@@ -636,7 +660,7 @@ itcl::body GuideLoop::recolour args {
       }
    }
 
-# M2 Coma
+   # M2 Coma
    if { [AO state coma] } {
       if { ( [AO state pwfs1] && [AO source m1 PWFS1] ) \
             || ( [AO state hrwfs] && [AO source m1 HRWFS] ) \
@@ -647,21 +671,21 @@ itcl::body GuideLoop::recolour args {
       }
    }
 
-# M2 guide source buttons.
-#   if { [AO source m2 PWFS1] } {
-#      $itk_component(m2p1) mark
-#   }
-#   if { [AO source m2 PWFS2] } {
-#      $itk_component(m2p2) mark
-#   }
-#   if { [AO source m2 OIWFS] } {
-#      $itk_component(m2oi) mark
-#   }
-#   if { [AO source m2 GAOS] } {
-#      $itk_component(m2ao) mark
-#   }
+   # M2 guide source buttons.
+   #   if { [AO source m2 PWFS1] } {
+   #      $itk_component(m2p1) mark
+   #   }
+   #   if { [AO source m2 PWFS2] } {
+   #      $itk_component(m2p2) mark
+   #   }
+   #   if { [AO source m2 OIWFS] } {
+   #      $itk_component(m2oi) mark
+   #   }
+   #   if { [AO source m2 GAOS] } {
+   #      $itk_component(m2ao) mark
+   #   }
 
-# Mount
+   # Mount
    if { [AO state mount] } {
       if { $mount } {
          $w itemconfigure mount_bg -fill green
@@ -669,66 +693,66 @@ itcl::body GuideLoop::recolour args {
          $w itemconfigure mount_bg -fill yellow
       }
    }
-#Rotator
-	if { [calparam cget -site] eq "CP" && [AO state rotator] } {
-		if { [AO state ttgsloop] && [[AO getGaosObj] state rotOffload]} {
-			$w itemconfigure rotator_bg -fill green
-		} else {
-			$w itemconfigure rotator_bg -fill yellow
-		}
-	}
-# WFS probes
+   #Rotator
+   if { [calparam cget -site] eq "CP" && [AO state rotator] } {
+      if { [AO state ttgsloop] && [[AO getGaosObj] state rotOffload]} {
+         $w itemconfigure rotator_bg -fill green
+      } else {
+         $w itemconfigure rotator_bg -fill yellow
+      }
+   }
+   # WFS probes
    if { ( [AO state p1guide] && [AO state pwfs1] ) \
-      || ( [AO state p2guide] && [AO state pwfs2] ) \
-      || ( [AO state oiguide] && ([AO state oiwfs] || ( [AO state oiao] && [AO state oiaoLoop] ) ) )
+         || ( [AO state p2guide] && [AO state pwfs2] ) \
+         || ( [AO state oiguide] && ([AO state oiwfs] || ( [AO state oiao] && [AO state oiaoLoop] ) ) )
    } {
-		$w itemconfigure probes_bg -fill green
+      $w itemconfigure probes_bg -fill green
    } elseif { [AO state p1guide] || [AO state p2guide] || [AO state oiguide] } {
-		$w itemconfigure probes_bg -fill yellow
+      $w itemconfigure probes_bg -fill yellow
    }
 }
 
 itcl::body GuideLoop::comacorr {state} {
    switch $state {
-   P1 {
-		AO configure -comacorr 1
-      AO configure -m1source PWFS1
-      #Synchronize M1 selection control
-      if { [$itk_component(m1src) get] ne "" && [$itk_component(m1src) get] ne "P1" } {
-         $itk_component(m1src) select P1
+      P1 {
+         AO configure -comacorr 1
+         AO configure -m1source PWFS1
+         #Synchronize M1 selection control
+         if { [$itk_component(m1src) get] ne "" && [$itk_component(m1src) get] ne "P1" } {
+            $itk_component(m1src) select P1
+         }
       }
-	}
-   HR {
-		AO configure -comacorr 1
-      AO configure -m1source HRWFS
-      #Synchronize M1 selection control
-      if { [$itk_component(m1src) get] ne "" && [$itk_component(m1src) get] ne "HR" } {
-         $itk_component(m1src) select HR
+      HR {
+         AO configure -comacorr 1
+         AO configure -m1source HRWFS
+         #Synchronize M1 selection control
+         if { [$itk_component(m1src) get] ne "" && [$itk_component(m1src) get] ne "HR" } {
+            $itk_component(m1src) select HR
+         }
       }
-   }
-   AO {
-      AO configure -comacorr 1
-      AO configure -m1source GAOS
-      #Synchronize M1 selection control
-      if { [$itk_component(m1src) get] ne "" && [$itk_component(m1src) get] ne "AO" } {
-         $itk_component(m1src) select AO
+      AO {
+         AO configure -comacorr 1
+         AO configure -m1source GAOS
+         #Synchronize M1 selection control
+         if { [$itk_component(m1src) get] ne "" && [$itk_component(m1src) get] ne "AO" } {
+            $itk_component(m1src) select AO
+         }
       }
-	}
-   default {
-      AO configure -comacorr 0
-   }
+      default {
+         AO configure -comacorr 0
+      }
    }
 }
 
 itcl::body GuideLoop::m2mode {probe val} {
-	switch $val {
-	push {
-      AO configure -${probe}guide On
-   } 
-	pop {
-      AO configure -${probe}guide ""
+   switch $val {
+      push {
+         AO configure -${probe}guide On
+      }
+      pop {
+         AO configure -${probe}guide ""
+      }
    }
-	}
 }
 
 itcl::body GuideLoop::mtmode {val} {
@@ -742,74 +766,74 @@ itcl::body GuideLoop::mtmode {val} {
       M2 {
          AO configure -mountguide SCS
       }
-		"" {
+      "" {
          AO configure -mountguide none
       }
    }
 }
 
 itcl::body GuideLoop::crmode {val} {
-	switch $val {
-		AO {
-			AO configure -crsource GAOS
-		}
-		"" {
-			AO configure -crsource ""
-		}
-	}
+   switch $val {
+      AO {
+         AO configure -crsource GAOS
+      }
+      "" {
+         AO configure -crsource ""
+      }
+   }
 }
 
 itcl::body GuideLoop::configProbeTracking {} {
    switch "[$itk_component(prsel) get]" {
-   "P1->P1" {
-      AO configure -probefrom PWFS1
-      AO configure -probeto PWFS1
-      AO configure -probeguide ON
-   }
-   "P2->P2" {
-      AO configure -probefrom PWFS2
-      AO configure -probeto PWFS2
-      AO configure -probeguide ON
-   }
-   "OI->P1" {
-      AO configure -probefrom OIWFS
-      AO configure -probeto PWFS1
-      AO configure -probeguide ON
-   }
-   "OI->P2" {
-      AO configure -probefrom OIWFS
-      AO configure -probeto PWFS2
-      AO configure -probeguide ON
-   }
-   "OI->OI" {
-      AO configure -probefrom OIWFS
-      AO configure -probeto OIWFS
-      AO configure -probeguide ON
-   }
-   default {
-      AO configure -probeguide OFF
-   }
+      "P1->P1" {
+         AO configure -probefrom PWFS1
+         AO configure -probeto PWFS1
+         AO configure -probeguide ON
+      }
+      "P2->P2" {
+         AO configure -probefrom PWFS2
+         AO configure -probeto PWFS2
+         AO configure -probeguide ON
+      }
+      "OI->P1" {
+         AO configure -probefrom OIWFS
+         AO configure -probeto PWFS1
+         AO configure -probeguide ON
+      }
+      "OI->P2" {
+         AO configure -probefrom OIWFS
+         AO configure -probeto PWFS2
+         AO configure -probeguide ON
+      }
+      "OI->OI" {
+         AO configure -probefrom OIWFS
+         AO configure -probeto OIWFS
+         AO configure -probeguide ON
+      }
+      default {
+         AO configure -probeguide OFF
+      }
    }
 }
 
 itcl::body GuideLoop::wfsmode {wfs val} {
    if { [AO state oiao] && $wfs == "oiwfs" } {
-		switch $val {
-		push {
-			AO configure -oiaoLoop 1
-		}
-		pop {
-			AO configure -oiaoLoop 0
-		}
+      switch $val {
+         push {
+            AO configure -oiaoLoop 1
+         }
+         pop {
+            AO configure -oiaoLoop 0
+         }
       }
    } else {
       switch $val {
-		push {
-			AO configure -${wfs}Active 1
-		}
-		pop {
-			AO configure -${wfs}Active 0
-		}
+         push {
+            AO configure -${wfs}Active 1
+         }
+         pop {
+            AO configure -${wfs}Active 0
+         }
       }
    }
 }
@@ -836,60 +860,60 @@ itcl::body GuideLoop::enable {} {
 }
 
 itcl::body GuideLoop::m1mode {state} {
-	switch $state {
-	P1 {
-		AO configure -m1source PWFS1
-      AO configure -m1corr 1
-      #Synchronize coma selection control
-      if { [$itk_component(m2coma) get] ne "" && [$itk_component(m2coma) get] ne "P1" } {
-         $itk_component(m2coma) select P1
+   switch $state {
+      P1 {
+         AO configure -m1source PWFS1
+         AO configure -m1corr 1
+         #Synchronize coma selection control
+         if { [$itk_component(m2coma) get] ne "" && [$itk_component(m2coma) get] ne "P1" } {
+            $itk_component(m2coma) select P1
+         }
       }
-	}
-	P2 {
-		AO configure -m1source PWFS2
-		AO configure -m1corr 1
-      #Synchronize coma selection control
-      if { [$itk_component(m2coma) get] ne "" } {
-         $itk_component(m2coma) select ""
+      P2 {
+         AO configure -m1source PWFS2
+         AO configure -m1corr 1
+         #Synchronize coma selection control
+         if { [$itk_component(m2coma) get] ne "" } {
+            $itk_component(m2coma) select ""
+         }
+      }
+      HR {
+         AO configure -m1source HRWFS
+         AO configure -m1corr 1
+         #Synchronize coma selection control
+         if { [$itk_component(m2coma) get] ne "" && [$itk_component(m2coma) get] ne "HR" } {
+            $itk_component(m2coma) select HR
+         }
+      }
+      OI {
+         AO configure -m1source OIWFS
+         AO configure -m1corr 1
+         #Synchronize coma selection control
+         if { [$itk_component(m2coma) get] ne "" } {
+            $itk_component(m2coma) select ""
+         }
+      }
+      AO {
+         AO configure -m1source GAOS
+         AO configure -m1corr 1
+         #Synchronize coma selection control
+         if { [$itk_component(m2coma) get] ne "" && [$itk_component(m2coma) get] ne "AO" } {
+            $itk_component(m2coma) select AO
+         }
+      }
+      default {
+         AO configure -m1corr 0
       }
    }
-   HR {
-      AO configure -m1source HRWFS
-      AO configure -m1corr 1
-      #Synchronize coma selection control
-      if { [$itk_component(m2coma) get] ne "" && [$itk_component(m2coma) get] ne "HR" } {
-         $itk_component(m2coma) select HR
-      }
-   }
-	OI {
-		AO configure -m1source OIWFS
-      AO configure -m1corr 1
-      #Synchronize coma selection control
-      if { [$itk_component(m2coma) get] ne "" } {
-         $itk_component(m2coma) select ""
-      }
-	}
-	AO {
-		AO configure -m1source GAOS
-      AO configure -m1corr 1
-      #Synchronize coma selection control
-      if { [$itk_component(m2coma) get] ne "" && [$itk_component(m2coma) get] ne "AO" } {
-         $itk_component(m2coma) select AO
-      }
-	}
-	default {
-      AO configure -m1corr 0
-	}
-	}
 }
 
 itcl::body GuideLoop::reset {} {
 
-# Disable
+   # Disable
    AO process IDLE
    AO disable
 
-# Simulate pushing all the "off" buttons.
+   # Simulate pushing all the "off" buttons.
    $itk_component(pwfs1) switchPop
    $itk_component(pwfs2) switchPop
    $itk_component(hrwfs) switchPop
@@ -901,84 +925,99 @@ itcl::body GuideLoop::reset {} {
    $itk_component(m2oi) pop
    $itk_component(m2coma) select ""
    $itk_component(mt) select ""
-	$itk_component(rotator) select ""
-	$itk_component(prsel) clear entry
+   $itk_component(rotator) select ""
+   $itk_component(prsel) clear entry
    $itk_component(prsel) insert entry end None
-	resetGaos
-	AO configure -probeto ""
+   resetGaos
+   AO configure -probeto ""
 }
 
 itcl::body GuideLoop::buildGaos {} {
-	set w $itk_component(canv)
-	if { [calparam cget -site] eq "CP" } {
-		itk_component add gaos { GemsWidget $w.gaos -aocontroller [AO getGaosObj] -layoutchangecmd [itcl::code $this resize] }
-		$w create window 443 62 -window $w.gaos -tags gaos -anchor nw
-		set gaosWidget $itk_component(gaos)
-		buildGemsArrows
-	} else {
-		itk_component add gaos { AltairWidget $w.gaos -aocontroller AO }
-		$w create window 481 72 -window $w.gaos -tags gaos -anchor nw
-		set gaosWidget $itk_component(gaos)
-		buildAltairArrows
-	}
+   set w $itk_component(canv)
+   if { [calparam cget -site] eq "CP" } {
+      $w create rectangle 0 0 1 1 -tags {active gaosframe} -outline black -width 1 -fill white
+      itk_component add gaos { GemsWidget $w.gaos -aocontroller [AO getGaosObj] -layoutchangecmd [itcl::code $this resize] }
+      $w create window 443 62 -window $w.gaos -tags gaos -anchor nw
+      set gaosWidget $itk_component(gaos)
+      buildGemsArrows
+   } else {
+      itk_component add gaos { AltairWidget $w.gaos -aocontroller AO }
+      $w create window 481 72 -window $w.gaos -tags gaos -anchor nw
+      set gaosWidget $itk_component(gaos)
+      buildAltairArrows
+   }
 }
 
 itcl::body GuideLoop::buildAltairArrows {} {
-	set w $itk_component(canv)
-	$w create line 480 83 315 83  -width 3 -fill white -tags {active gaos_m2} \
-		-arrow last -arrowshape {20 20 7}
-	$w create line 501 288 501 318 323 318 -width 3 -fill white \
-		-tags {active gaos_m1} -arrow last -arrowshape {20 20 7}
-	$w create line 371 184 425 184 425 140 480 140 -width 3 -fill white \
-		-tags {active wfs_gaos} -arrow last -arrowshape {20 20 7}
+   set w $itk_component(canv)
 
-	# GAOS internal
-	$w create line 617 200 642 200 642 152 617 152 -width 3 -fill white \
-		-tags {active ttgs_gaos} -arrow last -arrowshape {20 20 7}
-	$w create line 617 260 652 260 652 131 617 131 -width 3 -fill white \
-		-tags {active sfo_gaos} -arrow last -arrowshape {20 20 7}
+   $w create line 480 83 [expr 315 + $arrowBorderOffset] 83 -width [expr $lineWidth + 2 * $arrowBorder] \
+      -fill black -arrow last -arrowshape $arrowBorderShape
+   $w create line 480 83 [expr 315 + $arrowOffset] 83  -width $lineWidth -fill white -tags {active gaos_m2} \
+      -arrow last -arrowshape $arrowShape
+
+   $w create line 501 288 501 318 [expr 323 + $arrowBorderOffset] 318 -width [expr $lineWidth + 2 * $arrowBorder] \
+      -fill black -arrow last -arrowshape $arrowBorderShape
+   $w create line 501 288 501 318 [expr 323 + $arrowOffset] 318 -width $lineWidth -fill white \
+      -tags {active gaos_m1} -arrow last -arrowshape $arrowShape
+
+   $w create line 371 184 425 184 425 140 [expr 480 - $arrowBorderOffset] 140 -width [expr $lineWidth + 2 * $arrowBorder] \
+      -fill black -arrow last -arrowshape $arrowBorderShape
+   $w create line 371 184 425 184 425 140 [expr 480 - $arrowOffset] 140 -width $lineWidth -fill white \
+      -tags {active wfs_gaos} -arrow last -arrowshape $arrowShape
+
+   # GAOS internal
+   $w create line 617 200 642 200 642 152 [expr 617 + $arrowBorderOffset] 152 -width [expr $lineWidth + 2 * $arrowBorder] \
+      -fill black -arrow last -arrowshape $arrowBorderShape
+   $w create line 617 200 642 200 642 152 [expr 617 + $arrowOffset] 152 -width $lineWidth -fill white \
+      -tags {active ttgs_gaos} -arrow last -arrowshape $arrowShape
+
+   $w create line 617 260 652 260 652 131 [expr 617 + $arrowBorderOffset] 131 -width [expr $lineWidth + 2 * $arrowBorder] \
+      -fill black -arrow last -arrowshape $arrowBorderShape
+   $w create line 617 260 652 260 652 131 [expr 617 + $arrowOffset] 131 -width $lineWidth -fill white \
+      -tags {active sfo_gaos} -arrow last -arrowshape $arrowShape
 
 }
 
 itcl::body GuideLoop::recolourAltairArrows {} {
-	set w $itk_component(canv)
-	
-	if { [AO state gaosTTGS] } {
-		if { [AO state ttgsloop] } {
-			$w itemconfigure ttgs_gaos -fill green
-		} else {
-			$w itemconfigure ttgs_gaos -fill yellow
-		}
-	} else {
-		$w itemconfigure ttgs_gaos -fill white
-	}
-	if { [AO state gaosSFO] } {
-		if { [AO state sfoloop] } {
-			$w itemconfigure sfo_gaos -fill green
-		} else {
-			$w itemconfigure sfo_gaos -fill yellow
-		}
-	} else {
-		$w itemconfigure sfo_gaos -fill white
-	}
-	if { [AO state gaos] } {
-		if { [AO state m1] && [AO source m1 GAOS] } {
-			$w itemconfigure gaos_m1 -fill green
-		} else {
-			$w itemconfigure gaos_m1 -fill yellow
-		}
-		if { [AO state m2] && ([AO source m2 GAOS A] || \
-				[AO source m2 GAOS B]) } {
-			$w itemconfigure gaos_m2 -fill green
-		} else {
-			$w itemconfigure gaos_m2 -fill yellow
-		}
-		if { [AO state coma] } {
-			$w itemconfigure gaos_m2 -fill green
-		} else {
-			$w itemconfigure gaos_m2 -fill yellow
-		}
-	}
+   set w $itk_component(canv)
+
+   if { [AO state gaosTTGS] } {
+      if { [AO state ttgsloop] } {
+         $w itemconfigure ttgs_gaos -fill green
+      } else {
+         $w itemconfigure ttgs_gaos -fill yellow
+      }
+   } else {
+      $w itemconfigure ttgs_gaos -fill white
+   }
+   if { [AO state gaosSFO] } {
+      if { [AO state sfoloop] } {
+         $w itemconfigure sfo_gaos -fill green
+      } else {
+         $w itemconfigure sfo_gaos -fill yellow
+      }
+   } else {
+      $w itemconfigure sfo_gaos -fill white
+   }
+   if { [AO state gaos] } {
+      if { [AO state m1] && [AO source m1 GAOS] } {
+         $w itemconfigure gaos_m1 -fill green
+      } else {
+         $w itemconfigure gaos_m1 -fill yellow
+      }
+      if { [AO state m2] && ([AO source m2 GAOS A] || \
+            [AO source m2 GAOS B]) } {
+         $w itemconfigure gaos_m2 -fill green
+      } else {
+         $w itemconfigure gaos_m2 -fill yellow
+      }
+      if { [AO state coma] } {
+         $w itemconfigure gaos_m2 -fill green
+      } else {
+         $w itemconfigure gaos_m2 -fill yellow
+      }
+   }
    set wfs_gaos ""
    if { [AO state pwfs1] } {
       set wfs_gaos yellow
@@ -1000,147 +1039,167 @@ itcl::body GuideLoop::recolourAltairArrows {} {
 }
 
 itcl::body GuideLoop::buildGemsArrows {} {
-	set w $itk_component(canv)
-	$w create line 443 83 315 83  -width 3 -fill white -tags {active gaos_m2} \
-		-arrow last -arrowshape {20 20 7}
-	$w create line 443 362 383 362 383 318 323 318 -width 3 -fill white \
-		-tags {active gaos_m1} -arrow last -arrowshape {20 20 7}
-	$w create line 371 184 398 184 -width 3 -fill white \
-		-tags {active wfs_gaos}
-	$w create line 443 372 239 372 -width 3 -fill white \
-		-tags {active gaos_cr} -arrow last -arrowshape {20 20 7}
+   set w $itk_component(canv)
 
-	# GAOS internal
-   set ttCanIn [ $gaosWidget getMagnetPoint TT_CAN_IN ]
-   
-   $w create line 398 184 398 97 443 97 -width 3 -fill white \
-   -tags {active flexend_gaos} -arrow last -arrowshape {20 20 7}
-	$w create line 443 248 408 248 408 116 443 116 -width 3 -fill white \
-		-tags {active cwfsani_gaos} -arrow last -arrowshape {20 20 7}
-	$w create line 443 192 418 192 418 135 443 135 -width 3 -fill white \
-		-tags {active sfs_gaos} -arrow last -arrowshape {20 20 7}
-	$w create line 645 343 680 343 680 160 645 160 -width 3 -fill white \
-	   -tags {active odgwtt_gaos} -arrow last -arrowshape {20 20 7}
-   $w create line 443 343 398 343 398 184 -width 3 -fill white \
+   $w create line 0 0 1 1 -width [expr $lineWidth + 2 * $arrowBorder] -fill black -tags wfs_gaos_br
+   $w create line 0 0 1 1 -width [expr $lineWidth + 2 * $arrowBorder] -fill black -tags odgwflex_gaos_br
+   $w create line 0 0 1 1 -width [expr $lineWidth + 2 * $arrowBorder] -fill black -tags flexend_gaos_br \
+      -arrow last -arrowshape $arrowBorderShape
+
+   $w create line 0 0 1 1 -width [expr $lineWidth + 2 * $arrowBorder] -fill black -tags gaos_m2_br \
+      -arrow last -arrowshape $arrowBorderShape
+   $w create line 0 0 1 1  -width $lineWidth -fill white -tags {active gaos_m2} \
+      -arrow last -arrowshape $arrowShape
+
+   $w create line 0 0 1 1 -width [expr $lineWidth + 2 * $arrowBorder] -fill black -tags gaos_m1_br \
+      -arrow last -arrowshape $arrowBorderShape
+   $w create line 0 0 1 1 -width $lineWidth -fill white \
+      -tags {active gaos_m1} -arrow last -arrowshape $arrowShape
+
+   $w create line 0 0 1 1 -width $lineWidth -fill white \
+      -tags {active wfs_gaos}
+   $w create line 443 372 239 372 -width $lineWidth -fill white \
+      -tags {active gaos_cr} -arrow last -arrowshape $arrowShape
+
+   # GAOS internal
+   $w create line  0 0 1 1 -tags cwfsani_gaos_br -width [expr $lineWidth + 2 * $arrowBorder] -fill black \
+      -arrow last -arrowshape $arrowBorderShape
+   $w create line 0 0 1 1 -width $lineWidth -fill white \
+      -tags {active cwfsani_gaos} -arrow last -arrowshape $arrowShape
+
+   $w create line  0 0 1 1 -tags sfs_gaos_br -width [expr $lineWidth + 2 * $arrowBorder] -fill black \
+      -arrow last -arrowshape $arrowBorderShape
+   $w create line 0 0 1 1 -width $lineWidth -fill white \
+      -tags {active sfs_gaos} -arrow last -arrowshape $arrowShape
+
+   $w create line 0 0 1 1 -width [expr $lineWidth + 2 * $arrowBorder] -fill black \
+      -tags odgwtt_gaos_br -arrow last -arrowshape $arrowBorderShape
+   $w create line 0 0 1 1 -width $lineWidth -fill white \
+      -tags {active odgwtt_gaos} -arrow last -arrowshape $arrowShape
+
+   $w create line 0 0 1 1 -width $lineWidth -fill white \
       -tags {active odgwflex_gaos}
-#   $w create line  0 0 1 1 -tags cwfstt_gaos_br -width 5 -fill black -arrow last \
-#      -arrowshape { 21.3 21.3 7.5 }
-   $w create line 0 0 1 1 -width 3 -fill white -tags {active cwfstt_gaos} -arrow last \
-      -arrowshape {17 17 6}
+   $w create line 0 0 1 1 -width $lineWidth -fill white \
+      -tags {active flexend_gaos} -arrow last -arrowshape $arrowShape
+
+   $w create line  0 0 1 1 -tags cwfstt_gaos_br -width [expr $lineWidth + 2 * $arrowBorder] -fill black \
+      -arrow last -arrowshape $arrowBorderShape
+   $w create line 0 0 1 1 -width $lineWidth -fill white -tags {active cwfstt_gaos} -arrow last \
+      -arrowshape $arrowShape
 }
 
 itcl::body GuideLoop::recolourGemsArrows {} {
    if { ! $::Flags(ignoreao) } {
-   	set w $itk_component(canv)
-   
-   	if { [$gemsSys getSFSActive] eq "ON" } {
-   		if { [$gemsSys getFocLoopState] eq "CLOSED" } {
-   			$w itemconfigure sfs_gaos -fill green
-   		} else {
-   			$w itemconfigure sfs_gaos -fill yellow
-   		}
-   	} else {
-   		$w itemconfigure sfs_gaos -fill white
-   	}
-   	set ttSources [$gemsSys getTTLoopSources]
+      set w $itk_component(canv)
+
+      if { [$gemsSys getSFSActive] eq "ON" } {
+         if { [$gemsSys getFocLoopState] eq "CLOSED" } {
+            $w itemconfigure sfs_gaos -fill green
+         } else {
+            $w itemconfigure sfs_gaos -fill yellow
+         }
+      } else {
+         $w itemconfigure sfs_gaos -fill white
+      }
+      set ttSources [$gemsSys getTTLoopSources]
       set flexSources [$gemsSys getFlexLoopSources]
-   	set odgwCount 0
-   	for {set i 1} {$i <= 4} {incr i} {
-   		if {[$gemsSys getODGWActive $i] eq "ON"} {
-   			incr odgwCount
-   		}
-   	}
-   	set ttwfsCount 0
-   	for {set i 1} {$i <= 3} {incr i} {
-   		if {[$gemsSys getTTWFSActive $i] eq "ON"} {
-   			incr ttwfsCount
-   		}
-   	}
+      set odgwCount 0
+      for {set i 1} {$i <= 4} {incr i} {
+         if {[$gemsSys getODGWActive $i] eq "ON"} {
+            incr odgwCount
+         }
+      }
+      set ttwfsCount 0
+      for {set i 1} {$i <= 3} {incr i} {
+         if {[$gemsSys getTTWFSActive $i] eq "ON"} {
+            incr ttwfsCount
+         }
+      }
       set flextail white
-   	if { $odgwCount > 0 } {
-   		if { ( [$gemsSys getFlexLoopState] eq "CLOSED" && [string first odgw $flexSources] > -1 ) } {
-   			$w itemconfigure odgwflex_gaos -fill green
+      if { $odgwCount > 0 } {
+         if { ( [$gemsSys getFlexLoopState] eq "CLOSED" && [string first odgw $flexSources] > -1 ) } {
+            $w itemconfigure odgwflex_gaos -fill green
             set flextail green
-   		} else {
-   			$w itemconfigure odgwflex_gaos -fill yellow
+         } else {
+            $w itemconfigure odgwflex_gaos -fill yellow
             set flextail yellow
-   		}
+         }
          if { [$gemsSys getTTLoopState] eq "CLOSED" && [string first odgw $ttSources] > -1 } {
             $w itemconfigure odgwtt_gaos -fill green
          } else {
             $w itemconfigure odgwtt_gaos -fill yellow
          }
-   	} else {
-   		$w itemconfigure odgwflex_gaos -fill white
+      } else {
+         $w itemconfigure odgwflex_gaos -fill white
          $w itemconfigure odgwtt_gaos -fill white
-   	}
-   	if { $ttwfsCount > 0 } {
-   		if { [$gemsSys getTTLoopState] eq "CLOSED" && [string first ttgs $ttSources] > -1 } {
-   			$w itemconfigure cwfstt_gaos -fill green
-   		} else {
-   			$w itemconfigure cwfstt_gaos -fill yellow
-   		}
+      }
+      if { $ttwfsCount > 0 } {
+         if { [$gemsSys getTTLoopState] eq "CLOSED" && [string first ttgs $ttSources] > -1 } {
+            $w itemconfigure cwfstt_gaos -fill green
+         } else {
+            $w itemconfigure cwfstt_gaos -fill yellow
+         }
          if { [$gemsSys getAniLoopState] eq "CLOSED" } {
             $w itemconfigure cwfsani_gaos -fill green
          } else {
             $w itemconfigure cwfsani_gaos -fill yellow
          }
-   	} else {
-   		$w itemconfigure cwfsani_gaos -fill white
+      } else {
+         $w itemconfigure cwfsani_gaos -fill white
          $w itemconfigure cwfstt_gaos -fill white
-   	}
-   	if { [AO state oiwfs] } {
-   		if {[$gemsSys getFlexLoopState] eq "CLOSED" && [string first oigs $flexSources] > -1 } {
-   			$w itemconfigure wfs_gaos -fill green
+      }
+      if { [AO state oiwfs] } {
+         if {[$gemsSys getFlexLoopState] eq "CLOSED" && [string first oigs $flexSources] > -1 } {
+            $w itemconfigure wfs_gaos -fill green
             set flextail green
-   		} else {
-   			$w itemconfigure wfs_gaos -fill yellow
+         } else {
+            $w itemconfigure wfs_gaos -fill yellow
             if { $flextail ne "green" } {
                set flextail yellow
             }
-   		}
-   	} else {
-   		$w itemconfigure wfs_gaos -fill white
-   	}
-      
+         }
+      } else {
+         $w itemconfigure wfs_gaos -fill white
+      }
+
       $w itemconfigure flexend_gaos -fill $flextail
-      
-   	if {[AO state gaos]} {
-   		if {[AO state m1] && [AO source m1 GAOS] && [$gemsSys getM1OffloadState] eq "CLOSED"} {
-   			$w itemconfigure gaos_m1 -fill green
-   		} else {
-   			$w itemconfigure gaos_m1 -fill yellow
-   		}
-   	} else {
-   		$w itemconfigure gaos_m1 -fill white
-   	}
-   	if {[AO state gaos] || [AO state ttgsloop]} {
-   		if { ( [AO state m2] && [AO source m2 GAOS A] && [$gemsSys getM2OffloadState] eq "CLOSED" ) \
-            || ( [AO state coma] && [AO source m1 GAOS] ) } {
-   			$w itemconfigure gaos_m2 -fill green
-   		} else {
-   			$w itemconfigure gaos_m2 -fill yellow
-   		}
-   	} else {
-   		$w itemconfigure gaos_m2 -fill white
-   	}
-   	if {[AO state ttgsloop]} {
-   		if {[AO state rotator] && [$gemsSys getRotOffloadState] eq "CLOSED" } {
-   			$w itemconfigure gaos_cr -fill green
-   		} else {
-   			$w itemconfigure gaos_cr -fill yellow
-   		}
-   	} else {
-   		$w itemconfigure gaos_cr -fill white
-   	}
+
+      if {[AO state gaos]} {
+         if {[AO state m1] && [AO source m1 GAOS] && [$gemsSys getM1OffloadState] eq "CLOSED"} {
+            $w itemconfigure gaos_m1 -fill green
+         } else {
+            $w itemconfigure gaos_m1 -fill yellow
+         }
+      } else {
+         $w itemconfigure gaos_m1 -fill white
+      }
+      if {[AO state gaos] || [AO state ttgsloop]} {
+         if { ( [AO state m2] && [AO source m2 GAOS A] && [$gemsSys getM2OffloadState] eq "CLOSED" ) \
+               || ( [AO state coma] && [AO source m1 GAOS] ) } {
+            $w itemconfigure gaos_m2 -fill green
+         } else {
+            $w itemconfigure gaos_m2 -fill yellow
+         }
+      } else {
+         $w itemconfigure gaos_m2 -fill white
+      }
+      if {[AO state ttgsloop]} {
+         if {[AO state rotator] && [$gemsSys getRotOffloadState] eq "CLOSED" } {
+            $w itemconfigure gaos_cr -fill green
+         } else {
+            $w itemconfigure gaos_cr -fill yellow
+         }
+      } else {
+         $w itemconfigure gaos_cr -fill white
+      }
    }
 }
 
 itcl::body GuideLoop::recolourGaos {} {
    global AOtryingToReuseGain AOreuseGains
 
-	set w $itk_component(canv)
-   
+   set w $itk_component(canv)
+
    if { [calparam cget -site] eq "MK" } {
       if { [AO state gaos] } {
          if { [AO state aoSettled] } {
@@ -1159,57 +1218,58 @@ itcl::body GuideLoop::recolourGaos {} {
       recolourAltairArrows
    } elseif { ! $::Flags(ignoreao) } {
       if { [AO state gaos] } {
-   		if { [AO state aoSettled] } {
-   			$w itemconfigure aoSettled -fill green
-   		} else {
-   			  $w itemconfigure aoSettled -fill yellow
-   		}
-   	}
-   	if { $gaosWidget ne "" } {
+         if { [AO state aoSettled] } {
+            $w itemconfigure aoSettled -fill green
+         } else {
+            $w itemconfigure aoSettled -fill yellow
+         }
+         $w itemconfigure gaosframe -fill green
+      }
+      if { $gaosWidget ne "" } {
          $gaosWidget recolor
-   	}
-   	recolourGemsArrows
+      }
+      recolourGemsArrows
    }
 }
 
 itcl::body GuideLoop::enableGaos {} {
-	if { $gaosWidget ne "" } {
-		$gaosWidget enable
-	}
+   if { $gaosWidget ne "" } {
+      $gaosWidget enable
+   }
 }
 
 itcl::body GuideLoop::resetGaos {} {
-	if { $gaosWidget ne "" } {
-		$gaosWidget reset
-	}
+   if { $gaosWidget ne "" } {
+      $gaosWidget reset
+   }
 }
 
 itcl::body GuideLoop::onGemsChange {reasons} {
-	set shouldRecolor 0
-	foreach reason $reasons {
-		switch -glob $reason {
-		ttLoopState -
-		flexLoopState -
-		focLoopState -
-      aniLoopState -
-      lwfsLoopState -
-		m1OffloadState -
-		m2OffloadState -
-		rotOffloadState -
-		ttLoopSources -
-		ttwfsActive* -
-		odgwActive* -
-		sfsActive -
-		gemsActive -
-		loopsSettled {
-			set shouldRecolor 1
-			break
-		}
-		}
-	}
-	if { $shouldRecolor } {
-		recolour
-	}
+   set shouldRecolor 0
+   foreach reason $reasons {
+      switch -glob $reason {
+         ttLoopState -
+         flexLoopState -
+         focLoopState -
+         aniLoopState -
+         lwfsLoopState -
+         m1OffloadState -
+         m2OffloadState -
+         rotOffloadState -
+         ttLoopSources -
+         ttwfsActive* -
+         odgwActive* -
+         sfsActive -
+         gemsActive -
+         loopsSettled {
+            set shouldRecolor 1
+            break
+         }
+      }
+   }
+   if { $shouldRecolor } {
+      recolour
+   }
 }
 
 itcl::body GuideLoop::onIgnoreAOChange {name1 name2 op} {
@@ -1219,7 +1279,7 @@ itcl::body GuideLoop::onIgnoreAOChange {name1 name2 op} {
          $gaosWidget configure -state disabled
       } else {
          $itk_component(rotator) configure -state normal
-         $gaosWidget configure -state normal         
+         $gaosWidget configure -state normal
       }
    } else {
       $itk_component(rotator) configure -state disabled
@@ -1227,9 +1287,9 @@ itcl::body GuideLoop::onIgnoreAOChange {name1 name2 op} {
 }
 
 itcl::body GuideLoop::resize {} {
-#   if { $width == $oldWidth && $height == $oldHeight } {
-#      return
-#   }
+   #   if { $width == $oldWidth && $height == $oldHeight } {
+   #      return
+   #   }
    if { [calparam cget -site ] eq "CP" } {
       resizeGemsArrows
    }
@@ -1237,19 +1297,104 @@ itcl::body GuideLoop::resize {} {
 
 itcl::body GuideLoop::resizeGemsArrows {} {
    set w $itk_component(canv)
-   set xbase 0
-   set ybase 0
+
+   #resize box that frames GeMS widget
+   set gaospad 5
+   $w coords gaosframe [expr [winfo x $gaosWidget] - $gaospad -1] [expr [winfo y $gaosWidget] - $gaospad -1] \
+      [expr [winfo x $gaosWidget] + [winfo width $gaosWidget] + $gaospad] [expr [winfo y $gaosWidget] + [winfo height $gaosWidget] + $gaospad]
+
+   #Line from Canopus WFS to TT loop
    set ttCanIn [ $gaosWidget getMagnetPoint TT_CAN_IN ]
+   set canOutR [ $gaosWidget getMagnetPoint CAN_OUTR ]
+   $w coords cwfstt_gaos_br [lindex $canOutR 0] [lindex $canOutR 1] \
+      [expr [lindex $ttCanIn 0] + $arrowHeadSpace ] [lindex $canOutR 1] \
+      [expr [lindex $ttCanIn 0] + $arrowHeadSpace ] [lindex $ttCanIn 1] \
+      [expr [lindex $ttCanIn 0] + $arrowBorderOffset ] [lindex $ttCanIn 1]
+   $w coords cwfstt_gaos [lindex $canOutR 0] [lindex $canOutR 1] \
+      [expr [lindex $ttCanIn 0] + $arrowHeadSpace ] [lindex $canOutR 1] \
+      [expr [lindex $ttCanIn 0] + $arrowHeadSpace ] [lindex $ttCanIn 1] \
+      [expr [lindex $ttCanIn 0] + $arrowOffset ] [lindex $ttCanIn 1]
+
+   #Line from ODGW to TT loop
    set ttOdgwIn [ $gaosWidget getMagnetPoint TT_ODGW_IN ]
    set odgwOutR [ $gaosWidget getMagnetPoint ODGW_OUTR ]
-   $w coords cwfstt_gaos 645 248 [expr [lindex $ttCanIn 0] + $arrowHeadSpace ] 248 \
-      [expr [lindex $ttCanIn 0] + $arrowHeadSpace ] [lindex $ttCanIn 1] \
-      [expr [lindex $ttCanIn 0] + 2 ] [lindex $ttCanIn 1]
-#   $w coords cwfstt_gaos_br 645 248 [expr [lindex $ttCanIn 0] + $arrowHeadSpace ] 248 \
-#      [expr [lindex $ttCanIn 0] + $arrowHeadSpace ] [lindex $ttCanIn 1] \
-#      [expr [lindex $ttCanIn 0] - 1.3 ] [lindex $ttCanIn 1]
-   $w coords odgwtt_gaos [expr [lindex $odgwOutR 0] ] [expr [lindex $odgwOutR 1] ] \
+   $w coords odgwtt_gaos_br [lindex $odgwOutR 0] [lindex $odgwOutR 1] \
       [expr [lindex $ttOdgwIn 0] + $arrowHeadSpace + $interLineSpace ] [lindex $odgwOutR 1] \
       [expr [lindex $ttOdgwIn 0] + $arrowHeadSpace + $interLineSpace ] [lindex $ttOdgwIn 1] \
-      [expr [lindex $ttOdgwIn 0] + 3 ] [lindex $ttOdgwIn 1]
+      [expr [lindex $ttOdgwIn 0] + $arrowBorderOffset ] [lindex $ttOdgwIn 1]
+   $w coords odgwtt_gaos [expr [lindex $odgwOutR 0] + 1 ] [lindex $odgwOutR 1] \
+      [expr [lindex $ttOdgwIn 0] + $arrowHeadSpace + $interLineSpace ] [lindex $odgwOutR 1] \
+      [expr [lindex $ttOdgwIn 0] + $arrowHeadSpace + $interLineSpace ] [lindex $ttOdgwIn 1] \
+      [expr [lindex $ttOdgwIn 0] + $arrowOffset ] [lindex $ttOdgwIn 1]
+
+   #Lines from OIWFS and ODGW to Flex loop
+   set odgwOutL [ $gaosWidget getMagnetPoint ODGW_OUTL ]
+   set flexIn [ $gaosWidget getMagnetPoint FLEX_IN ]
+   set oiout_x [expr [lindex [$w coords oiwfs_bg] 2 ] +1 ]
+   set oiout_y [expr ( [lindex [$w coords oiwfs_bg] 1 ] + [lindex [$w coords oiwfs_bg] 3 ] ) / 2 ]
+
+   $w coords odgwflex_gaos_br [lindex $odgwOutL 0] [lindex $odgwOutL 1] \
+      [expr [lindex $odgwOutL 0] - $arrowHeadSpace - 2 * $interLineSpace] [lindex $odgwOutL 1] \
+      [expr [lindex $odgwOutL 0] - $arrowHeadSpace - 2 * $interLineSpace] $oiout_y
+   $w coords wfs_gaos_br $oiout_x $oiout_y \
+      [expr [lindex $odgwOutL 0] - $arrowHeadSpace - 2 * $interLineSpace] $oiout_y
+   $w coords flexend_gaos_br [expr [lindex $odgwOutL 0] - $arrowHeadSpace - 2 * $interLineSpace] $oiout_y \
+      [expr [lindex $odgwOutL 0] - $arrowHeadSpace - 2 * $interLineSpace] [lindex $flexIn 1] \
+      [expr [lindex $flexIn 0] - $arrowBorderOffset] [lindex $flexIn 1]
+
+   $w coords odgwflex_gaos [expr [lindex $odgwOutL 0] -1] [lindex $odgwOutL 1] \
+      [expr [lindex $odgwOutL 0] - $arrowHeadSpace - 2 * $interLineSpace] [lindex $odgwOutL 1] \
+      [expr [lindex $odgwOutL 0] - $arrowHeadSpace - 2 * $interLineSpace] $oiout_y
+   $w coords wfs_gaos $oiout_x $oiout_y \
+      [expr [lindex $odgwOutL 0] - $arrowHeadSpace - 2 * $interLineSpace] $oiout_y
+   $w coords flexend_gaos [expr [lindex $odgwOutL 0] - $arrowHeadSpace - 2 * $interLineSpace] $oiout_y \
+      [expr [lindex $odgwOutL 0] - $arrowHeadSpace - 2 * $interLineSpace] [lindex $flexIn 1] \
+      [expr [lindex $flexIn 0] - $arrowOffset] [lindex $flexIn 1]
+
+   #Line from CAnopus WFS to Ani loop
+   set canOutL [ $gaosWidget getMagnetPoint CAN_OUTL ]
+   set aniIn [ $gaosWidget getMagnetPoint ANI_IN ]
+   $w coords cwfsani_gaos_br [lindex $canOutL 0] [lindex $canOutL 1] \
+      [expr [lindex $canOutL 0] - $arrowHeadSpace - $interLineSpace] [lindex $canOutL 1] \
+      [expr [lindex $canOutL 0] - $arrowHeadSpace - $interLineSpace] [lindex $aniIn 1] \
+      [expr [lindex $aniIn 0] - $arrowBorderOffset ] [lindex $aniIn 1]
+   $w coords cwfsani_gaos [lindex $canOutL 0] [lindex $canOutL 1] \
+      [expr [lindex $canOutL 0] - $arrowHeadSpace - $interLineSpace] [lindex $canOutL 1] \
+      [expr [lindex $canOutL 0] - $arrowHeadSpace - $interLineSpace] [lindex $aniIn 1] \
+      [expr [lindex $aniIn 0] - $arrowOffset ] [lindex $aniIn 1]
+
+   #Line from SFS to SF loop
+   set sfsOut [ $gaosWidget getMagnetPoint SFS_OUT ]
+   set sfIn [ $gaosWidget getMagnetPoint SF_IN ]
+   $w coords sfs_gaos_br [lindex $sfsOut 0] [lindex $sfsOut 1] \
+      [expr [lindex $sfsOut 0] - $arrowHeadSpace ] [lindex $sfsOut 1] \
+      [expr [lindex $sfsOut 0] - $arrowHeadSpace ] [lindex $sfIn 1] \
+      [expr [lindex $sfIn 0] - $arrowBorderOffset ] [lindex $sfIn 1]
+   $w coords sfs_gaos [lindex $sfsOut 0] [lindex $sfsOut 1] \
+      [expr [lindex $sfsOut 0] - $arrowHeadSpace ] [lindex $sfsOut 1] \
+      [expr [lindex $sfsOut 0] - $arrowHeadSpace ] [lindex $sfIn 1] \
+      [expr [lindex $sfIn 0] - $arrowOffset ] [lindex $sfIn 1]
+
+   #Line from GAOS to M2
+   set gaos_x [lindex [$w coords gaosframe] 0]
+   set gaos_y0 [lindex [$w coords gaosframe] 1]
+   set m2_x1 [lindex [$w coords m2box] 2]
+   $w coords gaos_m2_br $gaos_x [expr $gaos_y0 + $interLineSpace] \
+      [expr $m2_x1 + $arrowBorderOffset] [expr $gaos_y0 + $interLineSpace]
+   $w coords gaos_m2 $gaos_x [expr $gaos_y0 + $interLineSpace] \
+      [expr $m2_x1 + $arrowOffset] [expr $gaos_y0 + $interLineSpace]
+
+   #Line from GAOS to M1
+   set gaos_y1 [lindex [$w coords gaosframe] 3]
+   set m1_x1 [lindex [$w coords m1box] 2]
+   set m1_ym [expr ([lindex [$w coords m1box] 1] + [lindex [$w coords m1box] 3]) / 2]
+
+   $w coords gaos_m1_br $gaos_x [expr $gaos_y1 - $interLineSpace] \
+      [expr [lindex $odgwOutL 0] - $arrowHeadSpace - 3 * $interLineSpace] [expr $gaos_y1 - $interLineSpace] \
+      [expr [lindex $odgwOutL 0] - $arrowHeadSpace - 3 * $interLineSpace] $m1_ym \
+      [expr $m1_x1 + $arrowBorderOffset] $m1_ym
+   $w coords gaos_m1 $gaos_x [expr $gaos_y1 - $interLineSpace] \
+      [expr [lindex $odgwOutL 0] - $arrowHeadSpace - 3 * $interLineSpace] [expr $gaos_y1 - $interLineSpace] \
+      [expr [lindex $odgwOutL 0] - $arrowHeadSpace - 3 * $interLineSpace] $m1_ym \
+      [expr $m1_x1 + $arrowOffset] $m1_ym
 }
