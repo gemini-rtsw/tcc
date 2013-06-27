@@ -14,6 +14,8 @@
 #  Copyright CCLRC
 #+
 
+package require Itcl
+
 itcl::class GuideLoop {
    inherit itk::Widget
    constructor args {}
@@ -50,18 +52,6 @@ itcl::class GuideLoop {
       method onGemsChange {reasons}
       method onIgnoreAOChange {name1 name2 op}
 
-      variable arrowHeadSpace 25
-      variable interLineSpace 10
-      variable arrowLength 15
-      variable arrowHalfWidth 6
-      variable arrowBorder 1
-      variable lineWidth 3
-
-      variable arrowOffset
-      variable arrowBorderOffset
-      variable arrowShape
-      variable arrowBorderShape
-
       method resize {}
       method resizeGemsArrows {}
    }
@@ -78,15 +68,6 @@ itk::usual GuideLoop {
 }
 
 itcl::body GuideLoop::constructor args {
-
-   set arrowShape [list $arrowLength $arrowLength $arrowHalfWidth ]
-   set a1 [expr $arrowBorder * sqrt( $arrowLength * ( $arrowLength + $arrowHalfWidth ) ) / $arrowHalfWidth ]
-   set a2 [expr $arrowLength + $arrowBorder + $a1]
-   set a3 [expr ($arrowBorder + $a1) * $arrowHalfWidth / $arrowLength]
-   set arrowBorderShape [list $a2 $a2 [expr $arrowHalfWidth + $a3]]
-   set arrowOffset 2
-   set arrowBorderOffset [ expr $arrowOffset - $a1 ]
-
    # Create canvas.
    itk_component add canv {
 #AWE      canvas $itk_interior.canv -width 630 -height 497 -borderwidth 2
@@ -199,8 +180,6 @@ itcl::body GuideLoop::constructor args {
    $w create text 122 12 -text "M1 Figure" -tags m1 -font $font
    $w create rectangle 0 0 85 44 -fill white -tags "active mount mount_bg"
    $w create text 42 12 -text Mount -tags mount -font $font
-   $w create rectangle 0 0 75 44 -fill white -tags "active rotator rotator_bg"
-   $w create text 37 12 -text "Cass Rot" -tags rotator -font $font
 
    # Controls for M1.
    itk_component add m1src {
@@ -273,17 +252,6 @@ itcl::body GuideLoop::constructor args {
    $w create window 43 22 -width 60 -window $itk_component(mt) -tags mount -anchor n
    $itk_component(mt) add M2 -pady 0
 
-   # Controls for Cass-rotator.
-   itk_component add rotator {
-		SelectButton $w.rotator -orient horizontal \
-				-command [itcl::code $this crmode]
-	} {
-		usual
-		rename -offbackground -background background Background
-	}
-   $w create window 38 22 -width 50 -window $itk_component(rotator) -tags rotator -anchor n
-   $itk_component(rotator) add AO -pady 0
-
    # Box for WFS probes.
    $w create rectangle 0 0 82 44 -fill white -tags "active probes probes_bg wfs_comb"
    $w create text 41 12 -text PROBES -tags "probes wfs_comb" -font $font
@@ -311,46 +279,45 @@ itcl::body GuideLoop::constructor args {
    $w move oiwfs 223 20
    $w move probes 127 108
    $w move wfs_comb 33 130
-   $w move mount 159 404
-   $w move rotator 164 350
+   $w move mount 159 350
 
    # PWFS to M1 and M2
-   $w create line 33 184 23 184 -width [expr $lineWidth + 2 * $arrowBorder] -fill black
-   $w create line 23 184 23 318 [expr 79 - $arrowBorderOffset] 318 \
-      -width [expr $lineWidth + 2 * $arrowBorder] -fill black -arrow last -arrowshape $arrowBorderShape
-   $w create line 23 184 23 52 [expr 88 - $arrowBorderOffset] 52 \
-      -width [expr $lineWidth + 2 * $arrowBorder] -fill black -arrow last -arrowshape $arrowBorderShape
+   $w create line 33 184 23 184 -width [expr $GraphParam::lineWidth + 2 * $GraphParam::arrowBorder] -fill black
+   $w create line 23 184 23 318 [expr 79 - $GraphParam::arrowBorderOffset] 318 \
+      -width [expr $GraphParam::lineWidth + 2 * $GraphParam::arrowBorder] -fill black -arrow last -arrowshape $GraphParam::arrowBorderShape
+   $w create line 23 184 23 52 [expr 88 - $GraphParam::arrowBorderOffset] 52 \
+      -width [expr $GraphParam::lineWidth + 2 * $GraphParam::arrowBorder] -fill black -arrow last -arrowshape $GraphParam::arrowBorderShape
 
-   $w create line 23 184 23 318 [expr 79 - $arrowOffset] 318 -width $lineWidth -fill white \
-      -tags {active wfs_m1} -arrow last -arrowshape $arrowShape
-   $w create line 23 184 23 52 [expr 88 - $arrowOffset] 52 -width $lineWidth -fill white \
-      -tags {active wfs_m2} -arrow last -arrowshape $arrowShape
-   $w create line 33 184 23 184 -width $lineWidth -fill white \
+   $w create line 23 184 23 318 [expr 79 - $GraphParam::arrowOffset] 318 -width $GraphParam::lineWidth -fill white \
+      -tags {active wfs_m1} -arrow last -arrowshape $GraphParam::arrowShape
+   $w create line 23 184 23 52 [expr 88 - $GraphParam::arrowOffset] 52 -width $GraphParam::lineWidth -fill white \
+      -tags {active wfs_m2} -arrow last -arrowshape $GraphParam::arrowShape
+   $w create line 33 184 23 184 -width $GraphParam::lineWidth -fill white \
       -tags {active wfs_head}
 
    # WFS to Probes
-   $w create line 201 228 201 238 -width [expr $lineWidth + 2 * $arrowBorder] -fill black
-   $w create line 73 219 73 228 146 228 -width [expr $lineWidth + 2 * $arrowBorder] -fill black
-   $w create line 146 219 146 228 -width [expr $lineWidth + 2 * $arrowBorder] -fill black
-   $w create line 146 228 201 228 -width [expr $lineWidth + 2 * $arrowBorder] -fill black
-   $w create line 311 219 311 228 201 228 -width [expr $lineWidth + 2 * $arrowBorder] -fill black
+   $w create line 201 228 201 238 -width [expr $GraphParam::lineWidth + 2 * $GraphParam::arrowBorder] -fill black
+   $w create line 73 219 73 228 146 228 -width [expr $GraphParam::lineWidth + 2 * $GraphParam::arrowBorder] -fill black
+   $w create line 146 219 146 228 -width [expr $GraphParam::lineWidth + 2 * $GraphParam::arrowBorder] -fill black
+   $w create line 146 228 201 228 -width [expr $GraphParam::lineWidth + 2 * $GraphParam::arrowBorder] -fill black
+   $w create line 311 219 311 228 201 228 -width [expr $GraphParam::lineWidth + 2 * $GraphParam::arrowBorder] -fill black
 
-   $w create line 201 228 201 238 -width $lineWidth -fill white \
+   $w create line 201 228 201 238 -width $GraphParam::lineWidth -fill white \
       -tags {active wfs_pr_tail}
-   $w create line 73 219 73 228 146 228 -width $lineWidth -fill white \
+   $w create line 73 219 73 228 146 228 -width $GraphParam::lineWidth -fill white \
       -tags {active pwfs1_pr}
-   $w create line 146 219 146 228 -width $lineWidth -fill white \
+   $w create line 146 219 146 228 -width $GraphParam::lineWidth -fill white \
       -tags {active pwfs2_pr}
-   $w create line 146 228 201 228 -width $lineWidth -fill white \
+   $w create line 146 228 201 228 -width $GraphParam::lineWidth -fill white \
       -tags {active pwfs12_pr}
-   $w create line 311 219 311 228 201 228 -width $lineWidth -fill white \
+   $w create line 311 219 311 228 201 228 -width $GraphParam::lineWidth -fill white \
       -tags {active oiwfs_pr}
 
    # M2 to mount
-   $w create line 88 20 12 20 12 426 [expr 159 - $arrowBorderOffset] 426 -width [expr $lineWidth + 2 * $arrowBorder] \
-      -fill black -arrow last -arrowshape $arrowBorderShape
-   $w create line 88 20 12 20 12 426 [expr 159 - $arrowOffset] 426 -width $lineWidth -fill white \
-      -tags {active m2_mt} -arrow last -arrowshape $arrowShape
+   $w create line 88 20 12 20 12 372 [expr 159 - $GraphParam::arrowBorderOffset] 372 -width [expr $GraphParam::lineWidth + 2 * $GraphParam::arrowBorder] \
+      -fill black -arrow last -arrowshape $GraphParam::arrowBorderShape
+   $w create line 88 20 12 20 12 372 [expr 159 - $GraphParam::arrowOffset] 372 -width $GraphParam::lineWidth -fill white \
+      -tags {active m2_mt} -arrow last -arrowshape $GraphParam::arrowShape
 
    # ENABLE/DISABLE/RESET buttons.
    # display loopProcessing state
@@ -693,14 +660,6 @@ itcl::body GuideLoop::recolour args {
          $w itemconfigure mount_bg -fill yellow
       }
    }
-   #Rotator
-   if { [calparam cget -site] eq "CP" && [AO state rotator] } {
-      if { [AO state ttgsloop] && [[AO getGaosObj] state rotOffload]} {
-         $w itemconfigure rotator_bg -fill green
-      } else {
-         $w itemconfigure rotator_bg -fill yellow
-      }
-   }
    # WFS probes
    if { ( [AO state p1guide] && [AO state pwfs1] ) \
          || ( [AO state p2guide] && [AO state pwfs2] ) \
@@ -925,7 +884,6 @@ itcl::body GuideLoop::reset {} {
    $itk_component(m2oi) pop
    $itk_component(m2coma) select ""
    $itk_component(mt) select ""
-   $itk_component(rotator) select ""
    $itk_component(prsel) clear entry
    $itk_component(prsel) insert entry end None
    resetGaos
@@ -951,31 +909,32 @@ itcl::body GuideLoop::buildGaos {} {
 itcl::body GuideLoop::buildAltairArrows {} {
    set w $itk_component(canv)
 
-   $w create line 480 83 [expr 315 + $arrowBorderOffset] 83 -width [expr $lineWidth + 2 * $arrowBorder] \
-      -fill black -arrow last -arrowshape $arrowBorderShape
-   $w create line 480 83 [expr 315 + $arrowOffset] 83  -width $lineWidth -fill white -tags {active gaos_m2} \
-      -arrow last -arrowshape $arrowShape
+   $w create line 481 83 [expr 315 + $GraphParam::arrowBorderOffset] 83 \
+      -width [expr $GraphParam::lineWidth + 2 * $GraphParam::arrowBorder] \
+      -fill black -arrow last -arrowshape $GraphParam::arrowBorderShape
+   $w create line 481 83 [expr 315 + $GraphParam::arrowOffset] 83  -width $GraphParam::lineWidth \
+      -fill white -tags {active gaos_m2} -arrow last -arrowshape $GraphParam::arrowShape
 
-   $w create line 501 288 501 318 [expr 323 + $arrowBorderOffset] 318 -width [expr $lineWidth + 2 * $arrowBorder] \
-      -fill black -arrow last -arrowshape $arrowBorderShape
-   $w create line 501 288 501 318 [expr 323 + $arrowOffset] 318 -width $lineWidth -fill white \
-      -tags {active gaos_m1} -arrow last -arrowshape $arrowShape
+   $w create line 501 288 501 318 [expr 323 + $GraphParam::arrowBorderOffset] 318 -width [expr $GraphParam::lineWidth + 2 * $GraphParam::arrowBorder] \
+      -fill black -arrow last -arrowshape $GraphParam::arrowBorderShape
+   $w create line 501 288 501 318 [expr 323 + $GraphParam::arrowOffset] 318 -width $GraphParam::lineWidth -fill white \
+      -tags {active gaos_m1} -arrow last -arrowshape $GraphParam::arrowShape
 
-   $w create line 371 184 425 184 425 140 [expr 480 - $arrowBorderOffset] 140 -width [expr $lineWidth + 2 * $arrowBorder] \
-      -fill black -arrow last -arrowshape $arrowBorderShape
-   $w create line 371 184 425 184 425 140 [expr 480 - $arrowOffset] 140 -width $lineWidth -fill white \
-      -tags {active wfs_gaos} -arrow last -arrowshape $arrowShape
+   $w create line 367 184 425 184 425 140 [expr 480 - $GraphParam::arrowBorderOffset] 140 -width [expr $GraphParam::lineWidth + 2 * $GraphParam::arrowBorder] \
+      -fill black -arrow last -arrowshape $GraphParam::arrowBorderShape
+   $w create line 367 184 425 184 425 140 [expr 480 - $GraphParam::arrowOffset] 140 -width $GraphParam::lineWidth -fill white \
+      -tags {active wfs_gaos} -arrow last -arrowshape $GraphParam::arrowShape
 
    # GAOS internal
-   $w create line 617 200 642 200 642 152 [expr 617 + $arrowBorderOffset] 152 -width [expr $lineWidth + 2 * $arrowBorder] \
-      -fill black -arrow last -arrowshape $arrowBorderShape
-   $w create line 617 200 642 200 642 152 [expr 617 + $arrowOffset] 152 -width $lineWidth -fill white \
-      -tags {active ttgs_gaos} -arrow last -arrowshape $arrowShape
+   $w create line 617 200 642 200 642 152 [expr 617 + $GraphParam::arrowBorderOffset] 152 -width [expr $GraphParam::lineWidth + 2 * $GraphParam::arrowBorder] \
+      -fill black -arrow last -arrowshape $GraphParam::arrowBorderShape
+   $w create line 617 200 642 200 642 152 [expr 617 + $GraphParam::arrowOffset] 152 -width $GraphParam::lineWidth -fill white \
+      -tags {active ttgs_gaos} -arrow last -arrowshape $GraphParam::arrowShape
 
-   $w create line 617 260 652 260 652 131 [expr 617 + $arrowBorderOffset] 131 -width [expr $lineWidth + 2 * $arrowBorder] \
-      -fill black -arrow last -arrowshape $arrowBorderShape
-   $w create line 617 260 652 260 652 131 [expr 617 + $arrowOffset] 131 -width $lineWidth -fill white \
-      -tags {active sfo_gaos} -arrow last -arrowshape $arrowShape
+   $w create line 617 260 652 260 652 131 [expr 617 + $GraphParam::arrowBorderOffset] 131 -width [expr $GraphParam::lineWidth + 2 * $GraphParam::arrowBorder] \
+      -fill black -arrow last -arrowshape $GraphParam::arrowBorderShape
+   $w create line 617 260 652 260 652 131 [expr 617 + $GraphParam::arrowOffset] 131 -width $GraphParam::lineWidth -fill white \
+      -tags {active sfo_gaos} -arrow last -arrowshape $GraphParam::arrowShape
 
 }
 
@@ -1041,51 +1000,49 @@ itcl::body GuideLoop::recolourAltairArrows {} {
 itcl::body GuideLoop::buildGemsArrows {} {
    set w $itk_component(canv)
 
-   $w create line 0 0 1 1 -width [expr $lineWidth + 2 * $arrowBorder] -fill black -tags wfs_gaos_br
-   $w create line 0 0 1 1 -width [expr $lineWidth + 2 * $arrowBorder] -fill black -tags odgwflex_gaos_br
-   $w create line 0 0 1 1 -width [expr $lineWidth + 2 * $arrowBorder] -fill black -tags flexend_gaos_br \
-      -arrow last -arrowshape $arrowBorderShape
+   $w create line 0 0 1 1 -width [expr $GraphParam::lineWidth + 2 * $GraphParam::arrowBorder] -fill black -tags wfs_gaos_br
+   $w create line 0 0 1 1 -width [expr $GraphParam::lineWidth + 2 * $GraphParam::arrowBorder] -fill black -tags odgwflex_gaos_br
+   $w create line 0 0 1 1 -width [expr $GraphParam::lineWidth + 2 * $GraphParam::arrowBorder] -fill black -tags flexend_gaos_br \
+      -arrow last -arrowshape $GraphParam::arrowBorderShape
 
-   $w create line 0 0 1 1 -width [expr $lineWidth + 2 * $arrowBorder] -fill black -tags gaos_m2_br \
-      -arrow last -arrowshape $arrowBorderShape
-   $w create line 0 0 1 1  -width $lineWidth -fill white -tags {active gaos_m2} \
-      -arrow last -arrowshape $arrowShape
+   $w create line 0 0 1 1 -width [expr $GraphParam::lineWidth + 2 * $GraphParam::arrowBorder] -fill black -tags gaos_m2_br \
+      -arrow last -arrowshape $GraphParam::arrowBorderShape
+   $w create line 0 0 1 1  -width $GraphParam::lineWidth -fill white -tags {active gaos_m2} \
+      -arrow last -arrowshape $GraphParam::arrowShape
 
-   $w create line 0 0 1 1 -width [expr $lineWidth + 2 * $arrowBorder] -fill black -tags gaos_m1_br \
-      -arrow last -arrowshape $arrowBorderShape
-   $w create line 0 0 1 1 -width $lineWidth -fill white \
-      -tags {active gaos_m1} -arrow last -arrowshape $arrowShape
+   $w create line 0 0 1 1 -width [expr $GraphParam::lineWidth + 2 * $GraphParam::arrowBorder] -fill black -tags gaos_m1_br \
+      -arrow last -arrowshape $GraphParam::arrowBorderShape
+   $w create line 0 0 1 1 -width $GraphParam::lineWidth -fill white \
+      -tags {active gaos_m1} -arrow last -arrowshape $GraphParam::arrowShape
 
-   $w create line 0 0 1 1 -width $lineWidth -fill white \
+   $w create line 0 0 1 1 -width $GraphParam::lineWidth -fill white \
       -tags {active wfs_gaos}
-   $w create line 443 372 239 372 -width $lineWidth -fill white \
-      -tags {active gaos_cr} -arrow last -arrowshape $arrowShape
 
    # GAOS internal
-   $w create line  0 0 1 1 -tags cwfsani_gaos_br -width [expr $lineWidth + 2 * $arrowBorder] -fill black \
-      -arrow last -arrowshape $arrowBorderShape
-   $w create line 0 0 1 1 -width $lineWidth -fill white \
-      -tags {active cwfsani_gaos} -arrow last -arrowshape $arrowShape
+   $w create line  0 0 1 1 -tags cwfsani_gaos_br -width [expr $GraphParam::lineWidth + 2 * $GraphParam::arrowBorder] -fill black \
+      -arrow last -arrowshape $GraphParam::arrowBorderShape
+   $w create line 0 0 1 1 -width $GraphParam::lineWidth -fill white \
+      -tags {active cwfsani_gaos} -arrow last -arrowshape $GraphParam::arrowShape
 
-   $w create line  0 0 1 1 -tags sfs_gaos_br -width [expr $lineWidth + 2 * $arrowBorder] -fill black \
-      -arrow last -arrowshape $arrowBorderShape
-   $w create line 0 0 1 1 -width $lineWidth -fill white \
-      -tags {active sfs_gaos} -arrow last -arrowshape $arrowShape
+   $w create line  0 0 1 1 -tags sfs_gaos_br -width [expr $GraphParam::lineWidth + 2 * $GraphParam::arrowBorder] -fill black \
+      -arrow last -arrowshape $GraphParam::arrowBorderShape
+   $w create line 0 0 1 1 -width $GraphParam::lineWidth -fill white \
+      -tags {active sfs_gaos} -arrow last -arrowshape $GraphParam::arrowShape
 
-   $w create line 0 0 1 1 -width [expr $lineWidth + 2 * $arrowBorder] -fill black \
-      -tags odgwtt_gaos_br -arrow last -arrowshape $arrowBorderShape
-   $w create line 0 0 1 1 -width $lineWidth -fill white \
-      -tags {active odgwtt_gaos} -arrow last -arrowshape $arrowShape
+   $w create line 0 0 1 1 -width [expr $GraphParam::lineWidth + 2 * $GraphParam::arrowBorder] -fill black \
+      -tags odgwtt_gaos_br -arrow last -arrowshape $GraphParam::arrowBorderShape
+   $w create line 0 0 1 1 -width $GraphParam::lineWidth -fill white \
+      -tags {active odgwtt_gaos} -arrow last -arrowshape $GraphParam::arrowShape
 
-   $w create line 0 0 1 1 -width $lineWidth -fill white \
+   $w create line 0 0 1 1 -width $GraphParam::lineWidth -fill white \
       -tags {active odgwflex_gaos}
-   $w create line 0 0 1 1 -width $lineWidth -fill white \
-      -tags {active flexend_gaos} -arrow last -arrowshape $arrowShape
+   $w create line 0 0 1 1 -width $GraphParam::lineWidth -fill white \
+      -tags {active flexend_gaos} -arrow last -arrowshape $GraphParam::arrowShape
 
-   $w create line  0 0 1 1 -tags cwfstt_gaos_br -width [expr $lineWidth + 2 * $arrowBorder] -fill black \
-      -arrow last -arrowshape $arrowBorderShape
-   $w create line 0 0 1 1 -width $lineWidth -fill white -tags {active cwfstt_gaos} -arrow last \
-      -arrowshape $arrowShape
+   $w create line  0 0 1 1 -tags cwfstt_gaos_br -width [expr $GraphParam::lineWidth + 2 * $GraphParam::arrowBorder] -fill black \
+      -arrow last -arrowshape $GraphParam::arrowBorderShape
+   $w create line 0 0 1 1 -width $GraphParam::lineWidth -fill white -tags {active cwfstt_gaos} -arrow last \
+      -arrowshape $GraphParam::arrowShape
 }
 
 itcl::body GuideLoop::recolourGemsArrows {} {
@@ -1164,8 +1121,8 @@ itcl::body GuideLoop::recolourGemsArrows {} {
 
       $w itemconfigure flexend_gaos -fill $flextail
 
-      if {[AO state gaos]} {
-         if {[AO state m1] && [AO source m1 GAOS] && [$gemsSys getM1OffloadState] eq "CLOSED"} {
+      if { [AO state gaos] } {
+         if { [AO state m1] && [AO source m1 GAOS] && [$gemsSys getM1OffloadState] eq "CLOSED" } {
             $w itemconfigure gaos_m1 -fill green
          } else {
             $w itemconfigure gaos_m1 -fill yellow
@@ -1173,7 +1130,7 @@ itcl::body GuideLoop::recolourGemsArrows {} {
       } else {
          $w itemconfigure gaos_m1 -fill white
       }
-      if {[AO state gaos] || [AO state ttgsloop]} {
+      if { [AO state gaos] || [AO state ttgsloop]}  {
          if { ( [AO state m2] && [AO source m2 GAOS A] && [$gemsSys getM2OffloadState] eq "CLOSED" ) \
                || ( [AO state coma] && [AO source m1 GAOS] ) } {
             $w itemconfigure gaos_m2 -fill green
@@ -1182,15 +1139,6 @@ itcl::body GuideLoop::recolourGemsArrows {} {
          }
       } else {
          $w itemconfigure gaos_m2 -fill white
-      }
-      if {[AO state ttgsloop]} {
-         if {[AO state rotator] && [$gemsSys getRotOffloadState] eq "CLOSED" } {
-            $w itemconfigure gaos_cr -fill green
-         } else {
-            $w itemconfigure gaos_cr -fill yellow
-         }
-      } else {
-         $w itemconfigure gaos_cr -fill white
       }
    }
 }
@@ -1275,14 +1223,10 @@ itcl::body GuideLoop::onGemsChange {reasons} {
 itcl::body GuideLoop::onIgnoreAOChange {name1 name2 op} {
    if { [calparam cget -site ] eq "CP" } {
       if { $::Flags(ignoreao) } {
-         $itk_component(rotator) configure -state disabled
          $gaosWidget configure -state disabled
       } else {
-         $itk_component(rotator) configure -state normal
          $gaosWidget configure -state normal
       }
-   } else {
-      $itk_component(rotator) configure -state disabled
    }
 }
 
@@ -1307,25 +1251,25 @@ itcl::body GuideLoop::resizeGemsArrows {} {
    set ttCanIn [ $gaosWidget getMagnetPoint TT_CAN_IN ]
    set canOutR [ $gaosWidget getMagnetPoint CAN_OUTR ]
    $w coords cwfstt_gaos_br [lindex $canOutR 0] [lindex $canOutR 1] \
-      [expr [lindex $ttCanIn 0] + $arrowHeadSpace ] [lindex $canOutR 1] \
-      [expr [lindex $ttCanIn 0] + $arrowHeadSpace ] [lindex $ttCanIn 1] \
-      [expr [lindex $ttCanIn 0] + $arrowBorderOffset ] [lindex $ttCanIn 1]
+      [expr [lindex $ttCanIn 0] + $GraphParam::arrowHeadSpace ] [lindex $canOutR 1] \
+      [expr [lindex $ttCanIn 0] + $GraphParam::arrowHeadSpace ] [lindex $ttCanIn 1] \
+      [expr [lindex $ttCanIn 0] + $GraphParam::arrowBorderOffset ] [lindex $ttCanIn 1]
    $w coords cwfstt_gaos [lindex $canOutR 0] [lindex $canOutR 1] \
-      [expr [lindex $ttCanIn 0] + $arrowHeadSpace ] [lindex $canOutR 1] \
-      [expr [lindex $ttCanIn 0] + $arrowHeadSpace ] [lindex $ttCanIn 1] \
-      [expr [lindex $ttCanIn 0] + $arrowOffset ] [lindex $ttCanIn 1]
+      [expr [lindex $ttCanIn 0] + $GraphParam::arrowHeadSpace ] [lindex $canOutR 1] \
+      [expr [lindex $ttCanIn 0] + $GraphParam::arrowHeadSpace ] [lindex $ttCanIn 1] \
+      [expr [lindex $ttCanIn 0] + $GraphParam::arrowOffset ] [lindex $ttCanIn 1]
 
    #Line from ODGW to TT loop
    set ttOdgwIn [ $gaosWidget getMagnetPoint TT_ODGW_IN ]
    set odgwOutR [ $gaosWidget getMagnetPoint ODGW_OUTR ]
    $w coords odgwtt_gaos_br [lindex $odgwOutR 0] [lindex $odgwOutR 1] \
-      [expr [lindex $ttOdgwIn 0] + $arrowHeadSpace + $interLineSpace ] [lindex $odgwOutR 1] \
-      [expr [lindex $ttOdgwIn 0] + $arrowHeadSpace + $interLineSpace ] [lindex $ttOdgwIn 1] \
-      [expr [lindex $ttOdgwIn 0] + $arrowBorderOffset ] [lindex $ttOdgwIn 1]
+      [expr [lindex $ttOdgwIn 0] + $GraphParam::arrowHeadSpace + $GraphParam::interLineSpace ] [lindex $odgwOutR 1] \
+      [expr [lindex $ttOdgwIn 0] + $GraphParam::arrowHeadSpace + $GraphParam::interLineSpace ] [lindex $ttOdgwIn 1] \
+      [expr [lindex $ttOdgwIn 0] + $GraphParam::arrowBorderOffset ] [lindex $ttOdgwIn 1]
    $w coords odgwtt_gaos [expr [lindex $odgwOutR 0] + 1 ] [lindex $odgwOutR 1] \
-      [expr [lindex $ttOdgwIn 0] + $arrowHeadSpace + $interLineSpace ] [lindex $odgwOutR 1] \
-      [expr [lindex $ttOdgwIn 0] + $arrowHeadSpace + $interLineSpace ] [lindex $ttOdgwIn 1] \
-      [expr [lindex $ttOdgwIn 0] + $arrowOffset ] [lindex $ttOdgwIn 1]
+      [expr [lindex $ttOdgwIn 0] + $GraphParam::arrowHeadSpace + $GraphParam::interLineSpace ] [lindex $odgwOutR 1] \
+      [expr [lindex $ttOdgwIn 0] + $GraphParam::arrowHeadSpace + $GraphParam::interLineSpace ] [lindex $ttOdgwIn 1] \
+      [expr [lindex $ttOdgwIn 0] + $GraphParam::arrowOffset ] [lindex $ttOdgwIn 1]
 
    #Lines from OIWFS and ODGW to Flex loop
    set odgwOutL [ $gaosWidget getMagnetPoint ODGW_OUTL ]
@@ -1334,67 +1278,67 @@ itcl::body GuideLoop::resizeGemsArrows {} {
    set oiout_y [expr ( [lindex [$w coords oiwfs_bg] 1 ] + [lindex [$w coords oiwfs_bg] 3 ] ) / 2 ]
 
    $w coords odgwflex_gaos_br [lindex $odgwOutL 0] [lindex $odgwOutL 1] \
-      [expr [lindex $odgwOutL 0] - $arrowHeadSpace - 2 * $interLineSpace] [lindex $odgwOutL 1] \
-      [expr [lindex $odgwOutL 0] - $arrowHeadSpace - 2 * $interLineSpace] $oiout_y
+      [expr [lindex $odgwOutL 0] - $GraphParam::arrowHeadSpace - 2 * $GraphParam::interLineSpace] [lindex $odgwOutL 1] \
+      [expr [lindex $odgwOutL 0] - $GraphParam::arrowHeadSpace - 2 * $GraphParam::interLineSpace] $oiout_y
    $w coords wfs_gaos_br $oiout_x $oiout_y \
-      [expr [lindex $odgwOutL 0] - $arrowHeadSpace - 2 * $interLineSpace] $oiout_y
-   $w coords flexend_gaos_br [expr [lindex $odgwOutL 0] - $arrowHeadSpace - 2 * $interLineSpace] $oiout_y \
-      [expr [lindex $odgwOutL 0] - $arrowHeadSpace - 2 * $interLineSpace] [lindex $flexIn 1] \
-      [expr [lindex $flexIn 0] - $arrowBorderOffset] [lindex $flexIn 1]
+      [expr [lindex $odgwOutL 0] - $GraphParam::arrowHeadSpace - 2 * $GraphParam::interLineSpace] $oiout_y
+   $w coords flexend_gaos_br [expr [lindex $odgwOutL 0] - $GraphParam::arrowHeadSpace - 2 * $GraphParam::interLineSpace] $oiout_y \
+      [expr [lindex $odgwOutL 0] - $GraphParam::arrowHeadSpace - 2 * $GraphParam::interLineSpace] [lindex $flexIn 1] \
+      [expr [lindex $flexIn 0] - $GraphParam::arrowBorderOffset] [lindex $flexIn 1]
 
    $w coords odgwflex_gaos [expr [lindex $odgwOutL 0] -1] [lindex $odgwOutL 1] \
-      [expr [lindex $odgwOutL 0] - $arrowHeadSpace - 2 * $interLineSpace] [lindex $odgwOutL 1] \
-      [expr [lindex $odgwOutL 0] - $arrowHeadSpace - 2 * $interLineSpace] $oiout_y
+      [expr [lindex $odgwOutL 0] - $GraphParam::arrowHeadSpace - 2 * $GraphParam::interLineSpace] [lindex $odgwOutL 1] \
+      [expr [lindex $odgwOutL 0] - $GraphParam::arrowHeadSpace - 2 * $GraphParam::interLineSpace] $oiout_y
    $w coords wfs_gaos $oiout_x $oiout_y \
-      [expr [lindex $odgwOutL 0] - $arrowHeadSpace - 2 * $interLineSpace] $oiout_y
-   $w coords flexend_gaos [expr [lindex $odgwOutL 0] - $arrowHeadSpace - 2 * $interLineSpace] $oiout_y \
-      [expr [lindex $odgwOutL 0] - $arrowHeadSpace - 2 * $interLineSpace] [lindex $flexIn 1] \
-      [expr [lindex $flexIn 0] - $arrowOffset] [lindex $flexIn 1]
+      [expr [lindex $odgwOutL 0] - $GraphParam::arrowHeadSpace - 2 * $GraphParam::interLineSpace] $oiout_y
+   $w coords flexend_gaos [expr [lindex $odgwOutL 0] - $GraphParam::arrowHeadSpace - 2 * $GraphParam::interLineSpace] $oiout_y \
+      [expr [lindex $odgwOutL 0] - $GraphParam::arrowHeadSpace - 2 * $GraphParam::interLineSpace] [lindex $flexIn 1] \
+      [expr [lindex $flexIn 0] - $GraphParam::arrowOffset] [lindex $flexIn 1]
 
    #Line from CAnopus WFS to Ani loop
    set canOutL [ $gaosWidget getMagnetPoint CAN_OUTL ]
    set aniIn [ $gaosWidget getMagnetPoint ANI_IN ]
    $w coords cwfsani_gaos_br [lindex $canOutL 0] [lindex $canOutL 1] \
-      [expr [lindex $canOutL 0] - $arrowHeadSpace - $interLineSpace] [lindex $canOutL 1] \
-      [expr [lindex $canOutL 0] - $arrowHeadSpace - $interLineSpace] [lindex $aniIn 1] \
-      [expr [lindex $aniIn 0] - $arrowBorderOffset ] [lindex $aniIn 1]
+      [expr [lindex $canOutL 0] - $GraphParam::arrowHeadSpace - $GraphParam::interLineSpace] [lindex $canOutL 1] \
+      [expr [lindex $canOutL 0] - $GraphParam::arrowHeadSpace - $GraphParam::interLineSpace] [lindex $aniIn 1] \
+      [expr [lindex $aniIn 0] - $GraphParam::arrowBorderOffset ] [lindex $aniIn 1]
    $w coords cwfsani_gaos [lindex $canOutL 0] [lindex $canOutL 1] \
-      [expr [lindex $canOutL 0] - $arrowHeadSpace - $interLineSpace] [lindex $canOutL 1] \
-      [expr [lindex $canOutL 0] - $arrowHeadSpace - $interLineSpace] [lindex $aniIn 1] \
-      [expr [lindex $aniIn 0] - $arrowOffset ] [lindex $aniIn 1]
+      [expr [lindex $canOutL 0] - $GraphParam::arrowHeadSpace - $GraphParam::interLineSpace] [lindex $canOutL 1] \
+      [expr [lindex $canOutL 0] - $GraphParam::arrowHeadSpace - $GraphParam::interLineSpace] [lindex $aniIn 1] \
+      [expr [lindex $aniIn 0] - $GraphParam::arrowOffset ] [lindex $aniIn 1]
 
    #Line from SFS to SF loop
    set sfsOut [ $gaosWidget getMagnetPoint SFS_OUT ]
    set sfIn [ $gaosWidget getMagnetPoint SF_IN ]
    $w coords sfs_gaos_br [lindex $sfsOut 0] [lindex $sfsOut 1] \
-      [expr [lindex $sfsOut 0] - $arrowHeadSpace ] [lindex $sfsOut 1] \
-      [expr [lindex $sfsOut 0] - $arrowHeadSpace ] [lindex $sfIn 1] \
-      [expr [lindex $sfIn 0] - $arrowBorderOffset ] [lindex $sfIn 1]
+      [expr [lindex $sfsOut 0] - $GraphParam::arrowHeadSpace ] [lindex $sfsOut 1] \
+      [expr [lindex $sfsOut 0] - $GraphParam::arrowHeadSpace ] [lindex $sfIn 1] \
+      [expr [lindex $sfIn 0] - $GraphParam::arrowBorderOffset ] [lindex $sfIn 1]
    $w coords sfs_gaos [lindex $sfsOut 0] [lindex $sfsOut 1] \
-      [expr [lindex $sfsOut 0] - $arrowHeadSpace ] [lindex $sfsOut 1] \
-      [expr [lindex $sfsOut 0] - $arrowHeadSpace ] [lindex $sfIn 1] \
-      [expr [lindex $sfIn 0] - $arrowOffset ] [lindex $sfIn 1]
+      [expr [lindex $sfsOut 0] - $GraphParam::arrowHeadSpace ] [lindex $sfsOut 1] \
+      [expr [lindex $sfsOut 0] - $GraphParam::arrowHeadSpace ] [lindex $sfIn 1] \
+      [expr [lindex $sfIn 0] - $GraphParam::arrowOffset ] [lindex $sfIn 1]
 
    #Line from GAOS to M2
    set gaos_x [lindex [$w coords gaosframe] 0]
    set gaos_y0 [lindex [$w coords gaosframe] 1]
    set m2_x1 [lindex [$w coords m2box] 2]
-   $w coords gaos_m2_br $gaos_x [expr $gaos_y0 + $interLineSpace] \
-      [expr $m2_x1 + $arrowBorderOffset] [expr $gaos_y0 + $interLineSpace]
-   $w coords gaos_m2 $gaos_x [expr $gaos_y0 + $interLineSpace] \
-      [expr $m2_x1 + $arrowOffset] [expr $gaos_y0 + $interLineSpace]
+   $w coords gaos_m2_br $gaos_x [expr $gaos_y0 + $GraphParam::interLineSpace] \
+      [expr $m2_x1 + $GraphParam::arrowBorderOffset] [expr $gaos_y0 + $GraphParam::interLineSpace]
+   $w coords gaos_m2 $gaos_x [expr $gaos_y0 + $GraphParam::interLineSpace] \
+      [expr $m2_x1 + $GraphParam::arrowOffset] [expr $gaos_y0 + $GraphParam::interLineSpace]
 
    #Line from GAOS to M1
    set gaos_y1 [lindex [$w coords gaosframe] 3]
    set m1_x1 [lindex [$w coords m1box] 2]
    set m1_ym [expr ([lindex [$w coords m1box] 1] + [lindex [$w coords m1box] 3]) / 2]
 
-   $w coords gaos_m1_br $gaos_x [expr $gaos_y1 - $interLineSpace] \
-      [expr [lindex $odgwOutL 0] - $arrowHeadSpace - 3 * $interLineSpace] [expr $gaos_y1 - $interLineSpace] \
-      [expr [lindex $odgwOutL 0] - $arrowHeadSpace - 3 * $interLineSpace] $m1_ym \
-      [expr $m1_x1 + $arrowBorderOffset] $m1_ym
-   $w coords gaos_m1 $gaos_x [expr $gaos_y1 - $interLineSpace] \
-      [expr [lindex $odgwOutL 0] - $arrowHeadSpace - 3 * $interLineSpace] [expr $gaos_y1 - $interLineSpace] \
-      [expr [lindex $odgwOutL 0] - $arrowHeadSpace - 3 * $interLineSpace] $m1_ym \
-      [expr $m1_x1 + $arrowOffset] $m1_ym
+   $w coords gaos_m1_br $gaos_x [expr $gaos_y1 - $GraphParam::interLineSpace] \
+      [expr [lindex $odgwOutL 0] - $GraphParam::arrowHeadSpace - 3 * $GraphParam::interLineSpace] [expr $gaos_y1 - $GraphParam::interLineSpace] \
+      [expr [lindex $odgwOutL 0] - $GraphParam::arrowHeadSpace - 3 * $GraphParam::interLineSpace] $m1_ym \
+      [expr $m1_x1 + $GraphParam::arrowBorderOffset] $m1_ym
+   $w coords gaos_m1 $gaos_x [expr $gaos_y1 - $GraphParam::interLineSpace] \
+      [expr [lindex $odgwOutL 0] - $GraphParam::arrowHeadSpace - 3 * $GraphParam::interLineSpace] [expr $gaos_y1 - $GraphParam::interLineSpace] \
+      [expr [lindex $odgwOutL 0] - $GraphParam::arrowHeadSpace - 3 * $GraphParam::interLineSpace] $m1_ym \
+      [expr $m1_x1 + $GraphParam::arrowOffset] $m1_ym
 }

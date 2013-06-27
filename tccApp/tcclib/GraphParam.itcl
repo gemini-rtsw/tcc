@@ -1,0 +1,32 @@
+#+
+#  GraphParam
+#
+#  A class to contain all the graphics parameter
+#
+#  J Luhrs  June 27 2013
+#
+#+
+
+package require Itcl
+
+itcl::class GraphParam {
+   common arrowHeadSpace 25
+   common interLineSpace 10
+   common arrowLength 15
+   common arrowHalfWidth 6
+   common arrowBorder 1
+   common lineWidth 3
+
+   common arrowOffset
+   common arrowBorderOffset
+   common arrowShape
+   common arrowBorderShape
+   
+   set arrowShape [list $arrowLength $arrowLength $arrowHalfWidth ]
+   set a1 [expr $arrowBorder * sqrt( $arrowLength * ( $arrowLength + $arrowHalfWidth ) ) / $arrowHalfWidth ]
+   set a2 [expr $arrowLength + $arrowBorder + $a1]
+   set a3 [expr ($arrowBorder + $a1) * $arrowHalfWidth / $arrowLength]
+   set arrowBorderShape [list $a2 $a2 [expr $arrowHalfWidth + $a3]]
+   set arrowOffset 2
+   set arrowBorderOffset [ expr $arrowOffset - $a1 ]
+}

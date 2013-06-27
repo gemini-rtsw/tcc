@@ -98,21 +98,31 @@ itcl::body GemsWidget::constructor {args} {
 		ToggleButton $w.buttonframe.flexloop -text FLEX -pushedbackground Green \
 			-pady 0 -width 6
 	} {ignore -width }
+   itk_component add crloop {
+      ToggleButton $w.buttonframe.crloop -text CRCS -pushedbackground Green \
+         -pady 0 -width 6
+   } {ignore -width }
    itk_component add sfsloop {
 		ToggleButton $w.buttonframe.sfsloop -text SFS -pushedbackground Green \
 			-pady 0 -width 6
 	} {ignore -width }
+   itk_component add rightframe {
+       frame $w.rightframe -background white -borderwidth 0
+   } {
+      usual
+      ignore -highlightthickness -borderwidth
+   }
    itk_component add lgswfsframe {
-      frame $w.lgswfsframe -background white -relief solid -borderwidth 1
+      frame $w.rightframe.lgswfsframe -background white -relief solid -borderwidth 1
    } {usual
          ignore -background }
    itk_component add lgswfslabel {
-      label $w.lgswfsframe.lgswfslabel -text LGSWFS -background white -highlightthickness 0 -borderwidth 0
+      label $w.rightframe.lgswfsframe.lgswfslabel -text LGSWFS -background white -highlightthickness 0 -borderwidth 0
    } {  usual
          ignore -highlightthickness -borderwidth -background
    }
    itk_component add lgswfsexp {
-      iwidgets::combobox $w.lgswfsframe.lgswfsexp -arrowrelief flat -width 5 \
+      iwidgets::combobox $w.rightframe.lgswfsframe.lgswfsexp -arrowrelief flat -width 5 \
          -width 4 -labeltext Hz -selectioncommand [itcl::code $this onLGSExpSel]
    }
    $itk_component(lgswfsexp) insert list end 50 100 200 500 800
@@ -125,43 +135,43 @@ itcl::body GemsWidget::constructor {args} {
 
    pack $itk_component(lgswfslabel) $itk_component(lgswfsexp) -padx 1 -pady 1
 
-   pack $itk_component(flexloop) $itk_component(aniloop) $itk_component(sfsloop) -side top -anchor w
+   pack $itk_component(flexloop) $itk_component(crloop) $itk_component(aniloop) $itk_component(sfsloop) -side top -anchor w
    #pack $itk_component(lgswfsframe) -padx 2 -pady 2
 
    itk_component add ttframe {
-       frame $w.ttframe -background white -relief solid -borderwidth 1
+       frame $w.rightframe.ttframe -background white -relief solid -borderwidth 1
    } { usual
          ignore -background }
    itk_component add ttlabel {
-         label $w.ttframe.ttlabel -text TT -background white -highlightthickness 0 -borderwidth 0
+         label $w.rightframe.ttframe.ttlabel -text TT -background white -highlightthickness 0 -borderwidth 0
    } { usual
           ignore -background -highlightthickness -borderwidth }
    itk_component add ttcan1 {
-      ToggleButton $w.ttframe.ttcan1 -text C1 \
+      ToggleButton $w.rightframe.ttframe.ttcan1 -text C1 \
          -pushedbackground Green -pady 0 -width 5 -command [itcl::code $this onTTCxPress]
    } {ignore -width }
    itk_component add ttcan2 {
-      ToggleButton $w.ttframe.ttcan2 -text C2 \
+      ToggleButton $w.rightframe.ttframe.ttcan2 -text C2 \
          -pushedbackground Green -pady 0 -width 5 -command [itcl::code $this onTTCxPress]
    } {ignore -width }
    itk_component add ttcan3 {
-      ToggleButton $w.ttframe.ttcan3 -text C3 \
+      ToggleButton $w.rightframe.ttframe.ttcan3 -text C3 \
          -pushedbackground Green -pady 0 -width 5 -command [itcl::code $this onTTCxPress]
    } {ignore -width }
    itk_component add ttodgw1 {
-      ToggleButton $w.ttframe.ttodgw1 -text OD1 \
+      ToggleButton $w.rightframe.ttframe.ttodgw1 -text OD1 \
          -pushedbackground Green -pady 0 -width 5 -command [itcl::code $this onTTODGWxPress]
    } {ignore -width }
    itk_component add ttodgw2 {
-      ToggleButton $w.ttframe.ttodgw2 -text OD2 \
+      ToggleButton $w.rightframe.ttframe.ttodgw2 -text OD2 \
          -pushedbackground Green -pady 0 -width 5 -command [itcl::code $this onTTODGWxPress]
    } {ignore -width }
    itk_component add ttodgw3 {
-      ToggleButton $w.ttframe.ttodgw3 -text OD3 \
+      ToggleButton $w.rightframe.ttframe.ttodgw3 -text OD3 \
          -pushedbackground Green -pady 0 -width 5 -command [itcl::code $this onTTODGWxPress]
    } {ignore -width }
    itk_component add ttodgw4 {
-      ToggleButton $w.ttframe.ttodgw4 -text OD4 \
+      ToggleButton $w.rightframe.ttframe.ttodgw4 -text OD4 \
          -pushedbackground Green -pady 0 -width 5 -command [itcl::code $this onTTODGWxPress]
    } {ignore -width }
    grid $itk_component(ttlabel) -
@@ -215,10 +225,9 @@ itcl::body GemsWidget::constructor {args} {
       lappend sfsExpList "[lindex $pair 1]"
    }
    itk_component add sfs {
-		WfsWidget $w.buttonframe.sfs -label SFS -explabel Hz -expvalues $sfsExpList
+		WfsWidget $w.sfs -label SFS -explabel Hz -expvalues $sfsExpList
 	}
    [$itk_component(sfs) component exp] configure -width 2 -labelpos w -labeltext "exp\[s\]"
-   pack $itk_component(sfs) -side bottom -anchor s -padx 0 -pady 0
 
    set odgwExpList ""
    foreach {pair } $odgwExpLUT {
@@ -252,27 +261,44 @@ itcl::body GemsWidget::constructor {args} {
    pack $itk_component(odgw1) $itk_component(odgw2) $itk_component(odgw3) $itk_component(odgw4) \
       -fill x -expand yes -anchor n -padx 1 -pady {0 1}
    pack configure $itk_component(odgw1) -pady 1
- 
+
    [$itk_component(sfs) component exp] selection set 0
    [$itk_component(odgw1) component exp] selection set 0
    [$itk_component(odgw2) component exp] selection set 0
    [$itk_component(odgw3) component exp] selection set 0
    [$itk_component(odgw4) component exp] selection set 0
 
-   pack $itk_component(gaoson) -side top -anchor n -padx 0 -pady {0 1}
+   pack $itk_component(ttframe) -side top -anchor e
+   pack $itk_component(lgswfsframe) -side top -anchor e -fill x -expand yes -pady {2 1}
+
+   itk_component add arrowspace {
+      canvas $w.arrowspace -width 1 -height 1 -borderwidth 0 -highlightthickness 0  -background white
+   } {
+      usual
+      ignore -highlightthickness -borderwidth -background
+   }
+#   $itk_component(arrowspace) create line 0 0 1 1 -tags tt_cr_br -fill black -width 5
+   $itk_component(arrowspace) create line 0 0 48 1 -tags tt_cr_br -fill black \
+      -width [expr $GraphParam::lineWidth + 2 * $GraphParam::arrowBorder] \
+      -arrow last -arrowshape $GraphParam::arrowBorderShape
+   $itk_component(arrowspace) create line 0 0 1 1 -tags tt_cr -fill white \
+      -width [expr $GraphParam::lineWidth] \
+      -arrow last -arrowshape $GraphParam::arrowShape
+
+   pack $itk_component(gaoson) -side top -anchor n -padx 0 -pady {0 2}
    pack $itk_component(odgwframe) -padx 0 -pady 0 -side bottom -expand yes -fill x
    pack $itk_component(canframe) -padx 0 -pady 1 -side bottom -fill x -expand yes
-   pack $itk_component(buttonframe) -fill x -side left -fill y -pady 1 -padx {0 1}
-   pack $itk_component(ttframe) -side top -anchor e
-   pack $itk_component(lgswfsframe) -side top -anchor e -padx {1 0} -pady 1 
-   #pack $itk_component(sfs) -padx 1 -pady 1 -side bottom -anchor w
+   pack $itk_component(rightframe) -side right
+   pack $itk_component(sfs) -side bottom -anchor s -padx {0 2} -pady {0 1}
+   pack $itk_component(buttonframe) -side left -pady 2
+   pack $itk_component(arrowspace) -fill both -expand yes
 
    set sys [GemsSys::getSingleton]
    $sys subscribe [itcl::code $this onGemsChange]
 
    trace variable ::Config(tcs.field,value) w [itcl::code $this onFieldChange]
 
-   foreach wd { ttframe ttcan3 ttodgw4 odgwframe odgw1 odgw4 sfs buttonframe canframe sfsloop aniloop flexloop} {
+   foreach wd { rightframe ttframe ttcan3 ttodgw4 odgwframe odgw1 odgw4 sfs buttonframe canframe sfsloop aniloop flexloop} {
       bind $itk_component($wd) <Configure> [itcl::code $this onLayoutChange]
    }
 
@@ -315,6 +341,7 @@ itcl::body GemsWidget::reset {} {
    $itk_component(ttodgw3) pop
    $itk_component(ttodgw4) pop
    $itk_component(flexloop) pop
+   $itk_component(crloop) pop
    $itk_component(sfsloop) pop
    $itk_component(aniloop) pop
    $itk_component(can1) pop
@@ -329,13 +356,16 @@ itcl::body GemsWidget::reset {} {
 
 itcl::body GemsWidget::recolor {} {
    if {[$itk_option(-aocontroller) state lwfsLoop] } {
-      #$itk_component(gaoson) configure -status on
       $itk_component(mainframe) configure -background green
       $itk_component(buttonframe) configure -background green
+      $itk_component(rightframe) configure -background green
+      $itk_component(arrowspace) configure -background green
    } else {
       #$itk_component(gaoson) configure -status off
       $itk_component(mainframe) configure -background white
       $itk_component(buttonframe) configure -background white
+      $itk_component(rightframe) configure -background white
+      $itk_component(arrowspace) configure -background white
    }
    if {[$itk_option(-aocontroller) state lgswfs] } {
       $itk_component(lgswfsframe) configure -background green
@@ -410,6 +440,15 @@ itcl::body GemsWidget::recolor {} {
    } else {
       $itk_component(odgwframe) configure -background white
    }
+   if { [$itk_option(-aocontroller) state ttLoop] } {
+      if { [AO state rotator] && [$itk_option(-aocontroller) state rotOffload] } {
+          $itk_component(arrowspace) itemconfigure tt_cr -fill green
+      } else {
+         $itk_component(arrowspace) itemconfigure tt_cr -fill yellow
+      }
+   } else {
+      $itk_component(arrowspace) itemconfigure tt_cr -fill white
+   }
 }
 
 itcl::body GemsWidget::enable {} {
@@ -459,6 +498,11 @@ itcl::body GemsWidget::enable {} {
    $itk_option(-aocontroller) configure -lwfsFreq [$itk_component(lgswfsexp) get]
    $itk_option(-aocontroller) configure -lwfsLoop [expr \"[$itk_component(gaoson) get]\" eq \"pushed\"]
    $itk_option(-aocontroller) configure -flexLoop [expr \"[$itk_component(flexloop) get]\" eq \"pushed\"]
+   if { "[$itk_component(crloop) get]" eq "pushed" } {
+      AO configure -crsource GAOS
+   } else {
+      AO configure -crsource ""
+   }
    set useTTGS1 [expr \"[$itk_component(ttcan1) get]\" eq \"pushed\"]
    set useTTGS2 [expr \"[$itk_component(ttcan2) get]\" eq \"pushed\"]
    set useTTGS3 [expr \"[$itk_component(ttcan3) get]\" eq \"pushed\"]
@@ -680,6 +724,7 @@ itcl::configbody GemsWidget::state {
          $itk_component(ttodgw3) configure -state $itk_option(-state)
          $itk_component(ttodgw4) configure -state $itk_option(-state)
          $itk_component(flexloop) configure -state $itk_option(-state)
+         $itk_component(crloop) configure -state $itk_option(-state)
          $itk_component(sfsloop) configure -state $itk_option(-state)
          $itk_component(can1) configure -state $itk_option(-state)
          $itk_component(can2) configure -state $itk_option(-state)
@@ -723,12 +768,12 @@ itcl::body GemsWidget::onTTCxPress {op} {
 itcl::body GemsWidget::getMagnetPoint { type } {
    switch $type {
       TT_CAN_IN {
-         set x [ expr [winfo x $itk_component(ttframe)] + [winfo width $itk_component(ttframe)] ]
-         set y [ expr [winfo y $itk_component(ttframe)] + [winfo y $itk_component(ttcan3)] ]
+         set x [ expr [winfo x $itk_component(rightframe)] + [winfo x $itk_component(ttframe)] + [winfo width $itk_component(ttframe)] ]
+         set y [ expr [winfo y $itk_component(rightframe)] + [winfo y $itk_component(ttframe)] + [winfo y $itk_component(ttcan3)] ]
       }
       TT_ODGW_IN {
-         set x [ expr [winfo x $itk_component(ttframe)] + [winfo width $itk_component(ttframe)] ]
-         set y [ expr [winfo y $itk_component(ttframe)] + [winfo y $itk_component(ttodgw4)] ]
+         set x [ expr [winfo x $itk_component(rightframe)] + [winfo x $itk_component(ttframe)] + [winfo width $itk_component(ttframe)] ]
+         set y [ expr [winfo y $itk_component(rightframe)] + [winfo y $itk_component(ttframe)] + [winfo y $itk_component(ttodgw4)] ]
       }
       ODGW_OUTR {
          set x [ expr [winfo x $itk_component(odgwframe)] + \
@@ -742,16 +787,16 @@ itcl::body GemsWidget::getMagnetPoint { type } {
             + [winfo y $itk_component(odgw4)] + [winfo height $itk_component(odgw4)] ) / 2 ]
       }
       CAN_OUTR  {
-         set x [ expr [winfo x $itk_component(canframe)] + [winfo width $itk_component(canframe)] ] 
+         set x [ expr [winfo x $itk_component(canframe)] + [winfo width $itk_component(canframe)] ]
          set y [ expr [winfo y $itk_component(canframe)] + [winfo height $itk_component(canframe)] / 2 ]
       }
       CAN_OUTL  {
-         set x [winfo x $itk_component(canframe)] 
+         set x [winfo x $itk_component(canframe)]
          set y [ expr [winfo y $itk_component(canframe)] + [winfo height $itk_component(canframe)] / 2 ]
       }
       SFS_OUT {
-         set x [ expr [winfo x $itk_component(buttonframe)] + [winfo x $itk_component(sfs)] ]
-         set y [ expr [winfo y $itk_component(buttonframe)] + [winfo y $itk_component(sfs)] + [winfo height $itk_component(sfs)] / 2 ]
+         set x [winfo x $itk_component(sfs)]
+         set y [ expr [winfo y $itk_component(sfs)] + [winfo height $itk_component(sfs)] / 2 ]
       }
       SF_IN {
          set x [ expr [winfo x $itk_component(buttonframe)] + [winfo x $itk_component(sfsloop)] ]
@@ -773,6 +818,27 @@ itcl::body GemsWidget::getMagnetPoint { type } {
 }
 
 itcl::body GemsWidget::onLayoutChange {} {
+   set startx [ expr [winfo width $itk_component(arrowspace)] ]
+   set starty [ expr [winfo y $itk_component(rightframe)] + [winfo y $itk_component(ttframe)] \
+      + [winfo y $itk_component(ttlabel)] + [winfo height $itk_component(ttlabel)] / 2 \
+      - [winfo y $itk_component(arrowspace)] ]
+   set endx 0
+   set endy [ expr [winfo y $itk_component(buttonframe)] + [winfo y $itk_component(crloop)] \
+      + [winfo height $itk_component(crloop)] / 2 \
+      - [winfo y $itk_component(arrowspace)] ]
+   set midx [expr ( $startx + $endx ) / 2 ]
+
+   $itk_component(arrowspace) coords tt_cr_br \
+      $startx $starty \
+      $midx $starty \
+      $midx $endy \
+      [expr $endx + $GraphParam::arrowBorderOffset] $endy
+   $itk_component(arrowspace) coords tt_cr \
+      $startx $starty \
+      $midx $starty \
+      $midx $endy \
+      [expr $endx + $GraphParam::arrowOffset] $endy
+
    if { ! [string is space $itk_option(-layoutchangecmd)] } {
       eval $itk_option(-layoutchangecmd)
    }

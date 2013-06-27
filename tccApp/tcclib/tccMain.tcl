@@ -66,6 +66,9 @@ global env
 
 # Create the CalParam object.
    CalParam calparam -calFile $calfile
+   
+   #GraphParam class, this in necessary to instance its common members
+   GraphParam
 
 	appData add configFile tcc[calparam cget -site].ca
 	puts "Using ca file [appData lookup configPath]/[appData lookup configFile]"
