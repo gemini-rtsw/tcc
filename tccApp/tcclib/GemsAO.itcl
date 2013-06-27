@@ -52,6 +52,7 @@ itcl::class GemsAO {
 
       method enable {}
       method disable {}
+      method shutterLaser {}
       method state {var}
       method isTTSource {src}
       method isFlexSource {src}
@@ -122,6 +123,20 @@ itcl::body GemsAO::disable {} {
 
    set lastError $errMsg
    return $ret
+}
+
+itcl::body GemsAO::shutterLaser {} {
+   if { [state lwfsLoop] } {
+      $sys openLGSLoop
+      if { [waitForCmdComplete 1000 5000 {expr ![state lwfsLoop]} "LGS loop to stop"] } {
+         return 1
+      }
+   }
+   $sys pauseLis
+   if { [waitForCmdComplete 1000 10000 {expr 1} "shuttering laser"] } {
+      return 1
+   }
+   return 0
 }
 
 itcl::body GemsAO::waitFor {timeout outCondition} {

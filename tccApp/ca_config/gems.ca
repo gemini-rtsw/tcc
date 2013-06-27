@@ -7,11 +7,12 @@
 #
 #-
 
-apply gems::aomApply aom:apply aom:activeC Primary GeMS Apply Record
-apply gems::mystApply myst:apply myst:applyC Primary Myst Apply Record
-apply gems::rtcApply rtc:apply rtc:applyC Primary RTC Apply Record
-apply gems::sfsApply sfs:apply sfs:applyC Primary SFS Apply Record
-apply gems::odgwApply gsaoi:dc:apply gsaoi:dc:applyC GSAOI DC Apply Record
+apply gems::aomApply    aom:apply       aom:activeC     Primary GeMS Apply Record
+apply gems::mystApply   myst:apply      myst:applyC     Primary Myst Apply Record
+apply gems::rtcApply    rtc:apply       rtc:applyC      Primary RTC Apply Record
+apply gems::sfsApply    sfs:apply       sfs:applyC      Primary SFS Apply Record
+apply gems::odgwApply   gsaoi:dc:apply  gsaoi:dc:applyC GSAOI DC Apply Record
+apply gems::lisApply    lis:apply       lis:applyC      LIS Apply Record
 
 command gems::adcMech gems::aomApply ADC Position Control
 {
@@ -163,6 +164,12 @@ status sfssad
 	sfsExp		sfs:expTime.VAL 		0	SFS exposure time
 }
 
+status lissad
+{
+    applyC      lis:applyC.VAL  0   Command Status
+    message     lis:applyC.OMSS 0   Command completion message
+}
+
 command gems::slewReset gems::mystApply Reset ngs config, cmat optimization, astrometric mode, etc
 {
 	astroMode myst:slewReset.A	Astrometric Mode (None/Regular/Good/Best)
@@ -297,4 +304,8 @@ command gems::odgwEndGuide gems::odgwApply ODGW start exposure
 {
    command gsaoi:dc:endGuide.DIR ODGW stop command
 }
- 
+
+command gems::lisPause gems::lisApply Pause LIS
+{
+   command lis:pause.DIR LIS pause command
+}

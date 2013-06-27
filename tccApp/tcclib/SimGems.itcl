@@ -71,6 +71,9 @@ public {
    method getODGWIdleRows {}
    method setODGWDisplay { opt {apply 1} }
 
+   #LIS commands
+   method pauseLis {}
+
 	#States
 	method getGemsActive {}
 	method getLoopsState {}
@@ -530,6 +533,13 @@ itcl::body SimGems::startSFS {} {
 
 itcl::body SimGems::stopSFS {} {
 	configCmd SFS sfsActive OFF
+}
+
+itcl::body SimGems::pauseLis {} {
+   $logger logmess "SimGems: Pause laser propagation."
+   if { [beginCmd] } {
+      after 200 [itcl::code $this endCmd]
+   }
 }
 
 itcl::body SimGems::setODGWExposure {id val} {

@@ -78,6 +78,9 @@ public {
    method setODGWDisplay { opt {apply 1} }
    method getODGWDisplayRate {}
    method setODGWDisplayRate { val {apply 1} }
+   
+   #LIS commands
+   method pauseLis {}
 
 	#States
 	method getGemsActive {}
@@ -188,11 +191,13 @@ itcl::body RealGems::constructor {} {
 	epics cs gems::odgwSetup
    epics cs gems::odgwGuide
    epics cs gems::odgwEndGuide
+   epics cs gems::lisPause
 	epics sa gemssad
 	epics sa aomsad
 	epics sa rtcsad
 	epics sa sfssad
 	epics sa odgwsad
+   epics sa lissad
 	
 	cs gems::aomApply setTimeout 3
 	cs gems::mystApply setTimeout 3
@@ -783,6 +788,14 @@ itcl::body RealGems::stopSFS {} {
 	set lastCmdSys sfssad
    after 100
 	catch {cs gems::sfsStopObserve post}
+}
+
+itcl::body RealGems::pauseLis {} {
+   cs gems::lisPause set command MARK
+   $logger logmess "gems::lisPause"
+   set lastCmdSys lissad
+   after 100
+   catch {cs gems::lisPause post}
 }
 
 itcl::body RealGems::setODGWExposure {id val} {
@@ -1447,3 +1460,4 @@ itcl::body RealGems::calculateBaseExpTime { idList tolerance } {
    }
    return $bestExpTime
 }
+
