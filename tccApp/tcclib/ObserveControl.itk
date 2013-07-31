@@ -23,12 +23,12 @@ itcl::class ObserveControl {
    common wfsConfigObj
    public {
       method traceProc { name index op }
-#      method setValue {name alarm time {values NoVal}}
+      #      method setValue {name alarm time {values NoVal}}
       method timeout {}
       method openloop {}
       method setfold {path {configISS 1}}
       method reset {} {
-	  $itk_component(guideloop) reset
+         $itk_component(guideloop) reset
       }
    }
    private {
@@ -42,12 +42,14 @@ itcl::class ObserveControl {
       method selwfs {}
       method hrstart {}
       method hrstop {}
+
+      method onSelOIChange {name alarm time value}
       variable wfs Pwfs1
       variable Pwfs1Dark
       variable Pwfs2Dark
       variable OiwfsDark
-		
-		variable tid 0
+
+      variable tid 0
    }
 }
 
@@ -59,7 +61,7 @@ itcl::body ObserveControl::constructor args {
 
    set w $itk_interior
 
-# Create command senders and status acceptors.
+   # Create command senders and status acceptors.
 
    if { [catch {sa pwfs1Guide info}] } {
       epics sa pwfs1Guide
@@ -71,22 +73,21 @@ itcl::body ObserveControl::constructor args {
       epics sa oiwfsGuide
    }
 
-
-# Guiding control picture.
+   # Guiding control picture.
    itk_component add guideloop {
       GuideLoop $w.guideloop
    }
 
-# AWE Guide Alarm
-# puts "path to GuideAlarm: $w.alarm"
+   # AWE Guide Alarm
+   # puts "path to GuideAlarm: $w.alarm"
    itk_component add alarm {
       GuideAlarm $w.alarm
    }
    #puts "created GuideAlarm object: $w.alarm"
    grid $itk_component(guideloop) $itk_component(alarm) -sticky news
 
-# bottom frame
-    itk_component add botframe {
+   # bottom frame
+   itk_component add botframe {
        frame $w.botframe -borderwidth 2
     }
 
@@ -94,55 +95,57 @@ itcl::body ObserveControl::constructor args {
 
    set w $itk_component(botframe)
 
-# Controls frame
+   # Controls frame
    itk_component add conframe {
        frame $w.conframe -borderwidth 2
    }
 
-# WFS controls
+   # WFS controls
    itk_component add wfs {
       frame $w.conframe.wfs -bd 2 -relief ridge
    }
 
-# HRWFS/AC controls
+   # HRWFS/AC controls
    itk_component add hrac {
       frame $w.conframe.hrac -bd 2 -relief ridge
    }
 
    pack $itk_component(hrac) $itk_component(wfs) -side left -padx 3
 
-# Acquisition Camera/HRWFS controls.
-#   itk_component add acqcam {
-#      AcqcamControl $w.acqcam
-#   }
+   # Acquisition Camera/HRWFS controls.
+   #   itk_component add acqcam {
+   #      AcqcamControl $w.acqcam
+   #   }
 
-# Fold mirrors.
+   # Fold mirrors.
    itk_component add mirrors {
       frame $w.mirrors  -bd 2 -relief ridge
    }
 
-# Various chop/node and WFS probe controls.
+   # Various chop/node and WFS probe controls.
    itk_component add buttons {
       frame $w.buttons -bd 2 -relief ridge
    }
 
-# Configure Wavelength and Fieldstop for the wfs
+   # Configure Wavelength and Fieldstop for the wfs
 
    itk_component add wfsconfig {
       WfsConfig $w.wfsconfig
    }
    set wfsConfigObj $itk_component(wfsconfig)
    $itk_component(guideloop) configure -wfsConfigObj $wfsConfigObj
-	$itk_component(guideloop) configure -wfsAlarmObj $itk_component(alarm)
+   $itk_component(guideloop) configure -wfsAlarmObj $itk_component(alarm)
 
-#   grid $itk_component(hrac) $itk_component(mirrors)  -padx 5 -pady 5 -sticky s
-#   grid  $itk_component(wfs) ^ $itk_component(buttons) -padx 5 -pady 5 -sticky s
-#   grid $itk_component(wfsconfig) ^ ^ -padx 5 -pady 5 -sticky s
+   #   grid $itk_component(hrac) $itk_component(mirrors)  -padx 5 -pady 5 -sticky
+# s
+   #   grid  $itk_component(wfs) ^ $itk_component(buttons) -padx 5 -pady 5
+# -sticky s
+   #   grid $itk_component(wfsconfig) ^ ^ -padx 5 -pady 5 -sticky s
 
    grid $itk_component(conframe) - $itk_component(mirrors)  -padx 2 -pady 2 -sticky n
    grid $itk_component(wfsconfig) $itk_component(buttons) ^  -padx 2 -pady 2 -sticky s
 
-# HRWFS/AC controls.
+   # HRWFS/AC controls.
    set w $itk_component(hrac)
    itk_component add hracsel {
       iwidgets::optionmenu $w.hracsel -command [itcl::code $this lenssel]
@@ -165,7 +168,7 @@ itcl::body ObserveControl::constructor args {
             -command [itcl::code $this hrstop]
    }
    grid $itk_component(hracsel) $itk_component(expose) $itk_component(hrstart) $itk_component(hrstop)
-# WFS controls.
+   # WFS controls.
    set w $itk_component(wfs)
    itk_component add wfssel {
       iwidgets::optionmenu $w.wfssel -command [itcl::code $this selwfs]
@@ -181,12 +184,12 @@ itcl::body ObserveControl::constructor args {
       LiveButton $w.stop -text "Stop" -command [itcl::code $this wfsstop]
    }
    grid $itk_component(wfssel) $itk_component(ql) $itk_component(dark) \
-         $itk_component(stop)
+      $itk_component(stop)
 
-# Button and option menu for configuring the A & G fold mirrors.
+   # Button and option menu for configuring the A & G fold mirrors.
    set w $itk_component(mirrors)
 
-# Checkbutton to enable/disable automatic Instr Origin configuration
+   # Checkbutton to enable/disable automatic Instr Origin configuration
 
    itk_component add instrOrigin {
        checkbutton $w.instorig -variable [itcl::scope set_instr_orig] \
@@ -195,7 +198,7 @@ itcl::body ObserveControl::constructor args {
    }
    pack $itk_component(instrOrigin)
 
-# Checkbutton to enable/disable automatic Wavelength configuration
+   # Checkbutton to enable/disable automatic Wavelength configuration
 
    itk_component add configWavelength {
        checkbutton $w.wavelen -variable [itcl::scope set_wavelength] \
@@ -220,7 +223,7 @@ itcl::body ObserveControl::constructor args {
 
    $itk_component(lpath) setState {0 1 2} disabled
 
-# Buttons for controlling chopping and M2 beam.
+   # Buttons for controlling chopping and M2 beam.
    set w $itk_component(buttons)
    itk_component add choplab {
       label $w.choplab -text Chop/Nod
@@ -242,14 +245,13 @@ itcl::body ObserveControl::constructor args {
             -sadrecord {tcssad nodState} -setvalue B
    }
 
-
    grid $itk_component(choplab) -sticky ew -padx 5
    grid $itk_component(chop) -sticky ew -padx 5
    grid $itk_component(beam) -sticky ew -padx 5
    grid $itk_component(noda) -sticky ew -padx 5
    grid $itk_component(nodb) -sticky ew -padx 5
 
-# Create command senders.
+   # Create command senders.
    if { [catch {cs chop info}] } {
       epics cs chop
    }
@@ -260,41 +262,44 @@ itcl::body ObserveControl::constructor args {
       epics cs nod
    }
 
-# Create the objects for taking darks.
+   # Create the objects for taking darks.
    set Pwfs1Dark [Dark #auto p1]
    set Pwfs2Dark [Dark #auto p2]
    set OiwfsDark [Dark #auto oi]
    if {! $mon_inpos} {
-       set mon_inpos 1
-       global inPosition followS INPOS FOLLOW
-       set INPOS ""
-       set FOLLOW ""
-       set varName "inPosition\(value\)"
-       trace variable $varName w "[itcl::code $this] traceProc"
-       
-       set $varName [sa tcssad get inPosition]
-       sa tcssad link inPosition inPosition
-       
-       set varName "followS\(value\)"
-       trace variable $varName w "[itcl::code $this] traceProc"	   
-       set $varName [sa mcssad get followS]
-       sa mcssad link followS followS
+      set mon_inpos 1
+      global inPosition followS INPOS FOLLOW
+      set INPOS ""
+      set FOLLOW ""
+      set varName "inPosition\(value\)"
+      trace variable $varName w "[itcl::code $this] traceProc"
+
+      set $varName [sa tcssad get inPosition]
+      sa tcssad link inPosition inPosition
+
+      set varName "followS\(value\)"
+      trace variable $varName w "[itcl::code $this] traceProc"
+      set $varName [sa mcssad get followS]
+      sa mcssad link followS followS
+      
+      sa agssad proc oiwfsName [itcl::code $this onSelOIChange]
    }
 
    eval itk_initialize $args
 }
 
 itcl::body ObserveControl::destructor {} {
-    global inPosition followS
+   global inPosition followS
 
-    after cancel $tid
-    if {$mon_inpos} {
-	sa tcssad unlink inPosition inPosition
-	trace remove variable inPosition(value) write "[itcl::code $this] traceProc"
-	sa mcssad unlink followS followS
-	trace remove variable followS(value) write "[itcl::code $this] traceProc"
-       set mon_inpos 0
-    }
+   after cancel $tid
+   if {$mon_inpos} {
+      sa agssad unproc oiwfsName [itcl::code $this onSelOIChange]
+      sa tcssad unlink inPosition inPosition
+      trace remove variable inPosition(value) write "[itcl::code $this] traceProc"
+      sa mcssad unlink followS followS
+      trace remove variable followS(value) write "[itcl::code $this] traceProc"
+      set mon_inpos 0
+   }
 
    itcl::delete object $Pwfs1Dark
    itcl::delete object $Pwfs2Dark
@@ -305,140 +310,140 @@ itcl::body ObserveControl::setfold {path {configISS 1}} {
    set sfPos $path
    logactions logmess "ObserveControl::setfold moving Science Fold to $path"
    switch $path {
-   "Sky>Instr" {
-	  	openloop
-	  	if {$configISS} {iss configure -source SKY -sink INSTR -ao OUT}
-	  	if {$set_instr_orig} {
-	      global instPO
-	      set ::Config(tcs.pointorig,value) $instPO
-	      $::Config(tcs.pointorig,namespace)::$::Config(tcs.pointorig,value) apply tcs.pointorig
-	  	}
-	  	if {$set_wavelength} {
-	      # reset the observing wavelength
-	      set fieldObj ${::Config(tcs.field,namespace)}::${::Config(tcs.field,value)}
- 	      set old_wavelength [$fieldObj cget -wavelength]
-	      #puts "old wavelength: $old_wavelength"
-	      set wavelObj ::WavelengthNames::$old_wavelength
- 	      #puts "wavelObj: $wavelObj"
-	      $wavelObj apply tcs.field.wavelength
-	  	}
-   }
-   "Sky>AO>Inst" {
-		if {$configISS} {iss configure -source AO -sink INSTR -ao IN}
-  		if {$set_instr_orig} {
-      	global instPO
-      	#puts "instPO is $instPO"
-      	if { [regexp ^(ngs|lgs|ao)2 $instPO] } {
-	  			set ::Config(tcs.pointorig,value) $instPO
-	  			$::Config(tcs.pointorig,namespace)::$::Config(tcs.pointorig,value) apply tcs.pointorig
-      	} else {
-	  			# set pointing origin to rotator_axis
-	  			set ::Config(tcs.pointorig,value) "rotator_axis"
-	  			# apply
-	  			$::Config(tcs.pointorig,namespace)::$::Config(tcs.pointorig,value) apply tcs.pointorig
-      	}
-  		}
-  		if {$set_wavelength} {
-      	# reset the observing wavelength
-      	set fieldObj ${::Config(tcs.field,namespace)}::${::Config(tcs.field,value)}
-      	set old_wavelength [$fieldObj cget -wavelength]
-      	#puts "old wavelength: $old_wavelength"
-      	set wavelObj ::WavelengthNames::$old_wavelength
-      	#puts "wavelObj: $wavelObj"
-      	$wavelObj apply tcs.field.wavelength
-  		}
-   }
-   "GCAL>Instr" {
-		if {$configISS} {iss configure -source CAL -sink INSTR}
-   }
-   "Sky>AC/HR" {
-		openloop
-	  	if {$configISS} {iss configure -source SKY -sink HRWFS -ao OUT}
-	  	if {$set_instr_orig} {
-	      # set pointing origin to rotator_axis
-	      set ::Config(tcs.pointorig,value) "rotator_axis"
-	      # apply
-	      $::Config(tcs.pointorig,namespace)::$::Config(tcs.pointorig,value) apply tcs.pointorig
-	  	}
-	  	if {$set_wavelength} {
-	      global env
-	      # configure wavelength based on AC col filter
-	      if {$env(TCC_TCSNAME) == "tcs"} {
-		  		set ac_filt [$wfsConfigObj getValue HrwfsColFilt]
-	      } else {
-		  		set ac_filt [.observePanel.frame.control.botframe.wfsconfig.tabs.canvas.notebook.cs.page1.cs.hrwfs.col get]
-	      }
-	      #puts "got ac filter: $ac_filt"
- 	      switch $ac_filt {
- 		  	"U-red1"  { set new_wavelength "Acq Cam U" }
- 		  	"B-blue"  { set new_wavelength "Acq Cam B" }
- 		  	"V-green" { set new_wavelength "Acq Cam V" }
- 		  	"R-red2"  { set new_wavelength "Acq Cam R" }
- 		  	"I-red3"  { set new_wavelength "Acq Cam I" }
- 		  	"neutral" { set new_wavelength "Acq Cam neutral" }
-		  	default {
-		      tk_messageBox -icon warning -parent $itk_interior \
-			  		-message "Warning, no valid HRWFS/AC color filter"
-		      set new_wavelength "invalid"
-		  	}
- 	      }
- 	      #puts "new wavelength: $new_wavelength"
-	      if {$new_wavelength != "invalid"} {
-		  		set wavelObj ::WavelengthNames::$new_wavelength
-		  		#puts "wavelObj: $wavelObj"
-		  		$wavelObj apply tcs.field.wavelength
-	      }
-	  	}
+      "Sky>Instr" {
+         openloop
+         if {$configISS} {iss configure -source SKY -sink INSTR -ao OUT}
+         if {$set_instr_orig} {
+            global instPO
+            set ::Config(tcs.pointorig,value) $instPO
+            $::Config(tcs.pointorig,namespace)::$::Config(tcs.pointorig,value) apply tcs.pointorig
+         }
+         if {$set_wavelength} {
+            # reset the observing wavelength
+            set fieldObj ${::Config(tcs.field,namespace)}::${::Config(tcs.field,value)}
+            set old_wavelength [$fieldObj cget -wavelength]
+            #puts "old wavelength: $old_wavelength"
+            set wavelObj ::WavelengthNames::$old_wavelength
+            #puts "wavelObj: $wavelObj"
+            $wavelObj apply tcs.field.wavelength
+         }
+      }
+      "Sky>AO>Inst" {
+         if {$configISS} {iss configure -source AO -sink INSTR -ao IN}
+         if {$set_instr_orig} {
+            global instPO
+            #puts "instPO is $instPO"
+            if { [regexp ^(ngs|lgs|ao)2 $instPO] } {
+               set ::Config(tcs.pointorig,value) $instPO
+               $::Config(tcs.pointorig,namespace)::$::Config(tcs.pointorig,value) apply tcs.pointorig
+            } else {
+               # set pointing origin to rotator_axis
+               set ::Config(tcs.pointorig,value) "rotator_axis"
+               # apply
+               $::Config(tcs.pointorig,namespace)::$::Config(tcs.pointorig,value) apply tcs.pointorig
+            }
+         }
+         if {$set_wavelength} {
+            # reset the observing wavelength
+            set fieldObj ${::Config(tcs.field,namespace)}::${::Config(tcs.field,value)}
+            set old_wavelength [$fieldObj cget -wavelength]
+            #puts "old wavelength: $old_wavelength"
+            set wavelObj ::WavelengthNames::$old_wavelength
+            #puts "wavelObj: $wavelObj"
+            $wavelObj apply tcs.field.wavelength
+         }
+      }
+      "GCAL>Instr" {
+         if {$configISS} {iss configure -source CAL -sink INSTR}
+      }
+      "Sky>AC/HR" {
+         openloop
+         if {$configISS} {iss configure -source SKY -sink HRWFS -ao OUT}
+         if {$set_instr_orig} {
+            # set pointing origin to rotator_axis
+            set ::Config(tcs.pointorig,value) "rotator_axis"
+            # apply
+            $::Config(tcs.pointorig,namespace)::$::Config(tcs.pointorig,value) apply tcs.pointorig
+         }
+         if {$set_wavelength} {
+            global env
+            # configure wavelength based on AC col filter
+            if {$env(TCC_TCSNAME) == "tcs"} {
+               set ac_filt [$wfsConfigObj getValue HrwfsColFilt]
+            } else {
+               set ac_filt [.observePanel.frame.control.botframe.wfsconfig.tabs.canvas.notebook.cs.page1.cs.hrwfs.col get]
+            }
+            #puts "got ac filter: $ac_filt"
+            switch $ac_filt {
+               "U-red1"  { set new_wavelength "Acq Cam U" }
+               "B-blue"  { set new_wavelength "Acq Cam B" }
+               "V-green" { set new_wavelength "Acq Cam V" }
+               "R-red2"  { set new_wavelength "Acq Cam R" }
+               "I-red3"  { set new_wavelength "Acq Cam I" }
+               "neutral" { set new_wavelength "Acq Cam neutral" }
+               default {
+                  tk_messageBox -icon warning -parent $itk_interior \
+                     -message "Warning, no valid HRWFS/AC color filter"
+                  set new_wavelength "invalid"
+               }
+            }
+            #puts "new wavelength: $new_wavelength"
+            if {$new_wavelength != "invalid"} {
+               set wavelObj ::WavelengthNames::$new_wavelength
+               #puts "wavelObj: $wavelObj"
+               $wavelObj apply tcs.field.wavelength
+            }
+         }
       }
       "Sky>AO>AC/HR" {
-	  		if {$configISS} {iss configure -source AO -sink HRWFS -ao IN}
-	  		if {$set_instr_orig} {
-   	      # set pointing origin to rotator_axis
-   	      set ::Config(tcs.pointorig,value) "rotator_axis"
-   	      # apply
-   	      $::Config(tcs.pointorig,namespace)::$::Config(tcs.pointorig,value) apply tcs.pointorig
-	  		}
-	  		if {$set_wavelength} {
-	      	global env
-	      	# configure wavelength based on AC col filter
-	      	if {$env(TCC_TCSNAME) == "tcs"} {
-		  			set ac_filt [$wfsConfigObj getValue HrwfsColFilt]
-	      	} else {
-		  			set ac_filt [.observePanel.frame.control.botframe.wfsconfig.tabs.canvas.notebook.cs.page1.cs.hrwfs.col get]
-	      	}
- 	      	#puts "got ac filter: $ac_filt"
- 	      	switch $ac_filt {
- 		  		"U-red1"  { set new_wavelength "Acq Cam U" }
- 		  		"B-blue"  { set new_wavelength "Acq Cam B" }
- 		  		"V-green" { set new_wavelength "Acq Cam V" }
- 		  		"R-red2"  { set new_wavelength "Acq Cam R" }
- 		  		"I-red3"  { set new_wavelength "Acq Cam I" }
- 		  		"neutral" { set new_wavelength "Acq Cam neutral" }
-		  		default {
-		      	tk_messageBox -icon warning -parent $itk_interior \
-			  			-message "Warning, no valid HRWFS/AC color filter"
-		      	set new_wavelength "invalid"
-		  		}
- 	      	}
- 	      	#puts "new wavelength: $new_wavelength"
-	      	if {$new_wavelength != "invalid"} {
-		  			set wavelObj ::WavelengthNames::$new_wavelength
-		  			#puts "wavelObj: $wavelObj"
-		  			$wavelObj apply tcs.field.wavelength
-	      	}
-	  		}
+         if {$configISS} {iss configure -source AO -sink HRWFS -ao IN}
+         if {$set_instr_orig} {
+            # set pointing origin to rotator_axis
+            set ::Config(tcs.pointorig,value) "rotator_axis"
+            # apply
+            $::Config(tcs.pointorig,namespace)::$::Config(tcs.pointorig,value) apply tcs.pointorig
+         }
+         if {$set_wavelength} {
+            global env
+            # configure wavelength based on AC col filter
+            if {$env(TCC_TCSNAME) == "tcs"} {
+               set ac_filt [$wfsConfigObj getValue HrwfsColFilt]
+            } else {
+               set ac_filt [.observePanel.frame.control.botframe.wfsconfig.tabs.canvas.notebook.cs.page1.cs.hrwfs.col get]
+            }
+            #puts "got ac filter: $ac_filt"
+            switch $ac_filt {
+               "U-red1"  { set new_wavelength "Acq Cam U" }
+               "B-blue"  { set new_wavelength "Acq Cam B" }
+               "V-green" { set new_wavelength "Acq Cam V" }
+               "R-red2"  { set new_wavelength "Acq Cam R" }
+               "I-red3"  { set new_wavelength "Acq Cam I" }
+               "neutral" { set new_wavelength "Acq Cam neutral" }
+               default {
+                  tk_messageBox -icon warning -parent $itk_interior \
+                     -message "Warning, no valid HRWFS/AC color filter"
+                  set new_wavelength "invalid"
+               }
+            }
+            #puts "new wavelength: $new_wavelength"
+            if {$new_wavelength != "invalid"} {
+               set wavelObj ::WavelengthNames::$new_wavelength
+               #puts "wavelObj: $wavelObj"
+               $wavelObj apply tcs.field.wavelength
+            }
+         }
       }
    }
-# AWE removed because these have no real use
-#      "AO cal>Instr" {iss configure -source AO -sink HRWFS}
-#      "AO cal>AC/HR" {iss configure -source AO -sink HRWFS}
+   # AWE removed because these have no real use
+   #      "AO cal>Instr" {iss configure -source AO -sink HRWFS}
+   #      "AO cal>AC/HR" {iss configure -source AO -sink HRWFS}
 
-#   puts "configISS2: $configISS"
-	if {$configISS} {
-		iss update
+   #   puts "configISS2: $configISS"
+   if {$configISS} {
+      iss update
    }
    if { [catch {cs tcsApply post} msg] } {
-		tk_messageBox -icon error -parent $itk_interior -message $msg
+      tk_messageBox -icon error -parent $itk_interior -message $msg
    }
 }
 
@@ -446,10 +451,10 @@ itcl::body ObserveControl::setnod state {
    switch $state {
       "Nod A" {
          cs nod set nod value A
-       }
+      }
       "Nod B" {
          cs nod set nod value B
-       }
+      }
    }
    logger command nod
    if { [catch {cs tcsApply post} msg] } {
@@ -472,29 +477,29 @@ itcl::body ObserveControl::center {p par} {
 }
 
 itcl::body ObserveControl::wfssky {} {
-# Short circuit the probe target filter
-    cs filter1 set shortCircuit Closed
-    logger command filter1
+   # Short circuit the probe target filter
+   cs filter1 set shortCircuit Closed
+   logger command filter1
 
-    if { [catch {cs tcsApply post} msg] } {
-	tk_messageBox -icon error -parent $itk_interior -message \
-            "Error posting commands: TCS reports \
-            \"$msg\""
-    }
+   if { [catch {cs tcsApply post} msg] } {
+      tk_messageBox -icon error -parent $itk_interior -message \
+         "Error posting commands: TCS reports \
+         \"$msg\""
+   }
 
-# Take a dark with the selected WFS
+   # Take a dark with the selected WFS
    [set ${wfs}Dark] take
 }
 
 itcl::body ObserveControl::wfsstop {} {
 
-# Stop the selected WFS.
+   # Stop the selected WFS.
    $wfs stop
 }
 
 itcl::body ObserveControl::wfsql {} {
 
-# Start the selected WFS with the quick-look tool.
+   # Start the selected WFS with the quick-look tool.
    $wfs configure -quicklook 1
    if { [$wfs cget -mode] eq "sky" } {
       $wfs configure -mode seq
@@ -504,49 +509,49 @@ itcl::body ObserveControl::wfsql {} {
 
 itcl::body ObserveControl::expose {} {
 
-# Set exposure time.
+   # Set exposure time.
    hrwfs expose [$itk_component(expose) get]
 }
 
 itcl::body ObserveControl::lenssel {} {
-# Select hrwfs lens.
+   # Select hrwfs lens.
    switch [$itk_component(hracsel) get] {
-   AC {
-      if { [sa hrwfs::currStatus get lensdem] ne "AC" } {
-         hrwfs lenssel AC
+      AC {
+         if { [sa hrwfs::currStatus get lensdem] ne "AC" } {
+            hrwfs lenssel AC
+         }
       }
-   }
-   HR {
-      if { [sa hrwfs::currStatus get lensdem] ne "HRWFS" } {
-         hrwfs lenssel HRWFS
+      HR {
+         if { [sa hrwfs::currStatus get lensdem] ne "HRWFS" } {
+            hrwfs lenssel HRWFS
+         }
       }
-   }
    }
 }
 
 itcl::body ObserveControl::hrstop {} {
 
-# Stop hrwfs.
+   # Stop hrwfs.
    hrwfs stop
 }
 
 itcl::body ObserveControl::hrstart {} {
-# Make sure the right lens is configured
+   # Make sure the right lens is configured
    switch [$itk_component(hracsel) get] {
-   AC {
-      if { [sa hrwfs::currStatus get lensdem] ne "AC" } {
-         hrwfs lenssel AC
-         hrwfs wait applyC 60
+      AC {
+         if { [sa hrwfs::currStatus get lensdem] ne "AC" } {
+            hrwfs lenssel AC
+            hrwfs wait applyC 60
+         }
+      }
+      HR {
+         if { [sa hrwfs::currStatus get lensdem] ne "HRWFS" } {
+            hrwfs lenssel HRWFS
+            hrwfs wait applyC 60
+         }
       }
    }
-   HR {
-      if { [sa hrwfs::currStatus get lensdem] ne "HRWFS" } {
-         hrwfs lenssel HRWFS
-         hrwfs wait applyC 60
-      }
-   }
-   }
-# Start continuous exposures to DHS.
+   # Start continuous exposures to DHS.
    hrwfs expose [$itk_component(expose) get]
    hrwfs output DHS
    hrwfs start -1
@@ -564,16 +569,16 @@ itcl::body ObserveControl::selwfs {} {
       }
       OI {
          set wfs Oiwfs
-			set oiwfsSrc [sa agssad get oiwfsName]
+         set oiwfsSrc [sa agssad get oiwfsName]
          if { $oiwfsSrc eq "GMOS" || $oiwfsSrc eq "F2" } {
             $itk_component(dark) configure -state normal
          } else {
             $itk_component(dark) configure -state disabled
-         } 
+         }
       }
       AO {
          set wfs Aowfs
-	 $itk_component(dark) configure -state disabled
+         $itk_component(dark) configure -state disabled
       }
    }
 }
@@ -585,32 +590,32 @@ itcl::body ObserveControl::traceProc {name index op} {
    global $name INPOS FOLLOW
 
    switch $name {
-       inPosition { 
-	   #puts "setting INPOS"
-	   set INPOS [set $gVar]
-       }
-       followS {
-	   #puts "setting FOLLOW"
-	   set FOLLOW [set $gVar]
-       }
+      inPosition {
+         #puts "setting INPOS"
+         set INPOS [set $gVar]
+      }
+      followS {
+         #puts "setting FOLLOW"
+         set FOLLOW [set $gVar]
+      }
    }
 
    if { $need_to_close_loop} {
-       if {[string match TRUE $INPOS] && [string match ON $FOLLOW]} {
-          logger log "ObserveControl::traceProc: closing loops."
-	   AO enable
-	   set need_to_close_loop 0
-       }  else {
-	   # the telescope is not in position, cancel the timeout
-	   #puts "not in position, cancelling timeout $tid"
-	   after cancel $tid
-       }
+      if {[string match TRUE $INPOS] && [string match ON $FOLLOW]} {
+         logger log "ObserveControl::traceProc: closing loops."
+         AO enable
+         set need_to_close_loop 0
+      }  else {
+         # the telescope is not in position, cancel the timeout
+         #puts "not in position, cancelling timeout $tid"
+         after cancel $tid
+      }
    }
 }
 
 itcl::body ObserveControl::timeout {} {
-    # will get here if the telescope did not go out of position
-    # assume the move was too fast, close the loop
+   # will get here if the telescope did not go out of position
+   # assume the move was too fast, close the loop
    if { $need_to_close_loop } {
       #puts "closing loop in timeout"
       logger log "ObserveControl::timeout: closing loops."
@@ -620,15 +625,26 @@ itcl::body ObserveControl::timeout {} {
 }
 
 itcl::body ObserveControl::openloop {} {
-    global INPOS
-# Open loop if neccesary
+   global INPOS
+   # Open loop if neccesary
    if {[AO cget -enabled]} {
       logger log "ObserveControl::openloop: opening loops."
       AO disable
       set need_to_close_loop 1
-# start timeout process
-	   if {[string match TRUE $INPOS]} {
-	      set tid [after 10000 "$this timeout"]
-	   }
+      # start timeout process
+      if {[string match TRUE $INPOS]} {
+         set tid [after 10000 "$this timeout"]
+      }
+   }
+}
+
+itcl::body ObserveControl::onSelOIChange {name alarm time value} {
+   if { [$itk_component(wfssel) get] eq "OI" } {
+      set oiwfsSrc [sa agssad get oiwfsName]
+      if { $oiwfsSrc eq "GMOS" || $oiwfsSrc eq "F2" } {
+         $itk_component(dark) configure -state normal
+      } else {
+         $itk_component(dark) configure -state disabled
+      }
    }
 }
