@@ -340,14 +340,21 @@ itcl::body GuideLoop::constructor args {
    
    #Add Laser Shutter button for GS
    if { [calparam cget -site] eq "CP" } {
-      itk_component add lasershutter {
-         LiveButton $w.lasershutter -text "Laser Shutter" -command { AO shutterLaser } \
-            -highlightcolor red -highlightthickness 2
+      itk_component add lshutterframe {
+         frame $w.lshutterframe -borderwidth 0 -highlightthickness 0 -background red
       } {
          usual
-         ignore -highlightcolor -highlightthickness
+         ignore -borderwidth -highlightthickness -background
       }
-      $w create window 280 459 -window $itk_component(lasershutter)
+      itk_component add lasershutter {
+         LiveButton $w.lshutterframe.lasershutter -text "Laser Shutter" -command { AO shutterLaser } \
+            -highlightthickness 0
+      } {
+         usual
+         ignore -highlightthickness
+      }
+      pack $itk_component(lasershutter) -padx 2 -pady 2
+      $w create window 280 459 -window $itk_component(lshutterframe)
    }
 
    # Monitor the guide states
