@@ -43,10 +43,11 @@ itcl::class TcsControl {
       method lockIndex {}
       method lockPark {}
       method checkState {win}
-		method ngsPark {par} {return Park}
-		method ngsDatum {par} {return Datum}
+      method ngsPark {par} {return Park}
+      method ngsDatum {par} {return Datum}
       method onIgnoreAOChange {name1 name2 op}
-		variable dome
+      method telShutdown {}
+      variable dome
       variable shutter
       variable alarmObj
       variable indexlock 0
@@ -115,8 +116,15 @@ itcl::body TcsControl::constructor args {
 #   pack $itk_component(f3top) $itk_component(f3mid) $itk_component(f3bot) \
 #         -fill both -expand yes
 
-# Commands to enable/disable following in each subsystem 
    set w $itk_component(row1f1)
+
+# Telescope Shutdown Button
+   itk_component add shutdown {
+       LiveButton $w.shutdown -text "Emergency Shutdown" -background red -command [itcl::code $this telShutdown]
+   }
+
+
+# Commands to enable/disable following in each subsystem 
    itk_component add mcs {
       OnOffButton $w.mcs -text MCS \
             -oncommand {mcFollow followState On} \
@@ -370,6 +378,7 @@ itcl::body TcsControl::constructor args {
    }
    set alarmObj $w.alarm
    
+   grid $itk_component(shutdown) - - -sticky news 
    grid x $itk_component(lockindex) $itk_component(lockpark) \
          -sticky nsew -padx 5
    grid $itk_component(mcs) $itk_component(mcsdatum) $itk_component(mcspark) \
@@ -584,7 +593,6 @@ itcl::body TcsControl::constructor args {
    if { [catch {cs oiwfsFocusPark info}] } {
       epics cs oiwfsFocusPark
    }
-
 
 # Vent gates move command.
    set w $itk_component(row3)
@@ -1027,4 +1035,90 @@ itcl::body TcsControl::onIgnoreAOChange {name1 name2 op} {
          $itk_component(odgw4) configure -state normal
       }
    }
+}
+
+itcl::body TcsControl::telShutdown {} {
+
+    set choice [tk_messageBox -icon question -type yesno -default no -title "Shutdown Telescope Now?" -message \
+		    "Are you sure you wish to shutdown the telescope?"]
+    
+    if {$choice == "yes"} {
+	logactions logmess "TcsControl::Emergency Shutdown Now"
+
+	# create the command snders if they don't exist
+	if { [catch {cs shutters info}] } {
+	    epics cs shutters
+	}
+	if { [catch {cs carouselMove info}] } {
+	    epics cs carouselMove
+	}
+	if { [catch {cs carousel info}] } {
+	    epics cs carousel
+	}
+	if { [catch {cs assertDrives info}] } {
+	    epics cs assertDrives
+	}
+
+	# open the loops
+
+	# is the loop control currently active?
+	set state [AO state processing];
+	puts "Currently: $state"
+	# If loop control is BUSY, we need to force it idle in order for the disable to be processed :(
+	if {$state == "BUSY"} {
+	    puts "gonna set IDLE";
+	    AO process IDLE;
+	}
+	AO disable;
+	logactions logmess "All Loops disabled"
+
+	# Turn off Follow on all subsystems
+	$itk_component(mcs) select Off;
+	$itk_component(crs) select Off;
+	$itk_component(scs) select Off;
+	$itk_component(p1) select Off;
+	$itk_component(p2) select Off;
+	$itk_component(oiwfs) select Off;
+	if {[calparam cget -site] eq "MK"} {
+	    $itk_component(gaos) select Off;
+	} else {
+	    $itk_component(ngs1) select Off;
+	    $itk_component(ngs2) select Off;
+	    $itk_component(ngs3) select Off;
+	    $itk_component(odgw1) select Off;
+	    $itk_component(odgw2) select Off;
+	    $itk_component(odgw3) select Off;
+	    $itk_component(odgw4) select Off;
+	}
+	# Turn Off TCS automated control of the ECS
+	cs carousel set dome Off;
+	cs carousel set shutter Off;
+
+	# Close Shutters and Vent Gates
+	cs shutters set top 11.0;
+	cs shutters set bottom 11.0;
+	logger command shutters;
+	cs ventgates set east 0.0;
+	cs ventgates set west 0.0;
+	logger command ventgates;
+
+	# Park the Dome
+	cs carouselMove set azimuth 90.0;
+	logger command carouselMove
+
+	if { [catch {cs tcsApply post} msg] } {
+	    tk_messageBox -icon error -parent $itk_interior -message \
+		"Error posting enclosure commands: TCS reports \
+           \"$msg\""
+	}
+
+	# Disassert MCS and CRCS drives
+	# no way to test this in simulation, not a tcs command.(all tcc commands should go through the TCS .. so this is a little questionable)
+	# Need to set mc:elDriveEnable, mc:azDriveEnable, cr:crDriveEnable all to 1, which enumerates to DISASSERTED
+
+	cs assertDrives set az 1;
+	cs assertDrives set el 1;
+	cs assertDrives set crs 1;
+	logactions logmess "Drives DISASSERTED, Emergency Shutdown complete"
+    }
 }
