@@ -1044,6 +1044,7 @@ itcl::body TcsControl::telShutdown {} {
     
     if {$choice == "yes"} {
 	logactions logmess "TcsControl::Emergency Shutdown Now"
+	$itk_component(shutdown) configure -text "Shutdown in Progress" -state disabled
 
 	# create the command snders if they don't exist
 	if { [catch {cs shutters info}] } {
@@ -1063,10 +1064,10 @@ itcl::body TcsControl::telShutdown {} {
 
 	# is the loop control currently active?
 	set state [AO state processing];
-	puts "Currently: $state"
+	# puts "Currently: $state"
 	# If loop control is BUSY, we need to force it idle in order for the disable to be processed :(
 	if {$state == "BUSY"} {
-	    puts "gonna set IDLE";
+	    # puts "gonna set IDLE";
 	    AO process IDLE;
 	}
 	AO disable;
@@ -1104,13 +1105,24 @@ itcl::body TcsControl::telShutdown {} {
 
 	# Park the Dome
 	cs carouselMove set azimuth 90.0;
-	logger command carouselMove
+	logger command carouselMove;
+
+	# Park the MCS, need to wait til this is finished before disasserting drives
+	cs telpark set dummy mark;
+	logger command telpark;
 
 	if { [catch {cs tcsApply post} msg] } {
 	    tk_messageBox -icon error -parent $itk_interior -message \
 		"Error posting enclosure commands: TCS reports \
            \"$msg\""
 	}
+	# first wait for the Mount to go not inPosition
+        if {[setTimeout "sa tcssad get mcsInPosition" 1 6000 200 "The Mount to start parking"]} return
+
+
+        # need to wait for the mount to be inPosition
+	logactions logmess "Waiting for the Mount to finish parking"
+        if {[setTimeout "sa tcssad get mcsInPosition" 0 600000 6000 "The Mount to finish Parking"]} return
 
 	# Disassert MCS and CRCS drives
 	# no way to test this in simulation, not a tcs command.(all tcc commands should go through the TCS .. so this is a little questionable)
@@ -1120,5 +1132,7 @@ itcl::body TcsControl::telShutdown {} {
 	cs assertDrives set el 1;
 	cs assertDrives set crs 1;
 	logactions logmess "Drives DISASSERTED, Emergency Shutdown complete"
+	$itk_component(shutdown) configure -text "Emergency Shutdown" -state normal
+
     }
 }
