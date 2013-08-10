@@ -42,9 +42,16 @@
 
 itcl::class PointObs {
    constructor {sourceentry args} {}
+   destructor {}
+   common ActuatorsMoving
+   common InPosition
+   common DomeVignette
    public {
       method slew {}
       method log {}
+      method updateAoMoving {args}
+      method checkDomeVignette {args}
+      method checkInPosition {args}
       variable logdelay 0
       variable guidedelay
       variable offloaddelay
@@ -78,9 +85,9 @@ itcl::class PointObs {
       variable AzElPlot
       variable Catalogue
       variable Guiding 0
-      variable InPosition
-      variable DomeVignette
-      variable ActuatorsMoving
+#      variable InPosition
+#      variable DomeVignette
+#      variable ActuatorsMoving
       variable IsGuiding
       variable LogCount 0
    }
@@ -100,7 +107,8 @@ itcl::body PointObs::constructor {sourceentry azelplot catalogue args} {
          -ontimeout [itcl::code $this onerror "Slew timed out"] \
          -oktest [itcl::code $this isinposition] \
          -waitvar [itcl::scope InPosition(value)]]
-   sa tcssad link inPosition [itcl::scope InPosition]
+   sa tcssad proc inPosition  "$this checkInPosition"
+#   sa tcssad link inPosition [itcl::scope InPosition]
    $SlewAction set slew pointing Off
 
 # Create action that waits for the dome vignetting to go to zero.
@@ -109,15 +117,17 @@ itcl::body PointObs::constructor {sourceentry azelplot catalogue args} {
          -ontimeout [itcl::code $this onerror "timed out waiting for dome"] \
          -oktest [itcl::code $this novignette] \
          -waitvar [itcl::scope DomeVignette(value)]]
-   sa tcssad link domeVignette [itcl::scope DomeVignette]
+   sa tcssad proc domeVignette "$this checkDomeVignette"
+#   sa tcssad link domeVignette [itcl::scope DomeVignette]
 
 # Create action that waits for the PCS to settle.
-   set DomeWaitAction [seq::Action #auto tcs -timeout 300 \
+   set aoWaitAction [seq::Action #auto tcs -timeout 300 \
          -onok [itcl::code $this nextaction pcswait] \
          -ontimeout [itcl::code $this onerror "timed out waiting for PCS to settle"] \
          -oktest [itcl::code $this actuatorsmoving] \
-         -waitvar [itcl::scope ActuatorsMoving(value)]]
-   sa pcssad link aoMoving [itcl::scope ActuatorsMoving]
+         -waitvar [itcl::scope ActuatorsMoving(value)]]   
+   sa pcssad proc aoMoving "$this updateAoMoving"
+#   sa pcssad link aoMoving [itcl::scope ActuatorsMoving]
 
 # Create actions for enabling and disabling guiding.
    set MountGuideAction [seq::Action #auto tcs \
@@ -158,6 +168,51 @@ itcl::body PointObs::constructor {sourceentry azelplot catalogue args} {
    $LogAction set pointLog log Off
 
    eval configure $args
+}
+
+itcl::body PointObs::destructor {} {
+   sa pcssad unproc aoMoving "$this updateAoMoving"
+   sa tcssad unproc domeVignette "$this checkDomeVignette"
+   sa tcssad unproc inPosition  "$this checkInPosition"
+}
+
+itcl::body PointObs::checkDomeVignette {name alarm time values} {
+        global DomeVignette
+
+        set tname [lrange [split $name "." ] 1 1 ]
+        set tnamev [format "%s%s" $tname "(value)"]
+        set $tnamev $values
+        if {([string is digit [set $tnamev]] || [string is double [set $tnamev]]) && [string length [set $tnamev]]>0 } {
+                set DomeVignette($tname) [format "%.0f" [set $tnamev]]
+#                puts "set DomeVignette($tname) to $DomeVignette($tname)"
+        }
+        return
+}
+
+itcl::body PointObs::checkInPosition {name alarm time values} {
+        global InPosition
+
+        set tname [lrange [split $name "." ] 1 1 ]
+        set tnamev [format "%s%s" $tname "(value)"]
+        set $tnamev $values
+        if {([string is digit [set $tnamev]] || [string is double [set $tnamev]]) && [string length [set $tnamev]]>0 } {
+                set InPosition($tname) [format "%.0f" [set $tnamev]]
+#                puts "set InPosition($tname) to $InPosition($tname)"
+        }
+        return
+}
+
+itcl::body PointObs::updateAoMoving {name alarm time values} {
+        global ActuatorsMoving
+
+        set tname [lrange [split $name "." ] 1 1 ]
+        set tnamev [format "%s%s" $tname "(value)"]
+        set $tnamev $values
+        if {([string is digit [set $tnamev]] || [string is double [set $tnamev]]) && [string length [set $tnamev]]>0 } {
+                set ActuatorsMoving($tname) [format "%.0f" [set $tnamev]]
+#                puts "set ActuatorsMoving($tname) to $ActuatorsMoving($tname)"
+        }
+        return
 }
 
 itcl::body PointObs::slew {} {
