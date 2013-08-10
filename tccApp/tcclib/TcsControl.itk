@@ -20,6 +20,7 @@ itcl::class TcsControl {
    destructor {}
    public {
       method setTimeout {chanStr value time incr reason}
+      method setTimeout2 {chanStr value time incr reason}
       method timeout {}
       variable timeout 0
       variable timeout_reason ""
@@ -825,6 +826,29 @@ itcl::body TcsControl::setTimeout {chanStr value time incr reason} {
    }
 }
 
+itcl::body TcsControl::setTimeout2 {chanStr value time incr reason} {
+
+   logactions logmess "starting a timeout check for $reason"
+   logactions logmess "chanStr: $chanStr curr value: [eval $chanStr]  check value: $value"
+   if { [catch {logactions logmess "prev tid: $tid  tid info: [after info $tid]"} ret]} {
+       # logactions logmess "prev tid: $tid tid info: $ret"
+   }
+   set tid [after $time "$this timeout"]
+   set timeout_reason $reason
+   while {[eval $chanStr] != $value} {
+       if {$timeout} break
+       after $incr
+       update 
+   } 
+   if ($timeout) {
+       set timeout 0
+       return 1
+   } else {
+       after cancel $tid
+       return 0
+   }
+}
+
 itcl::body TcsControl::timeout {} {
     # only get here if we timeout waiting for a response or BUSY-IDLE transition
     # raise a warning popup and open the loops.
@@ -1038,7 +1062,7 @@ itcl::body TcsControl::onIgnoreAOChange {name1 name2 op} {
 }
 
 itcl::body TcsControl::telShutdown {} {
-
+    global env
     set choice [tk_messageBox -icon question -type yesno -default no -title "Shutdown Telescope Now?" -message \
 		    "Are you sure you wish to shutdown the telescope?"]
     
@@ -1046,7 +1070,7 @@ itcl::body TcsControl::telShutdown {} {
 	logactions logmess "TcsControl::Emergency Shutdown Now"
 	$itk_component(shutdown) configure -text "Shutdown in Progress" -state disabled
 
-	# create the command snders if they don't exist
+	# create the command senders if they don't exist
 	if { [catch {cs shutters info}] } {
 	    epics cs shutters
 	}
@@ -1107,32 +1131,80 @@ itcl::body TcsControl::telShutdown {} {
 	cs carouselMove set azimuth 90.0;
 	logger command carouselMove;
 
-	# Park the MCS, need to wait til this is finished before disasserting drives
-	cs telpark set dummy mark;
-	logger command telpark;
-
 	if { [catch {cs tcsApply post} msg] } {
 	    tk_messageBox -icon error -parent $itk_interior -message \
 		"Error posting enclosure commands: TCS reports \
-           \"$msg\""
+                     \"$msg\""
 	}
-	# first wait for the Mount to go not inPosition
-        if {[setTimeout "sa tcssad get mcsInPosition" 1 6000 200 "The Mount to start parking"]} return
+	
+	# Park the MCS, need to wait til this is finished before disasserting drives
+	# Hmm ... just to catch all possible cases, what if the drives are not ASSERTED?
+	# Conclusion: Do more checks if we are not simulating.
 
+	if {$env(TCC_TCSNAME) == "tc1"} {
+	    cs telpark set dummy mark;
+	    logger command telpark;
+	    
+	    if { [catch {cs tcsApply post} msg] } {
+		tk_messageBox -icon error -parent $itk_interior -message \
+		    "Error posting enclosure commands: TCS reports \
+                     \"$msg\""
+	    }
+	    # if we're simulating, we can look for inPosition after the park
 
-        # need to wait for the mount to be inPosition
-	logactions logmess "Waiting for the Mount to finish parking"
-        if {[setTimeout "sa tcssad get mcsInPosition" 0 600000 6000 "The Mount to finish Parking"]} return
+	    # first wait for the Mount to go not inPosition
+	    if {[setTimeout "sa tcssad get mcsInPosition" 1 2000 200 "The Mount to start parking"]} return
+	    
+	    # need to wait for the mount to be inPosition
+	    logactions logmess "Waiting for the Mount to finish parking"
+	    if {[setTimeout "sa tcssad get mcsInPosition" 0 180000 1000 "The Mount to finish Parking"]} return
+	    $itk_component(shutdown) configure -text "Emergency Shutdown" -state normal
+	    logactions logmess "Simulating, Emergency Shutdown complete"
 
-	# Disassert MCS and CRCS drives
-	# no way to test this in simulation, not a tcs command.(all tcc commands should go through the TCS .. so this is a little questionable)
-	# Need to set mc:elDriveEnable, mc:azDriveEnable, cr:crDriveEnable all to 1, which enumerates to DISASSERTED
+	} else {
+	    # Not Simulating
+	    # make sure the drive is ASSERTED in the first place.
 
-	cs assertDrives set az 1;
-	cs assertDrives set el 1;
-	cs assertDrives set crs 1;
-	logactions logmess "Drives DISASSERTED, Emergency Shutdown complete"
-	$itk_component(shutdown) configure -text "Emergency Shutdown" -state normal
+	    if {[string equal [sa mcssad get azCondition] ASSERTED] && [string equal [sa mcssad get elCondition] ASSERTED]} {
+		# What if the mcs is already parked .. then go straight to disasserting the drives rather than timing out
+		# Really wish we had a Parked Status for the MCS
+		# Going with Parked == STATIONARY and at the usual demanded park position
 
+		if {[string equal [sa mcssad get azState] "STATIONARY"] && [string equal [sa mcssad get elState] "STATIONARY"] && 
+		    (abs([sa mcssad get azPos]-[sa mcssad get azPark])<0.1) && 
+		    (abs([sa mcssad get elPos]-[sa mcssad get elPark])<0.1)} {
+		    logactions logmess "The Mount is already parked"
+		} else {
+		    cs telpark set dummy mark;
+		    logger command telpark;
+		    
+		    if { [catch {cs tcsApply post} msg] } {
+			tk_messageBox -icon error -parent $itk_interior -message \
+			    "Error posting enclosure commands: TCS reports \
+                     \"$msg\""
+		    }
+
+		    #wait for the elevation drive to start parking
+		    if {[setTimeout2 "sa mcssad get elState" SLEWING 2000 200 "MCS Elevation to start parking"]} return
+		    #wait for the azimuth drive to start parking
+		    if {[setTimeout2 "sa mcssad get azState" SLEWING 2000 200 "MCS Azimuth to start parking"]} return
+		    #wait for the elevation drive to finish parking
+		    if {[setTimeout2 "sa mcssad get elState" STATIONARY 180000 1000 "MCS Elevation to finish parking"]} return
+		    #wait for the azimuth drive to finish parking
+		    if {[setTimeout2 "sa mcssad get azState" STATIONARY 180000 1000 "MCS Azimuth to finish parking"]} return
+		}
+		# Disassert MCS and CRCS drives
+		# Need to set mc:elDriveEnable, mc:azDriveEnable, cr:crDriveEnable all to 1, which enumerates to DISASSERTED
+		
+		cs assertDrives set az 1;
+		cs assertDrives set el 1;
+		cs assertDrives set crs 1;
+		logactions logmess "MCS Drives DISASSERTED, Emergency Shutdown complete"
+	    } else {
+		# The drives aren't ASSERTED, We can't move them from here.
+		logactions logmess "The MCS drives are not ASSERTED, Cannot Park the Mount"
+	    }
+	    $itk_component(shutdown) configure -text "Emergency Shutdown" -state normal
+	}
     }
 }
