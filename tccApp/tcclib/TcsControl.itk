@@ -1128,7 +1128,11 @@ itcl::body TcsControl::telShutdown {} {
 	logger command ventgates;
 
 	# Park the Dome
-	cs carouselMove set azimuth 90.0;
+	if {[calparam cget -site] eq "MK"} {
+	    cs carouselMove set azimuth 90.0;
+        } else {
+	    cs carouselMove set azimuth 180.0;
+        }
 	logger command carouselMove;
 
 	if { [catch {cs tcsApply post} msg] } {
