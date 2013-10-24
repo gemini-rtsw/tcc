@@ -81,11 +81,15 @@ itcl::body GraphicDisplay::constructor args {
    itk_component add aosetup {
       AoConfig $w.aosetup
    }
+# M1/M2 figure status   
+#   itk_component add figurestatus {
+#      FigurePersistence $w.figurestatus -font "Arial 8" -labelfont "Arial 8"
+#   }
 
 # OIWFS
    set w $itk_component(col4)
    itk_component add oiwfs {
-      frame $w.oiwfs -borderwidth 2 -relief ridge
+      frame $w.oiwfs -borderwidth 2 -relief groove
    }
    set w $itk_component(oiwfs)
    itk_component add oiname {
@@ -109,7 +113,7 @@ itcl::body GraphicDisplay::constructor args {
 # AO WFS.
    set w $itk_component(col4)
    itk_component add aowfs {
-      frame $w.aowfs -borderwidth 2 -relief ridge
+      frame $w.aowfs -borderwidth 2 -relief groove
    }
    set w $itk_component(aowfs)
    itk_component add aolabel {
@@ -131,7 +135,7 @@ itcl::body GraphicDisplay::constructor args {
 # PWFS1.
    set w $itk_component(col4)
    itk_component add pwfs1 {
-      frame $w.pwfs1 -borderwidth 2 -relief ridge
+      frame $w.pwfs1 -borderwidth 2 -relief groove
    }
    set w $itk_component(pwfs1)
    itk_component add probe1 {
@@ -161,7 +165,7 @@ itcl::body GraphicDisplay::constructor args {
 # PWFS2.
    set w $itk_component(col4)
    itk_component add pwfs2 {
-      frame $w.pwfs2 -borderwidth 2 -relief ridge
+      frame $w.pwfs2 -borderwidth 2 -relief groove
    }
    set w $itk_component(pwfs2)
    itk_component add probe2 {
@@ -187,9 +191,10 @@ itcl::body GraphicDisplay::constructor args {
    }
    pack $itk_component(p2label) $itk_component(probe2) $itk_component(p2wavel) $itk_component(p2WrapLine1) $itk_component(p2WrapLine2)
 
-   grid $itk_component(aosetup) - -sticky ew -padx 5 -pady 2
-   grid $itk_component(oiwfs) $itk_component(aowfs) -padx 5 -pady 2 -sticky ns
-   grid $itk_component(pwfs1) $itk_component(pwfs2) -padx 5 -pady 2
+   #grid $itk_component(figurestatus) - -sticky ew -padx 5 -pady 2
+   grid $itk_component(aosetup) - -sticky ew -padx 5 -pady 2 -sticky ew
+   grid $itk_component(oiwfs) $itk_component(aowfs) -padx 5 -pady 2 -sticky nsew
+   grid $itk_component(pwfs1) $itk_component(pwfs2) -padx 5 -pady 2 -sticky nsew
 
 # Configure the ISS port numbers and AO.
    $itk_component(opticsview) configure -portAnumber 1 
@@ -458,6 +463,9 @@ itcl::body GraphicDisplay::update {} {
 
 # Update the ao configuration.
    $itk_component(aosetup) update
+
+# Update theM1/M2 figure status
+#   $itk_component(figurestatus) update
 
 # Update the OIWFS name.
    $itk_component(oiname) configure -text [sa agssad get oiwfsName]

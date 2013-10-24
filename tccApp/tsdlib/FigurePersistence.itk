@@ -1,0 +1,80 @@
+#+
+#  FigurePersistence <- itk::Widget
+#
+#  Implements the FigurePersistence widget that displays a summary of the state
+#  M1/M2 figure save and restore functionalities.
+#
+#  Methods:
+#           update       Updates the display.
+#
+# J. Lührs  2013-10-22
+#-
+
+package require Itk
+
+itcl::class FigurePersistence {
+   inherit itk::Widget
+   constructor args {}
+   public {
+      method update {}
+   }
+}
+
+itk::usual FigurePersistence {
+   keep -background -cursor -font
+   keep -background -cursor -foreground -font
+}
+
+itcl::body FigurePersistence::constructor args {
+   # Frame for border.
+   itk_component add frame {
+      frame $itk_interior.frame -borderwidth 0
+   }
+   set w $itk_component(frame)
+   itk_component add title {
+      label $w.title -text Model
+   }
+   itk_component add figurerestored {
+      label $w.figurerestored -text "Restored:" -borderwidth 1 -relief sunken -width 14
+   }
+#   itk_component add figuresave {
+#         StatusField $w.figuresave -labeltext "Saving" -width 5 -labelmargin 5 \
+#               -entryrelief sunken -entryborder 1
+#   }
+#   itk_component add figurerestored {
+#      StatusField $w.figurerestored -labeltext "Restored" -width 12 -labelmargin 5 \
+#            -entryrelief sunken -entryborder 1
+#   }
+#   itk_component add figurerestoretime {
+#      StatusField $w.figurerestoretime -labeltext "At" -labelmargin 5 -width 17 \
+#            -entryrelief sunken -entryborder 1
+#   }
+   pack $itk_component(title) -anchor n
+#   pack $itk_component(figuresave) $itk_component(figurerestored) \
+#      $itk_component(figurerestoretime) -anchor e -padx 3 -pady 3
+#   pack configure $itk_component(figurerestored) -pady 
+   pack $itk_component(figurerestored) -anchor w -padx 3 -pady 3
+   pack $itk_component(frame)
+
+   eval itk_initialize $args
+}
+
+itcl::body FigurePersistence::update {} {
+#   set save [sa tcssad get m1ModelName value]
+   set restored [sa tcssad get m1RestoredFile value]
+#   set time [sa tcssad get m1RestoredTime value]
+
+#   $itk_component(figuresave) configure -text $save -status ok
+   if { $restored eq "None" } {
+      $itk_component(figurerestored) configure -text "restored $restored"
+#      $itk_component(figurerestoretime) configure -text "" -status none
+   } else {
+      set restored [string map { M1Restore "" } [file rootname [file tail $restored] ] ]
+      if { [string is space $restored ] } {
+         set restored non-AO
+      }
+      $itk_component(figurerestored) configure -text "restored $restored"
+#      $itk_component(figurerestoretime) configure  -status ok \
+#         -text [clock format [clock scan $time -gmt 1] -format "%H:%M:%S %d %h %Y" ]
+   }
+}

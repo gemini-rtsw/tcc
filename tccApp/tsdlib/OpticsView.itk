@@ -138,7 +138,7 @@ itcl::body OpticsView::constructor args {
 # 570 pixels into their proper positions.
 
    itk_component add canvas {
-      canvas $itk_interior.canvas -width 240 -height 570 -bg green
+      canvas $itk_interior.canvas -width 330 -height 570 -bg green
    }
    pack $itk_component(canvas)
    set c $itk_component(canvas)
@@ -271,6 +271,13 @@ itcl::body OpticsView::constructor args {
    eval $c create rectangle [$c coords pcsleft] -outline black \
          -tags [list {pcs pcsright}]
    $c scale pcsright 0 0 -1 1
+   
+# M1/M2 figure status   
+   itk_component add figurestatus {
+      FigurePersistence $c.figurestatus -font "Arial 10 bold"
+   } { usual
+      ignore -font }
+   $c create window -212 128 -window $c.figurestatus -anchor w
 
 # M2
    $c create arc -200 378 200 1380 -start 275 -extent -10 -style arc \
@@ -378,7 +385,7 @@ itcl::body OpticsView::constructor args {
 
 # Flip and move
    $c scale all 0 0 1 -1
-   $c move all 120 430
+   $c move all 212 430
 
    eval itk_initialize $args
 }
@@ -405,6 +412,8 @@ itcl::body OpticsView::update {} {
          $c itemconfigure M1coverOp -fill black
       }
    }
+   
+   $itk_component(figurestatus) update
 
 # Configure central hole cover
    switch $itk_option(-holecover) {

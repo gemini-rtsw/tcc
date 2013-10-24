@@ -63,36 +63,36 @@ itcl::body AoConfig::constructor args {
 
 # Frame for chop/nod border.
    itk_component add frame {
-      frame $itk_interior.frame -borderwidth 2 -relief ridge
+      frame $itk_interior.frame -borderwidth 2 -relief groove
    }
    set w $itk_component(frame)
 
 # Chop/Nod state
    itk_component add chnod {
-      StatusField $w.chnod -entryborder 3 -entryrelief groove -labeltext "Chop/Nod:" -labelpos w
+      StatusField $w.chnod -entryborder 1 -entryrelief sunken -labeltext "Chop/Nod:" -labelpos w
    }
 
 # M1 figure.
    itk_component add m1fig {
-      StatusField $w.m1fig -entryborder 3 -entryrelief groove -labeltext "M1 Fig:" -labelpos w
+      StatusField $w.m1fig -entryborder 1 -entryrelief sunken -labeltext "M1 Fig:" -labelpos w
    }
 
 # M2 configuration in both chop states
    itk_component add ttf {
-      StatusField $w.ttf -entryborder 3 -entryrelief groove -labeltext "TTF:" -labelpos w
+      StatusField $w.ttf -entryborder 1 -entryrelief sunken -labeltext "TTF:" -labelpos w
    }
 
 # Coma correction.   
    itk_component add coma {
-       StatusField $w.coma -entryborder 3 -entryrelief groove -labeltext "Coma:" -labelpos w
+       StatusField $w.coma -entryborder 1 -entryrelief sunken -labeltext "Coma:" -labelpos w
    }
 
-   grid $itk_component(chnod) -sticky e -row 0 -column 0
-   grid $itk_component(ttf)   -sticky e -row 0 -column 1 
-   grid $itk_component(m1fig) -sticky e -row 1 -column 0
-   grid $itk_component(coma)  -sticky e -row 1 -column 1
+   grid $itk_component(chnod) -sticky e -row 0 -column 0 -padx 3 -pady 3
+   grid $itk_component(ttf)   -sticky e -row 0 -column 1 -padx {0 3} -pady 3
+   grid $itk_component(m1fig) -sticky e -row 1 -column 0 -padx 3 -pady {0 3}
+   grid $itk_component(coma)  -sticky e -row 1 -column 1 -padx {0 3} -pady {0 3}
 
-   pack $itk_component(frame)
+   pack $itk_component(frame) -fill x
 
 # Inposition Override Enabled Message
    itk_component add aomesg {

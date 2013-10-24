@@ -376,31 +376,33 @@ itcl::body TcsConfigControl::apply {} {
 
          #Restore M1 and M2 figure to pre-GAOS state
          if { [::SlewOptionsNames::$slewoptions cget -restoreFigure] } {
-            if { [sa tcssad get useAO] eq "Yes" && [sa tcssad get m1ModelValid] eq "Valid" } {
-               cs m1ModelRestore set model NON-AO
+            if { [sa tcssad get m1ModelName] ne "non-AO" && [sa tcssad get m1ModelValid] eq "Valid" } {
+               cs m1ModelRestore set model non-AO
             }
          }
 
-         cs configForAO set useAO "No"
-         logger command configForAO
-         logactions logmess "Applying configForAO No"
-         iss configure -source SKY -ao OUT
-         if { [catch {cs tcsApply post} msg] } {
-            tk_messageBox -icon error -message $msg
-            return
-         }
-      } else {
-         cs configForAO set useAO "Yes"
-         logger command configForAO
-         logactions logmess "Applying configForAO Yes"
-         iss configure -source AO -ao IN
-         if { [catch {cs tcsApply post} msg] } {
-            tk_messageBox -icon error -message $msg
-            return
-         }
-      }
-   }
-
+         cs m1ModelSave set model non-AO
+			cs configForAO set useAO "No"
+		   logger command configForAO
+		   logactions logmess "Applying configForAO No"
+		   iss configure -source SKY -ao OUT
+		   if { [catch {cs tcsApply post} msg] } {
+				tk_messageBox -icon error -message $msg
+				return
+		   }
+		} else {
+         cs m1ModelSave set model AO
+		   cs configForAO set useAO "Yes"
+		   logger command configForAO
+		   logactions logmess "Applying configForAO Yes"
+		   iss configure -source AO -ao IN
+		   if { [catch {cs tcsApply post} msg] } {
+				tk_messageBox -icon error -message $msg
+				return
+		   }
+		}
+	}
+	
    #Already done as part of the GeMS configuration
    #if {[calparam cget -site] eq "CP" && !$::Flags(ignoreao) && ![string match
    # "No AO" $::Config(tcs.gaos,value)]} {

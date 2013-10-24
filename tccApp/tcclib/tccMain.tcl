@@ -288,6 +288,7 @@ global env
    epics cs oiwfsSelect
 	epics cs zeroRotCorr
    epics cs m1ModelRestore
+   epics cs m1ModelSave
 
 # Set the timeout period for posting commands to the TCS.
    cs tcsApply setTimeout 3
