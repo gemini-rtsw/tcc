@@ -42,12 +42,13 @@ itcl::class ObserveControl {
       method selwfs {}
       method hrstart {}
       method hrstop {}
+      method onOISelection {record value}
 
-      method onSelOIChange {name alarm time value}
       variable wfs Pwfs1
       variable Pwfs1Dark
       variable Pwfs2Dark
       variable OiwfsDark
+      variable oiSelMonId
 
       variable tid 0
    }
@@ -137,9 +138,9 @@ itcl::body ObserveControl::constructor args {
    $itk_component(guideloop) configure -wfsAlarmObj $itk_component(alarm)
 
    #   grid $itk_component(hrac) $itk_component(mirrors)  -padx 5 -pady 5 -sticky
-# s
+   # s
    #   grid  $itk_component(wfs) ^ $itk_component(buttons) -padx 5 -pady 5
-# -sticky s
+   # -sticky s
    #   grid $itk_component(wfsconfig) ^ ^ -padx 5 -pady 5 -sticky s
 
    grid $itk_component(conframe) - $itk_component(mirrors)  -padx 2 -pady 2 -sticky n
@@ -282,8 +283,13 @@ itcl::body ObserveControl::constructor args {
       set $varName [sa mcssad get followS]
       sa mcssad link followS followS
       
-      sa agssad proc oiwfsName [itcl::code $this onSelOIChange]
    }
+
+   if { [llength [itcl::find objects ::agssad.oiwfsName]] == 0 } {
+      RecordMonitor ::agssad.oiwfsName agssad oiwfsName
+   }
+   set oiSelMonId [::agssad.oiwfsName add [itcl::code $this onOISelection] ]
+   onOISelection agssad.oiwfsName [sa agssad get oiwfsName]
 
    eval itk_initialize $args
 }
@@ -291,9 +297,10 @@ itcl::body ObserveControl::constructor args {
 itcl::body ObserveControl::destructor {} {
    global inPosition followS
 
+   ::agssad.oiwfsName remove $oiSelMonId
+
    after cancel $tid
    if {$mon_inpos} {
-      sa agssad unproc oiwfsName [itcl::code $this onSelOIChange]
       sa tcssad unlink inPosition inPosition
       trace remove variable inPosition(value) write "[itcl::code $this] traceProc"
       sa mcssad unlink followS followS
@@ -562,23 +569,22 @@ itcl::body ObserveControl::selwfs {} {
       P1 {
          set wfs Pwfs1
          $itk_component(dark) configure -state normal
+         $itk_component(ql) configure -state normal
       }
       P2 {
          set wfs Pwfs2
          $itk_component(dark) configure -state normal
+         $itk_component(ql) configure -state normal
       }
       OI {
          set wfs Oiwfs
          set oiwfsSrc [sa agssad get oiwfsName]
-         if { $oiwfsSrc eq "GMOS" || $oiwfsSrc eq "F2" } {
-            $itk_component(dark) configure -state normal
-         } else {
-            $itk_component(dark) configure -state disabled
-         }
+         onOISelection agssad.oiwfsName $oiwfsSrc
       }
       AO {
          set wfs Aowfs
          $itk_component(dark) configure -state disabled
+         $itk_component(ql) configure -state normal
       }
    }
 }
@@ -638,13 +644,17 @@ itcl::body ObserveControl::openloop {} {
    }
 }
 
-itcl::body ObserveControl::onSelOIChange {name alarm time value} {
-   if { [$itk_component(wfssel) get] eq "OI" } {
-      set oiwfsSrc [sa agssad get oiwfsName]
-      if { $oiwfsSrc eq "GMOS" || $oiwfsSrc eq "F2" } {
+itcl::body ObserveControl::onOISelection {record value} {
+   if { $record eq "agssad.oiwfsName" && $wfs eq "Oiwfs"} {
+      if { $value eq "GMOS" || $value eq "F2" } {
          $itk_component(dark) configure -state normal
       } else {
          $itk_component(dark) configure -state disabled
+      }
+      if { $value eq "GPI" } {
+         $itk_component(ql) configure -state disabled
+      } else {
+         $itk_component(ql) configure -state normal
       }
    }
 }

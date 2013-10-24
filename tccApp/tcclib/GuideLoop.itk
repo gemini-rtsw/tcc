@@ -51,7 +51,7 @@ itcl::class GuideLoop {
       method resetGaos {}
       method onGemsChange {reasons}
       method onIgnoreAOChange {name1 name2 op}
-
+      method onOISelection { record value }
       method resize {}
       method resizeGemsArrows {}
    }
@@ -239,7 +239,12 @@ itcl::body GuideLoop::constructor args {
    $w create window 173 22 -width 50 -window $w.m2coma -tags m2 -anchor nw
    $itk_component(m2coma) add P1 -pady 0
    $itk_component(m2coma) add HR -pady 0
+   $itk_component(m2coma) add OI -pady 0
    $itk_component(m2coma) add AO -pady 0
+   
+   if { [calparam cget -site] eq "MK" } {
+      $itk_component(m2coma) setState 2 disabled
+   }
 
    # Controls for Mount.
    itk_component add mt {
@@ -318,7 +323,6 @@ itcl::body GuideLoop::constructor args {
       -fill black -arrow last -arrowshape $GraphParam::arrowBorderShape
    $w create line 88 20 12 20 12 372 [expr 159 - $GraphParam::arrowOffset] 372 -width $GraphParam::lineWidth -fill white \
       -tags {active m2_mt} -arrow last -arrowshape $GraphParam::arrowShape
-
    # ENABLE/DISABLE/RESET buttons.
    # display loopProcessing state
    $w create rectangle 0 0 100 20 -fill white -tags "processing processing_bg"
@@ -374,6 +378,11 @@ itcl::body GuideLoop::constructor args {
          lappend monids [::guideConfig.$rec add [itcl::code $this recolour]]
       }
 
+      if { [llength [itcl::find objects ::gpi_aostatus.aoSettled]] == 0 } {
+         RecordMonitor ::gpi_aostatus.aoSettled gpi::aostatus aoSettled
+      }
+      lappend monids [::gpi_aostatus.aoSettled add [itcl::code $this recolour]]
+
       set gemsSys [::GemsSys::getSingleton]
       $gemsSys subscribe [itcl::code $this onGemsChange]
    }
@@ -382,6 +391,13 @@ itcl::body GuideLoop::constructor args {
       RecordMonitor ::hrwfs.observeC hrwfs::observeC observe
    }
    lappend monids [::hrwfs.observeC add [itcl::code $this recolour]]
+
+   #Add monitor for OIWFS selection
+   if { [llength [itcl::find objects ::agssad.oiwfsName]] == 0 } {
+      RecordMonitor ::agssad.oiwfsName agssad oiwfsName
+   }
+   lappend monids [::agssad.oiwfsName add [itcl::code $this onOISelection] ]
+   onOISelection agssad.oiwfsName [sa agssad get oiwfsName]
 
    trace add variable ::Flags(ignoreao) write [itcl::code $this onIgnoreAOChange]
    onIgnoreAOChange ::Flags ignoreao w
@@ -397,8 +413,17 @@ itcl::body GuideLoop::constructor args {
 
 itcl::body GuideLoop::destructor {} {
    trace remove variable ::Flags(ignoreao) write [itcl::code $this onIgnoreAOChange]
+   
+   ::agssad.oiwfsName remove [lindex $monids end]
+   set monids [lreplace $monids end end]
+   
    ::hrwfs.observeC remove [lindex $monids end]
    set monids [lreplace $monids end end]
+   if { [calparam cget -site] eq "CP" } {
+      ::gpi_aostatus.aoSettled remove [lindex $monids end]
+      set monids [lreplace $monids end end]
+   }
+   
    foreach rec {p1state p2state oistate aostate m2state absorbtilt m1state \
       	m1source p1guide p2guide oiguide p1mweight p2mweight m2p1guide m2p2guide \
 	 		m2oiguide m2aoguide coma oiblend aoTTGS aoSFO ttgsloop sfoloop useLwfs niciAOloop niciAPD crGuide} mon $monids {
@@ -593,7 +618,9 @@ itcl::body GuideLoop::recolour args {
       $w itemconfigure oiwfs_wfs -outline black
       $w itemconfigure oiwfs_aotxt -fill grey
       $w itemconfigure oiwfs_wfstxt -fill black
-      $itk_component(oiwfs_ex) configure -state normal
+      if { [sa agssad get oiwfsName] ne "GPI" } {
+         $itk_component(oiwfs_ex) configure -state normal
+      }
       if { $itk_option(-wfsConfigObj) ne "" } {
          $itk_option(-wfsConfigObj) niciState disabled
       }
@@ -650,6 +677,7 @@ itcl::body GuideLoop::recolour args {
    if { [AO state coma] } {
       if { ( [AO state pwfs1] && [AO source m1 PWFS1] ) \
             || ( [AO state hrwfs] && [AO source m1 HRWFS] ) \
+            || ( [AO state oiwfs] && [AO source m1 OIWFS] ) \
             || ( ( [AO state gaos] && ([calparam cget -site] ne "CP" || [[AO getGaosObj] state m1Offload])) && [AO source m1 GAOS] ) } {
          $w itemconfigure m2xy_bg -fill green
       } else {
@@ -698,6 +726,14 @@ itcl::body GuideLoop::comacorr {state} {
          #Synchronize M1 selection control
          if { [$itk_component(m1src) get] ne "" && [$itk_component(m1src) get] ne "P1" } {
             $itk_component(m1src) select P1
+         }
+      }
+      OI {
+         AO configure -comacorr 1
+         AO configure -m1source OIWFS
+         #Synchronize M1 selection control
+         if { [$itk_component(m1src) get] ne "" && [$itk_component(m1src) get] ne "OI" } {
+            $itk_component(m1src) select OI
          }
       }
       HR {
@@ -820,14 +856,17 @@ itcl::body GuideLoop::configP1Ex {} {
    AO configure -pwfs1Expose [$itk_component(pwfs1) getExp]
    Pwfs1 configure -exposetime [$itk_component(pwfs1) getExp]
 }
+
 itcl::body GuideLoop::configP2Ex {} {
    AO configure -pwfs2Expose [$itk_component(pwfs2) getExp]
    Pwfs2 configure -exposetime [$itk_component(pwfs2) getExp]
 }
+
 itcl::body GuideLoop::configOiEx {} {
    AO configure -oiwfsExpose [$itk_component(oiwfs_ex) get]
    Oiwfs configure -exposetime [$itk_component(oiwfs_ex) get]
 }
+
 itcl::body GuideLoop::configHREx {} {
    AO configure -hrwfsExpose [$itk_component(hrwfs) getExp]
 }
@@ -867,8 +906,12 @@ itcl::body GuideLoop::m1mode {state} {
          AO configure -m1source OIWFS
          AO configure -m1corr 1
          #Synchronize coma selection control
-         if { [$itk_component(m2coma) get] ne "" } {
-            $itk_component(m2coma) select ""
+         if { [$itk_component(m2coma) get] ne "" && [$itk_component(m2coma) get] ne "OI" } {
+            if { [$itk_component(m2coma) getState 2] eq "normal" } {
+               $itk_component(m2coma) select "OI"
+            } else {
+               $itk_component(m2coma) select ""
+            }
          }
       }
       AO {
@@ -1245,6 +1288,16 @@ itcl::body GuideLoop::onIgnoreAOChange {name1 name2 op} {
          $gaosWidget configure -state disabled
       } else {
          $gaosWidget configure -state normal
+      }
+   }
+}
+
+itcl::body GuideLoop::onOISelection {record value} {
+   if { $record eq "agssad.oiwfsName" } {
+      if { $value eq "GPI" } {
+         $itk_component(oiwfs_ex) configure -state disabled
+      } else {
+         $itk_component(oiwfs_ex) configure -state normal
       }
    }
 }

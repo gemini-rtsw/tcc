@@ -165,6 +165,15 @@ global env
 			epics cs g4orbit
 					
 			epics cs guidersMapping
+         
+         #GPI channels
+         epics cs gpi::configCal
+         epics cs gpi::configAo
+         epics cs gpi::guide
+         epics cs gpi::endGuide
+         epics sa gpi::aostatus
+         epics sa gpi::status
+         
 		}
    }
 

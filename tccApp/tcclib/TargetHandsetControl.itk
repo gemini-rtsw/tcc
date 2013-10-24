@@ -26,12 +26,16 @@ itcl::class TargetHandsetControl {
       method setvt {}
       method getOffset {par}
       method refresh {}
+
       variable vt
       variable refid
-		method onMapChange {reasons}
-		method changeState {target state}
-		method refreshGLabel {vguide}
+      variable oiSelMonId
+
+      method onMapChange {reasons}
+      method changeState {target state}
+      method refreshGLabel {vguide}
       method mapGValue { val }
+      method onOISelection {record value}
    }
 }
 
@@ -51,7 +55,7 @@ itcl::body TargetHandsetControl::constructor args {
    pack $itk_component(sel) -padx 5 -pady 5
    set w $itk_component(sel)
 
-# Column headings.
+   # Column headings.
    itk_component add adjust {
       label $w.adjust -text Adjust
    }
@@ -65,7 +69,7 @@ itcl::body TargetHandsetControl::constructor args {
       label $w.offset -text offset
    }
 
-# Radio buttons for selecting which offset to adjust.
+   # Radio buttons for selecting which offset to adjust.
    itk_component add scisel {
       radiobutton $w.scisel -variable [itcl::scope vt] -value sourceA \
             -command [itcl::code $this setvt]
@@ -83,7 +87,7 @@ itcl::body TargetHandsetControl::constructor args {
             -command [itcl::code $this setvt]
    }
 
-# Labels.
+   # Labels.
    itk_component add scilab {
       StatusField $w.scilab -text Sci -width 8 -background grey
    }
@@ -96,10 +100,8 @@ itcl::body TargetHandsetControl::constructor args {
    itk_component add oilab {
       StatusField $w.oilab -text OIWFS -width 8
    }
-	
 
-
-# Display of positions and offsets.
+   # Display of positions and offsets.
    itk_component add scira {
       label $w.scira -width 12 -borderwidth 2 -relief groove
    }
@@ -150,114 +152,114 @@ itcl::body TargetHandsetControl::constructor args {
    }
 
    grid $itk_component(adjust) - $itk_component(ra) $itk_component(dec) \
-         $itk_component(offset) -
+      $itk_component(offset) -
    grid $itk_component(scilab) $itk_component(scisel) $itk_component(scira) \
-         $itk_component(scidec) $itk_component(scioff1) $itk_component(scioff2)
+      $itk_component(scidec) $itk_component(scioff1) $itk_component(scioff2)
    grid $itk_component(p1lab) $itk_component(p1sel) $itk_component(p1ra) \
-         $itk_component(p1dec) $itk_component(p1off1) $itk_component(p1off2)
+      $itk_component(p1dec) $itk_component(p1off1) $itk_component(p1off2)
    grid $itk_component(p2lab) $itk_component(p2sel) $itk_component(p2ra) \
-         $itk_component(p2dec) $itk_component(p2off1) $itk_component(p2off2)
+      $itk_component(p2dec) $itk_component(p2off1) $itk_component(p2off2)
    grid $itk_component(oilab) $itk_component(oisel) $itk_component(oira) \
-         $itk_component(oidec) $itk_component(oioff1) $itk_component(oioff2)
+      $itk_component(oidec) $itk_component(oioff1) $itk_component(oioff2)
 
-	if { [calparam cget -site] eq "CP" } {
-		itk_component add g1sel {
+   if { [calparam cget -site] eq "CP" } {
+      itk_component add g1sel {
 			radiobutton $w.g1sel -variable [itcl::scope vt] -value g1 \
 															-command [itcl::code $this setvt]
 		}
-		itk_component add g2sel {
+      itk_component add g2sel {
 			radiobutton $w.g2sel -variable [itcl::scope vt] -value g2 \
 															-command [itcl::code $this setvt]
 		}
-		itk_component add g3sel {
+      itk_component add g3sel {
 			radiobutton $w.g3sel -variable [itcl::scope vt] -value g3 \
 															-command [itcl::code $this setvt]
 		}
-		itk_component add g4sel {
+      itk_component add g4sel {
 			radiobutton $w.g4sel -variable [itcl::scope vt] -value g4 \
 															-command [itcl::code $this setvt]
 		}
-		itk_component add g1lab {
+      itk_component add g1lab {
 			StatusField $w.g1lab -width 8 -background grey
 		}
-		itk_component add g2lab {
+      itk_component add g2lab {
 			StatusField $w.g2lab -width 8 -background grey
 		}
-		itk_component add g3lab {
+      itk_component add g3lab {
 			StatusField $w.g3lab -width 8 -background grey
 		}
-		itk_component add g4lab {
+      itk_component add g4lab {
 			StatusField $w.g4lab -width 8 -background grey
 		}
-		itk_component add g1ra {
+      itk_component add g1ra {
 				label $w.g1ra -width 12 -borderwidth 2 -relief groove
 			}
-		itk_component add g1dec {
+      itk_component add g1dec {
 			label $w.g1dec -width 12 -borderwidth 2 -relief groove
 		}
-		itk_component add g1off1 {
+      itk_component add g1off1 {
 			label $w.g1off1 -width 6 -borderwidth 2 -relief groove
 		}
-		itk_component add g1off2 {
+      itk_component add g1off2 {
 			label $w.g1off2 -width 6 -borderwidth 2 -relief groove
 		}
-		itk_component add g2ra {
+      itk_component add g2ra {
 			label $w.g2ra -width 12 -borderwidth 2 -relief groove
 		}
-		itk_component add g2dec {
+      itk_component add g2dec {
 			label $w.g2dec -width 12 -borderwidth 2 -relief groove
 		}
-		itk_component add g2off1 {
+      itk_component add g2off1 {
 			label $w.g2off1 -width 6 -borderwidth 2 -relief groove
 		}
-		itk_component add g2off2 {
+      itk_component add g2off2 {
 			label $w.g2off2 -width 6 -borderwidth 2 -relief groove
 		}
-		itk_component add g3ra {
+      itk_component add g3ra {
 			label $w.g3ra -width 12 -borderwidth 2 -relief groove
 		}
-		itk_component add g3dec {
+      itk_component add g3dec {
 			label $w.g3dec -width 12 -borderwidth 2 -relief groove
 		}
-		itk_component add g3off1 {
+      itk_component add g3off1 {
 			label $w.g3off1 -width 6 -borderwidth 2 -relief groove
 		}
-		itk_component add g3off2 {
+      itk_component add g3off2 {
 			label $w.g3off2 -width 6 -borderwidth 2 -relief groove
 		}
-		itk_component add g4ra {
+      itk_component add g4ra {
 			label $w.g4ra -width 12 -borderwidth 2 -relief groove
 		}
-		itk_component add g4dec {
+      itk_component add g4dec {
 			label $w.g4dec -width 12 -borderwidth 2 -relief groove
 		}
-		itk_component add g4off1 {
+      itk_component add g4off1 {
 			label $w.g4off1 -width 6 -borderwidth 2 -relief groove
 		}
-		itk_component add g4off2 {
+      itk_component add g4off2 {
 			label $w.g4off2 -width 6 -borderwidth 2 -relief groove
 		}
-		grid $itk_component(g1lab) $itk_component(g1sel) $itk_component(g1ra) \
-				$itk_component(g1dec) $itk_component(g1off1) $itk_component(g1off2)
-		grid $itk_component(g2lab) $itk_component(g2sel) $itk_component(g2ra) \
-				$itk_component(g2dec) $itk_component(g2off1) $itk_component(g2off2)
-		grid $itk_component(g3lab) $itk_component(g3sel) $itk_component(g3ra) \
-				$itk_component(g3dec) $itk_component(g3off1) $itk_component(g3off2)
-		grid $itk_component(g4lab) $itk_component(g4sel) $itk_component(g4ra) \
-				$itk_component(g4dec) $itk_component(g4off1) $itk_component(g4off2)
-	}
+      grid $itk_component(g1lab) $itk_component(g1sel) $itk_component(g1ra) \
+         $itk_component(g1dec) $itk_component(g1off1) $itk_component(g1off2)
+      grid $itk_component(g2lab) $itk_component(g2sel) $itk_component(g2ra) \
+         $itk_component(g2dec) $itk_component(g2off1) $itk_component(g2off2)
+      grid $itk_component(g3lab) $itk_component(g3sel) $itk_component(g3ra) \
+         $itk_component(g3dec) $itk_component(g3off1) $itk_component(g3off2)
+      grid $itk_component(g4lab) $itk_component(g4sel) $itk_component(g4ra) \
+         $itk_component(g4dec) $itk_component(g4off1) $itk_component(g4off2)
+   }
 
-# Handset
+   # Handset
    set w $itk_interior
    itk_component add handset {
       Handset $w.handset -adjust target -cloop 1 -loopDef 0
    }
    pack $itk_component(handset)
 
-# Select the default virtual telescope.
+   # Select the default virtual telescope.
    set vt sourceA
 
-# Entry fields for entering an offset.
+   # Entry fields for entering an offset.
    itk_component add manual {
       iwidgets::labeledframe $itk_interior.manual -labeltext "Manual offset" \
             -labelpos nw
@@ -278,7 +280,7 @@ itcl::body TargetHandsetControl::constructor args {
    pack $itk_component(theta1) $itk_component(theta2) $itk_component(apply) \
       -side left -padx 4 -pady 4
 
-# Buttons for clearing and absorbing the offsets.
+   # Buttons for clearing and absorbing the offsets.
    set w $itk_interior
    itk_component add bot {
       frame $w.bot
@@ -294,9 +296,9 @@ itcl::body TargetHandsetControl::constructor args {
             -parcommand [itcl::code $this clpars]
    }
    pack $itk_component(absorb) $itk_component(clear) -side left -expand y \
-         -pady 4
+      -pady 4
 
-# Create status acceptor for mcs and wfs probe status
+   # Create status acceptor for mcs and wfs probe status
    if { [catch {sa mcssad info}] } {
       epics sa mcssad
    }
@@ -304,11 +306,18 @@ itcl::body TargetHandsetControl::constructor args {
       epics sa agssad
    }
 
-	if { [calparam cget -site] eq "CP" } {
-		[TcsVirtualMap::getSingleton] subscribe [itcl::code $this onMapChange]
-		onMapChange [list g1 g2 g3 g4]
-	}
-# Start process to refresh the position and offsets display.
+   if { [calparam cget -site] eq "CP" } {
+      [TcsVirtualMap::getSingleton] subscribe [itcl::code $this onMapChange]
+      onMapChange [list g1 g2 g3 g4]
+   }
+   
+   if { [llength [itcl::find objects ::agssad.oiwfsName]] == 0 } {
+      RecordMonitor ::agssad.oiwfsName agssad oiwfsName
+   }
+   set oiSelMonId [::agssad.oiwfsName add [itcl::code $this onOISelection] ]
+   onOISelection agssad.oiwfsName [sa agssad get oiwfsName]
+   
+   # Start process to refresh the position and offsets display.
    set refid [after 1000 [itcl::code $this refresh]]
 
    eval itk_initialize $args
@@ -325,10 +334,10 @@ itcl::body TargetHandsetControl::abpars par {
             pwfs1 {return PWFS1}
             pwfs2 {return PWFS2}
             oiwfs {return OIWFS}
-				g1 {return G1}
-				g2 {return G2}
-				g3 {return G3}
-				g4 {return G4}
+            g1 {return G1}
+            g2 {return G2}
+            g3 {return G3}
+            g4 {return G4}
          }
       }
       index {
@@ -340,10 +349,10 @@ itcl::body TargetHandsetControl::abpars par {
             pwfs1 -
             pwfs2 -
             oiwfs -
-				g1 -
-				g2 -
-				g3 -
-				g4 {return 0}
+            g1 -
+            g2 -
+            g3 -
+            g4 {return 0}
          }
       }
    }
@@ -361,10 +370,10 @@ itcl::body TargetHandsetControl::clpars par {
             pwfs1 {return PWFS1}
             pwfs2 {return PWFS2}
             oiwfs {return OIWFS}
-				g1 {return G1}
-				g2 {return G2}
-				g3 {return G3}
-				g4 {return G4}
+            g1 {return G1}
+            g2 {return G2}
+            g3 {return G3}
+            g4 {return G4}
          }
       }
       index {return all}
@@ -385,14 +394,14 @@ itcl::body TargetHandsetControl::getOffset {par} {
             pwfs1 { return PWFS1 }
             pwfs2 { return PWFS2 }
             oiwfs { return OIWFS }
-				g1		{ return G1 }
-				g2		{ return G2 }
-				g3		{ return G3 }
-				g4		{ return G4 }
-			}
+            g1		{ return G1 }
+            g2		{ return G2 }
+            g3		{ return G3 }
+            g4		{ return G4 }
+         }
       }
       type {
-            return "TANGENT PLANE"
+         return "TANGENT PLANE"
       }
       ind {
          return 0
@@ -406,29 +415,29 @@ itcl::body TargetHandsetControl::setvt {} {
 
 itcl::body TargetHandsetControl::refresh {} {
 
-# Update the fields.
-	if { [calparam cget -site] eq "CP" } {
-		set srcList {A sci Pwfs1 p1 Pwfs2 p2 Oiwfs oi G1 g1 G2 g2 G3 g3 G4 g4}
-	} else {
-		set srcList {A sci Pwfs1 p1 Pwfs2 p2 Oiwfs oi}
-	}
+   # Update the fields.
+   if { [calparam cget -site] eq "CP" } {
+      set srcList {A sci Pwfs1 p1 Pwfs2 p2 Oiwfs oi G1 g1 G2 g2 G3 g3 G4 g4}
+   } else {
+      set srcList {A sci Pwfs1 p1 Pwfs2 p2 Oiwfs oi}
+   }
    foreach {src w} $srcList {
       set target [sa tcssad get target$src]
       set ra [slaDr2tf 3 [lindex $target 0]]
       $itk_component(${w}ra) configure -text \
-            [format "%02d:%02d:%02d.%03d" [lindex $ra 1] [lindex $ra 2] \
-            [lindex $ra 3] [lindex $ra 4]]
+         [format "%02d:%02d:%02d.%03d" [lindex $ra 1] [lindex $ra 2] \
+         [lindex $ra 3] [lindex $ra 4]]
       set dec [slaDr2af 2 [lindex $target 1]]
       $itk_component(${w}dec) configure -text \
-            [format "%s%02d:%02d:%02d.%02d" [lindex $dec 0] [lindex $dec 1] \
-            [lindex $dec 2] [lindex $dec 3] [lindex $dec 4]]
+         [format "%s%02d:%02d:%02d.%02d" [lindex $dec 0] [lindex $dec 1] \
+         [lindex $dec 2] [lindex $dec 3] [lindex $dec 4]]
       $itk_component(${w}off1) configure -text [format "%8.2f" \
          [expr [lindex $target 2] * 206264.81 * cos( [lindex $target 1] )] ]
       $itk_component(${w}off2) configure -text \
          [format "%8.2f" [expr [lindex $target 3] * 206264.81] ]
    }
 
-# Set the status.
+   # Set the status.
    if { [isFollowing mcssad followS] } {
       if { [isInPosition tcssad inPosition] } {
          set status ok
@@ -473,144 +482,157 @@ itcl::body TargetHandsetControl::refresh {} {
    }
    $itk_component(oilab) configure -status $status
 
-	if { [calparam cget -site] eq "CP" } {
-		foreach vguide {g1 g2 g3 g4} {
-			refreshGLabel $vguide 
-		}
-	}
+   if { [calparam cget -site] eq "CP" } {
+      foreach vguide {g1 g2 g3 g4} {
+         refreshGLabel $vguide
+      }
+   }
 
-	set refid [after 1000 [itcl::code $this refresh]]
+   set refid [after 1000 [itcl::code $this refresh]]
 }
 
 itcl::body TargetHandsetControl::destructor {} {
-	if { [calparam cget -site] eq "CP" } {
-		[TcsVirtualMap::getSingleton] unsubscribe [itcl::code $this onMapChange]
-	}
-	after cancel $refid
+   if { [calparam cget -site] eq "CP" } {
+      [TcsVirtualMap::getSingleton] unsubscribe [itcl::code $this onMapChange]
+   }
+
+   ::agssad.oiwfsName remove $oiSelMonId
+
+   after cancel $refid
 }
 
 itcl::body TargetHandsetControl::onMapChange {reasons} {
-	foreach reason $reasons {
-		switch $reason {
-		g1 {
-			set value [[TcsVirtualMap::getSingleton] getMap g1] 
-			$itk_component(g1lab) configure -text [mapGValue $value]
-			if { $value eq "NONE" } {
-				changeState g1 disabled
-				
-			} else {
-				changeState g1 normal
-			}
-			refreshGLabel g1
-		}
-		g2 {
-			set value [[TcsVirtualMap::getSingleton] getMap g2] 
-			$itk_component(g2lab) configure -text [mapGValue $value]
-			if { $value eq "NONE" } {
-				changeState g2 disabled
-			} else {
-				changeState g2 normal
-			} 
-			refreshGLabel g2
-		}
-		g3 {
-			set value [[TcsVirtualMap::getSingleton] getMap g3] 
-			$itk_component(g3lab) configure -text [mapGValue $value]
-			if { $value eq "NONE" } {
-				changeState g3 disabled
-			} else {
-				changeState g3 normal
-			}
-			refreshGLabel g3
-		}
-		g4 {
-			set value [[TcsVirtualMap::getSingleton] getMap g4] 
-			$itk_component(g4lab) configure -text [mapGValue $value]
-			if { $value eq "NONE" } {
-				changeState g4 disabled
-			} else {
-				changeState g4 normal
-			}
-			refreshGLabel g4
-		}
-		}
-	}
+   foreach reason $reasons {
+      switch $reason {
+         g1 {
+            set value [[TcsVirtualMap::getSingleton] getMap g1]
+            $itk_component(g1lab) configure -text [mapGValue $value]
+            if { $value eq "NONE" } {
+               changeState g1 disabled
+
+            } else {
+               changeState g1 normal
+            }
+            refreshGLabel g1
+         }
+         g2 {
+            set value [[TcsVirtualMap::getSingleton] getMap g2]
+            $itk_component(g2lab) configure -text [mapGValue $value]
+            if { $value eq "NONE" } {
+               changeState g2 disabled
+            } else {
+               changeState g2 normal
+            }
+            refreshGLabel g2
+         }
+         g3 {
+            set value [[TcsVirtualMap::getSingleton] getMap g3]
+            $itk_component(g3lab) configure -text [mapGValue $value]
+            if { $value eq "NONE" } {
+               changeState g3 disabled
+            } else {
+               changeState g3 normal
+            }
+            refreshGLabel g3
+         }
+         g4 {
+            set value [[TcsVirtualMap::getSingleton] getMap g4]
+            $itk_component(g4lab) configure -text [mapGValue $value]
+            if { $value eq "NONE" } {
+               changeState g4 disabled
+            } else {
+               changeState g4 normal
+            }
+            refreshGLabel g4
+         }
+      }
+   }
 }
 
 itcl::body TargetHandsetControl::changeState {target state} {
-	$itk_component(${target}lab) configure -state $state
-	$itk_component(${target}sel) configure -state $state
-	$itk_component(${target}ra) configure -state $state
-	$itk_component(${target}dec) configure -state $state
-	$itk_component(${target}off1) configure -state $state
-	$itk_component(${target}off2) configure -state $state
+   $itk_component(${target}lab) configure -state $state
+   $itk_component(${target}sel) configure -state $state
+   $itk_component(${target}ra) configure -state $state
+   $itk_component(${target}dec) configure -state $state
+   $itk_component(${target}off1) configure -state $state
+   $itk_component(${target}off2) configure -state $state
 }
 
 itcl::body TargetHandsetControl::refreshGLabel {vguide} {
-	set value [[TcsVirtualMap::getSingleton] getMap $vguide]
-	switch $value {
-	TTGS1 {
-		if { [isFollowing agssad ngs1Follow] } {
-			set status ok
-		} else {
-			set status error
-		}
-	}
-	TTGS2 {
-		if { [isFollowing agssad ngs2Follow] } {
-			set status ok
-		} else {
-			set status error
-		}
-	}
-	TTGS3 {
-		if { [isFollowing agssad ngs3Follow] } {
-			set status ok
-		} else {
-			set status error
-		}
-	}
-	ODGW1 {
-		if { [isFollowing agssad odgw1Follow] } {
-			set status ok
-		} else {
-			set status error
-		}
-	}
-	ODGW2 {
-		if { [isFollowing agssad odgw2Follow] } {
-			set status ok
-		} else {
-			set status error
-		}
-	}
-	ODGW3 {
-		if { [isFollowing agssad odgw3Follow] } {
-			set status ok
-		} else {
-			set status error
-		}
-	}
-	ODGW4	{
-		if { [isFollowing agssad odgw4Follow] } {
-			set status ok
-		} else {
-			set status error
-		}
-	}
-	default {
-		set status none
-	}
-	}
-	$itk_component(${vguide}lab) configure -status $status
+   set value [[TcsVirtualMap::getSingleton] getMap $vguide]
+   switch $value {
+      TTGS1 {
+         if { [isFollowing agssad ngs1Follow] } {
+            set status ok
+         } else {
+            set status error
+         }
+      }
+      TTGS2 {
+         if { [isFollowing agssad ngs2Follow] } {
+            set status ok
+         } else {
+            set status error
+         }
+      }
+      TTGS3 {
+         if { [isFollowing agssad ngs3Follow] } {
+            set status ok
+         } else {
+            set status error
+         }
+      }
+      ODGW1 {
+         if { [isFollowing agssad odgw1Follow] } {
+            set status ok
+         } else {
+            set status error
+         }
+      }
+      ODGW2 {
+         if { [isFollowing agssad odgw2Follow] } {
+            set status ok
+         } else {
+            set status error
+         }
+      }
+      ODGW3 {
+         if { [isFollowing agssad odgw3Follow] } {
+            set status ok
+         } else {
+            set status error
+         }
+      }
+      ODGW4	{
+         if { [isFollowing agssad odgw4Follow] } {
+            set status ok
+         } else {
+            set status error
+         }
+      }
+      default {
+         set status none
+      }
+   }
+   $itk_component(${vguide}lab) configure -status $status
 }
 
 itcl::body TargetHandsetControl::mapGValue { val } {
    switch $val {
-   TTGS1 { return CWFS1 }
-   TTGS2 { return CWFS2 }
-   TTGS3 { return CWFS3 }
-   NONE { return "" }
-   default { return $val } 
+      TTGS1 { return CWFS1 }
+      TTGS2 { return CWFS2 }
+      TTGS3 { return CWFS3 }
+      NONE { return "" }
+      default { return $val }
+   }
+}
+
+itcl::body TargetHandsetControl::onOISelection {record value} {
+   if { $record eq "agssad.oiwfsName" } {
+      if { $value eq "GPI" } {
+         changeState oi disabled
+      } else {
+         changeState oi normal
+      }
    }
 }

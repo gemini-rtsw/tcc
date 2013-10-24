@@ -176,7 +176,7 @@ itcl::body ActiveOptics::enableLgs {} {
    global env
 
    # this will be called by the handset to reclose the loop after an offset in
-# LGS mode
+   # LGS mode
    if {[state useLwfs] && $enabled} {
       if {$env(TCC_TCSNAME) == "tc1"} {
          #simulating ... but not yet simulated in the tcs
@@ -192,7 +192,7 @@ itcl::body ActiveOptics::disableLgs {} {
    global env
 
    # this will be called by the handset to open the loop before an offset in LGS
-# mode
+   # mode
    process BUSY
    if {[state useLwfs] && $enabled} {
       if {$env(TCC_TCSNAME) == "tc1"} {
@@ -272,9 +272,9 @@ itcl::body ActiveOptics::enable {} {
    #      if { ( [string is double -strict $dmVolt1] && $dmVolt1 < 1 ) || \
    #           ( [string is double -strict $dmVolt2] && $dmVolt2 < 1 ) } {
    #	      if { [tk_messageBox -type yesno -icon warning -parent [focus]
-# -message \
+   # -message \
    #               "Altair is parked (DM is off). Do you want TCC to unpark it
-# before closing loops?"] eq "yes" } {
+   # before closing loops?"] eq "yes" } {
    #            unparkAltair
    #	      }
    #      }
@@ -302,9 +302,9 @@ itcl::body ActiveOptics::enable {} {
    # then we must first determine which chop states it will be active in
    # according to the probe chop/nod flags and modify the state accordingly.
    # AWE: This seems to assume that we only turn on m2wfs guiding if nod/chop
-# states are on
+   # states are on
    # this is an invalid assumption .. it should depend on guiding state (ie no
-# nod/chop for AO in LGS+P1)
+   # nod/chop for AO in LGS+P1)
 
    foreach sa [list pwfs1Guide pwfs2Guide oiwfsGuide pwfs2Guide] \
       statevar [list m2p1guide m2p2guide m2oiguide m2aoguide] \
@@ -367,6 +367,11 @@ itcl::body ActiveOptics::enable {} {
          if { [$gaosObj cget -lwfsLoop] && $m2aoguide eq "" } {
             set m2aoguide A
          }
+      }
+
+      # Workaround for GPI, which doesn't have a target.
+      if { $oiguide eq "On" && $m2aoguide eq "" && [sa agssad get oiwfsName] eq "GPI" } {
+         set m2oiguide A
       }
    }
 
@@ -448,7 +453,7 @@ itcl::body ActiveOptics::enable {} {
                cs m2GuideConfig set source $source
 
                # A delay is needed here so that we don't over-write the inputs of
-# the
+               # the
                # m2guideConfig CAD before the previous command has executed.
                after 1000
                logger command m2GuideConfig
@@ -629,10 +634,10 @@ itcl::body ActiveOptics::enable {} {
       }
    }
 
-   foreach wfs [list pwfs1 pwfs2 oiwfs] \
-      active [list $pwfs1Active $pwfs2Active $oiwfsActive] \
-      wfsobj [list Pwfs1 Pwfs2 Oiwfs] \
-      guide [list $m2p1guide $m2p2guide $m2oiguide] {
+   foreach wfs [list pwfs1 pwfs2] \
+      active [list $pwfs1Active $pwfs2Active] \
+      wfsobj [list Pwfs1 Pwfs2] \
+      guide [list $m2p1guide $m2p2guide] {
 
       # Stop the WFS we don't want.
       if { [state $wfs] && ! $active } {
@@ -650,6 +655,62 @@ itcl::body ActiveOptics::enable {} {
          $wfsobj configure -exposetime [set ${wfs}Expose] \
             -mode $mode -quicklook 0
          $wfsobj start -1
+      }
+   }
+
+   #Start/stop OIWFS
+   if { [sa agssad get oiwfsName] eq "GPI" } {
+      if { $oiwfsActive } {
+         if { ![state oiwfs] } {
+            #Verify that GPI shutter is open before attempting to activate AO.
+            set shutterState [sa gpi::status get entranceShutter]
+            if { [string is digit -strict $shutterState] && $shutterState == 1 } {
+
+               cs gpi::guide set dir MARK
+               if { [catch {cs gpi::guide post} msg] } {
+                  tk_messageBox -icon error -message \
+                     "Error posting guide command to GPI: \"$msg\""
+               }
+               if { [waitFor 120000 {state oiwfs} ] eq "timeout" } {
+                  tk_messageBox -icon error -message \
+                     "Error closing loops - Internal GPI Error"
+               }
+            } else {
+               tk_messageBox -icon error -message \
+                  "Error – cannot close guideloops, GPI shutter is CLOSED"
+            }
+         }
+      } else {
+         if { [state oiwfs] } {
+            cs gpi::endGuide set dir MARK
+            if { [catch {cs gpi::endGuide post} msg] } {
+               tk_messageBox -icon error -message \
+                  "Error posting endGuide command to GPI: \"$msg\""
+            }
+            if { [waitFor 120000 {expr ![state oiwfs]} ] eq "timeout" } {
+               tk_messageBox -icon error -message \
+                  "Error opening loops - Internal GPI Error"
+            }
+         }
+      }
+   } else {
+      # Stop the OIWFS if not wanted
+      if { [state oiwfs] && ! $oiwfsActive } {
+         Oiwfs stop
+      }
+      # Start the OIWFS
+      if { $oiwfsActive && ![state oiwfs]} {
+         # Determine which processing mode to set the OIWFS to, depending on
+         # whether
+         # or not it is being used for M2 tip/tilt & focus.
+         if { $m2oiguide eq "" } {
+            set mode seqnz
+         } else {
+            set mode seq
+         }
+         Oiwfs configure -exposetime [set oiwfsExpose] \
+            -mode $mode -quicklook 0
+         Oiwfs start -1
       }
    }
 
@@ -716,11 +777,25 @@ itcl::body ActiveOptics::disable {} {
          after 100
          cs niciAOLoop set dir 3
          #AWE manual recolour shouldn't be needed in the non-simulated version
-# ... set the record to be monitored
+         # ... set the record to be monitored
          ::.observePanel.frame.control.guideloop recolour
       }
    } else {
-      Oiwfs stop
+      if { [sa agssad get oiwfsName] eq "GPI" } {
+         if { [state oiwfs] } {
+            cs gpi::endGuide set dir MARK
+            if { [catch {cs gpi::endGuide post} msg] } {
+               tk_messageBox -icon error -message \
+                  "Error posting endGuide command to GPI: \"$msg\""
+            }
+            if { [waitFor 120000 {expr ![state oiwfs]} ] eq "timeout" } {
+               tk_messageBox -icon error -message \
+                  "Error opening loops - Internal GPI Error"
+            }
+         }
+      } else {
+         Oiwfs stop
+      }
    }
    #Only stop HRWFS if it is not used as Acquisition Camera
    if { [sa hrwfs::currStatus get lensdem] eq "HRWFS" } {
@@ -856,10 +931,19 @@ itcl::body ActiveOptics::state {component} {
          }
       }
       oiwfs {
-         if { [sa guideConfig get oistate value] == "Yes" } {
-            return 1
+         if { [sa agssad get oiwfsName] eq "GPI" } {
+            set ret [sa gpi::aostatus get aoSettled]
+            if { [string is boolean -strict $ret] } {
+               return $ret
+            } else {
+               return 0
+            }
          } else {
-            return 0
+            if { [sa guideConfig get oistate value] == "Yes" } {
+               return 1
+            } else {
+               return 0
+            }
          }
       }
       hrwfs {
@@ -1152,7 +1236,7 @@ itcl::body ActiveOptics::setTimeout {chanStr value time incr reason {compop ""}}
    logactions logmess "starting a timeout check for $reason"
    #puts "ActiveOptics::setTimeout $chanStr $value $time $incr $reason $compop"
    #Make sure that the record goes to the check value first (ie BUSY before
-# waiting for not BUSY)
+   # waiting for not BUSY)
    waitFor 500 "expr \\\"\[$chanStr\]\\\" eq \\\"$value\\\""
 
    logactions logmess "chanStr: $chanStr curr value: [eval $chanStr]  check value: $value"
@@ -1476,9 +1560,9 @@ itcl::body ActiveOptics::startAltairWFS {} {
          }
          # set the flux mode (0:low, 1:high)
          # only set the flux mode if the requested mode is different from the
-# current mode
+         # current mode
          # also call the Flux Mode proc to attempt to turn TTGS on if any part of
-# the 3 controlled components is off (red)
+         # the 3 controlled components is off (red)
          puts "[sa aossad get strapSFXMode] != $ttgsFlux"
 
          if { ( [sa aossad get strapRTStat] == 0)  || \
@@ -1555,7 +1639,7 @@ itcl::body ActiveOptics::startAltairWFS {} {
 
       #puts "current gsmag: [sa aossad get gsmag], new gsmag: $gsmag"
       #Workaround for FR 8556+dups, 10265, 9889, 8383+dups: Force PrepareCM, even
-# if gsmag has not changed.
+      # if gsmag has not changed.
       #		if {[sa aossad get gsmag] != $gsmag } {
       #write new gsmag and prepare control matrix
       cs aoPrepareCm set gsmag $gsmag

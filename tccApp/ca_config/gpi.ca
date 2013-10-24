@@ -1,0 +1,157 @@
+#+
+# gpi.ca
+#
+# Channel access configuration file for the GPI package
+#
+# C. Urrutia May 2013 
+
+####################
+# Top apply records: 
+####################
+
+apply gpi::apply    gpi:apply      gpi:applyC      Sequence commands Apply Record
+apply gpi::insapply gpi:inst:apply gpi:inst:applyC Instrument configuration Apply Record
+apply gpi::aoapply  gpi:ao:apply   gpi:ao:applyC   Adaptive Optics configuration Apply Record
+
+status gpi::apply
+{
+    mess     gpi:applyC.OMSS         0  Command completion message
+}
+
+status gpi::insapply
+{
+    mess     gpi:inst:applyC.OMSS         0  Command completion message
+}
+
+status gpi::aoapply
+{
+    mess     gpi:ao:applyC.OMSS         0  Command completion message
+}
+
+command gpi::config gpi::insapply Setup an instrument configuration
+{
+	polarizer           gpi:configPolarizer.deploy              Use polarizer
+	polarizerAngle      gpi:configPolarizer.angle               Polarizer angle
+	entranceShutter     gpi:selectShutter.entranceShutter       Entrance Shutter (open=1, closed=0)
+	scienceArmShutter   gpi:selectShutter.calScienceShutter     Science Arm Shutter (open=1, closed=0
+	calEntranceShutter  gpi:selectShutter.calEntranceShutter    Calibration Entrance Shutter (open=1, closed=0)
+	calExitShutter      gpi:selectShutter.calExitShutter        Calibration Exit Shutter (open=1, closed=0)
+	referenceArmShutter gpi:selectShutter.calReferenceShutter   Reference Arm Shutter (open=1, closed=0)
+	filter              gpi:ifs:selectIfsFilter.maskStr         Filter (Y|J|H|K1|K2)
+	apodizer            gpi:selectPupilPlaneMask.maskStr        Apodizer (CLEAR|CLEAR GPI|APOD_Y_56|APOD_J_56|APOD_H_56|APOD_K1_56|APOD_K2_51|APOD_H_S|APOD_H_L|H_STAR)	
+	lyot                gpi:selectLyotMask.maskStr              Lyot (OPEN|BLANK|LYOT_2_0|LYOT_3_0|LYOT_3_45|LYOT_4_0|LYOT_4_45|LYOT_7_0|LYOT_10_0)	
+	calSourceIr         gpi:selectSource.sourceIr               IR LASER light source
+        calSourceVis        gpi:selectSource.sourceVis              Visible LASER light source
+        calPowerSC          gpi:selectSource.powerSC                Super continuum power
+	calAttenuationSC    gpi:selectSource.attenuationSC          Super continuum attenuation
+	pupilCamera         gpi:selectPupilCamera.deploy            Pupil camera
+        fpm                 gpi:selectFocalPlaneMask.maskStr        Focal Plane Mask (MIRROR|PINHOLE|FPM_Y_56|FPM_J_56|FPM_H_56|FPM_K1_56|FPM_H_4)
+        offsetX             gpi:configFOVIfsOffset.xTarget          Offset coodinate X
+        offsetY             gpi:configFOVIfsOffset.yTarget          Offset coodinate Y
+
+        exposureTime        gpi:configIfs.integrationTime   Integration Time [s]
+        readoutMode         gpi:configIfs.readoutMode       Readout Mode
+        reads               gpi:configIfs.numReads          Number of reads
+        coadds              gpi:configIfs.numCoadds         Number of Coadds
+        detectorStartX      gpi:configIfs.startx            Detector ReadOut Area start X
+        detectorStartY      gpi:configIfs.starty            Detector ReadOut Area start Y
+        detectorEndX        gpi:configIfs.endx              Detector ReadOut Area end X
+        detectorEndY        gpi:configIfs.endy              Detector ReadOut Area end Y
+    
+        obsMode             gpi:observationMode.modeName    Observation Mode
+    
+        adc                 gpi:selectAdc.deploy        Deploy ADC
+        rotOverride         gpi:selectAdc.overrideCas   Override Cass-rotator angle
+        zenOverride         gpi:selectAdc.overrideZen   Override Zenith angle
+        orientation         gpi:selectAdc.orientation   Orientation
+        power               gpi:selectAdc.power         Power
+}
+
+command gpi::configCal gpi::aoapply GPI CAL configuration command
+{
+    useCal      gpi:configCal.useCal        Use AO
+    magnitudeH  gpi:configCal.magnitudeH    Band H magnitude
+}
+
+command gpi::configAo gpi::aoapply GPI AO configuration command
+{
+    useAo       gpi:configAo.useAo          Use AO
+    magnitudeI  gpi:configAo.magnitudeI     Band I magnitude
+    r0          gpi:configAo.r0             R0
+    optimize    gpi:configAo.optimize       Optimize
+    useLastVals gpi:configAo.useLastVals    Use last values
+}
+
+command gpi::guide gpi::aoapply   Guide command
+{
+    dir gpi:guide.DIR Command directive
+}
+
+command gpi::endGuide gpi::aoapply   End guide command
+{
+    dir gpi:endGuide.DIR Command directive
+}
+
+
+#############
+#Status:
+#############
+
+
+status gpi::status gpi status
+{
+   applyC      gpi:inst:applyC.VAL     0  Command status
+   message     gpi:inst:applyC.OMSS    0  Command completion message
+   observeC    gpi:observeC.VAL        0  Observe status
+   
+    polarizer           gpi:polarizerDeploy             0  Use polarizer
+    polarizerAngle      gpi:polarizerAngle              0  Polarizer angle
+    entranceShutter     gpi:omssEntranceShutter         0  Entrance Shutter (open=1, closed=0)
+    scienceArmShutter   gpi:scienceShutter              0  Science Arm Shutter (open=1, closed=0
+    calEntranceShutter  gpi:calEntranceShutter          0  Calibration Entrance Shutter (open=1, closed=0)
+    calExitShutter      gpi:calExitShutter              0  Calibration Exit Shutter (open=1, closed=0)
+    referenceArmShutter gpi:referenceShutter            0  Reference Arm Shutter (open=1, closed=0)
+    filter              gpi:ifsFilter                   0  Filter (Y|J|H|K1|K2)
+    apodizer            gpi:ppmMask                     0  Apodizer (CLEAR|CLEAR GPI|APOD_Y_56|APOD_J_56|APOD_H_56|APOD_K1_56|APOD_K2_51|APOD_H_S|APOD_H_L|H_STAR) 
+    lyot                gpi:lyotMask                    0  Lyot (OPEN|BLANK|LYOT_2_0|LYOT_3_0|LYOT_3_45|LYOT_4_0|LYOT_4_45|LYOT_7_0|LYOT_10_0) 
+    calSourceDeployed   gpi:artificialSourceDeploy      0  State of light source stage GPI_DEPLOY_IN(1)|GPI_EXTRACT_OUT(0)|GPI_DEPLOY_INVALID(-1)|GPI_DEPLOY_OVERRIDE(2)
+    calSourceIr         gpi:artificialSourceIR          0  State of IR light source GPI_SRC_OFF (0)|GPI_SRC_ON (1)|GPI_SRC_UNKNOWN(-2)|GPI_SRC_ERROR(-1)
+    calSourceVis        gpi:artificialSourceVIS         0  State of VIS light source GPI_SRC_OFF(0)|GPI_SRC_ON(1)|GPI_SRC_UNKNOWN(-2)|GPI_SRC_ERROR(-1)
+    calSourceSC         gpi:artificialSourceSCstate     0  State of Super Continuum light source GPI_SRC_OFF(0)|GPI_SRC_ON(1)|GPI_SRC_UNKNOWN(-2)|GPI_SRC_ERROR(-1)
+    calPowerSC          gpi:artificialSourceSCpower     0  Super Continuum light power
+    calAttenuationSC    gpi:artificialSourceSCDb        0  Attenuation in db of Super Continuum light source
+    calSphereAtt        gpi:calSphereSCDB               0  Attention in db of Super Continuum light source to the CAL
+    calSphereDeployed   gpi:calSphereDeploy             0  Position of Cal Sphere GPI_DEPLOY_IN(1)|GPI_EXTRACT_OUT(0)|GPI_DEPLOY_INVALID(-1)|GPI_DEPLOY_OVERRIDE(2)
+    pupilCamera         gpi:pupilViewingMirror          0  Pupil camera
+    fpm                 gpi:fpmMask                     0  Focal Plane Mask (MIRROR|PINHOLE|FPM_Y_56|FPM_J_56|FPM_H_56|FPM_K1_56|FPM_H_4)
+    
+    adc                 gpi:adcDeploy                   0  Deploy ADC
+    orientation         gpi:adcOrientation              0  Orientation
+    power               gpi:adcPower                    0  Power
+}
+
+status gpi::dcstatus gpi status
+{
+   applyC		  gpi:dc:applyC.VAL		 0     Command status
+   message  	  gpi:dc:applyC.OMSS		 0     Command completion message
+   observeC      gpi:dc:observeC.VAL  	 0     Observe status
+      
+    exposureTime        gpi:ifs:currentIntegrationTime      0  Integration Time [s]
+    readoutMode         gpi:ifs:currentSamplingMode         0  Readout Mode
+    reads               gpi:ifs:currentNumberOfReads        0  Number of reads
+    coadds              gpi:ifs:currentNumberOfCoadds       0  Number of Coadds
+    detectorStartX      gpi:ifs:takeExposureSubregionStartx 0  Detector ReadOut Area start X
+    detectorStartY      gpi:ifs:takeExposureSubregionStarty 0  Detector ReadOut Area start Y
+    detectorEndX        gpi:ifs:takeExposureSubregionEndx   0  Detector ReadOut Area end X
+    detectorEndY        gpi:ifs:takeExposureSubregionEndy   0  Detector ReadOut Area end Y
+    
+    obsMode             gpi:observationMode             0  Observation Mode
+}
+
+status gpi::aostatus GPI AO status
+{
+    applyC      gpi:ao:applyC.VAL       0   Command status
+    message     gpi:ao:applyC.OMSS      0   Command completion message   
+    aoSettled   gpi:calSettled           0   AO Settled status
+}
+

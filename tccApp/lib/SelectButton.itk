@@ -45,6 +45,7 @@ itcl::class SelectButton {
       method select {label}
       method clear {}
       method setState {elements state}
+      method getState {element}
    }
    private {
       method selectioncommand {label op}
@@ -148,6 +149,10 @@ itcl::body SelectButton::setState {elements state} {
     foreach i $elements {
 	$itk_component($i) configure -state $state
     }	
+}
+
+itcl::body SelectButton::getState {element} {
+   return [$itk_component($element) cget -state]
 }
 
 itcl::configbody SelectButton::state {

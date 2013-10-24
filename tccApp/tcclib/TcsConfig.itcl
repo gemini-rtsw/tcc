@@ -66,27 +66,6 @@ itcl::class TcsConfig {
 
 itcl::body TcsConfig::apply {comp} {
 
-# First determine whether the configuration contains a SlewOption that 
-# either disables or clears guiding and ao. This must be done before 
-# we start building the configuration to avoid applying it half way
-# through.
-   if { $slewOptions ne "" } {
-      if { [::SlewOptionsNames::$slewOptions cget -resetao] } {
-
-# Map the guide loop control window.
-         observePanel create
-         after 100
-
-# Reset AO.
-         .observePanel reset
-      } elseif { [::SlewOptionsNames::$slewOptions cget -disableao] } {
-
-# Disable AO.
-         AO disable
-         after 100
-      }
-   }
-
 # Apply the oiwfswavelength here (it was previously in the CC heirarchy but is now in WfsConfig
    set oiwfsWavelength $::Config(tcs.field.guide.oiwfswavelength,value)
    if {$oiwfsWavelength ne ""} {

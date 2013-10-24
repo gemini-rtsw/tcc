@@ -22,6 +22,9 @@
 
 itcl::class RecordMonitor {
    constructor {sa name} {}
+   destructor {
+      sa $sa unproc $name [itcl::code $this monitor]
+   }
    public {
       method add {proc}
       method remove {id} {unset procs($id)}
