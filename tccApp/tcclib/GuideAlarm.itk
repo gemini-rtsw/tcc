@@ -262,7 +262,7 @@ itcl::body GuideAlarm::setWfsColor {wfs color} {
    switch $wfs {
       ttgs    { lappend compList cnts1 cnts2 cnts3 cnts4 centroid }
       ttwfs   { lappend compList cnts1 cnts2 cnts3 }
-      lgswfs  { lappend compList cnts1 cnts2 cnts3 cnts4 cnts5 }
+      lgswfs  { lappend compList cnts }
       sfs     { lappend compList cnts }
       odgw    { lappend compList cnts1 cnts2 cnts3 cnts4 }
       default { lappend compList cnts centroid }
@@ -311,11 +311,8 @@ itcl::body GuideAlarm::alarmCheck {wfs} {
          }
          lgswfs {
             set alarmOn(lgswfs) 0
-            for { set i 1 } { $i <= 5 } { incr i } {
-               if { $guideCounts(lgswfs${i}) < $lgswfsLimit } {
-                  set alarmOn(lgswfs) 1
-                  break
-               }
+            if { $guideCounts(lgswfs) < $lgswfsLimit } {
+               set alarmOn(lgswfs) 1
             }
          }
          gaos -
@@ -548,7 +545,7 @@ itcl::body GuideAlarm::setUIState {wfs state} {
    switch $wfs {
       ttgs    { lappend compList cnts1 cnts2 cnts3 cnts4 centroid }
       ttwfs   { lappend compList cnts1 cnts2 cnts3 }
-      lgswfs  { lappend compList cnts1 cnts2 cnts3 cnts4 cnts5 }
+      lgswfs  { lappend compList cnts }
       sfs     { lappend compList cnts }
       odgw    { lappend compList cnts1 cnts2 cnts3 cnts4 }
       default { lappend compList cnts centroid }
@@ -672,9 +669,7 @@ itcl::body GuideAlarm::buildGemsAlarms {} {
    set gemsSys [GemsSys::getSingleton]
 
    #LGSWFS
-   for { set i 1 } { $i <= 5 } { incr i } {
-      set guideCounts(lgswfs${i}) [$gemsSys getLGSWFSCounts $i]
-   }
+   set guideCounts(lgswfs) [$gemsSys getLGSWFSAverage ]
    set guideCentroid(lgswfs) 0
 
    set alarmEnabled(lgswfs) 0
@@ -706,11 +701,7 @@ itcl::body GuideAlarm::buildGemsAlarms {} {
 		usual
 		rename -font -majorfont majorFont Font
 	}
-   itk_component add lgswfscnts1 { label $w.cnts1 -textvariable guideCounts(lgswfs1) }
-   itk_component add lgswfscnts2 { label $w.cnts2 -textvariable guideCounts(lgswfs2) }
-   itk_component add lgswfscnts3 { label $w.cnts3 -textvariable guideCounts(lgswfs3) }
-   itk_component add lgswfscnts4 { label $w.cnts4 -textvariable guideCounts(lgswfs4) }
-   itk_component add lgswfscnts5 { label $w.cnts5 -textvariable guideCounts(lgswfs5) }
+   itk_component add lgswfscnts { label $w.cnts -textvariable guideCounts(lgswfs) }
    itk_component add lgswfslimlab {
 		label $w.limlab -text "Limit:"
 	} {
@@ -727,9 +718,7 @@ itcl::body GuideAlarm::buildGemsAlarms {} {
    bind $itk_component(lgswfsliment) <KeyPress-Return> "$this configure -lgswfsLimit \[set lgswfsCountLimit\] ; $this alarmCheck lgswfs"
 
    grid $itk_component(lgswfstitle) $itk_component(lgswfssilent) -sticky news
-   grid $itk_component(lgswfscnts1)  $itk_component(lgswfscnts2) -sticky news
-   grid $itk_component(lgswfscnts3) - -sticky news
-   grid $itk_component(lgswfscnts4) $itk_component(lgswfscnts5) -sticky news
+   grid $itk_component(lgswfsclab)  $itk_component(lgswfscnts) -sticky news
    grid $itk_component(lgswfslimlab) $itk_component(lgswfsliment) -sticky news
 
    #TTWFS
@@ -906,73 +895,7 @@ itcl::body GuideAlarm::buildGemsAlarms {} {
    pack $itk_component(lgswfsframe)  $itk_component(ttwfsframe) \
       $itk_component(sfsframe) $itk_component(odgwframe) -side top -padx 3 \
       -pady 3 -ipadx 3 -ipady 3 -fill x -expand 1
-
-   #$gemsSys subscribe [itcl::code $this onGemsChange]
 }
-#
-#itcl::body GuideAlarm::onGemsChange {reasons} {
-#	global guideCounts
-#
-#   puts "GuideAlarm::onGemsChange $reasons"
-#
-#	foreach reason $reasons {
-#		switch $reason {
-#		sfsCounts {
-#			set guideCounts(sfs) [$gemsSys getSFSCounts]
-#			alarmCheck sfs
-#		}
-#		ttwfsCounts(1) {
-#			set guideCounts(ttwfs1) [$gemsSys getTTWFSCounts 1]
-#			alarmCheck ttwfs
-#		}
-#		ttwfsCounts(2) {
-#			set guideCounts(ttwfs2) [$gemsSys getTTWFSCounts 2]
-#			alarmCheck ttwfs
-#		}
-#		ttwfsCounts(3) {
-#			set guideCounts(ttwfs3) [$gemsSys getTTWFSCounts 3]
-#			alarmCheck ttwfs
-#		}
-#		lgswfsCounts(1) {
-#			set guideCounts(lgswfs1) [$gemsSys getLGSWFSCounts 1]
-#			alarmCheck lgswfs
-#		}
-#		lgswfsCounts(2) {
-#			set guideCounts(lgswfs2) [$gemsSys getLGSWFSCounts 2]
-#			alarmCheck lgswfs
-#		}
-#		lgswfsCounts(3) {
-#			set guideCounts(lgswfs3) [$gemsSys getLGSWFSCounts 3]
-#			alarmCheck lgswfs
-#		}
-#		lgswfsCounts(4) {
-#			set guideCounts(lgswfs4) [$gemsSys getLGSWFSCounts 4]
-#			alarmCheck lgswfs
-#		}
-#		lgswfsCounts(5) {
-#			set guideCounts(lgswfs5) [$gemsSys getLGSWFSCounts 5]
-#			alarmCheck lgswfs
-#		}
-#		odgwCounts(1) {
-#			set guideCounts(odgw1) [$gemsSys getODGWCounts 1]
-#			alarmCheck odgw
-#		}
-#		odgwCounts(2) {
-#			set guideCounts(odgw2) [$gemsSys getODGWCounts 2]
-#			alarmCheck odgw
-#		}
-#		odgwCounts(3) {
-#			set guideCounts(odgw3) [$gemsSys getODGWCounts 3]
-#			alarmCheck odgw
-#		}
-#		odgwCounts(4) {
-#			set guideCounts(odgw4) [$gemsSys getODGWCounts 4]
-#			alarmCheck odgw
-#		}
-#		}
-#	}
-#}
-
 itcl::body GuideAlarm::retrieveGeMSCounts {} {
    global guideCounts
 
@@ -982,11 +905,7 @@ itcl::body GuideAlarm::retrieveGeMSCounts {} {
    set guideCounts(ttwfs2) [$gemsSys getTTWFSCounts 2]
    set guideCounts(ttwfs3) [$gemsSys getTTWFSCounts 3]
    alarmCheck ttwfs
-   set guideCounts(lgswfs1) [$gemsSys getLGSWFSCounts 1]
-   set guideCounts(lgswfs2) [$gemsSys getLGSWFSCounts 2]
-   set guideCounts(lgswfs3) [$gemsSys getLGSWFSCounts 3]
-   set guideCounts(lgswfs4) [$gemsSys getLGSWFSCounts 4]
-   set guideCounts(lgswfs5) [$gemsSys getLGSWFSCounts 5]
+   set guideCounts(lgswfs) [$gemsSys getLGSWFSAverage]
    alarmCheck lgswfs
    set guideCounts(odgw1) [$gemsSys getODGWCounts 1]
    set guideCounts(odgw2) [$gemsSys getODGWCounts 2]

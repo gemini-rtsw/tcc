@@ -99,6 +99,7 @@ public {
 	method getODGWCounts {id}
 	method getTTWFSCounts {id}
 	method getLGSWFSCounts {id}
+   method getLGSWFSAverage {}
 	method getSFSCounts {}
 	method getAstroMode {}
 	method getAstrometryState {}
@@ -686,6 +687,11 @@ itcl::body SimGems::getTTWFSCounts {id} {
 
 itcl::body SimGems::getLGSWFSCounts {id} {
 	return $lgswfsCounts($id)
+}
+
+itcl::body SimGems::getLGSWFSAverage {} {
+   return [expr "( $lgswfsCounts(1) + $lgswfsCounts(2) + $lgswfsCounts(3) + \
+      $lgswfsCounts(4) + $lgswfsCounts(5) )  / 5"]
 }
 
 itcl::body SimGems::getSFSCounts {} {

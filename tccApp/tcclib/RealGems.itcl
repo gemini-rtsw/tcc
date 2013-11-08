@@ -107,7 +107,8 @@ public {
 	method getODGWCounts {id}
 	method getTTWFSCounts {id}
 	method getLGSWFSCounts {id}
-	method getSFSCounts {}
+   method getLGSWFSAverage {}
+   method getSFSCounts {}
 	method getAstroMode {}
 	method getAstrometryState {}
 	method getADCPos {}
@@ -1017,9 +1018,13 @@ itcl::body RealGems::getLGSWFSCounts {id} {
 	return [lindex $vals $index]
 }
 
+itcl::body RealGems::getLGSWFSAverage {} {
+   return [sa gemssad get lgsAvrg value]
+}
+
 itcl::body RealGems::getSFSCounts {} {
 #	$logger logmess "RealGems::getSFSCounts Gems status undefined."
-	return [sa sfssad get sfsCounts value]
+	return [sa gemssad get sfsFlux value]
 }
 
 itcl::body RealGems::getAstroMode {} {

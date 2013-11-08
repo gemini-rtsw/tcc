@@ -1382,13 +1382,14 @@ itcl::body GuideLoop::resizeGemsArrows {} {
    #Line from SFS to SF loop
    set sfsOut [ $gaosWidget getMagnetPoint SFS_OUT ]
    set sfIn [ $gaosWidget getMagnetPoint SF_IN ]
+   set sfsArrowX [expr ( [expr [lindex $sfsOut 0] < [lindex $sfIn 0]] ? [lindex $sfsOut 0] : [lindex $sfIn 0]) - $GraphParam::arrowHeadSpace ]
    $w coords sfs_gaos_br [lindex $sfsOut 0] [lindex $sfsOut 1] \
-      [expr [lindex $sfsOut 0] - $GraphParam::arrowHeadSpace ] [lindex $sfsOut 1] \
-      [expr [lindex $sfsOut 0] - $GraphParam::arrowHeadSpace ] [lindex $sfIn 1] \
+      $sfsArrowX [lindex $sfsOut 1] \
+      $sfsArrowX [lindex $sfIn 1] \
       [expr [lindex $sfIn 0] - $GraphParam::arrowBorderOffset ] [lindex $sfIn 1]
    $w coords sfs_gaos [lindex $sfsOut 0] [lindex $sfsOut 1] \
-      [expr [lindex $sfsOut 0] - $GraphParam::arrowHeadSpace ] [lindex $sfsOut 1] \
-      [expr [lindex $sfsOut 0] - $GraphParam::arrowHeadSpace ] [lindex $sfIn 1] \
+      $sfsArrowX [lindex $sfsOut 1] \
+      $sfsArrowX [lindex $sfIn 1] \
       [expr [lindex $sfIn 0] - $GraphParam::arrowOffset ] [lindex $sfIn 1]
 
    #Line from GAOS to M2
