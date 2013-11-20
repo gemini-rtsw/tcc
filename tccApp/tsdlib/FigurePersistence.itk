@@ -31,11 +31,14 @@ itcl::body FigurePersistence::constructor args {
       frame $itk_interior.frame -borderwidth 0
    }
    set w $itk_component(frame)
-   itk_component add title {
-      label $w.title -text Model
+   itk_component add title1 {
+      label $w.title1 -text Restored
+   }
+   itk_component add title2 {
+      label $w.title2 -text Figure
    }
    itk_component add figurerestored {
-      label $w.figurerestored -text "Restored:" -borderwidth 1 -relief sunken -width 14
+      label $w.figurerestored -text "" -borderwidth 1 -relief sunken -width 7
    }
 #   itk_component add figuresave {
 #         StatusField $w.figuresave -labeltext "Saving" -width 5 -labelmargin 5 \
@@ -49,11 +52,11 @@ itcl::body FigurePersistence::constructor args {
 #      StatusField $w.figurerestoretime -labeltext "At" -labelmargin 5 -width 17 \
 #            -entryrelief sunken -entryborder 1
 #   }
-   pack $itk_component(title) -anchor n
+   pack $itk_component(title1) $itk_component(title2) -anchor n -pady 0
 #   pack $itk_component(figuresave) $itk_component(figurerestored) \
 #      $itk_component(figurerestoretime) -anchor e -padx 3 -pady 3
 #   pack configure $itk_component(figurerestored) -pady 
-   pack $itk_component(figurerestored) -anchor w -padx 3 -pady 3
+   pack $itk_component(figurerestored) -anchor n -padx 3 -pady 3
    pack $itk_component(frame)
 
    eval itk_initialize $args
@@ -66,14 +69,14 @@ itcl::body FigurePersistence::update {} {
 
 #   $itk_component(figuresave) configure -text $save -status ok
    if { $restored eq "None" } {
-      $itk_component(figurerestored) configure -text "restored $restored"
+      $itk_component(figurerestored) configure -text "$restored"
 #      $itk_component(figurerestoretime) configure -text "" -status none
    } else {
       set restored [string map { M1Restore "" } [file rootname [file tail $restored] ] ]
       if { [string is space $restored ] } {
          set restored non-AO
       }
-      $itk_component(figurerestored) configure -text "restored $restored"
+      $itk_component(figurerestored) configure -text "$restored"
 #      $itk_component(figurerestoretime) configure  -status ok \
 #         -text [clock format [clock scan $time -gmt 1] -format "%H:%M:%S %d %h %Y" ]
    }
