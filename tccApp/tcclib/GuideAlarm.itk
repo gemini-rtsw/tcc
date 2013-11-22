@@ -925,7 +925,10 @@ itcl::body GuideAlarm::onOISelection {record value} {
       } else {
          set counts [sa guidects get oiwfs]
          set guideCentroid(oiwfs) [sa guidects get oiwfscent]
-         if {![string is boolean -strict $guideCentroid(oiwfs)] || $guideCentroid(oiwfs)} {
+         if {![string is boolean -strict $guideCentroid(oiwfs)]} {
+            set guideCentroid(oiwfs) 0
+         }
+         if {$guideCentroid(oiwfs)} {
             $itk_component(oiwfscentroid) configure -text "Subaperture BAD"
          } else {
             $itk_component(oiwfscentroid) configure -text "Subaperture OK"
