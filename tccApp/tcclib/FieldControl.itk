@@ -63,6 +63,7 @@ itcl::class FieldControl {
       method onSetDefault {} {}
       method onSwapTarget {} {}
       method store {name}
+      method doapply {}
    }
 }
 
@@ -1001,4 +1002,35 @@ itcl::body FieldControl::store {name} {
    #Force store of target
    onSaveTarget
    ComponentControl::store $name
+}
+
+itcl::body FieldControl::doapply {} {
+   # First, store the window contents
+   if { ![store [$itk_component(selector) get]] } {
+      return
+   }
+   # Determine whether the configuration contains a SlewOption that
+   # either disables or clears guiding and ao. This must be done before
+   # we start building the configuration to avoid applying it half way
+   # through.
+   set slewoptions ${::Config(tcs.slewoptions,value)}
+   if { $slewoptions ne "" } {
+      set slewOptions ${::Config(tcs.slewoptions,namespace)}::$slewoptions
+      if { [$slewOptions cget -resetao] } {
+
+         # Map the guide loop control window.
+         observePanel create
+         after 100
+
+         # Reset AO.
+         .observePanel reset
+      } elseif { [$slewOptions cget -disableao] } {
+
+         # Disable AO.
+         AO disable
+         after 100
+      }
+   }
+
+   $this ComponentControl::doapply
 }
