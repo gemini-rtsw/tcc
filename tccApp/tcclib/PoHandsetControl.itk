@@ -35,6 +35,7 @@ itcl::class PoHandsetControl {
       variable vt
       variable refid ""
       variable lock 1
+      variable gacq_rot 1
    }
 }
 
@@ -211,16 +212,19 @@ itcl::body PoHandsetControl::gacq_ack {} {
    # select the instrument offset
    [$itk_component(handset) component orient] select instr
 
-   # send the IAA/IPA
-   cs rotator set iaa [sa tcssad get gacqIAA]
-   cs rotator set ipa [sa tcssad get gacqIPA]
-   logger command rotator
-   if { [catch {cs tcsApply post} msg] } {
-      tk_messageBox -icon error -parent $itk_interior -message \
-            "Error posting rotator ipa command: TCS reports \
-            \"$msg\""
-   }
    logactions logmess "Applying GACQ Offset"
+
+   if {$gacq_rot} {
+       # send the IAA/IPA
+       cs rotator set iaa [sa tcssad get gacqIAA]
+       cs rotator set ipa [sa tcssad get gacqIPA]
+       logger command rotator
+       if { [catch {cs tcsApply post} msg] } {
+	   tk_messageBox -icon error -parent $itk_interior -message \
+	       "Error posting rotator ipa command: TCS reports \
+            \"$msg\""
+       }
+   }
 
    # send the P
    $itk_component(handset) sendOffset instr [sa tcssad get gacqP] 90.0
@@ -237,6 +241,17 @@ itcl::body PoHandsetControl::gacq_rej {} {
 
 itcl::body PoHandsetControl::gacq_validate {} {
    
+    set iaa_req [sa tcssad get gacqIAA]
+    set ipa_req [sa tcssad get gacqIPA]
+
+    if {$iaa_req == "-9999" || $ipa_req == "-9999"} {
+	set gacq_rot 0
+	set iaa_req "n/a"
+	set ipa_req "n/a"
+    } else {
+       	set gacq_rot 1
+    }
+
    if { ![winfo exists .gacq] } {
       toplevel .gacq
       wm title .gacq  "GACQ"
@@ -244,8 +259,8 @@ itcl::body PoHandsetControl::gacq_validate {} {
       frame .gacq.f1
       label .gacq.f1.p -text "P: [sa tcssad get gacqP]" -width 20
       label .gacq.f1.q -text "Q: [sa tcssad get gacqQ]" -width 20
-      label .gacq.f1.iaa -text "IAA: [sa tcssad get gacqIAA]" -width 20
-      label .gacq.f1.ipa -text "IPA: [sa tcssad get gacqIPA]" -width 20
+      label .gacq.f1.iaa -text "IAA: $iaa_req" -width 20
+      label .gacq.f1.ipa -text "IPA: $ipa_req" -width 20
       frame .gacq.f2
       button .gacq.f2.ok -text OK -command [itcl::code $this gacq_ack] -width 10
       button .gacq.f2.cancel -text Cancel -command [itcl::code $this gacq_rej] -width 10
@@ -255,13 +270,13 @@ itcl::body PoHandsetControl::gacq_validate {} {
    } else {
       .gacq.f1.p configure -text "P: [sa tcssad get gacqP]"
       .gacq.f1.q configure -text "Q: [sa tcssad get gacqQ]"
-      .gacq.f1.iaa configure -text "IAA: [sa tcssad get gacqIAA]"
-      .gacq.f1.ipa configure -text "IPA: [sa tcssad get gacqIPA]"
+      .gacq.f1.iaa configure -text "IAA: $iaa_req"
+      .gacq.f1.ipa configure -text "IPA: $ipa_req"
       wm deiconify .gacq
       raise .gacq
    }
 
-   logactions logmess "Received a GACQ Offset P: [sa tcssad get gacqP] Q: [sa tcssad get gacqQ] IAA: [sa tcssad get gacqIAA] IPA: [sa tcssad get gacqIPA]"
+   logactions logmess "Received a GACQ Offset P: [sa tcssad get gacqP] Q: [sa tcssad get gacqQ] IAA: $iaa_req IPA: $ipa_req"
 
    # wake up ssa   
    bell
