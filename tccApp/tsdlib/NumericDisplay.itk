@@ -87,19 +87,19 @@ itcl::body NumericDisplay::constructor args {
    grid configure $itk_component(objname) -sticky ew
    grid configure $itk_component(tarwavel) -sticky w
 
-   # Target position, LST and airmass and zenith distance.
-   itk_component add tarlab {
-      label $w.tarlab -text TARGET: -borderwidth 0
+   # Base position, LST and airmass and zenith distance.
+   itk_component add baselab {
+      label $w.baselab -text "BASE:" -borderwidth 0
    }
-   itk_component add tar1 {
-      StatusField $w.tar1 -labelmargin 5 -width 11 -entryborder 1 \
+   itk_component add base1 {
+      StatusField $w.base1 -labelmargin 5 -width 11 -entryborder 1 \
             -entryrelief sunken
+   }
+   itk_component add base2 {
+      StatusField $w.base2 -labelmargin 5 -width 11 -entryborder 1 \
+            -entryrelief sunken
+   }
 
-   }
-   itk_component add tar2 {
-      StatusField $w.tar2 -labelmargin 5 -width 11 -entryborder 1 \
-            -entryrelief sunken
-   }
    itk_component add lst {
       StatusField $w.lst -labeltext LST: -labelmargin 5 -entryborder 1 \
             -entryrelief sunken
@@ -114,15 +114,44 @@ itcl::body NumericDisplay::constructor args {
             -entryrelief sunken
    }
 
-   grid $itk_component(tarlab) $itk_component(tar1) $itk_component(tar2) \
+   grid $itk_component(baselab) $itk_component(base1) $itk_component(base2) \
       $itk_component(lst) $itk_component(am) $itk_component(zd) \
       -sticky e -pady {0 3} -padx {0 3}
-   grid configure $itk_component(tarlab) -padx 3
+   grid configure $itk_component(baselab) -padx 3
    grid configure $itk_component(lst) $itk_component(am) $itk_component(zd) \
       -sticky w
    grid columnconfigure $w 6 -weight 1
 
-   # Offsets, hour angle and UTC.
+   # Current position, hour angle and UTC.
+   itk_component add tarlab {
+      label $w.tarlab -text CURRENT: -borderwidth 0
+   }
+   itk_component add tar1 {
+      StatusField $w.tar1 -labelmargin 5 -width 11 -entryborder 1 \
+            -entryrelief sunken
+
+   }
+   itk_component add tar2 {
+      StatusField $w.tar2 -labelmargin 5 -width 11 -entryborder 1 \
+            -entryrelief sunken
+   }
+
+   itk_component add ha {
+      StatusField $w.ha -labeltext HA: -labelmargin 5 -width 8 -entryborder 1 \
+            -entryrelief sunken
+   }
+   [$itk_component(ha) component label] configure -width 4 -anchor e
+   itk_component add utc {
+      StatusField $w.utc -labeltext UTC: -labelmargin 5 -entryborder 1 \
+            -entryrelief sunken
+   }
+   [$itk_component(utc) component label] configure -width 4 -anchor e
+   grid $itk_component(tarlab) $itk_component(tar1) $itk_component(tar2) \
+      $itk_component(ha) $itk_component(utc) - -sticky e -pady {0 3} -padx {0 3}
+   grid configure $itk_component(tarlab) -padx 3
+   grid configure $itk_component(utc) -sticky w
+
+   # Offset position and HST.
    itk_component add offlab {
       label $w.offlab -text "OFFSET (arcsec):" -borderwidth 0
    }
@@ -134,33 +163,7 @@ itcl::body NumericDisplay::constructor args {
       StatusField $w.off2 -labelmargin 5 -width 8 -entryborder 1 \
             -entryrelief sunken -anchor e
    }
-   itk_component add ha {
-      StatusField $w.ha -labeltext HA: -labelmargin 5 -width 8 -entryborder 1 \
-            -entryrelief sunken
-   }
-   [$itk_component(ha) component label] configure -width 4 -anchor e
-   itk_component add utc {
-      StatusField $w.utc -labeltext UTC: -labelmargin 5 -entryborder 1 \
-            -entryrelief sunken
-   }
-   [$itk_component(utc) component label] configure -width 4 -anchor e
-   grid $itk_component(offlab) $itk_component(off1) $itk_component(off2) \
-      $itk_component(ha) $itk_component(utc) - -sticky e -pady {0 3} -padx {0 3}
-   grid configure $itk_component(offlab) -padx 3 
-   grid configure $itk_component(utc) -sticky w
 
-   # Base position and HST.
-   itk_component add baselab {
-      label $w.baselab -text "BASE:" -borderwidth 0
-   }
-   itk_component add base1 {
-      StatusField $w.base1 -labelmargin 5 -width 11 -entryborder 1 \
-            -entryrelief sunken
-   }
-   itk_component add base2 {
-      StatusField $w.base2 -labelmargin 5 -width 11 -entryborder 1 \
-            -entryrelief sunken
-   }
    itk_component add hflag {
       label $w.hflag -image hawaii_flag -borderwidth 0
    }
@@ -169,9 +172,9 @@ itcl::body NumericDisplay::constructor args {
             -entryrelief sunken
    }
    [$itk_component(hst) component label] configure -width 4 -anchor e
-   grid $itk_component(baselab) $itk_component(base1) $itk_component(base2) \
+   grid  $itk_component(offlab) $itk_component(off1) $itk_component(off2)\
       $itk_component(hflag) $itk_component(hst) -sticky e -pady {0 3} -padx {0 3}
-   grid configure $itk_component(baselab) -padx 3
+   grid configure $itk_component(offlab) -padx 3 
    grid configure $itk_component(hst) - -sticky w
 
    # Track rates and Chilean local time.
@@ -579,6 +582,8 @@ itcl::body NumericDisplay::update {} {
    # Telescope and dome position.
    #   $itk_component(telpos1) configure -text [sa tcssad get currentRA]
    #   $itk_component(telpos2) configure -text [sa tcssad get currentDec]
+    $itk_component(tar1) configure -text [sa tcssad get currentRA]
+   $itk_component(tar2) configure -text [sa tcssad get currentDec]
    $itk_component(ipa) configure -text [sa tcssad get instrPA]
    $itk_component(iaa) configure -text [sa tcssad get instrAA]
    $itk_component(telaz) configure -text [sa tcssad get currentAz]
@@ -596,8 +601,6 @@ itcl::body NumericDisplay::update {} {
    if { ![catch {set demand [ast target A A [expr { $wavel / 10000.0 }] \
          [sa tcssad get sourceATrackFrame] \
          [sa tcssad get sourceATrackEq]]}] } {
-      $itk_component(tar1) configure -text [lindex $demand 0]
-      $itk_component(tar2) configure -text [lindex $demand 1]
       $itk_component(ha) configure -text [lindex $demand 2]
       $itk_component(zd) configure -text [lindex $demand 3]
       $itk_component(am) configure -text [lindex $demand 4]
