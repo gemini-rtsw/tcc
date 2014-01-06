@@ -106,11 +106,13 @@ itcl::body ShutterAlarm::updateProc {name alarm time values} {
     }
 
     if {([string index $tname 0]=="t") && ($current($tname) > $topLimit)} {
+	#logactions logmess "Top Shutter Current Alarm: Current $current($tname) exceeds limit $toplimit"
 	$this configure -alarm 1
-	set shutterAlarm 1
+	set shutterAlarm 1 
     }
 
     if {([string index $tname 0]=="b") && ($current($tname) > $botLimit)} {
+	#logactions logmess "Bottom Shutter Current Alarm: Current $current($tname) exceeds limit $toplimit"
 	$this configure -alarm 1
 	set shutterAlarm 1
     }
@@ -160,7 +162,9 @@ itcl::body ShutterAlarm::clearAlarm {} {
 itcl::body ShutterAlarm::resetPeak {} {
    global shutterPeakCurrent
 
+   logactions logmess "Resetting Shutter Current Peaks .."
    foreach drive {t1x t1y t1z t1w b2x b2y b2z b2w} {
+        logactions logmess "peak current for drive $drive was $shutterPeakCurrent($drive)"
 	set peak($drive) 0.0
 	set shutterPeakCurrent($drive) 0.0
    }
