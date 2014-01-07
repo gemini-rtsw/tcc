@@ -243,6 +243,15 @@ itcl::body TcsConfigControl::apply {} {
       return
    }
 
+   # Check to be sure that the A&G loop control is not currently BUSY
+   set loopState [AO cget -processState]
+   if {$loopState == "BUSY"} {
+       logactions logmess "The loop processingState is BUSY, warning the user"
+       set choice [tk_messageBox -icon warning -parent $itk_interior -type yesno -default no\
+		       -message "You are attempting to slew while the loop processing is BUSY. \n Continue anyway?"]
+       if {$choice == "no"} return
+   }
+
    # Check to make sure that the laser isn't propogating!
    if {([calparam cget -site] eq "MK" && [sa aossad get laserProp] eq "SKY") ||
       ([calparam cget -site] eq "CP" && [[::GemsSys::getSingleton] getLaserProp] eq "SKY") } {
