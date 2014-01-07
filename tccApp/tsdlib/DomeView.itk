@@ -34,6 +34,29 @@ itcl::body DomeView::constructor args {
    if { [catch {sa ecssad info}] } {
       epics sa ecssad
    }
+
+   itk_component add ahus {
+      frame $itk_interior.ahus
+   }
+
+   itk_component add ecsAhu2 {
+      label $itk_interior.ahus.ecsAhu2 -text "AHU_2"
+   }
+
+   itk_component add ecsAhu3 {
+      label $itk_interior.ahus.ecsAhu3 -text "AHU_3"
+   }
+
+   itk_component add ecsAhu4 {
+      label $itk_interior.ahus.ecsAhu4 -text "AHU_4"
+   }
+
+   itk_component add ecsAhu5 {
+      label $itk_interior.ahus.ecsAhu5 -text "AHU_5"
+   }
+
+   pack $itk_component(ecsAhu2) $itk_component(ecsAhu3) $itk_component(ecsAhu4) $itk_component(ecsAhu5) -side left -padx 5
+
    itk_component add vign {
       label $itk_interior.vign
    }
@@ -56,7 +79,7 @@ itcl::body DomeView::constructor args {
          -width 2
    $itk_component(domeview) create text 310 0 -anchor n -text WIND -tags wind
 
-   pack $itk_component(domeview) $itk_component(vign) $itk_component(ecsFault)
+   pack $itk_component(ahus) $itk_component(domeview) $itk_component(vign) $itk_component(ecsFault)
 
    eval itk_initialize $args
 }
@@ -98,7 +121,8 @@ itcl::body DomeView::update {} {
       $itk_component(vign) configure -text "No Dome Vignetting" 
       $itk_component(vign) configure -foreground green
    }
-   
+
+# ECS Faults
    set domeF [sa ecssad get domeFault ] 
    set evgF  [sa ecssad get evgFault ] 
    set wvgF  [sa ecssad get wvgFault ] 
@@ -135,6 +159,35 @@ itcl::body DomeView::update {} {
    }       
 
    $itk_component(ecsFault) configure -text $fltMes
-   $itk_component(ecsFault) configure -text $fltMes
-  
+
+# Check that AHUs are turned OFF, otherwise, display warning in RED
+
+   if {[string first "OFF" [sa ecssad get ahu2]] >= 0} {
+       $itk_component(ecsAhu2) configure -text "    "
+   } else {
+       $itk_component(ecsAhu2) configure -text AHU_2
+   }
+
+   if {[string first "OFF" [sa ecssad get ahu3]] >= 0} {
+       $itk_component(ecsAhu3) configure -text "    "
+   } else {
+       $itk_component(ecsAhu3) configure -text AHU_3
+   }
+
+   if {[string first "OFF" [sa ecssad get ahu4]] >= 0} {
+       $itk_component(ecsAhu4) configure -text "    "
+   } else {
+       $itk_component(ecsAhu4) configure -text AHU_4
+   }
+
+   if {[string first "OFF" [sa ecssad get ahu5]] >= 0} {
+       $itk_component(ecsAhu5) configure -text "    "
+   } else {
+       $itk_component(ecsAhu5) configure -text AHU_5
+   }
+
+   $itk_component(ecsAhu2) configure -foreground red
+   $itk_component(ecsAhu3) configure -foreground red
+   $itk_component(ecsAhu4) configure -foreground red
+   $itk_component(ecsAhu5) configure -foreground red
 }
