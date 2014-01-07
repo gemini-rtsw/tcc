@@ -259,8 +259,20 @@ itcl::body NumericDisplay::constructor args {
 
    # Instrument origin and IAA. and  P and Q
 
+   itk_component add instrolab {
+      label $w.instrolab -text "INSTR Origin (arcsec):" -borderwidth 0
+   }
+   itk_component add instrop {
+      StatusField $w.instrop -labelmargin 5 -width 6 -entryborder 1 \
+            -entryrelief sunken -anchor e -labeltext P
+   }
+   itk_component add instroq {
+      StatusField $w.instroq -labelmargin 5 -width 6 -entryborder 1 \
+            -entryrelief sunken -anchor e -labeltext Q
+   }
+
    itk_component add instrlab {
-      label $w.instrlab -text "INSTRUMENT (arcsec):" -borderwidth 0
+      label $w.instrlab -text "INSTR Offset (arcsec):" -borderwidth 0
    }
    itk_component add iaa {
       StatusField $w.iaa -width 6 -entryborder 1 \
@@ -277,10 +289,14 @@ itcl::body NumericDisplay::constructor args {
             -entryrelief sunken -anchor e -labeltext Q
    }
 
-   grid $itk_component(instrlab) $itk_component(instrp) $itk_component(instrq) \
+   grid $itk_component(instrolab) $itk_component(instrop) $itk_component(instroq) \
       $itk_component(iaa) -sticky e -pady {0 3} -padx {0 3}
+   grid $itk_component(instrlab) $itk_component(instrp) $itk_component(instrq) -sticky e -pady {0 3} -padx {0 3}
    grid configure $itk_component(instrlab) -padx 3
+   grid configure $itk_component(instrolab) -padx 3
    grid configure $itk_component(iaa) -sticky w
+
+
 
    eval itk_initialize $args
 
@@ -665,8 +681,18 @@ itcl::body NumericDisplay::update {} {
    set insty [expr {[lindex $xy 1] / 0.62056151}]
    set iaa [expr [$itk_component(iaa) cget -text] * 3.1415926 / 180]
 
-   set instp [expr { - $instx * cos($iaa) + $insty * sin($iaa)}]
-   set instq [expr { - $instx * sin($iaa) - $insty * cos($iaa)}]
+   #set instp [expr { - $instx * cos($iaa) + $insty * sin($iaa)}]
+   #set instq [expr { - $instx * sin($iaa) - $insty * cos($iaa)}]
+   #$itk_component(instrp) configure -text [format %.2f $instp]
+   #$itk_component(instrq) configure -text [format %.2f $instq]
+
+   set instop [expr {[lindex $target 4] / 0.62056151}]
+   set instoq [expr {[lindex $target 5] / 0.62056151}]
+   $itk_component(instrop) configure -text [format %.2f $instop]
+   $itk_component(instroq) configure -text [format %.2f $instoq]
+
+   set instp [expr {[lindex $target 6] / 0.62056151}]
+   set instq [expr {[lindex $target 7] / 0.62056151}]
    $itk_component(instrp) configure -text [format %.2f $instp]
    $itk_component(instrq) configure -text [format %.2f $instq]
 
