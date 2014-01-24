@@ -19,9 +19,11 @@ BuildRoot: /var/tmp/%{name}-%{version}-root
 BuildArch: %{arch}
 Prefix: %{_prefix}
 ## You may specify dependencies here
-# BuildRequires:
+BuildRequires: tcl-devel tk-devel itcl-devel
+BuildRequires: epics_module-astlib-devel epics_module-slalib-devel
+Requires: iwidgets
+Requires: ocswish seqexec skycalc tcldom-libxml2
 Requires: epics_module-timelib epics_module-slalib epics_module-astlib
-Requires: ocswish seqexec skycalc
 #
 # FIXME: Need 2.5.1 b/c the api's changed for 3.x.
 #

@@ -21,6 +21,7 @@ static char rcsid[]="$Id:";
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <tcl.h>
 #include <tk.h>
 #include <slalib.h>
@@ -81,10 +82,10 @@ static Tk_CustomOption tagsOption;
 
 static Tk_ConfigSpec configspecs[] = {
 
-   {TK_CONFIG_COLOR, "-background", (char *) NULL, (char *) NULL, (char *)NULL,
+   {TK_CONFIG_COLOR, "-background", (char *) NULL, (char *) NULL, "LightGrey",
       Tk_Offset(WrapViewItem, backgroundColor), TK_CONFIG_NULL_OK},
 
-   {TK_CONFIG_COLOR, "-foreground", (char *) NULL, (char *) NULL, (char *)NULL,
+   {TK_CONFIG_COLOR, "-foreground", (char *) NULL, (char *) NULL, "black",
       Tk_Offset(WrapViewItem, foregroundColor), TK_CONFIG_NULL_OK},
 
    {TK_CONFIG_DOUBLE, "-lolimit", (char *) NULL, (char *) NULL, "0",
@@ -276,31 +277,27 @@ static int ConfigureWV( Tcl_Interp *interp, Tk_Canvas canvas, Tk_Item *itemPtr,
 /* Allocate colours and GCs */
    mask = GCForeground;
 
-   if ( configspecs[0].specFlags & TK_CONFIG_OPTION_SPECIFIED ) {
-      if ( wrapviewPtr->backgroundColor == NULL ) {
-         newGC = None;
-      } else {
-         gcvalues.foreground = wrapviewPtr->backgroundColor->pixel;
-         newGC = Tk_GetGC( tkwin, mask, &gcvalues );
-      }
-      if ( wrapviewPtr->backgroundGC != None ) {
-         Tk_FreeGC( display, wrapviewPtr->backgroundGC );
-      }
-      wrapviewPtr->backgroundGC = newGC;
+   if ( wrapviewPtr->backgroundColor == NULL ) {
+       newGC = None;
+   } else {
+       gcvalues.foreground = wrapviewPtr->backgroundColor->pixel;
+       newGC = Tk_GetGC( tkwin, mask, &gcvalues );
    }
+   if ( wrapviewPtr->backgroundGC != None ) {
+       Tk_FreeGC( display, wrapviewPtr->backgroundGC );
+   }
+   wrapviewPtr->backgroundGC = newGC;
 
-   if ( configspecs[1].specFlags & TK_CONFIG_OPTION_SPECIFIED ) {
-      if ( wrapviewPtr->foregroundColor == NULL ) {
-         newGC = None;
-      } else {
-         gcvalues.foreground = wrapviewPtr->foregroundColor->pixel;
-         newGC = Tk_GetGC( tkwin, mask, &gcvalues );
-      }
-      if ( wrapviewPtr->foregroundGC != None ) {
-         Tk_FreeGC( display, wrapviewPtr->foregroundGC );
-      }
-      wrapviewPtr->foregroundGC = newGC;
+   if ( wrapviewPtr->foregroundColor == NULL ) {
+       newGC = None;
+   } else {
+       gcvalues.foreground = wrapviewPtr->foregroundColor->pixel;
+       newGC = Tk_GetGC( tkwin, mask, &gcvalues );
    }
+   if ( wrapviewPtr->foregroundGC != None ) {
+       Tk_FreeGC( display, wrapviewPtr->foregroundGC );
+   }
+   wrapviewPtr->foregroundGC = newGC;
 
 /* Get data from the TCS */
    if ( Tcl_Eval( interp, "sa tcssad get demandAz value" ) == TCL_OK ) {

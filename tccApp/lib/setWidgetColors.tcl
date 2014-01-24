@@ -49,7 +49,7 @@ proc setWidgetColors {widgets background foreground} {
    set new(selectBackground) $darkerBg
    set new(troughColor) $darkerBg
    set new(textBackground) $darkerBg
-   set new(selectColor) #b03060
+   #set new(selectColor) #b03060
 
    set appname [winfo name .]
    foreach option [array names new] {
