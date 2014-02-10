@@ -19,12 +19,12 @@ proc tsdMain args {
 
 # Parse command line args
    #puts "args: $args"
-   set eng 0
+   set eng 1
    set dst 0
    set calfile [file join $::env(GEMINI_TOP) etc tcc calparams calparams.dat]
    
    set args [ join $args ]
-   
+  
    for { set i 0 } { $i < [llength $args] } { incr i } {
       set arg [lindex $args $i]
       switch -- $arg {
