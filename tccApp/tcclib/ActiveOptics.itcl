@@ -48,6 +48,7 @@ itcl::class ActiveOptics {
       variable gaos 0
       variable oiblend 0
       variable lgsp1source 0
+      variable lgsoisource 0
       variable pwfs1Expose 0.01
       variable pwfs1Active 0
       variable pwfs2Expose 0.005
@@ -197,7 +198,7 @@ itcl::body ActiveOptics::disableLgs {} {
    if {[state useLwfs] && $enabled} {
       if {$env(TCC_TCSNAME) == "tc1"} {
          #simulating ... but not yet simulated in the tcs
-         if { $oiblend } {
+         if { $oiblend || $lgsoisource} {
             Oiwfs stop
          }
          if { $lgsp1source } {
@@ -211,7 +212,7 @@ itcl::body ActiveOptics::disableLgs {} {
          set ttgsloop 0
          ::.observePanel.frame.control.guideloop recolour
       } else {
-         if { $oiblend } {
+         if { $oiblend || $lgsoisource} {
             Oiwfs stop
          }
          if { $lgsp1source } {
@@ -1092,7 +1093,14 @@ itcl::body ActiveOptics::state {component} {
          }
       }
       lgsp1source {
-         if {[sa guideConfig get lgsp1source] == "1" } {
+	  if {[sa guideConfig get lgsp1source] == "ON" || [sa guideConfig get lgsp1source] == "1"} {
+            return 1
+         } else {
+            return 0
+         }
+      }
+      lgsoisource {
+	  if {[sa guideConfig get lgsoisource] == "ON" || [sa guideConfig get lgsoisource] == "1"} {
             return 1
          } else {
             return 0
@@ -1478,8 +1486,8 @@ itcl::body ActiveOptics::enableOIAO {} {
 
 itcl::body ActiveOptics::configureBlending {} {
 
-   logactions logmess "ActiveOptics::configureBlending oiblend: $oiblend lgsp1source: $lgsp1source"
-   if { ($oiblend != [state oiblend]) || ($lgsp1source != [state lgsp1source])} {
+   logactions logmess "ActiveOptics::configureBlending oiblend: $oiblend lgsp1source: $lgsp1source lgsoisource: $lgsoisource"
+   if { ($oiblend != [state oiblend]) || ($lgsp1source != [state lgsp1source]) || ($lgsoisource != [state lgsoisource])} {
       # first disable all loops if neccesary
       if {$enabled} {
          process IDLE
@@ -1516,22 +1524,30 @@ itcl::body ActiveOptics::configureBlending {} {
 
       # AWE: lgsp1 command goes through the TCS
       if { $lgsp1source } {
-         cs aoLgsP1Source set state ON
+         cs aoLgsTTFSource set pwfs1 ON
       } else {
-         cs aoLgsP1Source set state OFF
+         cs aoLgsTTFSource set pwfs1 OFF
       }
-      logger command aoLgsP1Source
+      if { $lgsoisource } {
+         cs aoLgsTTFSource set oiwfs ON
+      } else {
+         cs aoLgsTTFSource set oiwfs OFF
+      }
+      logger command aoLgsTTFSource
 
-      # Post the Blending Command.
-      # The blending command must be finished before the loops are closed.
+      # Post the LGS TTF SourceCommand.
+      # The TTF Source command must be finished before the loops are closed.
+
+      # Post the command.
       if { [catch {cs tcsApply post} msg] } {
          errorBox "Error posting guide commands: TCS reports \
-               \"$msg\""
+					\"$msg\""
          return 1
       }
-      # need to wait for aoLgsP1Source to go idle
-      if {[setTimeout "sa aossad get lgsp1SourceBusy" BUSY 10000 200 \
-               "aoLgsP1Source to go idle"]} {
+
+      # need to wait for aoLgsTTFSource to go idle
+      if {[setTimeout "sa aossad get lgsttfSourceBusy" BUSY 10000 200 \
+               "aoLgsTTFSource to go idle"]} {
          return 1
       }
    }

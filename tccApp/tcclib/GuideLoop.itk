@@ -1040,9 +1040,12 @@ itcl::body GuideLoop::recolourAltairArrows {} {
       }
    }
    set wfs_gaos ""
-   if { [AO state pwfs1] } {
+   if { [AO state pwfs1] || [AO state oiwfs]} {
       set wfs_gaos yellow
-      if { [AO state lgsp1source] } {
+      if { [AO state lgsp1source] && [AO state pwfs1]} {
+         set wfs_gaos green
+      }
+      if { [AO state lgsoisource] && [AO state oiwfs]} {
          set wfs_gaos green
       }
    }
