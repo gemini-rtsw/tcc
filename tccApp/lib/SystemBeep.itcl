@@ -1,0 +1,14 @@
+#+
+#  SystemBeep.itcl
+#
+#  Command to produce an audible "beep"
+#
+#+
+
+proc systemBeep {} {
+   if { [exec uname] ne "Linux" } {
+      bell
+   } else {
+      catch { exec aplay [ file join $::ROOT lib/alert.wav ] 2>/dev/null }
+   }
+}
