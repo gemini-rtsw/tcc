@@ -264,11 +264,11 @@ itcl::body NumericDisplay::constructor args {
    }
    itk_component add instrop {
       StatusField $w.instrop -labelmargin 5 -width 6 -entryborder 1 \
-            -entryrelief sunken -anchor e -labeltext P
+            -entryrelief sunken -anchor e -labeltext X
    }
    itk_component add instroq {
       StatusField $w.instroq -labelmargin 5 -width 6 -entryborder 1 \
-            -entryrelief sunken -anchor e -labeltext Q
+            -entryrelief sunken -anchor e -labeltext Y
    }
 
    itk_component add instrlab {
@@ -598,8 +598,19 @@ itcl::body NumericDisplay::update {} {
    # Telescope and dome position.
    #   $itk_component(telpos1) configure -text [sa tcssad get currentRA]
    #   $itk_component(telpos2) configure -text [sa tcssad get currentDec]
-    $itk_component(tar1) configure -text [sa tcssad get currentRA]
-   $itk_component(tar2) configure -text [sa tcssad get currentDec]
+   #$itk_component(tar1) configure -text [sa tcssad get currentRA]
+   #$itk_component(tar2) configure -text [sa tcssad get currentDec]
+   #AWE: currentRA and currentDec are using channels telescopeRA and telescopeDec which are in degrees
+   # Convert to human readable strings
+   set ra [slaDr2tf 3 [expr [sa tcssad get currentRA]* 3.1415926 / 180]]
+   set dec [slaDr2af 2 [expr [sa tcssad get currentDec]* 3.1415926 / 180]]	
+   $itk_component(tar1) configure -text \
+      [format "%02d:%02d:%02d.%03d" [lindex $ra 1] [lindex $ra 2] \
+      [lindex $ra 3] [lindex $ra 4]]
+   $itk_component(tar2) configure -text \
+      [format "%s%02d:%02d:%02d.%02d" [lindex $dec 0] [lindex $dec 1] \
+      [lindex $dec 2] [lindex $dec 3] [lindex $dec 4]]
+
    $itk_component(ipa) configure -text [sa tcssad get instrPA]
    $itk_component(iaa) configure -text [sa tcssad get instrAA]
    $itk_component(telaz) configure -text [sa tcssad get currentAz]
@@ -691,10 +702,13 @@ itcl::body NumericDisplay::update {} {
    $itk_component(instrop) configure -text [format %.2f $instop]
    $itk_component(instroq) configure -text [format %.2f $instoq]
 
-   set instp [expr {[lindex $target 6] / 0.62056151}]
-   set instq [expr {[lindex $target 7] / 0.62056151}]
-   $itk_component(instrp) configure -text [format %.2f $instp]
-   $itk_component(instrq) configure -text [format %.2f $instq]
+   #AWE: Offsets, need to convert to P,Q using IAA
+   set instrx [expr {[lindex $target 6] / 0.62056151}]
+   set instry [expr {[lindex $target 7] / 0.62056151}]
+   set instrp [expr { - $instrx * cos($iaa) + $instry * sin($iaa)}]
+   set instrq [expr { - $instrx * sin($iaa) - $instry * cos($iaa)}]
+   $itk_component(instrp) configure -text [format %.2f $instrp]
+   $itk_component(instrq) configure -text [format %.2f $instrq]
 
    # M2 tip/tilt/focus/X/Y.
    set tip [sa m2ssad get xtilt]
