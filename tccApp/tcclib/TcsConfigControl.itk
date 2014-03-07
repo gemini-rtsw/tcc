@@ -710,6 +710,7 @@ itcl::body TcsConfigControl::apply {} {
       set magparts [split $magnitude " "]
       set magnitude [lindex $magparts 0]
 
+      if 0 {
       if {[string is double -strict $magnitude]} {
          if { ![catch {cs gpi::configCal info}] } {
             logactions logmess "writing magnitude $magnitude \($band\) to GPI"
@@ -721,6 +722,7 @@ itcl::body TcsConfigControl::apply {} {
             -message "For GPI you must provide target magnitude in the H-band"
          return
       }
+      }
 
       logactions logmess "GPI Guiding wavelength"
       set magnitude [$::Config(tcs.field.sciencetarget,namespace)::$target getMagnitude I]
@@ -728,6 +730,7 @@ itcl::body TcsConfigControl::apply {} {
       set magparts [split $magnitude " "]
       set magnitude [lindex $magparts 0]
 
+      if 0 {
       if {[string is double -strict $magnitude]} {
          if { ![catch {cs gpi::configAo info}] } {
             logactions logmess "writing magnitude $magnitude \($band\) to GPI"
@@ -739,6 +742,7 @@ itcl::body TcsConfigControl::apply {} {
          tk_messageBox -icon error \
             -message "For GPI you must provide target magnitude in the I-band"
          return
+      }
       }
 
       if { [catch {cs gpi::aoapply post} msg] } {
