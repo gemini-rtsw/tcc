@@ -417,6 +417,7 @@ global env
    set instPO rotator_axis
    set AOreuseGains 0
    set AOtryingToReuseGain 0
-
+# set up sound for systemBeep
+   snack::sound sysBeep -file [ file join $::ROOT lib/alert.wav ]
    return
 }
