@@ -22,7 +22,7 @@ Prefix: %{_prefix}
 BuildRequires: tcl-devel tk-devel itcl-devel
 BuildRequires: epics_module-astlib-devel epics_module-slalib-devel
 Requires: iwidgets
-Requires: ocswish seqexec skycalc tcldom-libxml2 tcl-snack
+Requires: ocswish seqexec skycalc tcldom-libxml2
 Requires: epics_module-timelib epics_module-slalib epics_module-astlib
 #
 # FIXME: Need 2.5.1 b/c the api's changed for 3.x.

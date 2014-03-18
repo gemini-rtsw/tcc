@@ -4,25 +4,12 @@
 #  Command to produce an audible "beep"
 #
 #+
-set soundReady 0
 
-proc setupBeep {} {
-   global soundReady sysBeep
-
-# set up sound for systemBeep
-   snack::sound sysBeep -load [ file join $::ROOT lib/alert.wav ]
-   set soundReady 1
-}
-
-proc systemBeep {{block 0}} {
-   global sysBeep soundReady
+proc systemBeep {} {
 
    if { [exec uname] ne "Linux" } {
         bell
    } else {
-        if {$soundReady == 0} setupBeep
-        #for debugging 
-        #puts [sysBeep info]
-        sysBeep play -block $block
+	puts \a
    }
 }
