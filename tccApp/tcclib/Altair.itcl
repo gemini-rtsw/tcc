@@ -259,17 +259,12 @@ itcl::body Altair::apply {comp} {
    logger command aoFlatten
 
 # Set filter 1 to limit the speed of offsets.
-# AWE: not in LGS+P1 mode
-    if [AO state lgsp1source] {
-	cs filter1 set shortCircuit Closed
-	logger command filter1
-    } else {
-	cs filter1 set shortCircuit Open
-	cs filter1 set bandwidth 200
-	cs filter1 set grab 0.1
-	cs filter1 set maxv 2.0
-	logger command filter1
-    }
+
+   cs filter1 set shortCircuit Open
+   cs filter1 set bandwidth 200
+   cs filter1 set grab 0.1
+   cs filter1 set maxv 2.0
+   logger command filter1
 
 # Apply Commands
    if { [catch {cs tcsApply post} msg] } {

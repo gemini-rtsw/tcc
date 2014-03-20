@@ -1551,6 +1551,19 @@ itcl::body ActiveOptics::configureBlending {} {
          return 1
       }
    }
+   # Need to set the target filter bypass to closed for lgsp1 mode
+   if [AO state lgsp1source] {
+      cs filter1 set shortCircuit Closed
+      logger command filter1
+
+      # Apply Commands
+      if { [catch {cs tcsApply post} msg] } {
+         tk_messageBox -icon error -message \
+         "Error posting GAOS commands: TCS reports \
+         \"$msg\""
+         return
+      }
+   }
    return 0
 }
 
