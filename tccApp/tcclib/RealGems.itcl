@@ -195,7 +195,9 @@ itcl::body RealGems::constructor {} {
    epics cs gems::lisPause
 	epics sa gemssad
 	epics sa aomsad
-	epics sa rtcsad
+   epics sa aomauxsad
+   epics sa aomadcsad
+   epics sa rtcsad
 	epics sa sfssad
 	epics sa odgwsad
    epics sa lissad
@@ -611,28 +613,28 @@ itcl::body RealGems::stopAstrometry {} {
 itcl::body RealGems::moveADC {pos} {
 	cs gems::adcMech set pos $pos
 	$logger logmess "gems::adcMech $pos"
-	set lastCmdSys aomsad
+	set lastCmdSys aomadcsad
 	catch {cs gems::adcMech post}
 }
 
 itcl::body RealGems::startADC {} {
 	cs gems::adcLoop set loop On
 	$logger logmess "gems::adcLoop loop On"
-	set lastCmdSys aomsad
+	set lastCmdSys aomadcsad
 	catch {cs gems::adcLoop post}
 }
 
 itcl::body RealGems::stopADC {} {
 	cs gems::adcLoop set loop Off
 	$logger logmess "gems::adcLoop loop Off"
-	set lastCmdSys aomsad
+	set lastCmdSys aomadcsad
 	catch {cs gems::adcLoop post}
 }
 
 itcl::body RealGems::moveBeamSplitter {pos} {
 	cs gems::beamSplitter set pos $pos
 	$logger logmess "gems::beamSplitter pos $pos"
-	set lastCmdSys aomsad
+	set lastCmdSys aomauxsad
 	catch {cs gems::beamSplitter post}
 }
 

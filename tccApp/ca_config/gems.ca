@@ -7,24 +7,26 @@
 #
 #-
 
-apply gems::aomApply    aom:apply       aom:activeC     Primary GeMS Apply Record
+apply gems::aomApply    aom:apply       aom:activeC     Primary Canopus Apply Record
+apply gems::aomAuxApply aom:apply3      aom:comCar3     Canopus aux. mechanisms Apply Record
+apply gems::aomAdcApply aom:apply61     aom:comCar61    Canopus ADC Apply Record
 apply gems::mystApply   myst:apply      myst:applyC     Primary Myst Apply Record
 apply gems::rtcApply    rtc:apply       rtc:applyC      Primary RTC Apply Record
 apply gems::sfsApply    sfs:apply       sfs:applyC      Primary SFS Apply Record
 apply gems::odgwApply   gsaoi:dc:apply  gsaoi:dc:applyC GSAOI DC Apply Record
 apply gems::lisApply    lis:apply       lis:applyC      LIS Apply Record
 
-command gems::adcMech gems::aomApply ADC Position Control
+command gems::adcMech gems::aomAdcApply ADC Position Control
 {
 	pos	aom:adcScCtrl.A		ADC unit position In/Out
 }
 
-command gems::adcLoop gems::aomApply ADC Control
+command gems::adcLoop gems::aomAdcApply ADC Control
 {
 	loop	aom:adcScLpCtrl.A		ADC loop control On/Off
 }
 
-command gems::beamSplitter gems::aomApply ADC Control
+command gems::beamSplitter gems::aomAuxApply ADC Control
 {
 	pos	aom:bsCtrl.A			Dichroic beamsplitter position 1|2
 }
@@ -140,6 +142,18 @@ status aomsad
 	
 	inShutterState	aom:inShState.VAL	0	Input shutter state
 	outShutterState	aom:outShState.VAL	0	Output shutter state
+}
+
+status aomauxsad
+{
+    applyC      aom:comCar3.VAL         0   Command Status
+    message     aom:comCar3.OMSS        0   Command completion message
+}
+
+status aomadcsad
+{
+    applyC      aom:comCar61.VAL         0   Command Status
+    message     aom:comCar61.OMSS        0   Command completion message
 }
 
 status rtcsad
