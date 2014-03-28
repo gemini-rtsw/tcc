@@ -143,6 +143,8 @@ itcl::class Target {
       variable current_cosys {}
       variable current_trackrate {}
 		method formatPreviewData {}
+      
+      common EPICS_MAX_LENGTH 39
    }
 }
 
@@ -192,7 +194,7 @@ itcl::body Target::apply {comp} {
 
    switch $type {
       hmsdegTarget {
-         cs $vt set objName [list $objname]
+         cs $vt set objName [list [string range $objname 0 [expr "$EPICS_MAX_LENGTH - 1"] ] ]
          cs $vt set theta1 [list $c1]
          cs $vt set theta2 [list $c2]
          cs $vt set epoch [list $epoch]
@@ -216,7 +218,7 @@ itcl::body Target::apply {comp} {
          }
       }
       degdegTarget {
-         cs $vt set objName [list $objname]
+         cs $vt set objName [list [string range $objname 0 [expr "$EPICS_MAX_LENGTH - 1"] ] ]
          cs $vt set system AZEL_TOPO
          cs $vt set equinox ""
          cs $vt set theta1 [list $c1]
@@ -246,7 +248,7 @@ itcl::body Target::apply {comp} {
 				g3      {set csname g3wfsorbit}
 				g4      {set csname g4wfsorbit}
 			}
-			cs $csname set objName [list $objname]
+			cs $csname set objName [list [string range $objname 0 [expr "$EPICS_MAX_LENGTH - 1"] ] ]
 		 	switch $format {
 				"AsA major planet" {
 					cs $csname set eltype 1
