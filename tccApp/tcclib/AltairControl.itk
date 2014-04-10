@@ -1,7 +1,7 @@
 #+
 #  AltairControl <- ComponentControl
 #
-#  A Gaos control is a ComponentControl widget with widgets for the 
+#  A Gaos control is a ComponentControl widget with widgets for the
 #  guide star magnitude, wind speed, seeing estimate and whether the
 #  ADC should be deployed.
 #
@@ -29,9 +29,9 @@ itcl::class AltairControl {
       variable lgs OFF
       variable force OFF
    }
-	protected {
-		method applycmd {}
-	}
+   protected {
+      method applycmd {}
+   }
 }
 
 itk::usual AltairControl {
@@ -42,75 +42,82 @@ itk::usual AltairControl {
 
 itcl::body AltairControl::constructor args {
 
-# Frame.
+   # Frame.
    itk_component add chop {
       frame $itk_interior.chop -bd 2 -relief ridge
    }
    pack $itk_component(chop) -fill x -expand y
    set w $itk_component(chop)
 
-# Guide star magnitude.
+   # Guide star magnitude.
    itk_component add gsmag {
       iwidgets::entryfield $w.gsmag -labeltext "Guide star magnitude" -width 8
    }
    pack $itk_component(gsmag) -anchor e -pady 4
 
-# Seeing estimate
+   # Seeing estimate
    itk_component add seeing {
       iwidgets::entryfield $w.seeing -labeltext "Seeing estimate r0" -width 8
    }
    pack $itk_component(seeing) -anchor e -pady 4
 
-# Wind speed
+   # Wind speed
    itk_component add windspeed {
       iwidgets::entryfield $w.windspeed -labeltext "Wind speed aloft (m/s)" \
             -width 8
    }
    pack $itk_component(windspeed) -anchor e -pady 4
 
-# LGS
+   # Beamsplitter
+   itk_component add beamsplitter {
+      iwidgets::optionmenu $w.beamsplitter -labeltext "Beam Splitter"
+   }
+   $itk_component(beamsplitter) insert end "A (1 um)" "B (850 nm)"
+   pack $itk_component(beamsplitter) -anchor e -pady 4
+
+   # LGS
    itk_component add lgs {
       checkbutton $w.lgs -text "use LGS" \
             -variable [itcl::scope lgs] -onvalue ON -offvalue OFF
    }
    pack $itk_component(lgs) -pady 4
 
-# Neutral Density Filter.
+   # Neutral Density Filter.
    itk_component add ndFilter {
       checkbutton $w.ndFilter -text "ND Filter" \
             -variable [itcl::scope ndFilter] -onvalue IN -offvalue OUT
    }
    pack $itk_component(ndFilter) -pady 4
 
-# Field Lens
+   # Field Lens
    itk_component add fldLens {
       checkbutton $w.fldLens -text "Field Lens" \
             -variable [itcl::scope fldLens] -onvalue IN -offvalue OUT
    }
    pack $itk_component(fldLens) -pady 4
 
-# Deploy ADC.
+   # Deploy ADC.
    itk_component add deployAdc {
       checkbutton $w.deployAdc -text "Deploy ADC" \
             -variable [itcl::scope deployAdc] -onvalue IN -offvalue OUT
    }
    pack $itk_component(deployAdc) -pady 4
 
-# adjust ADC.
+   # adjust ADC.
    itk_component add adjustAdc {
       checkbutton $w.adjustAdc -text "Adjust ADC" \
             -variable [itcl::scope adjustAdc] -onvalue ON -offvalue OFF
    }
    pack $itk_component(adjustAdc) -pady 4
 
-# force Reapply.
+   # force Reapply.
    itk_component add forceMode {
       checkbutton $w.forceMode -text "Force NGS/LGS Mode Apply" \
             -variable [itcl::scope force] -onvalue ON -offvalue OFF
    }
    pack $itk_component(forceMode) -pady 4
 
-# Set the object description.
+   # Set the object description.
    set description "GAOS configuration"
 
    eval itk_initialize $args
@@ -120,6 +127,7 @@ itcl::body AltairControl::reset {} {
    $itk_component(gsmag) clear
    $itk_component(seeing) clear
    $itk_component(windspeed) clear
+   $itk_component(beamsplitter) select "*1 um*"
    set lgs OFF
    set deployAdc IN
    set adjustAdc ON
@@ -130,11 +138,12 @@ itcl::body AltairControl::reset {} {
 
 itcl::body AltairControl::load {name} {
 
-# Copy the contents of the specified Gaos object into the edit
-# controls.
+   # Copy the contents of the specified Gaos object into the edit
+   # controls.
    $itk_component(gsmag) insert end [$name cget -gsmag]
    $itk_component(seeing) insert end [$name cget -seeing]
    $itk_component(windspeed) insert end [$name cget -windspeed]
+   $itk_component(beamsplitter) select "*[$name cget -wavelength]*"
    set deployAdc [string toupper [$name cget -deployAdc]]
    set adjustAdc [string toupper [$name cget -adjustAdc]]
    set ndFilter [string toupper [$name cget -ndFilter]]
@@ -147,6 +156,11 @@ itcl::body AltairControl::save {name} {
    $name configure -gsmag [$itk_component(gsmag) get]
    $name configure -seeing [$itk_component(seeing) get]
    $name configure -windspeed [$itk_component(windspeed) get]
+   if { [string match "*1 um*" [$itk_component(beamsplitter) get] ] } {
+      $name configure -wavelength "1 um"
+   } else {
+      $name configure -wavelength "850 nm"
+   }
    $name configure -deployAdc $deployAdc
    $name configure -adjustAdc $adjustAdc
    $name configure -ndFilter $ndFilter
@@ -155,12 +169,11 @@ itcl::body AltairControl::save {name} {
    $name configure -force $force
 }
 
-
 itcl::body AltairControl::applycmd {} {
-	# Open/Reset the loops
+   # Open/Reset the loops
    if [winfo exists .observePanel] {
        .observePanel.frame.control.guideloop reset
    }
 
-	ComponentControl::applycmd
+   ComponentControl::applycmd
 }

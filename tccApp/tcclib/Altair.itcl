@@ -68,6 +68,12 @@ itcl::class Altair {
 	      .tcsGaosPanel.frame.control.chop.gsmag insert end $gsmag
 	  }
       }
+      variable wavelength {} {
+         # update the magnitude entry if it exists
+         if { [winfo exists .tcsGaosPanel.frame.control.chop.beamsplitter] } {
+             .tcsGaosPanel.frame.control.chop.beamsplitter select "*$wavelength*"
+         }
+      }
       variable lgs {}
       variable seeing {}
       variable windspeed {}
@@ -198,6 +204,16 @@ itcl::body Altair::apply {comp} {
 	}
     }
     logger command aoFLens
+   
+# Position beam splitter
+   if { $wavelength eq "850 nm" } {
+      cs aoBeamsplitter set position B
+   } else {
+      cs aoBeamsplitter set position A
+   }
+   cs aoBeamsplitter set command MOVE
+   cs aoBeamsplitter set dir 3
+   logger command aoBeamsplitter
 
 # Deploy (or not) the ADC.
    cs aoDeployAdc set position $deployAdc
@@ -285,6 +301,7 @@ itcl::body Altair::save {node} {
    param $node gsmag $gsmag
    param $node seeing $seeing
    param $node windspeed $windspeed
+   param $node wavelength $wavelength
 }
 
 itcl::body Altair::init {} {
@@ -296,6 +313,7 @@ itcl::body Altair::init {} {
    set windspeed ""
    set ndFilter ""
    set fldLens ""
+   set wavelength ""
 }
 
 itcl::body Altair::setUseLwfs {} {

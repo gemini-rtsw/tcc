@@ -122,6 +122,7 @@ global env
 	   epics cs aongsNDFilter
 	   epics cs aolgsNDFilter
 	   epics cs aoFLens
+      epics cs aoBeamsplitter
 	   epics cs aoTTGSiris
 	   epics cs ttgsloop
 	   epics cs sfoloop
