@@ -34,6 +34,10 @@ itcl::class CalParam {
       variable hrwfs_ao_prog <undefined>
       variable baffle_visible <undefined>
       variable baffle_nearir <undefined>
+      
+      variable centralBaffleOverride
+      variable deployableBaffleOverride
+      
       variable niri_sfo_defocus <undefined>
       variable nifs_sfo_defocus <undefined>
       variable gnirs_sfo_defocus <undefined>
@@ -91,6 +95,9 @@ itcl::class CalParam {
       method odgwGetSciRows { size }
       method odgwGetIdleRows { size }
       method odgwGetDisplayRate { size }
+      
+      method centralBaffleOverride {instrument}
+      method deployableBaffleOverride {instrument}
    }
 }
 
@@ -193,5 +200,21 @@ itcl::body CalParam::odgwGetDisplayRate { size } {
       return 2
    } else {
       return [lindex $odgwParamLUT($size) 2]
+   }
+}
+
+itcl::body CalParam::centralBaffleOverride {instrument} {
+   if { [array names centralBaffleOverride -exact $instrument] == "" } {
+      return <undefined>
+   } else {
+      return $centralBaffleOverride($instrument)
+   }
+}
+
+itcl::body CalParam::deployableBaffleOverride {instrument} {
+   if { [array names deployableBaffleOverride -exact $instrument] == "" } {
+      return <undefined>
+   } else {
+      return $deployableBaffleOverride($instrument)
    }
 }

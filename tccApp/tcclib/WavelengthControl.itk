@@ -35,51 +35,44 @@ itk::usual WavelengthControl {
 }
 
 itcl::body WavelengthControl::constructor args {
-   eval itk_initialize $args
-
    itk_component add wframe {
       frame $itk_interior.wframe -bd 2 -relief ridge
-    }
-    pack $itk_component(wframe)
-    set w $itk_component(wframe)
-
-   if {$itk_option(-obsWavel)} {
-       # Lock the wavelength
-       itk_component add wllock {
-	   checkbutton $w.lock -variable [itcl::scope locked] -onvalue 1 -offvalue 0 -text "Lock Current WL: " -command "$this set_lock"
-       }
-       pack $itk_component(wllock) -padx 4 -pady 4
    }
-# Entryfield for the wavelength.
+   pack $itk_component(wframe)
+   set w $itk_component(wframe)
+
+   # Lock the wavelength
+   itk_component add wllock {
+	   checkbutton $w.lock -variable [itcl::scope locked] -onvalue 1 -offvalue 0 -text "Lock Current WL: " -command "$this set_lock"
+   }
+    
+   # Entryfield for the wavelength.
    itk_component add wavel {
       iwidgets::entryfield $w.wavel \
            -labeltext [lindex [cs wavelSourceA info wavel] 2]  -width 8
    }
    pack $itk_component(wavel) -padx 4 -pady 4
 
-   if {$itk_option(-obsWavel)} {
-       # Central baffle
-       itk_component add central {
-	   iwidgets::optionmenu $w.central -labeltext "Periscope"
-       }
-       $itk_component(central) insert end "" open closed
-       pack $itk_component(central) -anchor e -padx 3 -pady 3
-       
-       # Deployable baffle
-       itk_component add deploy {
-	   iwidgets::optionmenu $w.deploy -labeltext "M2 Deployable baffle"
-       }
-       $itk_component(deploy) insert end "" "thermal IR" "near IR" visible \
-	   extended
-       pack $itk_component(deploy) -anchor e -padx 3 -pady 3
+   itk_component add central {
+      iwidgets::optionmenu $w.central -labeltext "Periscope"
    }
-# Set the object description.
+   $itk_component(central) insert end "" open closed
+       
+   # Deployable baffle
+   itk_component add deploy {
+      iwidgets::optionmenu $w.deploy -labeltext "M2 Deployable baffle"
+   }
+   $itk_component(deploy) insert end "" "thermal IR" "near IR" visible \
+      extended
+   
+   # Set the object description.
    set description wavelength
 
+   eval itk_initialize $args
 }
 
 itcl::body WavelengthControl::save {name} {
-#puts "WavelengthControl::save name: $name prevwl: $prevwl"
+
    if {[$itk_component(wavel) get] != $prevwl } {set prevwl "-1"}
    if {$itk_option(-obsWavel)} {
        $name configure -wavel [$itk_component(wavel) get] \
@@ -91,7 +84,7 @@ itcl::body WavelengthControl::save {name} {
 }
 
 itcl::body WavelengthControl::reset {} {
-#puts "WavelengthControl::reset"
+
    if {$prevwl >= 0 } { set prevwl [$itk_component(wavel) get]}
    #set prevwl [$itk_component(wavel) get]
    if {$itk_option(-obsWavel)} {
@@ -113,37 +106,33 @@ itcl::body WavelengthControl::set_lock {} {
 
 itcl::body WavelengthControl::load {name} {
    if {$itk_option(-obsWavel)} {
-       if {$locked} {
-	   set ::Config(tcs.field.wavelength,value) $locked_name
-	   set name ::WavelengthNames::$locked_name
-	   $itk_component(selector) select $locked_name
-       }
+      if {$locked} {
+         set ::Config(tcs.field.wavelength,value) $locked_name
+         set name ::WavelengthNames::$locked_name
+         $itk_component(selector) select $locked_name
+      }
    }
    set wavelen [$name cget -wavel]
    if {$itk_option(-obsWavel)} {
-       if {[string match "*Acq Cam*" $name]} {
-	   set set_baffles 0
-       } else {
-	   set set_baffles [$name cget -set_baffles]
-       }
-       # puts "WavelengthControl Load, name: $name, wavelen: $wavelen, prevwl: $prevwl set_baffles: $set_baffles"
-       if {($wavelen != $prevwl) && $set_baffles } {
-	   if {$wavelen <= [calparam cget -baffle_visible]} {
-	       $itk_component(central) select closed
-	       $itk_component(deploy) select visible
-	   } elseif {$wavelen < [calparam cget -baffle_nearir]} {
-	       $itk_component(central) select open
-	       $itk_component(deploy) select "near IR"
-	   } else {
-	       $itk_component(central) select open
-	       $itk_component(deploy) select "thermal IR"
-	   }
+      $itk_component(central) select [$name getCentralBaffle]
+      $itk_component(deploy) select [$name getDeployableBaffle]
 	   set prevwl $wavelen
-       } else {
+   } else {
 	   $itk_component(central) select $prevcentral
 	   $itk_component(deploy) select $prevdeploy
-       }
    }
-# puts "centralBaffle: [$name cget -centralBaffle] deployableBaffle: [$name cget -deployableBaffle]"
+
    $itk_component(wavel) insert end $wavelen
+}
+
+itcl::configbody WavelengthControl::obsWavel {
+   if { $itk_option(-obsWavel) } {
+      pack $itk_component(wllock) -padx 4 -pady 4
+      pack $itk_component(central) -anchor e -padx 3 -pady 3
+      pack $itk_component(deploy) -anchor e -padx 3 -pady 3
+   } else {
+      pack forget $itk_component(wllock)
+      pack forget $itk_component(central)
+      pack forget $itk_component(deploy)
+   }
 }

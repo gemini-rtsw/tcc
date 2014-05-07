@@ -1,7 +1,7 @@
 #+
 #  Wavelength <- Paramset
 #
-#  Implements the Wavelength class. A Wavelength object stores an effective 
+#  Implements the Wavelength class. A Wavelength object stores an effective
 #  wavelength.
 #
 #  Options:
@@ -15,7 +15,7 @@
 #                             "extended" or "").
 #
 #  Methods:
-#          apply comp  Applies the wavelength to the TCS by setting the 
+#          apply comp  Applies the wavelength to the TCS by setting the
 #                      values of the command parameters for the virtual
 #                      telescope.
 #
@@ -42,68 +42,45 @@ itcl::class Wavelength {
       variable set_baffles 1
       variable centralBaffle ""
       variable deployableBaffle ""
+      
+      method getCentralBaffle {}
+      method getDeployableBaffle {}
    }
+   private method getBaffles {}
 }
 
 itcl::body Wavelength::apply {comp} {
    switch $comp {
       tcs.field.wavelength {
-	  set fieldObj ${::Config(tcs.field,namespace)}::${::Config(tcs.field,value)}
-	  #set name ${::Config(tcs.field.wavelength,value)}
-	  set name [string range $this [expr [string last "::" $this] +2] end] 
-	  # [$fieldObj cget -wavelength]
-	  #puts "Wavelength::apply wavel: $wavel, name: $name, this: $this"
-	  if {[string match "*Acq Cam*" $name]} {
-	      set loc_set_baffles 0
-	  } else {
-	      set loc_set_baffles $set_baffles
-	  }
+         set fieldObj ${::Config(tcs.field,namespace)}::${::Config(tcs.field,value)}
+         set name [namespace tail $this]
+         if {[string match "*Acq Cam*" $name]} {
+            set loc_set_baffles 0
+         } else {
+            set loc_set_baffles $set_baffles
+         }
+         set loc_centralBaffle [getCentralBaffle]
+         set loc_deployableBaffle [getDeployableBaffle]
 
-	  #puts "Wavelength apply comp: $comp, wavel: $wavel centralBaffle: $centralBaffle deployableBaffle: $deployableBaffle set_baffles: $set_baffles loc_set_baffles: $loc_set_baffles"
-	  
-#  the following sets up the baffle values when a configuration is loaded and applied without the Wavelength panel being open
-#  removed this ... decided to not set the baffle at all unless its explicitly configured.
-  	 if {($centralBaffle == ""  || $deployableBaffle == "") && $loc_set_baffles } {
- 	     if {$wavel <= [calparam cget -baffle_visible]} {
- 		 set centralBaffle closed
- 		 set deployableBaffle visible
- 	     } elseif {$wavel < [calparam cget -baffle_nearir]} {
- 		 set centralBaffle open
- 		 set deployableBaffle "near IR"
- 	     } else {
- 		 set centralBaffle open
- 		 set deployableBaffle "thermal IR"
- 	     }
- 	 }
-
-# for GS Engineering: Override baffles to retracted and closed when inst is HR
-	 set inst $::Config(tcs.instrument,value)
-	 #puts "Wavelength apply, inst: $inst"
-	 if { $inst == "HRWFS"} {
-	      set loc_set_baffles 1
-	      set centralBaffle closed
-	      set deployableBaffle "thermal IR"
-	 }
-
-	 cs wavelSourceA set wavel $wavel
+	      cs wavelSourceA set wavel $wavel
          logger command wavelSourceA
-         if { ! [string is space $centralBaffle] && $loc_set_baffles} {
-	     switch $centralBaffle {
-		 closed {cs m2Baffle set centralBaffle Closed}
-		 open {cs m2Baffle set centralBaffle Open}
-	     }
-	 }
-         if { ! [string is space $deployableBaffle] && $loc_set_baffles} {
-	     switch $deployableBaffle {
-		 "thermal IR" {cs m2Baffle set deployBaffle Retracted}
-		 "near IR" {cs m2Baffle set deployBaffle [list "Near IR"]}
-		 visible {cs m2Baffle set deployBaffle Visible}
-		 extended {cs m2Baffle set deployBaffle Extended}
-	     }
-	 }
-         if { !( [string is space $centralBaffle] && \
-		     [string is space $deployableBaffle] ) && $loc_set_baffles} {
-	     logger command m2Baffle
+         if { ! [string is space $loc_centralBaffle] && $loc_set_baffles} {
+            switch $loc_centralBaffle {
+               closed {cs m2Baffle set centralBaffle Closed}
+               open {cs m2Baffle set centralBaffle Open}
+            }
+         }
+         if { ! [string is space $loc_deployableBaffle] && $loc_set_baffles} {
+            switch $loc_deployableBaffle {
+               "thermal IR" {cs m2Baffle set deployBaffle Retracted}
+               "near IR" {cs m2Baffle set deployBaffle [list "Near IR"]}
+               visible {cs m2Baffle set deployBaffle Visible}
+               extended {cs m2Baffle set deployBaffle Extended}
+            }
+         }
+         if { !( [string is space $loc_centralBaffle] && \
+               [string is space $loc_deployableBaffle] ) && $loc_set_baffles} {
+            logger command m2Baffle
          }
       }
       tcs.field.guide.oiwfswavelength {
@@ -111,8 +88,8 @@ itcl::body Wavelength::apply {comp} {
          logger command wavelOiwfs
       }
       tcs.field.guide.aowfswavelength {
-	 cs wavelPwfs2 set wavel $wavel
-	 logger command wavelPwfs2
+         cs wavelPwfs2 set wavel $wavel
+      	logger command wavelPwfs2
       }
    }
 }
@@ -159,4 +136,59 @@ itcl::body Wavelength::save {node} {
    param $node wavel $wavel
    param $node centralBaffle $centralBaffle
    param $node deployableBaffle $deployableBaffle
+}
+
+itcl::body Wavelength::getBaffles {} {
+   set name [namespace tail $this]
+   if {[string match "*Acq Cam*" $name]} {
+      set loc_set_baffles 0
+   } else {
+      set loc_set_baffles $set_baffles
+   }
+   
+   set loc_centralBaffle $centralBaffle
+   set loc_deployableBaffle $deployableBaffle
+
+   set inst $::Config(tcs.instrument,value)
+   foreach instname { GMOS NICI NIRI GPI GNIRS GSAOI NIFS F2 } {
+      if { [ string match "*$instname*" $inst] } {
+         set inst $instname
+         break
+      }
+   }
+   if { $loc_centralBaffle == "" && [calparam centralBaffleOverride $inst] ne "<undefined>" && $loc_set_baffles } {
+      set loc_centralBaffle [calparam centralBaffleOverride $inst]
+   }
+   if { $loc_deployableBaffle == "" && [calparam deployableBaffleOverride $inst] ne "<undefined>" && $loc_set_baffles } {
+      set loc_deployableBaffle [calparam deployableBaffleOverride $inst]
+   }
+
+   if {($loc_centralBaffle == ""  || $loc_deployableBaffle == "") && $loc_set_baffles } {
+      if {$wavel <= [calparam cget -baffle_visible]} {
+         set loc_centralBaffle closed
+         set loc_deployableBaffle visible
+      } elseif {$wavel < [calparam cget -baffle_nearir]} {
+         set loc_centralBaffle open
+         set loc_deployableBaffle "near IR"
+      } else {
+         set loc_centralBaffle open
+         set loc_deployableBaffle "thermal IR"
+      }
+   }
+   # for GS Engineering: Override baffles to retracted and closed when inst is HR
+   if { $inst == "HRWFS"} {
+      set loc_set_baffles 1
+      set loc_centralBaffle closed
+      set loc_deployableBaffle "thermal IR"
+   }
+   
+   return [list $loc_centralBaffle $loc_deployableBaffle]
+}
+
+itcl::body Wavelength::getCentralBaffle {} {
+   return [ lindex [ getBaffles ] 0 ]
+}
+
+itcl::body Wavelength::getDeployableBaffle {} {
+   return [ lindex [ getBaffles ] 1 ]
 }
