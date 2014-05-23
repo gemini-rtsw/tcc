@@ -334,10 +334,14 @@ itcl::body ActiveOptics::enable {} {
       }
    }
 
-   # AWE: implementing a work around to only fix for LGS+P1
+   # AWE: implementing a work around to only fix for LGS+P1 and LGS+OI
    if { [calparam cget -site] eq "MK" } {
       if { ($aoguide eq "On") && ($p1guide eq "On") && $useLwfs} {
          logactions logmess "LGS+P1, fixing M2 config"
+         set m2aoguide "A"
+      }
+      if { ($aoguide eq "On") && ($oiguide eq "On") && $useLwfs} {
+         logactions logmess "LGS+OI, fixing M2 config"
          set m2aoguide "A"
       }
    }
