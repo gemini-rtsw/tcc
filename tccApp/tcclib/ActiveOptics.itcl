@@ -1555,8 +1555,8 @@ itcl::body ActiveOptics::configureBlending {} {
          return 1
       }
    }
-   # Need to set the target filter bypass to closed for lgsp1 mode
-   if [AO state lgsp1source] {
+   # Need to set the target filter bypass to closed for lgsp1 and lgsoi modes
+   if ([AO state lgsp1source] || [AO state lgsoisource]} {
       cs filter1 set shortCircuit Closed
       logger command filter1
 

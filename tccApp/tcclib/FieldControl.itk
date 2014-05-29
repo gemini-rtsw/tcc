@@ -964,16 +964,13 @@ itcl::body FieldControl::onSwapTarget {} {
             "AOWFS" {
                set lpath "Sky>AO>AC/HR"
             }
+	    "OIWFS" -
             "PWFS1" {
                if {[string match "*AO*" $guide] && [string match "*LGS*" $::Config(tcs.gaos,value)]} {
-                  #AWE: not sure if this is the best place, need to shortCircuit
-# the target filter
-                  #AWE: only get here when we're swapping to a P1 star and
-# guiding with Altair
-                  #     but, the new policy is to not swap while closed loop on
-# the laser.
-                  #     so, I'll shortCircuit it just in case this mode is ever
-# used closed loop.
+                  #AWE: not sure if this is the best place, need to shortCircuit the target filter
+                  #AWE: only get here when we're swapping to a P1/OI star and guiding with Altair
+                  #     but, the new policy is to not swap while closed loop on the laser.
+                  #     so, I'll shortCircuit it just in case this mode is ever used closed loop.
                   cs filter1 set shortCircuit Closed
                   logger command filter1
                }
