@@ -87,6 +87,7 @@ itcl::class ActiveOptics {
       variable aoSys ""
       method checkTemp {val ref}
       method waitFor {timeout outCondition}
+      method waitForCmdIdle {syssad {timeout 1000}}
 
       method _itcl_config {option args} \
       @itcl-builtin-configure
@@ -675,6 +676,14 @@ itcl::body ActiveOptics::enable {} {
                if { [catch {cs gpi::guide post} msg] } {
                   tk_messageBox -icon error -message \
                      "Error posting guide command to GPI: \"$msg\""
+               }
+               set result [waitForCmdIdle gpi::aostatus 10000]
+               if { $result eq "error" } {
+                  tk_messageBox -icon error -message \
+                     "Error closing GPI loop - Internal GPI Error: [sa gpi::aostatus get message]"
+               } elseif { $result eq "timeout" } {
+                  tk_messageBox -icon error -message \
+                     "Error closing GPI loop - Timeout waiting for command completion"
                }
                if { [waitFor 120000 {state oiwfs} ] eq "timeout" } {
                   tk_messageBox -icon error -message \
@@ -1804,4 +1813,20 @@ itcl::body ActiveOptics::messageBox {icon message args} {
    } else {
       return [eval "tk_messageBox -icon error -message {$message} $args"]
    }
+}
+
+itcl::body ActiveOptics::waitForCmdIdle {syssad {timeout 1000}} {
+   set elapsedTime 0
+   while {$timeout==0 || $elapsedTime<$timeout} {
+      set status [sa $syssad get activeC]
+      if {$status eq "IDLE"} {
+         return ok
+      } elseif {$status eq "ERROR"} {
+         return error
+      }
+      after 100
+      set elapsedTime [expr $elapsedTime + 100]
+      update
+   }
+   return timeout
 }
