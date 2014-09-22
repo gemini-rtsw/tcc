@@ -31,6 +31,8 @@ itcl::class TcsConfigFile {
       method tcsConf {component node}
       variable w
       variable nodelist
+      
+      common autoPortList [list VISITOR GPI]
    }
 }
 
@@ -609,12 +611,13 @@ itcl::body TcsConfigFile::tcsConf {component node} {
       set value [dom::element getAttribute $node value]
       
       if { $name eq "instrument" } {
-         if { $value eq "VISITOR" } {
+         regexp {([[:alpha:]]*)_?([[:alpha:]]*)} $value dummy inst suffix
+         if { [lsearch $autoPortList $inst] > -1 } {
             #Find port for visitor instrument
             set agSys [::AcqGuideSys::getSingleton]
             set port [ $agSys getPort $value ]
             if { $port > 1 } {
-               set value "$value$port"
+               set value "$value$port$suffix"
             }
          }
       }
