@@ -85,10 +85,14 @@ itcl::body GraphicDisplay::constructor args {
 #   itk_component add figurestatus {
 #      FigurePersistence $w.figurestatus -font "Arial 8" -labelfont "Arial 8"
 #   }
+   itk_component add wfsframe {
+      frame $w.wfsframe -borderwidth 0 -relief flat
+   }
+   set w $itk_component(wfsframe)
 
 # OIWFS
-   set w $itk_component(col4)
-   itk_component add oiwfs {
+   set w $itk_component(wfsframe)
+      itk_component add oiwfs {
       frame $w.oiwfs -borderwidth 2 -relief groove
    }
    set w $itk_component(oiwfs)
@@ -111,7 +115,7 @@ itcl::body GraphicDisplay::constructor args {
          $itk_component(oixy) $itk_component(oiwavel) -padx 5
 
 # AO WFS.
-   set w $itk_component(col4)
+   set w $itk_component(wfsframe)
    itk_component add aowfs {
       frame $w.aowfs -borderwidth 2 -relief groove
    }
@@ -131,9 +135,10 @@ itcl::body GraphicDisplay::constructor args {
    pack $itk_component(aolabel) -padx 5
    pack $itk_component(aowavel) $itk_component(aoxy) $itk_component(aoview) \
          -padx 5 -side bottom
+   
 
 # PWFS1.
-   set w $itk_component(col4)
+   set w $itk_component(wfsframe)
    itk_component add pwfs1 {
       frame $w.pwfs1 -borderwidth 2 -relief groove
    }
@@ -163,7 +168,7 @@ itcl::body GraphicDisplay::constructor args {
    pack $itk_component(p1label) $itk_component(probe1) $itk_component(p1wavel) $itk_component(p1WrapLine1) $itk_component(p1WrapLine2)
 
 # PWFS2.
-   set w $itk_component(col4)
+   set w $itk_component(wfsframe)
    itk_component add pwfs2 {
       frame $w.pwfs2 -borderwidth 2 -relief groove
    }
@@ -192,9 +197,12 @@ itcl::body GraphicDisplay::constructor args {
    pack $itk_component(p2label) $itk_component(probe2) $itk_component(p2wavel) $itk_component(p2WrapLine1) $itk_component(p2WrapLine2)
 
    #grid $itk_component(figurestatus) - -sticky ew -padx 5 -pady 2
-   grid $itk_component(aosetup) - -sticky ew -padx 5 -pady 2 -sticky ew
-   grid $itk_component(oiwfs) $itk_component(aowfs) -padx 5 -pady 2 -sticky nsew
-   grid $itk_component(pwfs1) $itk_component(pwfs2) -padx 5 -pady 2 -sticky nsew
+   #grid $itk_component(aosetup) - -sticky ew -padx 5 -pady 2 -sticky ew
+   grid $itk_component(oiwfs) $itk_component(aowfs) -padx 3 -pady 2 -sticky nsew
+   grid $itk_component(pwfs1) $itk_component(pwfs2) -padx 3 -pady 2 -sticky nsew
+   grid columnconfigure  $itk_component(wfsframe) all -uniform 1
+   grid rowconfigure  $itk_component(wfsframe) all -uniform 1
+   pack $itk_component(aosetup) $itk_component(wfsframe) -padx 5 -pady 2
 
 # Configure the ISS port numbers and AO.
    $itk_component(opticsview) configure -portAnumber 1 
@@ -468,7 +476,20 @@ itcl::body GraphicDisplay::update {} {
 #   $itk_component(figurestatus) update
 
 # Update the OIWFS name.
-   $itk_component(oiname) configure -text [sa agssad get oiwfsName]
+   set oiwfsName [sa agssad get oiwfsName]
+   $itk_component(oiname) configure -text $oiwfsName
+   if { $oiwfsName eq "GPI" } {
+      if { [lsearch [pack slaves $itk_component(oiwfs)] $itk_component(oiview)] > -1 } {
+         pack forget $itk_component(oiview) $itk_component(oixy) $itk_component(oiwavel)
+         puts "Clearing OIWFS box"
+      }
+   } else {
+      if { [lsearch [pack slaves $itk_component(oiwfs)] $itk_component(oiview)] == -1 } {
+         pack $itk_component(oiname) $itk_component(oilabel) $itk_component(oiview) \
+            $itk_component(oixy) $itk_component(oiwavel) -padx 5
+         puts "Filling OIWFS box"
+      }
+   } 
 
 # Update the guiding wavelengths.
    set wavel [sadVal tcssad pwfs1Wavelength ""]
