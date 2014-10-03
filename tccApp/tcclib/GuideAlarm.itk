@@ -31,11 +31,12 @@ itcl::class GuideAlarm {
       variable oiwfsLimit 1000.0
       variable gaosLimit 100.0
       variable ttgsLimit 6.6 {
-	   global  ttgsCountLimit
-	   set ttgsCountLimit $ttgsLimit
-	}
+         global  ttgsCountLimit
+         set ttgsCountLimit $ttgsLimit
+	   }
       variable sfoLimit 7000.0
       variable niciLimit 10.0
+      variable gpiLimit 100.0
       variable pwfs1Silent 0
       variable pwfs2Silent 0
       variable oiwfsSilent 0
@@ -66,7 +67,9 @@ itcl::class GuideAlarm {
       method retrieveGeMSCounts {}
       method updateOiwfs { name alarm time values }
       method onOISelection {record value}
+      method changeLimit {wfs}
       variable oiSelMonId
+      variable gpiOI 0
       
       variable tid 0
 
@@ -87,6 +90,7 @@ itcl::body GuideAlarm::constructor {args} {
    set sfsLimit [calparam cget -sfsAlarmDefault]
    set lgswfsLimit [calparam cget -lgsAlarmDefault]
    set ttwfsLimit [calparam cget -ngsAlarmDefault]
+   set gpiLimit [calparam cget -gpiAlarmDefault]
 
    itk_component add frame {
         frame $itk_interior.fr
@@ -191,7 +195,7 @@ itcl::body GuideAlarm::constructor {args} {
       if {![string is boolean -strict $guideCentroid($wfs)] || $guideCentroid($wfs)} {
          $itk_component(${wfs}centroid) configure -text "Subaperture BAD"
       }
-      bind $itk_component(${wfs}liment) <KeyPress-Return> "$this configure -${wfs}Limit \[set ${wfs}CountLimit\] ; $this alarmCheck $wfs"
+      bind $itk_component(${wfs}liment) <KeyPress-Return> [itcl::code $this changeLimit $wfs]
 
       grid $itk_component(${wfs}title) $itk_component(${wfs}silent) -sticky news
       grid $itk_component(${wfs}clab) $itk_component(${wfs}cnts) -sticky news
@@ -323,6 +327,13 @@ itcl::body GuideAlarm::alarmCheck {wfs} {
                set alarmOn($wfs) 1
             } else {
                set alarmOn($wfs) 0
+            }
+         }
+         oiwfs {
+            if { ($guideCounts(oiwfs) < ( $gpiOI ? $gpiLimit : $oiwfsLimit ) ) || $guideCentroid(oiwfs) } {
+               set alarmOn(oiwfs) 1
+            } else {
+               set alarmOn(oiwfs) 0
             }
          }
          default {
@@ -640,7 +651,7 @@ itcl::body GuideAlarm::buildAltairAlarms {} {
       if {![string is boolean -strict $guideCentroid($wfs)] || $guideCentroid($wfs)} {
          $itk_component(${wfs}centroid) configure -text "Subaperture BAD"
       }
-      bind $itk_component(${wfs}liment) <KeyPress-Return> "$this configure -${wfs}Limit \[set ${wfs}CountLimit\] ; $this alarmCheck $wfs"
+      bind $itk_component(${wfs}liment) <KeyPress-Return> [itcl::code $this changeLimit $wfs]
 
       grid $itk_component(${wfs}title) $itk_component(${wfs}silent) -sticky news
       if {$wfs == "ttgs"} {
@@ -715,7 +726,7 @@ itcl::body GuideAlarm::buildGemsAlarms {} {
 		rename -font -majorfont majorFont Font
 	}
 
-   bind $itk_component(lgswfsliment) <KeyPress-Return> "$this configure -lgswfsLimit \[set lgswfsCountLimit\] ; $this alarmCheck lgswfs"
+   bind $itk_component(lgswfsliment) <KeyPress-Return> [itcl::code $this changeLimit lgswfs]
 
    grid $itk_component(lgswfstitle) $itk_component(lgswfssilent) -sticky news
    grid $itk_component(lgswfsclab)  $itk_component(lgswfscnts) -sticky news
@@ -772,7 +783,7 @@ itcl::body GuideAlarm::buildGemsAlarms {} {
 		rename -font -majorfont majorFont Font
 	}
 
-   bind $itk_component(ttwfsliment) <KeyPress-Return> "$this configure -ttwfsLimit \[set ttwfsCountLimit\] ; $this alarmCheck ttwfs"
+   bind $itk_component(ttwfsliment) <KeyPress-Return> [itcl::code $this changeLimit ttwfs]
 
    grid $itk_component(ttwfstitle) $itk_component(ttwfssilent) -sticky news
    grid $itk_component(ttwfscnts1) $itk_component(ttwfscnts2) -sticky news
@@ -827,7 +838,7 @@ itcl::body GuideAlarm::buildGemsAlarms {} {
 		rename -font -majorfont majorFont Font
 	}
 
-   bind $itk_component(sfsliment) <KeyPress-Return> "$this configure -sfsLimit \[set sfsCountLimit\] ; $this alarmCheck sfs"
+   bind $itk_component(sfsliment) <KeyPress-Return> [itcl::code $this changeLimit sfs]
 
    grid $itk_component(sfstitle) $itk_component(sfssilent) -sticky news
    grid $itk_component(sfsclab) $itk_component(sfscnts) -sticky news
@@ -885,7 +896,7 @@ itcl::body GuideAlarm::buildGemsAlarms {} {
 		rename -font -majorfont majorFont Font
 	}
 
-   bind $itk_component(odgwliment) <KeyPress-Return> "$this configure -odgwLimit \[set odgwCountLimit\] ; $this alarmCheck odgw"
+   bind $itk_component(odgwliment) <KeyPress-Return> [itcl::code $this changeLimit odgw]
 
    grid $itk_component(odgwtitle) $itk_component(odgwsilent) -sticky news
    grid $itk_component(odgwcnts1) $itk_component(odgwcnts2) -sticky news
@@ -916,12 +927,18 @@ itcl::body GuideAlarm::retrieveGeMSCounts {} {
 
 
 itcl::body GuideAlarm::onOISelection {record value} {
-   global guideCounts guideCentroid
+   global guideCounts guideCentroid oiwfsCountLimit
    if { $record eq "agssad.oiwfsName" } {
       if { $value eq "GPI" } {
          set counts [sa guidects get gpi]
          set guideCentroid(oiwfs) 0
          $itk_component(oiwfscentroid) configure -text ""
+         if { ! $gpiOI } {
+            set oiwfsCountLimit $gpiLimit
+            puts $oiwfsCountLimit
+            puts [$itk_component(oiwfsliment) cget -text] 
+            set gpiOI 1
+         }
       } else {
          set counts [sa guidects get oiwfs]
          set guideCentroid(oiwfs) [sa guidects get oiwfscent]
@@ -933,6 +950,10 @@ itcl::body GuideAlarm::onOISelection {record value} {
          } else {
             $itk_component(oiwfscentroid) configure -text "Subaperture OK"
          }
+         if { $gpiOI } {
+            set oiwfsCountLimit $oiwfsLimit
+            set gpiOI 0
+         }
       }  
      
       if { [string is digit -strict $counts] || [string is double -strict $counts] } {
@@ -941,4 +962,23 @@ itcl::body GuideAlarm::onOISelection {record value} {
          set guideCounts(oiwfs) 0
       }
    }
+}
+
+itcl::body GuideAlarm::changeLimit {wfs} {
+   global ${wfs}CountLimit
+
+   switch $wfs {
+   oiwfs {
+      puts $oiwfsCountLimit
+      if { $gpiOI } {
+         configure -gpiLimit $oiwfsCountLimit
+      } else {
+         configure -oiwfsLimit $oiwfsCountLimit
+      }
+   }
+   default {
+      configure -${wfs}Limit [set ${wfs}CountLimit]      
+   }
+   }
+   alarmCheck $wfs
 }
