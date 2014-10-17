@@ -95,6 +95,7 @@ itcl::class OpticsView {
    itk_option define -laserProp laserProp LaserProp OFF
    itk_option define -aopresent aoPresent AoPresent 0 {}
    itk_option define -vignette vignette Vignette 0 
+   itk_option define -vignetteAlarm vignetteAlarm VignetteAlarm 0 
    itk_option define -portAlabel portALabel Label "" "relabel A"
    itk_option define -portBlabel portBLabel Label "" "relabel B"
    itk_option define -portClabel portCLabel Label "" "relabel C"
@@ -634,6 +635,11 @@ itcl::body OpticsView::update {} {
       set l white
    } else {
       set l grey
+   }
+   if { $itk_option(-vignetteAlarm) == 1 } {
+      set l yellow
+   } elseif { $itk_option(-vignetteAlarm) == 2 } {
+      set l red
    }
    $c itemconfigure SkyLight -fill $l
 

@@ -23,6 +23,7 @@ itcl::class GraphicDisplay {
    }
    private {
       variable Vignette 0
+      variable VignetteAlarm 0
       variable flash 0
    }
 }
@@ -251,6 +252,31 @@ itcl::body GraphicDisplay::update {} {
    } elseif { $v == 0 && $Vignette == 1 } {
       $itk_component(opticsview) configure -vignette 0
       set Vignette 0
+   }
+
+#determine whether to warn of impending dome vignetting
+   set va [sadVal tcssad domeVignetteTime -1]
+   if {$va < 60 && $va >0 } {
+	if {$flash} { 
+           $itk_component(opticsview) configure -vignetteAlarm 2
+	   systemBeep
+	   after 100
+	   systemBeep
+        } else { 
+           $itk_component(opticsview) configure -vignetteAlarm 0 
+        }
+	set VignetteAlarm 2
+   } elseif {$va < 120 && $va > 0 } {
+	if {$flash} { 
+           $itk_component(opticsview) configure -vignetteAlarm 1
+	   systemBeep
+        } else { 
+           $itk_component(opticsview) configure -vignetteAlarm 0 
+        }
+	set VignetteAlarm 1
+   } else {
+	$itk_component(opticsview) configure -vignetteAlarm 0 
+	set VignetteAlarm 0
    }
 
 # Determine the status of M2.
