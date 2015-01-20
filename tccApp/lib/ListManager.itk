@@ -103,6 +103,8 @@ itcl::body ListManager::select item {
    if { $editable == 0 } {
       $itk_component(selector) configure -editable 1
    }
+   set state [$itk_component(selector) cget -state]
+   $itk_component(selector) configure -state normal
 
 # Clear the current selection.
    $itk_component(selector) selection clear 0 end
@@ -119,6 +121,7 @@ itcl::body ListManager::select item {
    if { $editable == 0 } {
       $itk_component(selector) configure -editable 0
    }
+   $itk_component(selector) configure -state $state
 }
 
 itcl::body ListManager::get {} {
