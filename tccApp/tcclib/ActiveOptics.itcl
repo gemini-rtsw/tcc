@@ -677,7 +677,7 @@ itcl::body ActiveOptics::enable {} {
                   tk_messageBox -icon error -message \
                      "Error posting guide command to GPI: \"$msg\""
                }
-               set result [waitForCmdIdle gpi::aostatus 10000]
+               set result [waitForCmdIdle gpi::aostatus 45000]
                if { $result eq "error" } {
                   tk_messageBox -icon error -message \
                      "Error closing GPI loop - Internal GPI Error: [sa gpi::aostatus get message]"
@@ -695,7 +695,7 @@ itcl::body ActiveOptics::enable {} {
             }
          }
       } else {
-         if { [state oiwfs] } {
+        # if { [state oiwfs] } {
             cs gpi::endGuide set dir MARK
             if { [catch {cs gpi::endGuide post} msg] } {
                tk_messageBox -icon error -message \
@@ -705,7 +705,7 @@ itcl::body ActiveOptics::enable {} {
                tk_messageBox -icon error -message \
                   "Error opening loops - Internal GPI Error"
             }
-         }
+        # }
       }
    } else {
       # Stop the OIWFS if not wanted
@@ -796,7 +796,7 @@ itcl::body ActiveOptics::disable {} {
       }
    } else {
       if { [sa agssad get oiwfsName] eq "GPI" } {
-         if { [state oiwfs] } {
+        # if { [state oiwfs] } {
             cs gpi::endGuide set dir MARK
             if { [catch {cs gpi::endGuide post} msg] } {
                tk_messageBox -icon error -message \
@@ -806,7 +806,7 @@ itcl::body ActiveOptics::disable {} {
                tk_messageBox -icon error -message \
                   "Error opening loops - Internal GPI Error"
             }
-         }
+        # }
       } else {
          Oiwfs stop
       }
