@@ -97,14 +97,15 @@ proc tsdMain args {
    epics sa aossad
    epics sa gcalsad
    epics sa gpolsad
-#AWE  Below will not exist at GS until next year
-   if { ![catch {sa bfo info}] } {
-      epics sa bfo
+
+#AWE  Below will not exist at GS until next year  
+   if { [catch {epics sa bfo}] } {
+      #AWE should not generate an error this way
    }
    
    if { $::env(GEMINI_SITE) eq "CP" } {
       epics sa aomsad
-		epics sa gemssad
+      epics sa gemssad
    }
 
 # Wait to get connected to the TCS.
