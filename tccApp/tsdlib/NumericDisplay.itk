@@ -257,7 +257,7 @@ itcl::body NumericDisplay::constructor args {
    grid configure $itk_component(choplab) -padx 3
    grid configure $itk_component(ipa) -sticky w
 
-   # Instrument origin and IAA. and  P and Q
+   # Instrument origin and IAA. and  P and Q, Observatory Mode
 
    itk_component add instrolab {
       label $w.instrolab -text "INSTR Origin (arcsec):" -borderwidth 0
@@ -288,13 +288,20 @@ itcl::body NumericDisplay::constructor args {
       StatusField $w.instrq -labelmargin 5 -width 6 -entryborder 1 \
             -entryrelief sunken -anchor e -labeltext Q
    }
+   itk_component add obslab {
+      label $w.obslab -text "ObsMode:" -borderwidth 1 -text "ObsMode: "
+   }
+   itk_component add obsmode {
+      label  $w.obsmode -anchor e
+   }
 
    grid $itk_component(instrolab) $itk_component(instrop) $itk_component(instroq) \
       $itk_component(iaa) -sticky e -pady {0 3} -padx {0 3}
-   grid $itk_component(instrlab) $itk_component(instrp) $itk_component(instrq) -sticky e -pady {0 3} -padx {0 3}
+   grid $itk_component(instrlab) $itk_component(instrp) $itk_component(instrq) x $itk_component(obslab) $itk_component(obsmode) -sticky e -pady {0 3} -padx {0 3}
    grid configure $itk_component(instrlab) -padx 3
    grid configure $itk_component(instrolab) -padx 3
    grid configure $itk_component(iaa) -sticky w
+   grid configure $itk_component(obsmode) -sticky s
 
 
 
@@ -631,6 +638,18 @@ itcl::body NumericDisplay::update {} {
       $itk_component(ha) configure -text [lindex $demand 2]
       $itk_component(zd) configure -text [lindex $demand 3]
       $itk_component(am) configure -text [lindex $demand 4]
+   }
+
+   # Observatory Mode (BFO)
+   # AWE: catch if the sa does not exist (ie for GS until next year)
+   if { ![catch {set baseMode [sa bfo get base]}] } {
+      if ($baseMode) {$itk_component(obsmode) configure -text "Base" -foreground DarkGreen}
+   }
+   if { ![catch {set summitMode [sa bfo get summit]}] } {
+      if ($summitMode) {$itk_component(obsmode) configure -text "Summit" -foreground red}
+   }
+   if { ![catch {set standbyMode [sa bfo get standby]}] } {
+      if ($standbyMode) {$itk_component(obsmode) configure -text "Standby" -foreground blue}
    }
 
    # Nod state

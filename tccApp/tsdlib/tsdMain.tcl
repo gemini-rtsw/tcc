@@ -62,6 +62,9 @@ proc tsdMain args {
    
    # Create the CalParam object.
    CalParam calparam  -calFile $calfile
+
+   appData add configFile tsd[calparam cget -site].ca
+
    
    set skycalc_path [calparam cget -skycalc_dir]
    puts "using skycalc path: $skycalc_path"
@@ -94,6 +97,10 @@ proc tsdMain args {
    epics sa aossad
    epics sa gcalsad
    epics sa gpolsad
+#AWE  Below will not exist at GS until next year
+   if { ![catch {sa bfo info}] } {
+      epics sa bfo
+   }
    
    if { $::env(GEMINI_SITE) eq "CP" } {
       epics sa aomsad

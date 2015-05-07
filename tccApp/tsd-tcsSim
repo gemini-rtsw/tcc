@@ -58,23 +58,23 @@ if {$plat == "SunOS"} {
 }
 
 # Create the CalParam object.
-CalParam calparam
+# CalParam calparam
 
-set skycalc_path [calparam cget -skycalc_dir]
-puts "using skycalc path: $skycalc_path"
+# set skycalc_path [calparam cget -skycalc_dir]
+# puts "using skycalc path: $skycalc_path"
 
-if { [catch {set fid [open "|$skycalc_path/skycalc < lib/skycalc_input_file" r]}]} {
-   puts "Unable to determine whether Chile is using daylight saving time \
-         - assuming not. Please specify skycalc dir in calparams.<site>."
-   set ::CHILE_DAYLIGHT_SAVING 0
-} else {
-   set almanac [read $fid]
-   if { [string first CDT $almanac] == -1 } {
-      set ::CHILE_DAYLIGHT_SAVING 0
-   } else {
-      set ::CHILE_DAYLIGHT_SAVING 1
-   }
-}
+# if { [catch {set fid [open "|$skycalc_path/skycalc < lib/skycalc_input_file" r]}]} {
+#   puts "Unable to determine whether Chile is using daylight saving time \
+#         - assuming not. Please specify skycalc dir in calparams.<site>."
+#   set ::CHILE_DAYLIGHT_SAVING 0
+#} else {
+#   set almanac [read $fid]
+#   if { [string first CDT $almanac] == -1 } {
+#      set ::CHILE_DAYLIGHT_SAVING 0
+#   } else {
+#      set ::CHILE_DAYLIGHT_SAVING 1
+#   }
+#}
 
 # Set the name of the epics service configuration file.
 if { [info exists ::env(TCC_TCSNAME)] } {
@@ -89,7 +89,8 @@ if { [info exists ::env(TCC_TCSNAME)] } {
 }
 
 appData add configPath [file join $ROOT ca_config$ext]
-appData add configFile tsd.ca
+# AWE: Need to load site-specific in tsdMain, after loading calparam
+# appData add configFile tsd.ca
 
 # Load options database.
 option readfile [file join $ROOT options] userDefault
