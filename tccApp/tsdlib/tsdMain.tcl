@@ -102,6 +102,10 @@ proc tsdMain args {
    if { [catch {epics sa bfo}] } {
       #AWE should not generate an error this way
    }
+
+   if { [catch {epics sa vtk}] } {
+      #AWE should not generate an error this way
+   }
    
    if { $::env(GEMINI_SITE) eq "CP" } {
       epics sa aomsad
