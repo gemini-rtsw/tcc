@@ -642,18 +642,15 @@ itcl::body NumericDisplay::update {} {
 
    # Observatory Mode (BFO)
    # AWE: catch if the sa does not exist (ie for GS until next year)
-   if { [catch {set baseMode [sa bfo get base]}] || ![string is boolean -strict $baseMode] } {
-      set baseMode 0
+
+   if {! [catch {sa bfo info}]} {
+	set baseMode [sa bfo get base]
+        set summitMode [sa bfo get summit]
+        set standbyMode [sa bfo get standby]
+   	if ($baseMode) {$itk_component(obsmode) configure -text "Base" -foreground DarkGreen}
+   	if ($summitMode) {$itk_component(obsmode) configure -text "Summit" -foreground red}
+   	if ($standbyMode) {$itk_component(obsmode) configure -text "Standby" -foreground blue}
    }
-   if { [catch {set summitMode [sa bfo get summit]}] || ![string is boolean -strict $summitMode] } {
-      set summitMode 0
-   }
-   if { [catch {set standbyMode [sa bfo get standby]}] || ![string is boolean -strict $standbyMode] } {
-      set standbyMode 0
-   }
-   if ($baseMode) {$itk_component(obsmode) configure -text "Base" -foreground DarkGreen}
-   if ($summitMode) {$itk_component(obsmode) configure -text "Summit" -foreground red}
-   if ($standbyMode) {$itk_component(obsmode) configure -text "Standby" -foreground blue}
 
    # Nod state
    set nod [sa tcssad get nodState]
