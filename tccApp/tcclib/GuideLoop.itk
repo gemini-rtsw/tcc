@@ -926,8 +926,7 @@ itcl::body GuideLoop::m1mode {state} {
 
 itcl::body GuideLoop::enable {} {
    # Check to be sure that the A&G loop control is not currently BUSY
-   set loopState [AO cget -processState]
-   logactions logmess "The loop processState is: $loopState" 
+   set loopState [AO state processing]
    if {$loopState == "BUSY"} {
        logactions logmess "The loop processingState is BUSY, warning the user"
        set choice [tk_messageBox -icon warning -parent $itk_interior -type yesno -default no\
@@ -941,8 +940,7 @@ itcl::body GuideLoop::enable {} {
 
 itcl::body GuideLoop::disable {} {
    # Check to be sure that the A&G loop control is not currently BUSY
-   set loopState [AO cget -processState]
-   logactions logmess "The loop processState is: $loopState" 
+   set loopState [AO state processing]
    if {$loopState == "BUSY"} {
        logactions logmess "The loop processingState is BUSY, warning the user"
        set choice [tk_messageBox -icon warning -parent $itk_interior -type yesno -default no\
