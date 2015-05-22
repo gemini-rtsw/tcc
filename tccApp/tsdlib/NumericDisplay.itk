@@ -776,11 +776,19 @@ itcl::body NumericDisplay::update {} {
    }
 
    if { ![catch {set xv [sa vtk get xvtk]}] && [string is boolean -strict $xv] } {
-      $itk_component(xvtk) configure -text $xv -status ok
+      if { $xv } {
+          $itk_component(xvtk) configure -text $xv -status ok
+      } else {
+          $itk_component(xvtk) configure -text $xv -status none
+      }
    }
 
    if { ![catch {set yv [sa vtk get yvtk]}] && [string is boolean -strict $yv] } {
-      $itk_component(yvtk) configure -text $yv -status ok
+      if { $yv } {
+          $itk_component(yvtk) configure -text $yv -status ok
+      } else {
+          $itk_component(yvtk) configure -text $yv -status none
+      }
    }
 
    # Time.
