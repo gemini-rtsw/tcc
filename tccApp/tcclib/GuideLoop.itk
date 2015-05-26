@@ -36,7 +36,6 @@ itcl::class GuideLoop {
       method configOiEx {}
       method configHREx {}
       method enable {}
-      method disable {}
       method m1mode {state}
       variable monids
       variable gemsSys ""
@@ -334,7 +333,7 @@ itcl::body GuideLoop::constructor args {
       LiveButton $w.on -text Enable -command [itcl::code $this enable]
    }
    itk_component add off {
-       LiveButton $w.off -text Disable -command [itcl::code $this disable]
+       LiveButton $w.off -text Disable -command { AO disable }
    }
    itk_component add reset {
       button $w.reset -text "Disable & Reset" -command [itcl::code $this reset]
@@ -872,6 +871,11 @@ itcl::body GuideLoop::configHREx {} {
    AO configure -hrwfsExpose [$itk_component(hrwfs) getExp]
 }
 
+itcl::body GuideLoop::enable {} {
+   enableGaos
+   AO enable
+}
+
 itcl::body GuideLoop::m1mode {state} {
    switch $state {
       P1 {
@@ -924,37 +928,11 @@ itcl::body GuideLoop::m1mode {state} {
    }
 }
 
-itcl::body GuideLoop::enable {} {
-   # Check to be sure that the A&G loop control is not currently BUSY
-   set loopState [AO state processing]
-   if {$loopState == "BUSY"} {
-       logactions logmess "The loop processingState is BUSY, warning the user"
-       set choice [tk_messageBox -icon warning -parent $itk_interior -type yesno -default no\
-		       -message "You are attempting an action while the loop processing is BUSY. \nContinue anyway?\n\nCaution: continuing could result in needing to start a new TCC."]
-       if {$choice == "no"} return
-   }
-   AO process BUSY
-   enableGaos
-   AO enable
-}
-
-itcl::body GuideLoop::disable {} {
-   # Check to be sure that the A&G loop control is not currently BUSY
-   set loopState [AO state processing]
-   if {$loopState == "BUSY"} {
-       logactions logmess "The loop processingState is BUSY, warning the user"
-       set choice [tk_messageBox -icon warning -parent $itk_interior -type yesno -default no\
-		       -message "You are attempting an action while the loop processing is BUSY. \nContinue anyway?\n\nCaution: continuing could result in needing to start a new TCC."]
-       if {$choice == "no"} return
-   }
-   AO process BUSY
-   AO disable
-}
-
 itcl::body GuideLoop::reset {} {
 
    # Disable
-   disable
+   AO process IDLE
+   AO disable
 
    # Simulate pushing all the "off" buttons.
    $itk_component(pwfs1) switchPop
@@ -1062,12 +1040,9 @@ itcl::body GuideLoop::recolourAltairArrows {} {
       }
    }
    set wfs_gaos ""
-   if { [AO state pwfs1] || [AO state oiwfs]} {
+   if { [AO state pwfs1] } {
       set wfs_gaos yellow
-      if { [AO state lgsp1source] && [AO state pwfs1]} {
-         set wfs_gaos green
-      }
-      if { [AO state lgsoisource] && [AO state oiwfs]} {
+      if { [AO state lgsp1source] } {
          set wfs_gaos green
       }
    }
