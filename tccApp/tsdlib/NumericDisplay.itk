@@ -31,6 +31,7 @@ itcl::class NumericDisplay {
       method inPosition {rec value}
       method noheartbeat {}
       method heartbeat {rec value}
+      method chopping {}
       method inposreason {}
       variable nohbid
       variable hbid
@@ -438,15 +439,18 @@ itcl::body NumericDisplay::constructor args {
             -entryrelief sunken -labeltext Y
    }
 
-   itk_component add vtklab {
-      label $w.vtklab -text "VTK:" -borderwidth 0
+   if { ![catch {set xv [sa vtk get xvtk]}]} {
+       itk_component add vtklab {
+          label $w.vtklab -text "VTK:" -borderwidth 0
+       }
+       itk_component add xvtk {
+          StatusField $w.xvtk -labelmargin 2 -width 5 -entryborder 1 -entryrelief sunken -labeltext X
+       }
+       itk_component add yvtk {
+           StatusField $w.yvtk -labelmargin 2 -width 5 -entryborder 1 -entryrelief sunken -labeltext Y
+       }
    }
-   itk_component add xvtk {
-      StatusField $w.xvtk -labelmargin 2 -width 5 -entryborder 1 -entryrelief sunken -labeltext X
-   }
-   itk_component add yvtk {
-       StatusField $w.yvtk -labelmargin 2 -width 5 -entryborder 1 -entryrelief sunken -labeltext Y
-   }
+
 
    #   grid $itk_component(m2lab) -pady {0 3}
    grid $itk_component(ttlab) $itk_component(tip) $itk_component(tilt) -pady 3 -padx {0 3}
@@ -458,8 +462,19 @@ itcl::body NumericDisplay::constructor args {
    grid $itk_component(comalab) $itk_component(xcoma) $itk_component(ycoma) -pady {0 3} -padx {0 3}
    grid configure $itk_component(comalab) -padx 3
 
-   grid $itk_component(vtklab) $itk_component(xvtk) $itk_component(yvtk) -pady {0 3} -padx {0 3}
-   grid configure $itk_component(vtklab) -padx 3
+   if { ![catch {set xv [sa vtk get xvtk]}]} {
+       grid $itk_component(vtklab) $itk_component(xvtk) $itk_component(yvtk) -pady {0 3} -padx {0 3}
+       grid configure $itk_component(vtklab) -padx 3
+   } else {
+      itk_component add nod {
+         label $w.nod -borderwidth 0
+      }
+      itk_component add chopping {
+         StatusField $w.chopping -width 14 -anchor w -labelmargin 2 -entryrelief sunken -entryborder 1
+      }
+      grid $itk_component(nod) $itk_component(chopping) - -pady {0 3} -padx {0 3}
+      grid configure $itk_component(nod) -padx 3 
+   } 
 
    # Pack the top level frames.
    pack $itk_component(objtime) -fill x -expand y
@@ -641,6 +656,17 @@ itcl::body NumericDisplay::update {} {
       $itk_component(am) configure -text [lindex $demand 4]
    }
 
+   # TCC: VTK for GN
+
+   if { [catch {set xv [sa vtk get xvtk]}]} {
+       # Nod state
+       set nod [sa tcssad get nodState]
+       $itk_component(nod) configure -text "Nod $nod"
+    
+       # Chop state
+       chopping
+   }
+
    # Observatory Mode (BFO)
    # AWE: catch if the sa does not exist (ie for GS until next year)
 
@@ -775,19 +801,23 @@ itcl::body NumericDisplay::update {} {
       $itk_component(ycoma) configure -text $ycoma -status error
    }
 
-   if { ![catch {set xv [sa vtk get xvtk]}] && [string is boolean -strict $xv] } {
-      if { $xv } {
-          $itk_component(xvtk) configure -text $xv -status ok
-      } else {
-          $itk_component(xvtk) configure -text $xv -status none
+   if { ![catch {set xv [sa vtk get xvtk]}]} {
+      if { [string is boolean -strict $xv] } {
+         if { $xv } {
+             $itk_component(xvtk) configure -text $xv -status ok
+         } else {
+             $itk_component(xvtk) configure -text $xv -status none
+         }
       }
    }
 
-   if { ![catch {set yv [sa vtk get yvtk]}] && [string is boolean -strict $yv] } {
-      if { $yv } {
-          $itk_component(yvtk) configure -text $yv -status ok
-      } else {
-          $itk_component(yvtk) configure -text $yv -status none
+   if { ![catch {set yv [sa vtk get yvtk]}]} {
+      if { [string is boolean -strict $yv] } {
+         if { $yv } {
+             $itk_component(yvtk) configure -text $yv -status ok
+         } else {
+             $itk_component(yvtk) configure -text $yv -status none
+         }
       }
    }
 
@@ -994,6 +1024,36 @@ itcl::body NumericDisplay::heartbeat {rec value} {
 
    # Schedule the noheartbeat method again.
    set nohbid [after 5000 [itcl::code $this noheartbeat]]
+}
+
+itcl::body NumericDisplay::chopping {} {
+
+   set chopping [sa m2ssad get chopping]
+   set beam [sa tcssad get chopBeam]
+   set time [sa tcssad get chopBeam time]
+   if { [string equal $chopping YES] } {
+
+      # If we are chopping then check that the chop beam is still updating.
+      if { $time eq $lastchop } {
+         incr chopdead
+      } else {
+         set chopdead 0
+         set lastchop $time
+      }
+      if { $chopdead > 10 } {
+         $itk_component(chopping) configure -text "Chopping failed" \
+            -status error
+      } else {
+         $itk_component(chopping) configure -text "Chopping" \
+            -status ok
+      }
+   } else {
+
+      # Not chopping so set the count of dead cycles to zero.
+      set chopdead 0
+      $itk_component(chopping) configure -text "Beam $beam" \
+         -status ok
+   }
 }
 
 itcl::body NumericDisplay::inposreason {} {
