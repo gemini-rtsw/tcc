@@ -56,7 +56,7 @@ itcl::body PointLog::constructor {pointtest} {
 
 # Create a dialog box for entering comments.
       iwidgets::promptdialog .pd -title Comments \
-               -labeltext Comments: -modality global
+               -labeltext Comments: -modality application
       .pd buttonconfigure OK -command ".pd deactivate 1"
       .pd buttonconfigure Cancel -command ".pd deactivate 0"
       .pd buttonconfigure Apply -command [itcl::code $this addcomment]
@@ -131,11 +131,6 @@ itcl::body PointLog::constructor {pointtest} {
 # Restore the default directory
    cd $pwd
 
-   if { [string is space $LogFileName] } {
-      error "Log file not opened"
-   } else {
-      return
-   }
 }
 
 itcl::body PointLog::log {name alarm time values} {
