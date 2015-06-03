@@ -131,6 +131,11 @@ itcl::body PointLog::constructor {pointtest} {
 # Restore the default directory
    cd $pwd
 
+   if { [string is space $LogFileName] } {
+      error "Log file not opened"
+   } else {
+      return
+   }
 }
 
 itcl::body PointLog::log {name alarm time values} {
