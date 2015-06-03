@@ -46,7 +46,12 @@ if { [info exists env(TCC_TCSNAME)] } {
    set ext ""
 }
 appData add configPath $ROOT/ca_config$ext
-appData add configFile probecal.ca
+# sad.ca is different between CP and MK
+if { $env(GEMINI_SITE) eq "CP" } {
+    appData add configFile probecalCP.ca
+} else {
+    appData add configFile probecalMK.ca
+}
 
 appData add appKind Tcs
 appData add appName probecal
