@@ -78,7 +78,13 @@ if { [info exists env(TCC_TCSNAME)] && \
    set ext ""
 }
 appData add configPath [file join $ROOT ca_config$ext]
-appData add configFile pointtest.ca
+# sad.ca is different between Cp and MK
+if { $env(GEMINI_SITE) eq "CP" } {
+    appData add configFile pointtestCP.ca
+} else {
+    appData add configFile pointtestCP.ca
+}
+    
 
 appData add appKind Tcs
 appData add appName pointTest
