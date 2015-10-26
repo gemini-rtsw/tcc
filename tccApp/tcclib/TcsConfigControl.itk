@@ -526,6 +526,8 @@ itcl::body TcsConfigControl::apply {} {
       } else {
          set ::Config(tcs.field.guide.oiwfswavelength,value) "K"
       }
+   } else {
+      set ::Config(tcs.field.guide.oiwfswavelength,value) ""
    }
 
    #     set oiwlList $::Config(tcs.field.guide.oiwfswavelength,list)
@@ -589,6 +591,11 @@ itcl::body TcsConfigControl::apply {} {
       set ::Config(tcs.pointorig,value) $instPO
    }
 
+   if {[calparam cget -site] eq "MK" && [string match "*AO*" $guide]} {
+      set ::Config(tcs.field.guide.aowfswavelength,value) "GAOS"
+   } else {
+      set ::Config(tcs.field.guide.aowfswavelength,value) ""
+   }
    # Call the normal apply function.
    $this ComponentControl::doapply
 
@@ -607,7 +614,6 @@ itcl::body TcsConfigControl::apply {} {
    # Configure default filters, fieldstop for the WFS, and AO Flexture Model
    if {[string match "*AO*" $guide]} {
       logactions logmess "Configuring for AO"
-      set ::Config(tcs.field.guide.aowfswavelength,value) "GAOS"
       #	pwfs filter pwfs2 "AOWFS"
       # set the NCPA and Flexure config file names for altair
       if {[string match "*LGS*" $::Config(tcs.gaos,value)]} {
