@@ -387,35 +387,37 @@ itcl::body TcsConfigControl::apply {} {
    if { ![catch {cs configForAO info}] } {
       if { [string match "No AO" $::Config(tcs.gaos,value)] || [string match "" $::Config(tcs.gaos,value)]} {
 
-         #Restore M1 and M2 figure to pre-GAOS state
-         if { [::SlewOptionsNames::$slewoptions cget -restoreFigure] } {
-            if { [sa tcssad get m1ModelName] ne "non-AO" && [sa tcssad get m1ModelValid] eq "Valid" } {
-               cs m1ModelRestore set model non-AO
-            }
-         }
-
-         cs m1ModelSave set model non-AO
-			cs configForAO set useAO "No"
-		   logger command configForAO
-		   logactions logmess "Applying configForAO No"
-		   iss configure -source SKY -ao OUT
-		   if { [catch {cs tcsApply post} msg] } {
-				tk_messageBox -icon error -message $msg
-				return
-		   }
-		} else {
-         cs m1ModelSave set model AO
-		   cs configForAO set useAO "Yes"
-		   logger command configForAO
-		   logactions logmess "Applying configForAO Yes"
-		   iss configure -source AO -ao IN
-		   if { [catch {cs tcsApply post} msg] } {
-				tk_messageBox -icon error -message $msg
-				return
-		   }
-		}
+	#Restore M1 and M2 figure to pre-GAOS state
+        if { [::SlewOptionsNames::$slewoptions cget -restoreFigure] } {
+           if { [sa tcssad get m1ModelName] ne "non-AO" && [sa tcssad get m1ModelValid] eq "Valid" } {
+              cs m1ModelRestore set model non-AO
+           }
 	}
-	
+	cs m1ModelSave set model non-AO
+	cs configForAO set useAO "No"
+	logger command configForAO
+	logactions logmess "Applying configForAO No"
+	#AWE by using setfold, the sfPos variable is configured and instrument origin and wavelength are configured at the same time.
+	#iss configure -source SKY -ao OUT
+	ObserveControl::setfold "Sky>Instr" 1
+	if { [catch {cs tcsApply post} msg] } {
+	   tk_messageBox -icon error -message $msg
+	   return
+      	}
+      } else {
+	cs m1ModelSave set model AO
+	cs configForAO set useAO "Yes"
+	logger command configForAO
+	logactions logmess "Applying configForAO Yes"
+	#iss configure -source AO -ao IN
+	ObserveControl::setfold "Sky>AO>Instr" 1
+	if { [catch {cs tcsApply post} msg] } {
+	   tk_messageBox -icon error -message $msg
+	   return
+	}
+      }
+   }
+
    #Already done as part of the GeMS configuration
    #if {[calparam cget -site] eq "CP" && !$::Flags(ignoreao) && ![string match
    # "No AO" $::Config(tcs.gaos,value)]} {
@@ -771,12 +773,6 @@ itcl::body TcsConfigControl::apply {} {
          logactions logmess "Applying ODGW size: $odgwSize"
          [GemsSys::getSingleton] setODGWSize $odgwSize 1
       }
-   }
-
-   # Reinvoke the sf to auto conf inst origin and wavelength
-   global sfPos
-   if {$sfPos != "empty"} {
-      ObserveControl::setfold $sfPos 0
    }
 }
 
