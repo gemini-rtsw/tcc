@@ -81,7 +81,7 @@ itcl::class Field {
       method add {type name args}
       method remove {type name}
       method subconfigure {type name args}
-		method subconfigureTargetMagnitude {target band val}
+      method subconfigureTargetMagnitude {target band val}
       method subinit {type name}
       method subcget {type name option}
       method plot {azelplot} {puts "plotting $this on $azelplot"}
@@ -90,18 +90,18 @@ itcl::class Field {
       variable pwfs2target ""
       variable oiwfstarget ""
       variable aowfstarget ""
-		variable ttgs1target ""
-		variable ttgs2target ""
-		variable ttgs3target ""
-		variable odgw1target ""
-		variable odgw2target ""
-		variable odgw3target ""
-		variable odgw4target ""
-		variable swaptarget ""
-		variable swapguide ""
-		variable swaprotator ""
-		variable swapwavelength ""
-		variable gcount 0
+      variable ttgs1target ""
+      variable ttgs2target ""
+      variable ttgs3target ""
+      variable odgw1target ""
+      variable odgw2target ""
+      variable odgw3target ""
+      variable odgw4target ""
+      variable swaptarget ""
+      variable swapguide ""
+      variable swaprotator ""
+      variable swapwavelength ""
+      variable gcount 0
       variable rotator ""
       variable guide ""
       variable wavelength ""
@@ -112,23 +112,23 @@ itcl::class Field {
       variable targetlist
       variable trackratens
       variable trackratelist
-		variable trackratelist2
+      variable trackratelist2
       variable posAngle
       variable guideGroup ""
 
       #HACK to configure ODGW size
       variable odgwSize ""
 		
-		variable taggedTargets
-		method addTaggedTarget {{tagPrefix User} {target ""}}
-		method removeTaggedTarget {taggedTarget}
-		method setDefaultTarget { tagtarget }
-		method clearDefaultTarget { tag }
-		method getDefaultTarget { tag }
-		method setSwapTarget { tagtarget }
-		method clearSwapTarget {}
-		method getSwapTarget {}
-		method subscribe {observer}
+      variable taggedTargets
+      method addTaggedTarget {{tagPrefix User} {target ""}}
+      method removeTaggedTarget {taggedTarget}
+      method setDefaultTarget { tagtarget }
+      method clearDefaultTarget { tag }
+      method getDefaultTarget { tag }
+      method setSwapTarget { tagtarget }
+      method clearSwapTarget {}
+      method getSwapTarget {}
+      method subscribe {observer}
       method unsubscribe {observer}
       
       common cwfsWavelength 0.65
@@ -143,11 +143,11 @@ itcl::class Field {
       variable current_rotator ""
       variable current_wavelength ""
 		
-		method cleanTaggedTargets {}
-		method getFreeTargetId {}
+      method cleanTaggedTargets {}
+      method getFreeTargetId {}
 		
-		variable observerList {}
-		method notify {elementList}
+      variable observerList {}
+      method notify {elementList}
    }
 }
 
@@ -225,49 +225,36 @@ itcl::body Field::apply {comp} {
 	global env
 
 	if { $swaptarget ne "" } {
-#		set tag [$swaptarget cget -tagPrefix]
-#		switch $tag {
-#		   "AOWFS" {
-#		       set lpath "Sky>AO>AC/HR"
-#		   }
-#		   default {
-#		       set lpath "Sky>AC/HR"
-#		   }
-#		}
-#		if [winfo exists .observePanel] {
-#		    ::.observePanel.frame.control.botframe.mirrors.lpath select $lpath
-#		}
-
-		[$swaptarget cget -target] apply science
-		"::GuideNames::$swapguide" apply $comp.guide
-      if {[calparam cget -site] eq "CP"} {
-         foreach vguider {g1 g2 g3 g4} {
-            set value [[TcsVirtualMap::getSingleton] getMap $vguider]
-            switch $value {
-            TTGS1 -
-            TTGS2 -
-            TTGS3 -
-            ODGW1 -
-            ODGW2 -
-            ODGW3 -
-            ODGW4 {
-               "::GuideNames::$swapguide" applyGems $vguider
-            }
-            default {
-               "::GuideNames::$swapguide" disableGems $vguider
-            }
-            }
-         }
-      }
+	   [$swaptarget cget -target] apply science
+	   "::GuideNames::$swapguide" apply $comp.guide
+      	   if {[calparam cget -site] eq "CP"} {
+              foreach vguider {g1 g2 g3 g4} {
+                 set value [[TcsVirtualMap::getSingleton] getMap $vguider]
+                 switch $value {
+		    TTGS1 -
+            	    TTGS2 -
+            	    TTGS3 -
+            	    ODGW1 -
+            	    ODGW2 -
+            	    ODGW3 -
+            	    ODGW4 {
+               	       "::GuideNames::$swapguide" applyGems $vguider
+                    }
+            	    default {
+                       "::GuideNames::$swapguide" disableGems $vguider
+            	    }
+                 }
+              }
+           }
 	   if { ! [string equal $rotator ""] } {
 	      ::RotatorNames::$rotator apply $comp.rotator
 	   }
 		
-		"::WavelengthNames::$swapwavelength" configure -set_baffles 0
-		"::WavelengthNames::$swapwavelength" apply $comp.wavelength
-		"::WavelengthNames::$swapwavelength" configure -set_baffles 1
+	   "::WavelengthNames::$swapwavelength" configure -set_baffles 0
+	   "::WavelengthNames::$swapwavelength" apply $comp.wavelength
+	   "::WavelengthNames::$swapwavelength" configure -set_baffles 1
 
-		if { ![string is space $airmassLimit] } {
+	   if { ![string is space $airmassLimit] } {
 	      cs airmassLimit set limit $airmassLimit
 	      logger command airmassLimit
 	   }
@@ -279,93 +266,182 @@ itcl::body Field::apply {comp} {
 	      ocssession obsStart $observationid
 	   }
 	} else {
-		#set light path (probably changed by a swap)
-#		if {$guide ne "" } {
-#			switch $guide {
-#				"No guiding" -
-#			   "P1-P2" -
-#			   "P1-OI" -
-#			   "AO-P1" -
-#			   "P1" -
-#			   "P2-OI" -
-#			   "P2" -
-#			   "OI" {
-#				   set lpath "Sky>Instr"
-#				}
-#			   "AO-OI" -
-#			   "AO" -
-#				"GeMS" -
-#				"GeMS-OI" {
-#				   set lpath "Sky>AO>Inst"
-#				}
-#			}
-#			if [winfo exists .observePanel] {
-#			    ::.observePanel.frame.control.botframe.mirrors.lpath select $lpath
-#			}
-#		}
-# Call the apply method of all the components that have a value.
+	   # Call the apply method of all the components that have a value.
 	   if { ! [string equal $sciencetarget ""] } {
 	      	[$sciencetarget cget -target] apply science
 	   }
-		foreach {tagtarget code} [list $pwfs1target pwfs1 $pwfs2target pwfs2 $oiwfstarget oiwfs $aowfstarget aowfs] {
-			if { $tagtarget ne "" } {
-				[$tagtarget cget -target] apply $code
-			}
+	   foreach {tagtarget code} [list $pwfs1target pwfs1 $pwfs2target pwfs2 $oiwfstarget oiwfs $aowfstarget aowfs] {
+		if { $tagtarget ne "" } {
+		   [$tagtarget cget -target] apply $code
 		}
-		if {[calparam cget -site] eq "CP"} {
-			set gId 1
-			foreach tagtarget "$ttgs1target $ttgs2target $ttgs3target $odgw1target $odgw2target $odgw3target $odgw4target" {
-				if { $tagtarget ne "" } {
-					if { $gId > 4 } {
-						error "Trying to use more that 4 GEMS stars."
-					} else {
-						[$tagtarget cget -target] apply g$gId
-						set tag [$tagtarget cget -tagPrefix]
-						switch $tag {
-							CWFS1 {
-								cs guidersMapping set G${gId}guider TTGS1
-								if { $guide != ""} { 
-									"::GuideNames::$guide" applyGems g${gId}
-								}
-								cs wavelG${gId} set wavel $cwfsWavelength
-							}
-							CWFS2 {
-								cs guidersMapping set G${gId}guider TTGS2
-								if { $guide != ""} {								
-									"::GuideNames::$guide" applyGems g${gId}
-								}
-								cs wavelG${gId} set wavel $cwfsWavelength
-							}
-							CWFS3 {
-								cs guidersMapping set G${gId}guider TTGS3
-								if { $guide != ""} {
-									"::GuideNames::$guide" applyGems g${gId}
-								}
-								cs wavelG${gId} set wavel $cwfsWavelength
-							}
-							ODGW1 -
-							ODGW2 -
-							ODGW3 -
-							ODGW4 {
-								cs guidersMapping set G${gId}guider [$tagtarget cget -tagPrefix]
-								if { $guide != ""} {								
-									"::GuideNames::$guide" applyGems g${gId}
-								}
-								set scienceWavel [::WavelengthNames::$wavelength cget -wavel]
-								cs wavelG${gId} set wavel $scienceWavel
-							}
-						}
-						incr gId
-					}
+	   }
+	   if {[calparam cget -site] eq "CP"} {
+		set gId 1
+		foreach tagtarget "$ttgs1target $ttgs2target $ttgs3target $odgw1target $odgw2target $odgw3target $odgw4target" {
+		   if { $tagtarget ne "" } {
+			if { $gId > 4 } {
+			   error "Trying to use more that 4 GEMS stars."
+			} else {
+			   [$tagtarget cget -target] apply g$gId
+			   set tag [$tagtarget cget -tagPrefix]
+			   switch $tag {
+				CWFS1 {
+				   cs guidersMapping set G${gId}guider TTGS1
+				   if { $guide != ""} { 
+					"::GuideNames::$guide" applyGems g${gId}
+				   }
+				   cs wavelG${gId} set wavel $cwfsWavelength
 				}
-			}
-			for {} {$gId <= 4} {incr gId} {
-				cs guidersMapping set G${gId}guider None
-				if { $guide != ""} {				
-					"::GuideNames::$guide" disableGems g${gId}
+				CWFS2 {
+				   cs guidersMapping set G${gId}guider TTGS2
+				   if { $guide != ""} {								
+					"::GuideNames::$guide" applyGems g${gId}
+				   }
+				   cs wavelG${gId} set wavel $cwfsWavelength
 				}
+				CWFS3 {
+				   cs guidersMapping set G${gId}guider TTGS3
+				   if { $guide != ""} {
+					"::GuideNames::$guide" applyGems g${gId}
+				   }
+				   cs wavelG${gId} set wavel $cwfsWavelength
+				}
+				ODGW1 -
+				ODGW2 -
+				ODGW3 -
+				ODGW4 {
+				   cs guidersMapping set G${gId}guider [$tagtarget cget -tagPrefix]
+				   if { $guide != ""} {								
+					"::GuideNames::$guide" applyGems g${gId}
+				   }
+				   set scienceWavel [::WavelengthNames::$wavelength cget -wavel]
+				   cs wavelG${gId} set wavel $scienceWavel
+				}
+			   }
+			   incr gId
 			}
+		   }
 		}
+		for {} {$gId <= 4} {incr gId} {
+		   cs guidersMapping set G${gId}guider None
+		   if { $guide != ""} {				
+			"::GuideNames::$guide" disableGems g${gId}
+		   }
+		}
+	   }
+
+	   #AWE Configure the OIWFS pixel router
+
+	   # Set OIWFS mode in the TCS
+
+	   if { ! [string equal $guide ""] } {
+	      set inst $::Config(tcs.instrument,value)
+      	      if {([string equal $guide "AO-OI"]) && [string match "*NIFS*" $inst]} {
+                 set oiwfstarget $::Config(tcs.field.oiwfstarget,value)
+                 #puts "oiwfs target: $oiwfstarget"
+                 if {! [string equal $oiwfstarget ""]} {
+                    #puts "found NIFS (Aowfs/OI)"
+                    cs oiwfsSelect set oiwfs NIFS
+                    cs oiwfsSelect set output WFS
+                    logger command oiwfsSelect
+                 } else {
+                    #puts "no OIWFS"
+                    cs oiwfsSelect set oiwfs None
+                    cs oiwfsSelect set output WFS
+                    logger command oiwfsSelect
+                 }
+              } elseif {[string match "*OI*" $guide]} {
+                 #puts "OIWFS config, choosing oiwfs based on instrument: $inst"
+                 if {[string match "*GMOS*" $inst]} {
+                    #puts "found GMOS"
+            	    cs oiwfsSelect set oiwfs GMOS
+            	    cs oiwfsSelect set output WFS
+            	    logger command oiwfsSelect
+                 } elseif {[string match "*NIFS*" $inst]} {
+            	    #puts "found NIFS"
+            	    cs oiwfsSelect set oiwfs NIFS
+            	    cs oiwfsSelect set output WFS
+            	    logger command oiwfsSelect
+	         } elseif {[string match "*GNIRS*" $inst]} {
+                    #puts "found GNIRS"
+            	    cs oiwfsSelect set oiwfs GNIRS
+            	    cs oiwfsSelect set output WFS
+            	    logger command oiwfsSelect
+                 } elseif {[string match "*NIRI*" $inst]} {
+            	    #puts "found NIRI"
+            	    cs oiwfsSelect set oiwfs NIRI
+            	    cs oiwfsSelect set output WFS
+            	    logger command oiwfsSelect
+                 } elseif {[string match "*NICI*" $inst]} {
+            	    #puts "found NICI"
+            	    cs oiwfsSelect set oiwfs NICI
+            	    cs oiwfsSelect set output WFS
+            	    logger command oiwfsSelect
+                 } elseif {[string match "*BHROS*" $inst]} {
+            	    #puts "found BHROS"
+            	    cs oiwfsSelect set oiwfs BHROS
+            	    cs oiwfsSelect set output WFS
+            	    logger command oiwfsSelect
+                 } elseif {[string match "*F2*" $inst]} {
+            	    #puts "found FLAMINGOS2"
+            	    cs oiwfsSelect set oiwfs F2
+            	    cs oiwfsSelect set output WFS
+            	    logger command oiwfsSelect
+                 } else {
+            	    #puts "no OIWFS"
+            	    cs oiwfsSelect set oiwfs None
+            	    cs oiwfsSelect set output WFS
+            	    logger command oiwfsSelect
+                 }
+              } else {
+                 #puts "no OIWFS"
+                 cs oiwfsSelect set oiwfs None
+                 cs oiwfsSelect set output WFS
+                 logger command oiwfsSelect
+              }
+           }
+
+	   #GPI doen not need a guiding configuration, but still must be selected in
+   	   #the AG.
+	   if {[string match "*GPI*" $inst]} {
+	      cs oiwfsSelect set oiwfs GPI
+	      cs oiwfsSelect set output WFS
+	      logger command oiwfsSelect
+	   }
+	   #HACK to have the OI selected before configuring the telescope.
+	   if { [catch {cs tcsApply post} msg] } {
+	      tk_messageBox -icon error -message $msg
+	      return
+	   }
+	   after 1500
+
+	   # Configure default filters, fieldstop for the WFS
+	
+	   if {[string match "*P1*" $guide]} {
+	      pwfs filter pwfs1 "Red"
+	      #		pwfs fldstop pwfs1 "open1"
+	   }
+	
+	   if {[string match "*P2*" $guide]} {
+	      pwfs filter pwfs2 "Red"
+	      #		pwfs fldstop pwfs2 "open1"
+	   }
+
+	   if {[string match "*OI*" $guide]} {
+	      if {[string match "*GMOS*" $inst]} {
+	         set ::Config(tcs.field.guide.oiwfswavelength,value) "GMOS OIWFS"
+	      } elseif {[string match "*NICI*" $inst]} {
+	         set ::Config(tcs.field.guide.oiwfswavelength,value) "NICI OIWFS"
+	      } elseif {[string match "*F2*" $inst]} {
+	         set ::Config(tcs.field.guide.oiwfswavelength,value) "F2 OIWFS"
+	      } else {
+	         set ::Config(tcs.field.guide.oiwfswavelength,value) "K"
+	      }
+	   } else {
+	      set ::Config(tcs.field.guide.oiwfswavelength,value) ""
+	   }
+
+
 	   if { ! [string equal $guide ""] } {
 	      ::GuideNames::$guide apply $comp.guide
 	   }
