@@ -240,24 +240,19 @@ itcl::body ActiveOptics::enable {} {
    global AOtryingToReuseGain AOreuseGains
    set skip_strap 0
 
-   if {$processState == "BUSY"} {
-      logactions logmess "ActiveOptics::enable already busy, ignoring command"
-      return
-   } else {
-      process BUSY
-      set currentconfig ""
-      set config [configure]
+   process BUSY
+   set currentconfig ""
+   set config [configure]
+   foreach item $config {
+      lappend currentconfig [list [lindex $item 0] [lindex $item 2]]
+   }
+   if { $gaosObj ne "" } {
+      set config [$gaosObj configure]
       foreach item $config {
          lappend currentconfig [list [lindex $item 0] [lindex $item 2]]
       }
-      if { $gaosObj ne "" } {
-         set config [$gaosObj configure]
-         foreach item $config {
-            lappend currentconfig [list [lindex $item 0] [lindex $item 2]]
-         }
-      }
-      logactions logmess  "ActiveOptics::enable: $currentconfig"
    }
+   logactions logmess  "ActiveOptics::enable: $currentconfig"
 
    # check to make sure we're not using OI probe guiding with GMOS
    if { ($probeto == "OIWFS") && [string match "*GMOS*" $::Config(tcs.instrument,value)]} {
@@ -771,15 +766,9 @@ itcl::body ActiveOptics::enable {} {
 }
 
 itcl::body ActiveOptics::disable {} {
-   #puts "ActiveOptics::disable"
 
-   if {$processState == "BUSY"} {
-      logactions logmess "ActiveOptics::disable already busy, ignoring command"
-      return
-   } else {
-      process BUSY
-      logactions logmess  "ActiveOptics::disable"
-   }
+   process BUSY
+   logactions logmess  "ActiveOptics::disable"
 
    # Stop the wave-front sensors.
    Pwfs1 stop
@@ -925,7 +914,7 @@ itcl::body ActiveOptics::disable {} {
 itcl::body ActiveOptics::state {component} {
    global env
    # Returns the current state of a component.
-
+   update
    switch $component {
       processing {
          return $processState
