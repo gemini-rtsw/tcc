@@ -33,10 +33,15 @@ itcl::body LogActions::constructor {} {
     }
     #puts "ext: [exec date +%H_%M] log dir:  $log"
     puts [exec mkdir -m777 -p $log]
-    set file $log/tcclog.[exec date +%H_%M]
+    #AWE embed the hostname in the filename to make logs easier to find
+    set file $log/tcclog_[exec hostname].[exec date +%H_%M]
     #puts "file: $file"
     set logfid [open $file "CREAT WRONLY APPEND"]
     #puts "fid: $logfid"
+
+    #AWE Add the host from which the TCC was started.
+    logmess "TCC started from [exec hostname] on [exec date]"
+
 }
 
 itcl::body LogActions::destructor {} {
