@@ -72,7 +72,7 @@ itcl::body AltairControl::constructor args {
    itk_component add beamsplitter {
       iwidgets::optionmenu $w.beamsplitter -labeltext "Beam Splitter"
    }
-   $itk_component(beamsplitter) insert end "A (1 um)" "B (850 nm)"
+   $itk_component(beamsplitter) insert end WAVELENGTH_A WAVELENGTH_B
    pack $itk_component(beamsplitter) -anchor e -pady 4
 
    # LGS
@@ -127,7 +127,7 @@ itcl::body AltairControl::reset {} {
    $itk_component(gsmag) clear
    $itk_component(seeing) clear
    $itk_component(windspeed) clear
-   $itk_component(beamsplitter) select "*1 um*"
+   $itk_component(beamsplitter) select WAVELENGTH_B
    set lgs OFF
    set deployAdc IN
    set adjustAdc ON
@@ -156,10 +156,10 @@ itcl::body AltairControl::save {name} {
    $name configure -gsmag [$itk_component(gsmag) get]
    $name configure -seeing [$itk_component(seeing) get]
    $name configure -windspeed [$itk_component(windspeed) get]
-   if { [string match "*1 um*" [$itk_component(beamsplitter) get] ] } {
-      $name configure -wavelength "1 um"
+   if { [string match WAVELENGTH_A [$itk_component(beamsplitter) get] ] } {
+      $name configure -wavelength WAVELENGTH_A
    } else {
-      $name configure -wavelength "850 nm"
+      $name configure -wavelength WAVELENGTH_B
    }
    $name configure -deployAdc $deployAdc
    $name configure -adjustAdc $adjustAdc
