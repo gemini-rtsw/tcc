@@ -615,12 +615,12 @@ itcl::body Handset::onTcsStatusChange {reasons} {
    if { $need_to_close_loop} {
       if {[string match "TRUE*" $INPOS] && [string match "ON*" $FOLLOW]} {
          logactions logmess "Handset::onTcsStatusChange: automatically closing loop"
+		   set need_to_close_loop 0
 		   if {[AO state useLwfs]} {
 		       AO enableLgs
 		   } else {
 		       AO enable
 		   }
-		   set need_to_close_loop 0
       } else {
 	   # the telescope is not in position, cancel the timeout
          logactions logmess "Handset::onTcsStatusChange: not in position, cancelling timeout $tid"
@@ -638,12 +638,12 @@ itcl::body Handset::timeout {} {
    set INPOS [[TcsStatus::getSingleton] getInPosition]
    if { $need_to_close_loop && [string match "TRUE*" $INPOS]} {
       logactions logmess "timed out: automatically closing loop"
+      set need_to_close_loop 0
       if {[AO state useLwfs]} {
 	     AO enableLgs
       } else {
 	     AO enable
       }
-      set need_to_close_loop 0
    }
    set tid ""
 }
@@ -653,9 +653,9 @@ itcl::body Handset::openloop {} {
    if {$control_loop && [AO cget -enabled]} {
       logactions logmess "automatically opening loop"
 		if {[AO state useLwfs]} {
-         AO disableLgs
+         	   AO disableLgs
 		} else {
-         AO disable
+         	   AO disable
 		}
 		set need_to_close_loop 1
 		# start timeout process
