@@ -33,11 +33,14 @@ itcl::body LogActions::constructor {} {
     }
     #puts "ext: [exec date +%H_%M] log dir:  $log"
     puts [exec mkdir -m777 -p $log]
+
     #AWE embed the hostname in the filename to make logs easier to find
     #some of our hostnames have the domain name embedded .. clean it up here
 
     set hostname [exec hostname]
-    set hostname [string range $hostname 0 [expr [string first . $hostname] - 1]]
+    if ([string first . $hostname]>-1) {
+       set hostname [string range $hostname 0 [expr [string first . $hostname] - 1]]
+    }
     #puts "Hostname: $hostname"
 
     set file $log/tcclog_$hostname.[exec date +%H_%M]
