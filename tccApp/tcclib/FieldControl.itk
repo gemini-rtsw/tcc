@@ -955,6 +955,7 @@ itcl::body FieldControl::onSwapTarget {} {
       } else {
          set tag [$swaptarget cget -tagPrefix]
          #AWE: if swapping a PWFS1 star in LGS+P1 mode, we want Sky>AC/HR
+         #AWE: if swapping a OIWFS star in LGS+OI mode, we want Sky>AO>AC/HR
          set guide [$::Config(tcs.field,namespace)::$::Config(tcs.field,value) cget -guide]
          switch -regexp $tag {
             "CWFS[1-3]" -
@@ -974,7 +975,11 @@ itcl::body FieldControl::onSwapTarget {} {
                   cs filter1 set shortCircuit Closed
                   logger command filter1
                }
-               set lpath "Sky>AC/HR"
+	       if {[string match "*OI*" $guide] && [string match "*LGS*" $::Config(tcs.gaos,value)]} {
+		  set lpath "Sky>AO>AC/HR"
+	       } else {
+                  set lpath "Sky>AC/HR"
+	       }
             }
             default {
                set lpath "Sky>AC/HR"

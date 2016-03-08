@@ -557,6 +557,8 @@ itcl::body TcsConfigControl::apply {} {
          if { ![catch {cs aoSFOdefocus info}] } {
             if {[string match "*P1*" $guide]} {
                cs aoSFOdefocus set offset [calparam cget -gmos_p1_defocus]
+            } elseif {[string match "*OI*" $guide]} {
+               cs aoSFOdefocus set offset [calparam cget -gmos_oi_defocus]
             } else {
                cs aoSFOdefocus set offset [calparam cget -gmos_sfo_defocus]
             }
