@@ -1,6 +1,7 @@
 All: tcccmn.so tccext.so tsdext.so tcctime.so slaext.so tcctelsim.so
 
 TCL_VERS = 8.5
+ITCL_VERS = 3.4
 
 CC = gcc
 LD = g++
@@ -29,8 +30,8 @@ LDFLAGS = -shared \
           -Wl,-rpath=${EPICS}/modules/astlib/lib/${EPICS_HOST_ARCH} \
           -L${EPICS}/base/lib/${EPICS_HOST_ARCH} \
           -Wl,-rpath=${EPICS}/base/lib/${EPICS_HOST_ARCH} \
-          -L${HLPG_EXT_RUNTIME_BASE}/tcl$(TCL_VERS)/lib \
-          -ltclstub$(TCL_VERS) -ltkstub$(TCL_VERS) -lregistryIoc -last -ltime -lsla -m32 #-lposix4
+          -L/usr/lib/tcl$(TCL_VERS)/itcl$(ITCL_VERS) \
+          -litcl$(ITCL_VERS) -litclstub$(ITCL_VERS) -ltclstub$(TCL_VERS) -ltkstub$(TCL_VERS) -lregistryIoc -last -ltime -lsla -m32 #-lposix4
 
 tcccmn.so : $(CMNOBJ)
 	$(LD) -o $@ $(CMNOBJ) $(LDFLAGS) 
@@ -50,8 +51,8 @@ slaext.so : $(SLAOBJ) tcccmn.so
 	$(LD) -o $@ $(SLAOBJ) $(LDFLAGS) tcccmn.so \
 		-Wl,-rpath=lib/${HOST_ARCH}
 
-tcctelsim.so : $(TELSIMOBJ)
-	$(LD) -o $@ $(TELSIMOBJ) $(LDFLAGS)
+tcctelsim.so : $(CMNOBJ) $(TELSIMOBJ)
+	$(LD) -o $@  $(CMNOBJ) $(TELSIMOBJ) $(LDFLAGS)
 
 tsdext.o : tccAst.h
 tccext.o : tccAst.h autorepeat.h plosc.h
