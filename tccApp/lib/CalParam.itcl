@@ -55,6 +55,9 @@ itcl::class CalParam {
       variable p2m2TipGain
       variable p2m2TiltGain
       variable p2m2FocusGain
+      variable oim2TipGain
+      variable oim2TiltGain
+      variable oim2FocusGain
 		
 		variable odgw1XLimLow
 		variable odgw1XLimHigh
@@ -93,6 +96,9 @@ itcl::class CalParam {
       method p2m2TipGain {instrument wfs}
       method p2m2TiltGain {instrument wfs}
       method p2m2FocusGain {instrument wfs}
+      method oim2TipGain {instrument wfs}
+      method oim2TiltGain {instrument wfs}
+      method oim2FocusGain {instrument wfs}
       
       method odgwGetSciRows { size }
       method odgwGetIdleRows { size }
@@ -178,6 +184,32 @@ itcl::body CalParam::p2m2FocusGain {instrument wfs} {
       return <undefined>
    } else {
       return $p2m2FocusGain($key)
+   }
+}
+
+itcl::body CalParam::oim2TipGain {instrument wfs} {
+   set key "$instrument,$wfs"
+   if { [array names oim2TipGain -exact $key] == "" } {
+      return <undefined>
+   } else {
+      return $oim2TipGain($key)
+   }
+}
+
+itcl::body CalParam::oim2TiltGain {instrument wfs} {
+   set key "$instrument,$wfs"
+   if { [array names oim2TiltGain -exact $key] == "" } {
+      return <undefined>
+   } else {
+      return $oim2TiltGain($key)
+   }
+}
+itcl::body CalParam::oim2FocusGain {instrument wfs} {
+   set key "$instrument,$wfs"
+   if { [array names oim2FocusGain -exact $key] == "" } {
+      return <undefined>
+   } else {
+      return $oim2FocusGain($key)
    }
 }
 

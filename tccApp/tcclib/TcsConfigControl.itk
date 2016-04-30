@@ -24,6 +24,7 @@ itcl::class TcsConfigControl {
       method wrap {par}
       method applyP1M2Gains {instName wfs}
       method applyP2M2Gains {instName wfs}
+      method applyOiM2Gains {instName wfs}
       method ltcsQuerySidereal {}
       method ltcsQueryNonSidereal {}
       method ltcsQuery {ra dec epoch fov}
@@ -62,6 +63,10 @@ itcl::body TcsConfigControl::constructor {args} {
 
    if { [catch {cs pwfs2m2Gain info}] } {
       epics cs pwfs2m2Gain
+   }
+
+   if { [catch {cs oiwfsm2Gain info}] } {
+      epics cs oiwfsm2Gain
    }
 
    # Expand the component selector.
@@ -434,6 +439,9 @@ itcl::body TcsConfigControl::apply {} {
    if { [string match "*P2*" $guide] } {
       applyP2M2Gains $instName $guide
    }
+   if { [string match "*OI*" $guide] } {
+      applyOiM2Gains $instName $guide
+   }
 
    # Zero the offsets for the Gimbals if we're using aowfs and not LGS
    if {[string match "*AO*" $guide] && ![AO state useLwfs]} {
@@ -761,6 +769,25 @@ itcl::body TcsConfigControl::sesidle {} {
    }
 }
 
+itcl::body TcsConfigControl::applyOiM2Gains {instName wfs} {
+   set tipGain [calparam oim2TipGain $instName $wfs]
+   set tiltGain [calparam oim2TiltGain $instName $wfs]
+   set focusGain [calparam oim2FocusGain $instName $wfs]
+   if { $tipGain != "<undefined>"  && $tiltGain != "<undefined>"  && \
+         $focusGain != "<undefined>"} {
+      cs oiwfsm2Gain tipGain $tipGain
+      cs oiwfsm2Gain tiltGain $tiltGain
+      cs oiwfsm2Gain focusGain $focusGain
+      logactions logmess "Setting OIWFS M2 Gains to tip: $tipGain, tilt: $tiltGain, focus: $focusGain"
+   } else {
+      cs oiwfsm2Gain resetDefaults 1
+      logactions logmess "Setting OIWFS M2 Gains to defaults"
+   }
+   cs oiwfsm2Gain dir 0
+   after 100
+   cs oiwfsm2Gain dir 3
+}
+
 itcl::body TcsConfigControl::applyP1M2Gains {instName wfs} {
    set tipGain [calparam p1m2TipGain $instName $wfs]
    set tiltGain [calparam p1m2TiltGain $instName $wfs]
@@ -770,12 +797,33 @@ itcl::body TcsConfigControl::applyP1M2Gains {instName wfs} {
       cs pwfs1m2Gain tipGain $tipGain
       cs pwfs1m2Gain tiltGain $tiltGain
       cs pwfs1m2Gain focusGain $focusGain
+      logactions logmess "Setting PWFS1 M2 Gains to tip: $tipGain, tilt: $tiltGain, focus: $focusGain"
    } else {
       cs pwfs1m2Gain resetDefaults 1
+      logactions logmess "Setting PWFS1 M2 Gains to defaults"
    }
    cs pwfs1m2Gain dir 0
    after 100
    cs pwfs1m2Gain dir 3
+}
+
+itcl::body TcsConfigControl::applyP2M2Gains {instName wfs} {
+   set tipGain [calparam p2m2TipGain $instName $wfs]
+   set tiltGain [calparam p2m2TiltGain $instName $wfs]
+   set focusGain [calparam p2m2FocusGain $instName $wfs]
+   if { $tipGain != "<undefined>"  && $tiltGain != "<undefined>"  && \
+         $focusGain != "<undefined>"} {
+      cs pwfs2m2Gain tipGain $tipGain
+      cs pwfs2m2Gain tiltGain $tiltGain
+      cs pwfs2m2Gain focusGain $focusGain
+      logactions logmess "Setting PWFS2 M2 Gains to tip: $tipGain, tilt: $tiltGain, focus: $focusGain"
+   } else {
+      cs pwfs2m2Gain resetDefaults 1
+      logactions logmess "Setting PWFS2 M2 Gains to defaults"
+   }
+   cs pwfs2m2Gain dir 0
+   after 100
+   cs pwfs2m2Gain dir 3
 }
 
 #
@@ -878,23 +926,6 @@ itcl::body TcsConfigControl::ltcsQuery {ra dec epoch fov} {
       return -code error "LTCS Query returned, \"$result\"."
    }
    return 1
-}
-
-itcl::body TcsConfigControl::applyP2M2Gains {instName wfs} {
-   set tipGain [calparam p2m2TipGain $instName $wfs]
-   set tiltGain [calparam p2m2TiltGain $instName $wfs]
-   set focusGain [calparam p2m2FocusGain $instName $wfs]
-   if { $tipGain != "<undefined>"  && $tiltGain != "<undefined>"  && \
-         $focusGain != "<undefined>"} {
-      cs pwfs2m2Gain tipGain $tipGain
-      cs pwfs2m2Gain tiltGain $tiltGain
-      cs pwfs2m2Gain focusGain $focusGain
-   } else {
-      cs pwfs2m2Gain resetDefaults 1
-   }
-   cs pwfs2m2Gain dir 0
-   after 100
-   cs pwfs2m2Gain dir 3
 }
 
 itcl::body TcsConfigControl::onIgnoreAOChange {name1 name2 op} {
