@@ -64,16 +64,25 @@ itcl::body RADecTarget::constructor {args} {
 	}
 	buildProperMotion [$itk_component(space) childsite]
 
-
+	itk_component add lftframe { frame $w.lftframe }
 # Controls for differential track rate.
-	itk_component add trframe { iwidgets::labeledframe $itk_interior.trframe \
+	itk_component add trframe { iwidgets::labeledframe $w.lftframe.trframe \
 		-labelpos nw -labeltext "Differential Track Rates" -ipadx 1 -ipady 2 }
 	
 	buildDiffTrackRate [$itk_component(trframe) childsite]
-	
+   
+   itk_component add ephemeris {
+      iwidgets::entryfield $w.lftframe.ephemeris -width 15 -labeltext Ephemeris
+   } {
+      usual
+      rename -textfont -majorfont majorFont Font
+      rename -labelfont -majorfont majorFont Font
+   }
 
 	pack $itk_component(pos) -side top -expand yes -fill x
-	pack $itk_component(trframe) $itk_component(space) -side left -expand y -fill both -padx 0
+	pack $itk_component(ephemeris) -side bottom -fill x -padx 3 -pady 1
+   pack $itk_component(trframe) -side top -fill x
+   pack $itk_component(lftframe) $itk_component(space) -side left -expand y -fill both -padx 0
 }
 
 
@@ -85,6 +94,7 @@ itcl::body RADecTarget::cleanFields {} {
 	$itk_component(pm2) clear
 	$itk_component(parallax) clear
 	$itk_component(rv) clear
+   $itk_component(ephemeris) clear
 	set ::Config(tcs.field.cosys,value) ""
 	set ::Config(tcs.field.trackrate,value) ""
 }
@@ -99,6 +109,7 @@ itcl::body RADecTarget::load {target} {
 		$itk_component(pm2) insert end [$target cget -pm2]
 		$itk_component(parallax) insert end [$target cget -parallax]
 		$itk_component(rv) insert end [$target cget -rv]
+      $itk_component(ephemeris) insert end [$target cget -ephemeris]
 		set ::Config(tcs.field.cosys,value) [$target cget -cosys]
 
 		set ::Config(tcs.field.trackrate,value) [$target cget -trackrate]
@@ -124,6 +135,7 @@ itcl::body RADecTarget::save {target {propagate 1}} {
 		$target configure -parallax [$itk_component(parallax) get]
 		$target configure -rv [$itk_component(rv) get]
 		$target configure -cosys [$itk_component(cosys) get]
+      $target configure -ephemeris [$itk_component(ephemeris) get]
 		$target configure -trackrate $::Config(tcs.field.trackrate,value)
 	}
 }
