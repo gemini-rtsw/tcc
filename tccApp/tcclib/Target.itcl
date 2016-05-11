@@ -231,11 +231,13 @@ itcl::body Target::apply {comp} {
          cs $vt set dtheta2 ""
          cs $vt set rv ""
          cs $vt set mag [list $brightness]
+         cs $vt set eph [list $ephemeris]
          logger command $vt
       }
       namedTarget {
          if { [string equal $vt sourceA] } {
             cs planet set object $object
+            cs $vt set eph [list $ephemeris]
             logger command planet
          }
       }
@@ -321,6 +323,8 @@ itcl::body Target::apply {comp} {
 			 		cs $csname set n ""
 				}
 			}
+         cs $vt set eph [list $ephemeris]
+         
 			logger command $csname
 		}
    }
