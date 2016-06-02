@@ -439,9 +439,6 @@ itcl::body TcsConfigControl::apply {} {
    if { [string match "*P2*" $guide] } {
       applyP2M2Gains $instName $guide
    }
-   if { [string match "*OI*" $guide] } {
-      applyOiM2Gains $instName $guide
-   }
 
    # Zero the offsets for the Gimbals if we're using aowfs and not LGS
    if {[string match "*AO*" $guide] && ![AO state useLwfs]} {
@@ -487,6 +484,11 @@ itcl::body TcsConfigControl::apply {} {
    }
    # Call the normal apply function.
    $this ComponentControl::doapply
+   
+   # Now set the OI gains, after the OI has been selected
+   if { [string match "*OI*" $guide] } {
+      applyOiM2Gains $instName $guide
+   }
 
    #
    # If it was a non-sidereal target, then we do the ltcsQuery here after the tcs
