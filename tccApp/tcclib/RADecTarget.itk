@@ -102,13 +102,14 @@ itcl::body RADecTarget::cleanFields {} {
 itcl::body RADecTarget::load {target} {
 	if { ![string equal $target ""] && [string equal [$target cget -type] "hmsdegTarget"]} {
 		cleanFields
-		$itk_component(ra) insert end [$target cget -c1]
-		$itk_component(dec) insert end [$target cget -c2]
-		$itk_component(epoch) insert end [$target cget -epoch]
-		$itk_component(pm1) insert end [$target cget -pm1]
-		$itk_component(pm2) insert end [$target cget -pm2]
-		$itk_component(parallax) insert end [$target cget -parallax]
-		$itk_component(rv) insert end [$target cget -rv]
+      $itk_component(ra) insert end [$target cget -c1]
+      $itk_component(dec) insert end [$target cget -c2]
+      $itk_component(epoch) insert end [$target cget -epoch]
+      $itk_component(pmunits) select [$target cget -pmunits]
+      $itk_component(pm1) insert end [$target cget -pm1]
+      $itk_component(pm2) insert end [$target cget -pm2]
+      $itk_component(parallax) insert end [$target cget -parallax]
+      $itk_component(rv) insert end [$target cget -rv]
       $itk_component(ephemeris) insert end [$target cget -ephemeris]
 		set ::Config(tcs.field.cosys,value) [$target cget -cosys]
 
@@ -126,17 +127,18 @@ itcl::body RADecTarget::save {target {propagate 1}} {
 	}
 	if { ![string equal $target ""] } {
 		#$target init
-		$target configure -type hmsdegTarget
-		$target configure -c1 [$itk_component(ra) get]
-		$target configure -c2 [$itk_component(dec) get]
-		$target configure -epoch [$itk_component(epoch) get]
-		$target configure -pm1 [$itk_component(pm1) get]
-		$target configure -pm2 [$itk_component(pm2) get]
-		$target configure -parallax [$itk_component(parallax) get]
-		$target configure -rv [$itk_component(rv) get]
-		$target configure -cosys [$itk_component(cosys) get]
+      $target configure -type hmsdegTarget
+      $target configure -c1 [$itk_component(ra) get]
+      $target configure -c2 [$itk_component(dec) get]
+      $target configure -epoch [$itk_component(epoch) get]
+      $target configure -pmunits [$itk_component(pmunits) get]
+      $target configure -pm1 [$itk_component(pm1) get]
+      $target configure -pm2 [$itk_component(pm2) get]
+      $target configure -parallax [$itk_component(parallax) get]
+      $target configure -rv [$itk_component(rv) get]
+      $target configure -cosys [$itk_component(cosys) get]
       $target configure -ephemeris [$itk_component(ephemeris) get]
-		$target configure -trackrate $::Config(tcs.field.trackrate,value)
+      $target configure -trackrate $::Config(tcs.field.trackrate,value)
 	}
 }
 
@@ -168,7 +170,7 @@ itcl::body RADecTarget::buildProperMotion {parent} {
 # Parallax
    itk_component add parallax {
       iwidgets::entryfield $parent.parallax -width 8 \
-            -labeltext "Parallax (\")"
+            -labeltext "Parallax (mas)"
    }
 
 # Radial velocity.
