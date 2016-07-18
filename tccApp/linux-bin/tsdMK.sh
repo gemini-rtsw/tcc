@@ -1,4 +1,4 @@
 #!/bin/sh
 
 cd ${GEMINI_TOP}/opt/tcc
-./tsd${GEMINI_SITE}.sh $*
+./tsd $*
