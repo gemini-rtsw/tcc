@@ -294,6 +294,12 @@ itcl::body NumericDisplay::constructor args {
    itk_component add obsmode {
       label  $w.obsmode -anchor e
    }
+   itk_component add powerlab {
+      label $w.powerlab -text "Power Status:" -borderwidth 1 -text "Power Status: "
+   }
+   itk_component add powerstatus {
+      label  $w.powerstatus -anchor e
+   }
 
    grid $itk_component(instrolab) $itk_component(instrop) $itk_component(instroq) \
       $itk_component(iaa) -sticky e -pady {0 3} -padx {0 3}
@@ -316,8 +322,16 @@ itcl::body NumericDisplay::constructor args {
 	   StatusField $w.instry -labelmargin 5 -width 6 -entryborder 1 \
 	       -entryrelief sunken -anchor e -labeltext Y
        }
-      grid x $itk_component(instrx) $itk_component(instry) -sticky e -pady {0 3} -padx {0 3}
+      if { [calparam cget -site] eq "CP" } {
+          grid x $itk_component(instrx) $itk_component(instry) x $itk_component(powerlab) $itk_component(powerstatus) -sticky e -pady {0 3} -padx {0 3}
+      } else {
+          grid x $itk_component(instrx) $itk_component(instry) -sticky e -pady {0 3} -padx {0 3}
+      }
       grid configure $itk_component(instrx) -padx 3
+      
+      if { [calparam cget -site] eq "CP" } {
+          grid configure $itk_component(powerstatus) -sticky w
+      }
    }
 
    # Now that the grid is complete make adjustments to the row and column
@@ -678,6 +692,16 @@ itcl::body NumericDisplay::update {} {
    	if ($summitMode) {$itk_component(obsmode) configure -text "Summit" -foreground red}
    	if ($standbyMode) {$itk_component(obsmode) configure -text "Standby" -foreground blue}
    }
+
+   # Observatory power Status (BFO)
+
+   if {! [catch {sa ecssad info}]} {
+	set commercialPower [sa ecssad get commercial]
+	set generatorPower [sa ecssad get generator]
+   	if ($commercialPower) {$itk_component(powerstatus) configure -text "Commercial" -foreground DarkGreen}
+   	if ($generatorPower) {$itk_component(powerstatus) configure -text "Generator" -foreground red}
+   }
+
 
    # Target info.
    set target [sa tcssad get targetA]
