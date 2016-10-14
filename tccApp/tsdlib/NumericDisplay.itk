@@ -695,12 +695,14 @@ itcl::body NumericDisplay::update {} {
 
    # Observatory power Status (BFO)
 
-   if {! [catch {sa ecssad info}]} {
-	set commercialPower [sa ecssad get commercial]
-	set generatorPower [sa ecssad get generator]
-   	if ($commercialPower) {$itk_component(powerstatus) configure -text "Commercial" -foreground DarkGreen}
-   	if ($generatorPower) {$itk_component(powerstatus) configure -text "Generator" -foreground red}
-   }
+   if { [calparam cget -site] eq "CP" } {
+       if {! [catch {sa ecssad info}]} {
+	    set commercialPower [sa ecssad get commercial]
+	    set generatorPower [sa ecssad get generator]
+   	    if ($commercialPower) {$itk_component(powerstatus) configure -text "Commercial" -foreground DarkGreen}
+   	    if ($generatorPower) {$itk_component(powerstatus) configure -text "Generator" -foreground red}
+       }
+    }
 
 
    # Target info.
