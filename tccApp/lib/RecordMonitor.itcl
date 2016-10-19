@@ -65,6 +65,6 @@ itcl::body RecordMonitor::add proc {
 itcl::body RecordMonitor::monitor {record status time value} {
 
    foreach {id proc} [array get procs] {
-      uplevel #0 $proc $record \"$value\"
+      uplevel #0 $proc $record [concat \{ $value \}]
    }
 }
