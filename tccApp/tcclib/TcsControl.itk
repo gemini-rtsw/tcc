@@ -41,7 +41,6 @@ itcl::class TcsControl {
       method gaosfollow {}
       method gaosdatum {}
       method gaospark {}
-      method lockIndex {}
       method lockPark {}
       method checkState {win}
       method ngsPark {par} {return Park}
@@ -49,6 +48,7 @@ itcl::class TcsControl {
       method onIgnoreAOChange {name1 name2 op}
       method onOISelection {record value}
       method telShutdown {}
+      method testing {}
       variable dome
       variable shutter
       variable alarmObj
@@ -87,8 +87,10 @@ itcl::body TcsControl::constructor args {
    itk_component add row1f2 {
       frame $w.f3
    }
-   pack $itk_component(row1f1) $itk_component(row1f2) \
-      -side left -fill both -expand y
+#   pack $itk_component(row1f1) $itk_component(row1f2) \
+#      -side left -fill both
+   grid $itk_component(row1f1) $itk_component(row1f2) \
+      -sticky nsew
 
    # The third frame in the first row is divided into 2 horizontal and 2 vertical
 # below.
@@ -96,37 +98,31 @@ itcl::body TcsControl::constructor args {
    itk_component add f3top {
       frame $w.top -bd 2 -relief sunken -padx 2 -pady 2
    }
-   itk_component add f3top2 {
-      frame $w.top2 -bd 2 -relief sunken -padx 2 -pady 2
-   }
    itk_component add f3top3 {
       frame $w.top3 -bd 2 -padx 2 -pady 2 -relief ridge
    }
-   itk_component add f3mid {
-      frame $w.mid -bd 2 -relief ridge -padx 2 -pady 2
-   }
-
    itk_component add f3bot {
       frame $w.bot -bd 2 -relief ridge -padx 2 -pady 2
    }
+   itk_component add f3bot2 {
+      frame $w.bot2 -bd 2 -relief ridge -padx 2 -pady 2
+   }
 
-   grid $itk_component(f3top) - -sticky news
-   grid $itk_component(f3mid) - -sticky news
-   grid $itk_component(f3top2) - -sticky news
-   grid $itk_component(f3top3) - -sticky news
-   grid $itk_component(f3bot) - -sticky news
-   #   grid $itk_component(f3mid) $itk_component(f3bot) -sticky news
+#   grid $itk_component(f3top) -sticky news
+#   grid $itk_component(f3top3) -sticky news
+#   grid $itk_component(f3bot) -sticky news
+#   grid $itk_component(f3bot2) -sticky news
 
-   #   pack $itk_component(f3top) $itk_component(f3mid) $itk_component(f3bot) \
-   #         -fill both -expand yes
-
+  pack $itk_component(f3top) $itk_component(f3top3) $itk_component(f3bot) $itk_component(f3bot2) -side top -fill x -pady 2
+  if {[calparam cget -site] eq "CP"} {
+     pack configure $itk_component(f3top) $itk_component(f3top3) $itk_component(f3bot) $itk_component(f3bot2) -pady 15
+  }
    set w $itk_component(row1f1)
 
 # Telescope Shutdown Button
    itk_component add shutdown {
        LiveButton $w.shutdown -text "Emergency Shutdown" -background red -command [itcl::code $this telShutdown]
    }
-
 
 # Commands to enable/disable following in each subsystem 
    itk_component add mcs {
@@ -152,12 +148,6 @@ itcl::body TcsControl::constructor args {
             -onvalue {ON On} \
             -offvalue {OFF Off} \
             -sadrecord {crssad followS}
-   }
-   itk_component add ecs {
-      label $w.ecs -text ECS -relief sunken
-   }
-   itk_component add pcs {
-      label $w.pcs -text PCS -relief sunken
    }
    itk_component add p1 {
       OnOffButton $w.p1 -text P1 \
@@ -260,84 +250,33 @@ itcl::body TcsControl::constructor args {
    }
 
    # Commands for datuming, initing or unparking mechanisms.
-   itk_component add mcsdatum {
-      ApplyButton $w.mcsdatum -command mountDatum -text Datum  -state disabled\
-            -parcommand [itcl::code $this mountdatum]
-   }
-   itk_component add scsinit {
-      ApplyButton $w.scsinit -command m2Init -text Init -state disabled
-   }
-   itk_component add crsdatum {
-      ApplyButton $w.crsdatum -command rotDatum -text Datum -state disabled
-   }
-   itk_component add ecsinit {
-      ApplyButton $w.ecsinit -command enclosureInit -text Init -state disabled
-   }
-   itk_component add pcsunpark {
-      ApplyButton $w.pcsunpark -command m1Park -text Unpark  -state disabled\
-            -parcommand [itcl::code $this m1unpark]
-   }
-   itk_component add p1datum {
-      ApplyButton $w.p1datum -command pwfs1Datum -text Datum -state disabled
-   }
-   itk_component add p2datum {
-      ApplyButton $w.p2datum -command pwfs2Datum -text Datum -state disabled
-   }
-   itk_component add oidatum {
-      ApplyButton $w.oidatum -command oiwfsDatum -text Datum -state disabled
-   }
    if {[calparam cget -site] eq "MK"} {
-      itk_component add aodatum {
-   	   LiveButton $w.aodatum -command [itcl::code $this gaosdatum] -text Unpark -state disabled
+      itk_component add aounpark {
+   	   LiveButton $w.aounpark -command [itcl::code $this gaosdatum] -text Unpark -state disabled
 	   }
-   } else {
-      itk_component add ngs1datum {
-			ApplyButton $w.ngs1datum -command ngsPr1Ctrl -text Datum \
-				-state disabled -parcommand [itcl::code $this ngsDatum]
-		}
-      itk_component add ngs2datum {
-			ApplyButton $w.ngs2datum -command ngsPr2Ctrl -text Datum \
-				-state disabled -parcommand [itcl::code $this ngsDatum]
-		}
-      itk_component add ngs3datum {
-			ApplyButton $w.ngs3datum -command ngsPr3Ctrl -text Datum \
-				-state disabled -parcommand [itcl::code $this ngsDatum]
-		}
    }
-   #   itk_component add aodatum {
-   #      ApplyButton $w.aodatum -command aoDatum -text Unpark
-   #   }
 
    # Commands for parking mechanisms.
    itk_component add mcspark {
       ApplyButton $w.mcspark -command telpark -text Park -state disabled
    }
-   itk_component add scspark {
-      ApplyButton $w.scspark -command m2Park -text Park -state disabled
-   }
    itk_component add crspark {
       ApplyButton $w.crspark -command rotPark -text Park -state disabled
-   }
-   itk_component add ecspark {
-      ApplyButton $w.ecspark -command enclosurePark -text Park -state disabled
-   }
-   itk_component add pcspark {
-      ApplyButton $w.pcspark -command m1Park -text Park  -state disabled\
-            -parcommand [itcl::code $this m1park]
    }
    itk_component add p1park {
       ApplyButton $w.p1park -command pwfs1Park -text Park -state disabled
    }
    itk_component add p2park {
-      ApplyButton $w.p2park -command pwfs2Park -text Park -state disabled
+     ApplyButton $w.p2park -command pwfs2Park -text Park -state disabled
    }
    itk_component add oipark {
       ApplyButton $w.oipark -command oiwfsPark -text Park -state disabled
    }
+
    if {[calparam cget -site] eq "MK"} {
       itk_component add aopark {
    	   LiveButton $w.aopark -command [itcl::code $this gaospark] -text Park -state disabled
-	   }
+	}
    } else {
       itk_component add ngs1park {
 			ApplyButton $w.ngs1park -command ngsPr1Ctrl -text Park -state disabled \
@@ -366,58 +305,45 @@ itcl::body TcsControl::constructor args {
    }
 
    # implement locks for the index and park columns
-   itk_component add lockindex {
-       checkbutton $w.lockindex -command [itcl::code $this lockIndex] \
-	   -variable [itcl::scope indexlock]
-   }
+
    itk_component add lockpark {
        checkbutton $w.lockpark -command [itcl::code $this lockPark] \
 	   -variable [itcl::scope parklock]
    }
 
-   # AWE temporary placement of Shutter Alarm
-   # set w $itk_component(f3top3)
-   itk_component add alarm {
-      ShutterAlarm $w.alarm
-   }
-   set alarmObj $w.alarm
-
-   grid $itk_component(shutdown) - - -sticky news 
-   grid x $itk_component(lockindex) $itk_component(lockpark) \
-      -sticky nsew -padx 5
-   grid $itk_component(mcs) $itk_component(mcsdatum) $itk_component(mcspark) \
-      -sticky nsew -padx 5 -pady 1
-   grid $itk_component(scs) $itk_component(scsinit) $itk_component(scspark) \
-      -sticky nsew -padx 5 -pady 1
-   grid $itk_component(crs) $itk_component(crsdatum) $itk_component(crspark) \
-      -sticky nsew -padx 5 -pady 1
-   grid $itk_component(ecs) $itk_component(ecsinit) $itk_component(ecspark) \
-      -sticky nsew -padx 5 -pady 1
-   grid $itk_component(pcs) $itk_component(pcsunpark) $itk_component(pcspark) \
-      -sticky nsew -padx 5 -pady 1
-   grid $itk_component(p1) $itk_component(p1datum) $itk_component(p1park) \
-      -sticky nsew -padx 5 -pady 1
-   grid $itk_component(p2) $itk_component(p2datum) $itk_component(p2park) \
-      -sticky nsew -padx 5 -pady 1
-   grid $itk_component(oiwfs) $itk_component(oidatum) $itk_component(oipark) \
-      -sticky ew -padx 5 -pady 1
+   grid $itk_component(shutdown) - - -sticky new 
+   grid x  $itk_component(lockpark) - \
+      -sticky new -padx 5
+   grid $itk_component(mcs) $itk_component(mcspark) - \
+      -sticky new -padx 5 -pady 1
+   grid $itk_component(scs) x x \
+      -sticky new -padx 5 -pady 1
+   grid $itk_component(crs) $itk_component(crspark) - \
+      -sticky new -padx 5 -pady 1
+   grid $itk_component(p1) $itk_component(p1park) - \
+      -sticky new -padx 5 -pady 1
+   grid $itk_component(p2) $itk_component(p2park) - \
+      -sticky new -padx 5 -pady 1
+   grid $itk_component(oiwfs) $itk_component(oipark) - \
+      -sticky new -padx 5 -pady 1
    if {[calparam cget -site] eq "MK"} {
-      grid $itk_component(gaos) $itk_component(aodatum) $itk_component(aopark) \
-         -sticky ew -padx 5 -pady 1
+      grid $itk_component(gaos) $itk_component(aounpark) $itk_component(aopark) \
+         -sticky new -padx 5 -pady 1
    } else {
-      grid $itk_component(ngs1) $itk_component(ngs1datum) $itk_component(ngs1park) \
+      grid $itk_component(ngs1) $itk_component(ngs1park) - \
          -sticky ew -padx 5 -pady 1
-      grid $itk_component(ngs2) $itk_component(ngs2datum) $itk_component(ngs2park) \
+      grid $itk_component(ngs2) $itk_component(ngs2park) - \
          -sticky ew -padx 5 -pady 1
-      grid $itk_component(ngs3) $itk_component(ngs3datum) $itk_component(ngs3park) \
+      grid $itk_component(ngs3) $itk_component(ngs3park) - \
          -sticky ew -padx 5 -pady 1
-      grid $itk_component(odgw1) x $itk_component(odgw1park) -sticky ew -padx 5 -pady 1
-      grid $itk_component(odgw2) x $itk_component(odgw2park) -sticky ew -padx 5 -pady 1
-      grid $itk_component(odgw3) x $itk_component(odgw3park) -sticky ew -padx 5 -pady 1
-      grid $itk_component(odgw4) x $itk_component(odgw4park) -sticky ew -padx 5 -pady 1
+      grid $itk_component(odgw1) $itk_component(odgw1park) - -sticky ew -padx 5 -pady 1
+      grid $itk_component(odgw2) $itk_component(odgw2park) - -sticky ew -padx 5 -pady 1
+      grid $itk_component(odgw3) $itk_component(odgw3park) - -sticky ew -padx 5 -pady 1
+      grid $itk_component(odgw4) $itk_component(odgw4park) - -sticky ew -padx 5 -pady 1
    }
-   grid $itk_component(alarm) - - \
-      -sticky ew -padx 10 -pady 3
+
+   #grid rowconfigure $w {2 3 4 5 6 7 8 9 10} -minsize 30
+   #grid columnconfigure $w {0 1} -minsize 30
 
    # Carousel driving mode command.
    set w $itk_component(f3top)
@@ -459,31 +385,14 @@ itcl::body TcsControl::constructor args {
    pack $itk_component(dome) $itk_component(shutter) \
       -side left -padx 3 -pady 2
 
-   # Enclosure thermal control command.
-   set w $itk_component(f3top2)
-   itk_component add thermal {
-      ApplyButton $w.thermal -command encThermal \
-            -parcommand [itcl::code $this parget]
+   # Shutter Alarm
+   set w $itk_component(f3top3)
+   itk_component add alarm {
+      ShutterAlarm $w.alarm
    }
-   itk_component add mode {
-      iwidgets::optionmenu $w.mode \
-            -labeltext [lindex [cs encThermal info mode] 2] \
-   }
-   $itk_component(mode) insert end Passive Active Shutdown
+   set alarmObj $w.alarm
 
-   pack $itk_component(thermal) -fill x -pady 2
-   pack $itk_component(mode) -pady 2
-
-   # Close shutters command.
-   set w $itk_component(f3mid)
-   itk_component add closeshut {
-      ApplyButton $w.closeshut -command shutterPark
-   }
-   itk_component add closegates {
-      ApplyButton $w.closegates -command ventgatesPark
-   }
-   pack $itk_component(closeshut) $itk_component(closegates) \
-      -fill both -expand yes -side left
+   grid $itk_component(alarm) -sticky ew -padx 10 -pady 3
 
    # M2 coma and guide resets.
    set w $itk_component(f3bot)
@@ -497,69 +406,39 @@ itcl::body TcsControl::constructor args {
       -side top -fill both -expand yes
 
    # A & G mechanism parking and datuming
-   set w $itk_component(row2)
+   # AWE ..decided to put this in a different location GN/GS to improve the layout.
+
+   if {[calparam cget -site] eq "MK"} {
+      set w $itk_component(row2)
+   } else {
+      set w $itk_component(f3bot2)
+   }
+
    itk_component add mechlab {
       label $w.mechlab -text "A&G mechanisms:"
    }
    itk_component add agmech {
       iwidgets::optionmenu $w.mech
    }
-   $itk_component(agmech) insert end "Science fold" "HRWFS pickoff arm" \
-      "AO fold" \
-      "PWFS1 arm" "PWFS1 filter" "PWFS1 field stop" "PWFS1 focus" \
-      "PWFS2 arm" "PWFS2 filter" "PWFS2 field stop" "PWFS2 focus" \
-      "OIWFS arm" "OIWFS filter" "OIWFS field stop" "OIWFS focus"
+   $itk_component(agmech) insert end "Science fold" "HRWFS pickoff arm" "AO fold"
    $itk_component(agmech) select "Science fold"
-   itk_component add mechdatum {
-      LiveButton $w.mechdatum -text Datum \
-            -command [itcl::code $this agmech Datum]
-   }
+
    itk_component add mechpark {
       LiveButton $w.mechpark -text Park \
             -command [itcl::code $this agmech Park]
    }
 
-   pack $itk_component(mechlab) $itk_component(agmech) \
-      $itk_component(mechdatum)  $itk_component(mechpark) -side left \
-      -padx 5 -pady 5
+   if {[calparam cget -site] eq "MK"} {
+      pack $itk_component(mechlab) $itk_component(agmech) \
+       $itk_component(mechpark) -side left -fill x \
+       -padx 15 -pady 5
+   } else {
+     grid $itk_component(mechlab) - -sticky ew
+     grid $itk_component(agmech) $itk_component(mechpark) -sticky ew
+   }
 
-   # Create the command senders for all A&G park and datum commands.
-   if { [catch {cs scienceFoldDatum info}] } {
-      epics cs scienceFoldDatum
-   }
-   if { [catch {cs hrwfsDatum info}] } {
-      epics cs hrwfsDatum
-   }
-   if { [catch {cs aoFoldDatum info}] } {
-      epics cs aoFoldDatum
-   }
-   if { [catch {cs pwfs1FilterDatum info}] } {
-      epics cs pwfs1FilterDatum
-   }
-   if { [catch {cs pwfs1FldstopDatum info}] } {
-      epics cs pwfs1FldstopDatum
-   }
-   if { [catch {cs pwfs1FocusDatum info}] } {
-      epics cs pwfs1FocusDatum
-   }
-   if { [catch {cs pwfs2FilterDatum info}] } {
-      epics cs pwfs2FilterDatum
-   }
-   if { [catch {cs pwfs2FldstopDatum info}] } {
-      epics cs pwfs2FldstopDatum
-   }
-   if { [catch {cs pwfs2FocusDatum info}] } {
-      epics cs pwfs2FocusDatum
-   }
-   if { [catch {cs oiwfsFilterDatum info}] } {
-      epics cs oiwfsFilterDatum
-   }
-   if { [catch {cs oiwfsFldstopDatum info}] } {
-      epics cs oiwfsFldstopDatum
-   }
-   if { [catch {cs oiwfsFocusDatum info}] } {
-      epics cs oiwfsFocusDatum
-   }
+   # Create the command senders for all A&G park commands.
+
    if { [catch {cs scienceFoldPark info}] } {
       epics cs scienceFoldPark
    }
@@ -568,33 +447,6 @@ itcl::body TcsControl::constructor args {
    }
    if { [catch {cs aoFoldPark info}] } {
       epics cs aoFoldPark
-   }
-   if { [catch {cs pwfs1FilterPark info}] } {
-      epics cs pwfs1FilterPark
-   }
-   if { [catch {cs pwfs1FldstopPark info}] } {
-      epics cs pwfs1FldstopPark
-   }
-   if { [catch {cs pwfs1FocusPark info}] } {
-      epics cs pwfs1FocusPark
-   }
-   if { [catch {cs pwfs2FilterPark info}] } {
-      epics cs pwfs2FilterPark
-   }
-   if { [catch {cs pwfs2FldstopPark info}] } {
-      epics cs pwfs2FldstopPark
-   }
-   if { [catch {cs pwfs2FocusPark info}] } {
-      epics cs pwfs2FocusPark
-   }
-   if { [catch {cs oiwfsFilterPark info}] } {
-      epics cs oiwfsFilterPark
-   }
-   if { [catch {cs oiwfsFldstopPark info}] } {
-      epics cs oiwfsFldstopPark
-   }
-   if { [catch {cs oiwfsFocusPark info}] } {
-      epics cs oiwfsFocusPark
    }
 
    # Vent gates move command.
@@ -645,6 +497,13 @@ itcl::body TcsControl::destructor {} {
 
    trace add variable ::Flags(ignoreao) write [itcl::code $this onIgnoreAOChange]
    destroy $alarmObj
+}
+
+itcl::body TcsControl::testing { } {
+puts "testing"
+   tk_messageBox -icon error \
+      -message "GAOS failed to configure, useLwfs ended with Error: \nuseLwfs: Ustage or zoom failed. \nAborting GAOS config" \
+      -detail "Solution: Resolve Altair Error then Force Apply GAOS config or Re-Slew"
 }
 
 itcl::body TcsControl::enable par {
@@ -955,53 +814,10 @@ itcl::body TcsControl::gaospark {} {
    }
 }
 
-itcl::body TcsControl::lockIndex {} {
-   if {$indexlock} {
-      $itk_component(mcsdatum) configure -state [checkState $itk_component(mcsdatum) ]
-      $itk_component(scsinit) configure -state [checkState $itk_component(scsinit) ]
-      $itk_component(crsdatum) configure -state [checkState $itk_component(crsdatum) ]
-      $itk_component(ecsinit) configure -state [checkState $itk_component(ecsinit) ]
-      $itk_component(pcsunpark) configure -state [checkState $itk_component(pcsunpark) ]
-      $itk_component(p1datum) configure -state [checkState $itk_component(p1datum) ]
-      $itk_component(p2datum) configure -state [checkState $itk_component(p2datum) ]
-      if { [sa agssad get oiwfsName] ne "GPI" } {
-         $itk_component(oidatum) configure -state [checkState $itk_component(oidatum) ]
-      }
-      if {[calparam cget -site] eq "MK"} {
-         $itk_component(aodatum) configure -state [checkState $itk_component(aodatum) ]
-      } else {
-         if { !$::Flags(ignoreao) } {
-            $itk_component(ngs1datum) configure -state [checkState $itk_component(ngs1datum) ]
-            $itk_component(ngs2datum) configure -state [checkState $itk_component(ngs2datum) ]
-            $itk_component(ngs3datum) configure -state [checkState $itk_component(ngs3datum) ]
-         }
-      }
-   } else {
-      $itk_component(mcsdatum) configure -state disabled
-      $itk_component(scsinit) configure -state disabled
-      $itk_component(crsdatum) configure -state disabled
-      $itk_component(ecsinit) configure -state disabled
-      $itk_component(pcsunpark) configure -state disabled
-      $itk_component(p1datum) configure -state disabled
-      $itk_component(p2datum) configure -state disabled
-      $itk_component(oidatum) configure -state disabled
-      if {[calparam cget -site] eq "MK"} {
-         $itk_component(aodatum) configure -state disabled
-      } else {
-         $itk_component(ngs1datum) configure -state disabled
-         $itk_component(ngs2datum) configure -state disabled
-         $itk_component(ngs3datum) configure -state disabled
-      }
-   }
-}
-
 itcl::body TcsControl::lockPark {} {
    if {$parklock} {
       $itk_component(mcspark) configure -state [checkState $itk_component(mcspark) ]
-      $itk_component(scspark) configure -state [checkState $itk_component(scspark) ]
       $itk_component(crspark) configure -state [checkState $itk_component(crspark) ]
-      $itk_component(ecspark) configure -state [checkState $itk_component(ecspark) ]
-      $itk_component(pcspark) configure -state [checkState $itk_component(pcspark) ]
       $itk_component(p1park) configure -state [checkState $itk_component(p1park) ]
       $itk_component(p2park) configure -state [checkState $itk_component(p2park) ]
       if { [sa agssad get oiwfsName] ne "GPI" } {
@@ -1009,6 +825,7 @@ itcl::body TcsControl::lockPark {} {
       }
       if {[calparam cget -site] eq "MK"} {
          $itk_component(aopark) configure -state [checkState $itk_component(aopark) ]
+         $itk_component(aounpark) configure -state [checkState $itk_component(aounpark) ]
       } else {
          if { !$::Flags(ignoreao) } {
             $itk_component(ngs1park) configure -state [checkState $itk_component(ngs1park) ]
@@ -1022,15 +839,13 @@ itcl::body TcsControl::lockPark {} {
       }
    } else {
       $itk_component(mcspark) configure -state disabled
-      $itk_component(scspark) configure -state disabled
       $itk_component(crspark) configure -state disabled
-      $itk_component(ecspark) configure -state disabled
-      $itk_component(pcspark) configure -state disabled
       $itk_component(p1park) configure -state disabled
       $itk_component(p2park) configure -state disabled
       $itk_component(oipark) configure -state disabled
       if {[calparam cget -site] eq "MK"} {
          $itk_component(aopark) configure -state disabled
+         $itk_component(aounpark) configure -state disabled
       } else {
          $itk_component(ngs1park) configure -state disabled
          $itk_component(ngs2park) configure -state disabled
@@ -1061,9 +876,6 @@ itcl::body TcsControl::onIgnoreAOChange {name1 name2 op} {
          $itk_component(odgw2) configure -state disabled
          $itk_component(odgw3) configure -state disabled
          $itk_component(odgw4) configure -state disabled
-         $itk_component(ngs1datum) configure -state disabled
-         $itk_component(ngs2datum) configure -state disabled
-         $itk_component(ngs3datum) configure -state disabled
          $itk_component(ngs1park) configure -state disabled
          $itk_component(ngs2park) configure -state disabled
          $itk_component(ngs3park) configure -state disabled
@@ -1079,11 +891,6 @@ itcl::body TcsControl::onIgnoreAOChange {name1 name2 op} {
          $itk_component(odgw2) configure -state normal
          $itk_component(odgw3) configure -state normal
          $itk_component(odgw4) configure -state normal
-         if {$indexlock} {
-            $itk_component(ngs1datum) configure -state normal
-            $itk_component(ngs2datum) configure -state normal
-            $itk_component(ngs3datum) configure -state normal
-         }
          if {$parklock} {
             $itk_component(ngs1park) configure -state normal
             $itk_component(ngs2park) configure -state normal
