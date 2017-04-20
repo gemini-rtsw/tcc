@@ -217,6 +217,7 @@ global env
 # the configuration components.
    epics cs configForAO
    epics cs mount
+   epics cs azel
    epics cs sourceA
    epics cs sourceB
    epics cs pwfs1

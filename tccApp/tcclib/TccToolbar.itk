@@ -112,53 +112,36 @@ itcl::body TccToolbar::constructor args {
    }
    pack $itk_component(sslabel)
 
-# Divide the rest of the window into 3 rows
+# Divide the rest of the window into 2 rows
    itk_component add row1 {
       frame $w.row1
    }
    itk_component add row2 {
       frame $w.row2
    }
-   itk_component add row3 {
-      frame $w.row3
-   }
-   pack $itk_component(row1) $itk_component(row2) $itk_component(row3) \
+
+   pack $itk_component(row1) $itk_component(row2) \
          -fill x -expand y
 
-# Rotator, M1 and M2 buttons in the first row.
+# M1 and Adaptive Optics  buttons in the first row.
    set w $itk_component(row1)
-   itk_component add cr {
-      PanelButton $w.cr -text "Rotator" -panel crsPanel
-   }
    itk_component add m1 {
       PanelButton $w.m1 -text "M1" -panel m1sPanel
-   }
-   itk_component add m2 {
-      PanelButton $w.m2 -text "M2" -panel m2sPanel -state disabled
-   }
-   pack $itk_component(cr) $itk_component(m1) $itk_component(m2) \
-         -side left -expand y -fill x
-
-# Enclosure and A&G in the next row.
-   set w $itk_component(row2)
-   itk_component add ec {
-      PanelButton $w.ec -text "Enclosure" -panel ecsPanel
-   }
-   itk_component add ag {
-      PanelButton $w.ag -text "A & G" -panel agsPanel 
-   }
-   pack $itk_component(ec) $itk_component(ag) -side left -expand y -fill x
-
-# Mount and AO in the last row.
-   set w $itk_component(row3)
-   itk_component add mc {
-      PanelButton $w.mc -text Mount -panel mcsPanel
    }
    itk_component add ao {
       PanelButton $w.ao -text "Adaptive Optics" -panel aosPanel
    }
 
-   pack $itk_component(mc) $itk_component(ao) -side left -expand y -fill x
+   pack $itk_component(m1) $itk_component(ao)\
+         -side left -expand y -fill x
+
+# Mount & Rotator in the last row.
+   set w $itk_component(row2)
+   itk_component add mc {
+      PanelButton $w.mc -text "Mount and Rotator" -panel mcsPanel
+   }
+
+   pack $itk_component(mc) -side left -expand y -fill x
 
    eval itk_initialize $args
 }

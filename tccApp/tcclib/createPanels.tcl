@@ -21,17 +21,9 @@ proc createPanels {} {
    PanelMgr tcsPanel -name .tcsPanel -class TcsPanel \
          -title "System Control"
    PanelMgr mcsPanel -name .mcsPanel -class McsPanel \
-         -title "Mount Control"
-   PanelMgr crsPanel -name .crsPanel -class CrsPanel \
-         -title "Cass Rotator Control"
-   PanelMgr ecsPanel -name .ecsPanel -class EcsPanel \
-         -title "Enclosure Control"
+         -title "Mount And Rotator Control"
    PanelMgr m1sPanel -name .m1sPanel -class M1sPanel \
          -title "Primary Mirror Control"
-#   PanelMgr m2sPanel -name .m2sPanel -class M2sPanel \
-#         -title "Secondary Mirror Control"
-   PanelMgr agsPanel -name .agsPanel -class AgsPanel \
-         -title "A & G Control"
    PanelMgr aosPanel -name .aosPanel -class AosPanel \
          -title "Active Optics Control"
    PanelMgr previewPanel -name .previewPanel -class PreviewPanel \
