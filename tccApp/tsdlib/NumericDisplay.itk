@@ -164,18 +164,36 @@ itcl::body NumericDisplay::constructor args {
             -entryrelief sunken -anchor e
    }
 
-   itk_component add hflag {
-      label $w.hflag -image hawaii_flag -borderwidth 0
+   itk_component add para {
+      StatusField $w.para -labeltext ParA: -labelmargin 5 -width 7 -entryborder 1 \
+            -entryrelief sunken
    }
+   [$itk_component(para) component label] configure -width 4 -anchor e
+
+   # AWE put hst and hflag in a frame to solve layout issues 
+   itk_component add hstframe {
+	frame $w.hstframe
+   }
+
+   set w $itk_component(hstframe)
    itk_component add hst {
       StatusField $w.hst -labeltext HST: -labelmargin 5 -entryborder 1 \
             -entryrelief sunken
    }
+   itk_component add hflag {
+      label $w.hflag -image hawaii_flag -borderwidth 0
+   }
+
+   grid  $itk_component(hst) $itk_component(hflag) -sticky w
+
+   set w $itk_component(objtime)
+
    [$itk_component(hst) component label] configure -width 4 -anchor e
+
    grid  $itk_component(offlab) $itk_component(off1) $itk_component(off2)\
-      $itk_component(hflag) $itk_component(hst) - -sticky e -pady {0 3} -padx {0 3}
+      $itk_component(para) $itk_component(hstframe) - -sticky e -pady {0 3} -padx {0 3}
    grid configure $itk_component(offlab) -padx 3 
-   grid configure $itk_component(hst) -sticky w
+   grid configure $itk_component(hstframe) -sticky w
 
    # Track rates and Chilean local time.
    itk_component add ratelab {
@@ -189,18 +207,31 @@ itcl::body NumericDisplay::constructor args {
       StatusField $w.rate2 -labelmargin 5 -width 11 -entryborder 1 \
             -entryrelief sunken -anchor e
    }
-   itk_component add cflag {
-      label $w.cflag -image chile_flag -borderwidth 0
+
+   # AWE put clt and cflag in a frame to solve layout issues 
+   itk_component add cltframe {
+	frame $w.cltframe
    }
+
+   set w $itk_component(cltframe)
+
    itk_component add clt {
       StatusField $w.clt -labelmargin 5 -entryborder 1 \
             -entryrelief sunken
    }
+   itk_component add cflag {
+      label $w.cflag -image chile_flag -borderwidth 0
+   }
+
+   grid  $itk_component(clt) $itk_component(cflag) -sticky w
+
+   set w $itk_component(objtime)
+
    [$itk_component(clt) component label] configure -width 4 -anchor e
    grid $itk_component(ratelab) $itk_component(rate1) $itk_component(rate2) \
-      $itk_component(cflag) $itk_component(clt) - -sticky e -pady {0 2} -padx {0 3}
+      x $itk_component(cltframe) - -sticky e -pady {0 2} -padx {0 3}
    grid configure $itk_component(ratelab) -padx 3
-   grid configure $itk_component(clt) -sticky w
+   grid configure $itk_component(cltframe) -sticky w
 
    # Chop throw, IPA and seeing.
    itk_component add choplab {
@@ -648,6 +679,7 @@ itcl::body NumericDisplay::update {} {
       [format "%s%02d:%02d:%02d.%02d" [lindex $dec 0] [lindex $dec 1] \
       [lindex $dec 2] [lindex $dec 3] [lindex $dec 4]]
 
+   $itk_component(para) configure -text [sa tcssad get parAngle]
    $itk_component(ipa) configure -text [sa tcssad get instrPA]
    $itk_component(iaa) configure -text [sa tcssad get instrAA]
    $itk_component(telaz) configure -text [sa tcssad get currentAz]
