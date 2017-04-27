@@ -181,6 +181,28 @@ itcl::body TcsConfigControl::constructor {args} {
 
    # Wrap control
    set w [$itk_component(row3) childsite]
+
+   itk_component add p1lab {
+      label $w.p1lab -text "P1"
+   }
+   itk_component add p1unwrap {
+      ApplyButton $w.p1unwrap -command pwfs1Unwrap -text Unwrap
+   }
+
+   itk_component add p2lab {
+      label $w.p2lab -text "P2"
+   }
+
+   itk_component add p2unwrap {
+      ApplyButton $w.p2unwrap -command pwfs2Unwrap -text Unwrap
+   }
+
+   itk_component add wframe {
+      frame $w.wframe -bd 2 -relief groove
+   }
+   
+   set w $itk_component(wframe)
+
    itk_component add azwrap {
       iwidgets::optionmenu $w.azwrap -labeltext Azimuth
    }
@@ -194,8 +216,10 @@ itcl::body TcsConfigControl::constructor {args} {
             -parcommand [itcl::code $this wrap]
    }
 
-   pack $itk_component(wrapapply) $itk_component(rotwrap) \
-      $itk_component(azwrap) -side right -pady 3 -padx 20
+   pack $itk_component(wrapapply) $itk_component(rotwrap) $itk_component(azwrap) -side right -pady 3 -padx 3
+
+   set w [$itk_component(row3) childsite]
+   pack  $itk_component(wframe) $itk_component(p2unwrap) $itk_component(p2lab) $itk_component(p1unwrap) $itk_component(p1lab) -side right -pady 3 -padx 3
 
    # Trace changes in the selected field.
    trace variable ::Config(tcs.field,value) w [itcl::code $this newfield]
