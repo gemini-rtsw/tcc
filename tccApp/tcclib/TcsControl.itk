@@ -820,7 +820,8 @@ itcl::body TcsControl::lockPark {} {
       $itk_component(crspark) configure -state [checkState $itk_component(crspark) ]
       $itk_component(p1park) configure -state [checkState $itk_component(p1park) ]
       $itk_component(p2park) configure -state [checkState $itk_component(p2park) ]
-      if { [sa agssad get oiwfsName] ne "GPI" } {
+      set oiwfsName [string trim [sa agssad get oiwfsName] ]
+      if { $oiwfsName ne "GPI" && $oiwfsName ne "None" } {
          $itk_component(oipark) configure -state [checkState $itk_component(oipark) ]
       }
       if {[calparam cget -site] eq "MK"} {
@@ -905,8 +906,9 @@ itcl::body TcsControl::onIgnoreAOChange {name1 name2 op} {
 }
 
 itcl::body TcsControl::onOISelection {record value} {
+   set value [string trim $value]
    if { $record eq "agssad.oiwfsName" } {
-      if { $value eq "GPI" } {
+      if { $value eq "GPI" || $value eq "None" } {
          $itk_component(oiwfs) configure -state disabled
          $itk_component(oipark) configure -state disabled
       } else {
