@@ -228,6 +228,8 @@ itcl::body Field::apply {comp} {
 
 	# Set OIWFS mode in the TCS
 
+        set currentoiwfs [sa agssad get oiwfsName]
+        puts "current oiwfs: $currentoiwfs"
 	if { ! [string equal $guide ""] } {
 	   set inst $::Config(tcs.instrument,value)
       	   if {([string equal $guide "AO-OI"]) && [string match "*NIFS*" $inst]} {
@@ -239,7 +241,12 @@ itcl::body Field::apply {comp} {
                     cs oiwfsSelect set output WFS
                     logger command oiwfsSelect
                  } else {
-                    #puts "no OIWFS"
+                     if {! [string equal $currentoiwfs "None"]} {
+                         cs oiwfsPark set dir MARK
+                         after 100
+                         cs oiwfsPark set dir START
+                    }
+
                     cs oiwfsSelect set oiwfs None
                     cs oiwfsSelect set output WFS
                     logger command oiwfsSelect
@@ -282,13 +289,23 @@ itcl::body Field::apply {comp} {
             	    cs oiwfsSelect set output WFS
             	    logger command oiwfsSelect
                  } else {
-            	    #puts "no OIWFS"
+                     if {! [string equal $currentoiwfs "None"]} {
+                         cs oiwfsPark set dir MARK
+                         after 100
+                         cs oiwfsPark set dir START
+                    }
+
             	    cs oiwfsSelect set oiwfs None
             	    cs oiwfsSelect set output WFS
             	    logger command oiwfsSelect
                  }
            } else {
-                 #puts "no OIWFS"
+                 if {! [string equal $currentoiwfs "None"]} {
+                     cs oiwfsPark set dir MARK
+                     after 100
+                     cs oiwfsPark set dir START
+                 }
+
                  cs oiwfsSelect set oiwfs None
                  cs oiwfsSelect set output WFS
                  logger command oiwfsSelect
