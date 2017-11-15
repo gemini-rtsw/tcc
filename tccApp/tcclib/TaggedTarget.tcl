@@ -50,9 +50,14 @@ itcl::body TaggedTarget::constructor {tag _target} {
 }
 
 itcl::body TaggedTarget::getFullTag {{separator -}} {
-	if { [string equal $tagSuffix ""] } {
-		return $tagPrefix
+   if { ![ string equal [$target cget -tag] "" ] } {
+      set prefix [$target cget -tag]
+   } else {
+      set prefix $tagPrefix
+   }
+   if { [string equal $tagSuffix ""] } {
+		return $prefix
 	} else {
-		return $tagPrefix$separator$tagSuffix
+		return $prefix$separator$tagSuffix
 	}
 }

@@ -86,43 +86,6 @@ itcl::body FieldControl::constructor args {
    setTooltip $itk_component(store) "Save changes to the field parameters."
    setTooltip $itk_component(apply) "Configure TCS with the current field values."
 
-   # Display of current targets.
-   #   itk_component add sciencelabel {
-   #      label $w.sciencelabel -text "SCIENCE Target"
-   #   }
-   #   itk_component add sciencename {
-   #      label $w.sciencename -width 30 -borderwidth 2 -relief sunken
-   #   }
-   #   itk_component add pwfs1label {
-   #      label $w.pwfs1label -text "PWFS1 Target"
-   #   }
-   #   itk_component add pwfs1name {
-   #      label $w.pwfs1name -width 30 -borderwidth 2 -relief sunken
-   #   }
-   #   itk_component add pwfs2label {
-   #      label $w.pwfs2label -text "PWFS2 Target"
-   #   }
-   #   itk_component add pwfs2name {
-   #      label $w.pwfs2name -width 30 -borderwidth 2 -relief sunken
-   #   }
-   #   itk_component add oiwfslabel {
-   #      label $w.oiwfslabel -text "OIWFS target"
-   #   }
-   #   itk_component add oiwfsname {
-   #      label $w.oiwfsname -width 30 -borderwidth 2 -relief sunken
-   #   }
-   #   itk_component add aowfslabel {
-   #      label $w.aowfslabel -text "AOWFS target"
-   #   }
-   #   itk_component add aowfsname {
-   #      label $w.aowfsname -width 30 -borderwidth 2 -relief sunken
-   #   }
-   #   grid $itk_component(sciencelabel) $itk_component(sciencename)
-   #   grid $itk_component(pwfs1label)  $itk_component(pwfs1name)
-   #   grid $itk_component(pwfs2label) $itk_component(pwfs2name)
-   #   grid $itk_component(oiwfslabel) $itk_component(oiwfsname)
-   #   grid $itk_component(aowfslabel) $itk_component(aowfsname)
-
    # Guide, rotator and wavelength selection.
    itk_component add subsel {
       frame $itk_interior.subsel
@@ -183,44 +146,18 @@ itcl::body FieldControl::constructor args {
    setTooltip $itk_component(addTrg) "Add new target."
    setTooltip $itk_component(delTrg) "Delete selected target."
 
-   #   frame $w.trgOpFrm.edBtnFrm
-   #   image create photo ::images::copyIcon -file [file join tcclib copy.gif]
-   #   image create photo ::images::pasteIcon -file [file join tcclib paste.gif]
-   #   image create photo ::images::duplicateIcon -file [file join tcclib
-# duplicate.gif]
-   #   itk_component add copyTrg { button $w.trgOpFrm.edBtnFrm.copy -image
-# ::images::copyIcon }
-   #   itk_component add pasteTrg { button $w.trgOpFrm.edBtnFrm.paste -image
-# ::images::pasteIcon }
-   #   itk_component add duplicateTrg { button $w.trgOpFrm.edBtnFrm.duplicate
-# -image ::images::duplicateIcon }
-   #
-   #	pack $w.trgOpFrm.edBtnFrm.copy $w.trgOpFrm.edBtnFrm.paste
-# $w.trgOpFrm.edBtnFrm.duplicate \
-   #		-side left
-
    frame $w.trgOpFrm.opBtnFrm
    image create photo ::images::makedefaultIcon -file [file join tcclib star.gif]
    itk_component add makeDefault { button $w.trgOpFrm.opBtnFrm.makedefault -image ::images::makedefaultIcon \
 		-command [itcl::code $this onSetDefault]}
    setTooltip $itk_component(makeDefault) "Select/unselect target as the default for science/WFS."
    image create photo ::images::swapTargetsIcon -file [file join tcclib dep_loop.gif]
-   #	itk_component add swapTargets { button $w.trgOpFrm.opBtnFrm.swaptargets
-# -image ::images::swapTargetsIcon \
-   #		-command [itcl::code $this onSwapTarget]}
-   #	pack $w.trgOpFrm.opBtnFrm.makedefault $w.trgOpFrm.opBtnFrm.swaptargets
-# -side left
    pack $w.trgOpFrm.opBtnFrm.makedefault -side left
 
    pack $w.trgOpFrm.add $w.trgOpFrm.del  -side left
-   #	pack $w.trgOpFrm.add $w.trgOpFrm.del  $w.trgOpFrm.edBtnFrm -side left
-   #	pack configure $w.trgOpFrm.edBtnFrm -padx 5
 
    pack $w.trgOpFrm.opBtnFrm -side right
 
-   #   itk_component add hideNonDefaultBtn { button $w.trgOpFrm.hideNonDefaultBtn
-# -text "Show non-defaults" }
-   #   pack $w.trgOpFrm.hideNonDefaultBtn -side right
    itk_component add trgFrm { iwidgets::labeledframe $w.trgFrm -labeltext "Selected Target" \
 	   -labelpos nw -relief groove}
 
@@ -369,223 +306,9 @@ itcl::body FieldControl::reset {} {
    set ::Config(tcs.field.aowfstarget,value) ""
 }
 
-#itcl::body FieldControl::swapguide {} {
-#   global env
-#   if {$curr_guide == ""} {
-#	set new_wavelength ""
-#	set fieldObj ${::Config(tcs.field,namespace)}::${::Config(tcs.field,value)}
-#	#puts "fieldObj: $fieldObj"
-#
-#	set curr_guide ${::Config(tcs.field.guide,value)}
-#   	set curr_sciencetarget ${::Config(tcs.field.sciencetarget,value)}
-#	set curr_wl_name ${::Config(tcs.field.wavelength,value)}
-#
-#	if {![string equal $curr_wl_name ""]} {
-#	   set curr_wavelength [::WavelengthNames::$curr_wl_name cget -wavel]
-#	}
-#	#puts "got current wavelength name: $curr_wl_name , wl: $curr_wavelength"
-#	# getting current guide wavelength (from Acquisition Camera)
-#	# Create the status acceptor if it doesn't alread exist.
-#	if { [catch {sa hrwfs::currStatus info}] } {
-#	   epics sa hrwfs::currStatus
-#	}
-#        if {$env(TCC_TCSNAME) == "tcs"} {
-#	    set guide_wl [.observePanel.frame.control.botframe.wfsconfig getValue
-# HrwfsColFilt]
-#	} else {
-#	    set guide_wl
-# [.observePanel.frame.control.botframe.wfsconfig.tabs.canvas.notebook.cs.page1.cs.hrwfs.col
-# get]
-#	}
-##	puts "swapguide got guide wl: $guide_wl"
-#	switch $guide_wl {
-#	   "U-red1"  { set new_wavelength "Acq Cam U" }
-#	   "B-blue"  { set new_wavelength "Acq Cam B" }
-#	   "V-green" { set new_wavelength "Acq Cam V" }
-#	   "R-red2"  { set new_wavelength "Acq Cam R" }
-#	   "I-red3"  { set new_wavelength "Acq Cam I" }
-#	   "neutral" { set new_wavelength "Acq Cam neutral" }
-#	   default   { set new_wavelength "" }
-#	}
-#       switch $curr_guide {
-#	   "P1-P2" -
-#	   "P1-OI" -
-#	   "AO-P1" -
-#	   "P1" {
-#	       set curr_guidetarget ${::Config(tcs.field.pwfs1target,value)}
-#	       #set ::Config(tcs.field.pwfs1target,value) ""
-#	       set lpath "Sky>AC/HR"
-#	   }
-#	   "P2-OI" -
-#	   "P2" {
-#	       set curr_guidetarget ${::Config(tcs.field.pwfs2target,value)}
-#	       #set ::Config(tcs.field.pwfs2target,value) ""
-#	       set lpath "Sky>AC/HR"
-#	   }
-#	   "OI" {
-#	       set curr_guidetarget ${::Config(tcs.field.oiwfstarget,value)}
-#	       #set ::Config(tcs.field.oiwfstarget,value) ""
-#	       set lpath "Sky>AC/HR"
-#	   }
-#	   "AO-OI" -
-#	   "AO" {
-#	       set curr_guidetarget ${::Config(tcs.field.aowfstarget,value)}
-#	       #set ::Config(tcs.field.aowfstarget,value) ""
-#	       set lpath "Sky>AO>AC/HR"
-#	   }
-#	   default {
-#	       tk_messageBox -icon warning -parent $itk_interior \
-#		   -message "Invalid guide configuration ... doing nothing"
-#	       # puts "No guidestar set ... do nothing"
-#	       set curr_guide ""
-#	       set curr_sciencetarget ""
-#	       return
-#	   }
-#	}
-#	if {$curr_guidetarget == ""} {
-#	   tk_messageBox -icon warning -parent $itk_interior \
-#		-message "No guidestar set ... doing nothing"
-#	   # puts "No guidestar set ... do nothing"
-#	   set curr_guide ""
-#	   set curr_sciencetarget ""
-#	   set curr_wl_name ""
-#	   set curr_wavelength ""
-#	   set new_wavelength ""
-#	   return
-#	}
-#   	 #puts "guide conficuration is: $curr_guide"
-#   	 #puts "Science target is $curr_sciencetarget, curr_wl_name: $curr_wl_name"
-#   	 #puts "Guide target is $curr_guidetarget"
-#
-#	if {[string equal $new_wavelength ""]} {
-#	   tk_messageBox -icon warning -parent $itk_interior \
-#		-message "No guide wavelength found ... using 0.5 (Acq Cam neutral)"
-#	   set new_wavelength "Acq Cam neutral"
-#	}
-#	#puts "guide wl: $guide_wl using wl: $new_wavelength"
-#       logactions logmess "guide wl: $guide_wl using wl: $new_wavelength"
-#
-#   	::WavelengthNames::$new_wavelength configure -set_baffles 0
-#	$fieldObj configure -guide "No guiding"
-#	$fieldObj configure -sciencetarget $curr_guidetarget
-#	$fieldObj configure -wavelength $new_wavelength
-#
-#	$itk_component(swapguide) configure -text "Revert Science/Guide Targets" -bg
-# red
-#
-#	# set Light Path Mode (for the A&G)
-#	if [winfo exists .observePanel] {
-#	    ::.observePanel.frame.control.botframe.mirrors.lpath select $lpath
-#	}
-#
-#	# Append _GUIDE to the object name.
-#	# puts "current guide target: $curr_guidetarget"
-#	set curr_ns ${::Config(tcs.field.sciencetarget,namespace)}
-#	set curr_objname [${curr_ns}::$curr_guidetarget cget -objname]
-#	#puts "objname: $curr_objname ns: $curr_ns"
-#	#puts "changing name to [list ${curr_objname}_GUIDE]"
-#	${curr_ns}::$curr_guidetarget configure -objname [list ${curr_objname}_GUIDE]
-#	$this load $fieldObj
-#	$this applycmd
-#   	::WavelengthNames::$new_wavelength configure -set_baffles 1
-#   } else {
-#	#puts "swapping back ..."
-#
-#	switch $curr_guide {
-#	   "P1-P2" -
-#	   "P1-OI" -
-#	   "AO-P1" -
-#	   "P1" {
-#		   $fieldObj configure -pwfs1target $curr_guidetarget
-#		   set lpath "Sky>Instr"
-#	        }
-#	   "P2-OI" -
-#	   "P2" {
-#		   $fieldObj configure -pwfs2target $curr_guidetarget
-#		   set lpath "Sky>Instr"
-#	        }
-#	   "OI" {
-#		   $fieldObj configure -oiwfstarget $curr_guidetarget
-#		   set lpath "Sky>Instr"
-#	        }
-#	   "AO-OI" -
-#	   "AO" {
-#		   $fieldObj configure -aowfstarget $curr_guidetarget
-#		   set lpath "Sky>AO>Inst"
-#	        }
-#	}
-#	$fieldObj configure -guide $curr_guide
-#	$fieldObj configure -sciencetarget $curr_sciencetarget
-#	${curr_ns}::$curr_guidetarget configure -objname ${curr_objname}
-#	$fieldObj configure -wavelength $curr_wl_name
-#
-#	# set Light Path Mode (for the A&G)
-#	if [winfo exists .observePanel] {
-#	    ::.observePanel.frame.control.botframe.mirrors.lpath select $lpath
-#	}
-#
-#	#clear temp storage
-#	set curr_guide ""
-#	set curr_sciencetarget ""
-#	set curr_guidetarget ""
-#	set curr_wl_name ""
-#	set curr_wavelength ""
-#	#set fieldObj ""
-#	$itk_component(swapguide) configure -text "Swap Science/Guide Targets" -bg
-# "white"
-#	$this load $fieldObj
-#	$this applycmd
-#   }
-#}
 
 itcl::body FieldControl::load {name} {
-   # If the targets are currently swapped, swap back
-   #   if {($curr_guide != "") && ( ${name} != ${currentname} )} {
-   #
-   #	#puts "swapping back because loading new target ..."
-   #
-   #	switch $curr_guide {
-   #	   "P1-P2" -
-   #	   "P1-OI" -
-   #	   "AO-P1" -
-   #	   "P1" {
-   #		   $fieldObj configure -pwfs1target $curr_guidetarget
-   #		   set lpath "Sky>Instr"
-   #	        }
-   #	   "P2-OI" -
-   #	   "P2" {
-   #		   $fieldObj configure -pwfs2target $curr_guidetarget
-   #		   set lpath "Sky>Instr"
-   #	        }
-   #	   "OI" {
-   #		   $fieldObj configure -oiwfstarget $curr_guidetarget
-   #		   set lpath "Sky>Instr"
-   #	        }
-   #	   "AO-OI" -
-   #	   "AO" {
-   #		   $fieldObj configure -aowfstarget $curr_guidetarget
-   #		   set lpath "Sky>AO>Inst"
-   #	        }
-   #	}
-   #	$fieldObj configure -guide $curr_guide
-   #	$fieldObj configure -sciencetarget $curr_sciencetarget
-   #	${curr_ns}::$curr_guidetarget configure -objname ${curr_objname}
-   #	$fieldObj configure -wavelength $curr_wl_name
-   #
-   #	# set Light Path Mode (for the A&G)
-   #	if [winfo exists .observePanel] {
-   #	    ::.observePanel.frame.control.botframe.mirrors.lpath select $lpath
-   #	}
-   #
-   #	#clear temp storage
-   #	set curr_guide ""
-   #	set curr_sciencetarget ""
-   #	set curr_guidetarget ""
-   #	set curr_wl_name ""
-   #	set curr_wavelength ""
-   #	$itk_component(swapguide) configure -text "Swap Science/Guide Targets" -bg
-# "white"
-   #    }
+
    if {( ${name} != ${currentname} ) && ![string is space $currentname ]} {
       $currentname clearSwapTarget
    }
@@ -652,16 +375,6 @@ itcl::configbody FieldControl::component {
    if { $itk_option(-component) != "" } {
        set comp $itk_option(-component)
 
-# Configure the component options of the target controls.
-#      foreach target {science pwfs1 pwfs2 oiwfs aowfs} {
-#         $itk_component(${target}control) configure \
-#               -component $comp.${target}target
-
-# Configure the textvariable option on the target display widgets to the
-# config array.
-#         $itk_component(${target}name) configure -textvariable \
-#               ::Config($comp.${target}target,value)
-#      }
       $itk_component(targets) configure -component $comp.taggedtarget
 
 
@@ -779,25 +492,6 @@ itcl::body FieldControl::newtarget {name type args} {
          }
       }
    }
-}
-
-itcl::body FieldControl::pageSelectCB {color} {
-   return
-   # Re-configure the notebook background to match the selected page.
-   $itk_component(targets) config -background $color -tabbackground $color \
-      -backdrop $color
-
-   # Restore the colours of the tabs.
-   #   $itk_component(targets) pageconfigure Science -background \
-   #         [option get $itk_component(sciencecontrol) background Background]
-   #   $itk_component(targets) pageconfigure PWFS1 -background \
-   #         [option get $itk_component(pwfs1control) background Background]
-   #   $itk_component(targets) pageconfigure PWFS2 -background \
-   #         [option get $itk_component(pwfs2control) background Background]
-   #   $itk_component(targets) pageconfigure OIWFS -background \
-   #         [option get $itk_component(oiwfscontrol) background Background]
-   #   $itk_component(targets) pageconfigure AOWFS -background \
-   #         [option get $itk_component(aowfscontrol) background Background]
 }
 
 itcl::body FieldControl::onSelectTarget {target} {

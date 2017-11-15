@@ -20,6 +20,7 @@ itcl::class TargetDetail {
 	method saveTarget {target}
    
 private {
+   variable scienceTag {}
    method loadMagnitudes {target} {}
 }
 }
@@ -118,7 +119,7 @@ itcl::body TargetDetail::load {tagTarget} {
 	} else {
 		set tag [$tagTarget cget -tagPrefix]
 		if {[string equal $tag "Base"] } {
-			set tag Science
+			set tag Science 
 		}
 		$itk_component(tagMenu) select $tag
 		if { $tag eq "Science" } {
@@ -157,6 +158,7 @@ itcl::body TargetDetail::loadTarget {target} {
 			$itk_component(tabs) select RA/Dec
 		}
 	}
+   set scienceTag [$target cget -tag]
    loadMagnitudes $target
 }
 
@@ -191,6 +193,7 @@ itcl::body TargetDetail::cleanFields {} {
 	$itk_component(solarTarget) cleanFields
 	$itk_component(csysSel) select RA/Dec	
 	$itk_component(brightness) clear
+   set scienceTag {}
 }
 
 itcl::body TargetDetail::onTargetSelection {} {
@@ -242,6 +245,7 @@ itcl::body TargetDetail::saveTarget {target} {
 	$target init
 	$target configure -objname $name
 	$target configure -brightness [$itk_component(brightness) get]
+   $target configure -tag $scienceTag
 	switch [$itk_component(csysSel) get] {
 		Az/El {
 			$itk_component(azelTarget) save $target 
