@@ -30,11 +30,14 @@ itcl::class SlewOptionsControl {
       variable guiding
       variable guideOffset
       variable instrOffset
-      variable slewPwfs1
-      variable slewPwfs2
-      variable slewOiwfs
-      variable slewGeMS
-      variable slewAowfs
+      variable parkPwfs1
+      variable parkPwfs2
+      variable parkOiwfs
+      variable parkGeMS
+      variable followPwfs1
+      variable followPwfs2
+      variable followOiwfs
+      variable followGeMS
       variable resetao
       variable disableao
       variable ignoreao
@@ -114,30 +117,45 @@ itcl::body SlewOptionsControl::constructor args {
             -onvalue On -offvalue Off \
             -text [lindex [cs slew info instrOffset] 2]
    }
-   itk_component add slewPwfs1 {
-      checkbutton $w.slewPwfs1 -variable [itcl::scope slewPwfs1] \
+   itk_component add parkPwfs1 {
+      checkbutton $w.parkPwfs1 -variable [itcl::scope parkPwfs1] \
             -onvalue On -offvalue Off \
-            -text [lindex [cs slew info slewPwfs1] 2]
+            -text [lindex [cs slew info parkPwfs1] 2]
    }
-   itk_component add slewPwfs2 {
-      checkbutton $w.slewPwfs2 -variable [itcl::scope slewPwfs2] \
+   itk_component add parkPwfs2 {
+      checkbutton $w.parkPwfs2 -variable [itcl::scope parkPwfs2] \
             -onvalue On -offvalue Off \
-            -text [lindex [cs slew info slewPwfs2] 2]
+            -text [lindex [cs slew info parkPwfs2] 2]
    }
-   itk_component add slewOiwfs {
-      checkbutton $w.slewOiwfs -variable [itcl::scope slewOiwfs] \
+   itk_component add parkOiwfs {
+      checkbutton $w.parkOiwfs -variable [itcl::scope parkOiwfs] \
             -onvalue On -offvalue Off \
-            -text [lindex [cs slew info slewOiwfs] 2]
+            -text [lindex [cs slew info parkOiwfs] 2]
    }
-   itk_component add slewGeMS {
-      checkbutton $w.slewGeMS -variable [itcl::scope slewGeMS] \
+   itk_component add parkGeMS {
+      checkbutton $w.parkGeMS -variable [itcl::scope parkGeMS] \
             -onvalue On -offvalue Off \
-            -text [lindex [cs slew info slewGeMS] 2]
+            -text [lindex [cs slew info parkGeMS] 2]
    }
-   itk_component add slewAowfs {
-      checkbutton $w.slewAowfs -variable [itcl::scope slewAowfs] \
+   itk_component add followPwfs1 {
+      checkbutton $w.followPwfs1 -variable [itcl::scope followPwfs1] \
             -onvalue On -offvalue Off \
-            -text [lindex [cs slew info slewAowfs] 2]
+            -text [lindex [cs slew info followPwfs1] 2]
+   }
+   itk_component add followPwfs2 {
+      checkbutton $w.followPwfs2 -variable [itcl::scope followPwfs2] \
+            -onvalue On -offvalue Off \
+            -text [lindex [cs slew info followPwfs2] 2]
+   }
+   itk_component add followOiwfs {
+      checkbutton $w.followOiwfs -variable [itcl::scope followOiwfs] \
+            -onvalue On -offvalue Off \
+            -text [lindex [cs slew info followOiwfs] 2]
+   }
+   itk_component add followGeMS {
+      checkbutton $w.followGeMS -variable [itcl::scope followGeMS] \
+            -onvalue On -offvalue Off \
+            -text [lindex [cs slew info followGeMS] 2]
    }
    itk_component add resetao {
       checkbutton $w.resetao -variable [itcl::scope resetao] \
@@ -161,11 +179,14 @@ itcl::body SlewOptionsControl::constructor args {
          $itk_component(filter2) $itk_component(pointing) \
          $itk_component(guiding) $itk_component(guideOffset) \
          $itk_component(instrOffset) $itk_component(resetao) \
-         $itk_component(slewPwfs1) $itk_component(slewPwfs1) \
-         $itk_component(slewPwfs2) $itk_component(slewPwfs2) \
-         $itk_component(slewOiwfs) $itk_component(slewOiwfs) \
-         $itk_component(slewGeMS) $itk_component(slewGeMS) \
-         $itk_component(slewAowfs) $itk_component(slewAowfs) \
+         $itk_component(parkPwfs1) $itk_component(parkPwfs1) \
+         $itk_component(parkPwfs2) $itk_component(parkPwfs2) \
+         $itk_component(parkOiwfs) $itk_component(parkOiwfs) \
+         $itk_component(parkGeMS) $itk_component(parkGeMS) \
+         $itk_component(followPwfs1) $itk_component(followPwfs1) \
+         $itk_component(followPwfs2) $itk_component(followPwfs2) \
+         $itk_component(followOiwfs) $itk_component(followOiwfs) \
+         $itk_component(followGeMS) $itk_component(followGeMS) \
          $itk_component(disableao) $itk_component(ltcscheck) \
          $itk_component(restorefig) -pady 2 -anchor w
    if { [calparam cget -site] eq "CP" } {
@@ -197,11 +218,14 @@ itcl::body SlewOptionsControl::load {name} {
    set guiding [$name cget -guiding]
    set guideOffset [$name cget -guideOffset]
    set instrOffset [$name cget -instrOffset]
-   set slewPwfs1 [$name cget -slewPwfs1]
-   set slewPwfs2 [$name cget -slewPwfs2]
-   set slewOiwfs [$name cget -slewOiwfs]
-   set slewGeMS [$name cget -slewGeMS]
-   set slewAowfs [$name cget -slewAowfs]
+   set parkPwfs1 [$name cget -parkPwfs1]
+   set parkPwfs2 [$name cget -parkPwfs2]
+   set parkOiwfs [$name cget -parkOiwfs]
+   set parkGeMS [$name cget -parkGeMS]
+   set followPwfs1 [$name cget -followPwfs1]
+   set followPwfs2 [$name cget -followPwfs2]
+   set followOiwfs [$name cget -followOiwfs]
+   set followGeMS [$name cget -followGeMS]
    set resetao [$name cget -resetao]
    set disableao [$name cget -disableao]
    set ltcscheck [$name cget -ltcscheck]
@@ -218,11 +242,13 @@ itcl::body SlewOptionsControl::save {name} {
          -mountDifTr $mountDifTr -filter1 $filter1 \
          -filter2 $filter2 -pointing $pointing \
          -guiding $guiding -guideOffset $guideOffset \
-         -instrOffset $instrOffset -slewPwfs1 $slewPwfs1 \
-         -slewPwfs2 $slewPwfs2 -slewOiwfs $slewOiwfs \
-         -slewGeMS $slewGeMS -slewAowfs $slewAowfs \
-         -resetao $resetao -disableao $disableao \
-         -ltcscheck $ltcscheck -restoreFigure $restoreM1
+         -instrOffset $instrOffset -parkPwfs1 $parkPwfs1 \
+         -parkPwfs2 $parkPwfs2 -parkOiwfs $parkOiwfs \
+         -parkGeMS $parkGeMS -followPwfs1 $followPwfs1 \
+         -followPwfs2 $followPwfs2 -followOiwfs $followOiwfs \
+         -followGeMS $followGeMS -resetao $resetao \
+         -disableao $disableao -ltcscheck $ltcscheck \
+         -restoreFigure $restoreM1
    if { [calparam cget -site] eq "CP" } {
        $name configure -ignoreao $ignoreao
    }
