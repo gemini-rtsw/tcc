@@ -729,12 +729,16 @@ itcl::body NumericDisplay::update {} {
 
    if { [calparam cget -site] eq "CP" } {
        if {! [catch {sa ecssad info}]} {
-	    set commercialPower [sa ecssad get commercial]
-	    set generatorPower [sa ecssad get generator]
-   	    if ($commercialPower) {$itk_component(powerstatus) configure -text "Commercial" -foreground DarkGreen}
-   	    if ($generatorPower) {$itk_component(powerstatus) configure -text "Generator" -foreground red}
+           set commercialPower [string trim [sa ecssad get commercial]]
+           set generatorPower [string trim [sa ecssad get generator]]
+           if { [string is boolean -strict $commercialPower] && $commercialPower} {
+               $itk_component(powerstatus) configure -text "Commercial" -foreground DarkGreen
+           }
+           if { [string is boolean -strict $generatorPower] && $generatorPower} {
+               $itk_component(powerstatus) configure -text "Generator" -foreground red
+           }
        }
-    }
+   }
 
 
    # Target info.
