@@ -282,11 +282,17 @@ itcl::body TcsConfigControl::apply {} {
    }
 
    # Check to make sure that the laser isn't propogating!
-   if {([calparam cget -site] eq "MK" && [sa aossad get laserProp] eq "SKY") ||
-      ([calparam cget -site] eq "CP" && [[::GemsSys::getSingleton] getLaserProp] eq "SKY") } {
+   if {([calparam cget -site] eq "CP" && [[::GemsSys::getSingleton] getLaserProp] eq "SKY") } {
       logactions logmess "Warning The laser is propogating, aborting slew"
       tk_messageBox -icon error \
          -message "You cannot SLEW while the laser is propogating"
+      return
+   }
+   # Toptica Update: At GN, we must prevent Slewing when the laser is propagated out of the laser head at anything other than low power.
+   if {([calparam cget -site] eq "MK" && [sa aossad get laserPower] ne "Low" && [expr [lsearch -exact [list "SAFETY SHUTTER" "BDM" "SKY"] [sa aossad get laserProp]] >=0 ] ) } {
+      logactions logmess "Warning The laser is propogating at High Power out of the Laser Head, aborting slew"
+      tk_messageBox -icon error \
+         -message "You cannot SLEW while the laser is propogating at High Power out of the Laser Head"
       return
    }
 
