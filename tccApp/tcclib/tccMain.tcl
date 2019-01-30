@@ -35,6 +35,8 @@ global env
 
 	set simgems 0
 	set ignoreao ""
+    
+    set notifySeqexec 0
 	
 	set ocsproxy ""
    foreach {opt val} $args {
@@ -48,15 +50,18 @@ global env
          -cal {
             set calfile "$val"
          }
-			-ocsproxy {
-				set ocsproxy "$val"
-			}
-			-simgems {
-				set simgems $val
-			}
-			-nogems {
-				set ignoreao $val
-			}
+         -ocsproxy {
+            set ocsproxy "$val"
+         }
+         -simgems {
+            set simgems $val
+         }
+         -nogems {
+            set ignoreao $val
+         }
+         -notifySeqexec {
+             set notifySeqexec $val
+         } 
          default {
             tk_messageBox -icon warning -message \
                   "Unknown command line option \"$opt\" being ignored."
@@ -304,9 +309,12 @@ global env
 
 # Create the object the configures the Peripheral WFS
    Pwfs pwfs
+    
+# Create the Seqexec guide notifier
+   if {$notifySeqexec} { RemoteGuideControl Remote [calparam cget -seqexecURL] [calparam cget -site] }
 
 # Create the object that controls the active optics.
-   ActiveOptics AO
+   ActiveOptics AO -notifySeqexec $notifySeqexec
    #Set P1 default for MK
    if {[calparam cget -site] eq "MK"}  {
       AO configure -pwfs1Expose 0.005

@@ -74,6 +74,8 @@ itcl::class ActiveOptics {
       variable simgaosTTGS 0
       variable simsfoloop 0
       variable simttgsloop 0
+       
+      variable notifySeqexec 0
 
       common lowfluxTempLimit -29.0
       common highfluxTempLimit -9.0
@@ -256,6 +258,8 @@ itcl::body ActiveOptics::enable {} {
       }
    }
    logactions logmess  "ActiveOptics::enable: $currentconfig"
+    
+   if {$notifySeqexec} { catch { Remote sendConfiguration [itcl::scope $this] } }
 
    # check to make sure we're not using OI probe guiding with GMOS
    if { ($probeto == "OIWFS") && [string match "*GMOS*" $::Config(tcs.instrument,value)]} {
@@ -773,6 +777,8 @@ itcl::body ActiveOptics::disable {} {
    process BUSY
    logactions logmess  "ActiveOptics::disable"
 
+   if {$notifySeqexec} { catch { Remote disable } }
+   
    # Stop the wave-front sensors.
    Pwfs1 stop
    Pwfs2 stop

@@ -1,0 +1,123 @@
+#+
+# RemoteGuideControl.itcl
+# 
+# Functions to send guide configuration to Seqexec Server
+#
+# J. Luhrs January 28th, 2019
+#+
+
+package require Itcl
+package require http
+package require json::write 
+
+itcl::class RemoteGuideControl {
+    constructor {uri s} {}
+    
+    variable baseURI
+    variable site
+    variable allDisabled
+    variable gaosName
+    private common path "api/seqexec/guide"
+    private common timeout 2000
+    
+    method sendConfiguration {ao}
+    method disable {}
+    private method send {body}
+    private method altairConfig {mode aoOn strapOn sfoOn useOI useP1 oiBlend}
+    private method gemsConfig {} { return null }
+    private method buildConfig {m1GuideOn m1Source m2GuideOn m2Sources m2ComaOn mountGuideOn gaos}
+    private method toJsonBoolean {v} { return [expr $v ? "{true}" : "{false}" ] }
+    private method toJsonString {v} { if { $v eq "" } { return null } else { return [json::write string $v]} }
+}
+
+itcl::body RemoteGuideControl::constructor {uri s} {
+    set baseURI $uri
+    set site $s
+    
+    if {$site eq "MK"} {
+        set gaosName [toJsonString Altair]
+        set disabledGaos [altairConfig LGS false false false false false false]  
+    } else {
+        set gaosName [toJsonString GeMS]
+        set disabledGaos [gemsConfig]
+    }
+    set allDisabled [buildConfig false {} false {} false false $disabledGaos]
+}
+
+itcl::body RemoteGuideControl::disable {} {
+    send $allDisabled 
+}
+
+itcl::body RemoteGuideControl::sendConfiguration {ao} {
+    if {$site eq "MK"} {
+        set gaos [altairConfig [expr [$ao state useLwfs] ? "{LGS}" : "{NGS}" ] \
+                               [$ao cget -gaos] \
+                               [$ao cget -ttgsloop] \
+                               [$ao cget -sfoloop] \
+                               [$ao cget -lgsoisource] \
+                               [$ao cget -lgsp1source] \
+                               [$ao cget -oiblend] \
+                 ]
+    } else {
+        set gaos [gemsConfig]
+    }
+    
+    set m2Sources {}
+    foreach {var src} {p1guide PWFS1 p2guide PWFS2 oiguide OIWFS aoguide GAOS} {
+        if { [$ao cget -$var] eq "On" } { lappend m2Sources $src }
+    }
+    
+    set body [buildConfig [$ao cget -m1corr] \
+                          [$ao cget -m1source] \
+                          [expr [llength m2Sources ] > 0 ] \
+                          $m2Sources \
+                          [$ao cget -comacorr] \
+                          [string compare [$ao cget -mountguide] "none" ] \
+                          $gaos \
+             ]
+    
+    return [send $body]
+}
+
+itcl::body RemoteGuideControl::send {body} {
+    set header [list Content-type application/json] 
+    set uri [format "%s/%s" $baseURI $path]
+    
+    set t [http::geturl $uri -query $body -headers $header -timeout $timeout]
+    set ret [http::status $t]
+    http::cleanup $t
+    
+    return $ret
+}
+
+itcl::body RemoteGuideControl::buildConfig {m1GuideOn m1Source m2GuideOn m2Sources m2ComaOn \
+    mountGuideOn gaos} {
+    
+    set m2srcs {}
+    foreach s $m2Sources {
+        if { $s ne "" } { lappend m2srcs [json::write string $s ] }
+    }
+        
+    return [json::write object \
+        m1GuideOn [toJsonBoolean $m1GuideOn] \
+        m1Source [toJsonString $m1Source] \
+        m2GuideOn [toJsonBoolean $m2GuideOn] \
+        m2Sources [eval json::write array $m2srcs] \
+        m2ComaOn [toJsonBoolean $m2ComaOn] \
+        mountGuideOn [toJsonBoolean $mountGuideOn] \
+        gaosName $gaosName \
+        gaos $gaos \
+    ]
+}
+
+itcl::body RemoteGuideControl::altairConfig {mode aoOn strapOn sfoOn useOI useP1 oiBlend} {
+    return [json::write object \
+        mode [toJsonString $mode] \
+        aoOn [toJsonBoolean $aoOn] \
+        strapOn [toJsonBoolean $strapOn] \
+        sfoOn [toJsonBoolean $sfoOn] \
+        useOI [toJsonBoolean $useOI] \
+        useP1 [toJsonBoolean $useP1] \
+        oiBlend [toJsonBoolean $oiBlend] \
+    ]
+}
