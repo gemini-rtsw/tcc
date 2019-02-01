@@ -16,12 +16,13 @@ itcl::class RemoteGuideControl {
     variable baseURI
     variable site
     variable allDisabled
+    variable allDisabledWithoutGaos
     variable gaosName
     private common path "api/seqexec/guide"
     private common timeout 2000
     
-    method sendConfiguration {ao}
-    method disable {}
+    method sendConfiguration {ao includeGaos}
+    method disable {includeGaos}
     private method send {body}
     private method altairConfig {mode aoOn strapOn sfoOn useOI useP1 oiBlend}
     private method gemsConfig {} { return null }
@@ -35,31 +36,40 @@ itcl::body RemoteGuideControl::constructor {uri s} {
     set site $s
     
     if {$site eq "MK"} {
-        set gaosName [toJsonString Altair]
+        set gaosName altair
         set disabledGaos [altairConfig LGS false false false false false false]  
     } else {
-        set gaosName [toJsonString GeMS]
+        set gaosName gems
         set disabledGaos [gemsConfig]
     }
     set allDisabled [buildConfig false {} false {} false false $disabledGaos]
+    set allDisabledWithoutGaos [buildConfig false {} false {} false false {}]
 }
 
-itcl::body RemoteGuideControl::disable {} {
-    send $allDisabled 
-}
-
-itcl::body RemoteGuideControl::sendConfiguration {ao} {
-    if {$site eq "MK"} {
-        set gaos [altairConfig [expr [$ao state useLwfs] ? "{LGS}" : "{NGS}" ] \
-                               [$ao cget -gaos] \
-                               [$ao cget -ttgsloop] \
-                               [$ao cget -sfoloop] \
-                               [$ao cget -lgsoisource] \
-                               [$ao cget -lgsp1source] \
-                               [$ao cget -oiblend] \
-                 ]
+itcl::body RemoteGuideControl::disable {includeGaos} {
+    if {$includeGaos} {
+        send $allDisabled
     } else {
-        set gaos [gemsConfig]
+        send $allDisabledWithoutGaos
+    }
+}
+
+itcl::body RemoteGuideControl::sendConfiguration {ao includeGaos} {
+    if {$includeGaos} {
+        if {$site eq "MK"} {
+            set gaos [altairConfig [expr [$ao state useLwfs] ? "{LGS}" : "{NGS}" ] \
+                                   [$ao cget -gaos] \
+                                   [$ao cget -ttgsloop] \
+                                   [$ao cget -sfoloop] \
+                                   [$ao cget -lgsoisource] \
+                                   [$ao cget -lgsp1source] \
+                                   [$ao cget -oiblend] \
+                     ]
+        } else {
+            set gaos [gemsConfig]
+        }
+    } else {
+        set gaos {}
     }
     
     set m2Sources {}
@@ -84,10 +94,21 @@ itcl::body RemoteGuideControl::send {body} {
     set uri [format "%s/%s" $baseURI $path]
     
     set t [http::geturl $uri -query $body -headers $header -timeout $timeout]
-    set ret [http::status $t]
+    set status [http::status $t]
+    if { $status ne "ok" } {
+        set ret [list $status [http::error $t] ]
+    } else {
+        set httpStatus [http::ncode $t]
+        if { $httpStatus != 200 } {
+            set ret [list "httpError($httpStatus)" [http::data $t] ] 
+        } else {
+            set ret [list "ok" ""]
+        }
+    }
     http::cleanup $t
     
     return $ret
+
 }
 
 itcl::body RemoteGuideControl::buildConfig {m1GuideOn m1Source m2GuideOn m2Sources m2ComaOn \
@@ -98,15 +119,28 @@ itcl::body RemoteGuideControl::buildConfig {m1GuideOn m1Source m2GuideOn m2Sourc
         if { $s ne "" } { lappend m2srcs [json::write string $s ] }
     }
         
+    if { $gaos ne "" } {
+        set gaosGuide [json::write object \
+                        $gaosName $gaos \
+                      ]
+    } else {
+        set gaosGuide null
+    }
+        
     return [json::write object \
-        m1GuideOn [toJsonBoolean $m1GuideOn] \
-        m1Source [toJsonString $m1Source] \
-        m2GuideOn [toJsonBoolean $m2GuideOn] \
-        m2Sources [eval json::write array $m2srcs] \
-        m2ComaOn [toJsonBoolean $m2ComaOn] \
-        mountGuideOn [toJsonBoolean $mountGuideOn] \
-        gaosName $gaosName \
-        gaos $gaos \
+        tcsGuide [json::write object \
+            m1Guide [json::write object \
+                on [toJsonBoolean $m1GuideOn] \
+                source [toJsonString $m1Source] \
+            ] \
+            m2Guide [json::write object \
+                on [toJsonBoolean $m2GuideOn] \
+                sources [eval json::write array $m2srcs] \
+                comaOn [toJsonBoolean $m2ComaOn] \
+            ] \
+            mountGuideOn [toJsonBoolean $mountGuideOn] \
+        ] \
+        gaosGuide $gaosGuide \
     ]
 }
 

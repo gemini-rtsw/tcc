@@ -101,6 +101,10 @@ itcl::class ActiveOptics {
       method unparkAltair {}
       method startAltairWFS {}
       method startAltairLoops {}
+       
+       method remoteNotification {cmd desc}
+       method notifyEnable {}
+       method notifyDisable {}
 
       proc messageBox {icon message args}
 
@@ -259,8 +263,6 @@ itcl::body ActiveOptics::enable {} {
    }
    logactions logmess  "ActiveOptics::enable: $currentconfig"
     
-   if {$notifySeqexec} { catch { Remote sendConfiguration [itcl::scope $this] } }
-
    # check to make sure we're not using OI probe guiding with GMOS
    if { ($probeto == "OIWFS") && [string match "*GMOS*" $::Config(tcs.instrument,value)]} {
       errorBox "You cannot use OIWFS probe guiding with GMOS"
@@ -302,6 +304,10 @@ itcl::body ActiveOptics::enable {} {
       }
    }
 
+    # Notify here, because configureBlending calls disable. Otherwise the notify from disable will 
+    # be the last communicated state 
+    notifyEnable
+   
    # The probe guide states can either be A, B, AB or on. If it is the latter
    # then we must first determine which chop states it will be active in
    # according to the probe chop/nod flags and modify the state accordingly.
@@ -777,7 +783,7 @@ itcl::body ActiveOptics::disable {} {
    process BUSY
    logactions logmess  "ActiveOptics::disable"
 
-   if {$notifySeqexec} { catch { Remote disable } }
+   notifyDisable
    
    # Stop the wave-front sensors.
    Pwfs1 stop
@@ -1780,7 +1786,7 @@ itcl::body ActiveOptics::startAltairWFS {} {
       logger command aoFlatten
    }
 
-   return 0
+   return 0 
 }
 
 itcl::body ActiveOptics::startAltairLoops {} {
@@ -1831,4 +1837,32 @@ itcl::body ActiveOptics::waitForCmdIdle {syssad {timeout 1000}} {
       update
    }
    return timeout
+}
+
+
+itcl::body ActiveOptics::remoteNotification {cmd desc} {
+    if {$notifySeqexec} {
+        logactions logmess $desc
+        if { [catch { eval $cmd } res ] } {
+             logactions logmess "Error while $desc : $res"
+        } else {
+            puts "remoteNotification $res"
+            foreach {ret err} $res {
+                if {[string compare -nocase $ret "ok"]} {
+                    logactions logmess "Error while $desc : $err"
+                }
+            }
+        }
+    }
+}
+
+itcl::body ActiveOptics::notifyEnable {} {
+    set useGaos [expr {$::Config(tcs.gaos,value) ne "" && $::Config(tcs.gaos,value) ne "{No AO}" } ]
+    remoteNotification "Remote sendConfiguration [itcl::scope $this] $useGaos" "sending guide configuration to Seqexec"
+}
+
+
+itcl::body ActiveOptics::notifyDisable {} {
+    set useGaos [expr {$::Config(tcs.gaos,value) ne "" && $::Config(tcs.gaos,value) ne "{No AO}" } ]
+    remoteNotification "Remote disable $useGaos" "sending disabled guide configuration to Seqexec"
 }
