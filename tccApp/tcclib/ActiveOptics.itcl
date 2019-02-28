@@ -1857,12 +1857,12 @@ itcl::body ActiveOptics::remoteNotification {cmd desc} {
 }
 
 itcl::body ActiveOptics::notifyEnable {} {
-    set useGaos [expr {$::Config(tcs.gaos,value) ne "" && $::Config(tcs.gaos,value) ne "{No AO}" } ]
+    set useGaos [expr {$::Config(tcs.gaos,value) ne "" && $::Config(tcs.gaos,value) ne "No AO" } ]
     remoteNotification "Remote sendConfiguration [itcl::scope $this] $useGaos" "sending guide configuration to Seqexec"
 }
 
 
 itcl::body ActiveOptics::notifyDisable {} {
-    set useGaos [expr {$::Config(tcs.gaos,value) ne "" && $::Config(tcs.gaos,value) ne "{No AO}" } ]
+    set useGaos [expr {$::Config(tcs.gaos,value) ne "" && $::Config(tcs.gaos,value) ne "No AO" } ]
     remoteNotification "Remote disable $useGaos" "sending disabled guide configuration to Seqexec"
 }
