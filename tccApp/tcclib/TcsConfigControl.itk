@@ -13,6 +13,13 @@ itcl::class TcsConfigControl {
    constructor {args} {}
    destructor {}
    public {
+      variable ao OUT 
+      proc aowait {}
+      proc aowaitIN {}
+      proc p2wait {}
+      proc oiwait {}
+      proc gemswait {}
+      proc gemsp2wait {}
       method load {name}
       method preview {}
       method save {name}
@@ -486,6 +493,192 @@ itcl::body TcsConfigControl::apply {} {
    # this is a slew ... reset wrap controls
    $itk_component(azwrap) select 1
    $itk_component(rotwrap) select 1
+
+   # REL-372
+   # Processing Pwfs1 slew option 
+   set slewPwfs1Flag [$slewOptions cget -slewPwfs1]
+   set PWFS1target ${::Config(tcs.field.pwfs1target,value)}
+   set Pwfs1Following [sa agssad get p1FollowS]
+   # Guiding with P1?
+   set guide [$::Config(tcs.field,namespace)::$::Config(tcs.field,value) cget -guide]
+   puts "guide = $guide"
+   if { $slewPwfs1Flag } {
+       #puts "Processing Pwfs1 slew option" 
+       logactions logmess "Processing Pwfs1 slew option"
+       if { $PWFS1target ne "" && [string match "*P1*" $guide] } {
+           if { [string match "OFF" $Pwfs1Following] } {
+               cs p1Follow set followState On
+               if { [catch {cs pwfs1 post} msg] } {
+                   tk_messageBox -icon error -message \
+                    "Error posting commands: TCS reports \"$msg\""
+               }      
+               logger command p1Follow
+               logactions logmess "command pwfs1Follow"
+           } else {
+               logactions logmess "pwfs1 already Following"
+           }
+      } else {
+          # if P1 is not parked, then send it to Park
+          if { [sa agssad get p1Parked] != "1" } {
+              # Park P1 
+              cs pwfs1Park set dummy value MARK
+              cs pwfs1Park set dir MARK
+              after 100
+              cs pwfs1Park set dir START
+              logger command pwfs1Park
+              logactions logmess "command pwfs1Park"
+          }
+       } 
+   }
+
+   # Processing Pwfs2 slew option 
+   set slewPwfs2Flag [$slewOptions cget -slewPwfs2]
+   set PWFS2target ${::Config(tcs.field.pwfs2target,value)}
+   set Pwfs2Following [sa agssad get p2FollowS]
+   #puts "PWFS2target = $PWFS2target"
+   if { $slewPwfs2Flag } {
+       logactions logmess "Processing Pwfs2 slew option" 
+       if { $PWFS2target ne "" && [string match "*P2*" $guide] } {
+           if { [string match "OFF" $Pwfs2Following] } {
+              # Send AO Fold to OUT position. 
+              # This takes a long time and we can't put P2 into follow mode
+              # until it is ready.
+              if { [sa agssad get pa3aoName] != "park-pos." } {
+                 cs aoFoldPark set dummy value MARK
+              } 
+              # Start a background task that polls AO Fold until it is Parked.
+              set aowaitid [after 1000 TcsConfigControl::aowait]
+              } else {
+                   logactions logmess "pwfs2 already Following"
+              }
+      } else {
+          # if P2 is not parked, then send it to Park
+          if { [sa agssad get p2Parked] != "1" } {
+              # Park P2. 
+              cs pwfs2Park set dummy value MARK
+              cs pwfs2Park set dir MARK
+              after 100
+              cs pwfs2Park set dir START
+              logger command pwfs2Park
+              logactions logmess "command pwfs2Park"
+	     }
+       } 
+   }
+
+   # Processing Oiwfs slew option 
+   set slewOiwfsFlag [$slewOptions cget -slewOiwfs]
+   set OIWFStarget ${::Config(tcs.field.oiwfstarget,value)}
+   set oiwfsFollowing [sa agssad get oiFollowS]
+   #puts "OIWFStarget = $OIWFStarget"
+   set inst $::Config(tcs.instrument,value)
+   set currentoiwfs [sa agssad get oiwfsName]
+
+       if { $slewOiwfsFlag } {
+           logactions logmess "Processing Oiwfs slew option" 
+           if { $OIWFStarget ne "" && [string match "*OI*" $guide] } {
+               if { [string match "Off" $oiwfsFollowing] } {
+                   # wait for oiwfs based on instrument: instrument
+                   logactions logmess " wait for oiwfs  based on instrument: $inst"
+                   # Start a background task that polls AO Fold until it is OUT.
+                   set oiwaitid [after 1000 TcsConfigControl::oiwait]
+               } else {
+                   logactions logmess "oiwfs already Following"
+               }
+           } else {
+              # Park  OIWFS
+              if {! [string equal $currentoiwfs "None"] && ! [sa agssad get p2Parked] } {
+#                  cs oiwfsPark set dir MARK
+#                  after 100
+#                  cs oiwfsPark set dir START
+              #cs oiwfsPark set dummy value MARK
+              #logger command oiwfsPark
+              logactions logmess "command oiwfsPark"
+             } 
+         }
+      }
+
+   # Processing AO  slew option 
+   #
+   set slewAowfsFlag [$slewOptions cget -slewAowfs]
+   set AOWFStarget ${::Config(tcs.field.aowfstarget,value)}
+   #puts "AOWFStarget = $AOWFStarget"
+  # puts "slewAowfsFlag = $slewAowfsFlag"
+   if { $slewAowfsFlag } {
+       logactions logmess "Processing AO slew option" 
+       if { $AOWFStarget ne "" && [string match "*AO*" $guide] } {
+          # Send P2 to Park position. 
+          # This takes a long time and we can't put AOFold IN  and GeMS into follow mode
+          # until it is ready.
+          # Start a background task that polls P2 until it is Parked.
+          set p2waitid [after 1000 TcsConfigControl::p2wait]
+          logactions logmess "command aoFold IN"
+      } else {
+          # Park  OIWFS
+          #set ISS::ao  OUT
+          #ISS::posaofold
+          #logger command aoPark
+          logactions logmess "command aoPark?"
+
+      } 
+   }
+
+#puts "reading slewGeMSFlag"
+   set slewGeMSFlag [$slewOptions cget -slewGeMS]
+   #puts "Processing GeMS slew option slewGeMSFlag = $slewGeMSFlag" 
+  
+   set ngs1target ${::Config(tcs.field.ttgs1target,value)}
+   set ngs2target ${::Config(tcs.field.ttgs2target,value)}
+   set ngs3target ${::Config(tcs.field.ttgs3target,value)}
+ 
+   #puts "ngs1target = $ngs1target"
+   #puts "ngs2target = $ngs2target"
+   #puts "ngs3target = $ngs3target"
+
+   set ngs1Following [sa aomsad get ngs1Follow]
+   set ngs2Following [sa aomsad get ngs2Follow]
+   set ngs3Following [sa aomsad get ngs3Follow]
+   #puts "ngs1Following = $ngs1Following"
+   #puts "ngs2Following = $ngs2Following"
+   #puts "ngs3Following = $ngs3Following"
+
+   if { $slewGeMSFlag } {
+       if { [string match "*GeMS*" $guide] } {
+           if { $ngs1target ne "" || $ngs2target ne "" || $ngs3target ne "" } {
+                #puts "to gemsp2wait"
+                gemsp2wait
+           }
+   } else {
+       #puts "no targets for GeMS"
+           if { [string match "On" $ngs1Following] } {
+               cs ngs1Follow set followState Off
+               logger command ngs1Follow
+               #puts "command ngs1Follow Off"  
+               if { [catch {cs ngs1Follow post} msg] } {
+                    tk_messageBox -icon error -message \
+                    "Error posting commands: TCS reports \"$msg\""
+               }      
+           }
+           if { [string match "On" $ngs2Following] } {
+               cs ngs2Follow set followState Off
+               logger command ngs2Follow
+               #puts "command ngs2Follow Off"
+               if { [catch {cs ngs2Follow post} msg] } {
+                   tk_messageBox -icon error -message \
+                    "Error posting commands: TCS reports \"$msg\""
+               }
+           }
+
+           if { [string match "On" $ngs3Following] } {
+               cs ngs3Follow set followState Off
+               logger command ngs3Follow
+               #puts "command ngs3Follow Off"
+               if { [catch {cs ngs3Follow post} msg] } {
+                   tk_messageBox -icon error -message \
+                    "Error posting commands: TCS reports \"$msg\""
+               }
+           }
+       }
+   }
 
    # Process the wrap controls
    switch -- [$itk_component(azwrap) get] {
@@ -968,4 +1161,178 @@ itcl::body TcsConfigControl::onIgnoreAOChange {name1 name2 op} {
          $itk_component(gaos) configure -state normal
       }
    }
+}
+
+
+itcl::body TcsConfigControl::p2wait {} {
+   if { [sa agssad get p2Parked] != "1" } {
+
+# Not ready yet so try again later.
+      set aowaitid [after 1000 TcsConfigControl::p2wait]
+      } else {
+
+# P2 is parked so we can put the AO fold in.
+      logactions logmess "P2 is parked so we can put the AO fold in."
+      cs aoFold set aofold value IN
+      # turn off ag inpos override
+      cs agInPosOver set override value 0
+      logger command aoFold
+      if { [catch {cs aoFold post} msg] } {
+         tk_messageBox -icon error -message \
+               "Error posting commands: TCS reports \"$msg\""
+      }
+      aowaitIN
+   }
+}
+
+
+itcl::body TcsConfigControl::aowait {} {
+#puts "in aowait"
+set AOparked [sa agssad get aoPAParked]
+#puts "aoParked = $AOparked"
+   if { [sa agssad get aoPAParked] != "1" } {
+      # Not ready yet so try again later.
+      set aowaitid [after 1000 TcsConfigControl::aowait]
+     } else {
+           # AO fold is Parked so we can put PWFS2 in follow mode.
+           logactions logmess "AO fold is Parked so we can put PWFS2 in follow mode"
+           cs p2Follow set followState On
+           logger command p2Follow
+           #puts "command p2Follow"
+           if { [catch {cs pwfs2 post} msg] } {
+               tk_messageBox -icon error -message \
+                   "Error posting commands: TCS reports \"$msg\""
+           }  
+
+    }
+}
+
+itcl::body TcsConfigControl::aowaitIN {} {
+   if { [sa agssad get aoName] != "IN" } {
+      # Not ready yet so try again later.
+      set aowaitinid [after 1000 TcsConfigControl::aowaitIN]
+     } else {
+     }
+     # AO fold is IN so we can put AO (?) in follow mode.
+}
+
+itcl::body TcsConfigControl::gemsp2wait {} {
+   if { [sa agssad get p2Parked] != "1" } {
+# Not ready yet so try again later.
+      set gemsp2waitid [after 1000 TcsConfigControl::gemsp2wait]
+      } else {
+
+# P2 is parked so we can put the AO fold in.
+      logactions logmess "P2 is parked so we can put the AO fold in."
+      cs aoFold set aofold value IN
+      # turn off ag inpos override
+      cs agInPosOver set override value 0
+      logger command aoFold
+      if { [catch {cs aoFold post} msg] } {
+         tk_messageBox -icon error -message \
+               "Error posting commands: TCS reports \"$msg\""
+      }
+      gemswait
+   }
+}
+
+itcl::body TcsConfigControl::oiwait {} {
+   
+   set inst $::Config(tcs.instrument,value)
+   set currentoiwfs [sa agssad get oiwfsName]
+   #puts "inst = $inst"
+   #puts "currentoiwfs = $currentoiwfs"
+
+   if { ![string match "*$currentoiwfs*" $inst] } {
+# Not ready yet so try again later.
+      set oiwaitid [after 1000 TcsConfigControl::oiwait]
+      } else {
+          # OIWFS match instrument.
+          logactions logmess "oiwfs match instrument"
+          cs oiFollow set followState On
+          logger command oiFollow
+          #puts "command oiwfsFollow"
+          if { [catch {cs oiwfs post} msg] } {
+              tk_messageBox -icon error -message \
+               "Error posting commands: TCS reports \"$msg\""
+          }      
+    }
+}
+
+itcl::body TcsConfigControl::gemswait {} {
+   if { [sa agssad get aoName] != "IN" } {
+      # Not ready yet so try again later.
+      set gemswaitinid [after 1000 TcsConfigControl::gemswait]
+     } else {
+           # AO fold is IN so we can put ngs1 and ngs2 and ngs3 in follow mode.
+   set ngs1target ${::Config(tcs.field.ttgs1target,value)}
+   set ngs2target ${::Config(tcs.field.ttgs2target,value)}
+   set ngs3target ${::Config(tcs.field.ttgs3target,value)}
+   #puts "ngs1target in gemswait = $ngs1target"
+   #puts "ngs2target in gemswait = $ngs2target"
+   #puts "ngs3target in gemswait = $ngs3target"
+   # Processing GeMS slew option 
+   #puts "Processing GeMS slew option in gemswait" 
+
+
+   
+         if { $ngs1target ne "" } {
+             cs ngs1Follow set followState On
+             logger command ngs1Follow
+             #puts "command ngs1Follow"
+             if { [catch {cs ngs1Follow post} msg] } {
+                 tk_messageBox -icon error -message \
+                   "Error posting commands: TCS reports \"$msg\""
+             }  
+         } else {
+             # Park ngs1. 
+             #puts "parking ngs1"
+             cs ngsPr1Ctrl set command value Park
+             logger command ngsPr1Ctrl
+             #puts "command ngs1Park"
+             if { [catch {cs ngsPr1Ctrl post} msg] } {
+                 tk_messageBox -icon error -message \
+                   "Error posting commands: TCS reports \"$msg\""
+             }  
+           
+        }
+         if { $ngs2target ne "" } {
+             cs ngs2Follow set followState On
+             logger command ngs2Follow
+             #puts "command ngs2Follow"
+             if { [catch {cs ngs2Follow post} msg] } {
+                 tk_messageBox -icon error -message \
+                   "Error posting commands: TCS reports \"$msg\""
+             }  
+         } else {
+            # Park ngs2. 
+             #puts "parking ngs2"
+            cs ngsPr2Ctrl set command value Park
+            logger command ngsPr2Ctrl
+            #puts "command ngs2Park"
+             if { [catch {cs ngsPr2Ctrl post} msg] } {
+                 tk_messageBox -icon error -message \
+                   "Error posting commands: TCS reports \"$msg\""
+             }  
+        }
+         if { $ngs3target ne "" } {
+             cs ngs3Follow set followState On
+             logger command ngs3Follow
+             #puts "command ngs3Follow"
+             if { [catch {cs ngs3Follow post} msg] } {
+                 tk_messageBox -icon error -message \
+                   "Error posting commands: TCS reports \"$msg\""
+             }  
+         } else {
+            # Park ngs3. 
+            #puts "parking ngs3"
+            cs ngsPr3Ctrl set command value Park
+            logger command ngsPr3Ctrl
+             if { [catch {cs ngsPr3Ctrl post} msg] } {
+                 tk_messageBox -icon error -message \
+                   "Error posting commands: TCS reports \"$msg\""
+             }  
+            #puts "command ngsPr3Ctrl"
+        }
+    }
 }

@@ -1076,14 +1076,30 @@ itcl::body Field::setDefaultTarget {tagtarget} {
 			}
 			CWFS1 {
 				set ttgs1target $tagtarget
+                                puts "ttgs1target = $tagtarget"
+				if { [string is space [$tagtarget cget -target]] } {
+                                        set ::Config(tcs.field.ttgs1target,value) $::Config(tcs.field.ttgs1target,anon)
+                                } else {
+                                        set ::Config(tcs.field.ttgs1target,value) [namespace tail [$tagtarget cget -target]]
+                                }
 				notify ttgs1target
 			}
 			CWFS2 {
 				set ttgs2target $tagtarget
+				if { [string is space [$tagtarget cget -target]] } {
+                                        set ::Config(tcs.field.ttgs2target,value) $::Config(tcs.field.ttgs2target,anon)
+                                } else {
+                                        set ::Config(tcs.field.ttgs2target,value) [namespace tail [$tagtarget cget -target]]
+                                }
 				notify ttgs2target
 			}
 			CWFS3 {
 				set ttgs3target $tagtarget
+				if { [string is space [$tagtarget cget -target]] } {
+                                        set ::Config(tcs.field.ttgs3target,value) $::Config(tcs.field.ttgs3target,anon)
+                                } else {
+                                        set ::Config(tcs.field.ttgs3target,value) [namespace tail [$tagtarget cget -target]]
+                                }
 				notify ttgs3target
 			}
 			ODGW1 {

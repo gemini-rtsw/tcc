@@ -5,6 +5,7 @@ default_target:
 	   else echo "No configuration files for site \"${site}\""; exit 1; fi
 	cp defaultparams.${site}.`uname` defaultparams.dat
 	cp options.${site} options
+	cp default_components.xml.${site} default_components.xml
 	cd src; make install
 	cd lib; make
 	cd pointlib; make

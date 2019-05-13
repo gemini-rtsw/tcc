@@ -338,6 +338,141 @@ proc createConfig {} {
    set ::Config(tcs.field.aowfstarget.trackrate.cosys,subcomp) ""
    set ::Config(tcs.field.aowfstarget.trackrate.cosys,label) \
          "Coordinate system"
+   
+   set ::Config(tcs.field.ttgs1target,value) ""
+   set ::Config(tcs.field.ttgs1target,anon) ::[Target #auto]
+   set ::Config(tcs.field.ttgs1target,class) TargetComponent
+   set ::Config(tcs.field.ttgs1target,namespace) \
+         $::Config(tcs.field,anon)TargetNames
+   set ::Config(tcs.field.ttgs1target,list) \
+         $::Config(tcs.field,anon)TargetList
+   set ::Config(tcs.field.ttgs1target,panel) tcsFieldPanel
+   set ::Config(tcs.field.ttgs1target,subcomp) [list cosys trackrate]
+   set ::Config(tcs.field.ttgs1target,label) "CWFS1 target"
+
+   set ::Config(tcs.field.ttgs1target.cosys,value) ""
+   set ::Config(tcs.field.ttgs1target.cosys,anon) ::[Cosys #auto]
+   set ::Config(tcs.field.ttgs1target.cosys,class) CosysComponent
+   set ::Config(tcs.field.ttgs1target.cosys,namespace) ::CosysNames
+   set ::Config(tcs.field.ttgs1target.cosys,list) CosysList
+   set ::Config(tcs.field.ttgs1target.cosys,panel) \
+         tcsFieldAowfsTargetCosysPanel
+   set ::Config(tcs.field.ttgs1target.cosys,subcomp) ""
+   set ::Config(tcs.field.ttgs1target.cosys,label) "Coordinate system"
+
+   set ::Config(tcs.field.ttgs1target.trackrate,value) ""
+   set ::Config(tcs.field.ttgs1target.trackrate,anon) ::[TrackRate #auto]
+   set ::Config(tcs.field.ttgs1target.trackrate,class) TrackRateComponent
+   set ::Config(tcs.field.ttgs1target.trackrate,namespace) \
+         $::Config(tcs.field,anon)TrackRateNames
+   set ::Config(tcs.field.ttgs1target.trackrate,list) \
+         $::Config(tcs.field,anon)TrackRateList
+   set ::Config(tcs.field.ttgs1target.trackrate,panel) \
+         tcsFieldAowfsTargetTrackRatePanel
+   set ::Config(tcs.field.ttgs1target.trackrate,subcomp) cosys
+   set ::Config(tcs.field.ttgs1target.trackrate,label) \
+         "Differential track rate"
+
+   set ::Config(tcs.field.ttgs1target.trackrate.cosys,value) ""
+   set ::Config(tcs.field.ttgs1target.trackrate.cosys,anon) ::[Cosys #auto]
+   set ::Config(tcs.field.ttgs1target.trackrate.cosys,class) CosysComponent
+   set ::Config(tcs.field.ttgs1target.trackrate.cosys,namespace) ::CosysNames
+   set ::Config(tcs.field.ttgs1target.trackrate.cosys,list) CosysList
+   set ::Config(tcs.field.ttgs1target.trackrate.cosys,panel) \
+      tcsFieldAowfsTargetTrackRateCosysPanel
+   set ::Config(tcs.field.ttgs1target.trackrate.cosys,subcomp) ""
+   set ::Config(tcs.field.ttgs1target.trackrate.cosys,label) \
+         "Coordinate system"
+
+   set ::Config(tcs.field.ttgs2target,value) ""
+   set ::Config(tcs.field.ttgs2target,anon) ::[Target #auto]
+   set ::Config(tcs.field.ttgs2target,class) TargetComponent
+   set ::Config(tcs.field.ttgs2target,namespace) \
+         $::Config(tcs.field,anon)TargetNames
+   set ::Config(tcs.field.ttgs2target,list) \
+         $::Config(tcs.field,anon)TargetList
+   set ::Config(tcs.field.ttgs2target,panel) tcsFieldPanel
+   set ::Config(tcs.field.ttgs2target,subcomp) [list cosys trackrate]
+   set ::Config(tcs.field.ttgs2target,label) "CWFS2 target"
+
+   set ::Config(tcs.field.ttgs2target.cosys,value) ""
+   set ::Config(tcs.field.ttgs2target.cosys,anon) ::[Cosys #auto]
+   set ::Config(tcs.field.ttgs2target.cosys,class) CosysComponent
+   set ::Config(tcs.field.ttgs2target.cosys,namespace) ::CosysNames
+   set ::Config(tcs.field.ttgs2target.cosys,list) CosysList
+   set ::Config(tcs.field.ttgs2target.cosys,panel) \
+         tcsFieldAowfsTargetCosysPanel
+   set ::Config(tcs.field.ttgs2target.cosys,subcomp) ""
+   set ::Config(tcs.field.ttgs2target.cosys,label) "Coordinate system"
+
+   set ::Config(tcs.field.ttgs2target.trackrate,value) ""
+   set ::Config(tcs.field.ttgs2target.trackrate,anon) ::[TrackRate #auto]
+   set ::Config(tcs.field.ttgs2target.trackrate,class) TrackRateComponent
+   set ::Config(tcs.field.ttgs2target.trackrate,namespace) \
+         $::Config(tcs.field,anon)TrackRateNames
+   set ::Config(tcs.field.ttgs2target.trackrate,list) \
+         $::Config(tcs.field,anon)TrackRateList
+   set ::Config(tcs.field.ttgs2target.trackrate,panel) \
+         tcsFieldAowfsTargetTrackRatePanel
+   set ::Config(tcs.field.ttgs2target.trackrate,subcomp) cosys
+   set ::Config(tcs.field.ttgs2target.trackrate,label) \
+         "Differential track rate"
+
+   set ::Config(tcs.field.ttgs2target.trackrate.cosys,value) ""
+   set ::Config(tcs.field.ttgs2target.trackrate.cosys,anon) ::[Cosys #auto]
+   set ::Config(tcs.field.ttgs2target.trackrate.cosys,class) CosysComponent
+   set ::Config(tcs.field.ttgs2target.trackrate.cosys,namespace) ::CosysNames
+   set ::Config(tcs.field.ttgs2target.trackrate.cosys,list) CosysList
+   set ::Config(tcs.field.ttgs2target.trackrate.cosys,panel) \
+      tcsFieldAowfsTargetTrackRateCosysPanel
+   set ::Config(tcs.field.ttgs2target.trackrate.cosys,subcomp) ""
+   set ::Config(tcs.field.ttgs2target.trackrate.cosys,label) \
+         "Coordinate system"
+
+   set ::Config(tcs.field.ttgs3target,value) ""
+   set ::Config(tcs.field.ttgs3target,anon) ::[Target #auto]
+   set ::Config(tcs.field.ttgs3target,class) TargetComponent
+   set ::Config(tcs.field.ttgs3target,namespace) \
+         $::Config(tcs.field,anon)TargetNames
+   set ::Config(tcs.field.ttgs3target,list) \
+         $::Config(tcs.field,anon)TargetList
+   set ::Config(tcs.field.ttgs3target,panel) tcsFieldPanel
+   set ::Config(tcs.field.ttgs3target,subcomp) [list cosys trackrate]
+   set ::Config(tcs.field.ttgs3target,label) "CWFS3 target"
+
+   set ::Config(tcs.field.ttgs3target.cosys,value) ""
+   set ::Config(tcs.field.ttgs3target.cosys,anon) ::[Cosys #auto]
+   set ::Config(tcs.field.ttgs3target.cosys,class) CosysComponent
+   set ::Config(tcs.field.ttgs3target.cosys,namespace) ::CosysNames
+   set ::Config(tcs.field.ttgs3target.cosys,list) CosysList
+   set ::Config(tcs.field.ttgs3target.cosys,panel) \
+         tcsFieldAowfsTargetCosysPanel
+   set ::Config(tcs.field.ttgs3target.cosys,subcomp) ""
+   set ::Config(tcs.field.ttgs3target.cosys,label) "Coordinate system"
+
+   set ::Config(tcs.field.ttgs3target.trackrate,value) ""
+   set ::Config(tcs.field.ttgs3target.trackrate,anon) ::[TrackRate #auto]
+   set ::Config(tcs.field.ttgs3target.trackrate,class) TrackRateComponent
+   set ::Config(tcs.field.ttgs3target.trackrate,namespace) \
+         $::Config(tcs.field,anon)TrackRateNames
+   set ::Config(tcs.field.ttgs3target.trackrate,list) \
+         $::Config(tcs.field,anon)TrackRateList
+   set ::Config(tcs.field.ttgs3target.trackrate,panel) \
+         tcsFieldAowfsTargetTrackRatePanel
+   set ::Config(tcs.field.ttgs3target.trackrate,subcomp) cosys
+   set ::Config(tcs.field.ttgs3target.trackrate,label) \
+         "Differential track rate"
+
+   set ::Config(tcs.field.ttgs3target.trackrate.cosys,value) ""
+   set ::Config(tcs.field.ttgs3target.trackrate.cosys,anon) ::[Cosys #auto]
+   set ::Config(tcs.field.ttgs3target.trackrate.cosys,class) CosysComponent
+   set ::Config(tcs.field.ttgs3target.trackrate.cosys,namespace) ::CosysNames
+   set ::Config(tcs.field.ttgs3target.trackrate.cosys,list) CosysList
+   set ::Config(tcs.field.ttgs3target.trackrate.cosys,panel) \
+      tcsFieldAowfsTargetTrackRateCosysPanel
+   set ::Config(tcs.field.ttgs3target.trackrate.cosys,subcomp) ""
+   set ::Config(tcs.field.ttgs3target.trackrate.cosys,label) \
+         "Coordinate system"
 
    set ::Config(tcs.field.guide,value) ""
    set ::Config(tcs.field.guide,anon) ::[Guide #auto]
