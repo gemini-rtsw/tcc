@@ -625,59 +625,58 @@ itcl::body TcsConfigControl::apply {} {
 #puts "reading slewGeMSFlag"
    set slewGeMSFlag [$slewOptions cget -slewGeMS]
    #puts "Processing GeMS slew option slewGeMSFlag = $slewGeMSFlag" 
-  
-   set ngs1target ${::Config(tcs.field.ttgs1target,value)}
-   set ngs2target ${::Config(tcs.field.ttgs2target,value)}
-   set ngs3target ${::Config(tcs.field.ttgs3target,value)}
- 
-   #puts "ngs1target = $ngs1target"
-   #puts "ngs2target = $ngs2target"
-   #puts "ngs3target = $ngs3target"
 
-   set ngs1Following [sa aomsad get ngs1Follow]
-   set ngs2Following [sa aomsad get ngs2Follow]
-   set ngs3Following [sa aomsad get ngs3Follow]
-   #puts "ngs1Following = $ngs1Following"
-   #puts "ngs2Following = $ngs2Following"
-   #puts "ngs3Following = $ngs3Following"
+   if { [calparam cget -site ] eq "CP" && $slewGeMSFlag } {
+      if { [string match "*GeMS*" $guide] } {
+         if { $ngs1target ne "" || $ngs2target ne "" || $ngs3target ne "" } {
+            #puts "to gemsp2wait"
+            gemsp2wait
+         }
+      } else {
+         set ngs1target ${::Config(tcs.field.ttgs1target,value)}
+         set ngs2target ${::Config(tcs.field.ttgs2target,value)}
+         set ngs3target ${::Config(tcs.field.ttgs3target,value)}
+         #puts "ngs1target = $ngs1target"
+         #puts "ngs2target = $ngs2target"
+         #puts "ngs3target = $ngs3target"
+      
+         set ngs1Following [sa aomsad get ngs1Follow]
+         set ngs2Following [sa aomsad get ngs2Follow]
+         set ngs3Following [sa aomsad get ngs3Follow]
+         #puts "ngs1Following = $ngs1Following"
+         #puts "ngs2Following = $ngs2Following"
+         #puts "ngs3Following = $ngs3Following"
+      
+         #puts "no targets for GeMS"
+         if { [string match "On" $ngs1Following] } {
+            cs ngs1Follow set followState Off
+            logger command ngs1Follow
+            #puts "command ngs1Follow Off"  
+            if { [catch {cs ngs1Follow post} msg] } {
+               tk_messageBox -icon error -message \
+               "Error posting commands: TCS reports \"$msg\""
+            }      
+         }
+         if { [string match "On" $ngs2Following] } {
+            cs ngs2Follow set followState Off
+            logger command ngs2Follow
+            #puts "command ngs2Follow Off"
+            if { [catch {cs ngs2Follow post} msg] } {
+               tk_messageBox -icon error -message \
+               "Error posting commands: TCS reports \"$msg\""
+            }
+         }
 
-   if { $slewGeMSFlag } {
-       if { [string match "*GeMS*" $guide] } {
-           if { $ngs1target ne "" || $ngs2target ne "" || $ngs3target ne "" } {
-                #puts "to gemsp2wait"
-                gemsp2wait
-           }
-   } else {
-       #puts "no targets for GeMS"
-           if { [string match "On" $ngs1Following] } {
-               cs ngs1Follow set followState Off
-               logger command ngs1Follow
-               #puts "command ngs1Follow Off"  
-               if { [catch {cs ngs1Follow post} msg] } {
-                    tk_messageBox -icon error -message \
-                    "Error posting commands: TCS reports \"$msg\""
-               }      
-           }
-           if { [string match "On" $ngs2Following] } {
-               cs ngs2Follow set followState Off
-               logger command ngs2Follow
-               #puts "command ngs2Follow Off"
-               if { [catch {cs ngs2Follow post} msg] } {
-                   tk_messageBox -icon error -message \
-                    "Error posting commands: TCS reports \"$msg\""
-               }
-           }
-
-           if { [string match "On" $ngs3Following] } {
-               cs ngs3Follow set followState Off
-               logger command ngs3Follow
-               #puts "command ngs3Follow Off"
-               if { [catch {cs ngs3Follow post} msg] } {
-                   tk_messageBox -icon error -message \
-                    "Error posting commands: TCS reports \"$msg\""
-               }
-           }
-       }
+         if { [string match "On" $ngs3Following] } {
+            cs ngs3Follow set followState Off
+            logger command ngs3Follow
+            #puts "command ngs3Follow Off"
+            if { [catch {cs ngs3Follow post} msg] } {
+               tk_messageBox -icon error -message \
+               "Error posting commands: TCS reports \"$msg\""
+            }
+         }
+      }
    }
 
    # Process the wrap controls
