@@ -627,19 +627,19 @@ itcl::body TcsConfigControl::apply {} {
    #puts "Processing GeMS slew option slewGeMSFlag = $slewGeMSFlag" 
 
    if { [calparam cget -site ] eq "CP" && $slewGeMSFlag } {
+      set ngs1target ${::Config(tcs.field.ttgs1target,value)}
+      set ngs2target ${::Config(tcs.field.ttgs2target,value)}
+      set ngs3target ${::Config(tcs.field.ttgs3target,value)}
+      #puts "ngs1target = $ngs1target"
+      #puts "ngs2target = $ngs2target"
+      #puts "ngs3target = $ngs3target"
+
       if { [string match "*GeMS*" $guide] } {
          if { $ngs1target ne "" || $ngs2target ne "" || $ngs3target ne "" } {
             #puts "to gemsp2wait"
             gemsp2wait
          }
       } else {
-         set ngs1target ${::Config(tcs.field.ttgs1target,value)}
-         set ngs2target ${::Config(tcs.field.ttgs2target,value)}
-         set ngs3target ${::Config(tcs.field.ttgs3target,value)}
-         #puts "ngs1target = $ngs1target"
-         #puts "ngs2target = $ngs2target"
-         #puts "ngs3target = $ngs3target"
-      
          set ngs1Following [sa aomsad get ngs1Follow]
          set ngs2Following [sa aomsad get ngs2Follow]
          set ngs3Following [sa aomsad get ngs3Follow]
