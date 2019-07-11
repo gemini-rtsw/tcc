@@ -115,11 +115,11 @@
     <param name="instrOffset" value="On"/>
     <param name="resetao" value="1"/>
     <param name="disableao" value="1"/>
-    <param name="slewPwfs1" value="On"/>
-    <param name="slewPwfs2" value="On"/>
-    <param name="slewOiwfs" value="On"/>
-    <param name="slewGeMS" value="On"/>
-    <param name="slewAowfs" value="On"/>
+    <param name="slewPwfs1" value="Off"/>
+    <param name="slewPwfs2" value="Off"/>
+    <param name="slewOiwfs" value="Off"/>
+    <param name="slewGeMS" value="Off"/>
+    <param name="slewAowfs" value="Off"/>
     <param name="ltcscheck" value="1"/>
  </paramset>
 
