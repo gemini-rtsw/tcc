@@ -117,18 +117,6 @@ itcl::body GuideLoop::constructor args {
    [$itk_component(hrwfs) component exp] configure -labelpos nw
    $itk_component(hrwfs) setExp [AO cget -hrwfsExpose]
    $w create window 0 0 -window $w.hrwfs -tags "wfs_comb hrwfs" -anchor nw
-   # OIWFS including an AO mode for NICI
-   #   itk_component add oiwfs {
-   #      WfsWidget $w.oiwfs -label OI -onswitchpress [itcl::code $this wfsmode
-   # oiwfs] \
-   #          -onexpselect [itcl::code $this configOiEx]
-   #   } {
-   #      usual
-   #   }
-   #   [$itk_component(oiwfs) component exp] configure -labelpos nw
-   #   $itk_component(oiwfs) setExp [AO cget -oiwfsExpose]
-   #   $w create window 0 0 -width 100 -window $w.oiwfs -tags "wfs_comb oiwfs"
-   # -anchor nw
 
    itk_component add oiwfs {
 	  ToggleButton $w.oiwfs -text OI -pushedbackground Green -pady 0 \
@@ -138,10 +126,6 @@ itcl::body GuideLoop::constructor args {
    }
    $w create window 32 2 -width 48 -window $w.oiwfs -tags "wfs_comb oiwfs" -anchor nw
    $w create rectangle 0 0 110 68 -fill white -tags "active wfs_comb oiwfs oiwfs_bg"
-   #   $w create rectangle 2 26 60 47 -fill white -tags "active wfs_comb oiwfs
-   # oiwfs_ao"
-   #   $w create rectangle 63 26 121 47 -fill white -tags "active wfs_comb oiwfs
-   # oiwfs_wfs"
    $w create rectangle 2 2 30 20 -fill white -tags "active wfs_comb oiwfs oiwfs_ao"
    $w create rectangle 80 2 108 20 -fill white -tags "active wfs_comb oiwfs oiwfs_wfs"
 
@@ -688,20 +672,6 @@ itcl::body GuideLoop::recolour args {
       }
    }
 
-   # M2 guide source buttons.
-   #   if { [AO source m2 PWFS1] } {
-   #      $itk_component(m2p1) mark
-   #   }
-   #   if { [AO source m2 PWFS2] } {
-   #      $itk_component(m2p2) mark
-   #   }
-   #   if { [AO source m2 OIWFS] } {
-   #      $itk_component(m2oi) mark
-   #   }
-   #   if { [AO source m2 GAOS] } {
-   #      $itk_component(m2ao) mark
-   #   }
-
    # Mount
    if { [AO state mount] } {
       if { $mount } {
@@ -1107,10 +1077,10 @@ itcl::body GuideLoop::recolourAltairArrows {} {
 itcl::body GuideLoop::buildGemsArrows {} {
    set w $itk_component(canv)
 
-   $w create line 0 0 1 1 -width [expr $GraphParam::lineWidth + 2 * $GraphParam::arrowBorder] -fill black -tags wfs_gaos_br
-   $w create line 0 0 1 1 -width [expr $GraphParam::lineWidth + 2 * $GraphParam::arrowBorder] -fill black -tags odgwflex_gaos_br
-   $w create line 0 0 1 1 -width [expr $GraphParam::lineWidth + 2 * $GraphParam::arrowBorder] -fill black -tags flexend_gaos_br \
+   $w create line 0 0 1 1 -width [expr $GraphParam::lineWidth + 2 * $GraphParam::arrowBorder] -fill black -tags wfssfs_gaos_br \
       -arrow last -arrowshape $GraphParam::arrowBorderShape
+   $w create line 0 0 1 1 -width $GraphParam::lineWidth -fill white \
+   -tags {active wfssfs_gaos} -arrow last -arrowshape $GraphParam::arrowShape
 
    $w create line 0 0 1 1 -width [expr $GraphParam::lineWidth + 2 * $GraphParam::arrowBorder] -fill black -tags gaos_m2_br \
       -arrow last -arrowshape $GraphParam::arrowBorderShape
@@ -1122,29 +1092,21 @@ itcl::body GuideLoop::buildGemsArrows {} {
    $w create line 0 0 1 1 -width $GraphParam::lineWidth -fill white \
       -tags {active gaos_m1} -arrow last -arrowshape $GraphParam::arrowShape
 
-   $w create line 0 0 1 1 -width $GraphParam::lineWidth -fill white \
-      -tags {active wfs_gaos}
-
    # GAOS internal
    $w create line  0 0 1 1 -tags cwfsani_gaos_br -width [expr $GraphParam::lineWidth + 2 * $GraphParam::arrowBorder] -fill black \
       -arrow last -arrowshape $GraphParam::arrowBorderShape
    $w create line 0 0 1 1 -width $GraphParam::lineWidth -fill white \
       -tags {active cwfsani_gaos} -arrow last -arrowshape $GraphParam::arrowShape
 
-   $w create line  0 0 1 1 -tags sfs_gaos_br -width [expr $GraphParam::lineWidth + 2 * $GraphParam::arrowBorder] -fill black \
-      -arrow last -arrowshape $GraphParam::arrowBorderShape
-   $w create line 0 0 1 1 -width $GraphParam::lineWidth -fill white \
-      -tags {active sfs_gaos} -arrow last -arrowshape $GraphParam::arrowShape
-
    $w create line 0 0 1 1 -width [expr $GraphParam::lineWidth + 2 * $GraphParam::arrowBorder] -fill black \
       -tags odgwtt_gaos_br -arrow last -arrowshape $GraphParam::arrowBorderShape
    $w create line 0 0 1 1 -width $GraphParam::lineWidth -fill white \
       -tags {active odgwtt_gaos} -arrow last -arrowshape $GraphParam::arrowShape
-
+   
+   $w create line 0 0 1 1 -width [expr $GraphParam::lineWidth + 2 * $GraphParam::arrowBorder] -fill black -tags odgwflex_gaos_br \
+      -arrow last -arrowshape $GraphParam::arrowBorderShape
    $w create line 0 0 1 1 -width $GraphParam::lineWidth -fill white \
-      -tags {active odgwflex_gaos}
-   $w create line 0 0 1 1 -width $GraphParam::lineWidth -fill white \
-      -tags {active flexend_gaos} -arrow last -arrowshape $GraphParam::arrowShape
+      -tags {active odgwflex_gaos} -arrow last -arrowshape $GraphParam::arrowShape
 
    $w create line  0 0 1 1 -tags cwfstt_gaos_br -width [expr $GraphParam::lineWidth + 2 * $GraphParam::arrowBorder] -fill black \
       -arrow last -arrowshape $GraphParam::arrowBorderShape
@@ -1156,15 +1118,6 @@ itcl::body GuideLoop::recolourGemsArrows {} {
    if { ! $::Flags(ignoreao) } {
       set w $itk_component(canv)
 
-      if { [$gemsSys getSFSActive] eq "ON" } {
-         if { [$gemsSys getFocLoopState] eq "CLOSED" } {
-            $w itemconfigure sfs_gaos -fill green
-         } else {
-            $w itemconfigure sfs_gaos -fill yellow
-         }
-      } else {
-         $w itemconfigure sfs_gaos -fill white
-      }
       set ttSources [$gemsSys getTTLoopSources]
       set flexSources [$gemsSys getFlexLoopSources]
       set odgwCount 0
@@ -1179,14 +1132,14 @@ itcl::body GuideLoop::recolourGemsArrows {} {
             incr ttwfsCount
          }
       }
-      set flextail white
+#      set flextail white
       if { $odgwCount > 0 } {
          if { ( [$gemsSys getFlexLoopState] eq "CLOSED" && [string first odgw $flexSources] > -1 ) } {
             $w itemconfigure odgwflex_gaos -fill green
-            set flextail green
+#            set flextail green
          } else {
             $w itemconfigure odgwflex_gaos -fill yellow
-            set flextail yellow
+#            set flextail yellow
          }
          if { [$gemsSys getTTLoopState] eq "CLOSED" && [string first odgw $ttSources] > -1 } {
             $w itemconfigure odgwtt_gaos -fill green
@@ -1212,21 +1165,16 @@ itcl::body GuideLoop::recolourGemsArrows {} {
          $w itemconfigure cwfsani_gaos -fill white
          $w itemconfigure cwfstt_gaos -fill white
       }
-      if { [AO state oiwfs] } {
-         if {[$gemsSys getFlexLoopState] eq "CLOSED" && [string first oigs $flexSources] > -1 } {
-            $w itemconfigure wfs_gaos -fill green
-            set flextail green
+
+      if { [AO state pwfs1] } {
+         if {[$gemsSys getFocLoopState] eq "CLOSED" } {
+            $w itemconfigure wfssfs_gaos -fill green
          } else {
-            $w itemconfigure wfs_gaos -fill yellow
-            if { $flextail ne "green" } {
-               set flextail yellow
-            }
+            $w itemconfigure wfssfs_gaos -fill yellow
          }
       } else {
          $w itemconfigure wfs_gaos -fill white
       }
-
-      $w itemconfigure flexend_gaos -fill $flextail
 
       if { [AO state gaos] } {
          if { [AO state m1] && [AO source m1 GAOS] && [$gemsSys getM1OffloadState] eq "CLOSED" } {
@@ -1314,7 +1262,6 @@ itcl::body GuideLoop::onGemsChange {reasons} {
          ttLoopSources -
          ttwfsActive* -
          odgwActive* -
-         sfsActive -
          gemsActive -
          loopsSettled {
             set shouldRecolor 1
@@ -1388,54 +1335,44 @@ itcl::body GuideLoop::resizeGemsArrows {} {
       [expr [lindex $ttOdgwIn 0] + $GraphParam::arrowHeadSpace + $GraphParam::interLineSpace ] [lindex $ttOdgwIn 1] \
       [expr [lindex $ttOdgwIn 0] + $GraphParam::arrowOffset ] [lindex $ttOdgwIn 1]
 
-   #Lines from OIWFS and ODGW to Flex loop
+   #Lines from ODGW to Flex loop
    set odgwOutL [ $gaosWidget getMagnetPoint ODGW_OUTL ]
    set flexIn [ $gaosWidget getMagnetPoint FLEX_IN ]
-   set oiout_x [expr [lindex [$w coords oiwfs_bg] 2 ] +1 ]
-   set oiout_y [expr ( [lindex [$w coords oiwfs_bg] 1 ] + [lindex [$w coords oiwfs_bg] 3 ] ) / 2 ]
 
    $w coords odgwflex_gaos_br [lindex $odgwOutL 0] [lindex $odgwOutL 1] \
-      [expr [lindex $odgwOutL 0] - $GraphParam::arrowHeadSpace - 2 * $GraphParam::interLineSpace] [lindex $odgwOutL 1] \
-      [expr [lindex $odgwOutL 0] - $GraphParam::arrowHeadSpace - 2 * $GraphParam::interLineSpace] $oiout_y
-   $w coords wfs_gaos_br $oiout_x $oiout_y \
-      [expr [lindex $odgwOutL 0] - $GraphParam::arrowHeadSpace - 2 * $GraphParam::interLineSpace] $oiout_y
-   $w coords flexend_gaos_br [expr [lindex $odgwOutL 0] - $GraphParam::arrowHeadSpace - 2 * $GraphParam::interLineSpace] $oiout_y \
-      [expr [lindex $odgwOutL 0] - $GraphParam::arrowHeadSpace - 2 * $GraphParam::interLineSpace] [lindex $flexIn 1] \
+      [expr [lindex $odgwOutL 0] - $GraphParam::arrowHeadSpace -  $GraphParam::interLineSpace] [lindex $odgwOutL 1] \
+      [expr [lindex $odgwOutL 0] - $GraphParam::arrowHeadSpace -  $GraphParam::interLineSpace] [lindex $flexIn 1] \
       [expr [lindex $flexIn 0] - $GraphParam::arrowBorderOffset] [lindex $flexIn 1]
+   $w coords odgwflex_gaos [lindex $odgwOutL 0] [lindex $odgwOutL 1] \
+      [expr [lindex $odgwOutL 0] - $GraphParam::arrowHeadSpace -  $GraphParam::interLineSpace] [lindex $odgwOutL 1] \
+      [expr [lindex $odgwOutL 0] - $GraphParam::arrowHeadSpace -  $GraphParam::interLineSpace] [lindex $flexIn 1] \
+      [expr [lindex $flexIn 0] - $GraphParam::arrowOffset ] [lindex $flexIn 1]
 
-   $w coords odgwflex_gaos [expr [lindex $odgwOutL 0] -1] [lindex $odgwOutL 1] \
-      [expr [lindex $odgwOutL 0] - $GraphParam::arrowHeadSpace - 2 * $GraphParam::interLineSpace] [lindex $odgwOutL 1] \
-      [expr [lindex $odgwOutL 0] - $GraphParam::arrowHeadSpace - 2 * $GraphParam::interLineSpace] $oiout_y
-   $w coords wfs_gaos $oiout_x $oiout_y \
-      [expr [lindex $odgwOutL 0] - $GraphParam::arrowHeadSpace - 2 * $GraphParam::interLineSpace] $oiout_y
-   $w coords flexend_gaos [expr [lindex $odgwOutL 0] - $GraphParam::arrowHeadSpace - 2 * $GraphParam::interLineSpace] $oiout_y \
-      [expr [lindex $odgwOutL 0] - $GraphParam::arrowHeadSpace - 2 * $GraphParam::interLineSpace] [lindex $flexIn 1] \
-      [expr [lindex $flexIn 0] - $GraphParam::arrowOffset] [lindex $flexIn 1]
+   #Line from PWFS1 to Slow Focus Loop
+   set oiout_x [expr [lindex [$w coords oiwfs_bg] 2 ] +1 ]
+   set oiout_y [expr ( [lindex [$w coords oiwfs_bg] 1 ] + [lindex [$w coords oiwfs_bg] 3 ] ) / 2 ]
+   set sfIn [ $gaosWidget getMagnetPoint SF_IN ]
+    
+   $w coords wfssfs_gaos_br $oiout_x $oiout_y \
+      [expr [lindex $odgwOutL 0] - $GraphParam::arrowHeadSpace - 2 * $GraphParam::interLineSpace] $oiout_y \
+      [expr [lindex $odgwOutL 0] - $GraphParam::arrowHeadSpace - 2 * $GraphParam::interLineSpace] [lindex $sfIn 1] \
+      [expr [lindex $sfIn 0] - $GraphParam::arrowBorderOffset] [lindex $sfIn 1]
+   $w coords wfssfs_gaos $oiout_x $oiout_y \
+      [expr [lindex $odgwOutL 0] - $GraphParam::arrowHeadSpace - 2 * $GraphParam::interLineSpace] $oiout_y \
+      [expr [lindex $odgwOutL 0] - $GraphParam::arrowHeadSpace - 2 * $GraphParam::interLineSpace] [lindex $sfIn 1] \
+      [expr [lindex $sfIn 0] - $GraphParam::arrowOffset] [lindex $sfIn 1]
 
    #Line from CAnopus WFS to Ani loop
    set canOutL [ $gaosWidget getMagnetPoint CAN_OUTL ]
    set aniIn [ $gaosWidget getMagnetPoint ANI_IN ]
    $w coords cwfsani_gaos_br [lindex $canOutL 0] [lindex $canOutL 1] \
-      [expr [lindex $canOutL 0] - $GraphParam::arrowHeadSpace - $GraphParam::interLineSpace] [lindex $canOutL 1] \
-      [expr [lindex $canOutL 0] - $GraphParam::arrowHeadSpace - $GraphParam::interLineSpace] [lindex $aniIn 1] \
+      [expr [lindex $canOutL 0] - $GraphParam::arrowHeadSpace] [lindex $canOutL 1] \
+      [expr [lindex $canOutL 0] - $GraphParam::arrowHeadSpace] [lindex $aniIn 1] \
       [expr [lindex $aniIn 0] - $GraphParam::arrowBorderOffset ] [lindex $aniIn 1]
    $w coords cwfsani_gaos [lindex $canOutL 0] [lindex $canOutL 1] \
-      [expr [lindex $canOutL 0] - $GraphParam::arrowHeadSpace - $GraphParam::interLineSpace] [lindex $canOutL 1] \
-      [expr [lindex $canOutL 0] - $GraphParam::arrowHeadSpace - $GraphParam::interLineSpace] [lindex $aniIn 1] \
+      [expr [lindex $canOutL 0] - $GraphParam::arrowHeadSpace] [lindex $canOutL 1] \
+      [expr [lindex $canOutL 0] - $GraphParam::arrowHeadSpace] [lindex $aniIn 1] \
       [expr [lindex $aniIn 0] - $GraphParam::arrowOffset ] [lindex $aniIn 1]
-
-   #Line from SFS to SF loop
-   set sfsOut [ $gaosWidget getMagnetPoint SFS_OUT ]
-   set sfIn [ $gaosWidget getMagnetPoint SF_IN ]
-   set sfsArrowX [expr ( [expr [lindex $sfsOut 0] < [lindex $sfIn 0]] ? [lindex $sfsOut 0] : [lindex $sfIn 0]) - $GraphParam::arrowHeadSpace ]
-   $w coords sfs_gaos_br [lindex $sfsOut 0] [lindex $sfsOut 1] \
-      $sfsArrowX [lindex $sfsOut 1] \
-      $sfsArrowX [lindex $sfIn 1] \
-      [expr [lindex $sfIn 0] - $GraphParam::arrowBorderOffset ] [lindex $sfIn 1]
-   $w coords sfs_gaos [lindex $sfsOut 0] [lindex $sfsOut 1] \
-      $sfsArrowX [lindex $sfsOut 1] \
-      $sfsArrowX [lindex $sfIn 1] \
-      [expr [lindex $sfIn 0] - $GraphParam::arrowOffset ] [lindex $sfIn 1]
 
    #Line from GAOS to M2
    set gaos_x [lindex [$w coords gaosframe] 0]

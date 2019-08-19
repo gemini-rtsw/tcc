@@ -33,10 +33,7 @@ itcl::class GemsWidget {
    private {
       variable sys
       variable odgwExpLUT ""
-      #      variable sfsExpLUT ""
-      #      variable ttExpCount 8
       method onGemsChange {reasons}
-      #      method onLGSExpSel {}
 
       variable linkedField ""
       method onFieldChange {name1 name2 op}
@@ -47,13 +44,10 @@ itcl::class GemsWidget {
       method onODGWChange {id}
       method onTTODGWxPress { op }
       method onTTCxPress { op }
-      #method nearestMag {mag lut}
       method calcMagForWavelength {wavel mags brightness}
       method calcMagForTarget {wavel target }
       method lookup { val lut {index 0} }
       method nearest { val lut {index 0} }
-
-      method forceLGSOn {op}
 
       method onLayoutChange {}
    }
@@ -66,11 +60,7 @@ itk::usual GemsWidget {
 }
 
 itcl::body GemsWidget::constructor {args} {
-   #   set sfsExpLUT [calparam cget -sfsExpLUT]
    set odgwExpLUT [calparam cget -odgwExpLUT]
-   #   if {[llength $sfsExpLUT] == 0 } {
-   #      set sfsExpLUT { {15 30} {14 20} {13 10} {12 5} {11 1} }
-   #   }
    if {[llength $odgwExpLUT] == 0 } {
       set odgwExpLUT { {15 0.02} {14 0.01} {13 0.005} {12 0.0025} {11 0.00125} }
    }
@@ -121,26 +111,9 @@ itcl::body GemsWidget::constructor {args} {
    } {  usual
          ignore -highlightthickness -borderwidth -background
    }
-   #   itk_component add lgswfsexp {
-   #      iwidgets::combobox $w.rightframe.lgswfsframe.lgswfsexp -arrowrelief
-   # flat -width 5 \
-   #         -width 4 -labeltext Hz -selectioncommand [itcl::code $this
-   # onLGSExpSel]
-   #   }
-   #   $itk_component(lgswfsexp) insert list end 50 100 200 500 800
-   #   [$itk_component(lgswfsexp) component list] configure -hscrollmode none
-   # -vscrollmode none
-   #	itk_component add lgswfs {
-   #		WfsWidget $w.buttonframe.lgswfs -label LGSWFS -explabel Hz \
-   #			-expvalues [list 50 100 200 500 800] \
-   #			-onexpselect [itcl::code $this onLGSExpSel]
-   #	}
-
-   #   pack $itk_component(lgswfslabel) $itk_component(lgswfsexp) -padx 1 -pady 1
    pack $itk_component(lgswfslabel) -padx 1 -pady 1
 
-   pack $itk_component(flexloop) $itk_component(crloop) $itk_component(aniloop) $itk_component(sfsloop) -side top -anchor w
-   #pack $itk_component(lgswfsframe) -padx 2 -pady 2
+   pack $itk_component(crloop) $itk_component(sfsloop) $itk_component(flexloop) $itk_component(aniloop) -side top -anchor w
 
    itk_component add ttframe {
        frame $w.rightframe.ttframe -background white -relief solid -borderwidth 1
@@ -179,10 +152,6 @@ itcl::body GemsWidget::constructor {args} {
          -pushedbackground Green -pady 0 -width 5 -command [itcl::code $this onTTODGWxPress]
    } {ignore -width }
    grid $itk_component(ttlabel) -
-   #   pack $itk_component(ttcan12) $itk_component(ttcan3)
-   # $itk_component(ttodgw1) \
-   #      $itk_component(ttodgw2) $itk_component(ttodgw3) $itk_component(ttodgw4)
-   # -side top -anchor e
    grid $itk_component(ttcan1) $itk_component(ttcan2)
    grid $itk_component(ttcan3) - -sticky we
    grid $itk_component(ttodgw1) $itk_component(ttodgw2)
@@ -216,31 +185,8 @@ itcl::body GemsWidget::constructor {args} {
       ToggleButton $w.canframe.can3frame.can3 -text C3 -pushedbackground Green -width 6 -pady 0
    } { ignore -width -pady -padx}
    pack $itk_component(can3) -pady 2 -padx 5
-   #   itk_component add canexp {
-   #      iwidgets::combobox $w.canframe.canexp -arrowrelief flat -width 5
-   # -labeltext Hz
-   #   }
-   #   $itk_component(canexp) insert list end 50 100 200 500 800
    grid $itk_component(can1frame) $itk_component(can2frame) $itk_component(can3frame) -padx 0 -pady 0 -sticky we
    grid columnconfigure $itk_component(canframe) { 0 1 2 } -weight 1
-   #   grid $itk_component(canexp) - - -padx 1 -pady 1
-
-   #   set sfsExpList ""
-   #   foreach {pair } $sfsExpLUT {
-   #      lappend sfsExpList "[lindex $pair 1]"
-   #   }
-   itk_component add sfsframe {
-         frame $w.sfsframe -relief solid -borderwidth 1 -background white
-   } {
-      usual
-      ignore -background
-   }
-   itk_component add sfs {
-      ToggleButton $w.sfsframe.sfs -text SFS -pushedbackground Green -width 6 -pady 0
-   } { ignore -width -pady -padx}
-   #   [$itk_component(sfs) component exp] configure -width 2 -labelpos w
-   # -labeltext "exp\[s\]"
-   pack $itk_component(sfs) -pady 2 -padx 10
 
    set odgwExpList ""
    foreach {pair } $odgwExpLUT {
@@ -275,7 +221,6 @@ itcl::body GemsWidget::constructor {args} {
       -fill x -expand yes -anchor n -padx 1 -pady {0 1}
    pack configure $itk_component(odgw1) -pady 1
 
-#   [$itk_component(sfs) component exp] selection set 0
    [$itk_component(odgw1) component exp] selection set 0
    [$itk_component(odgw2) component exp] selection set 0
    [$itk_component(odgw3) component exp] selection set 0
@@ -290,8 +235,6 @@ itcl::body GemsWidget::constructor {args} {
       usual
       ignore -highlightthickness -borderwidth -background
    }
-   #   $itk_component(arrowspace) create line 0 0 1 1 -tags tt_cr_br -fill black
-   # -width 5
    $itk_component(arrowspace) create line 0 0 48 1 -tags tt_cr_br -fill black \
       -width [expr $GraphParam::lineWidth + 2 * $GraphParam::arrowBorder] \
       -arrow last -arrowshape $GraphParam::arrowBorderShape
@@ -303,7 +246,6 @@ itcl::body GemsWidget::constructor {args} {
    pack $itk_component(odgwframe) -padx 0 -pady 0 -side bottom -expand yes -fill x
    pack $itk_component(canframe) -padx 0 -pady 1 -side bottom -fill x -expand yes
    pack $itk_component(rightframe) -side right
-   pack $itk_component(sfsframe) -side bottom -anchor w -padx {0 2} -pady {0 1}
    pack $itk_component(buttonframe) -side left -pady 2
    pack $itk_component(arrowspace) -fill both -expand yes
 
@@ -312,7 +254,7 @@ itcl::body GemsWidget::constructor {args} {
 
    trace variable ::Config(tcs.field,value) w [itcl::code $this onFieldChange]
 
-   foreach wd { mainframe rightframe ttframe ttcan3 ttodgw4 odgwframe odgw1 odgw4 sfsframe buttonframe canframe sfsloop aniloop flexloop} {
+   foreach wd { mainframe rightframe ttframe ttcan3 ttodgw4 odgwframe odgw1 odgw4 buttonframe canframe sfsloop aniloop flexloop} {
       bind $itk_component($wd) <Configure> [itcl::code $this onLayoutChange]
    }
 
@@ -329,15 +271,7 @@ itcl::body GemsWidget::destructor {} {
 
 itcl::body GemsWidget::init {} {
    if {$itk_option(-aocontroller) ne "" } {
-      #$itk_component(lgswfsexp) clear entry
-      #$itk_component(lgswfsexp) insert entry end [calparam cget -lgsExpDefault]
-      #onLGSExpSel
-
-      #set idx [nearest [calparam cget -ngsExpDefault] [[$itk_component(canexp)
-      # component list] get 0 end] ]
-      #$itk_component(canexp) selection set $idx
       if { $linkedField eq "" } {
-#         [$itk_component(sfs) component exp] selection set 0
          [$itk_component(odgw1) component exp] selection set 0
          [$itk_component(odgw2) component exp] selection set 0
          [$itk_component(odgw3) component exp] selection set 0
@@ -362,7 +296,6 @@ itcl::body GemsWidget::reset {} {
    $itk_component(can1) pop
    $itk_component(can2) pop
    $itk_component(can3) pop
-   $itk_component(sfs) pop
    $itk_component(odgw1) switchPop
    $itk_component(odgw2) switchPop
    $itk_component(odgw3) switchPop
@@ -376,7 +309,6 @@ itcl::body GemsWidget::recolor {} {
       $itk_component(rightframe) configure -background green
       $itk_component(arrowspace) configure -background green
    } else {
-      #$itk_component(gaoson) configure -status off
       $itk_component(mainframe) configure -background white
       $itk_component(buttonframe) configure -background white
       $itk_component(rightframe) configure -background white
@@ -414,11 +346,6 @@ itcl::body GemsWidget::recolor {} {
       set ttFlag 1
    } else {
       $itk_component(can3frame) configure -background white
-   }
-   if {[$itk_option(-aocontroller) state sfs] } {
-      $itk_component(sfsframe) configure -background green
-   } else {
-      $itk_component(sfsframe) configure -background white
    }
    if {$ttFlag } {
       $itk_component(canframe) configure -background Green
@@ -467,20 +394,9 @@ itcl::body GemsWidget::recolor {} {
 }
 
 itcl::body GemsWidget::enable {} {
-   #$itk_option(-aocontroller) configure -gaos [expr \"[$itk_component(gaoson)
-   # get]\" eq \"pushed\"]
    $itk_option(-aocontroller) configure -ttgs1Active [expr \"[$itk_component(can1) get]\" eq \"pushed\"]
    $itk_option(-aocontroller) configure -ttgs2Active [expr \"[$itk_component(can2) get]\" eq \"pushed\"]
    $itk_option(-aocontroller) configure -ttgs3Active [expr \"[$itk_component(can3) get]\" eq \"pushed\"]
-   #   $itk_option(-aocontroller) configure -ttgs3Exp	[$itk_component(canexp)
-   # get]
-
-   $itk_option(-aocontroller) configure -sfsActive [expr \"[$itk_component(sfs) get]\" eq \"pushed\"]
-   #   set sfsExp [$itk_component(sfs) getExp]
-   #   if {![string is double -strict $sfsExp] } {
-   #      set sfsExp 1
-   #   }
-   #   $itk_option(-aocontroller) configure -sfsExp $sfsExp
 
    $itk_option(-aocontroller) configure -odgw1Active [expr \"[$itk_component(odgw1) switchGet]\" eq \"pushed\"]
    set odgw1Freq [$itk_component(odgw1) getExp]
@@ -511,8 +427,6 @@ itcl::body GemsWidget::enable {} {
    $itk_option(-aocontroller) configure -odgw4Exp [expr "1.0 / $odgw4Freq"]
 
    $itk_option(-aocontroller) configure -lwfsActive 1
-   #   $itk_option(-aocontroller) configure -lwfsFreq [$itk_component(lgswfsexp)
-   # get]
    $itk_option(-aocontroller) configure -lwfsLoop [expr \"[$itk_component(gaoson) get]\" eq \"pushed\"]
    $itk_option(-aocontroller) configure -flexLoop [expr \"[$itk_component(flexloop) get]\" eq \"pushed\"]
    if { "[$itk_component(crloop) get]" eq "pushed" } {
@@ -551,7 +465,6 @@ itcl::body GemsWidget::onGemsChange {reasons} {
          ttLoopState -
          ttwfsActive* -
          odgwActive* -
-         sfsActive -
          lgsLoopState -
          lgswfsActive {
             set shouldRecolor 1
@@ -563,22 +476,6 @@ itcl::body GemsWidget::onGemsChange {reasons} {
       recolor
    }
 }
-
-#itcl::body GemsWidget::onLGSExpSel {} {
-#   set lgsExp [$itk_component(lgswfsexp) get]
-#   set canExpList ""
-#   for {set i $ttExpCount } {$i > 0 } {incr i -1 } {
-#      lappend canExpList [format "%.1f" [expr "double($lgsExp) / $i"]]
-#   }
-#   set oldSel [lindex [[$itk_component(canexp) component list] curselection ] 0
-# ]
-#
-#   $itk_component(canexp) clear list
-#   eval $itk_component(canexp) insert list end $canExpList
-#   if {[string is integer -strict $oldSel] } {
-#      $itk_component(canexp) selection set $oldSel
-#   }
-#}
 
 itcl::body GemsWidget::onFieldChange {name1 name2 op} {
    clearFieldSubscription
@@ -631,10 +528,6 @@ itcl::body GemsWidget::onTTGSChange {id} {
    if { [llength [itcl::find objects $target] ] > 0 } {
       set mag [calcMagForTarget 0.65 $target]
       if { [string is double -strict $mag] } {
-         #         if { $id == 3 } {
-         #            set index [nearest $mag $sfsExpLUT ]
-         #            [$itk_component(sfs) component exp] selection set $index
-         #         }
          $itk_option(-aocontroller) configure -ttgs${id}Mag $mag
       }
    }
@@ -747,23 +640,13 @@ itcl::configbody GemsWidget::state {
          $itk_component(can1) configure -state $itk_option(-state)
          $itk_component(can2) configure -state $itk_option(-state)
          $itk_component(can3) configure -state $itk_option(-state)
-         #$itk_component(canexp) configure -state $itk_option(-state)
-         $itk_component(sfs) configure -state $itk_option(-state)
          $itk_component(odgw1) configure -state $itk_option(-state)
          $itk_component(odgw2) configure -state $itk_option(-state)
          $itk_component(odgw3) configure -state $itk_option(-state)
          $itk_component(odgw4) configure -state $itk_option(-state)
          $itk_component(lgswfslabel) configure -state $itk_option(-state)
-         #$itk_component(lgswfsexp) configure -state $itk_option(-state)
       }
    }
-}
-
-itcl::body GemsWidget::forceLGSOn {op} {
-   #   if { [$itk_component(lgswfs) cget -state] ne "disabled" &&
-   # [$itk_component(lgswfs) switchGet] eq "popped" } {
-   #      [$itk_component(lgswfs) component onoff] mark
-   #   }
 }
 
 itcl::body GemsWidget::onTTODGWxPress {op} {
@@ -811,10 +694,6 @@ itcl::body GemsWidget::getMagnetPoint { type } {
       CAN_OUTL  {
          set x [winfo x $itk_component(canframe)]
          set y [ expr [winfo y $itk_component(canframe)] + [winfo height $itk_component(canframe)] / 2 ]
-      }
-      SFS_OUT {
-         set x [winfo x $itk_component(sfsframe)]
-         set y [ expr [winfo y $itk_component(sfsframe)] + [winfo height $itk_component(sfsframe)] / 2 ]
       }
       SF_IN {
          set x [ expr [winfo x $itk_component(buttonframe)] + [winfo x $itk_component(sfsloop)] ]

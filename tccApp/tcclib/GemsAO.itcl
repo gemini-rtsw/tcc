@@ -8,15 +8,9 @@
 
 itcl::class GemsAO {
    public {
-      #	variable gaos 0
       variable ttgs1Active 0
-#      variable ttgs1Exp	10
       variable ttgs2Active 0
-#      variable ttgs2Exp	10
       variable ttgs3Active 0
-#      variable ttgs3Exp	10
-      variable sfsActive 0
-#      variable sfsExp 10
       variable odgw1Active 0
       variable odgw1Exp	10
       variable odgw2Active 0
@@ -34,7 +28,6 @@ itcl::class GemsAO {
       variable odgw4Mag 10
       variable oigsMag 10
       variable lwfsActive 0
-#      variable lwfsFreq 100
       variable lwfsLoop 0
       variable flexLoop 0
       variable aniLoop 0
@@ -228,30 +221,7 @@ itcl::body GemsAO::startWFS {} {
    if { [startTTGS] } {
       return 1
    }
-   if { $sfsActive } {
-      if { ![state sfs] } {
-#         if { $sfsExp ne "" && $sfsExp != [$sys getSFSExposure] } {
-#            $sys setSFSExposure $sfsExp
-#            if { [waitForCmdComplete 1000 1000 "expr 1" "SFS exposure setup"] } {
-#               return 1
-#            }
-#         }
-         $sys startSFS
-         if { [waitForCmdComplete 1000 2000 "state sfs" "SFS to go ON"] } {
-            return 1
-         }
-      }
-   }
    if { $lwfsActive} {
-#      if {$lwfsFreq ne ""} {
-#         set lwfsExp [expr "1.0 / $lwfsFreq"]
-#         if {$lwfsExp != [$sys getLGSWFSExposure]} {
-#            $sys setLGSWFSExposure $lwfsExp
-#            if { [waitForCmdComplete 1000 1000 "expr 1" "LGSWFS exposure setup"] } {
-#               return 1
-#            }
-#         }
-#      }
       if { ![state lgswfs] } {
          $sys startLGSWFS
          if { [waitForCmdComplete 1000 2000 "state lgswfs" "LGSWFS to go ON"] } {
@@ -267,23 +237,6 @@ itcl::body GemsAO::startWFS {} {
 
 itcl::body GemsAO::startTTGS {} {
    if { $ttgs1Active || $ttgs2Active || $ttgs3Active } {
-#      if {[set ttgs3Exp] ne "" && [set ttgs3Exp] != [$sys getTTWFSExposure 3]} {
-#         #TODO: The three canopus use the same value, so I'll use only ttgs3Exp
-#
-#         set ttExp $ttgs3Exp
-#         if { [string is double -strict $ttExp]} {
-#            set ttDiv [format %.0f [expr "round ($lwfsFreq / $ttExp)" ] ]
-#            if {$ttDiv < 1} {
-#               set ttDiv 1
-#            }
-#         } else {
-#            set ttDiv 1
-#         }
-#         $sys setTTWFSExposure 1 $ttDiv
-#         if { [waitForCmdComplete 1000 1000 "expr 1" "TTWFS exposure setup"] } {
-#            return 1
-#         }
-#      }
       set idList ""
       set testExp ""
       set errMsg ""
@@ -355,13 +308,6 @@ itcl::body GemsAO::stopWFS {} {
          set errMsg "$errMsg\n$lastError"
       }
    }
-   if { !$sfsActive && [state sfs] } {
-      $sys stopSFS
-      if {[waitForCmdComplete 1000 35000 {expr ![state sfs]} "SFS to go OFF"]} {
-         set ret 1
-         set errMsg "$errMsg\n$lastError"
-      }
-   }
    if { [stopTTGS] } {
       set ret 1
       set errMsg "$errMsg\n$lastError"
@@ -425,14 +371,6 @@ itcl::body GemsAO::disableWFS {} {
       set ret 1
       set errMsg "$errMsg\n$lastError"
    }
-   #	if { [state lgswfs] } {
-   #		$sys stopLGSWFS
-   #		if {[waitForCmdComplete 1000 2000 {expr ![state lgswfs]} "LGSWFS to go
-# OFF"]} {
-   #			set ret 1
-   #			set errMsg "$errMsg\n$lastError"
-   #		}
-   #	}
    if { [state sfs] } {
       $sys stopSFS
       if {[waitForCmdComplete 1000 15000 {expr ![state sfs]} "SFS to go OFF"]} {
