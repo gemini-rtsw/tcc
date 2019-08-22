@@ -49,8 +49,6 @@ itcl::class GuideAlarm {
       #GeMS
       variable odgwLimit 1000.0
       variable odgwSilent 0
-      variable sfsLimit 1000.0
-      variable sfsSilent 0
       variable lgswfsLimit 1000.0
       variable lgswfsSilent 0
       variable ttwfsLimit 1000.0
@@ -87,7 +85,6 @@ itcl::body GuideAlarm::constructor {args} {
    global pwfs1silent pwfs2silent oiwfssilent gaossilent ttgssilent sfosilent nicisilent guideCentroid
 
    set odgwLimit [calparam cget -odgwAlarmDefault]
-   set sfsLimit [calparam cget -sfsAlarmDefault]
    set lgswfsLimit [calparam cget -lgsAlarmDefault]
    set ttwfsLimit [calparam cget -ngsAlarmDefault]
    set gpiLimit [calparam cget -gpiAlarmDefault]
@@ -267,7 +264,6 @@ itcl::body GuideAlarm::setWfsColor {wfs color} {
       ttgs    { lappend compList cnts1 cnts2 cnts3 cnts4 centroid }
       ttwfs   { lappend compList cnts1 cnts2 cnts3 }
       lgswfs  { lappend compList cnts }
-      sfs     { lappend compList cnts }
       odgw    { lappend compList cnts1 cnts2 cnts3 cnts4 }
       default { lappend compList cnts centroid }
    }
@@ -278,7 +274,7 @@ itcl::body GuideAlarm::setWfsColor {wfs color} {
 
 itcl::body GuideAlarm::setSilent {wfs} {
    global pwfs1silent pwfs2silent oiwfssilent gaossilent ttgssilent sfosilent \
-      nicisilent sfssilent ttwfssilent odgwsilent sfssilent lgswfssilent
+      nicisilent ttwfssilent odgwsilent lgswfssilent
 
    #puts "setSilent wfs: $wfs val: [set ${wfs}silent]"
    set ${wfs}Silent [set ${wfs}silent]
@@ -322,13 +318,6 @@ itcl::body GuideAlarm::alarmCheck {wfs} {
          gaos -
          sfo -
          nici -
-         sfs {
-            if { $guideCounts($wfs) < [set ${wfs}Limit]} {
-               set alarmOn($wfs) 1
-            } else {
-               set alarmOn($wfs) 0
-            }
-         }
          oiwfs {
             if { ($guideCounts(oiwfs) < ( $gpiOI ? $gpiLimit : $oiwfsLimit ) ) || $guideCentroid(oiwfs) } {
                set alarmOn(oiwfs) 1
@@ -432,7 +421,7 @@ itcl::body GuideAlarm::ringBell {} {
 
    set wfsList {pwfs1 pwfs2 oiwfs nici}
    if { [calparam cget -site] eq "CP" } {
-      lappend wfsList ttwfs lgswfs sfs odgw
+      lappend wfsList ttwfs lgswfs odgw
    } else {
       lappend wfsList gaos ttgs sfo
    }
@@ -474,7 +463,7 @@ itcl::body GuideAlarm::scanLoop {} {
    if { [calparam cget -site] eq "CP" } {
       if { !$::Flags(ignoreao) } {
          retrieveGeMSCounts
-         lappend wfsList ttwfs lgswfs sfs odgw
+         lappend wfsList ttwfs lgswfs odgw
       }
    } else {
       lappend wfsList gaos ttgs sfo
@@ -496,7 +485,6 @@ itcl::body GuideAlarm::scanLoop {} {
             set test [expr {$ttwfsCount > 0 && ( [[AO getGaosObj] state ttLoop] || [[AO getGaosObj] state aniLoop] ) && $canguide}]
          }
          lgswfs {set test [expr {[[AO getGaosObj] state $wfs] && [[AO getGaosObj] state lwfsLoop] && $canguide}] }
-         sfs { set test [expr {[[AO getGaosObj] state $wfs] && [[AO getGaosObj] state sfsLoop] && $canguide}] }
          odgw {
             set odgwCountTT 0
             set odgwCountFlex 0
@@ -557,7 +545,6 @@ itcl::body GuideAlarm::setUIState {wfs state} {
       ttgs    { lappend compList cnts1 cnts2 cnts3 cnts4 centroid }
       ttwfs   { lappend compList cnts1 cnts2 cnts3 }
       lgswfs  { lappend compList cnts }
-      sfs     { lappend compList cnts }
       odgw    { lappend compList cnts1 cnts2 cnts3 cnts4 }
       default { lappend compList cnts centroid }
    }
@@ -674,8 +661,8 @@ itcl::body GuideAlarm::buildAltairAlarms {} {
 }
 
 itcl::body GuideAlarm::buildGemsAlarms {} {
-   global guideCounts lgswfsCountLimit ttwfsCountLimit sfsCountLimit odgwCountLimit
-   global lgswfssilent ttwfssilent sfssilent odgwsilent
+   global guideCounts lgswfsCountLimit ttwfsCountLimit odgwCountLimit
+   global lgswfssilent ttwfssilent odgwsilent
 
    set gemsSys [GemsSys::getSingleton]
 
@@ -790,60 +777,6 @@ itcl::body GuideAlarm::buildGemsAlarms {} {
    grid $itk_component(ttwfscnts3) -sticky news
    grid $itk_component(ttwfslimlab) $itk_component(ttwfsliment) -sticky news
 
-   #SFS
-   set guideCounts(sfs) [$gemsSys getSFSCounts]
-
-   set guideCentroid(sfs) 0
-
-   set alarmEnabled(sfs) 0
-   set alarmOn(sfs) 0
-   set sfsCountLimit [set sfsLimit]
-
-   itk_component add sfsframe {
-		frame $itk_component(frame).sfsframe -relief ridge -bd 2
-	}
-   set w $itk_component(sfsframe)
-
-   # create the display widgets
-   itk_component add sfstitle {
-		label $w.lab -text sfs
-	} {
-		usual
-		rename -font -majorfont majorFont Font
-	}
-   itk_component add sfssilent {
-		checkbutton $w.sil -variable sfssilent -onvalue 1 -offvalue 0 -text silent -command [itcl::code $this setSilent sfs]
-	} {
-		usual
-		rename -font -majorfont majorFont Font
-	}
-
-   itk_component add sfsclab {
-		label $w.clab -text "Counts:"
-	} {
-		usual
-		rename -font -majorfont majorFont Font
-	}
-   itk_component add sfscnts { label $w.cnts1 -textvariable guideCounts(sfs) }
-   itk_component add sfslimlab {
-		label $w.limlab -text "Limit:"
-	} {
-		usual
-		rename -font -majorfont majorFont Font
-	}
-   itk_component add sfsliment {
-		 entry $w.liment -textvariable sfsCountLimit -width 5
-	} {
-		usual
-		rename -font -majorfont majorFont Font
-	}
-
-   bind $itk_component(sfsliment) <KeyPress-Return> [itcl::code $this changeLimit sfs]
-
-   grid $itk_component(sfstitle) $itk_component(sfssilent) -sticky news
-   grid $itk_component(sfsclab) $itk_component(sfscnts) -sticky news
-   grid $itk_component(sfslimlab) $itk_component(sfsliment) -sticky news
-
    #ODGW
    for { set i 1 } { $i <= 4 } { incr i } {
       set guideCounts(odgw${i}) [$gemsSys getODGWCounts $i]
@@ -904,14 +837,12 @@ itcl::body GuideAlarm::buildGemsAlarms {} {
    grid $itk_component(odgwlimlab) $itk_component(odgwliment) -sticky news
 
    pack $itk_component(lgswfsframe)  $itk_component(ttwfsframe) \
-      $itk_component(sfsframe) $itk_component(odgwframe) -side top -padx 3 \
+      $itk_component(odgwframe) -side top -padx 3 \
       -pady 3 -ipadx 3 -ipady 3 -fill x -expand 1
 }
 itcl::body GuideAlarm::retrieveGeMSCounts {} {
    global guideCounts
 
-   set guideCounts(sfs) [$gemsSys getSFSCounts]
-   alarmCheck sfs
    set guideCounts(ttwfs1) [$gemsSys getTTWFSCounts 1]
    set guideCounts(ttwfs2) [$gemsSys getTTWFSCounts 2]
    set guideCounts(ttwfs3) [$gemsSys getTTWFSCounts 3]
