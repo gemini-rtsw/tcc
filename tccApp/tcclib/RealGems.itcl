@@ -179,10 +179,7 @@ itcl::body RealGems::constructor {} {
 	epics cs gems::beamSplitter
 	epics cs gems::ttApdCtrl
 	epics cs gems::ttExpCtrl
-	epics cs gems::sfsExpCtrl
 	epics cs gems::lgsExpCtrl
-	epics cs gems::sfsObserve
-	epics cs gems::sfsStopObserve
 	epics cs gems::odgwSetup
    epics cs gems::odgwGuide
    epics cs gems::odgwEndGuide
@@ -192,7 +189,6 @@ itcl::body RealGems::constructor {} {
    epics sa aomauxsad
    epics sa aomadcsad
    epics sa rtcsad
-	epics sa sfssad
 	epics sa odgwsad
    epics sa lissad
 	
@@ -247,9 +243,6 @@ itcl::body RealGems::constructor {} {
 	sa aomsad proc beamSplitterState [itcl::code $this onStatusChange]
 	sa aomsad proc adcScLoop [itcl::code $this onStatusChange]
 	
-	#sa sfssad proc sfsCounts [itcl::code $this onStatusChange]
-	sa sfssad proc sfsActive [itcl::code $this onStatusChange]
-	
 	sa rtcsad proc tt1Active [itcl::code $this onStatusChange]
 	sa rtcsad proc tt2Active [itcl::code $this onStatusChange]
 	sa rtcsad proc tt3Active [itcl::code $this onStatusChange]
@@ -302,8 +295,6 @@ itcl::body RealGems::destructor {} {
 	sa aomsad unproc adcScState [itcl::code $this onStatusChange]
 	sa aomsad unproc beamSplitterState [itcl::code $this onStatusChange]
 	sa aomsad unproc adcScLoop [itcl::code $this onStatusChange]
-#	sa sfssad unproc sfsCounts [itcl::code $this onStatusChange]
-	sa sfssad unproc sfsActive [itcl::code $this onStatusChange]
 	sa rtcsad unproc tt1Active [itcl::code $this onStatusChange]
 	sa rtcsad unproc tt2Active [itcl::code $this onStatusChange]
 	sa rtcsad unproc tt3Active [itcl::code $this onStatusChange]
@@ -1138,8 +1129,6 @@ itcl::body RealGems::onStatusChange {name alarm time value} {
 	aomsad.adcScState { lappend reasons adcPos }
 	aomsad.adcScLoop { lappend reasons adcState }
 	aomsad.beamSplitterState { lappend reasons beamSplitterPos }
-	sfssad.sfsActive { lappend reasons sfsActive }
-	sfssad.sfsCounts { lappend reasons sfsCounts }
 	rtcsad.tt1Active { lappend reasons ttwfsActive(1) }
 	rtcsad.tt2Active { lappend reasons ttwfsActive(2) }
 	rtcsad.tt3Active { lappend reasons ttwfsActive(3) }

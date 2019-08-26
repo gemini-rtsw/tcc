@@ -371,13 +371,6 @@ itcl::body GemsAO::disableWFS {} {
       set ret 1
       set errMsg "$errMsg\n$lastError"
    }
-   if { [state sfs] } {
-      $sys stopSFS
-      if {[waitForCmdComplete 1000 15000 {expr ![state sfs]} "SFS to go OFF"]} {
-         set ret 1
-         set errMsg "$errMsg\n$lastError"
-      }
-   }
    if { [disableTTGS] } {
       set ret 1
       set errMsg "$errMsg\n$lastError"
@@ -594,7 +587,6 @@ itcl::body GemsAO::state {var} {
       flexLoop   { return [expr {[$sys getFlexLoopState] eq "CLOSED"}] }
       rotOffload { return [expr {[$sys getRotOffloadState] eq "CLOSED"}] }
       lgswfs     { return [expr {[$sys getLGSWFSActive] eq "ON"}] }
-      sfs        { return [expr {[$sys getSFSActive] eq "ON"}] }
       ttgs1      { return [expr {[$sys getTTWFSActive 1] eq "ON"}] }
       ttgs2      { return [expr {[$sys getTTWFSActive 2] eq "ON"}] }
       ttgs3      { return [expr {[$sys getTTWFSActive 3] eq "ON"}] }

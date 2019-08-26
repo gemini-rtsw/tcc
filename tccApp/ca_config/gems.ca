@@ -12,7 +12,6 @@ apply gems::aomAuxApply aom:apply3      aom:comCar3     Canopus aux. mechanisms 
 apply gems::aomAdcApply aom:apply61     aom:comCar61    Canopus ADC Apply Record
 apply gems::mystApply   myst:apply      myst:applyC     Primary Myst Apply Record
 apply gems::rtcApply    rtc:apply       rtc:applyC      Primary RTC Apply Record
-apply gems::sfsApply    sfs:apply       sfs:applyC      Primary SFS Apply Record
 apply gems::odgwApply   gsaoi:dc:apply  gsaoi:dc:applyC GSAOI DC Apply Record
 apply gems::lisApply    lis:apply       lis:applyC      LIS Apply Record
 
@@ -84,7 +83,6 @@ status gemssad
    lgsFlux     myst:lgsFlux.VAL 0 Average flux/LGS frame 
    lgsAvrg     myst:lgsavgfluxperpix.VAL 0 Average flux/LGS frame 
    ngsFlux	   myst:ngsFlux.VAL          0 Average flux/NGS frame 
-   sfsFlux     myst:sfsflux.VAL          0 SFS flux
 
    ngs1     myst:ngsConfig.VALA 0  NGS1 active (Used/NotUsed) 
 	ngs2     myst:ngsConfig.VALB 0  NGS2 active (Used/NotUsed)
@@ -168,16 +166,6 @@ status rtcsad
 	lgsExp	rtc:lgs:expTime.VALA 0 LGSWFS exposure time
 	ngsExpMult rtc:ngs:expTime.VALA 0 NGS exposure time multiplier
 	sourceMask rtc:ngs:geometryState.VALA 0 Current NGS mask
-}
-
-status sfssad
-{
-	applyC		sfs:applyC.VAL			0	Command Status
-	message		sfs:applyC.OMSS		0	Command completion message
-
-	sfsActive	sfs:observing.VAL		 	0	SFS active (0/1)
-	sfsCounts	sfs:dspGlobalIntensity	0	SFS counts
-	sfsExp		sfs:expTime.VAL 		0	SFS exposure time
 }
 
 status lissad
@@ -277,24 +265,9 @@ command gems::ttExpCtrl	gems::rtcApply Canopus exposure control
 	freqDiv	rtc:ngs:setExpTime.A Canopus WFS read frequency divisor (f = (LWFS Freq) / divisor)
 }
 
-command gems::sfsExpCtrl gems::sfsApply SFS exposure control
-{
-	expTime sfs:setExpTime.A SFS exposure time (s)
-}
-
 command gems::lgsExpCtrl	gems::rtcApply LGSWFS exposure control
 {
 	expTime	rtc:lgs:setExpTime.A LGSWFS exposure time (s)
-}
-
-command gems::sfsObserve gems::sfsApply SFS WFS start
-{
-	dir sfs:observe.DIR SFS start observe
-}
-
-command gems::sfsStopObserve gems::sfsApply SFS WFS start
-{
-	dir sfs:endObserve.DIR SFS start observe
 }
 
 command gems::odgwSetup tcsApply ODGW exposure setup
