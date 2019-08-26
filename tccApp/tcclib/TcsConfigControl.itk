@@ -586,7 +586,7 @@ itcl::body TcsConfigControl::apply {} {
                }
            } else {
               # Park  OIWFS
-              if {! [string equal $currentoiwfs "None"] && ! [sa agssad get p2Parked] } {
+              if {! [string equal $currentoiwfs "None"] && [sa agssad get oiParked] != "1" } {
 #                  cs oiwfsPark set dir MARK
 #                  after 100
 #                  cs oiwfsPark set dir START
@@ -640,15 +640,8 @@ itcl::body TcsConfigControl::apply {} {
             gemsp2wait
          }
       } else {
-         set ngs1Following [sa aomsad get ngs1Follow]
-         set ngs2Following [sa aomsad get ngs2Follow]
-         set ngs3Following [sa aomsad get ngs3Follow]
-         #puts "ngs1Following = $ngs1Following"
-         #puts "ngs2Following = $ngs2Following"
-         #puts "ngs3Following = $ngs3Following"
-      
          #puts "no targets for GeMS"
-         if { [string match "On" $ngs1Following] } {
+         if { [isFollowing agssad ngs1Follow] } {
             cs ngs1Follow set followState Off
             logger command ngs1Follow
             #puts "command ngs1Follow Off"  
@@ -657,7 +650,7 @@ itcl::body TcsConfigControl::apply {} {
                "Error posting commands: TCS reports \"$msg\""
             }      
          }
-         if { [string match "On" $ngs2Following] } {
+         if { [isFollowing agssad ngs2Follow] } {
             cs ngs2Follow set followState Off
             logger command ngs2Follow
             #puts "command ngs2Follow Off"
@@ -667,7 +660,7 @@ itcl::body TcsConfigControl::apply {} {
             }
          }
 
-         if { [string match "On" $ngs3Following] } {
+         if { [isFollowing agssad ngs3Follow] } {
             cs ngs3Follow set followState Off
             logger command ngs3Follow
             #puts "command ngs3Follow Off"
