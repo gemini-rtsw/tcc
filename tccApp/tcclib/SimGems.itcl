@@ -55,12 +55,9 @@ public {
 	method stopTTWFS {idList}
 	method startLGSWFS {}
 	method stopLGSWFS {}
-	method startSFS {}
-	method stopSFS {}
 	method setODGWExposure {id val}
 	method setTTWFSExposure {id val}
 	method setLGSWFSExposure {val}
-	method setSFSExposure {val}
 
    #ODGW special commands
    method setODGWSize { size {apply 1} }
@@ -91,16 +88,13 @@ public {
    method getODGWEnabled {id}
    method getTTWFSActive {id}
 	method getLGSWFSActive {}
-	method getSFSActive {}
 	method getODGWExposure {id}
 	method getTTWFSExposure {id}
 	method getLGSWFSExposure {}
-	method getSFSExposure {}
 	method getODGWCounts {id}
 	method getTTWFSCounts {id}
 	method getLGSWFSCounts {id}
    method getLGSWFSAverage {}
-	method getSFSCounts {}
 	method getAstroMode {}
 	method getAstrometryState {}
 	method getADCPos {}
@@ -528,14 +522,6 @@ itcl::body SimGems::stopLGSWFS {} {
 	configCmd LGSWFS lgswfsActive OFF
 }
 
-itcl::body SimGems::startSFS {} {
-	configCmd SFS sfsActive ON
-}
-
-itcl::body SimGems::stopSFS {} {
-	configCmd SFS sfsActive OFF
-}
-
 itcl::body SimGems::pauseLis {} {
    $logger logmess "SimGems: Pause laser propagation."
    if { [beginCmd] } {
@@ -553,10 +539,6 @@ itcl::body SimGems::setTTWFSExposure {id val} {
 
 itcl::body SimGems::setLGSWFSExposure {val} {
 	configCmd "LGSWFS Exposure" lgswgsExposure $val
-}
-
-itcl::body SimGems::setSFSExposure {val} {
-	configCmd "SFS Exposure" sfsExposure $val
 }
 
 itcl::body SimGems::checkGemsActive {} {
@@ -657,10 +639,6 @@ itcl::body SimGems::getLGSWFSActive {} {
 	return $lgswfsActive
 }
 
-itcl::body SimGems::getSFSActive {} {
-	return $sfsActive
-}
-
 itcl::body SimGems::getODGWExposure {id} {
 	return $odgwExposure($id)
 }
@@ -671,10 +649,6 @@ itcl::body SimGems::getTTWFSExposure {id} {
 
 itcl::body SimGems::getLGSWFSExposure {} {
 	return $lgswgsExposure
-}
-
-itcl::body SimGems::getSFSExposure {} {
-	return $sfsExposure
 }
 
 itcl::body SimGems::getODGWCounts {id} {
@@ -692,10 +666,6 @@ itcl::body SimGems::getLGSWFSCounts {id} {
 itcl::body SimGems::getLGSWFSAverage {} {
    return [expr "( $lgswfsCounts(1) + $lgswfsCounts(2) + $lgswfsCounts(3) + \
       $lgswfsCounts(4) + $lgswfsCounts(5) )  / 5"]
-}
-
-itcl::body SimGems::getSFSCounts {} {
-	return $sfsCounts
 }
 
 itcl::body SimGems::getAstroMode {} {
