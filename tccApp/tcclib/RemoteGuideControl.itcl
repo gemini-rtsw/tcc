@@ -25,7 +25,7 @@ itcl::class RemoteGuideControl {
     method disable {includeGaos}
     private method send {body}
     private method altairConfig {mode aoOn strapOn sfoOn useOI useP1 oiBlend}
-    private method gemsConfig {aoOn ttgs1On ttgs2On ttgs3On odgw1On odgw2On odgw3On odgw4On}
+    private method gemsConfig {aoOn ttgs1On ttgs2On ttgs3On odgw1On odgw2On odgw3On odgw4On useP1}
     private method buildConfig {m1GuideOn m1Source m2GuideOn m2Sources m2ComaOn mountGuideOn gaos}
     private method toJsonBoolean {v} { return [expr $v ? "{true}" : "{false}" ] }
     private method toJsonString {v} { if { $v eq "" } { return null } else { return [json::write string $v]} }
@@ -40,7 +40,7 @@ itcl::body RemoteGuideControl::constructor {uri s} {
         set disabledGaos [altairConfig LGS false false false false false false]  
     } else {
         set gaosName gems
-        set disabledGaos [gemsConfig false false false false false false false false]
+        set disabledGaos [gemsConfig false false false false false false false false false]
     }
     set allDisabled [buildConfig false {} false {} false false $disabledGaos]
     set allDisabledWithoutGaos [buildConfig false {} false {} false false {}]
@@ -75,6 +75,7 @@ itcl::body RemoteGuideControl::sendConfiguration {ao includeGaos} {
                                  [$gems cget -odgw2Active] \
                                  [$gems cget -odgw3Active] \
                                  [$gems cget -odgw4Active] \
+                                 [expr [$ao cget -pwfs1Active] && [$gems cget -sfsLoop] ] \
                      ]
         }
     } else {
@@ -170,7 +171,7 @@ itcl::body RemoteGuideControl::altairConfig {mode aoOn strapOn sfoOn useOI useP1
     ]
 }
 
-itcl::body RemoteGuideControl::gemsConfig {aoOn ttgs1On ttgs2On ttgs3On odgw1On odgw2On odgw3On odgw4On} {
+itcl::body RemoteGuideControl::gemsConfig {aoOn ttgs1On ttgs2On ttgs3On odgw1On odgw2On odgw3On odgw4On useP1} {
     return [json::write object \
         aoOn [toJsonBoolean $aoOn] \
         ttgs1On [toJsonBoolean $ttgs1On] \
@@ -180,5 +181,6 @@ itcl::body RemoteGuideControl::gemsConfig {aoOn ttgs1On ttgs2On ttgs3On odgw1On 
         odgw2On [toJsonBoolean $odgw2On] \
         odgw3On [toJsonBoolean $odgw3On] \
         odgw4On [toJsonBoolean $odgw4On] \
+        useP1   [toJsonBoolean $useP1] \
     ]
 }
