@@ -329,7 +329,11 @@ itcl::body Field::apply {comp} {
 	# Configure default filters, fieldstop for the WFS
 	
 	if {[string match "*P1*" $guide]} {
-	   pwfs filter pwfs1 "Red"
+       if {[calparam cget -site] eq "CP" && $::Config(tcs.gaos,value) ne "" && $::Config(tcs.gaos,value) ne "No AO" } {
+           pwfs filter pwfs1 "Blue"
+       } else {
+           pwfs filter pwfs1 "Red"
+       }
 	   #		pwfs fldstop pwfs1 "open1"
 	}
 	
