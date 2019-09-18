@@ -142,7 +142,11 @@ itcl::body WaveFrontSensor::stop {} {
 itcl::body WaveFrontSensor::setup {frames} {
 
 # Set the sky name
-   set filename ${prefix}_[expr { int(1.0/$exposetime)}]Hz.fits
+   if { $exposetime > 1.0 } {
+       set filename ${prefix}_[expr { int(1000/$exposetime)}]mHz.fits
+   } else {
+       set filename ${prefix}_[expr { int(1.0/$exposetime)}]Hz.fits
+   }
 
 # If the mode or exposure time or output destination has been changed then
 # stop the sensor mode.
