@@ -1311,18 +1311,6 @@ itcl::body GuideLoop::resizeGemsArrows {} {
    $w coords gaosframe [expr [winfo x $gaosWidget] - $gaospad -1] [expr [winfo y $gaosWidget] - $gaospad -1] \
       [expr [winfo x $gaosWidget] + [winfo width $gaosWidget] + $gaospad] [expr [winfo y $gaosWidget] + [winfo height $gaosWidget] + $gaospad]
 
-   #Line from Canopus WFS to TT loop
-   set ttCanIn [ $gaosWidget getMagnetPoint TT_CAN_IN ]
-   set canOutR [ $gaosWidget getMagnetPoint CAN_OUTR ]
-   $w coords cwfstt_gaos_br [lindex $canOutR 0] [lindex $canOutR 1] \
-      [expr [lindex $ttCanIn 0] + $GraphParam::arrowHeadSpace ] [lindex $canOutR 1] \
-      [expr [lindex $ttCanIn 0] + $GraphParam::arrowHeadSpace ] [lindex $ttCanIn 1] \
-      [expr [lindex $ttCanIn 0] + $GraphParam::arrowBorderOffset ] [lindex $ttCanIn 1]
-   $w coords cwfstt_gaos [lindex $canOutR 0] [lindex $canOutR 1] \
-      [expr [lindex $ttCanIn 0] + $GraphParam::arrowHeadSpace ] [lindex $canOutR 1] \
-      [expr [lindex $ttCanIn 0] + $GraphParam::arrowHeadSpace ] [lindex $ttCanIn 1] \
-      [expr [lindex $ttCanIn 0] + $GraphParam::arrowOffset ] [lindex $ttCanIn 1]
-
    #Line from ODGW to TT loop
    set ttOdgwIn [ $gaosWidget getMagnetPoint TT_ODGW_IN ]
    set odgwOutR [ $gaosWidget getMagnetPoint ODGW_OUTR ]
@@ -1361,18 +1349,6 @@ itcl::body GuideLoop::resizeGemsArrows {} {
       [expr [lindex $odgwOutL 0] - $GraphParam::arrowHeadSpace - 2 * $GraphParam::interLineSpace] $oiout_y \
       [expr [lindex $odgwOutL 0] - $GraphParam::arrowHeadSpace - 2 * $GraphParam::interLineSpace] [lindex $sfIn 1] \
       [expr [lindex $sfIn 0] - $GraphParam::arrowOffset] [lindex $sfIn 1]
-
-   #Line from CAnopus WFS to Ani loop
-   set canOutL [ $gaosWidget getMagnetPoint CAN_OUTL ]
-   set aniIn [ $gaosWidget getMagnetPoint ANI_IN ]
-   $w coords cwfsani_gaos_br [lindex $canOutL 0] [lindex $canOutL 1] \
-      [expr [lindex $canOutL 0] - $GraphParam::arrowHeadSpace] [lindex $canOutL 1] \
-      [expr [lindex $canOutL 0] - $GraphParam::arrowHeadSpace] [lindex $aniIn 1] \
-      [expr [lindex $aniIn 0] - $GraphParam::arrowBorderOffset ] [lindex $aniIn 1]
-   $w coords cwfsani_gaos [lindex $canOutL 0] [lindex $canOutL 1] \
-      [expr [lindex $canOutL 0] - $GraphParam::arrowHeadSpace] [lindex $canOutL 1] \
-      [expr [lindex $canOutL 0] - $GraphParam::arrowHeadSpace] [lindex $aniIn 1] \
-      [expr [lindex $aniIn 0] - $GraphParam::arrowOffset ] [lindex $aniIn 1]
 
    #Line from GAOS to M2
    set gaos_x [lindex [$w coords gaosframe] 0]
