@@ -570,11 +570,13 @@ itcl::body ObserveControl::selwfs {} {
          set wfs Pwfs1
          $itk_component(dark) configure -state normal
          $itk_component(ql) configure -state normal
+         $itk_component(stop) configure -state normal
       }
       P2 {
          set wfs Pwfs2
          $itk_component(dark) configure -state normal
          $itk_component(ql) configure -state normal
+         $itk_component(stop) configure -state normal
       }
       OI {
          set wfs Oiwfs
@@ -585,6 +587,7 @@ itcl::body ObserveControl::selwfs {} {
          set wfs Aowfs
          $itk_component(dark) configure -state disabled
          $itk_component(ql) configure -state normal
+         $itk_component(stop) configure -state normal
       }
    }
 }
@@ -646,16 +649,23 @@ itcl::body ObserveControl::openloop {} {
 
 itcl::body ObserveControl::onOISelection {record value} {
    set value [string trim $value]
-   if { $record eq "agssad.oiwfsName" && $wfs eq "Oiwfs"} {
-      if { $value eq "GMOS" || $value eq "F2" } {
-         $itk_component(dark) configure -state normal
-      } else {
-         $itk_component(dark) configure -state disabled
-      }
-      if { $value eq "GPI" } {
-         $itk_component(ql) configure -state disabled
-      } else {
-         $itk_component(ql) configure -state normal
+   if {[string match "*OI*" [$itk_component(wfssel) get]]} {
+      if { $record eq "agssad.oiwfsName" && $wfs eq "Oiwfs"} {
+         if { $value eq "GMOS" || $value eq "F2" } {
+            $itk_component(dark) configure -state normal
+         } else {
+            $itk_component(dark) configure -state disabled
+         }
+         if { ($value eq "GPI")||($value eq "None") } {
+            $itk_component(ql) configure -state disabled
+         } else {
+            $itk_component(ql) configure -state normal
+         }
+         if { $value eq "None" } {
+            $itk_component(stop) configure -state disabled
+         } else {
+            $itk_component(stop) configure -state normal
+         }
       }
    }
 }
