@@ -942,6 +942,9 @@ itcl::body TcsControl::telShutdown {} {
 	if { [catch {cs assertDrives info}] } {
 	    epics cs assertDrives
 	}
+	if { [catch {cs autoClose info}] } {
+	    epics cs autoClose
+	}
 
 	# open the loops
 
@@ -979,13 +982,20 @@ itcl::body TcsControl::telShutdown {} {
 	cs carousel set shutter Off;
 
 	# Close Shutters and Vent Gates
-	cs shutters set top 11.0;
-	cs shutters set bottom 11.0;
-	logger command shutters;
-	cs ventgates set east 0.0;
-	cs ventgates set west 0.0;
-	logger command ventgates;
-
+        # Updated to use ECS AutoClose triggers
+	if {$env(TCC_TCSNAME) == "tc1"} {
+	   # autoClose isn't simulated .. just use the TCS simulated close commands instead
+	   cs shutters set top 11.0;
+	   cs shutters set bottom 11.0;
+	   logger command shutters;
+	   cs ventgates set east 0.0;
+	   cs ventgates set west 0.0;
+	   logger command ventgates;
+	} else {
+	   cs autoclose set sh 1;
+	   cs autoclose set evg 1;
+	   cs autoclose set wvg 1;
+	}
 	# Park the Dome
 	if {[calparam cget -site] eq "MK"} {
 	    cs carouselMove set azimuth 90.0;
