@@ -55,7 +55,19 @@ itcl::body ShutterAlarm::constructor {args} {
 
    foreach drive {t1x t1y t1z t1w b2x b2y b2z b2w} {
       #puts "setting up drive: $drive"
-      set shutterCurrent($drive) [sa shutterDriveCurrents get $drive]
+
+      set I [sa shutterDriveCurrents get $drive]
+      
+      if { ! [string is double -strict $I] } {
+         puts "Expecting floating point number for \"$drive\" but got \"$I\""
+         return
+      }
+      if { abs($I) > 100.0 } {
+         puts "Expecting absolute value for \"$drive\" less than 100, but got \"$I\""
+         return
+      }
+
+      set shutterCurrent($drive) $I
       set shutterPeakCurrent($drive) 1
       #puts "shutterCurrent($drive) = $shutterCurrent($drive)"
    }
