@@ -394,6 +394,10 @@ itcl::body GuideAlarm::updateProc2 {name alarm time values} {
    set tname [lrange [split $name "." ] 1 1 ]
    set tnamev [format "%s%s" $tname "(value)"]
    set $tnamev $values
+   if { ! ([string is integer [set $tnamev]] ) } {
+      logger log "GuideAlarm::updateProc2: bad centroid value $tnamev \"$values\""
+      return
+   }
    set tname [string trimright $tname "cent"]
    set oldValue $guideCentroid($tname)
    set guideCentroid($tname) [format "%.0f" [set $tnamev]]
