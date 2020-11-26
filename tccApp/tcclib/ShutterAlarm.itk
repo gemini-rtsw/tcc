@@ -41,10 +41,8 @@ itk::usual ShutterAlarm {
 itcl::body ShutterAlarm::constructor {args} {
    global shutterCurrent shutterPeakCurrent
 
-   #puts "ShutterAlarm this: $this"
-
-    set topLimit [calparam cget -top_shutter_current_limit]
-    set botLimit [calparam cget -bottom_shutter_current_limit]
+   set topLimit [calparam cget -top_shutter_current_limit]
+   set botLimit [calparam cget -bottom_shutter_current_limit]
 
    itk_component add button { 
         button $itk_interior.alarmButton -text "Shutter Current Monitor" -command "$this alarmPopup"
@@ -54,22 +52,21 @@ itcl::body ShutterAlarm::constructor {args} {
    pack $alarmBut
 
    foreach drive {t1x t1y t1z t1w b2x b2y b2z b2w} {
-      #puts "setting up drive: $drive"
 
       set I [sa shutterDriveCurrents get $drive]
-      
+
       if { ! [string is double -strict $I] } {
-         puts "Expecting floating point number for \"$drive\" but got \"$I\""
-         return
+         logactions logmess "Expecting floating point number for \"$drive\" but got \"$I\""
+         set I 0
       }
-      if { abs($I) > 100.0 } {
-         puts "Expecting absolute value for \"$drive\" less than 100, but got \"$I\""
-         return
+
+      if { abs($I) > 200.0 } {
+         logactions logmess "Expecting absolute value for \"$drive\" less than 200, but got \"$I\""
+         set I 0
       }
 
       set shutterCurrent($drive) $I
       set shutterPeakCurrent($drive) 1
-      #puts "shutterCurrent($drive) = $shutterCurrent($drive)"
    }
 
    sa shutterDriveCurrents proc t1x "$this updateProc"
@@ -103,12 +100,24 @@ itcl::body ShutterAlarm::destructor {} {
 itcl::body ShutterAlarm::updateProc {name alarm time values} {
     global shutterCurrent shutterPeakCurrent shutterAlarm
 
-    #puts [format "updateProc: %s %-20s\n%s\n" $time $name $values]
+    # puts "updateProc: $time $name $values"
+
+    if { ! [string is double -strict $values] } {
+       logactions logmess "Expecting floating point number for \"$name\" but got \"$values\""
+       return
+    }
+
+    if { abs($values) > 200.0 } {
+       logactions logmess "Expecting absolute value for \"$name\" less than 200, but got \"$values\""
+       return
+    }
+
     set tname [lrange [split $name "."] 1 1]
     set tnamev [format "%s%s" $tname "(value)"]
     set $tnamev $values
-    set current($tname) [set $tnamev]
 
+    set current($tname) [set $tnamev]
+ 
     if {[info exists peak($tname)]} {
 	if {$current($tname) > $peak($tname)} {
 	    set peak($tname) $current($tname)
@@ -131,7 +140,6 @@ itcl::body ShutterAlarm::updateProc {name alarm time values} {
 
     set shutterCurrent($tname) $current($tname)
     set shutterPeakCurrent($tname) $peak($tname)
-    #puts "set current($tname) to $current($tname)"
     return
 }
 
@@ -255,6 +263,7 @@ itcl::body ShutterAlarm::alarmPopup {} {
    itk_component add exit { 
    	button $sa.exit -text Exit -command " \
 	    $sa.alarm configure -text \"\" ; \
+ 	    # $this configure -alarmMess \"\" ; \
 	    destroy .shutAlarm"
    }
    grid $alarmMess - - -sticky news -padx 2 -pady 2
