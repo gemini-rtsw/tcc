@@ -40,9 +40,6 @@ itcl::class Dark {
       method enableprobe {}
       method isinposition {}
       method isexposedone {}
-      method offsettimeout {}
-      method exposetimeout {}
-      method resettimeout {} 
       variable guideenabled
       variable wfsname
       variable wfsobj
@@ -68,8 +65,6 @@ itcl::body Dark::constructor {wfs} {
    set offsetaction [seq::Action #auto tcs \
       -waitvar [itcl::scope InPosition(value)] \
       -onok [itcl::code $this expose] \
-      -timeout 10 \
-      -ontimeout [itcl::code $this offsettimeout] \
       -oktest [itcl::code $this isinposition]]
    $offsetaction set targetAdjust frame 3
    $offsetaction set targetAdjust angle 0.0
@@ -95,16 +90,12 @@ itcl::body Dark::constructor {wfs} {
       -waitvar [itcl::scope Exposing(value)] \
       -onok [itcl::code $this zero] \
       -oktest [itcl::code $this isexposedone] \
-      -timeout 10 \
-      -ontimeout [itcl::code $this exposetimeout] \
       -onstart "$wfsobj start"]
 
 # Create action for zeroing the offset.
    set resetaction [seq::Action #auto tcs \
       -waitvar [itcl::scope InPosition(value)] \
       -onok [itcl::code $this enableprobe] \
-      -timeout 10 \
-      -ontimeout [itcl::code $this resettimeout] \
       -oktest [itcl::code $this isinposition]]
    $resetaction set targetAdjust size -60.0
 
@@ -246,31 +237,4 @@ itcl::body Dark::enableguide {} {
    if { $guideenabled } {
       AO enable
    }
-}
-
-# Handle timeouts .. raise a helpful popup, ensure we remove offsets and clean up so we can try again.
-
-itcl::body Dark::offsettimeout {} {
-
-   logactions logmess "SKY sequence Timed out waiting for telescope offset to finish"
-   tk_messageBox -icon error -message "SKY sequence Timed out waiting for telescope offset to finish"
-
-   #recovery is to enable guiding .. no offset to undo
-   enableguide
-}
-
-itcl::body Dark::exposetimeout {} {
-
-   logactions logmess "SKY sequence Timed out waiting for $wfsname to finish exposing"
-   tk_messageBox -icon error -message "SKY sequence Timed out waiting for $wfsname to finish exposing"
-
-   #recovery is to undo the offset, then enable guiding .. so kick off the resetaction
-   zero
-}
-
-itcl::body Dark::resettimeout {} {
-   logactions logmess "SKY sequence Timed out waiting for the offset to be removed"
-   tk_messageBox -icon error -message "SKY sequence Timed out waiting for the offset to be removed"
-
-   #no real recovery .. this may have left behind an offset 
 }
