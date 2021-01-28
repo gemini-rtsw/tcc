@@ -264,11 +264,12 @@ itcl::body ActiveOptics::enable {} {
    logactions logmess  "ActiveOptics::enable: $currentconfig"
     
    # check to make sure we're not using OI probe guiding with GMOS
-   if { ($probeto == "OIWFS") && [string match "*GMOS*" $::Config(tcs.instrument,value)]} {
-      errorBox "You cannot use OIWFS probe guiding with GMOS"
-      process IDLE
-      return
-   }
+   # removed, see REL-3901
+   #if { ($probeto == "OIWFS") && [string match "*GMOS*" $::Config(tcs.instrument,value)]} {
+   #   errorBox "You cannot use OIWFS probe guiding with GMOS"
+   #   process IDLE
+   #   return
+   #}
 
    #Removed while requirements are settled.
    # If using Altair, check that it is unparked before closing loops.
