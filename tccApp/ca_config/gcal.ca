@@ -1,0 +1,61 @@
+#+
+# gcal.ca
+#
+# Channel access configuration file for GCAL
+#
+# Copyright CCLRC
+# $Id: gcal.ca,v 1.6 2008-04-29 19:15:36 jluhrs Exp $
+#-
+
+# Define the GCAL apply record.
+
+   apply gcal::Apply gc:apply gc:applyC Primary GCAL Apply Record
+   status gcal::Apply Apply message
+   {
+   mess       gc:applyC.OMSS                0     Command completion message
+   }
+
+   command gcal::filtSel gcal::Apply Filter selection
+   {
+      name  gc:filtSel.A 0 Filter name
+   }
+
+   command gcal::lampSel gcal::Apply Lamp control
+   {
+      nameIR    gc:lampSel.A 0 IR Lamp name
+      stateIR   gc:lampSel.B 0 IR lamp state (ON/OFF)
+      nameQH    gc:lampSel.C 0 QH Lamp name
+      stateQH   gc:lampSel.D 0 QH lamp state (ON/OFF)
+      nameAr    gc:lampSel.E 0 Ar Lamp name
+      stateAr   gc:lampSel.F 0 Ar lamp state (ON/OFF)
+      nameXe    gc:lampSel.G 0 Xe Lamp name
+      stateXe   gc:lampSel.H 0 Xe lamp state (ON/OFF)
+      nameThAr  gc:lampSel.I 0 ThAr Lamp name
+      stateThAr gc:lampSel.J 0 ThAr lamp state (ON/OFF)
+      nameCuAr  gc:lampSel.K 0 CuAr Lamp name
+      stateCuAr gc:lampSel.L 0 CuAr lamp state (ON/OFF)
+   }
+
+   command gcal::diffuseSel gcal::Apply Diffuser selection
+   {
+      name  gc:diffuseSel.A 0 Diffuser name
+   }
+
+   command gcal::shutter gcal::Apply Shutter control
+   {
+      position  gc:shutter.A 0 Shutter position (OPEN/CLOSE)
+      dir       gc:apply.DIR
+   }
+
+   status gcal::status
+   {
+      shutter             gc:sad:shutterName  0 Shutter position
+      filter              gc:sad:filtName     0 Filter name
+      diffuser            gc:sad:diffuseName  0 Diffuser name
+      IRLampState         gc:IR_LampState     0 IR lamp state
+      ArLampState         gc:Ar_LampState     0 Argon lamp state
+      XeLampState         gc:Xe_LampState     0 Xenon lamp state
+      CuArLampState       gc:CuAr_LampState   0 CuAr lamp state
+      ThArLampState       gc:ThAr_LampState   0 ThAr lamp state
+      QHLampState         gc:QH_LampState     0 Quartz Halogen lamp state
+   }

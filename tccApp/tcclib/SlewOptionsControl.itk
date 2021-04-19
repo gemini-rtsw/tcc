@@ -40,6 +40,7 @@ itcl::class SlewOptionsControl {
       variable ignoreao
       variable ltcscheck
       variable restoreM1
+      variable turnOffGCAL
    }
 }
 
@@ -155,6 +156,10 @@ itcl::body SlewOptionsControl::constructor args {
       checkbutton $w.restorefig -variable [itcl::scope restoreM1] \
             -text "Automatically restore M1 and M2 after using GAOS"
    }
+   itk_component add turnOffGCAL {
+      checkbutton $w.turnOffGCAL -variable [itcl::scope turnOffGCAL] \
+            -text "Turn off GCAL lamps when using Visitor instrument"
+   }
    pack $itk_component(chopThrow) $itk_component(sourceOffset) \
          $itk_component(sourceDifTr) $itk_component(mountOffset) \
          $itk_component(mountDifTr) $itk_component(filter1) \
@@ -165,7 +170,8 @@ itcl::body SlewOptionsControl::constructor args {
          $itk_component(slewPwfs2) $itk_component(slewOiwfs) \
          $itk_component(slewGeMS) $itk_component(slewAowfs) \
          $itk_component(disableao) $itk_component(ltcscheck) \
-         $itk_component(restorefig) -pady 2 -anchor w
+         $itk_component(restorefig) $itk_component(turnOffGCAL) \
+         -pady 2 -anchor w
    if { [calparam cget -site] eq "CP" } {
       itk_component add ignoreao {
          checkbutton $w.ignoreao -variable [itcl::scope ignoreao] \
@@ -207,6 +213,7 @@ itcl::body SlewOptionsControl::load {name} {
       set ignoreao [$name cget -ignoreao]
    }
    set restoreM1 [$name cget -restoreFigure]
+   set turnOffGCAL [$name cget -turnOffGCAL]
 }
 
 itcl::body SlewOptionsControl::save {name} {
@@ -220,7 +227,8 @@ itcl::body SlewOptionsControl::save {name} {
          -slewPwfs2 $slewPwfs2 -slewOiwfs $slewOiwfs \
          -slewGeMS $slewGeMS -slewAowfs $slewAowfs \
          -resetao $resetao -disableao $disableao \
-         -ltcscheck $ltcscheck -restoreFigure $restoreM1
+         -ltcscheck $ltcscheck -restoreFigure $restoreM1 \
+         -turnOffGCAL $turnOffGCAL
    if { [calparam cget -site] eq "CP" } {
        $name configure -ignoreao $ignoreao
    }

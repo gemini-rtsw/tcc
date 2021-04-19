@@ -36,6 +36,7 @@ itcl::class TcsConfigControl {
       method ltcsQueryNonSidereal {}
       method ltcsQuery {ra dec epoch fov}
       method onIgnoreAOChange {name1 name2 op}
+      variable gcalObj
       variable components {
          field pointOrig slewOptions chop gaos trackFrame instrument
       }
@@ -75,6 +76,8 @@ itcl::body TcsConfigControl::constructor {args} {
    if { [catch {cs oiwfsm2Gain info}] } {
       epics cs oiwfsm2Gain
    }
+    
+    set gcalObj [Gcal #auto]
 
    # Expand the component selector.
    $itk_component(selector) configure -width 43
@@ -464,6 +467,10 @@ itcl::body TcsConfigControl::apply {} {
 
    set guide [$fieldObj cget -guide]
    set inst $::Config(tcs.instrument,value)
+    
+   if([string match "*VISITOR*" $inst] && [$slewoptions cget -turnOffGCAL]) {
+       $gcal turnOff
+   } 
 
    # Set the proper P2 gains for NICI, or the defaults otherwise.
    switch -glob $inst {

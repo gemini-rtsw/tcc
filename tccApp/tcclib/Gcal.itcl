@@ -1,0 +1,35 @@
+#+
+# Gcal
+#
+# This class allows to configure GCAL.
+#
+# J Luhrs 15 April 2021
+#
+#  $Id: Exp $
+#-
+
+itcl::class Gcal {
+    constructor {} {
+        if { [catch {cs gcal::lampSel info}]} {
+            epics cs gcal::lampSel
+        }
+        if { [catch {cs gcal::shutter info}]} {
+            epics cs gcal::shutter
+        }
+    }
+    
+    method turnOff {} {
+        foreach l {Ar Xe CuAr ThAr QH} {
+            gcal::lampSel set name$l $l
+            gcal::lampSel set state$l OFF
+        }
+        cs gcal::shutter set position CLOSE
+        
+        # gcal::lampSel and gcal::shutter are triggered by the same apply record. 
+        if { [catch {cs gcal::shutter post} msg] } {
+            tk_messageBox -icon error -message \
+                "Error posting GCAL commands: GCAL reports \
+                \"$msg\""
+        }
+    }
+}
