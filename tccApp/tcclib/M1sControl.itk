@@ -21,8 +21,8 @@ itcl::class M1sControl {
    private {
       method park {par} {return PARK}
       method unpark {par} {return UNPARK}
-      method updateon {par} {return On}
-      method updateoff {par} {return Off}
+      method updateon {par} {return ON}
+      method updateoff {par} {return OFF}
       method zeroset {par} {return FIGURE}
       method restoreAO {par} {return AO}
       method restoreNonAO {par} {return non-AO}
@@ -57,11 +57,11 @@ itcl::body M1sControl::constructor args {
       label $w.model -text "Open Loop Model"
    }
    itk_component add updateon {
-      ApplyButton $w.updateon -command m1FigUpdates -text On \
+      ApplyButton $w.updateon -command pcsaos -text On \
             -parcommand [itcl::code $this updateon]
    }
    itk_component add updateoff {
-      ApplyButton $w.updateoff -command m1FigUpdates -text Off \
+      ApplyButton $w.updateoff -command pcsaos -text Off \
             -parcommand [itcl::code $this updateoff]
    }
    itk_component add zero {
