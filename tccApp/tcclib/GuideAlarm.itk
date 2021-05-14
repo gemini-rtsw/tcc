@@ -317,7 +317,13 @@ itcl::body GuideAlarm::alarmCheck {wfs} {
          }
          gaos -
          sfo -
-         nici -
+         nici { 
+            if { $guideCounts($wfs) < [set ${wfs}Limit]} {
+               set alarmOn($wfs) 1
+            } else {
+               set alarmOn($wfs) 0
+            }
+         }
          oiwfs {
             if { ($guideCounts(oiwfs) < ( $gpiOI ? $gpiLimit : $oiwfsLimit ) ) || $guideCentroid(oiwfs) } {
                set alarmOn(oiwfs) 1
