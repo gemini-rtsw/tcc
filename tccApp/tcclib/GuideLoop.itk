@@ -346,7 +346,7 @@ itcl::body GuideLoop::constructor args {
       $w create window 280 459 -window $itk_component(lshutterframe)
    }
    
-   $w create text 270 430 -text "Tbad Detection" -tags "tbad_alarm" -font $font -foreground red
+  $w create text 533 345 -text "Tbad Detection" -tags "tbad_alarm" -font $font -fill red
 
    # Monitor the guide states
    foreach rec {p1state p2state oistate aostate m2state absorbtilt m1state \
@@ -692,10 +692,10 @@ itcl::body GuideLoop::recolour args {
       $w itemconfigure probes_bg -fill yellow
    }
    
-   if { [calparam cget -site] eq "CP" && $::Config(tcs.gaos,value) ne "No AO" && [string first "ACTIVATED" [ sa gemsad get tbadAlarm ] ] > -1 } {
-      $w itemconfigure tbad_alarm -state enabled
+   if { [calparam cget -site] eq "CP" && $::Config(tcs.gaos,value) ne "No AO" && [string first "ACTIVATED" [ sa gemssad get tbadAlarm ] ] > -1 } {
+      $w itemconfigure tbad_alarm -text "Tbad Detection"
    } else {
-      $w itemconfigure tbad_alarm -state disabled
+      $w itemconfigure tbad_alarm -text ""
    }
 }
 
