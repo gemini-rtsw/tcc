@@ -345,6 +345,8 @@ itcl::body GuideLoop::constructor args {
       pack $itk_component(lasershutter) -padx 2 -pady 2
       $w create window 280 459 -window $itk_component(lshutterframe)
    }
+   
+   $w create text 270 430 -text "Tbad Detection" -tags "tbad_alarm" -font $font -foreground red
 
    # Monitor the guide states
    foreach rec {p1state p2state oistate aostate m2state absorbtilt m1state \
@@ -688,6 +690,12 @@ itcl::body GuideLoop::recolour args {
       $w itemconfigure probes_bg -fill green
    } elseif { [AO state p1guide] || [AO state p2guide] || [AO state oiguide] } {
       $w itemconfigure probes_bg -fill yellow
+   }
+   
+   if { [calparam cget -site] eq "CP" && $::Config(tcs.gaos,value) ne "No AO" && [string first "ACTIVATED" [ sa gemsad get tbadAlarm ] ] > -1 } {
+      $w itemconfigure tbad_alarm -state enabled
+   } else {
+      $w itemconfigure tbad_alarm -state disabled
    }
 }
 
