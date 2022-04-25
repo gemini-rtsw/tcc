@@ -259,6 +259,12 @@ itcl::body NumericDisplay::constructor args {
    itk_component add seelab {
       label $w.seelab -text "SEEING (V)" -borderwidth 0
    }
+   if { $::env(GEMINI_SITE) eq "MK" } {
+       itk_component add seep1 {
+          StatusField $w.seep1 -labeltext P1 -labelpos w -entryborder 1 \
+                -entryrelief sunken -width 5
+       }
+   }
    itk_component add seep2 {
       StatusField $w.seep2 -labeltext P2 -labelpos w -entryborder 1 \
             -entryrelief sunken -width 5
@@ -274,9 +280,15 @@ itcl::body NumericDisplay::constructor args {
    }
    [$itk_component(seeoi) component label] configure -width 2 -anchor e
    pack $itk_component(seelab) -padx 3 -pady 3
-   pack $itk_component(seep2) $itk_component(seeoi) $itk_component(seeao) -side left \
+   if { $::env(GEMINI_SITE) eq "MK" } {
+       pack $itk_component(seep1) $itk_component(seep2) $itk_component(seeoi) $itk_component(seeao) -side left \
       -pady {0 3} -padx {0 3}
-   pack configure $itk_component(seep2) -padx 3
+      pack configure $itk_component(seep1) -padx 3
+   } else {
+       pack $itk_component(seep2) $itk_component(seeoi) $itk_component(seeao) -side left \
+      -pady {0 3} -padx {0 3}
+      pack configure $itk_component(seep2) -padx 3
+   }
    #   grid $itk_component(seelab) - -sticky news
    #   grid $itk_component(seep2) $itk_component(seeoi) -sticky news
    #   grid $itk_component(seeao) - -sticky ns
@@ -906,6 +918,19 @@ itcl::body NumericDisplay::update {} {
    set p2guide [sa m2ssad get p2GuideConfig]
    set oiguide [sa m2ssad get oiGuideConfig]
    set aoguide [sa m2ssad get aoGuideConfig]
+
+   if { $::env(GEMINI_SITE) eq "MK" } {
+       set p1seeing [sa agssad get p1seeing]
+       if { [string is double -strict $p1seeing] } {
+          if { [string match *A-AUTO* $p1guide] } {
+             $itk_component(seep1) configure -text [format %.2f $p1seeing] -status ok
+          } else {
+             $itk_component(seep1) configure -text [format %.2f $p1seeing] -status none
+          }
+       } else {
+          $itk_component(seep2) configure -text $p1seeing -status error
+       }
+   }
 
    set seeing [sa agssad get p2seeing]
    if { [string is double -strict $seeing] } {

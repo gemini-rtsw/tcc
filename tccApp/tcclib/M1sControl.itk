@@ -21,7 +21,7 @@ itcl::class M1sControl {
    private {
       method park {par} {return PARK}
       method unpark {par} {return UNPARK}
-      method updateon {par} {return ON}
+      method updateon {} {}
       method updateoff {par} {return OFF}
       method zeroset {par} {return FIGURE}
       method restoreAO {par} {return AO}
@@ -57,8 +57,7 @@ itcl::body M1sControl::constructor args {
       label $w.model -text "Open Loop Model"
    }
    itk_component add updateon {
-      ApplyButton $w.updateon -command pcsaos -text On \
-            -parcommand [itcl::code $this updateon]
+      LiveButton $w.updateon -text "On" -command [itcl::code $this updateon]
    }
    itk_component add updateoff {
       ApplyButton $w.updateoff -command pcsaos -text Off \
@@ -87,6 +86,26 @@ itcl::body M1sControl::constructor args {
    grid columnconfigure $itk_component(bot) {0 1} -weight 1 -uniform 1
    grid $itk_component(top) -sticky ew
    grid $itk_component(bot) -sticky ew
+   epics cs  m1FigUpdates 
 
    eval itk_initialize $args
+}
+
+itcl::body M1sControl::updateon {} {
+    global env
+
+logactions logmess "M1sControl::updateon Turn on pcs aos"
+   cs pcsaos set setaos ON
+
+logactions logmess "M1sControl::updateon Setting M1 open loop model On"
+   cs m1FigUpdates set state On
+
+   cs m1FigUpdates set dir 0
+   after 100 
+   cs m1FigUpdates set dir 3
+   
+   if { [catch {cs m1FigUpdates post} msg] } {
+       tk_messageBox -icon error -message \
+         "Error posting commands: TCS reports \"$msg\""
+   }
 }

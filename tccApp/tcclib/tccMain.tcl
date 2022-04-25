@@ -136,6 +136,7 @@ global env
 	   epics cs gaosBTO
 	   epics cs gaosObserve
 	   epics cs m2deadband
+	   epics cs m1FigUpdates
 
        }
 		CP {
