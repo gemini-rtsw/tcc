@@ -204,6 +204,9 @@ global env
 
 # AWE monitor Guide Counts
    epics sa guidects
+   
+# LIS status
+   epics sa lissad
 
 # Create status senders for setting SIR records
    global env

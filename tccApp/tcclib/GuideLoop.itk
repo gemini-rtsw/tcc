@@ -385,12 +385,16 @@ itcl::body GuideLoop::constructor args {
    }
    lappend monids [::agssad.oiwfsName add [itcl::code $this onOISelection] ]
    onOISelection agssad.oiwfsName [sa agssad get oiwfsName]
+   
+   #Add monitor for TBAD alarm
+   if { [llength [itcl::find objects ::lissad.tbadAlarm]] == 0 } {
+      RecordMonitor ::lissad.tbadAlarm lissad tbadAlarm
+   }
+   lappend monids [::lissad.tbadAlarm add [itcl::code $this recolour]]
 
    trace add variable ::Flags(ignoreao) write [itcl::code $this onIgnoreAOChange]
    onIgnoreAOChange ::Flags ignoreao w
 
-   #bind [winfo toplevel $itk_interior ] <Configure> [itcl::code $this resize %h
-   # %w ]
 
    # Schedule an update once the channels have connected.
    after 1000 [itcl::code $this recolour]
@@ -400,6 +404,9 @@ itcl::body GuideLoop::constructor args {
 
 itcl::body GuideLoop::destructor {} {
    trace remove variable ::Flags(ignoreao) write [itcl::code $this onIgnoreAOChange]
+   
+   ::lissad.tbadAlarm remove [lindex $monids end]
+   set monids [lreplace $monids end end]
    
    ::agssad.oiwfsName remove [lindex $monids end]
    set monids [lreplace $monids end end]
@@ -692,7 +699,14 @@ itcl::body GuideLoop::recolour args {
       $w itemconfigure probes_bg -fill yellow
    }
    
-   if { [calparam cget -site] eq "CP" && $::Config(tcs.gaos,value) ne "No AO" && [string first "ACTIVATED" [ sa gemssad get tbadAlarm ] ] > -1 } {
+   if { [calparam cget -site] eq "CP" } {
+      set tbadalarm [expr $::Config(tcs.gaos,value) ne "No AO"]
+   } else {
+      set tbadalarm [expr [string first "LGS" $::Config(tcs.gaos,value) ] > -1]
+   }
+   
+   
+   if {  $tbadalarm && [string first "ACTIVATED" [ sa lissad get tbadAlarm ] ] > -1 } {
       $w itemconfigure tbad_alarm -text "Tbad Detection"
    } else {
       $w itemconfigure tbad_alarm -text ""
