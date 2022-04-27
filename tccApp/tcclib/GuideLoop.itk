@@ -391,6 +391,8 @@ itcl::body GuideLoop::constructor args {
       RecordMonitor ::lissad.tbadAlarm lissad tbadAlarm
    }
    lappend monids [::lissad.tbadAlarm add [itcl::code $this recolour]]
+   
+   trace add variable ::Config(tcs.gaos,value) write [itcl::code $this recolour]
 
    trace add variable ::Flags(ignoreao) write [itcl::code $this onIgnoreAOChange]
    onIgnoreAOChange ::Flags ignoreao w
@@ -404,6 +406,8 @@ itcl::body GuideLoop::constructor args {
 
 itcl::body GuideLoop::destructor {} {
    trace remove variable ::Flags(ignoreao) write [itcl::code $this onIgnoreAOChange]
+    
+   trace remove variable ::Config(tcs.gaos,value) write [itcl::code $this recolour]
    
    ::lissad.tbadAlarm remove [lindex $monids end]
    set monids [lreplace $monids end end]
@@ -700,11 +704,10 @@ itcl::body GuideLoop::recolour args {
    }
    
    if { [calparam cget -site] eq "CP" } {
-      set tbadalarm [expr $::Config(tcs.gaos,value) ne "No AO"]
+      set tbadalarm [expr {"$::Config(tcs.gaos,value)" ne "" && "$::Config(tcs.gaos,value)" ne "No AO"} ]
    } else {
-      set tbadalarm [expr [string first "LGS" $::Config(tcs.gaos,value) ] > -1]
+      set tbadalarm [expr { [string first "LGS" $::Config(tcs.gaos,value) ] > -1 }]
    }
-   
    
    if {  $tbadalarm && [string first "ACTIVATED" [ sa lissad get tbadAlarm ] ] > -1 } {
       $w itemconfigure tbad_alarm -text "Tbad Detection"
