@@ -136,7 +136,6 @@ global env
 	   epics cs gaosBTO
 	   epics cs gaosObserve
 	   epics cs m2deadband
-	   epics cs m1FigUpdates
 
        }
 		CP {
@@ -300,6 +299,7 @@ global env
 	epics cs zeroRotCorr
    epics cs m1ModelRestore
    epics cs m1ModelSave
+   epics cs m1FigUpdates
 
 # Set the timeout period for posting commands to the TCS.
    cs tcsApply setTimeout 3
