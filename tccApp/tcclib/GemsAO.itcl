@@ -236,25 +236,25 @@ itcl::body GemsAO::startWFS {} {
 }
 
 itcl::body GemsAO::startTTGS {} {
-   if { $ttgs1Active || $ttgs2Active || $ttgs3Active } {
-      set idList ""
-      set testExp ""
-      set errMsg ""
-      for {set i 1} {$i <= 3} { incr i} {
-         if { [set ttgs${i}Active] && ![state ttgs${i}] } {
-            lappend idList $i
-            lappend testExp "state ttgs${i}"
-            lappend errMsg "TTWFS $i start"
-         }
-      }
-
-      if { [llength $idList] > 0 } {
-         $sys startTTWFS $idList
-         if { [waitForCmdComplete 2000 5000 $testExp $errMsg 1] } {
-            return 1
-         }
-      }
-   }
+#   if { $ttgs1Active || $ttgs2Active || $ttgs3Active } {
+#      set idList ""
+#      set testExp ""
+#      set errMsg ""
+#      for {set i 1} {$i <= 3} { incr i} {
+#         if { [set ttgs${i}Active] && ![state ttgs${i}] } {
+#            lappend idList $i
+#            lappend testExp "state ttgs${i}"
+#            lappend errMsg "TTWFS $i start"
+#         }
+#      }
+#
+#      if { [llength $idList] > 0 } {
+#         $sys startTTWFS $idList
+#         if { [waitForCmdComplete 2000 5000 $testExp $errMsg 1] } {
+#            return 1
+#         }
+#      }
+#   }
    return 0
 }
 
@@ -317,23 +317,23 @@ itcl::body GemsAO::stopWFS {} {
 }
 
 itcl::body GemsAO::stopTTGS {} {
-   set idList ""
-   set testExp ""
-   set errMsg ""
-   for {set i 1} {$i <= 3} { incr i} {
-      if { ![set ttgs${i}Active] && [state ttgs${i}] } {
-         lappend idList $i
-         lappend testExp "expr !\[ state ttgs${i} \]"
-         lappend errMsg "TTWFS $i stop"
-      }
-   }
-
-   if { [llength $idList] > 0 } {
-      $sys stopTTWFS $idList
-      if { [waitForCmdComplete 2000 5000 $testExp $errMsg 1] } {
-         return 1
-      }
-   }
+#   set idList ""
+#   set testExp ""
+#   set errMsg ""
+#   for {set i 1} {$i <= 3} { incr i} {
+#      if { ![set ttgs${i}Active] && [state ttgs${i}] } {
+#         lappend idList $i
+#         lappend testExp "expr !\[ state ttgs${i} \]"
+#         lappend errMsg "TTWFS $i stop"
+#      }
+#   }
+#
+#   if { [llength $idList] > 0 } {
+#      $sys stopTTWFS $idList
+#      if { [waitForCmdComplete 2000 5000 $testExp $errMsg 1] } {
+#         return 1
+#      }
+#   }
 
    return 0
 }
@@ -380,23 +380,23 @@ itcl::body GemsAO::disableWFS {} {
 }
 
 itcl::body GemsAO::disableTTGS {} {
-   set idList ""
-   set testExp ""
-   set errMsg ""
-   for {set i 1} {$i <= 3} { incr i} {
-      if { [state ttgs${i}] } {
-         lappend idList $i
-         lappend testExp "expr !\[ state ttgs${i} \]"
-         lappend errMsg "TTWFS $i stop"
-      }
-   }
-
-   if { [llength $idList] > 0 } {
-      $sys stopTTWFS $idList
-      if { [waitForCmdComplete 1000 2000 $testExp $errMsg 1] } {
-         return 1
-      }
-   }
+#   set idList ""
+#   set testExp ""
+#   set errMsg ""
+#   for {set i 1} {$i <= 3} { incr i} {
+#      if { [state ttgs${i}] } {
+#         lappend idList $i
+#         lappend testExp "expr !\[ state ttgs${i} \]"
+#         lappend errMsg "TTWFS $i stop"
+#      }
+#   }
+#
+#   if { [llength $idList] > 0 } {
+#      $sys stopTTWFS $idList
+#      if { [waitForCmdComplete 1000 2000 $testExp $errMsg 1] } {
+#         return 1
+#      }
+#   }
 
    return 0
 }

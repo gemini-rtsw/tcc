@@ -57,12 +57,12 @@ public {
    method setupODGW {idList}
 	method startODGW {idList}
 	method stopODGW {idList}
-	method startTTWFS {idList}
-	method stopTTWFS {idList}
+	#method startTTWFS {idList}
+	#method stopTTWFS {idList}
 	method startLGSWFS {}
 	method stopLGSWFS {}
 	method setODGWExposure {id val}
-	method setTTWFSExposure {id val}
+	#method setTTWFSExposure {id val}
 	method setLGSWFSExposure {val}
 
    #ODGW special commands
@@ -177,7 +177,7 @@ itcl::body RealGems::constructor {} {
 	epics cs gems::adcMech
 	epics cs gems::adcLoop
 	epics cs gems::beamSplitter
-	epics cs gems::ttApdCtrl
+	#epics cs gems::ttApdCtrl
 	epics cs gems::ttExpCtrl
 	epics cs gems::lgsExpCtrl
 	epics cs gems::odgwSetup
@@ -678,77 +678,77 @@ itcl::body RealGems::stopODGW {idList} {
    after 1000
 }
 
-itcl::body RealGems::startTTWFS {idList} {
-   if { [getTTWFSActive 1] } {
-      set apd1Op START
-   } else {
-      set apd1Op STOP
-   }
-   if { [getTTWFSActive 2] } {
-      set apd2Op START
-   } else {
-      set apd2Op STOP
-   }
-   if { [getTTWFSActive 3] } {
-      set apd3Op START
-   } else {
-      set apd3Op STOP
-   }
-   
-   foreach id $idList {
-		switch $id {
-		1 { set apd1Op START }
-		2 { set apd2Op START }
-		3 { set apd3Op START }
-		default {
-			$logger logmess "RealGems::startTTWFS invalid index $id"
-		}
-		}
-   }
-   cs gems::ttApdCtrl set apd1 $apd1Op
-   cs gems::ttApdCtrl set apd2 $apd2Op
-   cs gems::ttApdCtrl set apd3 $apd3Op
-   
-	$logger logmess "gems::ttApdCtrl $apd1Op $apd2Op $apd3Op"
-	set lastCmdSys gemssad
-	catch {cs gems::ttApdCtrl post}
-}
+#itcl::body RealGems::startTTWFS {idList} {
+#   if { [getTTWFSActive 1] } {
+#      set apd1Op START
+#   } else {
+#      set apd1Op STOP
+#   }
+#   if { [getTTWFSActive 2] } {
+#      set apd2Op START
+#   } else {
+#      set apd2Op STOP
+#   }
+#   if { [getTTWFSActive 3] } {
+#      set apd3Op START
+#   } else {
+#      set apd3Op STOP
+#   }
+#   
+#   foreach id $idList {
+#		switch $id {
+#		1 { set apd1Op START }
+#		2 { set apd2Op START }
+#		3 { set apd3Op START }
+#		default {
+#			$logger logmess "RealGems::startTTWFS invalid index $id"
+#		}
+#		}
+#   }
+#   cs gems::ttApdCtrl set apd1 $apd1Op
+#   cs gems::ttApdCtrl set apd2 $apd2Op
+#   cs gems::ttApdCtrl set apd3 $apd3Op
+#   
+#	$logger logmess "gems::ttApdCtrl $apd1Op $apd2Op $apd3Op"
+#	set lastCmdSys gemssad
+#	catch {cs gems::ttApdCtrl post}
+#}
 
-itcl::body RealGems::stopTTWFS {idList} {
-   if { [getTTWFSActive 1] } {
-      set apd1Op START
-   } else {
-      set apd1Op STOP
-   }
-   if { [getTTWFSActive 2] } {
-      set apd2Op START
-   } else {
-      set apd2Op STOP
-   }
-   if { [getTTWFSActive 3] } {
-      set apd3Op START
-   } else {
-      set apd3Op STOP
-   }
-  
-   foreach id $idList {
-      switch $id {
-      1 { set apd1Op STOP }
-      2 { set apd2Op STOP }
-      3 { set apd3Op STOP }
-      default {
-         $logger logmess "RealGems::stopTTWFS invalid index $id"
-      }
-      }
-   }
-   cs gems::ttApdCtrl set apd1 $apd1Op
-   cs gems::ttApdCtrl set apd2 $apd2Op
-   cs gems::ttApdCtrl set apd3 $apd3Op
-   
-   $logger logmess "gems::ttApdCtrl $apd1Op $apd2Op $apd3Op"
-   set lastCmdSys gemssad
-   catch {cs gems::ttApdCtrl post}
-}
+#itcl::body RealGems::stopTTWFS {idList} {
+#   if { [getTTWFSActive 1] } {
+#      set apd1Op START
+#   } else {
+#      set apd1Op STOP
+#   }
+#   if { [getTTWFSActive 2] } {
+#      set apd2Op START
+#   } else {
+#      set apd2Op STOP
+#   }
+#   if { [getTTWFSActive 3] } {
+#      set apd3Op START
+#   } else {
+#      set apd3Op STOP
+#   }
+#  
+#   foreach id $idList {
+#      switch $id {
+#      1 { set apd1Op STOP }
+#      2 { set apd2Op STOP }
+#      3 { set apd3Op STOP }
+#      default {
+#         $logger logmess "RealGems::stopTTWFS invalid index $id"
+#      }
+#      }
+#   }
+#   cs gems::ttApdCtrl set apd1 $apd1Op
+#   cs gems::ttApdCtrl set apd2 $apd2Op
+#   cs gems::ttApdCtrl set apd3 $apd3Op
+#   
+#   $logger logmess "gems::ttApdCtrl $apd1Op $apd2Op $apd3Op"
+#   set lastCmdSys gemssad
+#   catch {cs gems::ttApdCtrl post}
+#}
 
 itcl::body RealGems::startLGSWFS {} {
 	$logger logmess "RealGems::startLGSWFS Gems command undefined."
@@ -776,12 +776,12 @@ itcl::body RealGems::setODGWExposure {id val} {
 	set lastCmdSys ""
 }
 
-itcl::body RealGems::setTTWFSExposure {id val} {
-	cs gems::ttExpCtrl set freqDiv $val
-	$logger logmess "gems::ttExpCtrl $val"
-	set lastCmdSys rtcsad
-	catch {cs gems::ttExpCtrl post}
-}
+#itcl::body RealGems::setTTWFSExposure {id val} {
+#	cs gems::ttExpCtrl set freqDiv $val
+#	$logger logmess "gems::ttExpCtrl $val"
+#	set lastCmdSys rtcsad
+#	catch {cs gems::ttExpCtrl post}
+#}
 
 itcl::body RealGems::setLGSWFSExposure {val} {
 	cs gems::lgsExpCtrl set expTime $val
@@ -881,7 +881,8 @@ itcl::body RealGems::getODGWEnabled {id} {
 }
 
 itcl::body RealGems::getTTWFSActive {id} {
-	if { [string compare -nocase [sa rtcsad get tt${id}Active value] "ENABLED"] == 0} {
+   set val [sa rtcsad get tt${id}Active value]
+	if { [string is integer -strict $val ] && $val > 0} {
 		return ON
 	}
 	return OFF

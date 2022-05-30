@@ -51,12 +51,12 @@ public {
    method setupODGW {idList}
    method startODGW {idList}
    method stopODGW {idList}
-	method startTTWFS {idList}
-	method stopTTWFS {idList}
+	#method startTTWFS {idList}
+	#method stopTTWFS {idList}
 	method startLGSWFS {}
 	method stopLGSWFS {}
 	method setODGWExposure {id val}
-	method setTTWFSExposure {id val}
+	#method setTTWFSExposure {id val}
 	method setLGSWFSExposure {val}
 
    #ODGW special commands
@@ -495,21 +495,21 @@ itcl::body SimGems::stopODGW {idList} {
 	configCmd "ODGW guide" odgwActive 0 200 "odgwActive(1) odgwActive(2) odgwActive(3) odgwActive(4)"
 }
 
-itcl::body SimGems::startTTWFS {idList} {
-   if {[beginCmd]} {
-      foreach id $idList {
-         after 200 "[itcl::code $this simDelayedChange ttwfsActive($id) ON]"
-      }
-   }
-}
-
-itcl::body SimGems::stopTTWFS {idList} {
-   if {[beginCmd]} {
-      foreach id $idList {
-         after 200 "[itcl::code $this simDelayedChange ttwfsActive($id) OFF]"
-      }
-   }
-}
+#itcl::body SimGems::startTTWFS {idList} {
+#   if {[beginCmd]} {
+#      foreach id $idList {
+#         after 200 "[itcl::code $this simDelayedChange ttwfsActive($id) ON]"
+#      }
+#   }
+#}
+#
+#itcl::body SimGems::stopTTWFS {idList} {
+#   if {[beginCmd]} {
+#      foreach id $idList {
+#         after 200 "[itcl::code $this simDelayedChange ttwfsActive($id) OFF]"
+#      }
+#   }
+#}
 
 itcl::body SimGems::startLGSWFS {} {
 	configCmd LGSWFS lgswfsActive ON
@@ -530,9 +530,9 @@ itcl::body SimGems::setODGWExposure {id val} {
 	configCmd "ODGW $id Exposure" odgwExposure($id) $val
 }
 
-itcl::body SimGems::setTTWFSExposure {id val} {
-	configCmd "TTWFS $id Exposure" ttwfsExposure($id) $val
-}
+#itcl::body SimGems::setTTWFSExposure {id val} {
+#	configCmd "TTWFS $id Exposure" ttwfsExposure($id) $val
+#}
 
 itcl::body SimGems::setLGSWFSExposure {val} {
 	configCmd "LGSWFS Exposure" lgswgsExposure $val
