@@ -1,0 +1,24 @@
+#+
+# lis.ca
+#
+# Channel access configuration file for LIS subsystem commands.
+#
+# J Luhrs April 2022
+#
+#-
+
+
+apply lisApply    lis:apply       lis:applyC      LIS Apply Record
+
+status lissad
+{
+    applyC      lis:applyC.VAL          0   Command Status
+    message     lis:applyC.OMSS         0   Command completion message
+    laserProp   lis:lasPropProc.VALA    0   Is the Laser Propagating to the Sky
+    tbadAlarm   lis:in:tbad.VAL         0   TBAD Alarm
+}
+
+command lisPause lisApply Pause LIS
+{
+   command lis:pause.DIR LIS pause command
+}
