@@ -997,6 +997,8 @@ itcl::body TcsConfigControl::applyOiM2Gains {instName wfs} {
    set tipGain [calparam oim2TipGain $instName $wfs]
    set tiltGain [calparam oim2TiltGain $instName $wfs]
    set focusGain [calparam oim2FocusGain $instName $wfs]
+
+   logactions logmess "Reading OIWFS M2 Gains to tip: $tipGain, tilt: $tiltGain, focus: $focusGain"
    if { $tipGain != "<undefined>"  && $tiltGain != "<undefined>"  && \
          $focusGain != "<undefined>"} {
       cs oiwfsm2Gain tipGain $tipGain
@@ -1007,9 +1009,14 @@ itcl::body TcsConfigControl::applyOiM2Gains {instName wfs} {
       cs oiwfsm2Gain resetDefaults 1
       logactions logmess "Setting OIWFS M2 Gains to defaults"
    }
-   cs oiwfsm2Gain dir 0
-   after 100
-   cs oiwfsm2Gain dir 3
+
+   if {[calparam cget -site] eq "CP"} {
+       logactions logmess "not sending MARK/START at GS"
+   } else {
+       cs oiwfsm2Gain dir 0
+       after 1000
+       cs oiwfsm2Gain dir 3
+   }
 }
 
 itcl::body TcsConfigControl::applyP1M2Gains {instName wfs} {
