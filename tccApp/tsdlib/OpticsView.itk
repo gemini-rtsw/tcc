@@ -111,7 +111,7 @@ itcl::class OpticsView {
    itk_option define -gpolustate gpolUState GpolUState 0
    itk_option define -gpolmstate gpolMState GpolMState 0
    itk_option define -gpollstate gpolLState GpolLState 0
-   itk_option define -zorroPOstatus zorroPOStatus ZorroPOStatus undefined
+   itk_option define -foxPOstatus foxPOStatus FoxPOStatus undefined
    public {
       method update {}
    }
@@ -234,8 +234,8 @@ itcl::body OpticsView::constructor args {
    $c create line -15 -55  15 -55 -width 2 -tags gpolu -fill ""
    $c create text -40 -80 -text GPOL -anchor c
 
-# Zorro Pickoff
-   $c create text -40 0 -anchor e -tags zorroPOStext
+# Fox Pickoff text
+   $c create text -40 0 -anchor e -tags foxPOStext -fill red
 
 # Incoming light beams
    $c create line -80 420 -80 143 -width 4 -tags SkyLight
@@ -380,9 +380,12 @@ itcl::body OpticsView::constructor args {
 # HRWFS fold unknown
    $c create bitmap 0 -60 -anchor c -foreground black -tags HrwfsFoldUnknown 
 
-# Zorro Pickoff fold when deployed
-   $c create line -42 23 -30 1 -width 2 -tags ZorroPickoffIn
-   $c create polygon -44 22 -32 0 -36 -2 -48 20 -outline "" -fill "" -tags ZorroPickoffInBck
+# Fox Pickoff fold when deployed
+   $c create line -42 23 -30 1 -width 2 -tags FoxPickoffIn
+   $c create polygon -44 22 -32 0 -36 -2 -48 20 -outline "" -fill "" -tags FoxPickoffInBck
+
+# Fox pickoff deployed message
+   $c create text 0 -7 -anchor c -tags FoxPOWarn -text "Pickoff\nBlock!!!" -fill "" 
 
 # ISS port numbers
    $c create text 0 -100 -anchor c -tags portAnumber
@@ -619,33 +622,35 @@ itcl::body OpticsView::update {} {
       $c itemconfigure HrwfsFoldOutBck -fill ""
    }
 
-# Change different visualization attributes of the zorro pickoff according
+# Change different visualization attributes of the fox pickoff according
 # to its state
    # This variable is used to make the pickoff unknown state blink
    set blink [expr { $blink ? 0 : 1}]
 
-   if { $itk_option(-zorroPOstatus) == "STOWED" } {
-      $c itemconfigure ZorroPickoffIn -fill white
-      $c itemconfigure ZorroPickoffInBck -outline black
-      $c itemconfigure ZorroPickoffInBck -fill green
-   } elseif { $itk_option(-zorroPOstatus) == "DEPLOYED" } {
-      $c itemconfigure ZorroPickoffIn -fill ""
-      $c itemconfigure ZorroPickoffInBck -outline ""
-      $c itemconfigure ZorroPickoffInBck -fill ""
+   if { $itk_option(-foxPOstatus) == "UNKNOWN" } {
+      $c itemconfigure FoxPickoffIn -fill white
+      $c itemconfigure FoxPickoffInBck -outline black
+      $c itemconfigure FoxPickoffInBck -fill green
+   } elseif { $itk_option(-foxPOstatus) == "DEPLOYED" } {
+      $c itemconfigure FoxPickoffIn -fill ""
+      $c itemconfigure FoxPickoffInBck -outline ""
+      $c itemconfigure FoxPickoffInBck -fill ""
    } elseif {$blink} {
       #This section is here to define what happens when its in an unknown state
-      $c itemconfigure ZorroPickoffIn -fill ""
-      $c itemconfigure ZorroPickoffInBck -outline black
-      $c itemconfigure ZorroPickoffInBck -fill yellow
+      $c itemconfigure FoxPickoffIn -fill ""
+      $c itemconfigure FoxPickoffInBck -outline black
+      $c itemconfigure FoxPickoffInBck -fill yellow
+      $c itemconfigure FoxPOWarn -fill red
    } else {
       #This section is here to define what happens when its in an unknown state
-      $c itemconfigure ZorroPickoffIn -fill ""
-      $c itemconfigure ZorroPickoffInBck -outline ""
-      $c itemconfigure ZorroPickoffInBck -fill ""
+      $c itemconfigure FoxPickoffIn -fill ""
+      $c itemconfigure FoxPickoffInBck -outline ""
+      $c itemconfigure FoxPickoffInBck -fill ""
+      $c itemconfigure FoxPOWarn -fill ""
    }
 
-# Configure Zorro Pickoff label
-   $c itemconfigure zorroPOStext -text $itk_option(-zorroPOstatus)
+# Configure Fox Pickoff label
+   $c itemconfigure foxPOStext -text $itk_option(-foxPOstatus)
 
 # Configure the GPOL slides.
    if { $itk_option(-gpolustate) == "IN" } {
@@ -744,10 +749,12 @@ itcl::body OpticsView::update {} {
    #set test on
    set test off
    if { $itk_option(-calunit) || $test } {
-
-# GCAL is on so the beam is white even if the telescope is vignetted.
+      # Light from gcal changes color depending on the position of pickoff
+      set po_pos $itk_option(-foxPOstatus)
       set l white
-
+      if { $po_pos == "DEPLOYED" || $po_pos == "UNKNOWN"} {
+          set l grey
+      }
       $c itemconfigure IssLightD -fill $l
       switch $scfoldpos {
          DU -
