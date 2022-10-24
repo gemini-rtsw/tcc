@@ -235,7 +235,7 @@ itcl::body OpticsView::constructor args {
    $c create text -40 -80 -text GPOL -anchor c
 
 # Fox Pickoff text
-   $c create text -40 0 -anchor e -tags foxPOStext -fill red
+   #$c create text -40 0 -anchor e -tags foxPOStext -fill red
 
 # Incoming light beams
    $c create line -80 420 -80 143 -width 4 -tags SkyLight
@@ -381,8 +381,8 @@ itcl::body OpticsView::constructor args {
    $c create bitmap 0 -60 -anchor c -foreground black -tags HrwfsFoldUnknown 
 
 # Fox Pickoff fold when deployed
-   $c create line -42 23 -30 1 -width 2 -tags FoxPickoffIn
-   $c create polygon -44 22 -32 0 -36 -2 -48 20 -outline "" -fill "" -tags FoxPickoffInBck
+   $c create line -38 25 -26 3 -width 2 -tags FoxPickoffIn
+   $c create polygon -40 24 -28 2 -32 0 -44 22 -outline "" -fill "" -tags FoxPickoffInBck
 
 # Fox pickoff deployed message
    $c create text 0 -7 -anchor c -tags FoxPOWarn -text "Pickoff\nBlock!!!" -fill "" 
@@ -413,6 +413,9 @@ itcl::body OpticsView::update {} {
 # the configuration options.
 
    set c $itk_component(canvas)
+
+   # This variable is used to make elements blink
+   set blink [expr { $blink ? 0 : 1}]
 
 # Configure the M1 cover
    switch $itk_option(-m1cover) {
@@ -624,14 +627,12 @@ itcl::body OpticsView::update {} {
 
 # Change different visualization attributes of the fox pickoff according
 # to its state
-   # This variable is used to make the pickoff unknown state blink
-   set blink [expr { $blink ? 0 : 1}]
 
-   if { $itk_option(-foxPOstatus) == "UNKNOWN" } {
+   if { $itk_option(-foxPOstatus) == "DEPLOYED" } {
       $c itemconfigure FoxPickoffIn -fill white
       $c itemconfigure FoxPickoffInBck -outline black
       $c itemconfigure FoxPickoffInBck -fill green
-   } elseif { $itk_option(-foxPOstatus) == "DEPLOYED" } {
+   } elseif { $itk_option(-foxPOstatus) == "STOWED" } {
       $c itemconfigure FoxPickoffIn -fill ""
       $c itemconfigure FoxPickoffInBck -outline ""
       $c itemconfigure FoxPickoffInBck -fill ""
@@ -640,17 +641,15 @@ itcl::body OpticsView::update {} {
       $c itemconfigure FoxPickoffIn -fill ""
       $c itemconfigure FoxPickoffInBck -outline black
       $c itemconfigure FoxPickoffInBck -fill yellow
-      $c itemconfigure FoxPOWarn -fill red
    } else {
       #This section is here to define what happens when its in an unknown state
       $c itemconfigure FoxPickoffIn -fill ""
       $c itemconfigure FoxPickoffInBck -outline ""
       $c itemconfigure FoxPickoffInBck -fill ""
-      $c itemconfigure FoxPOWarn -fill ""
    }
 
 # Configure Fox Pickoff label
-   $c itemconfigure foxPOStext -text $itk_option(-foxPOstatus)
+   #$c itemconfigure foxPOStext -text $itk_option(-foxPOstatus)
 
 # Configure the GPOL slides.
    if { $itk_option(-gpolustate) == "IN" } {
@@ -746,14 +745,21 @@ itcl::body OpticsView::update {} {
    }
 
 # Configure light from the calibration unit.
-   #set test on
-   set test off
-   if { $itk_option(-calunit) || $test } {
+   if { $itk_option(-calunit) } {
       # Light from gcal changes color depending on the position of pickoff
       set po_pos $itk_option(-foxPOstatus)
-      set l white
-      if { $po_pos == "DEPLOYED" || $po_pos == "UNKNOWN"} {
+      if { $po_pos == "STOWED"} {
+          set l white
+      } else {
           set l grey
+      }
+      # Make a blinking warning appear
+      if { $po_pos == "DEPLOYED" || $po_pos == "UNKNOWN"} {
+          if { $blink } {
+              $c itemconfigure FoxPOWarn -fill red
+          } else {
+              $c itemconfigure FoxPOWarn -fill ""
+          }
       }
       $c itemconfigure IssLightD -fill $l
       switch $scfoldpos {
