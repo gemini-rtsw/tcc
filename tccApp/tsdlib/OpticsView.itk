@@ -266,6 +266,7 @@ itcl::body OpticsView::constructor args {
    $c create line 0 30 50 55 -width 6 -tags {Light IssLightB AoLightExit}
    $c create line 0 30 -50 55 -width 6 -tags {Light IssLightC}
    $c create line 0 30 -50 5 -width 6 -tags {Light IssLightD}
+   $c create line 0 30 -36 12 -width 6 -tags {Light IssLightDFox}
    $c create line 0 30 50 5 -width 6 -tags {Light IssLightE}
 
 # HRWFS fold to ISS face
@@ -751,18 +752,21 @@ itcl::body OpticsView::update {} {
       set po_pos $itk_option(-foxPOstatus)
       if { $po_pos == "STOWED"} {
           set l white
-      } else {
-          set l grey
+          $c itemconfigure FoxPOWarn -fill ""
+          $c itemconfigure IssLightDFox -fill ""
+          $c itemconfigure IssLightD -fill $l
       }
-      # Make a blinking warning appear
       if { $po_pos == "DEPLOYED" || $po_pos == "UNKNOWN"} {
+          set l grey
+          $c itemconfigure IssLightD -fill ""
+          $c itemconfigure IssLightDFox -fill $l
+          # Make a blinking warning appear
           if { $blink } {
               $c itemconfigure FoxPOWarn -fill red
           } else {
               $c itemconfigure FoxPOWarn -fill ""
           }
       }
-      $c itemconfigure IssLightD -fill $l
       switch $scfoldpos {
          DU -
          UD {
@@ -791,9 +795,21 @@ itcl::body OpticsView::update {} {
 
 # Configure the emerging beam
    if { $outport != "" } {
-      $c itemconfigure IssLight${outport} -fill $l
+       if { $outport == "D" } {
+           set po_pos $itk_option(-foxPOstatus)
+           if { $po_pos == "DEPLOYED" || $po_pos == "UNKNOWN"} {
+               $c itemconfigure IssLightDFox -fill $l
+           } else {
+               $c itemconfigure IssLightD -fill $l
+           }
+       } else {
+           $c itemconfigure IssLight${outport} -fill $l
+       }
    }
 
+   #if { $outport != "" } {
+       #$c itemconfigure IssLight${outport} -fill $l
+   #}
 # Configure the beam from the HRWFS to the upward looking ISS face or HRWFS
    if { $outport == "A" } {
       if { $itk_option(-hrwfs) == "IN" } {
