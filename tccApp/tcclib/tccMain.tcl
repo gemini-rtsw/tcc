@@ -179,7 +179,9 @@ global env
          epics cs gpi::endGuide
          epics sa gpi::aostatus
          epics sa gpi::status
-         
+        
+         #GHOST sad  channels
+         epics sa ghostsad 
 		}
    }
 
