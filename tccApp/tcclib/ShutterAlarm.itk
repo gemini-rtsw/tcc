@@ -53,7 +53,7 @@ itcl::body ShutterAlarm::constructor {args} {
 
    foreach drive {t1x t1y t1z t1w b2x b2y b2z b2w} {
 
-      set I [sa shutterDriveCurrents get $drive]
+      set I [format %.2f [sa shutterDriveCurrents get $drive]]
 
       if { ! [string is double -strict $I] } {
          logactions logmess "Expecting floating point number for \"$drive\" but got \"$I\""
@@ -102,6 +102,7 @@ itcl::body ShutterAlarm::updateProc {name alarm time values} {
 
     # puts "updateProc: $time $name $values"
 
+    set values [format %.2f $values]
     if { ! [string is double -strict $values] } {
        logactions logmess "Expecting floating point number for \"$name\" but got \"$values\""
        return

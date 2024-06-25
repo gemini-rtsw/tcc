@@ -700,9 +700,9 @@ itcl::body NumericDisplay::update {} {
    $itk_component(elerr) configure -text [sa tcssad get elError]
    $itk_component(rot) configure -text [sa crssad get currentRma]
    $itk_component(roterr) configure -text [sa tcssad get rmaError]
-   $itk_component(domeaz) configure -text [sa ecssad get domePos]
-   $itk_component(topshut) configure -text [sa ecssad get topShtrPos]
-   $itk_component(botshut) configure -text [sa ecssad get botShtrPos]
+   $itk_component(domeaz) configure -text [format %.2f [sa ecssad get domePos]]
+   $itk_component(topshut) configure -text [format %.2f [sa ecssad get topShtrPos]]
+   $itk_component(botshut) configure -text [format %.2f [sa ecssad get botShtrPos]]
 
    # Target
    set wavel [sadVal tcssad sourceAWavelength ""]
@@ -1151,17 +1151,43 @@ itcl::body NumericDisplay::chopping {} {
 
 itcl::body NumericDisplay::inposreason {} {
    # Determines the reason for the TCS being out of position.
+   set tcsInPosFlag [sa tcssad get tcsInPos]
+   set outPosReasonFlag [sa tcssad get outPosReason]
+   set inPositionAzFlag [sa mcssad get inPositionAz]
+   set inPositionElFlag [sa mcssad get inPositionEl]
+   set inPositionAzFlag [expr int ($inPositionAzFlag)]
+   set inPositionElFlag [expr int ($inPositionElFlag)]
+   set mcsInposOverrFlag [sa tcssad get mcsInposOverr]
+   set mcsInPositionFlag [sa tcssad get mcsInPosition]
+   set crcsInPositionFlag [sa tcssad get crcsInPosition]
+   set agInPositionFlag [sa tcssad get agInPosition]
+
+   puts "tcsInPosFlag: $tcsInPosFlag"
+   puts "outPosReasonFlag: $outPosReasonFlag"
+   puts "inPositionAzFlag: $inPositionAzFlag"
+   puts "inPositionElFlag: $inPositionElFlag"
+   puts "mcsInposOverrFlag: $mcsInposOverrFlag"
+   puts "mcsInPositionFlag: $mcsInPositionFlag"
+   puts "crcsInPositionFlag: $crcsInPositionFlag"
+   puts "agInPositionFlag: $agInPositionFlag"
+
    if { ! [sa tcssad get tcsInPos] } {
+      puts "1"
       return [sa tcssad get outPosReason]
-   } elseif { [sa mcssad get inPositionAz] ne 1 && [string equal [sa tcssad get mcsInposOverr] disabled]} {
+   } elseif { $inPositionAzFlag ne 1 && [string equal [sa tcssad get mcsInposOverr] disabled]} {
+      puts "2"
       return "Azimuth axis not in position"
-   } elseif { [sa mcssad get inPositionEl] ne 1 && [string equal [sa tcssad get mcsInposOverr] disabled]} {
+   } elseif { $inPositionElFlag ne 1 && [string equal [sa tcssad get mcsInposOverr] disabled]} {
+      puts "3"
       return "Elevation axis not in position"
    } elseif { [sa tcssad get mcsInPosition] ne 1 } {
+      puts "4"
       return "Mount not in position"
    } elseif { [sa tcssad get crcsInPosition] ne 1 } {
+      puts "5"
       return "Rotator not in position"
    } elseif { [sa tcssad get agInPosition] ne 1 } {
+      puts "6"
       return "A&G or A&G Seq not in position"
    } elseif { [sa tcssad get aoInPosition] ne 1 } {
       return "Adaptive Optics not in position"
