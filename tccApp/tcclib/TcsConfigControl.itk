@@ -785,6 +785,7 @@ itcl::body TcsConfigControl::apply {} {
       } elseif {[string match "*GMOS*" $inst]} {
          set instr GMOS
          set port [sa agssad get portGmos]
+         set port [expr int ($port)]
          #set the defocus offset for Sfo or P1
          if { ![catch {cs aoSFOdefocus info}] } {
             if {[string match "*P1*" $guide]} {

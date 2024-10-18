@@ -1161,7 +1161,8 @@ itcl::body ActiveOptics::state {component} {
          }
       }
       mount {
-         set flag [sa guideConfig get absorbtilt value]
+         set flag [expr {int([sa guideConfig get absorbtilt value])}]
+         #puts "flag = $flag"
          if { [string is integer -strict $flag] } {
             if { $flag > 0 } {
                return 1
@@ -1228,7 +1229,11 @@ itcl::body ActiveOptics::source {component src {beam A}} {
          }
       }
       mount {
-         switch [sa guideConfig get absorbtilt value] {
+         #puts "Receiving the guideConfig"
+         #puts [sa guideConfig get absorbtilt value]
+         set tmp [expr {int([sa guideConfig get absorbtilt value])}]
+         #puts "tmp = $tmp"
+         switch $tmp {
             3 {
                if { $src == "M2" } {
                   return 1

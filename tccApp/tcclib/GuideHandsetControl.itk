@@ -107,10 +107,11 @@ itcl::body GuideHandsetControl::constructor args {
 itcl::body GuideHandsetControl::refresh {} {
 
 # Update the displays of CA and CE.
-   $itk_component(calocal) configure -text [sa tcssad get calocal value]
-   $itk_component(celocal) configure -text [sa tcssad get celocal value]
-   $itk_component(caguide) configure -text [sa tcssad get caguide value]
-   $itk_component(ceguide) configure -text [sa tcssad get ceguide value]
+   
+   $itk_component(calocal) configure -text [format "%.2f" [sa tcssad get calocal value]]
+   $itk_component(celocal) configure -text [format "%.2f" [sa tcssad get celocal value]]
+   $itk_component(caguide) configure -text [format "%.2f" [sa tcssad get caguide value]]
+   $itk_component(ceguide) configure -text [format "%.2f" [sa tcssad get ceguide value]]
 
 # Reschedule
    set refid [after 1000 [itcl::code $this refresh]]

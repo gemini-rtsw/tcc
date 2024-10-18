@@ -1159,38 +1159,41 @@ itcl::body NumericDisplay::inposreason {} {
    set inPositionElFlag [expr int ($inPositionElFlag)]
    set mcsInposOverrFlag [sa tcssad get mcsInposOverr]
    set mcsInPositionFlag [sa tcssad get mcsInPosition]
+   set mcsInPositionFlag [expr int ($mcsInPositionFlag)]
    set crcsInPositionFlag [sa tcssad get crcsInPosition]
+   set crcsInPositionFlag [expr int ($crcsInPositionFlag)]
    set agInPositionFlag [sa tcssad get agInPosition]
+   set agInPositionFlag [expr int ($agInPositionFlag)]
 
-   puts "tcsInPosFlag: $tcsInPosFlag"
-   puts "outPosReasonFlag: $outPosReasonFlag"
-   puts "inPositionAzFlag: $inPositionAzFlag"
-   puts "inPositionElFlag: $inPositionElFlag"
-   puts "mcsInposOverrFlag: $mcsInposOverrFlag"
-   puts "mcsInPositionFlag: $mcsInPositionFlag"
-   puts "crcsInPositionFlag: $crcsInPositionFlag"
-   puts "agInPositionFlag: $agInPositionFlag"
+   #puts "tcsInPosFlag: $tcsInPosFlag"
+   #puts "outPosReasonFlag: $outPosReasonFlag"
+   #puts "inPositionAzFlag: $inPositionAzFlag"
+   #puts "inPositionElFlag: $inPositionElFlag"
+   #puts "mcsInposOverrFlag: $mcsInposOverrFlag"
+   #puts "mcsInPositionFlag: $mcsInPositionFlag"
+   #puts "crcsInPositionFlag: $crcsInPositionFlag"
+   #puts "agInPositionFlag: $agInPositionFlag"
 
    if { ! [sa tcssad get tcsInPos] } {
-      puts "1"
+      #puts "1"
       return [sa tcssad get outPosReason]
    } elseif { $inPositionAzFlag ne 1 && [string equal [sa tcssad get mcsInposOverr] disabled]} {
-      puts "2"
+      #puts "2: Azimuth axis not in position"
       return "Azimuth axis not in position"
    } elseif { $inPositionElFlag ne 1 && [string equal [sa tcssad get mcsInposOverr] disabled]} {
-      puts "3"
+      #puts "3: Elevation axis not in position"
       return "Elevation axis not in position"
-   } elseif { [sa tcssad get mcsInPosition] ne 1 } {
-      puts "4"
+   } elseif { $mcsInPositionFlag ne 1 } {
+      #puts "4: Mount not in position"
       return "Mount not in position"
-   } elseif { [sa tcssad get crcsInPosition] ne 1 } {
-      puts "5"
+   } elseif { $crcsInPositionFlag ne 1 } {
+      #puts "5: Rotator not in position"
       return "Rotator not in position"
-   } elseif { [sa tcssad get agInPosition] ne 1 } {
-      puts "6"
+   } elseif { $agInPositionFlag ne 1 } {
+      #puts "6: A&G or A&G Seq not in position"
       return "A&G or A&G Seq not in position"
    } elseif { [sa tcssad get aoInPosition] ne 1 } {
-      return "Adaptive Optics not in position"
+      #return "Adaptive Optics not in position"
    } elseif { $::env(GEMINI_SITE) eq "CP" && \
          ( [string equal -nocase [sa aomsad get ngs1Follow] "On"] || \
       [string equal -nocase [sa aomsad get ngs2Follow] "On"] || \
