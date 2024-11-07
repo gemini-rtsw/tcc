@@ -2,7 +2,7 @@
 %define gemopt opt
 %define name tcc
 %define version 2024A.1.1.1
-%define release 9
+%define release 8
 %define repository gemini
 
 %define debug_package %{nil}
