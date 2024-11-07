@@ -485,10 +485,14 @@ itcl::body GraphicDisplay::update {} {
          -m1cover [sa gissad get m1cover value] \
          -holecover [sa gissad get m1inst value] \
          -calunit $calunit
-   if { $::env(GEMINI_SITE) eq "CP" } {
+   
+if { $::env(GEMINI_SITE) eq "CP" } {
       $itk_component(opticsview) configure \
               -aoentrance [expr {[sa aomsad get inShutterState value] eq "Open"}]\
-              -aoexit [expr {[sa aomsad get outShutterState value] eq "Open"}]
+              -aoexit [expr {[sa aomsad get outShutterState value] eq "Open"}] \
+              -f2cover [sa f2sad get f2cover value] \
+              -gsaoicover [sa gsaoisad get gsaoicover value]
+
    } else {
       $itk_component(opticsview) configure \
               -aoentrance [sa aossad get entShutterOpen value] \

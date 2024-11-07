@@ -74,7 +74,7 @@ itcl::class ActiveOptics {
       variable simgaosTTGS 0
       variable simsfoloop 0
       variable simttgsloop 0
-       
+
       variable notifySeqexec 0
 
       common lowfluxTempLimit -29.0
@@ -101,7 +101,7 @@ itcl::class ActiveOptics {
       method unparkAltair {}
       method startAltairWFS {}
       method startAltairLoops {}
-       
+
        method remoteNotification {cmd desc}
        method notifyEnable {}
        method notifyDisable {}
@@ -262,7 +262,7 @@ itcl::body ActiveOptics::enable {} {
       }
    }
    logactions logmess  "ActiveOptics::enable: $currentconfig"
-    
+
    # check to make sure we're not using OI probe guiding with GMOS
    # removed, see REL-3901
    #if { ($probeto == "OIWFS") && [string match "*GMOS*" $::Config(tcs.instrument,value)]} {
@@ -305,10 +305,10 @@ itcl::body ActiveOptics::enable {} {
       }
    }
 
-    # Notify here, because configureBlending calls disable. Otherwise the notify from disable will 
-    # be the last communicated state 
+    # Notify here, because configureBlending calls disable. Otherwise the notify from disable will
+    # be the last communicated state
     notifyEnable
-   
+
    # The probe guide states can either be A, B, AB or on. If it is the latter
    # then we must first determine which chop states it will be active in
    # according to the probe chop/nod flags and modify the state accordingly.
@@ -785,7 +785,7 @@ itcl::body ActiveOptics::disable {} {
    logactions logmess  "ActiveOptics::disable"
 
    notifyDisable
-   
+
    # Stop the wave-front sensors.
    Pwfs1 stop
    Pwfs2 stop
@@ -1162,7 +1162,6 @@ itcl::body ActiveOptics::state {component} {
       }
       mount {
          set flag [expr {int([sa guideConfig get absorbtilt value])}]
-         #puts "flag = $flag"
          if { [string is integer -strict $flag] } {
             if { $flag > 0 } {
                return 1
@@ -1229,10 +1228,7 @@ itcl::body ActiveOptics::source {component src {beam A}} {
          }
       }
       mount {
-         #puts "Receiving the guideConfig"
-         #puts [sa guideConfig get absorbtilt value]
          set tmp [expr {int([sa guideConfig get absorbtilt value])}]
-         #puts "tmp = $tmp"
          switch $tmp {
             3 {
                if { $src == "M2" } {
@@ -1792,7 +1788,7 @@ itcl::body ActiveOptics::startAltairWFS {} {
       logger command aoFlatten
    }
 
-   return 0 
+   return 0
 }
 
 itcl::body ActiveOptics::startAltairLoops {} {

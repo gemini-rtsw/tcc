@@ -55,6 +55,7 @@ itcl::class GuideLoop {
       method onOISelection { record value }
       method resize {}
       method resizeGemsArrows {}
+      method OiExpListUpdate {args}
    }
    itk_option define -wfsConfigObj wfsConfigObj WfsConfigObj "" {
    	if { $itk_option(-wfsConfigObj) ne "" } { recolour }
@@ -136,8 +137,7 @@ itcl::body GuideLoop::constructor args {
    }
 
    $w create window 55 24 -window $w.oiwfs_ex -tag "oiwfs wfs_comb" -anchor n
-   $w.oiwfs_ex insert list end  1.0 0.5 0.1 0.05 0.02 0.01 0.008 0.005
-   $w.oiwfs_ex insert entry end [AO cget -oiwfsExpose]
+   $this OiExpListUpdate
    [$w.oiwfs_ex component list] configure -hscrollmode none \
       -vscrollmode none
 
@@ -402,9 +402,15 @@ itcl::body GuideLoop::constructor args {
    after 1000 [itcl::code $this recolour]
 
    eval itk_initialize $args
+
+   #add monitor for instrument change
+   trace add variable ::Config(tcs.instrument,value) write [itcl::code $this OiExpListUpdate]
 }
 
 itcl::body GuideLoop::destructor {} {
+
+   trace remove variable ::Config(tcs.instrument,value) write [itcl::code $this OiExpListUpdate]
+   
    trace remove variable ::Flags(ignoreao) write [itcl::code $this onIgnoreAOChange]
     
    trace remove variable ::Config(tcs.gaos,value) write [itcl::code $this recolour]
@@ -1397,4 +1403,27 @@ itcl::body GuideLoop::resizeGemsArrows {} {
       [expr [lindex $odgwOutL 0] - $GraphParam::arrowHeadSpace - 3 * $GraphParam::interLineSpace] [expr $gaos_y1 - $GraphParam::interLineSpace] \
       [expr [lindex $odgwOutL 0] - $GraphParam::arrowHeadSpace - 3 * $GraphParam::interLineSpace] $m1_ym \
       [expr $m1_x1 + $GraphParam::arrowOffset] $m1_ym
+}
+itcl::body GuideLoop::OiExpListUpdate {args} {
+
+    set w $itk_component(canv)
+    set instrument $::Config(tcs.instrument,value) 
+    set last_selected_value [AO cget -oiwfsExpose]
+
+    $w.oiwfs_ex delete list 0 end
+   
+    if {[string match "GMOS*OI" $instrument]} {
+        $w.oiwfs_ex insert list end 1.0 0.5 0.1 0.05 0.02 0.01 0.005
+        if { $last_selected_value == "0.008" } {
+                set last_selected_value 0.005
+        }
+    } elseif {[string match "*F25" $instrument]} {
+        $w.oiwfs_ex insert list end 1.0 0.5 0.1 0.05 0.02 0.008 0.005
+         if { $last_selected_value == "0.01" } {
+                set last_selected_value 0.005
+        }
+    } else {
+        $w.oiwfs_ex insert list end 1.0 0.5 0.1 0.05 0.02 0.01 0.008 0.005
+    }
+    $w.oiwfs_ex insert entry end $last_selected_value
 }

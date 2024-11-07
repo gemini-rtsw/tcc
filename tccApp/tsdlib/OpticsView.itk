@@ -20,6 +20,10 @@
 #          -deployablebaffle  The postion of the deployable baffle (RETRACTED,
 #                             "NEAR IR", VISIBLE or EXTENDED).
 #
+#          -f2Cover	      The position of f2 cover (OPEN,MIDDLE ,CLOSED)
+#
+#          -gsaoicover 	      The position of gsaoi cover (OPEN,MIDDLE ,CLOSED)
+#
 #          -gpolustate        The state of the GPOL upper slide (IN or OUT)
 #
 #          -gpolmstate        The state of the GPOL middle slide (IN or OUT)
@@ -112,6 +116,8 @@ itcl::class OpticsView {
    itk_option define -gpolmstate gpolMState GpolMState 0
    itk_option define -gpollstate gpolLState GpolLState 0
    itk_option define -foxPOstatus foxPOStatus FoxPOStatus undefined
+   itk_option define -f2cover f2cover F2cover undefined
+   itk_option define -gsaoicover gsaocover Gsaoicover undefined
    public {
       method update {}
    }
@@ -409,7 +415,6 @@ itcl::body OpticsView::constructor args {
 }
 
 itcl::body OpticsView::update {} {
-
 # Set the visibiliy of elements of the drawing according to the state of
 # the configuration options.
 
@@ -719,6 +724,7 @@ itcl::body OpticsView::update {} {
          }
 
 # Determine which (if any) ISS port the beam emerges from
+#    
          if { $inport != "" } {
             if { $scfoldpos == "" } {
                if { $inport == "U" } {
@@ -744,10 +750,8 @@ itcl::body OpticsView::update {} {
          }
       }
    }
-
-
 # Configure light from the calibration unit.
-   if { $itk_option(-calunit) } {
+      if {$itk_option(-calunit)} {
       # Light from gcal changes color depending on the position of pickoff
       set po_pos $itk_option(-foxPOstatus)
       if { $po_pos == "STOWED"} {
@@ -767,6 +771,29 @@ itcl::body OpticsView::update {} {
               $c itemconfigure FoxPOWarn -fill ""
           }
       }
+      #instrument cover F2/GSAOI
+    if {[string length $scfoldpos] == 2} {
+        set index0 [string index $scfoldpos 0]
+        set index1 [string index $scfoldpos 1]
+        if {$index0 == "U"} {
+                if {$itk_option(-port${index1}label) == "F2" && $itk_option(-f2cover) == "Closed"} {
+                        set l grey
+                }
+
+                if {$itk_option(-port${index1}label) == "GSAOI" && $itk_option(-gsaoicover) == "Closed"} {
+                        set l grey
+                }
+        } elseif {$index1 == "U"} {
+                if {$itk_option(-port${index0}label) == "F2" && $itk_option(-f2cover) == "Closed"} {
+                        set l grey
+                }
+
+                if {$itk_option(-port${index0}label) == "GSAOI" && $itk_option(-gsaoicover) == "Closed"} {
+                        set l grey
+                }
+        }
+     }
+
       switch $scfoldpos {
          DU -
          UD {
@@ -792,7 +819,6 @@ itcl::body OpticsView::update {} {
    } else {
       $c itemconfigure FoxPOWarn -fill ""
    }
-
 # Configure the emerging beam
    if { $outport != "" } {
        if { $outport == "D" } {
@@ -803,6 +829,14 @@ itcl::body OpticsView::update {} {
                $c itemconfigure IssLightD -fill $l
            }
        } else {
+
+           #instrument cover F2/GSAOI
+           if { $itk_option(-f2cover) == "Closed" && $itk_option(-port${outport}label)== "F2" } {
+     		set l grey
+           }
+           if {$itk_option(-gsaoicover)== "Closed" && $itk_option(-port${outport}label)== "GSAOI"} {
+		set l grey
+           }
            $c itemconfigure IssLight${outport} -fill $l
        }
    }
