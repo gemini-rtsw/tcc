@@ -1,4 +1,4 @@
-%define _prefix __auto__
+%define _prefix /gemsoft
 %define gemopt opt
 %define name tcc
 %define version 2025A
@@ -6,6 +6,7 @@
 %define repository gemini
 
 %define debug_package %{nil}
+%define _build_id_links none
 
 Summary: %{name} Package
 Name: %{name}
