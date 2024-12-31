@@ -1,8 +1,8 @@
 %define _prefix __auto__
 %define gemopt opt
 %define name tcc
-%define version __auto__
-%define release __auto__
+%define version 2025A
+%define release 1
 %define repository gemini
 
 %define debug_package %{nil}
