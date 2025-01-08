@@ -55,7 +55,8 @@ itcl::class GuideLoop {
       method onOISelection { record value }
       method resize {}
       method resizeGemsArrows {}
-      method OiExpListUpdate {args}
+      method updateOiExpList {args}
+      method CheckStateAndUpdateOIExpList {args}
    }
    itk_option define -wfsConfigObj wfsConfigObj WfsConfigObj "" {
    	if { $itk_option(-wfsConfigObj) ne "" } { recolour }
@@ -137,7 +138,7 @@ itcl::body GuideLoop::constructor args {
    }
 
    $w create window 55 24 -window $w.oiwfs_ex -tag "oiwfs wfs_comb" -anchor n
-   $this OiExpListUpdate
+   $this updateOiExpList
    [$w.oiwfs_ex component list] configure -hscrollmode none \
       -vscrollmode none
 
@@ -404,12 +405,12 @@ itcl::body GuideLoop::constructor args {
    eval itk_initialize $args
 
    #add monitor for instrument change
-   trace add variable ::Config(tcs.instrument,value) write [itcl::code $this OiExpListUpdate]
+   trace add variable ::Config(tcs.instrument,value) write [itcl::code $this CheckStateAndUpdateOIExpList]
 }
 
 itcl::body GuideLoop::destructor {} {
 
-   trace remove variable ::Config(tcs.instrument,value) write [itcl::code $this OiExpListUpdate]
+   trace remove variable ::Config(tcs.instrument,value) write [itcl::code $this CheckStateAndUpdateOIExpList]
    
    trace remove variable ::Flags(ignoreao) write [itcl::code $this onIgnoreAOChange]
     
@@ -626,6 +627,7 @@ itcl::body GuideLoop::recolour args {
       $w itemconfigure oiwfs_wfstxt -fill black
       if { [sa agssad get oiwfsName] ne "GPI" } {
          $itk_component(oiwfs_ex) configure -state normal
+         $this updateOiExpList 
       }
       if { $itk_option(-wfsConfigObj) ne "" } {
          $itk_option(-wfsConfigObj) niciState disabled
@@ -1404,14 +1406,13 @@ itcl::body GuideLoop::resizeGemsArrows {} {
       [expr [lindex $odgwOutL 0] - $GraphParam::arrowHeadSpace - 3 * $GraphParam::interLineSpace] $m1_ym \
       [expr $m1_x1 + $GraphParam::arrowOffset] $m1_ym
 }
-itcl::body GuideLoop::OiExpListUpdate {args} {
-
+itcl::body GuideLoop::updateOiExpList {args} {
     set w $itk_component(canv)
     set instrument $::Config(tcs.instrument,value) 
     set last_selected_value [AO cget -oiwfsExpose]
-
+    
     $w.oiwfs_ex delete list 0 end
-   
+    
     if {[string match "GMOS*OI" $instrument]} {
         $w.oiwfs_ex insert list end 1.0 0.5 0.1 0.05 0.02 0.01 0.005
         if { $last_selected_value == "0.008" } {
@@ -1426,4 +1427,11 @@ itcl::body GuideLoop::OiExpListUpdate {args} {
         $w.oiwfs_ex insert list end 1.0 0.5 0.1 0.05 0.02 0.01 0.008 0.005
     }
     $w.oiwfs_ex insert entry end $last_selected_value
+}
+
+itcl::body GuideLoop::CheckStateAndUpdateOIExpList {args} {
+    set oi_state [$itk_component(oiwfs_ex) cget -state]
+    if {$oi_state == "normal"} {
+        eval [list GuideLoop::updateOiExpList] $args
+    }
 }
