@@ -18,7 +18,6 @@ proc saveLayout {} {
 # Create a dialog box for selecting the file and center it.
    set dialog [iwidgets::fileselectiondialog .fsd \
          -modality application -title "Layout File Selection Dialog"]
-   $dialog center
 
 # Activate the dialog
    if { [$dialog activate] } {
