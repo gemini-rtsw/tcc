@@ -1,11 +1,10 @@
-
 %define debug_package %{nil}
 %define _build_id_links none
 
 Summary: %{name} Package
 Name: %{name}
 Version: %{auto_version}
-Release: %{auto_release}.%{dist}.%{repository}
+Release: %{auto_release}%{dist}.%{repository}
 License: GPL
 ## Source:%{name}-%{auto_version}.tar.gz
 Group: Gemini
