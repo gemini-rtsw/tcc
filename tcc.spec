@@ -1,15 +1,20 @@
 %define debug_package %{nil}
 %define _build_id_links none
 
-Summary: %{name} Package
-Name: %{name}
-Version: %{auto_version}
-Release: %{auto_release}%{dist}.%{repository}
+# Define version and release manually without recursive references
+%define pkg_name tcc
+%define pkg_version 1.0
+%define pkg_release 1
+
+Summary: TCC Package
+Name: %{pkg_name}
+Version: %{pkg_version}
+Release: %{pkg_release}%{dist}.%{repository}
 License: GPL
 ## Source:%{name}-%{auto_version}.tar.gz
 Group: Gemini
-Source0: %{name}-%{auto_version}.tar.gz
-BuildRoot: /var/tmp/%{name}-%{auto_version}-root
+Source0: %{pkg_name}-%{pkg_version}.tar.gz
+BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-root
 BuildArch: %{arch}
 Prefix: %{_prefix}
 ## You may specify dependencies here
@@ -26,22 +31,22 @@ Requires: tcldom-libxml2 = 2.5
 # AutoReqProv: no
 
 %description
-This is a default description for the %{name} package
+This is a default description for the %{pkg_name} package
 
 ## If you want to have a devel-package to be generated uncomment the following:
 # %package devel
-# Summary: %{name}-devel Package
+# Summary: %{pkg_name}-devel Package
 # Group: Development/Gemini
-# Requires: %{name}
+# Requires: %{pkg_name}
 # %description devel
-# This is a default description for the %{name}-devel package
+# This is a default description for the %{pkg_name}-devel package
 
 ## Of course, you also can create additional packages, e.g for "doc". Just
 ## follow the same way as I did with "%package devel".
 
 %prep
 ## Do some preparation stuff, e.g. unpacking the source with
-%setup -n %{name}
+%setup -n %{pkg_name}
 
 
 %build
