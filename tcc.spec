@@ -9,7 +9,7 @@
 Summary: TCC Package
 Name: %{pkg_name}
 Version: %{pkg_version}
-Release: %{pkg_release}%{dist}.%{repository}
+Release: %{pkg_release}.el9.gemini
 License: GPL
 ## Source:%{name}-%{auto_version}.tar.gz
 Group: Gemini
