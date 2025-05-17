@@ -15,7 +15,7 @@ License: GPL
 Group: Gemini
 Source0: %{pkg_name}-%{pkg_version}.tar.gz
 BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-root
-BuildArch: %{arch}
+BuildArch: x86_64
 Prefix: %{_prefix}
 ## You may specify dependencies here
 BuildRequires: tcl-devel tk-devel itcl-devel
