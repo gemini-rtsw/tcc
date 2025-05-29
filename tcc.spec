@@ -7,6 +7,7 @@
 %define release 1
 %define gemopt opt
 %define repository gemini
+%define _prefix /gemsoft
 
 # This hack is needed for our build system that creates 
 # a file with the literal name containing %{pkg_name}
