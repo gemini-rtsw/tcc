@@ -25,17 +25,16 @@ Source0: %{name}-%{version}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot
 BuildArch: x86_64
 Prefix: %{_prefix}
+
 ## You may specify dependencies here
 BuildRequires: tcl-devel tk-devel itcl-devel
-#BuildRequires: epics_module-astlib-devel%{?_isa} epics_module-slalib-devel%{?_isa}
+BuildRequires: epics_module-astlib-devel epics_module-slalib-devel
 Requires: tcl tk itcl itk iwidgets
 Requires: ocswish seqexec
 Requires: tcldom-libxml2
-#Requires: epics_module-timelib%{?_isa} epics_module-slalib%{?_isa} epics_module-astlib%{?_isa}
-#
-# FIXME: Need 2.5.1 b/c the api's changed for 3.x.
-#
-#Requires: tcldom-libxml2 = 2.5
+Requires: epics_module-timelib epics_module-slalib epics_module-astlib
+
+
 ## Switch dependency checking off
 AutoReqProv: no
 
