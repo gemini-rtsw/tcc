@@ -28,9 +28,9 @@ Prefix: %{_prefix}
 ## You may specify dependencies here
 BuildRequires: tcl-devel tk-devel itcl-devel
 #BuildRequires: epics_module-astlib-devel%{?_isa} epics_module-slalib-devel%{?_isa}
-Requires: tcl tk
-#Requires: iwidgets
-#Requires: ocswish seqexec skycalc tcldom-libxml2
+Requires: tcl tk itcl itk iwidgets
+Requires: ocswish seqexec
+Requires: tcldom-libxml2
 #Requires: epics_module-timelib%{?_isa} epics_module-slalib%{?_isa} epics_module-astlib%{?_isa}
 #
 # FIXME: Need 2.5.1 b/c the api's changed for 3.x.
