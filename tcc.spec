@@ -42,12 +42,12 @@ AutoReqProv: no
 This is a default description for the %{name} package
 
 ## If you want to have a devel-package to be generated uncomment the following:
-# %package devel
-# Summary: %{name}-devel Package
-# Group: Development/Gemini
-# Requires: %{name}
-# %description devel
-# This is a default description for the %{name}-devel package
+%package devel
+Summary: %{name}-devel Package
+Group: Development/Gemini
+Requires: %{name}
+%description devel
+This is a default description for the %{name}-devel package
 
 ## Of course, you also can create additional packages, e.g for "doc". Just
 ## follow the same way as I did with "%package devel".
@@ -131,7 +131,7 @@ done
 
 ## If you want to have a devel-package to be generated and do some
 ## %post-stuff regarding it uncomment the following:
-# %post devel
+%post devel
 
 ## if you want to do something after uninstallation uncomment the following
 ## and list the actions to perform. But be aware of e.g. deleting directories,
@@ -143,7 +143,7 @@ done
 
 ## If you want to have a devel-package to be generated and do some
 ## %postun-stuff regarding it uncomment the following:
-# %postun devel
+%postun devel
 
 ## Its similar for %pre, %preun, %pre devel, %preun devel.
 
@@ -159,8 +159,8 @@ rm -rf $RPM_BUILD_ROOT
 %{_prefix}/bin/*
 
 ## If you want to have a devel-package to be generated uncomment the following
-# %files devel
-# %defattr(-,root,root)
+%files devel
+%defattr(-,root,root)
 ## list files that are installed by the devel package here, e.g
 ## %{_prefix}/zzz/zzz
 
