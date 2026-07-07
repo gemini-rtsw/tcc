@@ -1,11 +1,26 @@
 name: Build
+
 on:
   push:
     branches: [main]
   pull_request:
     branches: [main]
+
 jobs:
   build:
+    strategy:
+      fail-fast: false
+      matrix:
+        # tcc is EL9-only; add '8' here if an EL8 build is ever needed.
+        el: ['9']
     uses: gemini-rtsw/gemini-rtsw-ci/.github/workflows/ci.yml@main
     with:
       scripts_dir: gemini-rtsw-ci
+      el_version: ${{ matrix.el }}
+
+  # Rebuild rpm-repo:latest ONCE, after the build legs have pushed their
+  # scratch tags. Single writer -> no race on :latest. Shows as the final job.
+  publish:
+    needs: build
+    uses: gemini-rtsw/gemini-rtsw-ci/.github/workflows/publish.yml@main
+    secrets: inherit
