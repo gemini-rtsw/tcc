@@ -134,6 +134,13 @@ cp -a tccApp/default* $RPM_BUILD_ROOT/%{_prefix}/%{gemopt}/tcc/ 2>/dev/null || :
 [ -f tccApp/pointtest ] && cp -a tccApp/pointtest $RPM_BUILD_ROOT/%{_prefix}/%{gemopt}/tcc/ || :
 [ -f tccApp/probecal ] && cp -a tccApp/probecal $RPM_BUILD_ROOT/%{_prefix}/%{gemopt}/tcc/ || :
 
+# Seed the runtime configuration (/gemsoft/etc/tcc) from the committed
+# gnconfig snapshot (test-config/, see its README). Packaged as
+# %config(noreplace) below: fresh installs (dev containers) get a working
+# config; existing site-managed config is never overwritten.
+mkdir -p $RPM_BUILD_ROOT/%{_prefix}/etc/tcc
+cp -a test-config/defaults test-config/calparams test-config/pointtests $RPM_BUILD_ROOT/%{_prefix}/etc/tcc/
+
 # Copy binaries to bin directory if linux-bin exists and has files
 if [ -d tccApp/linux-bin ] && [ "$(ls -A tccApp/linux-bin 2>/dev/null)" ]; then
     cp -a tccApp/linux-bin/* $RPM_BUILD_ROOT/%{_prefix}/bin/ || :
@@ -189,6 +196,7 @@ rm -rf $RPM_BUILD_ROOT
 ## %{_prefix}/zzz/zzz
 %{_prefix}/%{gemopt}/tcc/
 %{_prefix}/bin/*
+%config(noreplace) %{_prefix}/etc/tcc/
 
 ## If you want to have a devel-package to be generated uncomment the following
 %files devel
