@@ -4,7 +4,10 @@
 # Define version and release
 %define name tcc
 %define version 1.0
-%define release 1
+%define release 2
+# Short git hash of the built commit; exported by gemini-rtsw-ci/build_rpm.sh
+# into the build container (same pattern as tcslib/gemUtil).
+%define checkout %(if [ -n "$GIT_HASH" ]; then echo "$GIT_HASH"; else git rev-parse --short HEAD 2>/dev/null || echo nogit; fi)
 %define gemopt opt
 %define repository gemini
 %define _prefix /gemsoft
@@ -17,7 +20,7 @@
 Summary: TCC Package
 Name: %{name}
 Version: %{version}
-Release: %{release}%{?dist}.%{repository}
+Release: %{release}.git.%{checkout}%{?dist}.%{repository}
 License: GPL
 ## Source:%{name}-%{auto_version}.tar.gz
 Group: Gemini
@@ -214,6 +217,9 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Wed Jul 08 2026 Hawi Stecher <hawi.stecher@noirlab.edu> 1.0-2
+- REL-4962: log target field and observation ID on Set/Slew
+
 ## Write changes here, e.g.
 # * Thu Dec 6 2007 John Doe <jdoe@gemini.edu> VERSION-RELEASE
 # - change made
