@@ -135,9 +135,10 @@ cp -a tccApp/default* $RPM_BUILD_ROOT/%{_prefix}/%{gemopt}/tcc/ 2>/dev/null || :
 [ -f tccApp/probecal ] && cp -a tccApp/probecal $RPM_BUILD_ROOT/%{_prefix}/%{gemopt}/tcc/ || :
 
 # Seed the runtime configuration (/gemsoft/etc/tcc) from the committed
-# gnconfig snapshot (test-config/, see its README). Packaged as
-# %config(noreplace) below: fresh installs (dev containers) get a working
-# config; existing site-managed config is never overwritten.
+# gnconfig snapshot (test-config/, see its README). Packaged in the DEVEL
+# subpackage only (%config(noreplace)): dev containers get a working config,
+# while the regular tcc package never touches /gemsoft/etc — that tree is
+# site-managed (gnconfig) in operations.
 mkdir -p $RPM_BUILD_ROOT/%{_prefix}/etc/tcc
 cp -a test-config/defaults test-config/calparams test-config/pointtests $RPM_BUILD_ROOT/%{_prefix}/etc/tcc/
 
@@ -196,13 +197,13 @@ rm -rf $RPM_BUILD_ROOT
 ## %{_prefix}/zzz/zzz
 %{_prefix}/%{gemopt}/tcc/
 %{_prefix}/bin/*
-%config(noreplace) %{_prefix}/etc/tcc/
 
 ## If you want to have a devel-package to be generated uncomment the following
 %files devel
 %defattr(-,root,root)
-## list files that are installed by the devel package here, e.g
-## %{_prefix}/zzz/zzz
+# Seed runtime config for dev containers only; ops manages the real
+# /gemsoft/etc/tcc via gnconfig and never installs tcc-devel.
+%config(noreplace) %{_prefix}/etc/tcc/
 
 
 %changelog
