@@ -46,6 +46,15 @@ This is a default description for the %{name} package
 Summary: %{name}-devel Package
 Group: Development/Gemini
 Requires: %{name}
+# Toolchain for building the tcc C extensions (tcctime.so etc.) in the dev
+# container. They are 32-bit (-m32) because they load into ocswish (i686):
+#   cd tccApp && EPICS_HOST_ARCH=linux-x86 make -f Makefile.linux install
+# Only the dev image installs tcc-devel — ops never sees these.
+Requires: gcc gcc-c++ make
+Requires: glibc-devel(x86-32)
+Requires: tcl-devel(x86-32) tk-devel(x86-32) itcl-devel(x86-32)
+Requires: epics_module-astlib-devel epics_module-slalib-devel epics_module-timelib-devel
+Requires: epics_module-astlib(x86-32) epics_module-slalib(x86-32) epics_module-timelib(x86-32)
 %description devel
 This is a default description for the %{name}-devel package
 
