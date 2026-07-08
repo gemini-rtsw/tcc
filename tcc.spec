@@ -172,6 +172,13 @@ done
 ## If you want to have a devel-package to be generated and do some
 ## %post-stuff regarding it uncomment the following:
 %post devel
+# GEMINI_SITE comes from the file /gemsoft/etc/site (login shells run
+# `export GEMINI_SITE=$(cat ...)`), which gemini-setup seeds with NOSITE.
+# Default dev containers to MK so the tcc launcher finds options.MK without
+# manual steps; only ever touch the placeholder value, never a real site.
+if [ ! -r /gemsoft/etc/site ] || grep -qx NOSITE /gemsoft/etc/site 2>/dev/null; then
+    echo MK > /gemsoft/etc/site
+fi
 
 ## if you want to do something after uninstallation uncomment the following
 ## and list the actions to perform. But be aware of e.g. deleting directories,
