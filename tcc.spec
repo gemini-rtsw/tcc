@@ -109,9 +109,12 @@ mkdir -p tccApp/linux-bin
 # Copy files from tccApp directory
 [ -d tccApp/ca_config ] && cp -a tccApp/ca_config/* $RPM_BUILD_ROOT/%{_prefix}/%{gemopt}/tcc/ca_config/ || :
 [ -d tccApp/ca_config.tc1 ] && cp -a tccApp/ca_config.tc1/* $RPM_BUILD_ROOT/%{_prefix}/%{gemopt}/tcc/ca_config.tc1/ || :
-[ -f tccApp/calparams* ] && cp -a tccApp/calparams* $RPM_BUILD_ROOT/%{_prefix}/%{gemopt}/tcc/ || :
-[ -f tccApp/options* ] && cp -a tccApp/options* $RPM_BUILD_ROOT/%{_prefix}/%{gemopt}/tcc/ || :
-[ -f tccApp/default* ] && cp -a tccApp/default* $RPM_BUILD_ROOT/%{_prefix}/%{gemopt}/tcc/ || :
+# NOTE: not `[ -f glob ] && cp` -- test -f is false whenever the glob matches
+# more than one file, which silently dropped options.MK/options.CP and the
+# default* files from the package.
+cp -a tccApp/calparams* $RPM_BUILD_ROOT/%{_prefix}/%{gemopt}/tcc/ 2>/dev/null || :
+cp -a tccApp/options* $RPM_BUILD_ROOT/%{_prefix}/%{gemopt}/tcc/ 2>/dev/null || :
+cp -a tccApp/default* $RPM_BUILD_ROOT/%{_prefix}/%{gemopt}/tcc/ 2>/dev/null || :
 [ -d tccApp/lib ] && cp -a tccApp/lib/* $RPM_BUILD_ROOT/%{_prefix}/%{gemopt}/tcc/lib/ || :
 [ -d tccApp/plugins ] && cp -a tccApp/plugins/* $RPM_BUILD_ROOT/%{_prefix}/%{gemopt}/tcc/plugins/ || :
 [ -d tccApp/pointcats ] && cp -a tccApp/pointcats/* $RPM_BUILD_ROOT/%{_prefix}/%{gemopt}/tcc/pointcats/ || :
