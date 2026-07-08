@@ -40,7 +40,8 @@ dnf install -y --refresh tcl-1:8.5.13-8.el9.i686 tk-1:8.5.13-6.el9.i686 \
 # Same anchoring for the 32-bit build stack tcc-devel requires (the i686
 # EPICS modules and itcl-devel are older than their same-named x86_64
 # counterparts, so repo resolution would refuse them).
-dnf install -y itcl-devel-3.4-10.el7.centos.i686 \
+dnf install -y tcl-devel-1:8.5.13-8.el9.i686 tk-devel-1:8.5.13-6.el9.i686 \
+    itcl-devel-3.4-10.el7.centos.i686 \
     epics_module-astlib-3.14.9-17.el9.gemini.i686 \
     epics_module-slalib-3.14.9-11.el9.gemini.i686 \
     epics_module-timelib-3.15.1-0.el9.gemini.i686
