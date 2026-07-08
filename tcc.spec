@@ -27,8 +27,18 @@ BuildArch: x86_64
 Prefix: %{_prefix}
 
 ## You may specify dependencies here
+# The C extensions are built 32-bit (-m32, they load into ocswish i686), so
+# the build needs the 32-bit toolchain. custom-repo-setup.sh anchors the
+# older-than-best i686 providers before dependency resolution.
+BuildRequires: gcc gcc-c++ make
+BuildRequires: glibc-devel(x86-32)
+BuildRequires: tcl-devel(x86-32) tk-devel(x86-32) itcl-devel(x86-32)
+BuildRequires: epics_module-astlib(x86-32) epics_module-slalib(x86-32) epics_module-timelib(x86-32)
 BuildRequires: tcl-devel tk-devel itcl-devel
-BuildRequires: epics_module-astlib-devel epics_module-slalib-devel
+BuildRequires: epics_module-astlib-devel epics_module-slalib-devel epics_module-timelib-devel
+# src/Makefile.linux includes ${HLPG_INSTALL_BASE}/conf/gemini_env, shipped
+# by ocswish.
+BuildRequires: ocswish
 Requires: tcl tk itcl itk iwidgets
 Requires: ocswish seqexec
 Requires: tcldom-libxml2
@@ -67,10 +77,20 @@ This is a default description for the %{name}-devel package
 
 
 %build
-## Write build instructions here, e.g
-# sh configure
+# Build the six Tcl C extensions (tcctime.so etc.) exactly as the dev
+# container does. Production build hosts have this environment implicitly;
+# here it must be explicit: EPICS_HOST_ARCH selects the 32-bit EPICS libs,
+# HOST_ARCH names the install subdir (lib/Linux) that the tcc launcher
+# loads from. A build failure MUST fail the RPM -- a silent '|| true' here
+# shipped hollow RPMs for years.
+# rpmbuild runs a non-login shell, so the env the profile.d scripts provide
+# on hosts/dev containers must be set explicitly here.
 cd tccApp
-make -f Makefile.linux || true
+export EPICS=/gemsoft/opt/epics
+export EPICS_HOST_ARCH=linux-x86
+export HOST_ARCH=Linux
+export HLPG_INSTALL_BASE=/gemsoft/opt/ocswish
+make -f Makefile.linux
 
 %install
 ## Write install instructions here, e.g
