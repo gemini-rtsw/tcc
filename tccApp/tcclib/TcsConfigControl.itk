@@ -274,7 +274,20 @@ itcl::body TcsConfigControl::apply {} {
    #-
    global instPO
 
-   logactions logmess "Starting a Slew"
+   # REL-4962: include the target field and its Gemini observation ID (the
+   # value shown in the Session Control box) so the log records which
+   # program/observation each slew belongs to.
+   set fieldname $::Config(tcs.field,value)
+   set obsid ""
+   if { $fieldname != "" } {
+      catch {set obsid \
+         [$::Config(tcs.field,namespace)::$fieldname cget -observationid]}
+   }
+   if { [string is space $obsid] } {
+      logactions logmess "Starting a Slew to \"$fieldname\""
+   } else {
+      logactions logmess "Starting a Slew to \"$fieldname\" (observation id: $obsid)"
+   }
 
    # First, store the window contents (this was moved here because any error in
    # the first steps would prevent saving the window changes.
