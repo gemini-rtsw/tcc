@@ -4,7 +4,7 @@
 # Define version and release
 %define name tcc
 %define version 1.0
-%define release 3
+%define release 4
 # Short git hash of the built commit; exported by gemini-rtsw-ci/build_rpm.sh
 # into the build container (same pattern as tcslib/gemUtil).
 %define checkout %(if [ -n "$GIT_HASH" ]; then echo "$GIT_HASH"; else git rev-parse --short HEAD 2>/dev/null || echo nogit; fi)
@@ -151,14 +151,13 @@ if [ -d tccApp/linux-bin ] && [ "$(ls -A tccApp/linux-bin 2>/dev/null)" ]; then
     chmod 755 $RPM_BUILD_ROOT/%{_prefix}/bin/* || :
 fi
 
-# Install each launcher wrapper under its bare name as well (tcc, tsd, ...).
-# The old spec touch'd EMPTY placeholder files here "to satisfy package
-# requirements", shipping a /gemsoft/bin/tcc that did nothing.
-for bin in tcc tsd tccscript tccSkycat pointtest probecal; do
-    if [ -f tccApp/linux-bin/$bin.sh ]; then
-        install -m 755 tccApp/linux-bin/$bin.sh $RPM_BUILD_ROOT/%{_prefix}/bin/$bin
-    fi
-done
+# Deliberately ship NO bare-named launchers (tcc, tsd, ...) in /gemsoft/bin
+# -- only the .sh wrappers, matching the production (2025A) package. On ops
+# consoles /gemsoft/bin precedes ~/sciops/das/bin-gn in PATH, and operators'
+# bare `tcc` must FALL THROUGH to the sciops wrapper there (which adds the
+# xterm + console logging + -notifySeqexec layer before calling tcc.sh). A
+# bare /gemsoft/bin/tcc would shadow it and silently break ops logging.
+# (Earlier spec revisions touch'd empty placeholders here; also wrong.)
 
 ## if you want to do something after installation uncomment the following
 ## and list the actions to perform:
@@ -218,9 +217,11 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
-* Thu Jul 09 2026 Hawi Stecher <hawi.stecher@noirlab.edu> 1.0-3
-- Install real launcher wrappers as /gemsoft/bin/{tcc,tsd,...} (were empty
-  placeholder files)
+* Thu Jul 09 2026 Hawi Stecher <hawi.stecher@noirlab.edu> 1.0-4
+- Ship NO bare-named launchers in /gemsoft/bin (only *.sh), matching 2025A:
+  bare `tcc` must fall through PATH to the sciops console-logging wrapper
+  on ops consoles. Supersedes 1.0-2 (empty placeholders) and 1.0-3 (real
+  wrappers at bare names) which both shadowed the sciops wrapper.
 
 * Wed Jul 08 2026 Hawi Stecher <hawi.stecher@noirlab.edu> 1.0-2
 - REL-4962: log target field and observation ID on Set/Slew
