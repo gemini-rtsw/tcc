@@ -4,7 +4,7 @@
 # Define version and release
 %define name tcc
 %define version 1.0
-%define release 2
+%define release 3
 # Short git hash of the built commit; exported by gemini-rtsw-ci/build_rpm.sh
 # into the build container (same pattern as tcslib/gemUtil).
 %define checkout %(if [ -n "$GIT_HASH" ]; then echo "$GIT_HASH"; else git rev-parse --short HEAD 2>/dev/null || echo nogit; fi)
@@ -151,11 +151,12 @@ if [ -d tccApp/linux-bin ] && [ "$(ls -A tccApp/linux-bin 2>/dev/null)" ]; then
     chmod 755 $RPM_BUILD_ROOT/%{_prefix}/bin/* || :
 fi
 
-# Create empty files in bin to satisfy package requirements
+# Install each launcher wrapper under its bare name as well (tcc, tsd, ...).
+# The old spec touch'd EMPTY placeholder files here "to satisfy package
+# requirements", shipping a /gemsoft/bin/tcc that did nothing.
 for bin in tcc tsd tccscript tccSkycat pointtest probecal; do
-    if [ ! -f $RPM_BUILD_ROOT/%{_prefix}/bin/$bin ]; then
-        touch $RPM_BUILD_ROOT/%{_prefix}/bin/$bin
-        chmod 755 $RPM_BUILD_ROOT/%{_prefix}/bin/$bin
+    if [ -f tccApp/linux-bin/$bin.sh ]; then
+        install -m 755 tccApp/linux-bin/$bin.sh $RPM_BUILD_ROOT/%{_prefix}/bin/$bin
     fi
 done
 
@@ -217,6 +218,10 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Thu Jul 09 2026 Hawi Stecher <hawi.stecher@noirlab.edu> 1.0-3
+- Install real launcher wrappers as /gemsoft/bin/{tcc,tsd,...} (were empty
+  placeholder files)
+
 * Wed Jul 08 2026 Hawi Stecher <hawi.stecher@noirlab.edu> 1.0-2
 - REL-4962: log target field and observation ID on Set/Slew
 
