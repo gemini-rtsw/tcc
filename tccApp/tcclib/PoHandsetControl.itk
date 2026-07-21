@@ -232,12 +232,15 @@ itcl::body PoHandsetControl::gacq_ack {} {
        }
    }
 
-   # send the P
-   $itk_component(handset) sendOffset instr $gacqP 90.0
-   
-   # send the Q
-   $itk_component(handset) sendOffset instr $gacqQ 180.0
-  
+   # Send P and Q combined into a single vector offset. Sending them as
+   # two back-to-back poAdjust apply sequences races in the TCS: the
+   # second set of CAD field writes can land between the first apply's
+   # PRESET and START, re-marking the CAD so the first offset is lost.
+   # P alone maps to 90.0 and Q alone to 180.0, as before.
+   set size  [expr {hypot($gacqP, $gacqQ)}]
+   set angle [expr {atan2($gacqP, -$gacqQ) * 180.0 / acos(-1.0)}]
+   $itk_component(handset) sendOffset instr $size $angle
+
    wm withdraw .gacq
 }
 

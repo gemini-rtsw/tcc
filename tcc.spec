@@ -4,7 +4,7 @@
 # Define version and release
 %define name tcc
 %define version 1.0
-%define release 4
+%define release 5
 # Short git hash of the built commit; exported by gemini-rtsw-ci/build_rpm.sh
 # into the build container (same pattern as tcslib/gemUtil).
 %define checkout %(if [ -n "$GIT_HASH" ]; then echo "$GIT_HASH"; else git rev-parse --short HEAD 2>/dev/null || echo nogit; fi)
@@ -217,6 +217,12 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Tue Jul 21 2026 Hawi Stecher <hawi.stecher@noirlab.edu> 1.0-5
+- REL-4975: apply GACQ P and Q as a single combined offset. The previous
+  back-to-back P then Q apply sequences race in the (soft IOC) TCS: the Q
+  field writes can re-mark the poAdjust CAD between the first apply's
+  PRESET and START, silently dropping the P offset.
+
 * Thu Jul 09 2026 Hawi Stecher <hawi.stecher@noirlab.edu> 1.0-4
 - Ship NO bare-named launchers in /gemsoft/bin (only *.sh), matching 2025A:
   bare `tcc` must fall through PATH to the sciops console-logging wrapper
