@@ -8,7 +8,8 @@
 #
 #          -aoexit            True if the AO exit shutter is open.
 #
-#          -aofold            The position of the ao fold mirror (IN or OUT).
+#          -aofold            The position of the ao fold mirror (IN, OUT,
+#                             MOVING or unknown).
 #
 #          -aopresent         AO unit present (boolean).
 #
@@ -704,11 +705,12 @@ itcl::body OpticsView::update {} {
       if { $itk_option(-holecover) == "OPENED" } {
          $c itemconfigure CHLight -fill $l
 
-# Deal with the AO fold mirror position
-         if { $itk_option(-aofold) != "IN" } {
+# Deal with the AO fold mirror position. While the fold is moving or in
+# an unknown state no light is shown beyond it.
+         if { $itk_option(-aofold) == "OUT" } {
             $c itemconfigure NotAoLight -fill $l
             set inport U
-         } else {
+         } elseif { $itk_option(-aofold) == "IN" } {
             if { $itk_option(-aopresent) == 1 } {
                $c itemconfigure AoLight -fill $l
                if { $itk_option(-aoentrance) } {

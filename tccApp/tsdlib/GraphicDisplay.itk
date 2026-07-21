@@ -344,7 +344,18 @@ itcl::body GraphicDisplay::update {} {
 
    switch $aoPlace {
        IN {
-           $itk_component(opticsview) configure -aofold "IN"
+# PA3AO reports in position while the RT34 rotary table is still moving
+# PWFS2 clear of the beam, so the fold is only genuinely in the light
+# path once P2 is in position as well.
+           if { [isInPosition agssad p2InPosition] } {
+               $itk_component(opticsview) configure -aofold "IN"
+           } else {
+               if { $flash } {
+                   $itk_component(opticsview) configure -aofold "MOVING"
+               } else {
+                   $itk_component(opticsview) configure -aofold "unknown"
+               }
+           }
        }
        "datum-pos." -
        "park-pos." -
