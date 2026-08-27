@@ -4,7 +4,7 @@
 # Define version and release
 %define name tcc
 %define version 1.0
-%define release 5
+%define release 6
 # Short git hash of the built commit; exported by gemini-rtsw-ci/build_rpm.sh
 # into the build container (same pattern as tcslib/gemUtil).
 %define checkout %(if [ -n "$GIT_HASH" ]; then echo "$GIT_HASH"; else git rev-parse --short HEAD 2>/dev/null || echo nogit; fi)
@@ -68,6 +68,8 @@ Requires: glibc-devel(x86-32)
 Requires: tcl-devel(x86-32) tk-devel(x86-32) itcl-devel(x86-32)
 Requires: epics_module-astlib-devel epics_module-slalib-devel epics_module-timelib-devel
 Requires: epics_module-astlib(x86-32) epics_module-slalib(x86-32) epics_module-timelib(x86-32)
+# Also carries devcontainer/readdir_lfs.so (see that source for why). Dev
+# image only; the ops package never pulls it in and no runtime script uses it.
 %description devel
 This is a default description for the %{name}-devel package
 
@@ -94,6 +96,13 @@ export EPICS_HOST_ARCH=linux-x86
 export HOST_ARCH=Linux
 export HLPG_INSTALL_BASE=/gemsoft/opt/ocswish
 make -f Makefile.linux
+cd ..
+
+# Dev-container-only readdir shim; see devcontainer/readdir_lfs.c for why.
+# Packaged in tcc-devel only, activated only by an LD_PRELOAD that
+# custom_env_setup.sh sets on the dev container. Ops installs neither.
+gcc -m32 -O2 -fPIC -shared -Wall -o readdir_lfs32.so devcontainer/readdir_lfs.c
+gcc -m64 -O2 -fPIC -shared -Wall -o readdir_lfs64.so devcontainer/readdir_lfs.c
 
 %install
 ## Write install instructions here, e.g
@@ -144,6 +153,14 @@ cp -a tccApp/default* $RPM_BUILD_ROOT/%{_prefix}/%{gemopt}/tcc/ 2>/dev/null || :
 # site-managed (gnconfig) in operations.
 mkdir -p $RPM_BUILD_ROOT/%{_prefix}/etc/tcc
 cp -a test-config/defaults test-config/calparams test-config/pointtests $RPM_BUILD_ROOT/%{_prefix}/etc/tcc/
+
+# Dev-container-only readdir shim, in its own tcc-devel-owned tree so it
+# shares no directory with the tcc package. The lib/lib64 split matches the
+# loader's $LIB expansion used by the LD_PRELOAD in custom_env_setup.sh.
+mkdir -p $RPM_BUILD_ROOT/%{_prefix}/%{gemopt}/tcc-devel/lib
+mkdir -p $RPM_BUILD_ROOT/%{_prefix}/%{gemopt}/tcc-devel/lib64
+cp -a readdir_lfs32.so $RPM_BUILD_ROOT/%{_prefix}/%{gemopt}/tcc-devel/lib/readdir_lfs.so
+cp -a readdir_lfs64.so $RPM_BUILD_ROOT/%{_prefix}/%{gemopt}/tcc-devel/lib64/readdir_lfs.so
 
 # Copy binaries to bin directory if linux-bin exists and has files
 if [ -d tccApp/linux-bin ] && [ "$(ls -A tccApp/linux-bin 2>/dev/null)" ]; then
@@ -214,9 +231,18 @@ rm -rf $RPM_BUILD_ROOT
 # Seed runtime config for dev containers only; ops manages the real
 # /gemsoft/etc/tcc via gnconfig and never installs tcc-devel.
 %config(noreplace) %{_prefix}/etc/tcc/
+%{_prefix}/%{gemopt}/tcc-devel/
 
 
 %changelog
+* Thu Aug 27 2026 Hawi Stecher <hawi.stecher@noirlab.edu> 1.0-6
+- Dev container only: ship devcontainer/readdir_lfs.so in tcc-devel, an
+  LD_PRELOAD shim forwarding the non-LFS readdir() of the i686 Tcl 8.5 stack
+  to readdir64(). On the container's overlayfs-over-ext4, readdir() returns
+  EOVERFLOW, Tcl's glob then sees empty directories and the auto_path scan
+  finds no pkgIndex.tcl, so the tcc dies on "can't find package Itcl". Ops
+  Rocky 9 consoles are XFS and never hit it; nothing here reaches them.
+
 * Tue Jul 21 2026 Hawi Stecher <hawi.stecher@noirlab.edu> 1.0-5
 - REL-4975: apply GACQ P and Q as a single combined offset. The previous
   back-to-back P then Q apply sequences race in the (soft IOC) TCS: the Q
