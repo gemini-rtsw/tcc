@@ -603,8 +603,12 @@ itcl::body FieldControl::onSwapTarget {} {
    store [$itk_component(selector) get]
 
    set swaptarget [$::Config(tcs.field,namespace)::$::Config(tcs.field,value) getSwapTarget]
+   # REL-3071: remember which way round this is, and pass it to the apply
+   # below so a revert can leave the unchanged PWFS2/AOWFS target alone.
+   set reverting 0
    #If the science and guide are swapped, just unswap
    if { ![string is space $swaptarget]} {
+      set reverting 1
       $::Config(tcs.field,namespace)::$::Config(tcs.field,value) clearSwapTarget
    } else {
       set tag [$tagtarget cget -tagPrefix]
@@ -688,7 +692,7 @@ itcl::body FieldControl::onSwapTarget {} {
       }
       #Apply the swapped configuration
       $::Config($comp,namespace)::$::Config($comp,value) apply \
-         $itk_option(-component)
+         $itk_option(-component) $reverting
       if [catch {cs $itk_option(-apply) post} msg] {
          tk_messageBox -icon error -parent $itk_interior -message \
             "Error posting command: $itk_option(-system) reports \"$msg\""

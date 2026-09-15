@@ -74,7 +74,9 @@ itcl::class Field {
    constructor {args} {}
    destructor {}
    public {
-      method apply {comp}
+      # REL-3071: reverting is 1 only for the apply that undoes a target
+      # swap; see the guide-target loop in the body.
+      method apply {comp {reverting 0}}
       method init {}
       method preview {view}
       method save {node}
@@ -221,7 +223,7 @@ itcl::body Field::destructor {} {
 	itcl::delete object $taggedTargets
 }
 
-itcl::body Field::apply {comp} {
+itcl::body Field::apply {comp {reverting 0}} {
 	global env
 
 	#AWE Configure the OIWFS pixel router
@@ -404,10 +406,29 @@ itcl::body Field::apply {comp} {
 	   if { ! [string equal $sciencetarget ""] } {
 	      	[$sciencetarget cget -target] apply science
 	   }
-	   foreach {tagtarget code} [list $pwfs1target pwfs1 $pwfs2target pwfs2 $oiwfstarget oiwfs $aowfstarget aowfs] {
-		if { $tagtarget ne "" } {
-		   [$tagtarget cget -target] apply $code
+	   # REL-3071: on a revert none of the guide targets have changed - the
+	   # swap never re-sent them. Re-applying the PWFS2-bound ones here marks
+	   # the pwfs2 CAD (Target::apply maps both pwfs2 and aowfs to vt pwfs2),
+	   # and the TCS treats a configuration carrying both sourceA and pwfs2 as
+	   # a fresh acquisition: it short-circuits the target filter for that
+	   # configuration (tcsConfigEndPreset). The mount then closes the
+	   # remaining distance in a single tick instead of ramping, which rails
+	   # the Altair tip/tilt mirror when the AO loops are closed. Leaving
+	   # pwfs2 unmarked keeps the filter engaged through the revert.
+	   #
+	   # Note this cannot be fixed by commanding the filter1 CAD instead:
+	   # only shortCircuit Open (sc == 0) means "filtered", and that is
+	   # exactly the value the TCS rule overwrites.
+	   foreach {tagtarget code} [list $pwfs1target pwfs1 $pwfs2target pwfs2 \
+                                     $oiwfstarget oiwfs $aowfstarget aowfs] {
+		if { $tagtarget eq "" } {
+		   continue
 		}
+		if { $reverting && ([string equal $code pwfs2] || \
+		                    [string equal $code aowfs]) } {
+		   continue
+		}
+		[$tagtarget cget -target] apply $code
 	   }
 	   if {[calparam cget -site] eq "CP"} {
 		set gId 1

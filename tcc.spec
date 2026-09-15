@@ -4,7 +4,7 @@
 # Define version and release
 %define name tcc
 %define version 1.0
-%define release 5
+%define release 6
 # Short git hash of the built commit; exported by gemini-rtsw-ci/build_rpm.sh
 # into the build container (same pattern as tcslib/gemUtil).
 %define checkout %(if [ -n "$GIT_HASH" ]; then echo "$GIT_HASH"; else git rev-parse --short HEAD 2>/dev/null || echo nogit; fi)
@@ -217,6 +217,15 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Mon Sep 15 2026 Hawi Stecher <hawi.stecher@noirlab.edu> 1.0-6
+- REL-3071: keep the TCS target filter engaged through a Revert. The revert
+  leg re-applied every guide target, including the unchanged Altair one,
+  which marks the pwfs2 CAD; the TCS reads a configuration carrying both
+  sourceA and pwfs2 as a fresh acquisition and short-circuits the target
+  filter for it. The mount then closed the remaining distance in a single
+  tick instead of ramping, railing the Altair tip/tilt mirror whenever the
+  AO loops were closed through the revert.
+
 * Tue Jul 21 2026 Hawi Stecher <hawi.stecher@noirlab.edu> 1.0-5
 - REL-4975: apply GACQ P and Q as a single combined offset. The previous
   back-to-back P then Q apply sequences race in the (soft IOC) TCS: the Q
