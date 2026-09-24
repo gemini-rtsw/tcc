@@ -1,0 +1,86 @@
+#+
+#  HrwfsWaveFrontSensor
+#
+#  HRWFS signal-processing controller (REL-845).
+#
+#  Unlike the PWFS/OIWFS WaveFrontSensor classes this does NOT inherit
+#  WaveFrontSensor: that base class is hard-wired to the PWFS/OIWFS record
+#  naming (${prefix}SeqDark, ${prefix}DetSigInit, ${name}Observe, ...) and does
+#  not know about HRWFS. HRWFS detector observing is driven separately (by
+#  ActiveOptics via the hrwfs object), so this class only configures the HRWFS
+#  signal-processing mode, via the hrwfsSig command (see ca_config/hrwfs.ca ->
+#  hrwfs:dc:detSig* records added in the HRWFS DC).
+#
+#  Prepared for REL-845 (HRWFS signal processing).
+#-
+
+itcl::class HrwfsWaveFrontSensor {
+   constructor {wfs args} {}
+   public {
+      variable exposetime 1.0
+      variable mode seq
+      method apply {}
+   }
+   protected {
+      variable current_mode ""
+      variable current_exposetime 0
+   }
+}
+
+itcl::body HrwfsWaveFrontSensor::constructor {wfs args} {
+
+# Create the command sender (wfs argument accepted for symmetry with the
+# other WFS objects; HRWFS uses the single hrwfsSig command).
+   if { [catch {cs hrwfsSig info}] } {
+      epics cs hrwfsSig
+   }
+   eval configure $args
+}
+
+#+
+#  apply
+#
+#  Configure HRWFS signal processing for the current mode / exposure time.
+#  Modes: sky (sequence sky/dark), seqnz (sequence closed loop, do not forward
+#  Zernikes) and seq (sequence closed loop, forward Zernikes). Initialisation
+#  (which builds the interaction matrix and reads the reference in the HRWFS DC)
+#  is done first whenever the exposure time changes or on the first call.
+#-
+itcl::body HrwfsWaveFrontSensor::apply {} {
+
+# Sky/dark file name for this exposure time.
+   set filename [expr { int(1.0/$exposetime)}]Hz.fits
+
+# Initialise the signal processing first (build matrices, read reference) when
+# the exposure time has changed or on the first call.
+   if { $mode ne "sky" && $exposetime != $current_exposetime } {
+      cs hrwfsSig set darkFilename [file join data $filename]
+      logger log "hrwfsSig darkFilename $filename"
+      cs hrwfsSig set detSigInit START
+      logger log "hrwfsSig detSigInit START"
+      set current_exposetime $exposetime
+   }
+
+# Set the processing mode if it has changed.
+   if { $mode ne $current_mode } {
+      switch $mode {
+         sky {
+            cs hrwfsSig set seqDarkFilename $filename
+            logger log "hrwfsSig seqDarkFilename $filename"
+            cs hrwfsSig set detSigModeSeqDark START
+            logger log "hrwfsSig detSigModeSeqDark START"
+         }
+         seqnz {
+            cs hrwfsSig set z2m2 0
+            cs hrwfsSig set detSigModeSeq START
+            logger log "hrwfsSig detSigModeSeq (z2m2 0)"
+         }
+         seq {
+            cs hrwfsSig set z2m2 1
+            cs hrwfsSig set detSigModeSeq START
+            logger log "hrwfsSig detSigModeSeq (z2m2 1)"
+         }
+      }
+      set current_mode $mode
+   }
+}

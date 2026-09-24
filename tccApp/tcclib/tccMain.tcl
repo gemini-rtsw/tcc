@@ -333,6 +333,7 @@ global env
    WaveFrontSensor Pwfs2 pwfs2
    OiWaveFrontSensor Oiwfs oiwfs
    AoWaveFrontSensor Aowfs
+   HrwfsWaveFrontSensor Hrwfswfs hrwfs
 
 # Create object for executing nods
    Nod Nodder

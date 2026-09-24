@@ -100,3 +100,15 @@ command hrwfs::abort hrwfs::apply Abort observation
 {
    dummy      hrwfs:abort.A
 }
+
+# REL-845 HRWFS signal processing (mirrors oiwfsSig). The detSig* records are
+# standalone CADs applied via their own .DIR, so use tcsApply.
+command hrwfsSig tcsApply
+{
+   detSigModeSeqDark hrwfs:dc:detSigModeSeqDark.DIR
+   seqDarkFilename   hrwfs:dc:detSigModeSeqDark.C
+   detSigModeSeq     hrwfs:dc:detSigModeSeq.DIR
+   z2m2              hrwfs:dc:detSigModeSeq.T
+   detSigInit        hrwfs:dc:detSigInit.DIR
+   darkFilename      hrwfs:dc:detSigInit.B
+}
