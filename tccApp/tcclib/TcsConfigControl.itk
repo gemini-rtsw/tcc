@@ -514,6 +514,29 @@ itcl::body TcsConfigControl::apply {} {
    $itk_component(azwrap) select 1
    $itk_component(rotwrap) select 1
 
+   # REL-4661: take P1/P2 out of follow before slewing to the new target.
+   # This sits after every check above that can abort the slew, so an
+   # aborted Set/Slew leaves the probes as they were. A probe stopped here
+   # stays out of follow after the slew (see the REL-372 blocks below); the
+   # operator re-enables it from the TCS panel.
+   set stoppedFollow {}
+   foreach {probe sadrec cmd} {P1 p1FollowS p1Follow P2 p2FollowS p2Follow} {
+      if { [isFollowing agssad $sadrec] } {
+         cs $cmd set followState Off
+         logger command $cmd
+         lappend stoppedFollow $probe
+      }
+   }
+   if { [llength $stoppedFollow] } {
+      if { [catch {cs tcsApply post} msg] } {
+         tk_messageBox -icon error -parent $itk_interior -message \
+            "Error stopping [join $stoppedFollow /] follow: TCS reports \"$msg\""
+         return
+      }
+      logactions logmess \
+         "Took [join $stoppedFollow { and }] out of follow before slew"
+   }
+
    # REL-372
    # Processing Pwfs1 slew option 
    set slewPwfs1Flag [$slewOptions cget -slewPwfs1]
@@ -526,7 +549,11 @@ itcl::body TcsConfigControl::apply {} {
        #puts "Processing Pwfs1 slew option" 
        logactions logmess "Processing Pwfs1 slew option"
        if { $PWFS1target ne "" && [string match "*P1*" $guide] } {
-           if { [string match "OFF" $Pwfs1Following] } {
+           # REL-4661: Pwfs1Following was read before the follow-off above
+           # landed, so check stoppedFollow first and leave P1 off.
+           if { "P1" in $stoppedFollow } {
+               logactions logmess "pwfs1 left out of follow after slew"
+           } elseif { [string match "OFF" $Pwfs1Following] } {
                cs p1Follow set followState On
                if { [catch {cs pwfs1 post} msg] } {
                    tk_messageBox -icon error -message \
@@ -559,7 +586,11 @@ itcl::body TcsConfigControl::apply {} {
    if { $slewPwfs2Flag } {
        logactions logmess "Processing Pwfs2 slew option" 
        if { $PWFS2target ne "" && [string match "*P2*" $guide] } {
-           if { [string match "OFF" $Pwfs2Following] } {
+           # REL-4661: as for P1. This also skips the AO fold park and the
+           # aowait poll, whose only purpose is to turn P2 follow back on.
+           if { "P2" in $stoppedFollow } {
+               logactions logmess "pwfs2 left out of follow after slew"
+           } elseif { [string match "OFF" $Pwfs2Following] } {
               # Send AO Fold to OUT position. 
               # This takes a long time and we can't put P2 into follow mode
               # until it is ready.
