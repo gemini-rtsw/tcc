@@ -760,6 +760,12 @@ itcl::body ActiveOptics::enable {} {
          hrwfs output DHS
          hrwfs start -1
       }
+
+      # REL-845: configure HRWFS signal processing for tuning. HRWFS feeds M1
+      # figure (it cannot drive M2), so use sequence closed loop with the
+      # Zernikes forwarded. The detector observing above is left as-is.
+      Hrwfswfs configure -exposetime $hrwfsExpose -mode seq
+      Hrwfswfs apply
    }
 
    # Post the commands.
