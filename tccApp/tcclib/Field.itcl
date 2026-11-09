@@ -130,6 +130,7 @@ itcl::class Field {
       method setSwapTarget { tagtarget }
       method clearSwapTarget {}
       method getSwapTarget {}
+      method scienceLightPath {}
       method subscribe {observer}
       method unsubscribe {observer}
       
@@ -1277,6 +1278,27 @@ itcl::body Field::clearSwapTarget {} {
 
 itcl::body Field::getSwapTarget {} {
 	return $swaptarget
+}
+
+# Light path for this field's own (unswapped) guide configuration: where a
+# Revert puts the science fold back to. "" when the field has no guide set.
+itcl::body Field::scienceLightPath {} {
+   if { $guide eq "" } {
+      return ""
+   }
+   switch $guide {
+      "AO-OI" -
+      "AO-P1" -
+      "AO" -
+      "GeMS" -
+      "GeMS-OI" -
+      "GeMS-P1" {
+         return "Sky>AO>Inst"
+      }
+      default {
+         return "Sky>Instr"
+      }
+   }
 }
 
 itcl::configbody Field::odgwSize {

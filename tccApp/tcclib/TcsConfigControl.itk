@@ -440,6 +440,25 @@ itcl::body TcsConfigControl::apply {} {
       return
    }
 
+   # REL-827: Set/Slew while Swapped. The swapped state lives on the field
+   # object, so without this the slew applies the swapped configuration (the
+   # guide star as science target, the acq-cam wavelength and swap guide
+   # config) and the field stays swapped afterwards, with the fold still on
+   # the AC. Revert first, as the TCC used to: clear the swap (which also
+   # puts the field's own guide and wavelength back in the panel) and move
+   # the fold back. The doapply below then sends the science configuration.
+   # This sits after the checks above so an aborted Set/Slew leaves the swap.
+   set swaptarget [$fieldObj getSwapTarget]
+   if { ![string is space $swaptarget] } {
+      logactions logmess "Field \"$::Config(tcs.field,value)\" is swapped\
+         ([$swaptarget cget -tagPrefix]); reverting before slew"
+      $fieldObj clearSwapTarget
+      set lpath [$fieldObj scienceLightPath]
+      if { $lpath ne "" && [winfo exists .observePanel] } {
+         ::.observePanel.frame.control.botframe.mirrors.lpath select $lpath
+      }
+   }
+
    # Configure UseAO flag in the TCS
 
    if { ![catch {cs configForAO info}] } {

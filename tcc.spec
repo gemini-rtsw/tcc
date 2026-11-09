@@ -4,7 +4,7 @@
 # Define version and release
 %define name tcc
 %define version 1.0
-%define release 7
+%define release 8
 # Short git hash of the built commit; exported by gemini-rtsw-ci/build_rpm.sh
 # into the build container (same pattern as tcslib/gemUtil).
 %define checkout %(if [ -n "$GIT_HASH" ]; then echo "$GIT_HASH"; else git rev-parse --short HEAD 2>/dev/null || echo nogit; fi)
@@ -217,6 +217,12 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Mon Nov 09 2026 Hawi Stecher <hawi.stecher@noirlab.edu> 1.0-8
+- REL-827: Set/Slew while Swapped now reverts first. Previously the slew sent
+  the swapped configuration (guide star as science target) and left the field
+  swapped with the fold on the AC, so the TCC kept trying to unswap after the
+  slew. The swap is cleared and the fold moved back before the slew is applied.
+
 * Mon Oct 05 2026 Anthony Sylvester <anthony.sylvester@noirlab.edu> 1.0-7
 - REL-4661: Set/Slew takes P1 and P2 out of follow before slewing, so a new
   target can be selected while the probes are following. A probe stopped
