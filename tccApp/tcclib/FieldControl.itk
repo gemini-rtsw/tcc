@@ -625,30 +625,8 @@ itcl::body FieldControl::onSwapTarget {} {
       #set light path
       set swaptarget [$::Config(tcs.field,namespace)::$::Config(tcs.field,value) getSwapTarget]
       if { [string is space $swaptarget]} {
-         set guide [$::Config(tcs.field,namespace)::$::Config(tcs.field,value) cget -guide]
-         if {$guide ne "" } {
-            switch $guide {
-               "No guiding" -
-               "P1-P2" -
-               "P1-OI" -
-               "P1" -
-               "P2-OI" -
-               "P2" -
-               "OI" {
-                  set lpath "Sky>Instr"
-               }
-               "AO-OI" -
-               "AO-P1" -
-               "AO" -
-               "GeMS" -
-               "GeMS-OI" -
-               "GeMS-P1" {
-                  set lpath "Sky>AO>Inst"
-               }
-               default {
-                  set lpath "Sky>Instr"
-               }
-            }
+         set lpath [$::Config(tcs.field,namespace)::$::Config(tcs.field,value) scienceLightPath]
+         if {$lpath ne "" } {
             if [winfo exists .observePanel] {
                ::.observePanel.frame.control.botframe.mirrors.lpath select $lpath
             }
