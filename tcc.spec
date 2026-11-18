@@ -4,7 +4,7 @@
 # Define version and release
 %define name tcc
 %define version 1.0
-%define release 8
+%define release 9
 # Short git hash of the built commit; exported by gemini-rtsw-ci/build_rpm.sh
 # into the build container (same pattern as tcslib/gemUtil).
 %define checkout %(if [ -n "$GIT_HASH" ]; then echo "$GIT_HASH"; else git rev-parse --short HEAD 2>/dev/null || echo nogit; fi)
@@ -46,6 +46,11 @@ Requires: tcl tk itcl itk iwidgets
 Requires: ocswish seqexec
 Requires: tcldom-libxml2
 Requires: epics_module-timelib epics_module-slalib epics_module-astlib
+# The C extensions (tcctime.so etc.) are 32-bit and link -last -ltime -lsla
+# with an rpath into the linux-x86 module dirs, so they need the i686 builds
+# at runtime. AutoReqProv is off, so these must be listed by hand; without
+# them tcc fails to load its extensions (seen on the GS install, REL-4962).
+Requires: epics_module-astlib(x86-32) epics_module-slalib(x86-32) epics_module-timelib(x86-32)
 
 
 ## Switch dependency checking off
@@ -217,6 +222,11 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Wed Nov 18 2026 Hawi Stecher <hawi.stecher@noirlab.edu> 1.0-9
+- REL-4962: require the 32-bit (x86-32) astlib, slalib and timelib at
+  runtime. The C extensions are built -m32 and link against them; the GS
+  install had to add astlib and timelib by hand.
+
 * Mon Nov 09 2026 Hawi Stecher <hawi.stecher@noirlab.edu> 1.0-8
 - REL-827: Set/Slew while Swapped now reverts first. Previously the slew sent
   the swapped configuration (guide star as science target) and left the field
